@@ -26,7 +26,7 @@
  *  
  *----------------------------------------------------------------------------
  *
- * Portions Copyright © 2016 STMicroelectronics International N.V. All rights reserved.
+ * Portions COPYRIGHT 2015 STMicroelectronics
  * Portions Copyright (c) 2013 ARM LIMITED
  * All rights reserved.
  * Redistribution and use in source and binary forms, with or without
@@ -57,47 +57,29 @@
   ******************************************************************************
   * @file    cmsis_os.c
   * @author  MCD Application Team
-  * @date    22-January-2016
-  * @brief   CMSIS-RTOS API implementation for FreeRTOS V8.2.3
+  * @date    27-March-2015
+  * @brief   CMSIS-RTOS API implementation for FreeRTOS V8.2.1
   ******************************************************************************
   * @attention
   *
-  * Redistribution and use in source and binary forms, with or without 
-  * modification, are permitted, provided that the following conditions are met:
+  * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
+  * You may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at:
   *
-  * 1. Redistribution of source code must retain the above copyright notice, 
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
+  *        http://www.st.com/software_license_agreement_liberty_v2
   *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  * Unless required by applicable law or agreed to in writing, software 
+  * distributed under the License is distributed on an "AS IS" BASIS, 
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
   *
   ******************************************************************************
   */ 
 
 #include <string.h>
 #include "cmsis_os.h"
+#include "uart.h"
 
 extern void xPortSysTickHandler(void);
 
@@ -361,29 +343,58 @@ osStatus osTimerStart (osTimerId timer_id, uint32_t millisec)
 {
   osStatus result = osOK;
 #if (configUSE_TIMERS == 1)  
-  portBASE_TYPE taskWoken = pdFALSE;
+	portBASE_TYPE taskWoken = pdFALSE;
   TickType_t ticks = millisec / portTICK_PERIOD_MS;
-
-  if (ticks == 0)
-    ticks = 1;
-    
-  if (inHandlerMode()) 
+  
+  if (xTimerIsTimerActive(timer_id) != pdFALSE)
   {
-    if (xTimerChangePeriodFromISR(timer_id, ticks, &taskWoken) != pdPASS)
+    if (inHandlerMode()) 
     {
-      result = osErrorOS;
+      if(xTimerResetFromISR(timer_id, &taskWoken) != pdPASS)
+      {
+        result = osErrorOS;
+      }
+      else
+      {
+        portEND_SWITCHING_ISR(taskWoken);
+        result = osOK;
+      }
     }
     else
     {
-      portEND_SWITCHING_ISR(taskWoken);     
+      if (xTimerReset(timer_id, 0) != pdPASS)
+        result = osErrorOS;
+      else   
+        result = osOK;
     }
   }
-  else 
+  else
   {
-    if (xTimerChangePeriod(timer_id, ticks, 0) != pdPASS)
-      result = osErrorOS;
+    if (ticks == 0)
+      ticks = 1;
+    
+    if (inHandlerMode()) 
+    {
+      if (xTimerChangePeriodFromISR(timer_id, ticks, &taskWoken) != pdPASS) 
+        result = osErrorOS;
+      else
+      {
+        xTimerStartFromISR(timer_id, &taskWoken);
+        portEND_SWITCHING_ISR(taskWoken);
+        result = osOK; 
+      }
+    }
+    else 
+    {
+      if (xTimerChangePeriod(timer_id, ticks, 0) != pdPASS)
+        result = osErrorOS;
+      else
+      {
+        if (xTimerStart(timer_id, 0) != pdPASS)
+          result = osErrorOS;
+      }
+    }
   }
-
 #else 
   result = osErrorOS;
 #endif
@@ -457,7 +468,6 @@ osStatus result = osOK;
 */
 int32_t osSignalSet (osThreadId thread_id, int32_t signal)
 {
-#if( configUSE_TASK_NOTIFICATIONS == 1 )	
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
   
   if (inHandlerMode())
@@ -473,12 +483,6 @@ int32_t osSignalSet (osThreadId thread_id, int32_t signal)
   }
   
   return osOK;
-#else
-  (void) thread_id;
-  (void) signal;
-
-  return osErrorOS; /* Task Notification not supported */ 	
-#endif
 }
 
 /**
@@ -500,9 +504,6 @@ int32_t osSignalClear (osThreadId thread_id, int32_t signal);
 osEvent osSignalWait (int32_t signals, uint32_t millisec)
 {
   osEvent ret;
-
-#if( configUSE_TASK_NOTIFICATIONS == 1 )
-	
   TickType_t ticks;
 
   ret.value.signals = 0;  
@@ -528,19 +529,12 @@ osEvent osSignalWait (int32_t signals, uint32_t millisec)
       if(ticks == 0)  ret.status = osOK;
       else  ret.status = osEventTimeout;
     }
-    else if(ret.value.signals < 0)
+    else if(ret.value.signals >= 0x80000000)
     {
       ret.status =  osErrorValue;     
     }
     else  ret.status =  osEventSignal;
-  }
-#else
-  (void) signals;
-  (void) millisec;
-	
-  ret.status =  osErrorOS;	/* Task Notification not supported */
-#endif
-  
+  }  
   return ret;
 }
 
@@ -957,19 +951,21 @@ osStatus osMessagePut (osMessageQId queue_id, uint32_t info, uint32_t millisec)
   if (ticks == 0) {
     ticks = 1;
   }
-  
+
   if (inHandlerMode()) {
     if (xQueueSendFromISR(queue_id, &info, &taskWoken) != pdTRUE) {
+
       return osErrorOS;
     }
+
     portEND_SWITCHING_ISR(taskWoken);
   }
   else {
     if (xQueueSend(queue_id, &info, ticks) != pdTRUE) {
+
       return osErrorOS;
     }
   }
-  
   return osOK;
 }
 
@@ -1053,7 +1049,7 @@ osMailQId osMailCreate (const osMailQDef_t *queue_def, osThreadId thread_id)
 {
   (void) thread_id;
   
-  osPoolDef_t pool_def = {queue_def->queue_sz, queue_def->item_sz, NULL};
+  osPoolDef_t pool_def = {queue_def->queue_sz, queue_def->item_sz};
   
   
   /* Create a mail queue control block */
