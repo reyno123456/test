@@ -1,8 +1,11 @@
 CROSS_COMPILE = /opt/toolchain/gcc-arm-none-eabi-5_2-2015q4/bin/arm-none-eabi-
 
+TARGET = ar8020
+
 PWD = $(shell pwd)
-WORK_DIR := $(PWD)/../../../../
+WORK_DIR := $(PWD)/../../../..
 OUTPUT_DIR := $(WORK_DIR)/Output
+UTILITY_DIR :=  $(WORK_DIR)/Utility
 
 OBJS_APP = $(WORK_DIR)/Application/AR8020Verification/main.o
 
@@ -145,8 +148,6 @@ INCLUDES += -I$(WORK_DIR)/Configure \
             -I$(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/Template/Inc \
             -I$(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Core/Inc
 
-TARGET = ar8020
-
 CFLAGS += -DSTM32F746xx -D_AR8020_VERIFICATION_ -DUSB_DEV_CLASS_HID_ENABLE 
 LDFLAGS += -Bstatic
 
@@ -155,7 +156,7 @@ $(TARGET).bin: $(OBJS) $(LIBS)
 	$(CROSS_COMPILE)objcopy -O binary $(TARGET).elf $@
 	$(CROSS_COMPILE)objdump -D $(TARGET).elf > $(TARGET).dis
 	$(CROSS_COMPILE)nm $(TARGET).elf > $(TARGET).map
-	./Tools/bin2mif $@ $(TARGET).mif 32768 64
+	$(UTILITY_DIR)/bin2mif $@ $(TARGET).mif 32768 64
 	cp $(TARGET).mif  $(OUTPUT_DIR)
 
 %.o: %.c
@@ -165,6 +166,6 @@ $(TARGET).bin: $(OBJS) $(LIBS)
 #	$(CROSS_COMPILE)gcc $(INCLUDES) -O2 -mthumb -mcpu=cortex-m4 -mlittle-endian -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -c $< -o $@
 
 clean:
-	rm -f $(OBJS)
-	#rm *.o driver/src/*.o kernel/*.o lib/src/*.o *.elf *.bin *.dis *.mif *.map
+	rm -f $(OBJS) 
+	rm -f  $(TARGET).elf  $(TARGET).bin  $(TARGET).dis  $(TARGET).mif  $(TARGET).map $(OUTPUT_DIR)/$(TARGET).mif
 
