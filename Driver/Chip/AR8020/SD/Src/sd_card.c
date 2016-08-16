@@ -11,6 +11,7 @@
   *           + Peripheral State functions
   */
 
+#include "system_config.h"
 #include "sd_core.h"
 #include "sd_card.h"
 #include "command.h"

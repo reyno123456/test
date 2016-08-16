@@ -1,4 +1,5 @@
 #include "sd_host.h"
+#include "system_config.h"
 #include "command.h"
 
 SDMMC_Status sd_init()

@@ -48,3 +48,14 @@ void *memory_cpy(void *dest, const void *src, unsigned int len)
 
     return dest;
 }
+
+void memset(char *s, char c, unsigned int len)
+{
+    memory_set(s, c, len);
+}
+
+void *memcpy(void *dest, const void *src, unsigned int len)
+{
+    memory_cpy(dest, src, len);
+}
+

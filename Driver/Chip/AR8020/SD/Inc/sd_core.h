@@ -18,6 +18,23 @@ extern "C" {
 
 #include "stm32f746xx.h"
 #include "command.h"
+
+//====================================================================
+//MOBILE STORAGE RELATED
+//====================================================================
+#define SDMMC_BASE  0x42000000
+
+/**
+ * * @brief  SDMMC Status structures definition
+ * */
+typedef enum
+{
+  SDMMC_OK       = 0x00,
+  SDMMC_ERROR    = 0x01,
+  SDMMC_BUSY     = 0x02,
+  SDMMC_TIMEOUT  = 0x03
+} SDMMC_Status;
+
 /**
   * @brief SD controller register
   */

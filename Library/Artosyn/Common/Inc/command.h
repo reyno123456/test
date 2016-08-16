@@ -21,6 +21,6 @@ extern void command_eraseSdcard(char *Dstaddr, char * BlockNum);
 
 extern void delay_ms(uint32_t num);
 extern void write_reg32(uint32_t *addr, uint32_t data);
-extern unsigned int read_reg32(uint32_t *addr);
+extern uint32_t read_reg32(uint32_t *addr);
 
 #endif

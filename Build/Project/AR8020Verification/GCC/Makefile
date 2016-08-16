@@ -1,30 +1,42 @@
-CROSS_COMPILE = /opt/toolchain/arm-2010q1/bin/arm-uclinuxeabi-
+CROSS_COMPILE = /opt/toolchain/gcc-arm-none-eabi-5_2-2015q4/bin/arm-none-eabi-
 
 PWD = $(shell pwd)
 WORK_DIR := $(PWD)/../../../../
+OUTPUT_DIR := $(WORK_DIR)/Output
 
 OBJS_APP = $(WORK_DIR)/Application/AR8020Verification/main.o
 
-OBJS_LIB_USB_Device = $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/AUDIO/Src/usbd_audio.o \
-                      $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/AUDIO/Src/usbd_audio_if_template.o \
-                      $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.o \
-                      $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc_if_template.o \
-                      $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/CustomHID/Src/usbd_customhid.o \
-                      $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/CustomHID/Src/usbd_customhid_if_template.o \
-                      $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/DFU/Src/usbd_dfu.o \
-                      $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/DFU/Src/usbd_dfu_media_template.o \
-                      $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/HID/Src/usbd_hid.o \
-                      $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_bot.o \
-                      $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc.o \
-                      $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_data.o \
-                      $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_scsi.o \
-                      $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_storage_template.o \
-                      $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/Template/Src/usbd_template.o \
-                      $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Core/Src/usbd_conf_template.o \
-                      $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Core/Src/usbd_core.o \
-                      $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.o \
-                      $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Core/Src/usbd_ioreq.o
-
+OBJS_LIB_USB_Device =  $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Core/Src/usbd_conf_template.o \
+                       $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Core/Src/usbd_core.o \
+                       $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.o \
+                       $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Core/Src/usbd_ioreq.o
+OBJS_LIB_USB_Device += $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/Template/Src/usbd_template.o
+ifdef USB_DEV_CLASS_AUDIO_ENABLE
+OBJS_LIB_USB_Device += $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/AUDIO/Src/usbd_audio.o \
+                       $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/AUDIO/Src/usbd_audio_if_template.o
+endif
+ifdef USB_DEV_CLASS_CDC_ENABLE
+OBJS_LIB_USB_Device += $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.o \
+                       $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc_if_template.o
+endif
+ifdef USB_DEV_CLASS_CUSTOMHID_ENABLE                      
+OBJS_LIB_USB_Device += $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/CustomHID/Src/usbd_customhid.o \
+                       $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/CustomHID/Src/usbd_customhid_if_template.o
+endif
+ifdef USB_DEV_CLASS_DFU_ENABLE                      
+OBJS_LIB_USB_Device += $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/DFU/Src/usbd_dfu.o \
+                       $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/DFU/Src/usbd_dfu_media_template.o
+endif
+ifdef USB_DEV_CLASS_HID_ENABLE                      
+OBJS_LIB_USB_Device += $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/HID/Src/usbd_hid.o
+endif
+ifdef USB_DEV_CLASS_MSC_ENABLE                      
+OBJS_LIB_USB_Device += $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_bot.o \
+                       $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc.o \
+                       $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_data.o \
+                       $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_scsi.o \
+                       $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_storage_template.o
+endif                      
 
 OBJS_LIB_USB_HOST = $(WORK_DIR)/Library/ThirdParty/STM32_USB_Host_Library/Class/AUDIO/Src/usbh_audio.o \
                     $(WORK_DIR)/Library/ThirdParty/STM32_USB_Host_Library/Class/CDC/Src/usbh_cdc.o \
@@ -45,9 +57,10 @@ OBJS_LIB_USB_HOST = $(WORK_DIR)/Library/ThirdParty/STM32_USB_Host_Library/Class/
 
 OBJS_LIB_CMSIS = $(WORK_DIR)/Library/ThirdParty/CMSIS_RTOS/cmsis_os.o 
 
-OBJS_LIB_ARTOSYN = $(WORK_DIR)/Library/Artosyn/Lib/Src/interrupt.o \
-                   $(WORK_DIR)/Library/Artosyn/Lib/Src/command.o \
-                   $(WORK_DIR)/Library/Artosyn/Lib/Src/memory.o
+OBJS_LIB_ARTOSYN = $(WORK_DIR)/Library/Artosyn/Common/Src/interrupt.o \
+                   $(WORK_DIR)/Library/Artosyn/Common/Src/command.o \
+                   $(WORK_DIR)/Library/Artosyn/Common/Src/memory.o \
+                   $(WORK_DIR)/Library/Artosyn/Common/Src/printlog.o
 
 OBJS_FATFS = $(WORK_DIR)/Library/ThirdParty/FatFs/Src/diskio.o \
              $(WORK_DIR)/Library/ThirdParty/FatFs/Src/ff.o \
@@ -60,21 +73,21 @@ OBJS_DRIVER_HAL = $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal.
                   $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma2d.o \
                   $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma_ex.o \
                   $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash.o \
-                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/Src/stm32f7xx_hal_flash_ex.o \
-                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/Src/stm32f7xx_hal_gpio.o \
-                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/Src/stm32f7xx_hal_hcd.o \
-                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/Src/stm32f7xx_hal_i2c.o \
-                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/Src/stm32f7xx_hal_i2c_ex.o \
-                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/Src/stm32f7xx_hal_ltdc.o \
-                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/Src/stm32f7xx_hal_pwr.o \
-                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/Src/stm32f7xx_hal_pwr_ex.o \
-                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/Src/stm32f7xx_hal_rcc.o \
-                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/Src/stm32f7xx_hal_rcc_ex.o \
-                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/Src/stm32f7xx_hal_sdram.o \
-                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/Src/stm32f7xx_hal_sram.o \
-                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/Src/stm32f7xx_hal_uart.o \
-                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/Src/stm32f7xx_ll_fmc.o \
-                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/Src/stm32f7xx_ll_usb.o
+                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_flash_ex.o \
+                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_gpio.o \
+                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_hcd.o \
+                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c.o \
+                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c_ex.o \
+                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_ltdc.o \
+                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr.o \
+                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pwr_ex.o \
+                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc.o \
+                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc_ex.o \
+                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sdram.o \
+                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sram.o \
+                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_uart.o \
+                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_ll_fmc.o \
+                  $(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Src/stm32f7xx_ll_usb.o
 
 OBJS_DRIVER = $(WORK_DIR)/Driver/Chip/AR8020/UART/Src/serial.o \
               $(WORK_DIR)/Driver/Chip/AR8020/SD/Src/sd_core.o \
@@ -87,9 +100,8 @@ OBJS_KERNEL = $(WORK_DIR)/Kernel/FreeRTOS/croutine.o \
               $(WORK_DIR)/Kernel/FreeRTOS/queue.o \
               $(WORK_DIR)/Kernel/FreeRTOS/tasks.o \
               $(WORK_DIR)/Kernel/FreeRTOS/timers.o \
-              $(WORK_DIR)/Kernel/FreeRTOS/port.o \
-              $(WORK_DIR)/Kernel/FreeRTOS/heap_4.o \
-              $(WORK_DIR)/Kernel/FreeRTOS/System/system_stm32f7xx.o
+              $(WORK_DIR)/Kernel/FreeRTOS/portable/GCC/ARM_CM7/r0p1/port.o \
+              $(WORK_DIR)/Kernel/FreeRTOS/portable/MemMang/heap_4.o
 
 OBJS_BOOTLOAD = ${WORK_DIR}/Bootload/AR8020Verification/start.o
 
@@ -105,16 +117,19 @@ OBJS += $(OBJS_LIB_USB_HOST)
 OBJS += $(OBJS_LIB_USB_Device)
 OBJS += $(OBJS_APP)
 
-INCLUDES += -I$(WORK_DIR)/Driver/Chip/AR8020/SD/Inc \
+INCLUDES += -I$(WORK_DIR)/Configure \
+            -I$(WORK_DIR)/Configure/Include \
+            -I$(WORK_DIR)/Driver/Chip/AR8020/SD/Inc \
 	    -I$(WORK_DIR)/Driver/Chip/AR8020/UART/Inc \
-            -I$(WORK_DIR)/Library/Artosyn/Lib/Inc \
-	    -I$(WORK_DIR)/Configuration/Include \
-	    -I$(WORK_DIR)/Kernel/FreeRTOS/Inc \
-            -I$(WORK_DIR)/Kernel/FreeRTOS/System \
+            -I$(WORK_DIR)/Library/Artosyn/Common/Inc \
+            -I$(WORK_DIR)/Library/ThirdParty/CMSIS/Device/ST/STM32F7xx/Include \
+	    -I$(WORK_DIR)/Kernel/FreeRTOS/include \
+            -I$(WORK_DIR)/Kernel/FreeRTOS/portable/GCC/ARM_CM7/r0p1 \
             -I$(WORK_DIR)/Driver/HAL/STM32F7xx_HAL_Driver/Inc \
 	    -I$(WORK_DIR)/Library/ThirdParty/FatFs/Inc \
 	    -I$(WORK_DIR)/Library/ThirdParty/FatFs/Port \
             -I$(WORK_DIR)/Library/ThirdParty/CMSIS/Include \
+            -I$(WORK_DIR)/Library/ThirdParty/CMSIS_RTOS \
             -I$(WORK_DIR)/Library/ThirdParty/STM32_USB_Host_Library/Class/AUDIO/Inc \
             -I$(WORK_DIR)/Library/ThirdParty/STM32_USB_Host_Library/Class/CDC/Inc \
             -I$(WORK_DIR)/Library/ThirdParty/STM32_USB_Host_Library/Class/HID/Inc \
@@ -132,17 +147,19 @@ INCLUDES += -I$(WORK_DIR)/Driver/Chip/AR8020/SD/Inc \
 
 TARGET = ar8020
 
+CFLAGS += -DSTM32F746xx -D_AR8020_VERIFICATION_ -DUSB_DEV_CLASS_HID_ENABLE 
+LDFLAGS += -Bstatic
+
 $(TARGET).bin: $(OBJS) $(LIBS)
-	#$(CROSS_COMPILE)ld -Bstatic -T$(TARGET).lds -o $(TARGET).elf $^
-	$(CROSS_COMPILE)ld -Bstatic -o $(TARGET).elf $^
+	$(CROSS_COMPILE)ld $(LDFLAGS) -T$(WORK_DIR)/Bootload/AR8020Verification/$(TARGET).lds -o $(TARGET).elf $^
 	$(CROSS_COMPILE)objcopy -O binary $(TARGET).elf $@
 	$(CROSS_COMPILE)objdump -D $(TARGET).elf > $(TARGET).dis
 	$(CROSS_COMPILE)nm $(TARGET).elf > $(TARGET).map
 	./Tools/bin2mif $@ $(TARGET).mif 32768 64
-	cp $(TARGET).mif  /mnt/hgfs/mzhao
+	cp $(TARGET).mif  $(OUTPUT_DIR)
 
 %.o: %.c
-	$(CROSS_COMPILE)gcc $(INCLUDES) -mthumb -mcpu=cortex-m4 -mlittle-endian -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -std=c99 -c $< -o $@
+	$(CROSS_COMPILE)gcc $(INCLUDES) $(CFLAGS) -mthumb -mcpu=cortex-m4 -mlittle-endian -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -std=c99 -c $< -o $@
 
 #%.o: %.S
 #	$(CROSS_COMPILE)gcc $(INCLUDES) -O2 -mthumb -mcpu=cortex-m4 -mlittle-endian -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -c $< -o $@

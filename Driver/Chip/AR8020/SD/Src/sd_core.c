@@ -10,6 +10,7 @@
   *            Peripheral Control functions
   *            Peripheral State functions
   */
+#include "system_config.h"
 #include "sd_core.h"
 #include "serial.h"
 /**TODO
