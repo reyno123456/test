@@ -1,6 +1,7 @@
 #ifndef __ISR__H
 #define __ISR__H
 
+void SVC_Handler(void);
 void UART0_IRQHandler(void);
 void UART1_IRQHandler(void);
 void UART2_IRQHandler(void);

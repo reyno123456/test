@@ -10,7 +10,9 @@ unsigned int vectors[] __attribute__((section(".vectors"))) = {
 
 	[1] = (unsigned int)&_start,
 
-	[2 ... 15] = (unsigned int)&default_isr,
+	[2 ... 10] = (unsigned int)&default_isr,
+	[11] = (unsigned int)&SVC_Handler,
+	[12 ... 15] = (unsigned int)&default_isr,
 	[16] = (unsigned int)&UART0_IRQHandler,
 	[17] = (unsigned int)&UART1_IRQHandler,
 	[18 ... 165] = (unsigned int)&default_isr
