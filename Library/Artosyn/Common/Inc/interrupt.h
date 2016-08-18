@@ -2,6 +2,9 @@
 #define __ISR__H
 
 void SVC_Handler(void);
+void PendSV_Handler(void);
+void SysTick_Handler(void);
+
 void UART0_IRQHandler(void);
 void UART1_IRQHandler(void);
 void UART2_IRQHandler(void);

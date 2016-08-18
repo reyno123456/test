@@ -7,7 +7,8 @@ WORK_DIR := $(PWD)/../../../..
 OUTPUT_DIR := $(WORK_DIR)/Output
 UTILITY_DIR :=  $(WORK_DIR)/Utility
 
-OBJS_APP = $(WORK_DIR)/Application/AR8020Verification/main.o
+OBJS_APP = $(WORK_DIR)/Application/AR8020Verification/main.o \
+           $(WORK_DIR)/Application/AR8020Verification/test_freertos.o
 
 OBJS_LIB_USB_Device =  $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Core/Src/usbd_conf_template.o \
                        $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Core/Src/usbd_core.o \
@@ -146,7 +147,8 @@ INCLUDES += -I$(WORK_DIR)/Configure \
             -I$(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/HID/Inc \
             -I$(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/MSC/Inc \
             -I$(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/Template/Inc \
-            -I$(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Core/Inc
+            -I$(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Core/Inc \
+            -I$(WORK_DIR)/Application/AR8020Verification
 
 CFLAGS += -DSTM32F746xx -D_AR8020_VERIFICATION_ -DUSB_DEV_CLASS_HID_ENABLE 
 LDFLAGS += -Bstatic
@@ -160,7 +162,7 @@ $(TARGET).bin: $(OBJS) $(LIBS)
 	cp $(TARGET).mif  $(OUTPUT_DIR)
 
 %.o: %.c
-	$(CROSS_COMPILE)gcc $(INCLUDES) $(CFLAGS) -mthumb -mcpu=cortex-m4 -mlittle-endian -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -std=c99 -c $< -o $@
+	$(CROSS_COMPILE)gcc $(INCLUDES) $(CFLAGS) -mthumb -mcpu=cortex-m7 -mlittle-endian -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -std=c99 -c $< -o $@
 
 #%.o: %.S
 #	$(CROSS_COMPILE)gcc $(INCLUDES) -O2 -mthumb -mcpu=cortex-m4 -mlittle-endian -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -c $< -o $@

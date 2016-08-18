@@ -2,6 +2,11 @@
 #include "serial.h"
 #include "command.h"
 
+void SysTick_Handler(void)
+{
+    osSystickHandler();
+}
+
 /* added by xiongjiangjiang */
 void UART0_IRQHandler(void)
 {
