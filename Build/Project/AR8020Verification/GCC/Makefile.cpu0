@@ -15,26 +15,26 @@ OBJS_LIB_USB_Device =  $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/C
                        $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.o \
                        $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Core/Src/usbd_ioreq.o
 OBJS_LIB_USB_Device += $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/Template/Src/usbd_template.o
-ifdef USB_DEV_CLASS_AUDIO_ENABLE
+ifeq ($(USB_DEV_CLASS_AUDIO_ENABLE), 1)
 OBJS_LIB_USB_Device += $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/AUDIO/Src/usbd_audio.o \
                        $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/AUDIO/Src/usbd_audio_if_template.o
 endif
-ifdef USB_DEV_CLASS_CDC_ENABLE
+ifeq ($(USB_DEV_CLASS_CDC_ENABLE), 1)
 OBJS_LIB_USB_Device += $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.o \
                        $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc_if_template.o
 endif
-ifdef USB_DEV_CLASS_CUSTOMHID_ENABLE                      
+ifeq ($(USB_DEV_CLASS_CUSTOMHID_ENABLE), 1)                      
 OBJS_LIB_USB_Device += $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/CustomHID/Src/usbd_customhid.o \
                        $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/CustomHID/Src/usbd_customhid_if_template.o
 endif
-ifdef USB_DEV_CLASS_DFU_ENABLE                      
+ifeq ($(USB_DEV_CLASS_DFU_ENABLE), 1)
 OBJS_LIB_USB_Device += $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/DFU/Src/usbd_dfu.o \
                        $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/DFU/Src/usbd_dfu_media_template.o
 endif
-ifdef USB_DEV_CLASS_HID_ENABLE                      
+ifeq ($(USB_DEV_CLASS_HID_ENABLE), 1)
 OBJS_LIB_USB_Device += $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/HID/Src/usbd_hid.o
 endif
-ifdef USB_DEV_CLASS_MSC_ENABLE                      
+ifeq ($(USB_DEV_CLASS_MSC_ENABLE), 1)                      
 OBJS_LIB_USB_Device += $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_bot.o \
                        $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc.o \
                        $(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_data.o \
@@ -150,7 +150,7 @@ INCLUDES += -I$(WORK_DIR)/Configure \
             -I$(WORK_DIR)/Library/ThirdParty/STM32_USB_Device_Library/Core/Inc \
             -I$(WORK_DIR)/Application/AR8020Verification
 
-CFLAGS += -DSTM32F746xx -D_AR8020_VERIFICATION_ -DUSB_DEV_CLASS_HID_ENABLE 
+CFLAGS += -DSTM32F746xx -D_AR8020_VERIFICATION_
 LDFLAGS += -Bstatic
 
 $(TARGET).bin: $(OBJS) $(LIBS)

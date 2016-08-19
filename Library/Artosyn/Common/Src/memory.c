@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include "memory.h"
 
 void memory_set(char *s, char c, unsigned int len)
@@ -57,5 +58,15 @@ void memset(char *s, char c, unsigned int len)
 void *memcpy(void *dest, const void *src, unsigned int len)
 {
     memory_cpy(dest, src, len);
+}
+
+void *malloc(size_t size)
+{
+    return pvPortMalloc(size);
+}
+
+void free(void* p)
+{
+    vPortFree(p);
 }
 
