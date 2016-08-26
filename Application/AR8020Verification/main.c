@@ -1,4 +1,3 @@
-#include "uart.h"
 #include "test_freertos.h"
 
 /**

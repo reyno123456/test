@@ -1,0 +1,128 @@
+# top file directory
+TOP_DIR ?= ../../..
+
+# build file directory
+BUILD_DIR ?= $(TOP_DIR)/Build
+
+# binary file director
+OUTPUT_DIR ?= $(TOP_DIR)/Output
+OUTPUT_HEADER_STAGING_DIR ?= $(OUTPUT_DIR)/Staging/Inc
+OUTPUT_LIB_STAGING_DIR ?= $(OUTPUT_DIR)/Staging/Lib
+
+# current directory
+CURDIR ?= $(shell pwd)
+
+include $(BUILD_DIR)/config.mk
+
+###############################################################################
+# static library name
+LIB = libusb.a
+
+# source file(s), including c file(s)
+SRC_C   := STM32_USB_Host_Library/Class/AUDIO/Src/usbh_audio.c \
+           STM32_USB_Host_Library/Class/CDC/Src/usbh_cdc.c \
+           STM32_USB_Host_Library/Class/HID/Src/usbh_hid.c \
+           STM32_USB_Host_Library/Class/HID/Src/usbh_hid_keybd.c \
+           STM32_USB_Host_Library/Class/HID/Src/usbh_hid_mouse.c \
+           STM32_USB_Host_Library/Class/HID/Src/usbh_hid_parser.c \
+           STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.c \
+           STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.c \
+           STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_scsi.c \
+           STM32_USB_Host_Library/Class/MTP/Src/usbh_mtp.c \
+           STM32_USB_Host_Library/Class/MTP/Src/usbh_mtp_ptp.c \
+           STM32_USB_Host_Library/Core/Src/usbh_conf_template.c \
+           STM32_USB_Host_Library/Core/Src/usbh_core.c \
+           STM32_USB_Host_Library/Core/Src/usbh_ctlreq.c \
+           STM32_USB_Host_Library/Core/Src/usbh_ioreq.c \
+           STM32_USB_Host_Library/Core/Src/usbh_pipes.c
+
+INCDIRS :=  -ISTM32_USB_Host_Library/Core/Inc \
+            -ISTM32_USB_Host_Library/Class/AUDIO/Inc \
+            -ISTM32_USB_Host_Library/Class/CDC/Inc \
+            -ISTM32_USB_Host_Library/Class/HID/Inc \
+            -ISTM32_USB_Host_Library/Class/MSC/Inc \
+            -ISTM32_USB_Host_Library/Class/MTP/Inc \
+            -I../CMSIS/Include \
+            -I../CMSIS/Device/ST/STM32F7xx/Include \
+            -I$(TOP_DIR)/Kernel/FreeRTOS/CMSIS_RTOS \
+            -I$(TOP_DIR)/Kernel/FreeRTOS/include \
+            -I$(TOP_DIR)/Configure/Include \
+            -I$(TOP_DIR)/Kernel/FreeRTOS/portable/GCC/ARM_CM7/r0p1
+
+SRC_C   += STM32_USB_Device_Library/Core/Src/usbd_conf_template.c \
+           STM32_USB_Device_Library/Core/Src/usbd_core.c \
+           STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c \
+           STM32_USB_Device_Library/Core/Src/usbd_ioreq.c \
+           STM32_USB_Device_Library/Class/Template/Src/usbd_template.c
+ifeq ($(USB_DEV_CLASS_AUDIO_ENABLE), 1)
+SRC_C   += STM32_USB_Device_Library/Class/AUDIO/Src/usbd_audio.c \
+           STM32_USB_Device_Library/Class/AUDIO/Src/usbd_audio_if_template.c
+endif
+ifeq ($(USB_DEV_CLASS_CDC_ENABLE), 1)
+SRC_C   += STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c \
+           STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc_if_template.c
+endif
+ifeq ($(USB_DEV_CLASS_CUSTOMHID_ENABLE), 1)
+SRC_C   += STM32_USB_Device_Library/Class/CustomHID/Src/usbd_customhid.c \
+           STM32_USB_Device_Library/Class/CustomHID/Src/usbd_customhid_if_template.c
+endif
+ifeq ($(USB_DEV_CLASS_DFU_ENABLE), 1)
+SRC_C   += STM32_USB_Device_Library/Class/DFU/Src/usbd_dfu.c \
+           STM32_USB_Device_Library/Class/DFU/Src/usbd_dfu_media_template.c
+endif
+ifeq ($(USB_DEV_CLASS_HID_ENABLE), 1)
+SRC_C   += STM32_USB_Device_Library/Class/HID/Src/usbd_hid.c
+endif
+ifeq ($(USB_DEV_CLASS_MSC_ENABLE), 1)
+SRC_C   += STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_bot.c \
+           STM32_USB_Device_Library/Class/MSC/Src/usbd_msc.c \
+           STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_data.c \
+           STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_scsi.c \
+           STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_storage_template.c
+endif
+
+INCDIRS +=  -ISTM32_USB_Device_Library/Core/Inc \
+            -ISTM32_USB_Device_Library/Class/AUDIO/Inc \
+            -ISTM32_USB_Device_Library/Class/CDC/Inc \
+            -ISTM32_USB_Device_Library/Class/CustomHID/Inc \
+            -ISTM32_USB_Device_Library/Class/DFU/Inc \
+            -ISTM32_USB_Device_Library/Class/HID/Inc \
+            -ISTM32_USB_Device_Library/Class/MSC/Inc \
+            -ISTM32_USB_Device_Library/Class/Template/Inc \
+
+SRC_C += STM32F7xx_HAL_Driver/Src/stm32f7xx_hal.c \
+         STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cortex.c \
+         STM32F7xx_HAL_Driver/Src/stm32f7xx_ll_usb.c
+
+INCDIRS += -ISTM32F7xx_HAL_Driver/Inc
+
+
+
+# object file(s)
+OBJ_C   := $(patsubst %.c,%.o,$(SRC_C))
+
+CFLAGS +=
+
+all: .depend $(LIB) install
+
+$(LIB):  $(OBJ_C)
+	@echo "Generating static library: " $(notdir $@)
+	@$(AR) $(ARFLAGS) $@ $^
+
+install:
+	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)
+	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)
+
+clean:
+	@echo "Cleaning..."
+	@$(RM) $(LIB) $(OBJ_C) $(OBJ_CPP) .depend $(OUTPUT_LIB_STAGING_DIR)/$(LIB)
+
+.PHONY: all clean install
+#########################################################################
+
+include $(BUILD_DIR)/rules.mk
+
+sinclude .depend
+
+#########################################################################
+

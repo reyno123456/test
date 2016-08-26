@@ -1,0 +1,70 @@
+obj = cpu0
+
+# top file directory
+TOP_DIR ?= ../../../
+
+# build file directory
+BUILD_DIR ?= $(TOP_DIR)/Build
+
+# binary file director
+OUTPUT_DIR ?= $(TOP_DIR)/Output
+OUTPUT_HEADER_STAGING_DIR ?= $(OUTPUT_DIR)/Staging/Inc
+OUTPUT_LIB_STAGING_DIR ?= $(OUTPUT_DIR)/Staging/Lib
+
+# current directory
+CURDIR ?= $(shell pwd)
+
+include $(BUILD_DIR)/config.mk
+
+###############################################################################
+# static library name
+LIB = lib$(CHIP)drv.a
+
+CPU_NUMBER = cpu0
+
+# source file(s), including c file(s)
+SRC_C := UART/Src/serial.c \
+         SD/Src/sd_core.c \
+         SD/Src/sd_card.c \
+         SD/Src/sd_host.c
+
+INCDIRS := -ISD/Inc \
+           -IUART/Inc \
+           -I$(TOP_DIR)/Configure \
+           -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Device/ST/STM32F7xx/Include \
+           -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \
+           -I$(TOP_DIR)/Library/Artosyn/Common/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
+           -I$(TOP_DIR)/Configure/Include
+
+# object file(s)
+OBJ_C     := $(patsubst %.c,%.o,$(SRC_C))
+
+all: $(obj).depend $(LIB) install
+
+$(LIB): CFLAGS += -DCPU0_DRV 
+$(LIB): $(OBJ_C)
+	@echo "Generating static library: " $(notdir $@)
+	$(AR) $(ARFLAGS) $@ $(OBJ_C)
+
+install:
+	@echo "Installing static library: $(LIB)"
+	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)
+	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)/$(CPU_NUMBER)
+	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
+	@cp -f UART/Inc/serial.h $(OUTPUT_HEADER_STAGING_DIR)
+
+clean:
+	@echo "Cleaning..."
+	@$(RM) $(LIB) $(OBJ_C) $(obj).depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB)
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/serial.h
+
+.PHONY: all clean install
+#########################################################################
+
+include $(BUILD_DIR)/rules.mk
+
+sinclude $(obj).depend
+
+#########################################################################
+

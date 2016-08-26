@@ -15,6 +15,13 @@ extern "C" {
 #include "integer.h"
 
 
+#if  defined ( __GNUC__ )
+  #ifndef __weak
+    #define __weak   __attribute__((weak))
+  #endif /* __weak */
+#endif /* __GNUC__ */
+
+
 /* Status of Disk Functions */
 typedef BYTE	DSTATUS;
 
