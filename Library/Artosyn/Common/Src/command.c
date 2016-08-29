@@ -8,7 +8,7 @@ char g_commandLine[50];
 void command_init(void)
 {
     g_commandPos = 0;
-    memory_set(g_commandLine, '\0', 50);
+    memset(g_commandLine, '\0', 50);
 }
 
 void command_parse(char *cmd)
@@ -17,7 +17,7 @@ void command_parse(char *cmd)
     char *tempCommand[5];
 
     cmdIndex = 0;
-    memory_set(tempCommand, 0, 5);
+    memset(tempCommand, 0, 5);
 
     while (cmdIndex < 5)
     {
@@ -62,26 +62,26 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     serial_puts(cmdArray[0]);
     serial_putc('\n');
     /* read memory: "read $(address)" */
-    if ((memory_cmp(cmdArray[0], "read", 4) == 0) && (cmdNum == 2))
+    if ((memcmp(cmdArray[0], "read", 4) == 0) && (cmdNum == 2))
     {
         command_readMemory(cmdArray[1]);
     }
     /* write memory: "write $(address) $(data)" */
-    else if ((memory_cmp(cmdArray[0], "write", 5) == 0) && (cmdNum == 3))
+    else if ((memcmp(cmdArray[0], "write", 5) == 0) && (cmdNum == 3))
     {
         command_writeMemory(cmdArray[1], cmdArray[2]);
     }
     /* read sdcard: "readsd $(startBlock) $(blockNum)" */
-    else if (memory_cmp(cmdArray[0], "readsd", 6) == 0)
+    else if (memcmp(cmdArray[0], "readsd", 6) == 0)
     {
         command_readSdcard(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
     /* write sdcard: "writesd $startBlock) $(blockNum) $(data)" */
-    else if (memory_cmp(cmdArray[0], "writesd", 7) == 0)
+    else if (memcmp(cmdArray[0], "writesd", 7) == 0)
     {
         command_writeSdcard(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
-    else if (memory_cmp(cmdArray[0], "erasesd", 7) == 0)
+    else if (memcmp(cmdArray[0], "erasesd", 7) == 0)
     {
         command_eraseSdcard(cmdArray[1], cmdArray[2]);
     }
@@ -109,7 +109,7 @@ unsigned int command_str2uint(char *str)
         str += 2;
     }
 
-    strSize = memory_strlen(str);
+    strSize = strlen(str);
 
     /* the number should not exceed 8 bits */
     if (strSize > 8)
@@ -233,7 +233,7 @@ void command_readSdcard(char *Dstaddr, char *BytesNum, char *SrcAddr)
 
 #if 0
     readSdcardBuff = m7_malloc(iBytesNum);
-    memory_set(readSdcardBuff, '\0', iBytesNum);
+    memset(readSdcardBuff, '\0', iBytesNum);
     bufferPos = readSdcardBuff;
 
     /* read from sdcard */
@@ -280,7 +280,7 @@ void command_writeSdcard(char *Dstaddr, char *BytesNum, char *SrcAddr)
     iSrcAddr    = command_str2uint(SrcAddr);
 #if 0
     writeSdcardBuff = m7_malloc(iBytesNum);
-    memory_set(writeSdcardBuff, SrcAddr, iBytesNum);
+    memset(writeSdcardBuff, SrcAddr, iBytesNum);
 
     /* write to sdcard */
     sd_write(&sdhandle, iDstAddr, iBytesNum, writeSdcardBuff);

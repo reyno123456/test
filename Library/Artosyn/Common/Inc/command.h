@@ -1,7 +1,6 @@
 #ifndef __COMMAND__H
 #define __COMMAND__H
 #include "stm32f746xx.h"
-#include "memory.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

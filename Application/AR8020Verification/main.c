@@ -1,3 +1,4 @@
+#include "debuglog.h"
 #include "test_freertos.h"
 
 /**
@@ -25,7 +26,7 @@ int main(void)
   int tmp;
   
   serial_init();
-  serial_puts("main function start \n");
+  dlog_info("main function start \n");
 
   /* Enable the CPU Cache */
   CPU_CACHE_Enable();
@@ -40,7 +41,7 @@ int main(void)
   HAL_NVIC_EnableIRQ(Uart0_IRQn);
   HAL_Init();
 
-  serial_puts("HAL_Init done \n");
+  dlog_info("HAL_Init done \n");
 
   /* FreeRTOS task test*/
   TestTask();

@@ -19,17 +19,22 @@ include $(BUILD_DIR)/config.mk
 LIB = libcommon.a
 
 # source file(s), including c file(s)
-SRC_C   := Src/interrupt.c \
-           Src/command.c \
+SRC_C   := Src/string.c \
+           Src/printf.c \
            Src/memory.c \
-           Src/printlog.c
-
+           Src/debuglog.c \
+           Src/interrupt.c \
+           Src/command.c
 
 INCDIRS :=  -IInc \
             -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
             -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Device/ST/STM32F7xx/Include \
             -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \
-            -I$(TOP_DIR)/Driver/Chip/AR8020/SD/Inc
+            -I$(TOP_DIR)/Driver/Chip/AR8020/SD/Inc \
+            -I$(TOP_DIR)/Kernel/FreeRTOS/CMSIS_RTOS \
+            -I$(TOP_DIR)/Kernel/FreeRTOS/include \
+            -I$(TOP_DIR)/Configure/Include \
+            -I$(TOP_DIR)/Kernel/FreeRTOS/portable/GCC/ARM_CM7/r0p1
 
 # object file(s)
 OBJ_C   := $(patsubst %.c,%.o,$(SRC_C))
@@ -43,6 +48,8 @@ $(LIB):  $(OBJ_C)
 	@$(AR) $(ARFLAGS) $@ $^
 
 install:
+	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/debuglog.h $(OUTPUT_HEADER_STAGING_DIR)
 	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)
 

@@ -1,6 +1,7 @@
 #include "interrupt.h"
 #include "serial.h"
 #include "command.h"
+#include "cmsis_os.h"
 
 void SysTick_Handler(void)
 {

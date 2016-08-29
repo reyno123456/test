@@ -1,8 +1,8 @@
 #include "FreeRTOS.h"
 #include "test_freertos.h"
 #include "task.h"
-#include "serial.h"
 #include "cmsis_os.h"
+#include "debuglog.h"
 
 #define m7_malloc pvPortMalloc
 #define m7_free vPortFree
@@ -16,7 +16,7 @@ void vTask1( void const * argument)
 
 	for (;;)
 	{
-		serial_puts("Task1 is running\n");
+		dlog_info("Task1 is running\n");
 		osDelay(1500);
 	}
 }
@@ -27,7 +27,7 @@ void vTask2( void const * argument)
 
 	for (;;)
 	{
-		serial_puts("Task2 is running\n");
+		dlog_info("Task2 is running\n");
 		osDelay(3000);
 	}
 }
@@ -42,7 +42,7 @@ void vSendTask(void const *argument)
 		xStatus = xQueueSendToBack(xQueue, &cValueToSend, 0);
 		if (xStatus != pdPASS)
 		{
-			serial_puts("Could not send to the Queue\n");
+			dlog_info("Could not send to the Queue\n");
 		}
 		taskYIELD();
 	}
@@ -59,18 +59,18 @@ void vReceiveTask(void const *argument)
 
 		if (uxQueueMessagesWaiting(xQueue) != 0)
 		{
-			serial_puts("Queue should have been empty\n");
+			dlog_info("Queue should have been empty\n");
 		}
 		xStatus = xQueueReceive(xQueue, &cReceiveValue, xTicksToWait);
 		if (xStatus == pdPASS)
 		{
-			serial_puts("receive value is: \n");
+			dlog_info("receive value is: \n");
 			serial_int(cReceiveValue);
 			serial_putc('\n');
 		}
 		else
 		{
-			serial_puts("Could not receive from the Queue\n");
+			dlog_info("Could not receive from the Queue\n");
 		}
 	}
 
@@ -82,13 +82,13 @@ void PrintfMutex(void *argument)
 	{
 		if (xSemaphoreTake(xMutex, portMAX_DELAY) == pdPASS)
 		{
-			serial_puts(argument);
+			dlog_info("Mutex argument %p", argument);
 			serial_putc('\n');
 		}
 
 		if (xSemaphoreGive(xMutex) == pdTRUE)
 		{
-			serial_puts("Give the Mutex!\n");
+			dlog_info("Give the Mutex!\n");
 		}
 	}
 }
@@ -109,12 +109,12 @@ void TestQueue(void)
 		//xTaskCreate(vSendTask, "sender 1", 1000, (void *)'a', 1, NULL);
 		//xTaskCreate(vSendTask, "sender 2", 1000, (void *)'b', 1, NULL);
 		//xTaskCreate(vReceiveTask, "receive", 1000, NULL, 2, NULL);
-		serial_puts("Create task succ!\n");
+		dlog_info("Create task succ!\n");
 		osKernelStart();
 	}
 	else
 	{
-		serial_puts("Create Queue failed\n");
+		dlog_info("Create Queue failed\n");
 	}
 }
 
@@ -125,7 +125,7 @@ void TestTask(void)
 	osThreadDef(Task2_Thread, vTask2, osPriorityNormal, 0, 8 * configMINIMAL_STACK_SIZE);
 	osThreadCreate(osThread(Task2_Thread), NULL);
 	osKernelStart();
-	serial_puts("osKernelStart done \n");
+	dlog_info("osKernelStart done \n");
 }
 
 void TestMutex(void)
@@ -133,7 +133,7 @@ void TestMutex(void)
 	xMutex = xSemaphoreCreateMutex();
 	if (xMutex == NULL)
 	{
-		serial_puts("Create the xMutex failed!\n");
+		dlog_info("Create the xMutex failed!\n");
 	}
 	else
 	{
@@ -153,7 +153,7 @@ void TestMem(void)
 	for (i = 0; i < 5; i++)
 	{
 		dynaAddr[i] = m7_malloc(100);
-		serial_puts("malloc addr is ");
+		dlog_info("malloc addr is ");
 		print_str((unsigned int)dynaAddr[i]);
 		serial_putc('\n');
 	}
