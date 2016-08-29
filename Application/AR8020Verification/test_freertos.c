@@ -64,8 +64,7 @@ void vReceiveTask(void const *argument)
 		xStatus = xQueueReceive(xQueue, &cReceiveValue, xTicksToWait);
 		if (xStatus == pdPASS)
 		{
-			dlog_info("receive value is: \n");
-			serial_int(cReceiveValue);
+			dlog_info("receive value is: %d\n", cReceiveValue);
 			serial_putc('\n');
 		}
 		else
@@ -153,8 +152,7 @@ void TestMem(void)
 	for (i = 0; i < 5; i++)
 	{
 		dynaAddr[i] = m7_malloc(100);
-		dlog_info("malloc addr is ");
-		print_str((unsigned int)dynaAddr[i]);
+		dlog_info("malloc addr is 0x%x\n", (unsigned int)dynaAddr[i]);
 		serial_putc('\n');
 	}
 

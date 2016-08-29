@@ -1,6 +1,33 @@
 #ifndef __UART__H
 #define __UART__H
 
+/* Private define ------------------------------------------------------------*/
+
+#define UART0_BASE               0x40500000
+#define	UART1_BASE               0x40510000
+#define	UART2_BASE               0x40520000
+#define	UART3_BASE               0x40530000
+#define	UART4_BASE               0x40540000
+#define	UART5_BASE               0x40550000
+#define	UART6_BASE               0x40560000
+#define	UART7_BASE               0x40570000
+#define	UART8_BASE               0x40580000
+
+#define CLK_FREQ                 50000000    // clock frequency
+
+#define UART_FCR_ENABLE_FIFO     0x01
+#define UART_FCR_CLEAR_RCVR      0x02
+#define UART_FCR_CLEAR_XMIT      0x04
+#define UART_FCR_TRIGGER_14      0xc0
+#define UART_LCR_WLEN8           0x03
+#define UART_LCR_STOP            0x04
+#define UART_LCR_PARITY          0x08
+#define UART_LCR_DLAB            0x80
+#define UART_LSR_THRE            0x20
+#define UART_LSR_DATAREADY       0x01
+#define UART_IIR_RECEIVEDATA     0x04
+#define UART_LSR_DR              0x01
+
 typedef struct {
   unsigned int RBR_THR_DLL;
   unsigned int DLH_IER;
@@ -35,28 +62,14 @@ typedef struct {
   unsigned int CTR;
 } uart_type;
 
-/* Private define ------------------------------------------------------------*/
-#define UART0_BASE               0x40500000
-#define UART_FCR_ENABLE_FIFO     0x01
-#define UART_FCR_CLEAR_RCVR      0x02
-#define UART_FCR_CLEAR_XMIT      0x04
-#define UART_FCR_TRIGGER_14      0xc0
-#define UART_LCR_WLEN8           0x03
-#define UART_LCR_STOP            0x04
-#define UART_LCR_PARITY          0x08
-#define UART_LCR_DLAB            0x80
-#define UART_LSR_THRE            0x20
-#define UART_LSR_DATAREADY       0x01
-#define UART_IIR_RECEIVEDATA     0x04
-#define UART_LSR_DR              0x01
+void uart_init(unsigned char index, unsigned int baud_rate);
+void uart_putc(unsigned char index, char c);
+char uart_getc(unsigned char index);
 
-
-extern void serial_init(void);
-extern void serial_putc(char c);
-extern void serial_puts(const char *s);
-extern char serial_getc(unsigned int UART_BASE);
-extern void print_str(unsigned int n);
-extern void serial_int(unsigned int n);
-extern void Uart0_IRQHandler(void);
+void serial_init(void);
+void serial_putc(char c);
+void serial_puts(const char *s);
+char serial_getc(void);
+void Drv_UART0_IRQHandler(void);
 
 #endif

@@ -62,5 +62,7 @@ typedef uint32_t uint32_t;
 typedef unsigned unsigned long int uint64_t;
 */
 
+#define NULL ((void*)0)
+
 #endif
 

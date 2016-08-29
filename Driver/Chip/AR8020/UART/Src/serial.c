@@ -1,97 +1,175 @@
+#include "data_type.h"
 #include "serial.h"
 
-void serial_init()
+/*********************************************************
+ * Generic UART APIs
+ *********************************************************/
+
+static uart_type* get_uart_type_by_index(unsigned char index)
 {
-  int devisor;
-  uart_type *uart0_regs;
-  uart0_regs = (uart_type *)UART0_BASE;
+    uart_type *uart_regs;
 
-  //uart0_regs->IIR_FCR = UART_FCR_ENABLE_FIFO | UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT | UART_FCR_TRIGGER_14;
-  uart0_regs->IIR_FCR = UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT | UART_FCR_TRIGGER_14;
-  uart0_regs->DLH_IER = 0x00000000;
-  uart0_regs->LCR = UART_LCR_WLEN8 & ~(UART_LCR_STOP | UART_LCR_PARITY);
+    switch (index)
+    {
+    case 0:
+        uart_regs = (uart_type *)UART0_BASE;
+        break;
+    case 1:
+        uart_regs = (uart_type *)UART1_BASE;
+        break;
+    case 2:
+        uart_regs = (uart_type *)UART2_BASE;
+        break;
+    case 3:
+        uart_regs = (uart_type *)UART3_BASE;
+        break;
+    case 4:
+        uart_regs = (uart_type *)UART4_BASE;
+        break;
+    case 5:
+        uart_regs = (uart_type *)UART5_BASE;
+        break;
+    case 6:
+        uart_regs = (uart_type *)UART6_BASE;
+        break;
+    case 7:
+        uart_regs = (uart_type *)UART7_BASE;
+        break;
+    case 8:
+        uart_regs = (uart_type *)UART8_BASE;
+        break;
+    default:
+        uart_regs = (uart_type *)NULL;
+        break;
+    }
 
-  devisor = 50000000 / (16 * 115200);
-  uart0_regs->LCR |= UART_LCR_DLAB;
-  uart0_regs->DLH_IER = (devisor >> 8) & 0x000000ff;
-  uart0_regs->RBR_THR_DLL = devisor & 0x000000ff;
-  uart0_regs->LCR &= ~UART_LCR_DLAB;
-  uart0_regs->DLH_IER = 0x1;
+    return uart_regs;
+}
+
+void uart_init(unsigned char index, unsigned int baud_rate)
+{
+    int devisor;
+    uart_type *uart_regs;
+    uart_regs = get_uart_type_by_index(index);
+
+    if (uart_regs != NULL)
+    {
+        uart_regs->IIR_FCR = UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT | UART_FCR_TRIGGER_14;
+        uart_regs->DLH_IER = 0x00000000;
+        uart_regs->LCR = UART_LCR_WLEN8 & ~(UART_LCR_STOP | UART_LCR_PARITY);
+
+        devisor = CLK_FREQ / (16 * baud_rate);
+        uart_regs->LCR |= UART_LCR_DLAB;
+        uart_regs->DLH_IER = (devisor >> 8) & 0x000000ff;
+        uart_regs->RBR_THR_DLL = devisor & 0x000000ff;
+        uart_regs->LCR &= ~UART_LCR_DLAB;
+        uart_regs->DLH_IER = 0x1;
+    }
+}
+
+void uart_putc(unsigned char index, char c)
+{
+    volatile uart_type *uart_regs;
+    uart_regs = get_uart_type_by_index(index);
+
+    if (uart_regs != NULL)
+    {
+        while ((uart_regs->LSR & UART_LSR_THRE) != UART_LSR_THRE);
+        uart_regs->RBR_THR_DLL = c;
+    }
+}
+
+char uart_getc(unsigned char index)
+{
+    char tmp = 0;
+    uart_type *uart_regs = get_uart_type_by_index(index);
+
+    if (uart_regs != NULL)
+    {
+        while ((uart_regs->LSR & UART_LSR_DATAREADY) != UART_LSR_DATAREADY); 
+        tmp = uart_regs->RBR_THR_DLL;
+    }
+
+    return tmp;
+}
+
+/*********************************************************
+ * Serial(UART0) APIs
+ *********************************************************/
+
+/* added by xiongjiangjiang */
+extern unsigned char g_commandPos;
+extern char g_commandLine[50];
+void Drv_UART0_IRQHandler(void)
+{
+    char                  c;
+    unsigned int          status;
+    unsigned int          isrType;
+    volatile uart_type   *uart0_regs;
+
+    uart0_regs = get_uart_type_by_index(0);
+    status     = uart0_regs->LSR;
+    isrType    = uart0_regs->IIR_FCR;
+
+    /* receive data irq, try to get the data */
+    if (UART_IIR_RECEIVEDATA == (isrType & UART_IIR_RECEIVEDATA))
+    {
+        if ((status & UART_LSR_DATAREADY) == UART_LSR_DATAREADY)
+        {
+            c = uart0_regs->RBR_THR_DLL;
+            /* receive "enter" key */
+            if (c == '\r')
+            {
+                serial_putc('\n');
+
+                /* if g_commandLine is not empty, go to parse command */
+                if (g_commandPos > 0)
+                    command_parse(g_commandLine);
+            }
+            /* receive "backspace" key */
+            else if (c == '\b')
+            {
+                if (g_commandPos > 1)
+                    g_commandLine[--g_commandPos] = '\0';
+                serial_putc('\b');
+                serial_putc(' ');
+                serial_putc('\b');
+            }
+            /* receive normal data */
+            else
+            {
+                serial_putc(c);
+                g_commandLine[g_commandPos++] = c;
+            }
+        }
+    }
+}
+
+void serial_init(void)
+{
+    uart_init(0, 115200);
 }
 
 void serial_putc(char c)
 {
-  volatile uart_type *uart0_regs;
-  uart0_regs = (uart_type *) UART0_BASE;
-  if (c == '\n')
-    serial_putc('\r');
-  while ((uart0_regs->LSR & UART_LSR_THRE) != UART_LSR_THRE);
-  uart0_regs->RBR_THR_DLL = c;
-}
-
-/* change the DEC into HEX*/
-void print_str(unsigned int n)
-{
-  int i;
-  char tmp;
-  for (i = 0; i < 8; i++)
-  {
-    tmp = (n >> ((7 - i) * 4)) & 0xf;
-    if (tmp >= 0xa && tmp <= 0xf)
-      tmp = tmp - 0xa + 'a';
-    else
-      tmp = tmp + '0';
-    serial_putc(tmp);
-  }
+    if (c == '\n')
+    {
+        uart_putc(0, '\r');
+    }
+    uart_putc(0, c);
 }
 
 void serial_puts(const char *s)
 {
-  while (*s)
-    serial_putc(*s++);
-}
-
-/* add by minzhao
-*  print the int
-*/
-void serial_int(unsigned int n)
-{
-  unsigned int temp = n;
-  unsigned int chartmp;
-  char str[10];
-  unsigned int count = 0;
-  unsigned int i;
-  while (n)
-  {
-    if (n < 10)
+    while (*s)
     {
-      n = n + '0';
-      str[count] = n;
-      count++;
-      str[count] = '\0';
-      for (i = count - 1; i >= 0; i--)
-      {
-        serial_putc(str[i]);
-      }
-      break;
+        serial_putc(*s++);
     }
-    temp = n / 10;
-    chartmp = n - temp * 10;
-    chartmp = chartmp + '0';
-    n = temp;
-    str[count] = chartmp;
-    count++;
-  }
 }
 
-char serial_getc(unsigned int UART_BASE)
+char serial_getc(void)
 {
-  char tmp;
-  uart_type *uart0_regs;
-  uart0_regs = (uart_type *) UART_BASE;
-  while ((uart0_regs->LSR & UART_LSR_DR) != UART_LSR_DR);
-  tmp = uart0_regs->RBR_THR_DLL;
-  return tmp;
+    return uart_getc(0);
 }
 
 

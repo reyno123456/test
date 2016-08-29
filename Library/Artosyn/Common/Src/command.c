@@ -165,13 +165,13 @@ void command_readMemory(char *addr)
     {
         /* new line */
         serial_puts("0x");
-        print_str(readAddress);
+        printf("%x", readAddress);
         serial_putc(':');
         serial_putc(' ');
 
         for (column = 0; column < 8; column++)
         {
-            print_str(*((unsigned int *)readAddress));
+            printf("%x", readAddress);
             serial_putc(' ');
             readAddress += 4;
         }
@@ -215,19 +215,19 @@ void command_readSdcard(char *Dstaddr, char *BytesNum, char *SrcAddr)
 
 
     serial_puts("readSdcardBuff = ");
-    print_str(readSdcardBuff);
+    printf("%x", readSdcardBuff);
     serial_putc('\n');
 
     serial_puts("iDstAddr = ");
-    print_str(iDstAddr);
+    printf("%x", iDstAddr);
     serial_putc('\n');
 
     serial_puts("iBytesNum = ");
-    print_str(iBytesNum);
+    printf("%x", iBytesNum);
     serial_putc('\n');
 
     serial_puts("iSrcAddr = ");
-    print_str(iSrcAddr);
+    printf("%x", iSrcAddr);
     serial_putc('\n');
 
 
@@ -243,20 +243,20 @@ void command_readSdcard(char *Dstaddr, char *BytesNum, char *SrcAddr)
     for (blockIndex = iDstAddr; blockIndex <= (iDstAddr + iBytesNum / dma.BlockSize); blockIndex++)
     {
         serial_puts("==============block:");
-        print_str(blockIndex);
+        printf("%x", blockIndex);
         serial_puts("==============\n");
 
         for (rowIndex = 0; rowIndex < 16; rowIndex++)
         {
             /* new line */
             serial_puts("0x");
-            print_str((unsigned int)((rowIndex << 5) + (blockIndex << 9)));
+            printf("%x", (unsigned int)((rowIndex << 5) + (blockIndex << 9)));
             serial_putc(':');
             serial_putc(' ');
 
             for (columnIndex = 0; columnIndex < 8; columnIndex++)
             {
-                print_str(*((unsigned int *)bufferPos));
+                printf("%x", *((unsigned int *)bufferPos));
                 serial_putc(' ');
                 bufferPos += 4;
             }
@@ -288,19 +288,19 @@ void command_writeSdcard(char *Dstaddr, char *BytesNum, char *SrcAddr)
 #endif
 
     serial_puts("writeSdcardBuff = ");
-    print_str(writeSdcardBuff);
+    printf("%x", writeSdcardBuff);
     serial_putc('\n');
 
     serial_puts("iDstAddr = ");
-    print_str(iDstAddr);
+    printf("%x", iDstAddr);
     serial_putc('\n');
 
     serial_puts("iBytesNum = ");
-    print_str(iBytesNum);
+    printf("%x", iBytesNum);
     serial_putc('\n');
 
     serial_puts("iSrcAddr = ");
-    print_str(iSrcAddr);
+    printf("%x", iSrcAddr);
     serial_putc('\n');
 }
 
@@ -312,11 +312,11 @@ void command_eraseSdcard(char *startBlock, char *blockNum)
     iBlockNum   = command_str2uint(blockNum);
 
     serial_puts("startBlock = ");
-    print_str(iStartBlock);
+    printf("%x", iStartBlock);
     serial_putc('\n');
 
     serial_puts("blockNum = ");
-    print_str(iBlockNum);
+    printf("%x", iBlockNum);
     serial_putc('\n');
 
     //sd_erase(&sdhandle, iStartBlock, iBlockNum);
@@ -333,10 +333,10 @@ void write_reg32(uint32_t *addr, uint32_t data)
 {
 #ifdef ECHO
     serial_puts("Write ADDR = ");
-    print_str((uint32_t)addr);
+    printf("%x", (uint32_t)addr);
     serial_putc('\n');
     serial_puts("Write data = ");
-    print_str(data);
+    printf("%x", data);
     serial_putc('\n');
 #endif
     uint32_t *reg_addr = (uint32_t *)addr;
@@ -347,13 +347,13 @@ uint32_t read_reg32(uint32_t *addr)
 {
 #ifdef ECHO
     serial_puts("Read ADDR = ");
-    print_str((uint32_t)addr);
+    printf("%x", (uint32_t)addr);
     serial_putc('\n');
 #endif
     uint32_t *reg_addr = (uint32_t *)addr;
 #ifdef ECHO
     serial_puts("Read data = ");
-    print_str(*reg_addr);
+    printf("%x", *reg_addr);
     serial_putc('\n');
 #endif
     return (*reg_addr);
