@@ -1,22 +1,71 @@
 #include "interrupt.h"
 #include "serial.h"
 #include "command.h"
-#include "cmsis_os.h"
 #include "debuglog.h"
 
-void SysTick_Handler(void)
+#define MAX_IRQ_VECTROS		(166)
+typedef void(*Irq_hdl_func)(void);
+
+
+static unsigned int handlers[MAX_IRQ_VECTROS] = {
+	0
+};
+
+int reg_IrqHandle(int num, unsigned int hdl)
 {
-    osSystickHandler();
+	if(num < MAX_IRQ_VECTROS)
+	{
+		handlers[num ] = hdl;
+		return 0;
+	}
+	return 1;
+}
+
+int rmv_IrqHandle(int num)
+{
+	if(num < MAX_IRQ_VECTROS)
+	{
+		handlers[num] = 0;
+		return 0;
+	}
+	return 1;
+}
+
+#define IRQ_HDL_RUN(num) \
+do{ \
+	if(handlers[num] != 0) \
+	{ \
+		( *(Irq_hdl_func)(handlers[num]))(); \
+	} \
+	else \
+	{ \
+		dlog_info("IRQ vector %d\n", num); \
+	} \
+}while(0)
+
+void SVC_IRQHandler(void)
+{
+	IRQ_HDL_RUN(SVC_VECTOR_NUM);
+}
+
+void PendSV_IRQHandler(void)
+{
+	IRQ_HDL_RUN(PENDSV_VECYOR_NUM);
+}
+
+void SysTick_IRQHandler(void)
+{
+	IRQ_HDL_RUN(PENDSV_VECYOR_NUM);
 }
 
 void UART0_IRQHandler(void)
 {
-    Drv_UART0_IRQHandler();
+    IRQ_HDL_RUN(UART0_VECYOR_NUM);
 }
 
 void UART1_IRQHandler(void)
 {
-    dlog_info("UART1_IRQHandler\n");
+	IRQ_HDL_RUN(UART1_VECYOR_NUM);
 }
 
 void UART2_IRQHandler(void)
@@ -383,7 +432,3 @@ void WIMAX_RX_EN_IRQHandler(void)
 {
     dlog_info("WIMAX_RX_EN_IRQHandler\n");
 }
-
-
-
-
