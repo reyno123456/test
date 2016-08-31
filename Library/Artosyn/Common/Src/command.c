@@ -1,6 +1,5 @@
 #include "command.h"
 #include "serial.h"
-#include "sd_host.h"
 
 unsigned char g_commandPos;
 char g_commandLine[50];
