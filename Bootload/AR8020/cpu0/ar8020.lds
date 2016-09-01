@@ -35,15 +35,20 @@ SECTIONS
 
     .rodata :
     {
+		_rodata_start = . ;
 		*(.rodata*)
+		. = ALIGN(4) ;
+		_rodata_end = . ;
     } > ITCM0
 
-    .data :
+    .data : AT (_rodata_end)
     {
+		_data_start = . ;
 		*(.data)
 		. = ALIGN(4) ;
 		*(.ramcode)
-    } > ITCM0
+		_data_end = . ;
+    } > DTCM0
 
 	.flash_data :
 	{
