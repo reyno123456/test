@@ -30,7 +30,7 @@ SRC_C   := STM32_USB_Host_Library/Class/AUDIO/Src/usbh_audio.c \
            STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_scsi.c \
            STM32_USB_Host_Library/Class/MTP/Src/usbh_mtp.c \
            STM32_USB_Host_Library/Class/MTP/Src/usbh_mtp_ptp.c \
-           STM32_USB_Host_Library/Core/Src/usbh_conf_template.c \
+           STM32_USB_Host_Library/Core/Src/usbh_conf.c \
            STM32_USB_Host_Library/Core/Src/usbh_core.c \
            STM32_USB_Host_Library/Core/Src/usbh_ctlreq.c \
            STM32_USB_Host_Library/Core/Src/usbh_ioreq.c \
@@ -47,13 +47,13 @@ INCDIRS :=  -ISTM32_USB_Host_Library/Core/Inc \
             -I$(TOP_DIR)/Kernel/FreeRTOS/CMSIS_RTOS \
             -I$(TOP_DIR)/Kernel/FreeRTOS/include \
             -I$(TOP_DIR)/Configure/Include \
-            -I$(TOP_DIR)/Kernel/FreeRTOS/portable/GCC/ARM_CM7/r0p1
+            -I$(TOP_DIR)/Kernel/FreeRTOS/portable/GCC/ARM_CM7/r0p1 \
+            -I../../Artosyn/Common/Inc
 
-SRC_C   += STM32_USB_Device_Library/Core/Src/usbd_conf_template.c \
+SRC_C   += STM32_USB_Device_Library/Core/Src/usbd_conf.c \
            STM32_USB_Device_Library/Core/Src/usbd_core.c \
            STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c \
-           STM32_USB_Device_Library/Core/Src/usbd_ioreq.c \
-           STM32_USB_Device_Library/Class/Template/Src/usbd_template.c
+           STM32_USB_Device_Library/Core/Src/usbd_ioreq.c
 ifeq ($(USB_DEV_CLASS_AUDIO_ENABLE), 1)
 SRC_C   += STM32_USB_Device_Library/Class/AUDIO/Src/usbd_audio.c \
            STM32_USB_Device_Library/Class/AUDIO/Src/usbd_audio_if_template.c
@@ -71,7 +71,8 @@ SRC_C   += STM32_USB_Device_Library/Class/DFU/Src/usbd_dfu.c \
            STM32_USB_Device_Library/Class/DFU/Src/usbd_dfu_media_template.c
 endif
 ifeq ($(USB_DEV_CLASS_HID_ENABLE), 1)
-SRC_C   += STM32_USB_Device_Library/Class/HID/Src/usbd_hid.c
+SRC_C   += STM32_USB_Device_Library/Class/HID/Src/usbd_hid.c \
+           STM32_USB_Device_Library/Class/HID/Src/usbd_hid_desc.c
 endif
 ifeq ($(USB_DEV_CLASS_MSC_ENABLE), 1)
 SRC_C   += STM32_USB_Device_Library/Class/MSC/Src/usbd_msc_bot.c \
@@ -89,10 +90,16 @@ INCDIRS +=  -ISTM32_USB_Device_Library/Core/Inc \
             -ISTM32_USB_Device_Library/Class/HID/Inc \
             -ISTM32_USB_Device_Library/Class/MSC/Inc \
             -ISTM32_USB_Device_Library/Class/Template/Inc \
+            -ISTM32F7xx_HAL_Driver/Inc
 
 SRC_C += STM32F7xx_HAL_Driver/Src/stm32f7xx_hal.c \
          STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cortex.c \
-         STM32F7xx_HAL_Driver/Src/stm32f7xx_ll_usb.c
+         STM32F7xx_HAL_Driver/Src/stm32f7xx_ll_usb.c \
+         STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pcd.c \
+         STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pcd_ex.c \
+         STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_hcd.c \
+         STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc.c \
+         STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc_ex.c
 
 INCDIRS += -ISTM32F7xx_HAL_Driver/Inc
 
@@ -112,6 +119,24 @@ $(LIB):  $(OBJ_C)
 install:
 	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)
+	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32_USB_Device_Library/Core/Inc/usbd_core.h  $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32_USB_Device_Library/Core/Inc/usbd_conf.h  $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32_USB_Device_Library/Core/Inc/usbd_def.h  $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32_USB_Device_Library/Core/Inc/usbd_ctlreq.h  $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32_USB_Device_Library/Core/Inc/usbd_ioreq.h  $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32_USB_Device_Library/Class/HID/Inc/usbd_hid.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32_USB_Device_Library/Class/HID/Inc/usbd_hid_desc.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_def.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_rcc.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_rcc_ex.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_cortex.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pcd.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pcd_ex.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_hcd.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_usb.h $(OUTPUT_HEADER_STAGING_DIR)
+
+
 
 clean:
 	@echo "Cleaning..."

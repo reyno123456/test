@@ -98,7 +98,6 @@ USBD_StatusTypeDef USBD_Init(USBD_HandleTypeDef *pdev, USBD_DescriptorsTypeDef *
   /* Check whether the USB Host handle is valid */
   if(pdev == NULL)
   {
-    USBD_ErrLog("Invalid Device handle");
     return USBD_FAIL; 
   }
   
@@ -113,7 +112,7 @@ USBD_StatusTypeDef USBD_Init(USBD_HandleTypeDef *pdev, USBD_DescriptorsTypeDef *
   {
     pdev->pDesc = pdesc;
   }
-  
+
   /* Set Device initial State */
   pdev->dev_state  = USBD_STATE_DEFAULT;
   pdev->id = id;
@@ -165,7 +164,6 @@ USBD_StatusTypeDef  USBD_RegisterClass(USBD_HandleTypeDef *pdev, USBD_ClassTypeD
   }
   else
   {
-    USBD_ErrLog("Invalid Class handle");
     status = USBD_FAIL; 
   }
   
@@ -227,7 +225,7 @@ USBD_StatusTypeDef  USBD_RunTestMode (USBD_HandleTypeDef  *pdev)
 USBD_StatusTypeDef USBD_SetClassConfig(USBD_HandleTypeDef  *pdev, uint8_t cfgidx)
 {
   USBD_StatusTypeDef   ret = USBD_FAIL;
-  
+
   if(pdev->pClass != NULL)
   {
     /* Set configuration  and Start the Class*/
@@ -262,7 +260,6 @@ USBD_StatusTypeDef USBD_ClrClassConfig(USBD_HandleTypeDef  *pdev, uint8_t cfgidx
 */
 USBD_StatusTypeDef USBD_LL_SetupStage(USBD_HandleTypeDef *pdev, uint8_t *psetup)
 {
-
   USBD_ParseSetupRequest(&pdev->request, psetup);
   
   pdev->ep0_state = USBD_EP0_SETUP;

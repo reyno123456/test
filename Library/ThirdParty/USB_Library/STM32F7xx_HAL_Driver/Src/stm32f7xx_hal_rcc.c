@@ -618,7 +618,7 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, ui
   if(FLatency > (FLASH->ACR & FLASH_ACR_LATENCY))
   {    
     /* Program the new number of wait states to the LATENCY bits in the FLASH_ACR register */
-    __HAL_FLASH_SET_LATENCY(FLatency);
+    //__HAL_FLASH_SET_LATENCY(FLatency);
     
     /* Check that the new number of wait states is taken into account to access the Flash
     memory by reading the FLASH_ACR register */
@@ -782,7 +782,7 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, ui
     }
     
     /* Program the new number of wait states to the LATENCY bits in the FLASH_ACR register */
-    __HAL_FLASH_SET_LATENCY(FLatency);
+    //__HAL_FLASH_SET_LATENCY(FLatency);
     
     /* Check that the new number of wait states is taken into account to access the Flash
     memory by reading the FLASH_ACR register */
@@ -859,7 +859,7 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, ui
   */
 void HAL_RCC_MCOConfig(uint32_t RCC_MCOx, uint32_t RCC_MCOSource, uint32_t RCC_MCODiv)
 {
-  GPIO_InitTypeDef GPIO_InitStruct;
+//  GPIO_InitTypeDef GPIO_InitStruct;
   /* Check the parameters */
   assert_param(IS_RCC_MCO(RCC_MCOx));
   assert_param(IS_RCC_MCODIV(RCC_MCODiv));
@@ -872,12 +872,12 @@ void HAL_RCC_MCOConfig(uint32_t RCC_MCOx, uint32_t RCC_MCOSource, uint32_t RCC_M
     MCO1_CLK_ENABLE();
     
     /* Configure the MCO1 pin in alternate function mode */    
-    GPIO_InitStruct.Pin = MCO1_PIN;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Alternate = GPIO_AF0_MCO;
-    HAL_GPIO_Init(MCO1_GPIO_PORT, &GPIO_InitStruct);
+//    GPIO_InitStruct.Pin = MCO1_PIN;
+//    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+//    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+//    GPIO_InitStruct.Pull = GPIO_NOPULL;
+//    GPIO_InitStruct.Alternate = GPIO_AF0_MCO;
+//    HAL_GPIO_Init(MCO1_GPIO_PORT, &GPIO_InitStruct);
     
     /* Mask MCO1 and MCO1PRE[2:0] bits then Select MCO1 clock source and prescaler */
     MODIFY_REG(RCC->CFGR, (RCC_CFGR_MCO1 | RCC_CFGR_MCO1PRE), (RCC_MCOSource | RCC_MCODiv));
@@ -890,12 +890,12 @@ void HAL_RCC_MCOConfig(uint32_t RCC_MCOx, uint32_t RCC_MCOSource, uint32_t RCC_M
     MCO2_CLK_ENABLE();
     
     /* Configure the MCO2 pin in alternate function mode */
-    GPIO_InitStruct.Pin = MCO2_PIN;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Alternate = GPIO_AF0_MCO;
-    HAL_GPIO_Init(MCO2_GPIO_PORT, &GPIO_InitStruct);
+//    GPIO_InitStruct.Pin = MCO2_PIN;
+//    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+//    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+//    GPIO_InitStruct.Pull = GPIO_NOPULL;
+//    GPIO_InitStruct.Alternate = GPIO_AF0_MCO;
+//    HAL_GPIO_Init(MCO2_GPIO_PORT, &GPIO_InitStruct);
     
     /* Mask MCO2 and MCO2PRE[2:0] bits then Select MCO2 clock source and prescaler */
     MODIFY_REG(RCC->CFGR, (RCC_CFGR_MCO2 | RCC_CFGR_MCO2PRE), (RCC_MCOSource | (RCC_MCODiv << 3)));

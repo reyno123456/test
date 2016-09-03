@@ -392,6 +392,16 @@ typedef struct
 #define CLEAR_IN_EP_INTR(__EPNUM__, __INTERRUPT__)          (USBx_INEP(__EPNUM__)->DIEPINT = (__INTERRUPT__))
 #define CLEAR_OUT_EP_INTR(__EPNUM__, __INTERRUPT__)         (USBx_OUTEP(__EPNUM__)->DOEPINT = (__INTERRUPT__))  
 
+
+/* add for dma address and dtcm address convert */
+#define DTCM_START_ADDR            0x20000000
+#define DTCM_END_ADDR              0x2003FFFF
+#define DTCM_DMA_ADDR_OFFSET       0x24080000
+
+
+
+
+
 /* Exported functions --------------------------------------------------------*/
 HAL_StatusTypeDef USB_CoreInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef Init);
 HAL_StatusTypeDef USB_DevInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef Init);

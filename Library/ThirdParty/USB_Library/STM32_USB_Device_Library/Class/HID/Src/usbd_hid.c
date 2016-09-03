@@ -48,9 +48,9 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_hid.h"
-#include "usbd_desc.h"
+#include "usbd_hid_desc.h"
 #include "usbd_ctlreq.h"
-
+#include "usbd_core.h"
 
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
   * @{
@@ -108,6 +108,8 @@ static uint8_t  *USBD_HID_GetCfgDesc (uint16_t *length);
 static uint8_t  *USBD_HID_GetDeviceQualifierDesc (uint16_t *length);
 
 static uint8_t  USBD_HID_DataIn (USBD_HandleTypeDef *pdev, uint8_t epnum);
+static uint8_t  USBD_HID_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum);
+
 /**
   * @}
   */ 
@@ -124,7 +126,7 @@ USBD_ClassTypeDef  USBD_HID =
   NULL, /*EP0_TxSent*/  
   NULL, /*EP0_RxReady*/
   USBD_HID_DataIn, /*DataIn*/
-  NULL, /*DataOut*/
+  USBD_HID_DataOut, /*DataOut*/
   NULL, /*SOF */
   NULL,
   NULL,      
@@ -146,7 +148,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ]  __ALIGN_
   0x01,         /*bConfigurationValue: Configuration value*/
   0x00,         /*iConfiguration: Index of string descriptor describing
   the configuration*/
-  0xE0,         /*bmAttributes: bus powered and Support Remote Wake-up */
+  0x80,         /*bmAttributes: bus powered and Support Remote Wake-up */
   0x32,         /*MaxPower 100 mA: this current is used for detecting Vbus*/
   
   /************** Descriptor of Joystick Mouse interface ****************/
@@ -155,10 +157,10 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ]  __ALIGN_
   USB_DESC_TYPE_INTERFACE,/*bDescriptorType: Interface descriptor type*/
   0x00,         /*bInterfaceNumber: Number of Interface*/
   0x00,         /*bAlternateSetting: Alternate setting*/
-  0x01,         /*bNumEndpoints*/
+  0x02,         /*bNumEndpoints*/
   0x03,         /*bInterfaceClass: HID*/
-  0x01,         /*bInterfaceSubClass : 1=BOOT, 0=no boot*/
-  0x02,         /*nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse*/
+  0x00,         /*bInterfaceSubClass : 1=BOOT, 0=no boot*/
+  0x00,         /*nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse*/
   0,            /*iInterface: Index of string descriptor*/
   /******************** Descriptor of Joystick Mouse HID ********************/
   /* 18 */
@@ -178,10 +180,17 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ]  __ALIGN_
   
   HID_EPIN_ADDR,     /*bEndpointAddress: Endpoint Address (IN)*/
   0x03,          /*bmAttributes: Interrupt endpoint*/
-  HID_EPIN_SIZE, /*wMaxPacketSize: 4 Byte max */
-  0x00,
-  HID_FS_BINTERVAL,          /*bInterval: Polling Interval (10 ms)*/
+  LOBYTE(HID_EPIN_SIZE), /*wMaxPacketSize: 4 Byte max */
+  HIBYTE(HID_EPIN_SIZE),
+  HID_HS_BINTERVAL,          /*bInterval: Polling Interval (10 ms)*/
   /* 34 */
+  0x07,
+  USB_DESC_TYPE_ENDPOINT,
+  HID_EPOUT_ADDR,
+  0x03,
+  LOBYTE(HID_EPOUT_SIZE),
+  LOBYTE(HID_EPOUT_SIZE),
+  HID_HS_BINTERVAL,
 } ;
 
 /* USB HID device Configuration Descriptor */
@@ -216,53 +225,34 @@ __ALIGN_BEGIN static uint8_t USBD_HID_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_
 
 __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE]  __ALIGN_END =
 {
-  0x05,   0x01,
-  0x09,   0x02,
-  0xA1,   0x01,
-  0x09,   0x01,
+  0x06,   0x00,
+  0xFF,   0x09,
+  0x01,   0xA1,
+  0x01,   0x19,
   
-  0xA1,   0x00,
-  0x05,   0x09,
-  0x19,   0x01,
-  0x29,   0x03,
-  
+  0x01,   0x2A,
+  0x00,   0x02,
   0x15,   0x00,
-  0x25,   0x01,
-  0x95,   0x03,
-  0x75,   0x01,
+  0x26,   0xFF,
   
-  0x81,   0x02,
-  0x95,   0x01,
-  0x75,   0x05,
-  0x81,   0x01,
+  0x00,   0x75,
+  0x08,   0x96,
+  0x00,   0x02,
+  0x81,   0x00,
   
-  0x05,   0x01,
-  0x09,   0x30,
-  0x09,   0x31,
-  0x09,   0x38,
+  0x19,   0x01,
+  0x29,   0x40,
+  0x15,   0x00,
+  0x26,   0xFF,
   
-  0x15,   0x81,
-  0x25,   0x7F,
-  0x75,   0x08,
-  0x95,   0x03,
-  
-  0x81,   0x06,
-  0xC0,   0x09,
-  0x3c,   0x05,
-  0xff,   0x09,
-  
-  0x01,   0x15,
-  0x00,   0x25,
-  0x01,   0x75,
-  0x01,   0x95,
-  
-  0x02,   0xb1,
-  0x22,   0x75,
-  0x06,   0x95,
-  0x01,   0xb1,
-  
-  0x01,   0xc0
+  0x00,   0x75,
+  0x08,   0x95,
+  0x40,   0x91,
+  0x00,   0xC0,
 }; 
+
+USBD_HID_HandleTypeDef g_usbdHidData;
+
 
 /**
   * @}
@@ -283,15 +273,21 @@ static uint8_t  USBD_HID_Init (USBD_HandleTypeDef *pdev,
                                uint8_t cfgidx)
 {
   uint8_t ret = 0;
-  
+ 
   /* Open EP IN */
   USBD_LL_OpenEP(pdev,
                  HID_EPIN_ADDR,
                  USBD_EP_TYPE_INTR,
                  HID_EPIN_SIZE);  
-  
-  pdev->pClassData = USBD_malloc(sizeof (USBD_HID_HandleTypeDef));
-  
+
+  USBD_LL_OpenEP(pdev,
+                 HID_EPOUT_ADDR,
+                 USBD_EP_TYPE_INTR,
+                 HID_EPOUT_SIZE);
+
+//  pdev->pClassData = USBD_malloc(sizeof (USBD_HID_HandleTypeDef));
+  pdev->pClassData = &g_usbdHidData;
+
   if(pdev->pClassData == NULL)
   {
     ret = 1; 
@@ -317,6 +313,9 @@ static uint8_t  USBD_HID_DeInit (USBD_HandleTypeDef *pdev,
   USBD_LL_CloseEP(pdev,
                   HID_EPIN_ADDR);
   
+  USBD_LL_CloseEP(pdev,
+                  HID_EPOUT_ADDR);
+
   /* FRee allocated memory */
   if(pdev->pClassData != NULL)
   {
@@ -382,6 +381,17 @@ static uint8_t  USBD_HID_Setup (USBD_HandleTypeDef *pdev,
       {
         len = MIN(HID_MOUSE_REPORT_DESC_SIZE , req->wLength);
         pbuf = HID_MOUSE_ReportDesc;
+
+        /* resolve some bug unknown */
+        pbuf[32] = 0x00;
+        pbuf[33] = 0x75;
+        pbuf[34] = 0x08;
+        pbuf[35] = 0x95;
+        pbuf[36] = 0x40;
+        pbuf[37] = 0x91;
+        pbuf[38] = 0x00;
+        pbuf[39] = 0xC0;
+
       }
       else if( req->wValue >> 8 == HID_DESCRIPTOR_TYPE)
       {
@@ -496,6 +506,15 @@ static uint8_t  USBD_HID_DataIn (USBD_HandleTypeDef *pdev,
 }
 
 
+static uint8_t USBD_HID_DataOut (USBD_HandleTypeDef *pdev,
+                              uint8_t epnum)
+{
+  return USBD_OK;
+}
+
+
+
+
 /**
 * @brief  DeviceQualifierDescriptor 
 *         return Device Qualifier descriptor
@@ -507,6 +526,133 @@ static uint8_t  *USBD_HID_GetDeviceQualifierDesc (uint16_t *length)
   *length = sizeof (USBD_HID_DeviceQualifierDesc);
   return USBD_HID_DeviceQualifierDesc;
 }
+
+
+extern void USBD_HID_InitGlobal(void)
+{
+
+  USBD_HID.Init                          = USBD_HID_Init;
+  USBD_HID.DeInit                        = USBD_HID_DeInit;
+  USBD_HID.Setup                         = USBD_HID_Setup;
+  USBD_HID.EP0_TxSent                    = NULL;
+  USBD_HID.EP0_RxReady                   = NULL;
+  USBD_HID.DataIn                        = USBD_HID_DataIn;
+  USBD_HID.DataOut                       = USBD_HID_DataOut;
+  USBD_HID.SOF                           = NULL;
+  USBD_HID.IsoINIncomplete               = NULL;
+  USBD_HID.IsoOUTIncomplete              = NULL;
+  USBD_HID.GetHSConfigDescriptor         = USBD_HID_GetCfgDesc;
+  USBD_HID.GetFSConfigDescriptor         = USBD_HID_GetCfgDesc;
+  USBD_HID.GetOtherSpeedConfigDescriptor = USBD_HID_GetCfgDesc;
+  USBD_HID.GetDeviceQualifierDescriptor  = USBD_HID_GetDeviceQualifierDesc;
+
+
+  USBD_HID_CfgDesc[0]    = 0x09;
+  USBD_HID_CfgDesc[1]    = USB_DESC_TYPE_CONFIGURATION;
+  USBD_HID_CfgDesc[2]    = USB_HID_CONFIG_DESC_SIZ;
+  USBD_HID_CfgDesc[3]    = 0x00;
+  USBD_HID_CfgDesc[4]    = 0x01;
+  USBD_HID_CfgDesc[5]    = 0x01;
+  USBD_HID_CfgDesc[6]    = 0x00;
+  USBD_HID_CfgDesc[7]    = 0x80;
+  USBD_HID_CfgDesc[8]    = 0x32;
+  USBD_HID_CfgDesc[9]    = 0x09;
+  USBD_HID_CfgDesc[10]   = USB_DESC_TYPE_INTERFACE;
+  USBD_HID_CfgDesc[11]   = 0x00;
+  USBD_HID_CfgDesc[12]   = 0x00;
+  USBD_HID_CfgDesc[13]   = 0x02;
+  USBD_HID_CfgDesc[14]   = 0x03;
+  USBD_HID_CfgDesc[15]   = 0x00;
+  USBD_HID_CfgDesc[16]   = 0x00;
+  USBD_HID_CfgDesc[17]   = 0;
+  USBD_HID_CfgDesc[18]   = 0x09;
+  USBD_HID_CfgDesc[19]   = HID_DESCRIPTOR_TYPE;
+  USBD_HID_CfgDesc[20]   = 0x11;
+  USBD_HID_CfgDesc[21]   = 0x01;
+  USBD_HID_CfgDesc[22]   = 0x00;
+  USBD_HID_CfgDesc[23]   = 0x01;
+  USBD_HID_CfgDesc[24]   = 0x22;
+  USBD_HID_CfgDesc[25]   = HID_MOUSE_REPORT_DESC_SIZE;
+  USBD_HID_CfgDesc[26]   = 0x00;
+  USBD_HID_CfgDesc[27]   = 0x07;
+  USBD_HID_CfgDesc[28]   = USB_DESC_TYPE_ENDPOINT;
+  USBD_HID_CfgDesc[29]   = HID_EPIN_ADDR;
+  USBD_HID_CfgDesc[30]   = 0x03;
+  USBD_HID_CfgDesc[31]   = LOBYTE(HID_EPIN_SIZE);
+  USBD_HID_CfgDesc[32]   = HIBYTE(HID_EPIN_SIZE);
+  USBD_HID_CfgDesc[33]   = HID_HS_BINTERVAL;
+  USBD_HID_CfgDesc[34]   = 0x07;
+  USBD_HID_CfgDesc[35]   = USB_DESC_TYPE_ENDPOINT;
+  USBD_HID_CfgDesc[36]   = HID_EPOUT_ADDR;
+  USBD_HID_CfgDesc[37]   = 0x03;
+  USBD_HID_CfgDesc[38]   = LOBYTE(HID_EPOUT_SIZE);
+  USBD_HID_CfgDesc[39]   = HIBYTE(HID_EPOUT_SIZE);
+  USBD_HID_CfgDesc[40]   = HID_HS_BINTERVAL;
+
+  USBD_HID_Desc[0]  = 0x09;
+  USBD_HID_Desc[1]  = HID_DESCRIPTOR_TYPE;
+  USBD_HID_Desc[2]  = 0x11;
+  USBD_HID_Desc[3]  = 0x01;
+  USBD_HID_Desc[4]  = 0x00;
+  USBD_HID_Desc[5]  = 0x01;
+  USBD_HID_Desc[6]  = 0x22;
+  USBD_HID_Desc[7]  = HID_MOUSE_REPORT_DESC_SIZE;
+  USBD_HID_Desc[8]  = 0x00;
+
+  USBD_HID_DeviceQualifierDesc[0]  = USB_LEN_DEV_QUALIFIER_DESC;
+  USBD_HID_DeviceQualifierDesc[1]  = USB_DESC_TYPE_DEVICE_QUALIFIER;
+  USBD_HID_DeviceQualifierDesc[2]  = 0x00;
+  USBD_HID_DeviceQualifierDesc[3]  = 0x02;
+  USBD_HID_DeviceQualifierDesc[4]  = 0x00;
+  USBD_HID_DeviceQualifierDesc[5]  = 0x00;
+  USBD_HID_DeviceQualifierDesc[6]  = 0x00;
+  USBD_HID_DeviceQualifierDesc[7]  = 0x40;
+  USBD_HID_DeviceQualifierDesc[8]  = 0x01;
+  USBD_HID_DeviceQualifierDesc[9]  = 0x00;
+
+  HID_MOUSE_ReportDesc[0]  = 0x06;
+  HID_MOUSE_ReportDesc[1]  = 0x00;
+  HID_MOUSE_ReportDesc[2]  = 0xFF;
+  HID_MOUSE_ReportDesc[3]  = 0x09;
+  HID_MOUSE_ReportDesc[4]  = 0x01;
+  HID_MOUSE_ReportDesc[5]  = 0xA1;
+  HID_MOUSE_ReportDesc[6]  = 0x01;
+  HID_MOUSE_ReportDesc[7]  = 0x19;
+  HID_MOUSE_ReportDesc[8]  = 0x01;
+  HID_MOUSE_ReportDesc[9]  = 0x2A;
+  HID_MOUSE_ReportDesc[10] = 0x00;
+  HID_MOUSE_ReportDesc[11] = 0x02;
+  HID_MOUSE_ReportDesc[12] = 0x15;
+  HID_MOUSE_ReportDesc[13] = 0x00;
+  HID_MOUSE_ReportDesc[14] = 0x26;
+  HID_MOUSE_ReportDesc[15] = 0xFF;
+  HID_MOUSE_ReportDesc[16] = 0x00;
+  HID_MOUSE_ReportDesc[17] = 0x75;
+  HID_MOUSE_ReportDesc[18] = 0x08;
+  HID_MOUSE_ReportDesc[19] = 0x96;
+  HID_MOUSE_ReportDesc[20] = 0x00;
+  HID_MOUSE_ReportDesc[21] = 0x02;
+  HID_MOUSE_ReportDesc[22] = 0x81;
+  HID_MOUSE_ReportDesc[23] = 0x00;
+  HID_MOUSE_ReportDesc[24] = 0x19;
+  HID_MOUSE_ReportDesc[25] = 0x01;
+  HID_MOUSE_ReportDesc[26] = 0x29;
+  HID_MOUSE_ReportDesc[27] = 0x40;
+  HID_MOUSE_ReportDesc[28] = 0x15;
+  HID_MOUSE_ReportDesc[29] = 0x00;
+  HID_MOUSE_ReportDesc[30] = 0x26;
+  HID_MOUSE_ReportDesc[31] = 0xFF;
+  HID_MOUSE_ReportDesc[32] = 0x00;
+  HID_MOUSE_ReportDesc[33] = 0x75;
+  HID_MOUSE_ReportDesc[34] = 0x08;
+  HID_MOUSE_ReportDesc[35] = 0x95;
+  HID_MOUSE_ReportDesc[36] = 0x40;
+  HID_MOUSE_ReportDesc[37] = 0x91;
+  HID_MOUSE_ReportDesc[38] = 0x00;
+  HID_MOUSE_ReportDesc[39] = 0xC0;
+
+}
+
 
 /**
   * @}

@@ -802,7 +802,9 @@ static USBH_StatusTypeDef USBH_AUDIO_ParseCSDescriptors(USBH_HandleTypeDef *phos
   AUDIO_HandleTypeDef           *AUDIO_Handle;
   
   AUDIO_Handle =  (AUDIO_HandleTypeDef *) phost->pActiveClass->pData;  
+#if (USBH_KEEP_CFG_DESCRIPTOR == 1)
   pdesc   = (USBH_DescHeader_t *)(phost->device.CfgDesc_Raw);
+#endif
   ptr = USB_LEN_CFG_DESC;
   
   AUDIO_Handle->class_desc.FeatureUnitNum = 0;

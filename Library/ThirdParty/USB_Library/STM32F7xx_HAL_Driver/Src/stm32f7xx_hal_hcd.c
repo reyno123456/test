@@ -260,11 +260,28 @@ HAL_StatusTypeDef HAL_HCD_DeInit(HCD_HandleTypeDef *hhcd)
   * @param  hhcd: HCD handle
   * @retval None
   */
-__weak void  HAL_HCD_MspInit(HCD_HandleTypeDef *hhcd)
+void  HAL_HCD_MspInit(HCD_HandleTypeDef *hhcd)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_HCD_MspInit could be implemented in the user file
    */
+  if(hhcd->Instance == USB_OTG_FS)
+  {
+    /* Set USBFS Interrupt priority */
+    HAL_NVIC_SetPriority(OTG_FS_IRQn, 6, 0);
+    
+    /* Enable USBFS Interrupt */
+    HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
+  }
+  else if(hhcd->Instance == USB_OTG_HS)
+  {
+    /* Set USBHS Interrupt priority */
+    HAL_NVIC_SetPriority(OTG_HS_IRQn, 6, 0);
+    
+    /* Enable USBHS Interrupt */
+    HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
+  }
+
 }
 
 /**
@@ -272,11 +289,22 @@ __weak void  HAL_HCD_MspInit(HCD_HandleTypeDef *hhcd)
   * @param  hhcd: HCD handle
   * @retval None
   */
-__weak void  HAL_HCD_MspDeInit(HCD_HandleTypeDef *hhcd)
+void  HAL_HCD_MspDeInit(HCD_HandleTypeDef *hhcd)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_HCD_MspDeInit could be implemented in the user file
    */
+  if(hhcd->Instance == USB_OTG_FS)
+  {
+    /* Disable USB FS Clocks */ 
+    __HAL_RCC_USB_OTG_FS_CLK_DISABLE();
+  }
+  else if(hhcd->Instance == USB_OTG_HS)
+  {
+    /* Disable USB HS Clocks */ 
+    __HAL_RCC_USB_OTG_HS_CLK_DISABLE();
+    __HAL_RCC_USB_OTG_HS_ULPI_CLK_DISABLE();
+  }
 }
 
 /**
@@ -550,11 +578,12 @@ void HAL_HCD_IRQHandler(HCD_HandleTypeDef *hhcd)
   * @param  hhcd: HCD handle
   * @retval None
   */
-__weak void HAL_HCD_SOF_Callback(HCD_HandleTypeDef *hhcd)
+void HAL_HCD_SOF_Callback(HCD_HandleTypeDef *hhcd)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_HCD_SOF_Callback could be implemented in the user file
    */
+  USBH_LL_IncTimer (hhcd->pData);
 }
 
 /**
@@ -562,11 +591,12 @@ __weak void HAL_HCD_SOF_Callback(HCD_HandleTypeDef *hhcd)
   * @param  hhcd: HCD handle
   * @retval None
   */
-__weak void HAL_HCD_Connect_Callback(HCD_HandleTypeDef *hhcd)
+void HAL_HCD_Connect_Callback(HCD_HandleTypeDef *hhcd)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_HCD_Connect_Callback could be implemented in the user file
    */
+  USBH_LL_Connect(hhcd->pData);
 }
 
 /**
@@ -574,11 +604,12 @@ __weak void HAL_HCD_Connect_Callback(HCD_HandleTypeDef *hhcd)
   * @param  hhcd: HCD handle
   * @retval None
   */
-__weak void HAL_HCD_Disconnect_Callback(HCD_HandleTypeDef *hhcd)
+void HAL_HCD_Disconnect_Callback(HCD_HandleTypeDef *hhcd)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_HCD_Disconnect_Callback could be implemented in the user file
    */
+  USBH_LL_Disconnect(hhcd->pData);
 } 
 
 /**
@@ -596,11 +627,14 @@ __weak void HAL_HCD_Disconnect_Callback(HCD_HandleTypeDef *hhcd)
   *            URB_STALL/    
   * @retval None
   */
-__weak void HAL_HCD_HC_NotifyURBChange_Callback(HCD_HandleTypeDef *hhcd, uint8_t chnum, HCD_URBStateTypeDef urb_state)
+void HAL_HCD_HC_NotifyURBChange_Callback(HCD_HandleTypeDef *hhcd, uint8_t chnum, HCD_URBStateTypeDef urb_state)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_HCD_HC_NotifyURBChange_Callback could be implemented in the user file
    */
+#if (USBH_USE_OS == 1)   
+  USBH_LL_NotifyURBChange(hhcd->pData);
+#endif
 }
 
 /**
@@ -632,7 +666,7 @@ HAL_StatusTypeDef HAL_HCD_Start(HCD_HandleTypeDef *hhcd)
   serial_puts("1 \n");
   __HAL_LOCK(hhcd); 
   serial_puts("2 \n");
-//  __HAL_HCD_ENABLE(hhcd);
+  __HAL_HCD_ENABLE(hhcd);
   USB_EnableGlobalInt (hhcd->Instance);
   serial_puts("3 \n");
   USB_DriveVbus(hhcd->Instance, 1);  

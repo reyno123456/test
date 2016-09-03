@@ -157,7 +157,6 @@ HAL_StatusTypeDef HAL_Init(void)
 //#if (ART_ACCLERATOR_ENABLE != 0)
 //   __HAL_FLASH_ART_ENABLE();
 //#endif /* ART_ACCLERATOR_ENABLE */
-   
   /* Set Interrupt Group Priority */
   HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
 
@@ -316,12 +315,21 @@ __weak uint32_t HAL_GetTick(void)
   * @param Delay: specifies the delay time length, in milliseconds.
   * @retval None
   */
-__weak void HAL_Delay(__IO uint32_t Delay)
+void HAL_Delay(__IO uint32_t Delay)
 {
+#if 0
   uint32_t tickstart = 0;
   tickstart = HAL_GetTick();
   while((HAL_GetTick() - tickstart) < Delay)
   {
+  }
+#endif
+  while(Delay)
+  {
+    if (SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk)
+    {
+      Delay--;
+    }
   }
 }
 

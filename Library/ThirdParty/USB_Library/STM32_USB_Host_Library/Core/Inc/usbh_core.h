@@ -142,9 +142,13 @@ uint8_t              USBH_LL_GetToggle    (USBH_HandleTypeDef *phost, uint8_t );
 void                 USBH_Delay (uint32_t Delay);
 void                 USBH_LL_SetTimer     (USBH_HandleTypeDef *phost, uint32_t );  
 void                 USBH_LL_IncTimer     (USBH_HandleTypeDef *phost);  
+
 /**
   * @}
   */ 
+
+void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id);
+
 
 #ifdef __cplusplus
 }

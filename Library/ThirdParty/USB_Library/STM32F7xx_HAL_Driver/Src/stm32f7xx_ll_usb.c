@@ -58,6 +58,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
 #include "uart.h"
+#include "usbd_conf.h"
 
 /** @addtogroup STM32F7xx_LL_USB_DRIVER
   * @{
@@ -129,7 +130,7 @@ HAL_StatusTypeDef USB_CoreInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef c
     /* Deactivate the power down*/
     USBx->GCCFG = USB_OTG_GCCFG_PWRDWN;
   }
- 
+
   if(cfg.dma_enable == ENABLE)
   {
     //USBx->GAHBCFG |= (USB_OTG_GAHBCFG_HBSTLEN_1 | USB_OTG_GAHBCFG_HBSTLEN_2);
@@ -151,12 +152,8 @@ HAL_StatusTypeDef USB_CoreInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef c
   */
 HAL_StatusTypeDef USB_EnableGlobalInt(USB_OTG_GlobalTypeDef *USBx)
 {
-//  serial_puts("befroe");
-//  print_str(USBx->GAHBCFG);
-  
   USBx->GAHBCFG |= USB_OTG_GAHBCFG_GINT;
 
-//  serial_puts("after");
   return HAL_OK;
 }
 
@@ -195,8 +192,9 @@ HAL_StatusTypeDef USB_SetCurrentMode(USB_OTG_GlobalTypeDef *USBx , USB_OTG_ModeT
   {
     USBx->GUSBCFG |= USB_OTG_GUSBCFG_FDMOD; 
   }
+
   HAL_Delay(50);
-  
+
   return HAL_OK;
 }
 
@@ -447,7 +445,9 @@ HAL_StatusTypeDef USB_ActivateEndpoint(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTy
     if (((USBx_INEP(ep->num)->DIEPCTL) & USB_OTG_DIEPCTL_USBAEP) == 0)
     {
       USBx_INEP(ep->num)->DIEPCTL |= ((ep->maxpacket & USB_OTG_DIEPCTL_MPSIZ ) | (ep->type << 18 ) |\
-        ((ep->num) << 22 ) | (USB_OTG_DIEPCTL_SD0PID_SEVNFRM) | (USB_OTG_DIEPCTL_USBAEP)); 
+         (USB_OTG_DIEPCTL_SD0PID_SEVNFRM) | (USB_OTG_DIEPCTL_USBAEP)); 
+      //  ((ep->num) << 22 ) | (USB_OTG_DIEPCTL_SD0PID_SEVNFRM) | (USB_OTG_DIEPCTL_USBAEP)); 
+
     } 
 
   }
@@ -566,6 +566,7 @@ HAL_StatusTypeDef USB_DeactivateDedicatedEndpoint(USB_OTG_GlobalTypeDef *USBx, U
 HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeDef *ep, uint8_t dma)
 {
   uint16_t pktcnt = 0;
+  uint32_t tmp = 0;
   
   /* IN endpoint */
   if (ep->is_in == 1)
@@ -598,7 +599,16 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeDe
 
     if (dma == 1)
     {
-      USBx_INEP(ep->num)->DIEPDMA = (uint32_t)(ep->dma_addr);
+      tmp = (uint32_t)(ep->dma_addr);
+
+      if ((tmp >= DTCM_START_ADDR) && (tmp <= DTCM_END_ADDR))
+      {
+        USBx_INEP(ep->num)->DIEPDMA = tmp + DTCM_DMA_ADDR_OFFSET;
+      }
+      else
+      {
+        USBx_INEP(ep->num)->DIEPDMA = tmp;
+      }
     }
     else
     {
@@ -655,7 +665,16 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeDe
 
     if (dma == 1)
     {
-      USBx_OUTEP(ep->num)->DOEPDMA = (uint32_t)ep->xfer_buff;
+      tmp = (uint32_t)(ep->xfer_buff);
+
+      if ((tmp >= DTCM_START_ADDR) && (tmp <= DTCM_END_ADDR))
+      {
+        USBx_OUTEP(ep->num)->DOEPDMA = tmp + DTCM_DMA_ADDR_OFFSET;
+      }
+      else
+      {
+        USBx_OUTEP(ep->num)->DOEPDMA = tmp;
+      }
     }
     
     if (ep->type == EP_TYPE_ISOC)
@@ -687,6 +706,8 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeDe
   */
 HAL_StatusTypeDef USB_EP0StartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeDef *ep, uint8_t dma)
 {
+  uint32_t tmp = 0;
+
   /* IN endpoint */
   if (ep->is_in == 1)
   {
@@ -718,7 +739,16 @@ HAL_StatusTypeDef USB_EP0StartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeD
     
     if (dma == 1)
     {
-      USBx_INEP(ep->num)->DIEPDMA = (uint32_t)(ep->dma_addr);
+      tmp = (uint32_t)(ep->dma_addr);
+
+      if ((tmp >= DTCM_START_ADDR) && (tmp <= DTCM_END_ADDR))
+      {
+        USBx_INEP(ep->num)->DIEPDMA = tmp + DTCM_DMA_ADDR_OFFSET;
+      }
+      else
+      {
+        USBx_INEP(ep->num)->DIEPDMA = tmp;
+      }
     }
     else
     {
@@ -752,7 +782,16 @@ HAL_StatusTypeDef USB_EP0StartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeD
 
     if (dma == 1)
     {
-      USBx_OUTEP(ep->num)->DOEPDMA = (uint32_t)(ep->xfer_buff);
+      tmp = (uint32_t)(ep->xfer_buff);
+
+      if ((tmp >= DTCM_START_ADDR) && (tmp <= DTCM_END_ADDR))
+      { 
+        USBx_OUTEP(ep->num)->DOEPDMA = tmp + DTCM_DMA_ADDR_OFFSET;
+      }
+      else
+      {
+        USBx_OUTEP(ep->num)->DOEPDMA = tmp;
+      }
     }
     
     /* EP enable */
@@ -1070,6 +1109,8 @@ HAL_StatusTypeDef  USB_ActivateSetup (USB_OTG_GlobalTypeDef *USBx)
   */
 HAL_StatusTypeDef USB_EP0_OutStart(USB_OTG_GlobalTypeDef *USBx, uint8_t dma, uint8_t *psetup)
 {
+  uint32_t tmp = 0;
+
   USBx_OUTEP(0)->DOEPTSIZ = 0;
   USBx_OUTEP(0)->DOEPTSIZ |= (USB_OTG_DOEPTSIZ_PKTCNT & (1 << 19)) ;
   USBx_OUTEP(0)->DOEPTSIZ |= (3 * 8);
@@ -1077,7 +1118,17 @@ HAL_StatusTypeDef USB_EP0_OutStart(USB_OTG_GlobalTypeDef *USBx, uint8_t dma, uin
   
   if (dma == 1)
   {
-    USBx_OUTEP(0)->DOEPDMA = (uint32_t)psetup;
+    tmp = (uint32_t)psetup;
+
+    if ((tmp >= DTCM_START_ADDR) && (tmp <= DTCM_END_ADDR))
+    {
+      USBx_OUTEP(0)->DOEPDMA = tmp + DTCM_DMA_ADDR_OFFSET;
+    }
+    else
+    {
+      USBx_OUTEP(0)->DOEPDMA = tmp;
+    }
+
     /* EP enable */
     USBx_OUTEP(0)->DOEPCTL = 0x80008000;
   }
@@ -1495,46 +1546,14 @@ HAL_StatusTypeDef USB_HC_StartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_HCTypeDe
   {
     /* xfer_buff MUST be 32-bits aligned */
     tmp = (uint32_t)hc->xfer_buff;
-    if ((tmp >= 0x20000000) && (tmp <= 0x2003FFFF))
+    if ((tmp >= DTCM_START_ADDR) && (tmp <= DTCM_END_ADDR))
     {
-      USBx_HC(hc->ch_num)->HCDMA = tmp + 0x24080000;
+      USBx_HC(hc->ch_num)->HCDMA = tmp + DTCM_DMA_ADDR_OFFSET;
     }
     else
     {
       USBx_HC(hc->ch_num)->HCDMA = tmp;
     }
-
-    /*
-    serial_puts("USBx_HC(hc->ch_num)->HCDMA : ");
-    print_str(USBx_HC(hc->ch_num)->HCDMA);
-    serial_puts(" \n"); 
-
-    serial_puts("hc->xfer_buff : ");
-    print_str((uint32_t)hc->xfer_buff);
-    serial_puts(" \n");     
-    */
-    
-    /*
-    tmp = (uint32_t)hc->xfer_buff;
-    USBx_HC(hc->ch_num)->HCDMA = tmp;
-    
-    *dma_addr_00 = 0xabcdffff;
-    *dma_addr_01 = 0xffffabcd;   
-    
-    serial_puts("hc->xfer_buff address: ");
-    print_str(tmp);
-    serial_puts(" \n");    
-      
-    tmp = *dma_addr_0;
-    serial_puts("0x21000f10 : ");
-    print_str(tmp);
-    serial_puts(" \n");     
-      
-    tmp = *dma_addr_1;
-    serial_puts("0x21000f1c : ");
-    print_str(tmp);
-    serial_puts(" \n");   
-    */
   }
   
   is_oddframe = (USBx_HOST->HFNUM & 0x01) ? 0 : 1;
@@ -1741,6 +1760,22 @@ HAL_StatusTypeDef USB_StopHost(USB_OTG_GlobalTypeDef *USBx)
   USB_EnableGlobalInt(USBx);
   return HAL_OK;  
 }
+
+
+void USB_LL_OTG0_IRQHandler(void)
+{
+  if (USB_OTG_HS->GINTSTS & 0x01)
+  {
+ //   HAL_HCD_IRQHandler(&hhcd);
+  }
+  else
+  {
+    HAL_PCD_IRQHandler(&hpcd);
+  }
+}
+
+
+
 /**
   * @}
   */

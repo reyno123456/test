@@ -74,6 +74,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
+#include "usbd_def.h"
 
 /** @addtogroup STM32F7xx_HAL_Driver
   * @{
@@ -152,10 +153,10 @@ HAL_StatusTypeDef HAL_PCD_Init(PCD_HandleTypeDef *hpcd)
 
   /* Disable the Interrupts */
  __HAL_PCD_DISABLE(hpcd);
- 
+
  /*Init the Core (common init.) */
  USB_CoreInit(hpcd->Instance, hpcd->Init);
- 
+
  /* Force Device Mode*/
  USB_SetCurrentMode(hpcd->Instance , USB_OTG_DEVICE_MODE);
  
@@ -186,7 +187,7 @@ HAL_StatusTypeDef HAL_PCD_Init(PCD_HandleTypeDef *hpcd)
    
    hpcd->Instance->DIEPTXF[i] = 0;
  }
- 
+
  /* Init Device */
  USB_DevInit(hpcd->Instance, hpcd->Init);
  
@@ -197,7 +198,7 @@ HAL_StatusTypeDef HAL_PCD_Init(PCD_HandleTypeDef *hpcd)
  {
    HAL_PCDEx_ActivateLPM(hpcd);
  }
- 
+
  USB_DevDisconnect (hpcd->Instance);  
  return HAL_OK;
 }
@@ -233,11 +234,44 @@ HAL_StatusTypeDef HAL_PCD_DeInit(PCD_HandleTypeDef *hpcd)
   * @param  hpcd: PCD handle
   * @retval None
   */
-__weak void HAL_PCD_MspInit(PCD_HandleTypeDef *hpcd)
+void HAL_PCD_MspInit(PCD_HandleTypeDef *hpcd)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_PCD_MspInit could be implemented in the user file
    */
+  
+  if(hpcd->Instance == USB_OTG_FS)
+  {
+    /* Set USBFS Interrupt priority */
+    HAL_NVIC_SetPriority(OTG_FS_IRQn, 5, 0);
+    
+    /* Enable USBFS Interrupt */
+    HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
+
+    if(hpcd->Init.low_power_enable == 1)
+    {
+      /* Enable EXTI Line 18 for USB wakeup*/
+      __HAL_USB_OTG_FS_WAKEUP_EXTI_CLEAR_FLAG();
+      __HAL_USB_OTG_FS_WAKEUP_EXTI_ENABLE_RISING_EDGE();
+      __HAL_USB_OTG_FS_WAKEUP_EXTI_ENABLE_IT();
+      
+      /* Set EXTI Wakeup Interrupt priority*/
+      HAL_NVIC_SetPriority(OTG_FS_WKUP_IRQn, 0, 0);
+      
+      /* Enable EXTI Interrupt */
+      HAL_NVIC_EnableIRQ(OTG_FS_WKUP_IRQn);          
+    }
+
+  }
+  else if(hpcd->Instance == USB_OTG_HS)
+  {
+    /* Set USBHS Interrupt to the lowest priority */
+    HAL_NVIC_SetPriority(OTG_HS_IRQn, 5, 0);
+    
+    /* Enable USBHS Interrupt */
+    HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
+  }
+
 }
 
 /**
@@ -245,11 +279,24 @@ __weak void HAL_PCD_MspInit(PCD_HandleTypeDef *hpcd)
   * @param  hpcd: PCD handle
   * @retval None
   */
-__weak void HAL_PCD_MspDeInit(PCD_HandleTypeDef *hpcd)
+void HAL_PCD_MspDeInit(PCD_HandleTypeDef *hpcd)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_PCD_MspDeInit could be implemented in the user file
    */
+  if(hpcd->Instance == USB_OTG_FS)
+  {  
+    /* Disable USB FS Clock */
+    __HAL_RCC_USB_OTG_FS_CLK_DISABLE();
+    __HAL_RCC_SYSCFG_CLK_DISABLE();
+  }
+  else if(hpcd->Instance == USB_OTG_HS)
+  {  
+    /* Disable USB HS Clocks */
+    __HAL_RCC_USB_OTG_HS_CLK_DISABLE();
+    __HAL_RCC_SYSCFG_CLK_DISABLE();
+  }  
+
 }
 
 /**
@@ -462,7 +509,6 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
     /* Handle Suspend Interrupt */
     if(__HAL_PCD_GET_FLAG(hpcd, USB_OTG_GINTSTS_USBSUSP))
     {
-
       if((USBx_DEVICE->DSTS & USB_OTG_DSTS_SUSPSTS) == USB_OTG_DSTS_SUSPSTS)
       {
         
@@ -617,11 +663,13 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
   * @param  epnum: endpoint number  
   * @retval None
   */
- __weak void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
+void HAL_PCD_DataOutStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_PCD_DataOutStageCallback could be implemented in the user file
    */ 
+  USBD_LL_DataOutStage(hpcd->pData, epnum, hpcd->OUT_ep[epnum].xfer_buff);
+
 }
 
 /**
@@ -630,22 +678,25 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
   * @param  epnum: endpoint number  
   * @retval None
   */
- __weak void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
+void HAL_PCD_DataInStageCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_PCD_DataInStageCallback could be implemented in the user file
    */ 
+  USBD_LL_DataInStage(hpcd->pData, epnum, hpcd->IN_ep[epnum].xfer_buff);
+
 }
 /**
   * @brief  Setup stage callback
   * @param  hpcd: PCD handle
   * @retval None
   */
- __weak void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef *hpcd)
+void HAL_PCD_SetupStageCallback(PCD_HandleTypeDef *hpcd)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_PCD_SetupStageCallback could be implemented in the user file
-   */ 
+   */
+  USBD_LL_SetupStage(hpcd->pData, (uint8_t *)hpcd->Setup);
 }
 
 /**
@@ -653,11 +704,12 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
   * @param  hpcd: PCD handle
   * @retval None
   */
- __weak void HAL_PCD_SOFCallback(PCD_HandleTypeDef *hpcd)
+void HAL_PCD_SOFCallback(PCD_HandleTypeDef *hpcd)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_PCD_SOFCallback could be implemented in the user file
    */ 
+  USBD_LL_SOF(hpcd->pData);
 }
 
 /**
@@ -665,11 +717,33 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
   * @param  hpcd: PCD handle
   * @retval None
   */
- __weak void HAL_PCD_ResetCallback(PCD_HandleTypeDef *hpcd)
+void HAL_PCD_ResetCallback(PCD_HandleTypeDef *hpcd)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_PCD_ResetCallback could be implemented in the user file
    */ 
+  USBD_SpeedTypeDef speed = USBD_SPEED_HIGH;
+  
+  /* Set USB Current Speed */
+  switch(hpcd->Init.speed)
+  {
+  case PCD_SPEED_HIGH:
+    speed = USBD_SPEED_HIGH;
+    break;
+    
+  case PCD_SPEED_FULL:
+    speed = USBD_SPEED_FULL;
+    break;   
+    
+  default:
+    speed = USBD_SPEED_FULL;
+    break;
+  }
+  
+  /* Reset Device */
+  USBD_LL_Reset(hpcd->pData);
+  
+  USBD_LL_SetSpeed(hpcd->pData, speed);
 }
 
 
@@ -678,11 +752,14 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
   * @param  hpcd: PCD handle
   * @retval None
   */
- __weak void HAL_PCD_SuspendCallback(PCD_HandleTypeDef *hpcd)
+void HAL_PCD_SuspendCallback(PCD_HandleTypeDef *hpcd)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_PCD_SuspendCallback could be implemented in the user file
    */ 
+  USBD_LL_Suspend(hpcd->pData);
+            
+
 }
 
 /**
@@ -690,11 +767,12 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
   * @param  hpcd: PCD handle
   * @retval None
   */
- __weak void HAL_PCD_ResumeCallback(PCD_HandleTypeDef *hpcd)
+void HAL_PCD_ResumeCallback(PCD_HandleTypeDef *hpcd)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_PCD_ResumeCallback could be implemented in the user file
    */ 
+  USBD_LL_Resume(hpcd->pData);
 }
 
 /**
@@ -703,11 +781,12 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
   * @param  epnum: endpoint number
   * @retval None
   */
- __weak void HAL_PCD_ISOOUTIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
+void HAL_PCD_ISOOUTIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_PCD_ISOOUTIncompleteCallback could be implemented in the user file
    */ 
+  USBD_LL_IsoOUTIncomplete(hpcd->pData, epnum);
 }
 
 /**
@@ -716,11 +795,12 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
   * @param  epnum: endpoint number  
   * @retval None
   */
- __weak void HAL_PCD_ISOINIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
+void HAL_PCD_ISOINIncompleteCallback(PCD_HandleTypeDef *hpcd, uint8_t epnum)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_PCD_ISOINIncompleteCallback could be implemented in the user file
    */ 
+  USBD_LL_IsoINIncomplete(hpcd->pData, epnum);
 }
 
 /**
@@ -728,11 +808,12 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
   * @param  hpcd: PCD handle
   * @retval None
   */
- __weak void HAL_PCD_ConnectCallback(PCD_HandleTypeDef *hpcd)
+void HAL_PCD_ConnectCallback(PCD_HandleTypeDef *hpcd)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_PCD_ConnectCallback could be implemented in the user file
    */ 
+  USBD_LL_DevConnected(hpcd->pData);
 }
 
 /**
@@ -740,11 +821,12 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
   * @param  hpcd: PCD handle
   * @retval None
   */
- __weak void HAL_PCD_DisconnectCallback(PCD_HandleTypeDef *hpcd)
+void HAL_PCD_DisconnectCallback(PCD_HandleTypeDef *hpcd)
 {
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_PCD_DisconnectCallback could be implemented in the user file
    */ 
+  USBD_LL_DevDisconnected(hpcd->pData);
 }
 
 /**

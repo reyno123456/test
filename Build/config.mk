@@ -23,7 +23,7 @@ CFLAGS += -O2 -s
 DEBREL = Release
 endif
 
-DEFS = -mthumb -mcpu=cortex-m7 -mlittle-endian -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -std=c99 -c -DSTM32F746xx
+DEFS = -mthumb -mcpu=cortex-m7 -mlittle-endian -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -std=c99 -c -DSTM32F746xx -DUSE_USB_HS -DUSE_HAL_DRIVER
 
 CFLAGS += $(DEFS)
 
@@ -48,6 +48,8 @@ export RM
 
 CHIP = AR8020
 export CHIP
+
+export USB_DEV_CLASS_HID_ENABLE = 1
 
 ###############################################################################
 

@@ -28,8 +28,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_ctlreq.h"
 #include "usbd_ioreq.h"
-
-
 /** @addtogroup STM32_USBD_STATE_DEVICE_LIBRARY
   * @{
   */
@@ -333,8 +331,7 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev ,
 {
   uint16_t len;
   uint8_t *pbuf;
-  
-    
+
   switch (req->wValue >> 8)
   { 
 #if (USBD_LPM_ENABLED == 1)
@@ -426,17 +423,17 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev ,
      USBD_CtlError(pdev , req);
     return;
   }
-  
+
   if((len != 0)&& (req->wLength != 0))
   {
     
     len = MIN(len , req->wLength);
-    
+
     USBD_CtlSendData (pdev, 
                       pbuf,
                       len);
   }
-  
+
 }
 
 /**
@@ -506,7 +503,7 @@ static void USBD_SetConfig(USBD_HandleTypeDef *pdev ,
     {
     case USBD_STATE_ADDRESSED:
       if (cfgidx) 
-      {                                			   							   							   				
+      {
         pdev->dev_config = cfgidx;
         pdev->dev_state = USBD_STATE_CONFIGURED;
         if(USBD_SetClassConfig(pdev , cfgidx) == USBD_FAIL)
@@ -514,6 +511,7 @@ static void USBD_SetConfig(USBD_HandleTypeDef *pdev ,
           USBD_CtlError(pdev , req);  
           return;
         }
+
         USBD_CtlSendStatus(pdev);
       }
       else 
@@ -524,7 +522,7 @@ static void USBD_SetConfig(USBD_HandleTypeDef *pdev ,
       
     case USBD_STATE_CONFIGURED:
       if (cfgidx == 0) 
-      {                           
+      {
         pdev->dev_state = USBD_STATE_ADDRESSED;
         pdev->dev_config = cfgidx;          
         USBD_ClrClassConfig(pdev , cfgidx);
@@ -543,6 +541,7 @@ static void USBD_SetConfig(USBD_HandleTypeDef *pdev ,
           USBD_CtlError(pdev , req);  
           return;
         }
+
         USBD_CtlSendStatus(pdev);
       }
       else
@@ -702,7 +701,6 @@ void USBD_ParseSetupRequest(USBD_SetupReqTypedef *req, uint8_t *pdata)
   req->wValue        = SWAPBYTE      (pdata +  2);
   req->wIndex        = SWAPBYTE      (pdata +  4);
   req->wLength       = SWAPBYTE      (pdata +  6);
-
 }
 
 /**

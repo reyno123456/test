@@ -34,7 +34,7 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f4xx.h"
+#include "stm32f7xx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,23 +55,32 @@
 #define USBH_MAX_NUM_ENDPOINTS                2
 #define USBH_MAX_NUM_INTERFACES               2
 #define USBH_MAX_NUM_CONFIGURATION            1
-#define USBH_KEEP_CFG_DESCRIPTOR              1
+#define USBH_KEEP_CFG_DESCRIPTOR              0
 #define USBH_MAX_NUM_SUPPORTED_CLASS          1
 #define USBH_MAX_SIZE_CONFIGURATION           0x200
 #define USBH_MAX_DATA_BUFFER                  0x200
 #define USBH_DEBUG_LEVEL                      2
-#define USBH_USE_OS                           1
+#define USBH_USE_OS                           0
     
 /** @defgroup USBH_Exported_Macros
   * @{
   */ 
+
+#if (USBH_USE_OS == 1)
+  #include "cmsis_os.h"
+  #define  USBH_PROCESS_PRIO        osPriorityNormal
+  #define  USBH_PROCESS_STACK_SIZE  (8 * configMINIMAL_STACK_SIZE)
+
+#endif
+
 
  /* Memory management macros */   
 #define USBH_malloc               malloc
 #define USBH_free                 free
 #define USBH_memset               memset
 #define USBH_memcpy               memcpy
-    
+
+
  /* DEBUG macros */  
 
   
@@ -116,6 +125,12 @@
 /**
   * @}
   */ 
+typedef enum
+{
+    APPLICATION_IDLE = 0,
+    APPLICATION_READY,
+    APPLICATION_DISCONNECT,
+}ApplicationStateDef;
 
 
 /** @defgroup USBH_CONF_Exported_Macros
@@ -131,6 +146,7 @@
 /**
   * @}
   */ 
+extern ApplicationStateDef Appli_state;
 
 /** @defgroup USBH_CONF_Exported_FunctionsPrototype
   * @{

@@ -28,6 +28,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usbh_core.h"
 
+HCD_HandleTypeDef hhcd;
+
 /**
   * @brief  USBH_LL_Init 
   *         Initialize the Low Level portion of the Host driver.
@@ -36,6 +38,48 @@
   */
 USBH_StatusTypeDef  USBH_LL_Init (USBH_HandleTypeDef *phost)
 {
+#ifdef USE_USB_FS  
+  /* Set the LL Driver parameters */
+  hhcd.Instance = USB_OTG_FS;
+  hhcd.Init.Host_channels = 11; 
+  hhcd.Init.dma_enable = 0;
+  hhcd.Init.low_power_enable = 0;
+  hhcd.Init.phy_itface = HCD_PHY_EMBEDDED; 
+  hhcd.Init.Sof_enable = 0;
+  hhcd.Init.speed = HCD_SPEED_FULL;
+  hhcd.Init.vbus_sensing_enable = 0;
+  hhcd.Init.lpm_enable = 0;
+  
+  /* Link the driver to the stack */
+  hhcd.pData = phost;
+  phost->pData = &hhcd;
+  
+  /* Initialize the LL Driver */
+  HAL_HCD_Init(&hhcd);
+#endif
+
+#ifdef USE_USB_HS
+  /* Set the LL driver parameters */
+  hhcd.Instance = USB_OTG_HS;
+  hhcd.Init.Host_channels = 6; 
+  hhcd.Init.dma_enable = 1;
+  hhcd.Init.low_power_enable = 0;
+  hhcd.Init.phy_itface = HCD_PHY_ULPI;
+  hhcd.Init.Sof_enable = 0;
+  hhcd.Init.speed = HCD_SPEED_HIGH;
+  hhcd.Init.vbus_sensing_enable = 0;
+  hhcd.Init.use_external_vbus = 1;
+  hhcd.Init.lpm_enable = 0;
+  
+  /* Link the driver to the stack */
+  hhcd.pData = phost;
+  phost->pData = &hhcd;
+  
+  /* Initialize the LL driver */
+  HAL_HCD_Init(&hhcd);
+  
+#endif /*USE_USB_HS*/ 
+  USBH_LL_SetTimer(phost, HAL_HCD_GetCurrentFrame(&hhcd));
 
   return USBH_OK;
 }
@@ -48,6 +92,7 @@ USBH_StatusTypeDef  USBH_LL_Init (USBH_HandleTypeDef *phost)
   */
 USBH_StatusTypeDef  USBH_LL_DeInit (USBH_HandleTypeDef *phost)
 {
+  HAL_HCD_DeInit(phost->pData);
 
   return USBH_OK; 
 }
@@ -60,6 +105,7 @@ USBH_StatusTypeDef  USBH_LL_DeInit (USBH_HandleTypeDef *phost)
   */
 USBH_StatusTypeDef  USBH_LL_Start(USBH_HandleTypeDef *phost)
 {
+  HAL_HCD_Start(phost->pData);
 
   return USBH_OK; 
 }
@@ -72,6 +118,7 @@ USBH_StatusTypeDef  USBH_LL_Start(USBH_HandleTypeDef *phost)
   */
 USBH_StatusTypeDef  USBH_LL_Stop (USBH_HandleTypeDef *phost)
 {
+  HAL_HCD_Stop(phost->pData);
 
   return USBH_OK; 
 }
@@ -85,7 +132,25 @@ USBH_StatusTypeDef  USBH_LL_Stop (USBH_HandleTypeDef *phost)
 USBH_SpeedTypeDef USBH_LL_GetSpeed  (USBH_HandleTypeDef *phost)
 {
   USBH_SpeedTypeDef speed = USBH_SPEED_FULL;
+  
+  switch (HAL_HCD_GetCurrentSpeed(phost->pData))
+  {
+  case 0: 
+    speed = USBH_SPEED_HIGH;
+    break;
     
+  case 1: 
+    speed = USBH_SPEED_FULL;
+    break;
+    
+  case 2: 
+    speed = USBH_SPEED_LOW;
+    break;
+    
+  default:
+    speed = USBH_SPEED_FULL;
+    break;
+  }    
 
   return  speed;
 }
@@ -98,6 +163,7 @@ USBH_SpeedTypeDef USBH_LL_GetSpeed  (USBH_HandleTypeDef *phost)
   */
 USBH_StatusTypeDef USBH_LL_ResetPort (USBH_HandleTypeDef *phost) 
 {
+  HAL_HCD_ResetPort(phost->pData);
 
   return USBH_OK; 
 }
@@ -111,7 +177,7 @@ USBH_StatusTypeDef USBH_LL_ResetPort (USBH_HandleTypeDef *phost)
   */
 uint32_t USBH_LL_GetLastXferSize  (USBH_HandleTypeDef *phost, uint8_t pipe)  
 {
-   return 0; 
+   return HAL_HCD_HC_GetXferCount(phost->pData, pipe);
 }
 
 /**
@@ -134,7 +200,14 @@ USBH_StatusTypeDef   USBH_LL_OpenPipe (USBH_HandleTypeDef *phost,
                                       uint8_t ep_type,
                                       uint16_t mps)
 {
- 
+  HAL_HCD_HC_Init(phost->pData,
+                  pipe_num,
+                  epnum,
+                  dev_address,
+                  speed,
+                  ep_type,
+                  mps);
+
   return USBH_OK; 
 }
 
@@ -147,6 +220,8 @@ USBH_StatusTypeDef   USBH_LL_OpenPipe (USBH_HandleTypeDef *phost,
   */
 USBH_StatusTypeDef   USBH_LL_ClosePipe   (USBH_HandleTypeDef *phost, uint8_t pipe)   
 {
+  HAL_HCD_HC_Halt(phost->pData, pipe);
+
   return USBH_OK; 
 }
 
@@ -188,6 +263,14 @@ USBH_StatusTypeDef   USBH_LL_SubmitURB  (USBH_HandleTypeDef *phost,
                                             uint16_t length,
                                             uint8_t do_ping ) 
 {
+  HAL_HCD_HC_SubmitRequest(phost->pData,
+                           pipe, 
+                           direction,
+                           ep_type,  
+                           token, 
+                           pbuff, 
+                           length,
+                           do_ping);
 
   return USBH_OK;   
 }
@@ -209,7 +292,7 @@ USBH_StatusTypeDef   USBH_LL_SubmitURB  (USBH_HandleTypeDef *phost,
   */
 USBH_URBStateTypeDef  USBH_LL_GetURBState (USBH_HandleTypeDef *phost, uint8_t pipe) 
 {
-  return USBH_URB_IDLE; 
+  return (USBH_URBStateTypeDef)HAL_HCD_HC_GetURBState (phost->pData, pipe);
 }
 
 /**
@@ -225,6 +308,18 @@ USBH_URBStateTypeDef  USBH_LL_GetURBState (USBH_HandleTypeDef *phost, uint8_t pi
 
 USBH_StatusTypeDef  USBH_LL_DriverVBUS (USBH_HandleTypeDef *phost, uint8_t state)
 {
+#ifdef USE_USB_FS
+  if(state == 0)
+  {
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, GPIO_PIN_SET);
+  }
+  else
+  {
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, GPIO_PIN_RESET);
+  }
+  
+  HAL_Delay(200);
+#endif /* USE_USB_FS */
 
   return USBH_OK;  
 }
@@ -240,6 +335,14 @@ USBH_StatusTypeDef  USBH_LL_DriverVBUS (USBH_HandleTypeDef *phost, uint8_t state
   */
 USBH_StatusTypeDef   USBH_LL_SetToggle   (USBH_HandleTypeDef *phost, uint8_t pipe, uint8_t toggle)   
 {
+  if(hhcd.hc[pipe].ep_is_in)
+  {
+    hhcd.hc[pipe].toggle_in = toggle;
+  }
+  else
+  {
+    hhcd.hc[pipe].toggle_out = toggle;
+  }
 
   return USBH_OK; 
 }
@@ -254,7 +357,15 @@ USBH_StatusTypeDef   USBH_LL_SetToggle   (USBH_HandleTypeDef *phost, uint8_t pip
 uint8_t  USBH_LL_GetToggle   (USBH_HandleTypeDef *phost, uint8_t pipe)   
 {
   uint8_t toggle = 0;
-  
+
+  if(hhcd.hc[pipe].ep_is_in)
+  {
+    toggle = hhcd.hc[pipe].toggle_in;
+  }
+  else
+  {
+    toggle = hhcd.hc[pipe].toggle_out;
+  }  
 
   return toggle; 
 }
@@ -266,6 +377,36 @@ uint8_t  USBH_LL_GetToggle   (USBH_HandleTypeDef *phost, uint8_t pipe)
   */
 void  USBH_Delay (uint32_t Delay)
 {
-
+  HAL_Delay(Delay);
 }
+
+
+
+/* USB Host Application State */
+void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
+{
+    switch (id)
+    {
+    case HOST_USER_SELECT_CONFIGURATION:
+        break;
+
+    case HOST_USER_DISCONNECTION:
+        Appli_state = APPLICATION_DISCONNECT;
+
+    case HOST_USER_CLASS_ACTIVE:
+        Appli_state = APPLICATION_READY;
+
+    case HOST_USER_CONNECTION:
+        break;
+
+    default:
+        break;
+    }
+}
+
+
+
+
+
+
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

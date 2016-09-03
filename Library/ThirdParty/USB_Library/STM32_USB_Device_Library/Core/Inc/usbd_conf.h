@@ -34,10 +34,14 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32fxxx.h"  /* replace 'stm32xxx' with your HAL driver header filename, ex: stm32f4xx.h */
+#include "stm32f7xx.h"  /* replace 'stm32xxx' with your HAL driver header filename, ex: stm32f4xx.h */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "data_type.h"
+
+extern PCD_HandleTypeDef hpcd;
+
 
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
   * @{
@@ -81,6 +85,7 @@
 #define USBD_free                 free
 #define USBD_memset               memset
 #define USBD_memcpy               memcpy
+
     
  /* DEBUG macros */  
 

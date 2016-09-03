@@ -29,6 +29,7 @@
 
 #include "usbh_core.h"
 
+ApplicationStateDef Appli_state;
 
 /** @addtogroup USBH_LIB
   * @{
