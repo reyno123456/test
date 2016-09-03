@@ -1,13 +1,19 @@
 #ifndef __ISR__H
 #define __ISR__H
 
-#define SVC_VECTOR_NUM 		(11)
-#define	PENDSV_VECYOR_NUM 	(14)
-#define UART0_VECYOR_NUM	(16)
-#define UART1_VECYOR_NUM	(17)
+typedef enum
+{
+    SVC_VECTOR_NUM = 11,
+    PENDSV_VECTOR_NUM = 14,
+    SYSTICK_VECTOR_NUM = 15,
+    UART0_VECTOR_NUM = 16,
+    UART1_VECYOR_NUM = 17,
+}IRQ_type;
 
-int reg_IrqHandle(int num, unsigned int hdl);
-int rmv_IrqHandle(int num);
+typedef void(*Irq_handler)(void);
+
+int reg_IrqHandle(IRQ_type vct, Irq_handler hdl);
+int rmv_IrqHandle(IRQ_type vct);
 
 #endif
 

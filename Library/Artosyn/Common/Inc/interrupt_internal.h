@@ -2,8 +2,8 @@
 #define __ISR_INTERNAL__H
 
 void SVC_IRQHandler(void);
-void PendSV_IRQHandler(void);
-void SysTick_IRQHandler(void);
+void PENDSV_IRQHandler(void);
+void SYSTICK_IRQHandler(void);
 
 void UART0_IRQHandler(void);
 void UART1_IRQHandler(void);

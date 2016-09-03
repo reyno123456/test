@@ -23,7 +23,8 @@ CPU_NUMBER = cpu0
 # source file(s), including c file(s)
 SRC_C   := start.c
 
-INCDIRS := -I$(TOP_DIR)/Library/Artosyn/Common/Inc
+INCDIRS := -I$(TOP_DIR)/Library/Artosyn/Common/Inc \
+           -I$(TOP_DIR)/Kernel/FreeRTOS/CMSIS_RTOS
  
 # object file(s)
 OBJ_C   := $(patsubst %.c,%.o,$(SRC_C))

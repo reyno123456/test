@@ -1,2 +1,6 @@
-start_0.o: start_0.c ../../Library/Artosyn/Common/Inc/interrupt.h
-start_2.o: start_2.c ../../Library/Artosyn/Common/Inc/interrupt.h
+start_0.o: start_0.c ../../Library/Artosyn/Common/Inc/interrupt.h \
+ ../../Library/Artosyn/Common/Inc/interrupt_internal.h \
+ ../../Kernel/FreeRTOS/CMSIS_RTOS/cmsis_os.h
+start_2.o: start_2.c ../../Library/Artosyn/Common/Inc/interrupt.h \
+ ../../Library/Artosyn/Common/Inc/interrupt_internal.h
+ 

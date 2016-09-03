@@ -1,71 +1,64 @@
 #include "interrupt.h"
-#include "serial.h"
-#include "command.h"
 #include "debuglog.h"
 
 #define MAX_IRQ_VECTROS		(166)
-typedef void(*Irq_hdl_func)(void);
 
-
-static unsigned int handlers[MAX_IRQ_VECTROS] = {
+static Irq_handler handlers[MAX_IRQ_VECTROS] = {
 	0
 };
 
-int reg_IrqHandle(int num, unsigned int hdl)
+int reg_IrqHandle(IRQ_type vct, Irq_handler hdl)
 {
-	if(num < MAX_IRQ_VECTROS)
-	{
-		handlers[num ] = hdl;
-		return 0;
-	}
-	return 1;
+    if(vct < MAX_IRQ_VECTROS)
+    {
+        handlers[vct] = hdl;
+        return 0;
+    }
+
+    return 1;
 }
 
-int rmv_IrqHandle(int num)
+int rmv_IrqHandle(IRQ_type vct)
 {
-	if(num < MAX_IRQ_VECTROS)
-	{
-		handlers[num] = 0;
-		return 0;
-	}
-	return 1;
+    if(vct < MAX_IRQ_VECTROS)
+    {
+        handlers[vct] = 0;
+        return 0;
+    }
+    return 1;
 }
 
-#define IRQ_HDL_RUN(num) \
-do{ \
-	if(handlers[num] != 0) \
-	{ \
-		( *(Irq_hdl_func)(handlers[num]))(); \
-	} \
-	else \
-	{ \
-		dlog_info("IRQ vector %d\n", num); \
-	} \
-}while(0)
+static inline run_irq_hdl(IRQ_type vct)
+{
+    if(handlers[vct] != 0)
+    {
+        (handlers[vct])();
+    }
+}
 
 void SVC_IRQHandler(void)
 {
-	IRQ_HDL_RUN(SVC_VECTOR_NUM);
+    run_irq_hdl(SVC_VECTOR_NUM);
 }
 
-void PendSV_IRQHandler(void)
+void PENDSV_IRQHandler(void)
 {
-	IRQ_HDL_RUN(PENDSV_VECYOR_NUM);
+    run_irq_hdl(PENDSV_VECTOR_NUM);
 }
 
-void SysTick_IRQHandler(void)
+void SYSTICK_IRQHandler(void)
 {
-	IRQ_HDL_RUN(PENDSV_VECYOR_NUM);
+    run_irq_hdl(SYSTICK_VECTOR_NUM);
 }
 
 void UART0_IRQHandler(void)
 {
-    IRQ_HDL_RUN(UART0_VECYOR_NUM);
+    run_irq_hdl(UART0_VECTOR_NUM);
 }
 
 void UART1_IRQHandler(void)
 {
-	IRQ_HDL_RUN(UART1_VECYOR_NUM);
+    run_irq_hdl(UART1_VECYOR_NUM);
 }
 
 void UART2_IRQHandler(void)
