@@ -1,0 +1,35 @@
+#ifndef I2C_H
+#define I2C_H
+
+#include <stddef.h>
+#include <stdint.h>
+
+typedef enum
+{
+    I2C_Component_0 = 0,
+    I2C_Component_1,
+    I2C_Component_2,
+    I2C_Component_3,
+    I2C_Component_4
+} EN_I2C_COMPONENT;
+
+typedef enum
+{
+    I2C_Master_Mode = 0,
+    I2C_Slave_Mode,
+} ENUM_I2C_Mode;
+
+typedef enum
+{
+    I2C_Standard_Speed = 1,
+    I2C_Fast_Speed,
+    I2C_High_Speed,
+} ENUM_I2C_Speed;
+
+uint8_t I2C_Init(EN_I2C_COMPONENT en_component, ENUM_I2C_Mode en_i2cMode, uint16_t u16_i2cAddr, ENUM_I2C_Speed en_i2cSpeed);
+uint8_t I2C_Master_Write_Data(EN_I2C_COMPONENT en_component, uint8_t* ptr_subAddr, uint8_t u8_subAddrSize, uint8_t* ptr_data, uint32_t u32_dataSize);
+uint8_t I2C_Master_Read_Data(EN_I2C_COMPONENT en_component, uint8_t* ptr_subAddr, uint8_t u8_subAddrSize, uint8_t* ptr_data, uint32_t u32_dataSize);
+
+#endif
+
+

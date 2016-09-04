@@ -1,5 +1,6 @@
 #include "debuglog.h"
 #include "test_freertos.h"
+#include "test_i2c_adv7611.h"
 
 /**
  * @brief  CPU L1-Cache enable.

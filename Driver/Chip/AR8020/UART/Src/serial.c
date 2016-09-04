@@ -1,3 +1,5 @@
+#include <stddef.h>
+#include <stdint.h>
 #include "data_type.h"
 #include "serial.h"
 

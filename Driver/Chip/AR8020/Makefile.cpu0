@@ -26,10 +26,13 @@ CPU_NUMBER = cpu0
 SRC_C := UART/Src/serial.c \
          SD/Src/sd_core.c \
          SD/Src/sd_card.c \
-         SD/Src/sd_host.c
+         SD/Src/sd_host.c \
+         I2C/Src/i2c_ll.c \
+         I2C/Src/i2c.c
 
 INCDIRS := -ISD/Inc \
            -IUART/Inc \
+           -II2C/Inc \
            -I$(TOP_DIR)/Configure \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Device/ST/STM32F7xx/Include \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \
@@ -53,6 +56,7 @@ install:
 	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)/$(CPU_NUMBER)
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@cp -f UART/Inc/serial.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f I2C/Inc/i2c.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."

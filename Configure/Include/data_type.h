@@ -6,27 +6,6 @@
 #define ENUMERATE
 #define FPGA
 
-#if 0
-#ifndef int16_t
-typedef  INT16  int16_t;
-#endif
-#ifndef uint16_t
-typedef UINT16 uint16_t;
-#endif
-#ifndef int32_t
-typedef  INT32  int32_t;
-#endif
-#ifndef int64_t
-typedef  INT64  int64_t;
-#endif
-#ifndef uint32_t
-typedef UINT32 uint32_t;
-#endif
-#ifndef uint64_t
-typedef UINT64 uint64_t;
-#endif
-#endif
-
 #define USE_FULL_ASSERT
 /* shift bit field */
 #define SBF(f, v)    ((v) << (f))
@@ -55,14 +34,8 @@ typedef UINT64 uint64_t;
 #define m7_malloc             pvPortMalloc
 #define m7_free               vPortFree
 
-/*
-typedef unsigned char uint8_t;
-typedef unsigned short int uint16_t;
-typedef uint32_t uint32_t;
-typedef unsigned unsigned long int uint64_t;
-*/
-
-#define NULL ((void*)0)
+#define TRUE  (1)
+#define FALSE (0)
 
 #endif
 
