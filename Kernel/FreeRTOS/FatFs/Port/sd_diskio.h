@@ -33,7 +33,7 @@
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-extern Diskio_drvTypeDef  SD_Driver;
+//extern Diskio_drvTypeDef  SD_Driver;
 
 #endif /* __SD_DISKIO_H */
 

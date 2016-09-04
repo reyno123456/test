@@ -23,12 +23,29 @@
 extern "C" {
 #endif
 
-#include "integer.h"	/* Basic integer types */
+//#include "integer.h"	/* Basic integer types */
 #include "ffconf.h"		/* FatFs configuration options */
 #if _FATFS != _FFCONF
 #error Wrong configuration file (ffconf.h).
 #endif
 
+/*ADD BY MINZHAO*/
+/* This type MUST be 8 bit */
+typedef unsigned char	BYTE;
+
+/* These types MUST be 16 bit */
+typedef short			SHORT;
+typedef unsigned short	WORD;
+typedef unsigned short	WCHAR;
+
+/* These types MUST be 16 bit or 32 bit */
+typedef int				INT;
+typedef unsigned int	UINT;
+
+/* These types MUST be 32 bit */
+typedef long			LONG;
+typedef unsigned long	DWORD;
+/*END MINZHAO*/
 
 
 /* Definitions of volume management */

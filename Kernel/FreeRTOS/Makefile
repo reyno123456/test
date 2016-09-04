@@ -78,6 +78,8 @@ install:
 	@cp -f include/queue.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f include/semphr.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f include/event_groups.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f FatFs/Inc/ff.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f FatFs/Inc/ffconf.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."
@@ -95,6 +97,8 @@ clean:
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/queue.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/semphr.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/event_groups.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/ff.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/ffconf.h
 
 .PHONY: all clean install
 #########################################################################

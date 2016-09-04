@@ -39,8 +39,6 @@ INCDIRS :=  -IInc \
 # object file(s)
 OBJ_C   := $(patsubst %.c,%.o,$(SRC_C))
 
-CFLAGS +=
-
 all: .depend $(LIB) install
 
 $(LIB):  $(OBJ_C)
@@ -55,7 +53,7 @@ install:
 
 clean:
 	@echo "Cleaning..."
-	@$(RM) $(LIB) $(OBJ_C) $(OBJ_CPP) .depend $(OUTPUT_LIB_STAGING_DIR)/$(LIB)
+	@$(RM) $(LIB) $(OBJ_C) $(OBJ_CPP) .depend $(OUTPUT_LIB_STAGING_DIR)/$(LIB) $(OUTPUT_HEADER_STAGING_DIR)/debuglog.h
 
 .PHONY: all clean install
 #########################################################################

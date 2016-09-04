@@ -29,6 +29,7 @@
 #include <string.h>
 #include "ff_gen_drv.h"
 #include "sd_host.h"
+#include "debuglog.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Block Size in Bytes */
@@ -86,7 +87,7 @@ DSTATUS SD_initialize(BYTE lun)
   {
     Stat &= ~STA_NOINIT;
   }
-
+  dlog_info("\nSD initializa success!");
   return Stat;
 }
 
@@ -119,25 +120,19 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 {
   DRESULT res = RES_OK;
 
-  if (sd_read((uint32_t*)buff,
+  if (sd_read((uint32_t)buff,
               (uint32_t) (sector * BLOCK_SIZE),
               count) != MSD_OK)
   {
     res = RES_ERROR;
   }
 
-  serial_puts("Buff Addr = ");
-  print_str(buff);
-
-
-  serial_puts("\nprint read");
-  for (int i = 0; i < 512; ++i)
+  dlog_info("Buff Addr = %x", buff);
+  dlog_info("\nprint read");
+  for (int i = 0; i < 32; ++i)
   {
-    serial_puts("\nread byte = ");
-    print_str(buff[i]);
-    serial_putc('\n');
+    dlog_info("\nread byte = %x", buff[i]);
   }
-
   return res;
 }
 
@@ -154,7 +149,12 @@ DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
 {
   DRESULT res = RES_OK;
 
-  if (sd_write((uint32_t*)buff,
+  for (int j = 0; j < 32; ++j)
+  {
+    dlog_info("\nwrite byte = %x", buff[j]);
+  }
+
+  if (sd_write((uint32_t)buff,
                (uint64_t)(sector * BLOCK_SIZE),
                count) != MSD_OK)
   {

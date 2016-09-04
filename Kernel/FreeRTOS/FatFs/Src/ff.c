@@ -125,8 +125,7 @@
 
 #include "ff.h"			/* Declarations of FatFs API */
 #include "diskio.h"		/* Declarations of disk I/O functions */
-#include "serial.h"
-
+#include "debuglog.h"
 
 /*--------------------------------------------------------------------------
 
@@ -2316,9 +2315,7 @@ FRESULT find_volume (	/* FR_OK(0): successful, !=0: any error occurred */
 	fs->fs_type = 0;					/* Clear the file system object */
 	fs->drv = LD2PD(vol);				/* Bind the logical drive and a physical drive */
 
-	serial_puts("fs->drv = ");
-	print_str(fs->drv);
-	serial_putc('\n');
+	dlog_info("fs->drv = %d\n", fs->drv);
 
 	stat = disk_initialize(fs->drv);	/* Initialize the physical drive */
 	if (stat & STA_NOINIT)				/* Check if the initialization succeeded */
@@ -2333,9 +2330,7 @@ FRESULT find_volume (	/* FR_OK(0): successful, !=0: any error occurred */
 	bsect = 0;
 	fmt = check_fs(fs, bsect);					/* Load sector 0 and check if it is an FAT boot sector as SFD */
 
-	serial_puts("fmt = ");
-	print_str(fmt);
-	serial_putc('\n');
+	dlog_info("fmt = %d\n", fmt);
 
 	if (fmt == 1 || (!fmt && (LD2PT(vol)))) {	/* Not an FAT boot sector or forced partition number */
 		for (i = 0; i < 4; i++) {			/* Get partition offset */
@@ -2494,12 +2489,10 @@ FRESULT f_mount (
 	FRESULT res;
 	const TCHAR *rp = path;
 	vol = get_ldnumber(&rp);
-	serial_puts("vol = ");
-	print_str(vol);
-	serial_putc('\n');
+	dlog_info("vol = %d\n", vol);
 	if (vol < 0)
 	{
-		serial_puts("\nvol < 0\n");
+		dlog_info("\nvol < 0\n");
 		return FR_INVALID_DRIVE;
 	}
 	cfs = FatFs[vol];					/* Pointer to fs object */
@@ -2541,7 +2534,7 @@ FRESULT f_open (
     BYTE mode			/* Access mode and file open mode flags */
 )
 {
-	serial_puts("f_open in \n");
+	dlog_info("f_open in \n");
 
 	FRESULT res;
 	DIR dj;
@@ -2663,7 +2656,7 @@ FRESULT f_open (
 		}
 	}
 
-	serial_puts("f_open out \n");
+	dlog_info("f_open out \n");
 	LEAVE_FF(dj.fs, res);
 }
 

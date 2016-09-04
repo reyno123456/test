@@ -51,25 +51,21 @@ uint8_t FATFS_LinkDriverEx(Diskio_drvTypeDef *drv, char *path, uint8_t lun)
   uint8_t ret = 1;
   uint8_t DiskNum = 0;
 
-  serial_puts("disk.nbr = ");
-  print_str(disk.nbr);
-  serial_puts("\nvolume = ");
-  print_str(_VOLUMES);
-  serial_putc('\n');
+  dlog_info("disk.nbr = %d", disk.nbr);
   /*  if (disk.nbr <= _VOLUMES)
     {
       disk.is_initialized[disk.nbr] = 0;
       disk.drv[disk.nbr] = drv;
       disk.lun[disk.nbr] = lun;
       DiskNum = disk.nbr++;
-      serial_puts("DiskNum = ");
+      dlog_info("DiskNum = ");
       print_str(DiskNum);
       serial_putc('\n');
       path[0] = DiskNum + '0';
       path[1] = ':';
       path[2] = '/';
       path[3] = 0;
-      serial_puts("\npath = ");
+      dlog_info("\npath = ");
       serial_putc(path[0]);
       serial_putc(path[1]);
 
@@ -82,14 +78,11 @@ uint8_t FATFS_LinkDriverEx(Diskio_drvTypeDef *drv, char *path, uint8_t lun)
   disk.drv[disk.nbr] = drv;
   disk.lun[disk.nbr] = lun;
   DiskNum = disk.nbr++;
-  print_str(DiskNum);
-  serial_putc('\n');
   path[0] = DiskNum + '0';
   path[1] = ':';
   path[2] = '/';
   path[3] = 0;
-  serial_puts("\npath = ");
-  serial_puts(path);
+  dlog_info("\npath = %d\n", path);
   ret = 0;
 
   return ret;

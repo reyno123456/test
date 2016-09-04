@@ -16,29 +16,18 @@
 extern "C" {
 #endif
 
-#include "stm32f746xx.h"
-#include "command.h"
-
+//#include <stdio.h>
+#include "data_type.h"
+#include <stdint.h>
+//#include "unistd.h"
+//#include "stm32f746xx.h"
 //====================================================================
 //MOBILE STORAGE RELATED
 //====================================================================
-#define SDMMC_BASE  0x42000000
-
 /**
- * * @brief  SDMMC Status structures definition
- * */
-typedef enum
-{
-  SDMMC_OK       = 0x00,
-  SDMMC_ERROR    = 0x01,
-  SDMMC_BUSY     = 0x02,
-  SDMMC_TIMEOUT  = 0x03
-} SDMMC_Status;
-
-/**
-  * @brief SD controller register
-  */
-typedef struct
+* @brief SD controller register
+*/
+typedef struct 
 {
   uint32_t  CTRL         ;   /** Control */
   uint32_t  PWREN        ;   /** Power-enable */
@@ -85,6 +74,80 @@ typedef struct
   uint32_t  EMMC_DDR_REG ;   /** eMMC DDR START bit detection or HS400 mode enable control register */
   uint32_t  ENABLE_SHIFT ;   /** Phase shift control register, default value 0x0 */
 } SDMMC_REG;
+
+typedef enum
+{
+  SDMMC_OK       = 0x00,
+  SDMMC_ERROR    = 0x01,
+  SDMMC_BUSY     = 0x02,
+  SDMMC_TIMEOUT  = 0x03
+} SDMMC_Status;
+
+/**
+  * @brief  SDMMC Configuration Structure definition
+  */
+typedef struct
+{
+  uint32_t  ClockEdge;            /*!< Specifies the clock transition on which the bit capture is made.
+                                           This parameter can be a value of @ref SDMMC_LL_Clock_Edge                 */
+  uint32_t  ClockBypass;          /*!< Specifies whether the SDMMC Clock divider bypass is
+                                           enabled or disabled.
+                                           This parameter can be a value of @ref SDMMC_LL_Clock_Bypass               */
+  uint32_t  ClockPowerSave;       /*!< Specifies whether SDMMC Clock output is enabled or
+                                           disabled when the bus is idle.
+                                           This parameter can be a value of @ref SDMMC_LL_Clock_Power_Save           */
+  uint32_t  BusWide;              /*!< Specifies the SDMMC bus width.
+                                           This parameter can be a value of @ref SDMMC_LL_Bus_Wide                   */
+  uint32_t  HardwareFlowControl;  /*!< Specifies whether the SDMMC hardware flow control is enabled or disabled.
+                                           This parameter can be a value of @ref SDMMC_LL_Hardware_Flow_Control      */
+  uint32_t  ClockDiv;             /*!< Specifies the clock frequency of the SDMMC controller.
+                                           This parameter can be a value between Min_Data = 0 and Max_Data = 255 */
+} SDMMC_InitTypeDef;
+
+typedef enum
+{
+  SDMMC_RESPONSE_NO = 0,          /* no response*/
+  SDMMC_RESPONSE_R1,              /*normal response command. length = 48bits */
+  SDMMC_RESPONSE_R2,              /*136bits CID for CMD2 and CMD10 and CSD for CMD9*/
+  SDMMC_RESPONSE_R3,              /*48bits OCR for ACMD41*/
+  SDMMC_RESPONSE_R6,              /*48bits RCA for CMD3*/
+  SDMMC_RESPONSE_R7               /*48bits support the voltage information for CMD8*/
+} RESPTYPE;
+
+/**
+  * @brief  SDMMC Command Control structure
+  */
+typedef struct
+{
+  uint32_t Argument;            /*!< Specifies the SDMMC command argument which is sent
+                                     to a card as part of a command message. If a command
+                                     contains an argument, it must be loaded into this register
+                                     before writing the command to the command register.              */
+  uint32_t CmdIndex;            /*!< Specifies the SDMMC command index. It must be Min_Data = 0 and
+                                     Max_Data = 64                                                    */
+  RESPTYPE Response;            /* specifies the response type*/
+  uint32_t Attribute;           /* specifies the CMD attribute*/
+} SDMMC_CmdInitTypeDef;
+
+/**
+  * @brief  SDMMC Data Control structure
+  */
+typedef struct
+{
+  uint32_t DataTimeOut;         /*!< Specifies the data timeout period in card bus clock periods.  */
+  uint32_t DataLength;          /*!< Specifies the number of data bytes to be transferred.         */
+  uint32_t DataBlockSize;       /*!< Specifies the data block size for block transfer.
+                                     This parameter can be a value of @ref SDMMC_LL_Data_Block_Size    */
+  uint32_t TransferDir;         /*!< Specifies the data transfer direction, whether the transfer
+                                     is a read or write.
+                                     This parameter can be a value of @ref SDMMC_LL_Transfer_Direction */
+  uint32_t TransferMode;        /*!< Specifies whether data transfer is in stream or block mode.
+                                     This parameter can be a value of @ref SDMMC_LL_Transfer_Type      */
+  uint32_t DPSM;                /*!< Specifies whether SDMMC Data path state machine (DPSM)
+                                     is enabled or disabled.
+                                     This parameter can be a value of @ref SDMMC_LL_DPSM_State         */
+} SDMMC_DataInitTypeDef;
+#define SDMMC_BASE  0x42000000
 
 #define SDMMC_ADDR       ((SDMMC_REG *)SDMMC_BASE)
 /* Power Enable Register */
@@ -262,70 +325,6 @@ typedef struct
 #define SDMMC_RESP1                                ((uint32_t)0x00000004)
 #define SDMMC_RESP2                                ((uint32_t)0x00000008)
 #define SDMMC_RESP3                                ((uint32_t)0x0000000C)
-/**
-  * @brief  SDMMC Configuration Structure definition
-  */
-typedef struct
-{
-  uint32_t  ClockEdge;            /*!< Specifies the clock transition on which the bit capture is made.
-                                           This parameter can be a value of @ref SDMMC_LL_Clock_Edge                 */
-  uint32_t  ClockBypass;          /*!< Specifies whether the SDMMC Clock divider bypass is
-                                           enabled or disabled.
-                                           This parameter can be a value of @ref SDMMC_LL_Clock_Bypass               */
-  uint32_t  ClockPowerSave;       /*!< Specifies whether SDMMC Clock output is enabled or
-                                           disabled when the bus is idle.
-                                           This parameter can be a value of @ref SDMMC_LL_Clock_Power_Save           */
-  uint32_t  BusWide;              /*!< Specifies the SDMMC bus width.
-                                           This parameter can be a value of @ref SDMMC_LL_Bus_Wide                   */
-  uint32_t  HardwareFlowControl;  /*!< Specifies whether the SDMMC hardware flow control is enabled or disabled.
-                                           This parameter can be a value of @ref SDMMC_LL_Hardware_Flow_Control      */
-  uint32_t  ClockDiv;             /*!< Specifies the clock frequency of the SDMMC controller.
-                                           This parameter can be a value between Min_Data = 0 and Max_Data = 255 */
-} SDMMC_InitTypeDef;
-
-typedef enum
-{
-  SDMMC_RESPONSE_NO = 0,          /* no response*/
-  SDMMC_RESPONSE_R1,              /*normal response command. length = 48bits */
-  SDMMC_RESPONSE_R2,              /*136bits CID for CMD2 and CMD10 and CSD for CMD9*/
-  SDMMC_RESPONSE_R3,              /*48bits OCR for ACMD41*/
-  SDMMC_RESPONSE_R6,              /*48bits RCA for CMD3*/
-  SDMMC_RESPONSE_R7               /*48bits support the voltage information for CMD8*/
-} RESPTYPE;
-
-/**
-  * @brief  SDMMC Command Control structure
-  */
-typedef struct
-{
-  uint32_t Argument;            /*!< Specifies the SDMMC command argument which is sent
-                                     to a card as part of a command message. If a command
-                                     contains an argument, it must be loaded into this register
-                                     before writing the command to the command register.              */
-  uint32_t CmdIndex;            /*!< Specifies the SDMMC command index. It must be Min_Data = 0 and
-                                     Max_Data = 64                                                    */
-  RESPTYPE Response;            /* specifies the response type*/
-  uint32_t Attribute;           /* specifies the CMD attribute*/
-} SDMMC_CmdInitTypeDef;
-
-/**
-  * @brief  SDMMC Data Control structure
-  */
-typedef struct
-{
-  uint32_t DataTimeOut;         /*!< Specifies the data timeout period in card bus clock periods.  */
-  uint32_t DataLength;          /*!< Specifies the number of data bytes to be transferred.         */
-  uint32_t DataBlockSize;       /*!< Specifies the data block size for block transfer.
-                                     This parameter can be a value of @ref SDMMC_LL_Data_Block_Size    */
-  uint32_t TransferDir;         /*!< Specifies the data transfer direction, whether the transfer
-                                     is a read or write.
-                                     This parameter can be a value of @ref SDMMC_LL_Transfer_Direction */
-  uint32_t TransferMode;        /*!< Specifies whether data transfer is in stream or block mode.
-                                     This parameter can be a value of @ref SDMMC_LL_Transfer_Type      */
-  uint32_t DPSM;                /*!< Specifies whether SDMMC Data path state machine (DPSM)
-                                     is enabled or disabled.
-                                     This parameter can be a value of @ref SDMMC_LL_DPSM_State         */
-} SDMMC_DataInitTypeDef;
 
 /**
 * @def check Bus Width
@@ -606,90 +605,94 @@ uint32_t     Core_SDMMC_GetFIFOCount(SDMMC_REG *SDMMCx);
 
 /* Power on/off switch for up to 16 cards */
 #define   Core_SDMMC_SetPWREN(SDMMCx, temreg) \
-            write_reg32(&(SDMMCx->PWREN),temreg);
+            write_reg32((uint32_t *)&(SDMMCx->PWREN),temreg);
 /* Bits used to mask unwanted interrupts */
 #define   Core_SDMMC_SetINTMASK(SDMMCx, temreg) \
-            write_reg32(&(SDMMCx->INTMASK),temreg);
+            write_reg32((uint32_t *)&(SDMMCx->INTMASK),temreg);
 /* Writes to bits clear status bit */
 #define   Core_SDMMC_SetRINTSTS(SDMMCx, temreg) \
-            write_reg32(&(SDMMCx->RINTSTS),temreg);
+            write_reg32((uint32_t *)&(SDMMCx->RINTSTS),temreg);
 /* Enable global interrupt */
 #define   Core_SDMMC_SetCTRL(SDMMCx, temreg) \
-            write_reg32(&(SDMMCx->CTRL),temreg);
+            write_reg32((uint32_t *)&(SDMMCx->CTRL),temreg);
 /* Clock Divider Register*/
 #define   Core_SDMMC_SetCLKDIV(SDMMCx, temreg) \
-            write_reg32(&(SDMMCx->CLKDIV),temreg);
+            write_reg32((uint32_t *)&(SDMMCx->CLKDIV),temreg);
 /* Clock divider source for up to 16 SD cards supported */
 #define   Core_SDMMC_SetCLKSRC(SDMMCx, temreg) \
-            write_reg32(&(SDMMCx->CLKSRC),temreg);
+            write_reg32((uint32_t *)&(SDMMCx->CLKSRC),temreg);
 /* Clock Enable Register */
 #define   Core_SDMMC_SetCLKENA(SDMMCx, temreg) \
-            write_reg32(&(SDMMCx->CLKENA),temreg);
+            write_reg32((uint32_t *)&(SDMMCx->CLKENA),temreg);
 /* Set value for card data read timeout*/
 #define   Core_SDMMC_SetTMOUT(SDMMCx, temreg) \
-            write_reg32(&(SDMMCx->TMOUT),temreg);
+            write_reg32((uint32_t *)&(SDMMCx->TMOUT),temreg);
 /* Set card type */
 #define   Core_SDMMC_SetCTYPE(SDMMCx, temreg) \
-            write_reg32(&(SDMMCx->CTYPE),temreg);
+            write_reg32((uint32_t *)&(SDMMCx->CTYPE),temreg);
 /* FIFO Threshold Watermark Register */
 #define   Core_SDMMC_SetFIFOTH(SDMMCx, temreg) \
-            write_reg32(&(SDMMCx->FIFOTH),temreg);
+            write_reg32((uint32_t *)&(SDMMCx->FIFOTH),temreg);
 /* Bus Mode Register */
 #define   Core_SDMMC_SetBMOD(SDMMCx, temreg) \
-            write_reg32(&(SDMMCx->BMOD),temreg);
+            write_reg32((uint32_t *)&(SDMMCx->BMOD),temreg);
 /* Descriptor List Base Address Register */
 #define   Core_SDMMC_SetDBADDR(SDMMCx, temreg) \
-            write_reg32(&(SDMMCx->DBADDR),temreg);
+            write_reg32((uint32_t *)&(SDMMCx->DBADDR),temreg);
 /* internal DMAC Interrupt Enable Register*/
 #define   Core_SDMMC_SetIDINTEN(SDMMCx, temreg) \
-            write_reg32(&(SDMMCx->IDINTEN),temreg);
+            write_reg32((uint32_t *)&(SDMMCx->IDINTEN),temreg);
 #define   Core_SDMMC_SetUHSREG(SDMMCx, temreg) \
-            write_reg32(&(SDMMCx->UHSREG),temreg);
+            write_reg32((uint32_t *)&(SDMMCx->UHSREG),temreg);
 #define   Core_SDMMC_SetBLKSIZ(SDMMCx, temreg)  \
-           write_reg32(&(SDMMCx->BLKSIZ),temreg);
+           write_reg32((uint32_t *)&(SDMMCx->BLKSIZ),temreg);
 #define   Core_SDMMC_SetBYCTNT(SDMMCx, temreg)  \
-            write_reg32(&(SDMMCx->BYCTNT),temreg);
+            write_reg32((uint32_t *)&(SDMMCx->BYCTNT),temreg);
 #define   Core_SDMMC_SetCMD(SDMMCx, temreg) \
-            write_reg32(&(SDMMCx->CMD),temreg);
+            write_reg32((uint32_t *)&(SDMMCx->CMD),temreg);
 #define   Core_SDMMC_SetCMDARG(SDMMCx, temreg) \
-            write_reg32(&(SDMMCx->CMDARG),temreg);
+            write_reg32((uint32_t *)&(SDMMCx->CMDARG),temreg);
 #define   Core_SDMMC_GetCDETECT(SDMMCx) \
-            read_reg32(&(SDMMCx->CDETECT));
+            read_reg32((uint32_t *)&(SDMMCx->CDETECT));
 #define   Core_SDMMC_GetRINTSTS(SDMMCx) \
-            read_reg32(&(SDMMCx->RINTSTS));
+            read_reg32((uint32_t *)&(SDMMCx->RINTSTS));
 #define   Core_SDMMC_GetSTATUS(SDMMCx)  \
-            read_reg32(&(SDMMCx->STATUS));
+            read_reg32((uint32_t *)&(SDMMCx->STATUS));
 #define   Core_SDMMC_GetCMD(SDMMCx) \
-            read_reg32(&(SDMMCx->CMD));
+            read_reg32((uint32_t *)&(SDMMCx->CMD));
 #define   Core_SDMMC_GetRESP0(SDMMCx) \
-            read_reg32(&(SDMMCx->RESP0));
+            read_reg32((uint32_t *)&(SDMMCx->RESP0));
 #define   Core_SDMMC_GetRESP1(SDMMCx) \
-            read_reg32(&(SDMMCx->RESP1));
+            read_reg32((uint32_t *)&(SDMMCx->RESP1));
 #define   Core_SDMMC_GetRESP2(SDMMCx) \
-            read_reg32(&(SDMMCx->RESP2));
+            read_reg32((uint32_t *)&(SDMMCx->RESP2));
 #define   Core_SDMMC_GetRESP3(SDMMCx) \
-            read_reg32(&(SDMMCx->RESP3));
+            read_reg32((uint32_t *)&(SDMMCx->RESP3));
 
 
 #define   Core_SDMMC_WaiteCmdDone(SDMMCx) \
       do { \
         get_val = Core_SDMMC_GetRINTSTS(SDMMCx)  \
         cmd_done = (get_val & SDMMC_RINTSTS_CMD_DONE);  \
+        dlog_info("Cmd Done?\n"); \
       } while (!cmd_done);
 #define   Core_SDMMC_WaiteDataOver(SDMMCx) \
       do { \
         get_val = Core_SDMMC_GetRINTSTS(SDMMCx)  \
         data_over = (get_val & SDMMC_RINTSTS_DATA_OVER);  \
+        dlog_info("Data Over?\n");  \
       } while (!data_over);
 #define   Core_SDMMC_WaiteCardBusy(SDMMCx) \
       do { \
         get_val = Core_SDMMC_GetSTATUS(SDMMCx)  \
         card_busy = (get_val & SDMMC_STATUS_DATA_BUSY);  \
+        dlog_info("Card Busy?\n");   \
       } while (card_busy);
 #define   Core_SDMMC_WaiteCmdStart(SDMMCx) \
       do { \
-      get_val = Core_SDMMC_GetCMD(SDMMCx)  \
-      cmd_start = (get_val & SDMMC_CMD_START_CMD); \
+        get_val = Core_SDMMC_GetCMD(SDMMCx)  \
+        cmd_start = (get_val & SDMMC_CMD_START_CMD); \
+        dlog_info("Cmd Start?\n");  \
       } while (cmd_start);
 #define   Core_SDMMC_WaiteVoltSwitchInt(SDMMCx)  \
       do { \

@@ -46,6 +46,8 @@ $(LIB):  $(OBJ_C)
 install:
 	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)
+	@cp -f ./Inc/ff.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f ./Inc/ffconf.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."

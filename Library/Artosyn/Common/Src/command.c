@@ -1,6 +1,15 @@
+<<<<<<< Updated upstream
 #include "command.h"
 #include "sd_host.h"
 #include "debuglog.h"
+=======
+#include "sd_host.h"
+#include "stm32f746xx.h"
+#include "debuglog.h"
+#include <string.h>
+#include <stdlib.h>
+
+>>>>>>> Stashed changes
 
 unsigned char g_commandPos;
 char g_commandLine[50];
@@ -85,7 +94,11 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     /* error command */
     else
     {
+<<<<<<< Updated upstream
         dlog_error("command not found!\n");
+=======
+        dlog_info("command not found!\n");
+>>>>>>> Stashed changes
     }
 
     /* must init to receive new data from serial */
@@ -150,7 +163,11 @@ void command_readMemory(char *addr)
 
     if (readAddress == 0xFFFFFFFF)
     {
+<<<<<<< Updated upstream
         dlog_error("read address is illegal\n");
+=======
+        dlog_info("read address is illegal");
+>>>>>>> Stashed changes
         return;
     }
 
@@ -161,11 +178,19 @@ void command_readMemory(char *addr)
     for (row = 0; row < 8; row++)
     {
         /* new line */
+<<<<<<< Updated upstream
         dlog_info("0x%08x: ", (unsigned int)readAddress);
 
         for (column = 0; column < 8; column++)
         {
             dlog_info("%08x ", *(unsigned int *)readAddress);
+=======
+        dlog_info("0x%x: ", readAddress);
+
+        for (column = 0; column < 8; column++)
+        {
+            dlog_info("0x%x: ", readAddress);
+>>>>>>> Stashed changes
             readAddress += 4;
         }
         dlog_info("\n");
@@ -182,7 +207,11 @@ void command_writeMemory(char *addr, char *value)
 
     if (writeAddress == 0xFFFFFFFF)
     {
+<<<<<<< Updated upstream
         dlog_error("write address is illegal\n");
+=======
+        dlog_info("write address is illegal");
+>>>>>>> Stashed changes
         return;
     }
 
@@ -207,11 +236,21 @@ void command_readSdcard(char *Dstaddr, char *BytesNum, char *SrcAddr)
     iSrcAddr   = command_str2uint(SrcAddr);
 
 
+<<<<<<< Updated upstream
     dlog_info("readSdcardBuff = 0x%08x\n", readSdcardBuff);
 
     dlog_info("iDstAddr = 0x%08x\n", iDstAddr);
 
     dlog_info("iBytesNum = 0x%08x\n", iBytesNum);
+=======
+    dlog_info("readSdcardBuff = %x\n", readSdcardBuff);
+
+    dlog_info("iDstAddr = %x\n", iDstAddr);
+
+    dlog_info("iBytesNum = %x\n", iBytesNum);
+
+    dlog_info("iSrcAddr = %x\n", iSrcAddr);
+>>>>>>> Stashed changes
 
     dlog_info("iSrcAddr = 0x%08x\n", iSrcAddr);
 
@@ -226,25 +265,25 @@ void command_readSdcard(char *Dstaddr, char *BytesNum, char *SrcAddr)
     /* print to serial */
     for (blockIndex = iDstAddr; blockIndex <= (iDstAddr + iBytesNum / dma.BlockSize); blockIndex++)
     {
-        serial_puts("==============block:");
-        printf("%x", blockIndex);
-        serial_puts("==============\n");
+        dlog_info("==============block:");
+        dlog_info("%x", blockIndex);
+        dlog_info("==============\n");
 
         for (rowIndex = 0; rowIndex < 16; rowIndex++)
         {
             /* new line */
-            serial_puts("0x");
-            printf("%x", (unsigned int)((rowIndex << 5) + (blockIndex << 9)));
-            serial_putc(':');
-            serial_putc(' ');
+            dlog_info("0x");
+            dlog_info("%x", (unsigned int)((rowIndex << 5) + (blockIndex << 9)));
+            dlog_info(':');
+            dlog_info(' ');
 
             for (columnIndex = 0; columnIndex < 8; columnIndex++)
             {
-                printf("%x", *((unsigned int *)bufferPos));
-                serial_putc(' ');
+                dlog_info("%x", *((unsigned int *)bufferPos));
+                dlog_info(' ');
                 bufferPos += 4;
             }
-            serial_putc('\n');
+            dlog_info('\n');
         }
     }
     m7_free(readSdcardBuff);
@@ -271,6 +310,7 @@ void command_writeSdcard(char *Dstaddr, char *BytesNum, char *SrcAddr)
     m7_free(writeSdcardBuff);
 #endif
 
+<<<<<<< Updated upstream
     dlog_info("writeSdcardBuff = 0x%08x\n", writeSdcardBuff);
 
     dlog_info("iDstAddr = 0x%08x\n", iDstAddr);
@@ -278,6 +318,15 @@ void command_writeSdcard(char *Dstaddr, char *BytesNum, char *SrcAddr)
     dlog_info("iBytesNum = 0x%08x\n", iBytesNum);
 
     dlog_info("iSrcAddr = 0x%08x\n", iSrcAddr);
+=======
+    dlog_info("writeSdcardBuff = %x\n", writeSdcardBuff);
+
+    dlog_info("iDstAddr = %x\n", iDstAddr);
+
+    dlog_info("iBytesNum = %x\n", iBytesNum);
+
+    dlog_info("iSrcAddr = %x\n", iSrcAddr);
+>>>>>>> Stashed changes
 }
 
 void command_eraseSdcard(char *startBlock, char *blockNum)
@@ -287,7 +336,15 @@ void command_eraseSdcard(char *startBlock, char *blockNum)
     iStartBlock = command_str2uint(startBlock);
     iBlockNum   = command_str2uint(blockNum);
 
+<<<<<<< Updated upstream
     dlog_info("startBlock = 0x%08x\n", iStartBlock);
+=======
+    dlog_info("startBlock = %x\n", iStartBlock);
+
+    dlog_info("blockNum = %x\n", iBlockNum);
+
+    //sd_erase(&sdhandle, iStartBlock, iBlockNum);
+>>>>>>> Stashed changes
 
     dlog_info("blockNum = 0x%08x\n", iBlockNum);
 }
@@ -301,8 +358,13 @@ void delay_ms(uint32_t num)
 void write_reg32(uint32_t *addr, uint32_t data)
 {
 #ifdef ECHO
+<<<<<<< Updated upstream
     dlog_info("Write ADDR = 0x%08x\n", (uint32_t)addr);
     dlog_info("Write data = 0x%08x\n", (uint32_t)data);
+=======
+    dlog_info("Write ADDR = %x\n" , (uint32_t)addr);
+    dlog_info("Write data = %x\n" , data);
+>>>>>>> Stashed changes
 #endif
     uint32_t *reg_addr = (uint32_t *)addr;
     *reg_addr = data;
@@ -311,11 +373,19 @@ void write_reg32(uint32_t *addr, uint32_t data)
 uint32_t read_reg32(uint32_t *addr)
 {
 #ifdef ECHO
+<<<<<<< Updated upstream
     dlog_info("Read ADDR = 0x%08x\n", (uint32_t)addr);
 #endif
     uint32_t *reg_addr = (uint32_t *)addr;
 #ifdef ECHO
     dlog_info("Read data = 0x%08x\n", (uint32_t)*reg_addr);
+=======
+    dlog_info("Read ADDR = %x\n" , (uint32_t)addr);
+#endif
+    uint32_t *reg_addr = (uint32_t *)addr;
+#ifdef ECHO
+    dlog_info("Read data = %x\n" , *reg_addr);
+>>>>>>> Stashed changes
 #endif
     return (*reg_addr);
 }

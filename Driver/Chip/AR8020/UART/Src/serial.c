@@ -1,7 +1,12 @@
+<<<<<<< Updated upstream
 #include <stddef.h>
 #include <stdint.h>
 #include "data_type.h"
+=======
+>>>>>>> Stashed changes
 #include "serial.h"
+#include "stddef.h"
+#include "command.h"
 
 /*********************************************************
  * Generic UART APIs

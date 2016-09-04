@@ -15,10 +15,9 @@
 extern "C" {
 #endif
 
-#include "stm32f746xx.h"
-#include "sd_core.h"
-#include "command.h"
 
+#include <stdio.h>
+#include "sd_core.h"
 /*
  * DMA data Structure definition
  */
@@ -27,22 +26,22 @@ typedef struct
 	uint32_t DstAddr;         /* DstAddr: Pointer to the buffer that will contain the received data */
 	uint32_t SrcAddr;         /* SrcAddr: Address from where data is to be read */
 	uint32_t BlockSize;       /* BlockSize: SD card Data block size */
-	uint32_t NumberOfBytes;  /*  NumberOfBytes: Number of bytes to be read/write. */
-	uint32_t ListBaseAddr;
+	uint32_t SectorNum;       /* SectorNum: How many sectors to be read/writen. */
+	uint32_t ListBaseAddr;    /* The address of IDMAC descripter */
 } SDMMC_DMATransTypeDef;
 /*
  * SD Handle Structure definition
  */
 typedef struct
 {
-	SDMMC_REG                    *Instance;        /*!< SDMMC register base address                     */
-	uint32_t                     CardType;         /*!< SD card type                                   */
-	uint32_t                     RCA;              /*!< SD relative card address                       */
-	uint32_t                     CSD[4];           /*!< SD card specific data table                    */
-	uint32_t                     CID[4];           /*!< SD card identification number table            */
-	uint32_t               		 SdTransferCplt;   /*!< SD transfer complete flag in non blocking mode */
-	uint32_t               		 SdTransferErr;    /*!< SD transfer error flag in non blocking mode    */
-	uint32_t              		 SdOperation;      /*!< SD transfer operation (read/write)             */
+	SDMMC_REG                    *Instance;        /* SDMMC register base address                     */
+	uint32_t                     CardType;         /* SD card type                                   */
+	uint32_t                     RCA;              /* SD relative card address                       */
+	uint32_t                     CSD[4];           /* SD card specific data table                    */
+	uint32_t                     CID[4];           /* SD card identification number table            */
+	uint32_t               		 SdTransferCplt;   /* SD transfer complete flag in non blocking mode */
+	uint32_t               		 SdTransferErr;    /* SD transfer error flag in non blocking mode    */
+	uint32_t              		 SdOperation;      /* SD transfer operation (read/write)             */
 	uint32_t                     Response;         /* SD response */
 
 } SD_HandleTypeDef;
@@ -53,64 +52,59 @@ typedef struct
   */
 typedef struct
 {
-	__IO uint8_t  CSDStruct;            /*!< CSD structure                         */
-	__IO uint8_t  SysSpecVersion;       /*!< System specification version          */
-	__IO uint8_t  Reserved1;            /*!< Reserved                              */
-	__IO uint8_t  TAAC;                 /*!< Data read access time 1               */
-	__IO uint8_t  NSAC;                 /*!< Data read access time 2 in CLK cycles */
-	__IO uint8_t  MaxDataTransRate;        /*!< Max. bus clock frequency              */
-	__IO uint16_t CardComdClasses;      /*!< Card command classes                  */
-	__IO uint8_t  RdBlockLen;           /*!< Max. read data block length           */
-	__IO uint8_t  PartBlockRead;        /*!< Partial blocks for read allowed       */
-	__IO uint8_t  WrBlockMisalign;      /*!< Write block misalignment              */
-	__IO uint8_t  RdBlockMisalign;      /*!< Read block misalignment               */
-	__IO uint8_t  DSRImpl;              /*!< DSR implemented                       */
-	__IO uint8_t  Reserved2;            /*!< Reserved                              */
-	__IO uint32_t DeviceSize;           /*!< Device Size                           */
-	__IO uint8_t  MaxRdCurrentVDDMin;   /*!< Max. read current @ VDD min           */
-	__IO uint8_t  MaxRdCurrentVDDMax;   /*!< Max. read current @ VDD max           */
-	__IO uint8_t  MaxWrCurrentVDDMin;   /*!< Max. write current @ VDD min          */
-	__IO uint8_t  MaxWrCurrentVDDMax;   /*!< Max. write current @ VDD max          */
-	__IO uint8_t  DeviceSizeMul;        /*!< Device size multiplier                */
-	__IO uint8_t  EraseGrSize;          /*!< Erase group size                      */
-	__IO uint8_t  EraseGrMul;           /*!< Erase group size multiplier           */
-	__IO uint8_t  WrProtectGrSize;      /*!< Write protect group size              */
-	__IO uint8_t  WrProtectGrEnable;    /*!< Write protect group enable            */
-	__IO uint8_t  ManDeflECC;           /*!< Manufacturer default ECC              */
-	__IO uint8_t  WrSpeedFact;          /*!< Write speed factor                    */
-	__IO uint8_t  MaxWrBlockLen;        /*!< Max. write data block length          */
-	__IO uint8_t  WriteBlockPaPartial;  /*!< Partial blocks for write allowed      */
-	__IO uint8_t  Reserved3;            /*!< Reserved                              */
-	__IO uint8_t  ContentProtectAppli;  /*!< Content protection application        */
-	__IO uint8_t  FileFormatGrouop;     /*!< File format group                     */
-	__IO uint8_t  CopyFlag;             /*!< Copy flag (OTP)                       */
-	__IO uint8_t  PermWrProtect;        /*!< Permanent write protection            */
-	__IO uint8_t  TempWrProtect;        /*!< Temporary write protection            */
-	__IO uint8_t  FileFormat;           /*!< File format                           */
-	__IO uint8_t  ECC;                  /*!< ECC code                              */
-	__IO uint8_t  CSD_CRC;              /*!< CSD CRC                               */
-	__IO uint8_t  Reserved4;            /*!< Always 1                              */
-
+	uint8_t  CSD_STRUCTURE;            /* CSD structure                         */
+	uint8_t  SysSpecVersion;       /* System specification version          */
+	uint8_t  Reserved1;            /* Reserved                              */
+	uint8_t  TAAC;                 /* Data read access time 1               */
+	uint8_t  NSAC;                 /* Data read access time 2 in CLK cycles */
+	uint8_t  TRAN_SPEED;     /* Max. bus clock frequency              */
+	uint16_t CCC;      /* Card command classes                  */
+	uint8_t  READ_BL_LEN;           /* Max. read data block length           */
+	uint8_t  READ_BL_PARTIAL;        /* Partial blocks for read allowed       */
+	uint8_t  WRITE_BLK_MISALIGN;      /* Write block misalignment              */
+	uint8_t  READ_BLK_MISALIGN;      /* Read block misalignment               */
+	uint8_t  DSP_IMP;              /* DSR implemented                       */
+	uint8_t  Reserved2;            /* Reserved                              */
+	uint32_t C_SIZE;           /* Device Size                           */
+	uint8_t  MaxRdCurrentVDDMin;   /* Max. read current @ VDD min           */
+	uint8_t  MaxRdCurrentVDDMax;   /* Max. read current @ VDD max           */
+	uint8_t  MaxWrCurrentVDDMin;   /* Max. write current @ VDD min          */
+	uint8_t  MaxWrCurrentVDDMax;   /* Max. write current @ VDD max          */
+	uint8_t  C_SIZEMul;        /* Device size multiplier                */
+	uint8_t  ERASE_BLK_EN;          /* Erase group size                      */
+	uint8_t  SECTOR_SIZE;           /* Erase group size multiplier           */
+	uint8_t  WP_GRP_SIZE;      /* Write protect group size              */
+	uint8_t  WP_GRP_ENABLE;    /* Write protect group enable            */
+	uint8_t  ManDeflECC;           /* Manufacturer default ECC              */
+	uint8_t  R2W_FACTOR;          /* Write speed factor                    */
+	uint8_t  WRITE_BL_LEN;        /* Max. write data block length          */
+	uint8_t  WRITE_BL_PARTIAL;  /* Partial blocks for write allowed      */
+	uint8_t  Reserved3;            /* Reserved                              */
+	uint8_t  FILE_FORMAT_GRP;     /* File format group                     */
+	uint8_t  COPY;             /* Copy flag (OTP)                       */
+	uint8_t  PERM_WRITE_PROTECT;        /* Permanent write protection            */
+	uint8_t  TMP_WRITE_PROTECT;        /* Temporary write protection            */
+	uint8_t  FILE_FORMAT;           /* File format                           */
+	uint8_t  Reserved4;            /* Always 1                              */
+	uint8_t  CSD_CRC;              /* CSD CRC                               */
 } SD_CSDTypedef;
-/**
-  * @}
-  */
+
 
 /** @defgroup SD_Exported_Types_Group3 Card Identification Data: CID Register
   * @{
   */
 typedef struct
 {
-	__IO uint8_t  ManufacturerID;  /*!< Manufacturer ID       */
-	__IO uint16_t OEM_AppliID;     /*!< OEM/Application ID    */
-	__IO uint32_t ProdName1;       /*!< Product Name part1    */
-	__IO uint8_t  ProdName2;       /*!< Product Name part2    */
-	__IO uint8_t  ProdRev;         /*!< Product Revision      */
-	__IO uint32_t ProdSN;          /*!< Product Serial Number */
-	__IO uint8_t  Reserved1;       /*!< Reserved1             */
-	__IO uint16_t ManufactDate;    /*!< Manufacturing Date    */
-	__IO uint8_t  CID_CRC;         /*!< CID CRC               */
-	__IO uint8_t  Reserved2;       /*!< Always 1              */
+	uint8_t  ManufacturerID;  /*!< Manufacturer ID       */
+	uint16_t OEM_AppliID;     /*!< OEM/Application ID    */
+	uint32_t ProdName1;       /*!< Product Name part1    */
+	uint8_t  ProdName2;       /*!< Product Name part2    */
+	uint8_t  ProdRev;         /*!< Product Revision      */
+	uint32_t ProdSN;          /*!< Product Serial Number */
+	uint8_t  Reserved1;       /*!< Reserved1             */
+	uint16_t ManufactDate;    /*!< Manufacturing Date    */
+	uint8_t  CID_CRC;         /*!< CID CRC               */
+	uint8_t  Reserved2;       /*!< Always 1              */
 
 } SD_CIDTypedef;
 
@@ -119,16 +113,16 @@ typedef struct
   */
 typedef struct
 {
-	__IO uint8_t  DAT_BUS_WIDTH;           /*!< Shows the currently defined data bus width                 */
-	__IO uint8_t  SECURED_MODE;            /*!< Card is in secured mode of operation                       */
-	__IO uint16_t SD_CARD_TYPE;            /*!< Carries information about card type                        */
-	__IO uint32_t SIZE_OF_PROTECTED_AREA;  /*!< Carries information about the capacity of protected area   */
-	__IO uint8_t  SPEED_CLASS;             /*!< Carries information about the speed class of the card      */
-	__IO uint8_t  PERFORMANCE_MOVE;        /*!< Carries information about the card's performance move      */
-	__IO uint8_t  AU_SIZE;                 /*!< Carries information about the card's allocation unit size  */
-	__IO uint16_t ERASE_SIZE;              /*!< Determines the number of AUs to be erased in one operation */
-	__IO uint8_t  ERASE_TIMEOUT;           /*!< Determines the timeout for any number of AU erase          */
-	__IO uint8_t  ERASE_OFFSET;            /*!< Carries information about the erase offset                 */
+	uint8_t  DAT_BUS_WIDTH;           /*!< Shows the currently defined data bus width                 */
+	uint8_t  SECURED_MODE;            /*!< Card is in secured mode of operation                       */
+	uint16_t SD_CARD_TYPE;            /*!< Carries information about card type                        */
+	uint32_t SIZE_OF_PROTECTED_AREA;  /*!< Carries information about the capacity of protected area   */
+	uint8_t  SPEED_CLASS;             /*!< Carries information about the speed class of the card      */
+	uint8_t  PERFORMANCE_MOVE;        /*!< Carries information about the card's performance move      */
+	uint8_t  AU_SIZE;                 /*!< Carries information about the card's allocation unit size  */
+	uint16_t ERASE_SIZE;              /*!< Determines the number of AUs to be erased in one operation */
+	uint8_t  ERASE_TIMEOUT;           /*!< Determines the timeout for any number of AU erase          */
+	uint8_t  ERASE_OFFSET;            /*!< Carries information about the erase offset                 */
 
 } SD_CardStatusTypedef;
 
@@ -164,7 +158,7 @@ typedef enum
 	SD_RX_OVERRUN                      = (6),   /*!< Receive FIFO overrun                                          */
 	SD_START_BIT_ERR                   = (7),   /*!< Start bit not detected on all data signals in wide bus mode   */
 	SD_OUT_OF_RANGE                    = (8),   /*!< Command's argument was out of range.                          */
-	SD_ADDRESS_ERROR                      = (9),   /*!< Misaligned address                                            */
+	SD_ADDRESS_ERROR                   = (9),   /*!< Misaligned address                                            */
 	SD_BLOCK_LEN_ERROR                 = (10),  /*!< Transferred block length is not allowed for the card or the number of transferred bytes does not match the block length */
 	SD_ERASE_SEQ_ERROR                 = (11),  /*!< An error in the sequence of erase command occurs.            */
 	SD_ERASE_PARAM                     = (12),  /*!< An invalid selection for erase groups                        */
@@ -175,7 +169,7 @@ typedef enum
 	SD_ILLEGAL_COMMAND                 = (16),  /*!< Command is not legal for the card state                      */
 	SD_CARD_ECC_FAILED                 = (17),  /*!< Card internal ECC was applied but failed to correct the data */
 	SD_CC_ERROR                        = (18),  /*!< Internal card controller error                               */
-	SD_GENERAL_UNKNOWN_ERROR                           = (19),  /*!< General or unknown error                                     */
+	SD_GENERAL_UNKNOWN_ERROR           = (19),  /*!< General or unknown error                                     */
 	SD_STREAM_READ_UNDERRUN            = (20),  /*!< The card could not sustain data transfer in stream read operation. */
 	SD_STREAM_WRITE_OVERRUN            = (21),  /*!< The card could not sustain data programming in stream mode   */
 	SD_CSD_OVERWRITE                   = (22),  /*!< CSD overwrite error                                      */
@@ -442,16 +436,14 @@ SD_ErrorTypedef Card_SD_Erase(SD_HandleTypeDef *hsd, uint32_t startaddr, uint32_
 void Card_SD_IRQHandler(SD_HandleTypeDef *hsd);
 
 /* Callback in non blocking modes (DMA) */
-/*void Card_SD_DMA_RxCpltCallback(DMA_HandleTypeDef *hdma);
-void Card_SD_DMA_RxErrorCallback(DMA_HandleTypeDef *hdma);
-void Card_SD_DMA_TxCpltCallback(DMA_HandleTypeDef *hdma);
-void Card_SD_DMA_TxErrorCallback(DMA_HandleTypeDef *hdma);*/
 void Card_SD_XferCpltCallback(SD_HandleTypeDef *hsd);
 void Card_SD_XferErrorCallback(SD_HandleTypeDef *hsd);
 
 /* Non-Blocking mode: DMA */
-SD_ErrorTypedef Card_SD_ReadBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
-SD_ErrorTypedef Card_SD_WriteBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
+SD_ErrorTypedef Card_SD_ReadBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
+SD_ErrorTypedef Card_SD_WriteBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
+SD_ErrorTypedef Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
+SD_ErrorTypedef Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
 SD_ErrorTypedef Card_SD_CheckWriteOperation(SD_HandleTypeDef *hsd, uint32_t Timeout);
 SD_ErrorTypedef Card_SD_CheckReadOperation(SD_HandleTypeDef *hsd, uint32_t Timeout);
 
@@ -474,7 +466,7 @@ SD_TransferStateTypedef Card_SD_GetStatus(SD_HandleTypeDef *hsd);
 
 
 #ifdef __cplusplus
-extern
 }
 #endif
+
 #endif

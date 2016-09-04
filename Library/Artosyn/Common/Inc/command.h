@@ -1,9 +1,6 @@
 #ifndef __COMMAND__H
 #define __COMMAND__H
-#include "stm32f746xx.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stdint.h>
 
 extern unsigned char g_commandPos;
 extern char g_commandLine[50];
