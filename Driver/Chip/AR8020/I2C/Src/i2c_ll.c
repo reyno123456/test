@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "data_type.h"
+#include "reg_rw.h"
 #include "i2c_ll.h"
 #include "i2c.h"
 #include "debuglog.h"
@@ -127,7 +128,7 @@ uint8_t I2C_LL_IOCtl(STRU_I2C_Controller* ptr_i2cController, ENUM_I2C_CMD_ID en_
         {
             unsigned int pre_rd;
             unsigned int data = (*ptr_i2cCommandVal) & 0xFF;
-            pre_rd = read_reg32((unsigned int)i2c_reg + 0x10);
+            pre_rd = Reg_Read32((unsigned int)i2c_reg + 0x10);
             pre_rd = pre_rd & 0xfe000;              // Write enable, IC_DATA_CMD[8]=0x0
             data |= pre_rd;
             i2c_reg->IC_DATA_CMD = data;
@@ -148,13 +149,13 @@ uint8_t I2C_LL_IOCtl(STRU_I2C_Controller* ptr_i2cController, ENUM_I2C_CMD_ID en_
             i2c_reg->IC_DATA_CMD |= (1<<8);         // Read enable, IC_DATA_CMD[8]=0x1
             
             /* Wait till data is ready */
-            while(read_reg32((unsigned int)i2c_reg + 0x70) & (1 << 5)) //i2c_reg->IC_STATUS
+            while(Reg_Read32((unsigned int)i2c_reg + 0x70) & (1 << 5)) //i2c_reg->IC_STATUS
             {
                 I2C_LL_Delay(1000);
             }
 
             /* Read data */
-            *ptr_i2cCommandVal = read_reg32((unsigned int)i2c_reg + 0x10) & 0xFF; //i2c_reg->IC_DATA_CMD;
+            *ptr_i2cCommandVal = Reg_Read32((unsigned int)i2c_reg + 0x10) & 0xFF; //i2c_reg->IC_DATA_CMD;
         }
         else
         {
@@ -163,10 +164,10 @@ uint8_t I2C_LL_IOCtl(STRU_I2C_Controller* ptr_i2cController, ENUM_I2C_CMD_ID en_
         }
         break;
     case I2C_CMD_GET_M_IDLE:
-    	*ptr_i2cCommandVal =  read_reg32((unsigned int)i2c_reg + 0x70) & (1 << 5) ? 0 : 1; //i2c_reg->IC_STATUS;
+    	*ptr_i2cCommandVal =  Reg_Read32((unsigned int)i2c_reg + 0x70) & (1 << 5) ? 0 : 1; //i2c_reg->IC_STATUS;
         break;
     case I2C_CMD_GET_M_TXFIFO_EMPTY:
-    	*ptr_i2cCommandVal =  read_reg32((unsigned int)i2c_reg + 0x70) & (1 << 2) ? 1 : 0; //i2c_reg->IC_STATUS;
+    	*ptr_i2cCommandVal =  Reg_Read32((unsigned int)i2c_reg + 0x70) & (1 << 2) ? 1 : 0; //i2c_reg->IC_STATUS;
     	break;
     default:
         return FALSE;

@@ -23,14 +23,16 @@ LIB = lib$(CHIP)drv.a
 CPU_NUMBER = cpu0
 
 # source file(s), including c file(s)
-SRC_C := UART/Src/serial.c \
+SRC_C := SysCtl/Src/reg_rw.c \
+         UART/Src/serial.c \
          SD/Src/sd_core.c \
          SD/Src/sd_card.c \
          SD/Src/sd_host.c \
          I2C/Src/i2c_ll.c \
          I2C/Src/i2c.c
 
-INCDIRS := -ISD/Inc \
+INCDIRS := -ISysCtl/Inc \
+           -ISD/Inc \
            -IUART/Inc \
            -II2C/Inc \
            -I$(TOP_DIR)/Configure \
