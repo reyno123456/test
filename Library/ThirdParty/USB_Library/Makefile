@@ -135,6 +135,15 @@ install:
 	@cp -f STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pcd_ex.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_hcd.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_usb.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32_USB_Host_Library/Core/Inc/usbh_core.h  $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32_USB_Host_Library/Core/Inc/usbh_conf.h  $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32_USB_Host_Library/Core/Inc/usbh_def.h  $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32_USB_Host_Library/Core/Inc/usbh_ctlreq.h  $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32_USB_Host_Library/Core/Inc/usbh_ioreq.h  $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32_USB_Host_Library/Core/Inc/usbh_pipes.h  $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc.h  $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc_bot.h  $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc_scsi.h  $(OUTPUT_HEADER_STAGING_DIR)
 
 
 

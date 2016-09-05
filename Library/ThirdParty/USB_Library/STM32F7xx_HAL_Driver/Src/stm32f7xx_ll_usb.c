@@ -59,6 +59,7 @@
 #include "stm32f7xx_hal.h"
 #include "uart.h"
 #include "usbd_conf.h"
+#include "usbh_conf.h"
 
 /** @addtogroup STM32F7xx_LL_USB_DRIVER
   * @{
@@ -1766,7 +1767,7 @@ void USB_LL_OTG0_IRQHandler(void)
 {
   if (USB_OTG_HS->GINTSTS & 0x01)
   {
- //   HAL_HCD_IRQHandler(&hhcd);
+    HAL_HCD_IRQHandler(&hhcd);
   }
   else
   {

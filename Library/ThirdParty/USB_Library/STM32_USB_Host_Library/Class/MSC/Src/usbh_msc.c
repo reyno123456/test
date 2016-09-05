@@ -42,7 +42,7 @@
 #include "usbh_msc.h"
 #include "usbh_msc_bot.h"    
 #include "usbh_msc_scsi.h"
-
+#include "debuglog.h"
 
 /** @addtogroup USBH_LIB
   * @{
@@ -156,7 +156,7 @@ static USBH_StatusTypeDef USBH_MSC_InterfaceInit (USBH_HandleTypeDef *phost)
   
   if(interface == 0xFF) /* Not Valid Interface */
   {
-    USBH_DbgLog ("Cannot Find the interface for %s class.", phost->pActiveClass->Name);
+    dlog_info("Cannot Find the interface for %s class.\n", phost->pActiveClass->Name);
     status = USBH_FAIL;      
   }
   else
@@ -291,7 +291,7 @@ static USBH_StatusTypeDef USBH_MSC_ClassRequest(USBH_HandleTypeDef *phost)
     if(status == USBH_OK)
     {
       MSC_Handle->max_lun = (uint8_t )(MSC_Handle->max_lun) + 1;
-      USBH_UsrLog ("Number of supported LUN: %lu", (int32_t)(MSC_Handle->max_lun));
+      dlog_info("Number of supported LUN: %lu\n", (int32_t)(MSC_Handle->max_lun));
       
       for(i = 0; i < MSC_Handle->max_lun; i++)
       {
@@ -341,7 +341,7 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
       switch (MSC_Handle->unit[MSC_Handle->current_lun].state)
       {
       case MSC_INIT:
-        USBH_UsrLog ("LUN #%d: ", MSC_Handle->current_lun);
+        dlog_info("LUN #%d: \n", MSC_Handle->current_lun);
         MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_READ_INQUIRY;
         MSC_Handle->timer = phost->Timer;
         
@@ -350,9 +350,9 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
         
         if( scsi_status == USBH_OK)
         {
-          USBH_UsrLog ("Inquiry Vendor  : %s", MSC_Handle->unit[MSC_Handle->current_lun].inquiry.vendor_id);
-          USBH_UsrLog ("Inquiry Product : %s", MSC_Handle->unit[MSC_Handle->current_lun].inquiry.product_id);
-          USBH_UsrLog ("Inquiry Version : %s", MSC_Handle->unit[MSC_Handle->current_lun].inquiry.revision_id);
+          dlog_info("Inquiry Vendor  : %s\n", MSC_Handle->unit[MSC_Handle->current_lun].inquiry.vendor_id);
+          dlog_info("Inquiry Product : %s\n", MSC_Handle->unit[MSC_Handle->current_lun].inquiry.product_id);
+          dlog_info("Inquiry Version : %s\n", MSC_Handle->unit[MSC_Handle->current_lun].inquiry.revision_id);
           MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_TEST_UNIT_READY;        
         }
         if( scsi_status == USBH_FAIL)
@@ -374,7 +374,7 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
           if( MSC_Handle->unit[MSC_Handle->current_lun].prev_ready_state != USBH_OK)
           {
             MSC_Handle->unit[MSC_Handle->current_lun].state_changed = 1;
-            USBH_UsrLog ("MSC Device ready");
+            dlog_info("MSC Device ready\n");
           }
           else
           {
@@ -390,7 +390,7 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
           if( MSC_Handle->unit[MSC_Handle->current_lun].prev_ready_state != USBH_FAIL)
           {
             MSC_Handle->unit[MSC_Handle->current_lun].state_changed = 1;
-            USBH_UsrLog ("MSC Device NOT ready");
+            dlog_info("MSC Device NOT ready\n");
           }
           else
           {
@@ -414,10 +414,10 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
         {
           if(MSC_Handle->unit[MSC_Handle->current_lun].state_changed == 1)
           {
-            USBH_UsrLog ("MSC Device capacity : %lu Bytes", \
+            dlog_info("MSC Device capacity : %lu Bytes\n", \
               (int32_t)(MSC_Handle->unit[MSC_Handle->current_lun].capacity.block_nbr * MSC_Handle->unit[MSC_Handle->current_lun].capacity.block_size));
-            USBH_UsrLog ("Block number : %lu", (int32_t)(MSC_Handle->unit[MSC_Handle->current_lun].capacity.block_nbr));
-            USBH_UsrLog ("Block Size   : %lu", (int32_t)(MSC_Handle->unit[MSC_Handle->current_lun].capacity.block_size));
+            dlog_info("Block number : %lu\n", (int32_t)(MSC_Handle->unit[MSC_Handle->current_lun].capacity.block_nbr));
+            dlog_info("Block Size   : %lu\n", (int32_t)(MSC_Handle->unit[MSC_Handle->current_lun].capacity.block_size));
           }
           MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_IDLE;
           MSC_Handle->unit[MSC_Handle->current_lun].error = MSC_OK;
@@ -450,15 +450,15 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
             }        
           }
           
-          USBH_UsrLog ("Sense Key  : %x", MSC_Handle->unit[MSC_Handle->current_lun].sense.key);
-          USBH_UsrLog ("Additional Sense Code : %x", MSC_Handle->unit[MSC_Handle->current_lun].sense.asc);
-          USBH_UsrLog ("Additional Sense Code Qualifier: %x", MSC_Handle->unit[MSC_Handle->current_lun].sense.ascq);
+          dlog_info("Sense Key  : %x", MSC_Handle->unit[MSC_Handle->current_lun].sense.key);
+          dlog_info("Additional Sense Code : %x", MSC_Handle->unit[MSC_Handle->current_lun].sense.asc);
+          dlog_info("Additional Sense Code Qualifier: %x", MSC_Handle->unit[MSC_Handle->current_lun].sense.ascq);
           MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_IDLE;
           MSC_Handle->current_lun++;
         }
         if( scsi_status == USBH_FAIL)
         {
-          USBH_UsrLog ("MSC Device NOT ready");
+          dlog_info("MSC Device NOT ready");
           MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_UNRECOVERED_ERROR; 
         }
         else if(scsi_status == USBH_UNRECOVERED_ERROR)
@@ -579,9 +579,9 @@ static USBH_StatusTypeDef USBH_MSC_RdWrProcess(USBH_HandleTypeDef *phost, uint8_
     
     if( scsi_status == USBH_OK)
     {
-      USBH_UsrLog ("Sense Key  : %x", MSC_Handle->unit[lun].sense.key);
-      USBH_UsrLog ("Additional Sense Code : %x", MSC_Handle->unit[lun].sense.asc);
-      USBH_UsrLog ("Additional Sense Code Qualifier: %x", MSC_Handle->unit[lun].sense.ascq);
+      dlog_info("Sense Key  : %x", MSC_Handle->unit[lun].sense.key);
+      dlog_info("Additional Sense Code : %x", MSC_Handle->unit[lun].sense.asc);
+      dlog_info("Additional Sense Code Qualifier: %x", MSC_Handle->unit[lun].sense.ascq);
       MSC_Handle->unit[lun].state = MSC_IDLE;
       MSC_Handle->unit[lun].error = MSC_ERROR;
       
@@ -589,7 +589,7 @@ static USBH_StatusTypeDef USBH_MSC_RdWrProcess(USBH_HandleTypeDef *phost, uint8_
     }
     if( scsi_status == USBH_FAIL)
     {
-      USBH_UsrLog ("MSC Device NOT ready");
+      dlog_info("MSC Device NOT ready");
     }
     else if(scsi_status == USBH_UNRECOVERED_ERROR)
     {
