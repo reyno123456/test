@@ -57,11 +57,8 @@ install:
 	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)/$(CPU_NUMBER)
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@cp -f UART/Inc/serial.h $(OUTPUT_HEADER_STAGING_DIR)
-<<<<<<< Updated upstream
 	@cp -f I2C/Inc/i2c.h $(OUTPUT_HEADER_STAGING_DIR)
-=======
 	@cp -f SD/Inc/* $(OUTPUT_HEADER_STAGING_DIR)
->>>>>>> Stashed changes
 
 clean:
 	@echo "Cleaning..."
