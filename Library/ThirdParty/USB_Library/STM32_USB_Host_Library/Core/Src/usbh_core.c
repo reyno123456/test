@@ -28,6 +28,8 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "usbh_core.h"
+#include "debuglog.h"
+
 
 ApplicationStateDef Appli_state;
 
@@ -95,7 +97,7 @@ USBH_StatusTypeDef  USBH_Init(USBH_HandleTypeDef *phost, void (*pUsrFunc)(USBH_H
   /* Check whether the USB Host handle is valid */
   if(phost == NULL)
   {
-    USBH_ErrLog("Invalid Host handle");
+    dlog_error("Invalid Host handle\n");
     return USBH_FAIL; 
   }
   
@@ -211,13 +213,13 @@ USBH_StatusTypeDef  USBH_RegisterClass(USBH_HandleTypeDef *phost, USBH_ClassType
     }
     else
     {
-      USBH_ErrLog("Max Class Number reached");
+      dlog_error("Max Class Number reached\n");
       status = USBH_FAIL; 
     }
   }
   else
   {
-    USBH_ErrLog("Invalid Class handle");
+    dlog_error("Invalid Class handle\n");
     status = USBH_FAIL; 
   }
   
@@ -238,14 +240,14 @@ USBH_StatusTypeDef USBH_SelectInterface(USBH_HandleTypeDef *phost, uint8_t inter
   if(interface < phost->device.CfgDesc.bNumInterfaces)
   {
     phost->device.current_interface = interface;
-    USBH_UsrLog ("Switching to Interface (#%d)", interface);
-    USBH_UsrLog ("Class    : %xh", phost->device.CfgDesc.Itf_Desc[interface].bInterfaceClass );
-    USBH_UsrLog ("SubClass : %xh", phost->device.CfgDesc.Itf_Desc[interface].bInterfaceSubClass );
-    USBH_UsrLog ("Protocol : %xh", phost->device.CfgDesc.Itf_Desc[interface].bInterfaceProtocol );                 
+    dlog_info("Switching to Interface (#%d)", interface);
+    dlog_info("Class    : %xh", phost->device.CfgDesc.Itf_Desc[interface].bInterfaceClass );
+    dlog_info("SubClass : %xh", phost->device.CfgDesc.Itf_Desc[interface].bInterfaceSubClass );
+    dlog_info("Protocol : %xh", phost->device.CfgDesc.Itf_Desc[interface].bInterfaceProtocol );                 
   }
   else
   {
-    USBH_ErrLog ("Cannot Select This Interface.");
+    dlog_error("Cannot Select This Interface.\n");
     status = USBH_FAIL; 
   }
   return status;  
@@ -421,8 +423,8 @@ USBH_StatusTypeDef  USBH_Process(USBH_HandleTypeDef *phost)
     
   case HOST_DEV_ATTACHED :
     
-    USBH_UsrLog("USB Device Attached");  
-      
+    dlog_info("USB Device Attached\n");
+
     /* Wait for 100 ms after Reset */
     USBH_Delay(100); 
           
@@ -463,11 +465,11 @@ USBH_StatusTypeDef  USBH_Process(USBH_HandleTypeDef *phost)
     if ( USBH_HandleEnum(phost) == USBH_OK)
     { 
       /* The function shall return USBH_OK when full enumeration is complete */
-      USBH_UsrLog ("Enumeration done.");
+      dlog_info("Enumeration done.\n");
       phost->device.current_interface = 0;
       if(phost->device.DevDesc.bNumConfigurations == 1)
       {
-        USBH_UsrLog ("This device has only 1 configuration.");
+        dlog_info("This device has only 1 configuration.\n");
         phost->gState  = HOST_SET_CONFIGURATION;        
         
       }
@@ -499,7 +501,7 @@ USBH_StatusTypeDef  USBH_Process(USBH_HandleTypeDef *phost)
     if (USBH_SetCfg(phost, phost->device.CfgDesc.bConfigurationValue) == USBH_OK)
     {
       phost->gState  = HOST_CHECK_CLASS;
-      USBH_UsrLog ("Default configuration set.");
+      dlog_info("Default configuration set.");
       
     }      
     
@@ -509,7 +511,7 @@ USBH_StatusTypeDef  USBH_Process(USBH_HandleTypeDef *phost)
     
     if(phost->ClassNumber == 0)
     {
-      USBH_UsrLog ("No Class has been registered.");
+      dlog_info("No Class has been registered.");
     }
     else
     {
@@ -528,7 +530,7 @@ USBH_StatusTypeDef  USBH_Process(USBH_HandleTypeDef *phost)
         if(phost->pActiveClass->Init(phost)== USBH_OK)
         {
           phost->gState  = HOST_CLASS_REQUEST; 
-          USBH_UsrLog ("%s class started.", phost->pActiveClass->Name);
+          dlog_info("%s class started.\n", phost->pActiveClass->Name);
           
           /* Inform user that a class has been activated */
           phost->pUser(phost, HOST_USER_CLASS_SELECTED);   
@@ -536,13 +538,13 @@ USBH_StatusTypeDef  USBH_Process(USBH_HandleTypeDef *phost)
         else
         {
           phost->gState  = HOST_ABORT_STATE;
-          USBH_UsrLog ("Device not supporting %s class.", phost->pActiveClass->Name);
+          dlog_info("Device not supporting %s class.\n", phost->pActiveClass->Name);
         }
       }
       else
       {
         phost->gState  = HOST_ABORT_STATE;
-        USBH_UsrLog ("No registered class for this device.");
+        dlog_info("No registered class for this device.\n");
       }
     }
     
@@ -565,7 +567,7 @@ USBH_StatusTypeDef  USBH_Process(USBH_HandleTypeDef *phost)
     else
     {
       phost->gState  = HOST_ABORT_STATE;
-      USBH_ErrLog ("Invalid Class Driver.");
+      dlog_info("Invalid Class Driver.\n");
     
 #if (USBH_USE_OS == 1)
     osMessagePut ( phost->os_event, USBH_STATE_CHANGED_EVENT, 0);
@@ -646,8 +648,8 @@ static USBH_StatusTypeDef USBH_HandleEnum (USBH_HandleTypeDef *phost)
     /* Get FULL Device Desc  */
     if ( USBH_Get_DevDesc(phost, USB_DEVICE_DESC_SIZE)== USBH_OK)
     {
-      USBH_UsrLog("PID: %xh", phost->device.DevDesc.idProduct );  
-      USBH_UsrLog("VID: %xh", phost->device.DevDesc.idVendor );  
+      dlog_info("PID: %xh\n", phost->device.DevDesc.idProduct );  
+      dlog_info("VID: %xh\n", phost->device.DevDesc.idVendor );  
       
       phost->EnumState = ENUM_SET_ADDR;
        
@@ -662,7 +664,7 @@ static USBH_StatusTypeDef USBH_HandleEnum (USBH_HandleTypeDef *phost)
       phost->device.address = USBH_DEVICE_ADDRESS;
       
       /* user callback for device address assigned */
-      USBH_UsrLog("Address (#%d) assigned.", phost->device.address);
+      dlog_info("Address (#%d) assigned.\n", phost->device.address);
       phost->EnumState = ENUM_GET_CFG_DESC;
       
       /* modify control channels to update device address */
@@ -713,7 +715,7 @@ static USBH_StatusTypeDef USBH_HandleEnum (USBH_HandleTypeDef *phost)
                                0xff) == USBH_OK)
       {
         /* User callback for Manufacturing string */
-        USBH_UsrLog("Manufacturer : %s",  (char *)phost->device.Data);
+        dlog_info("Manufacturer : %s",  (char *)phost->device.Data);
         phost->EnumState = ENUM_GET_PRODUCT_STRING_DESC;
         
 #if (USBH_USE_OS == 1)
@@ -723,7 +725,7 @@ static USBH_StatusTypeDef USBH_HandleEnum (USBH_HandleTypeDef *phost)
     }
     else
     {
-     USBH_UsrLog("Manufacturer : N/A");      
+     dlog_info("Manufacturer : N/A");      
      phost->EnumState = ENUM_GET_PRODUCT_STRING_DESC; 
 #if (USBH_USE_OS == 1)
     osMessagePut ( phost->os_event, USBH_STATE_CHANGED_EVENT, 0);
@@ -740,13 +742,13 @@ static USBH_StatusTypeDef USBH_HandleEnum (USBH_HandleTypeDef *phost)
                                0xff) == USBH_OK)
       {
         /* User callback for Product string */
-        USBH_UsrLog("Product : %s",  (char *)phost->device.Data);
+        dlog_info("Product : %s",  (char *)phost->device.Data);
         phost->EnumState = ENUM_GET_SERIALNUM_STRING_DESC;        
       }
     }
     else
     {
-      USBH_UsrLog("Product : N/A");
+      dlog_info("Product : N/A");
       phost->EnumState = ENUM_GET_SERIALNUM_STRING_DESC; 
 #if (USBH_USE_OS == 1)
     osMessagePut ( phost->os_event, USBH_STATE_CHANGED_EVENT, 0);
@@ -763,13 +765,13 @@ static USBH_StatusTypeDef USBH_HandleEnum (USBH_HandleTypeDef *phost)
                                0xff) == USBH_OK)
       {
         /* User callback for Serial number string */
-         USBH_UsrLog("Serial Number : %s",  (char *)phost->device.Data);
+        dlog_info("Serial Number : %s",  (char *)phost->device.Data);
         Status = USBH_OK;
       }
     }
     else
     {
-      USBH_UsrLog("Serial Number : N/A"); 
+      dlog_info("Serial Number : N/A"); 
       Status = USBH_OK;
 #if (USBH_USE_OS == 1)
     osMessagePut ( phost->os_event, USBH_STATE_CHANGED_EVENT, 0);
@@ -867,7 +869,7 @@ USBH_StatusTypeDef  USBH_LL_Disconnect  (USBH_HandleTypeDef *phost)
   {    
     phost->pUser(phost, HOST_USER_DISCONNECTION);
   }
-  USBH_UsrLog("USB Device disconnected"); 
+  dlog_info("USB Device disconnected"); 
   
   /* Start the low level driver  */
   USBH_LL_Start(phost);

@@ -27,6 +27,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "usbh_ctlreq.h"
+#include "debuglog.h"
 
 /** @addtogroup USBH_LIB
 * @{
@@ -847,7 +848,7 @@ static USBH_StatusTypeDef USBH_HandleControl (USBH_HandleTypeDef *phost)
     {
       phost->pUser(phost, HOST_USER_UNRECOVERED_ERROR);
       phost->Control.errorcount = 0;
-      USBH_ErrLog("Control error");
+      dlog_info("Control error");
       status = USBH_FAIL;
     }
     break;
