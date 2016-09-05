@@ -8,9 +8,6 @@ USBD_HandleTypeDef USBD_Device;
 
 void test_usbd_hid(void)
 {
-    USBD_HID_InitDescGlobal();
-    USBD_HID_InitGlobal();
-
     dlog_info("0000\n");
     USBD_Init(&USBD_Device, &HID_Desc, 0);
 
