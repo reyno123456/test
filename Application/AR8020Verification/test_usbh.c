@@ -5,6 +5,10 @@
 #include "usbh_def.h"
 #include "usbh_core.h"
 #include "usbh_msc.h"
+#include "ff_gen_drv.h"
+#include "usbh_diskio.h"
+#include "interrupt.h"
+#include "interrupt_internal.h"
 
 /* USB Host Global Variables */
 USBH_HandleTypeDef   hUSBHost;
@@ -15,7 +19,6 @@ uint8_t              wtext[] = "USB Host Library : Mass Stroage Example";
 
 
 FILE_OPERATION_CONTEXT fileOperation;
-
 
 void test_OperateFile(void)
 {
@@ -241,13 +244,17 @@ void test_usbh(void)
 
     dlog_info("start test_usbh\n");
 
+    reg_IrqHandle(USB_OTG0_VECTOR_NUM, USB_OTG0_IRQHandler);
+
     USBH_Init(&hUSBHost, USBH_UserPorcess, 0);
 
     USBH_RegisterClass(&hUSBHost, USBH_MSC_CLASS);
 
     USBH_Start(&hUSBHost);
 
-    fileResult = f_mount(&USBH_fatfs, "", 0);
+    FATFS_LinkDriver(&USBH_Driver, "0:/");
+
+    fileResult = f_mount(&USBH_fatfs, "0:/", 0);
 
     if (fileResult != FR_OK)
     {
@@ -268,6 +275,3 @@ void test_usbh(void)
         test_ProcessOperation();
     }
 }
-
-
-

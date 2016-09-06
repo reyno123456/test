@@ -26,13 +26,16 @@
   */ 
 
 /* Includes ------------------------------------------------------------------*/
-#include <string.h>
 #include "ff_gen_drv.h"
+#include "ffconf.h"
+#include "diskio.h"
+#include "usbh_msc.h"
+#include "debuglog.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-extern USBH_HandleTypeDef  HOST_HANDLE;
+extern USBH_HandleTypeDef  hUSBHost;
 #if _USE_BUFF_WO_ALIGNMENT == 0
 /* Local buffer use to handle buffer not aligned 32bits*/
 static DWORD scratch[_MAX_SS / 4];
@@ -85,7 +88,7 @@ DSTATUS USBH_status(BYTE lun)
 {
   DRESULT res = RES_ERROR;
   
-  if(USBH_MSC_UnitIsReady(&HOST_HANDLE, lun))
+  if(USBH_MSC_UnitIsReady(&hUSBHost, lun))
   {
     res = RES_OK;
   }
@@ -116,7 +119,7 @@ DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 #if _USE_BUFF_WO_ALIGNMENT == 0
     while ((count--)&&(status == USBH_OK))
     {
-      status = USBH_MSC_Read(&HOST_HANDLE, lun, sector + count, (uint8_t *)scratch, 1);
+      status = USBH_MSC_Read(&hUSBHost, lun, sector + count, (uint8_t *)scratch, 1);
       if(status == USBH_OK)
       {
         memcpy (&buff[count * _MAX_SS] ,scratch, _MAX_SS);
@@ -132,7 +135,7 @@ DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
   }
   else
   {
-    status = USBH_MSC_Read(&HOST_HANDLE, lun, sector, buff, count);
+    status = USBH_MSC_Read(&hUSBHost, lun, sector, buff, count);
   }
   
   if(status == USBH_OK)
@@ -141,14 +144,14 @@ DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
   }
   else
   {
-    USBH_MSC_GetLUNInfo(&HOST_HANDLE, lun, &info); 
+    USBH_MSC_GetLUNInfo(&hUSBHost, lun, &info); 
     
     switch (info.sense.asc)
     {
     case SCSI_ASC_LOGICAL_UNIT_NOT_READY:
     case SCSI_ASC_MEDIUM_NOT_PRESENT:
     case SCSI_ASC_NOT_READY_TO_READY_CHANGE: 
-      USBH_ErrLog ("USB Disk is not ready!");  
+      dlog_info("USB Disk is not ready!\n");
       res = RES_NOTRDY;
       break; 
       
@@ -183,7 +186,7 @@ DRESULT USBH_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
     {
       memcpy (scratch, &buff[count * _MAX_SS], _MAX_SS);
       
-      status = USBH_MSC_Write(&HOST_HANDLE, lun, sector + count, (BYTE *)scratch, 1) ;
+      status = USBH_MSC_Write(&hUSBHost, lun, sector + count, (BYTE *)scratch, 1) ;
       if(status == USBH_FAIL)
       {
         break;
@@ -195,7 +198,7 @@ DRESULT USBH_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
   }
   else
   {
-    status = USBH_MSC_Write(&HOST_HANDLE, lun, sector, (BYTE *)buff, count);
+    status = USBH_MSC_Write(&hUSBHost, lun, sector, (BYTE *)buff, count);
   }
   
   if(status == USBH_OK)
@@ -204,19 +207,19 @@ DRESULT USBH_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
   }
   else
   {
-    USBH_MSC_GetLUNInfo(&HOST_HANDLE, lun, &info); 
+    USBH_MSC_GetLUNInfo(&hUSBHost, lun, &info); 
     
     switch (info.sense.asc)
     {
     case SCSI_ASC_WRITE_PROTECTED:
-      USBH_ErrLog("USB Disk is Write protected!");
+      dlog_info("USB Disk is Write protected!\n");
       res = RES_WRPRT;
       break;
       
     case SCSI_ASC_LOGICAL_UNIT_NOT_READY:
     case SCSI_ASC_MEDIUM_NOT_PRESENT:
     case SCSI_ASC_NOT_READY_TO_READY_CHANGE:
-      USBH_ErrLog("USB Disk is not ready!");      
+      dlog_info("USB Disk is not ready!");
       res = RES_NOTRDY;
       break; 
       
@@ -252,7 +255,7 @@ DRESULT USBH_ioctl(BYTE lun, BYTE cmd, void *buff)
     
   /* Get number of sectors on the disk (DWORD) */  
   case GET_SECTOR_COUNT : 
-    if(USBH_MSC_GetLUNInfo(&HOST_HANDLE, lun, &info) == USBH_OK)
+    if(USBH_MSC_GetLUNInfo(&hUSBHost, lun, &info) == USBH_OK)
     {
       *(DWORD*)buff = info.capacity.block_nbr;
       res = RES_OK;
@@ -265,7 +268,7 @@ DRESULT USBH_ioctl(BYTE lun, BYTE cmd, void *buff)
     
   /* Get R/W sector size (WORD) */  
   case GET_SECTOR_SIZE :	
-    if(USBH_MSC_GetLUNInfo(&HOST_HANDLE, lun, &info) == USBH_OK)
+    if(USBH_MSC_GetLUNInfo(&hUSBHost, lun, &info) == USBH_OK)
     {
       *(DWORD*)buff = info.capacity.block_size;
       res = RES_OK;
@@ -279,7 +282,7 @@ DRESULT USBH_ioctl(BYTE lun, BYTE cmd, void *buff)
     /* Get erase block size in unit of sector (DWORD) */ 
   case GET_BLOCK_SIZE : 
     
-    if(USBH_MSC_GetLUNInfo(&HOST_HANDLE, lun, &info) == USBH_OK)
+    if(USBH_MSC_GetLUNInfo(&hUSBHost, lun, &info) == USBH_OK)
     {
       *(DWORD*)buff = info.capacity.block_size;
       res = RES_OK;

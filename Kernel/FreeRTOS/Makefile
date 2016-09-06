@@ -30,7 +30,8 @@ SRC_C   := croutine.c \
            FatFs/Src/diskio.c \
            FatFs/Src/ff.c \
            FatFs/Src/ff_gen_drv.c \
-           FatFs/Port/sd_diskio.c
+           FatFs/Port/sd_diskio.c \
+           FatFs/Port/usbh_diskio.c
 
 
 INCDIRS := -Iinclude \
@@ -38,6 +39,8 @@ INCDIRS := -Iinclude \
            -ICMSIS_RTOS \
            -I$(TOP_DIR)/Configure/Include \
            -I$(TOP_DIR)/Library/ThirdParty/USB_Library/STM32F7xx_HAL_Driver/Inc \
+           -I$(TOP_DIR)/Library/ThirdParty/USB_Library/STM32_USB_Host_Library/Class/MSC/Inc \
+           -I$(TOP_DIR)/Library/ThirdParty/USB_Library/STM32_USB_Host_Library/Core/Inc \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include
 
 
@@ -80,6 +83,10 @@ install:
 	@cp -f include/event_groups.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f FatFs/Inc/ff.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f FatFs/Inc/ffconf.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f FatFs/Inc/ff_gen_drv.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f FatFs/Inc/diskio.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f FatFs/Inc/integer.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f FatFs/Port/usbh_diskio.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."
