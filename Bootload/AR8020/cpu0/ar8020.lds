@@ -5,11 +5,7 @@ ENTRY(_start)
 MEMORY 
 {
         ITCM0     : ORIGIN = 0x00000000, LENGTH = 0x80000
-        ITCM1     : ORIGIN = 0x00080000, LENGTH = 0x80000
-        FLASH	  : ORIGIN = 0x10000000, LENGTH = 0x80000
-        DTCM0     : ORIGIN = 0x44080000, LENGTH = 0x80000
-        DTCM1     : ORIGIN = 0x44180000, LENGTH = 0x80000
-        SRAM      : ORIGIN = 0X21000000, LENGTH = 0xFFFFF
+        DTCM0     : ORIGIN = 0x20000000, LENGTH = 0x80000
 }
 
 SECTIONS
@@ -50,25 +46,19 @@ SECTIONS
 		_data_end = . ;
     } > DTCM0
 
-	.flash_data :
-	{
-		. = ALIGN(4);
-		_flash_data_start = . ;
-		_flash_data_load  = LOADADDR(.flash_data) ;
-		*(.flash_data)
-		_flash_data_end = . ;
-	} > ITCM0
-
     .bss :
     {
+                _bss_start = .;
 		*(.bss)
 		*(COMMON)
-    } > ITCM0
+                . = ALIGN(4);
+                _bss_end = .;
+    } > DTCM0
 
-	.stack :
-	{
-		*(.stack)
-	} 
+    .stack :
+    {
+                *(.stack)
+    } 
 
 
 }
