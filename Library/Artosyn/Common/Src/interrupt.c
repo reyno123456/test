@@ -426,3 +426,8 @@ void WIMAX_RX_EN_IRQHandler(void)
 {
     dlog_info("WIMAX_RX_EN_IRQHandler\n");
 }
+
+void VEBRC_IRQHandler(void)
+{
+    run_irq_hdl(VEBRC_VECTOR_NUM);
+}

@@ -23,9 +23,15 @@ LIB = lib$(CHIP)drv.a
 CPU_NUMBER = cpu2
 
 # source file(s), including c file(s)
-SRC_C := UART/Src/serial.c
+SRC_C := UART/Src/serial.c \
+         H264Encoder/Src/h264_encoder.c \
+         H264Encoder/Src/enc_internal.c \
+         H264Encoder/Src/vsoc_enc.c \
+         H264Encoder/Src/brc.c
 
 INCDIRS := -IUART/Inc \
+           -IH264Encoder/Inc \
+           -ISysCtl/Inc \
            -I$(TOP_DIR)/Configure \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Device/ST/STM32F7xx/Include \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \
@@ -48,6 +54,8 @@ install:
 	@echo "Installing static library: $(LIB)"
 	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
+	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f H264Encoder/Inc/h264_encoder.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."

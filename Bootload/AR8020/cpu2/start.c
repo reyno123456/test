@@ -24,7 +24,9 @@ unsigned int vectors[] __attribute__((section(".vectors"))) = {
 	[15] = (unsigned int)&SYSTICK_IRQHandler,
 	[16] = (unsigned int)&UART0_IRQHandler,
 	[17] = (unsigned int)&UART1_IRQHandler,
-	[18 ... 165] = (unsigned int)&default_isr
+	[18 ... 76] = (unsigned int)&default_isr,
+        [77] = (unsigned int)&VEBRC_IRQHandler,
+        [78 ... 165] = (unsigned int)&default_isr
 };
 
 void __attribute__((section(".start"))) _start(void)

@@ -19,43 +19,30 @@ include $(BUILD_DIR)/config.mk
 
 ###############################################################################
 
-CPU_NUMBER = cpu0
-
-# libs
-LD_LIBS := -lbootload -lfreertos -lusb -lAR8020drv -lcommon 
-
-LDFLAGS += -Bstatic
-LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) $(LD_LIBS)
-
-# source file(s), including c file(s)
-SRC_C   := main.c test_freertos.c test_usbd.c test_i2c_adv7611.c test_usbh.c
-
-CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include
-
-# object file(s)
-OBJ_C   := $(patsubst %.c,%.o,$(SRC_C))
-
 # executable file
-TARGET = ar8020
+TARGET = ar8020_all
+TARGET_CPU0 = ar8020_cpu0
+TARGET_CPU1 = ar8020_cpu1
+TARGET_CPU2 = ar8020_cpu2
 
 ###############################################################################
 
 all: .depend $(TARGET)
 
-$(TARGET): $(OBJ_C)
-	$(LD) $^ $(LDFLAGS) -T$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(TARGET).lds -o $(TARGET).elf 
-	$(OBJCOPY) -O binary $(TARGET).elf $@
-	$(OBJDUMP) -D $(TARGET).elf > $(TARGET).dis
-	$(NM) $(TARGET).elf > $(TARGET).map
-	$(UTILITY_DIR)/bin2mif $@ $(TARGET).mif 32768 64
-	cp $(TARGET).mif  $(OUTPUT_DIR)
+$(TARGET): $(TARGET_CPU0) $(TARGET_CPU2) 
+
+$(TARGET_CPU0):
+	@$(MAKE) -C cpu0 all
+
+$(TARGET_CPU2):
+	@$(MAKE) -C cpu2 all
 
 clean:
-	rm -f $(OBJ_C) .depend 
-	rm -f $(TARGET) $(TARGET).elf  $(TARGET).bin  $(TARGET).dis  $(TARGET).mif  $(TARGET).map $(OUTPUT_DIR)/$(TARGET).mif
+	@$(MAKE) -C cpu0 clean
+	@$(MAKE) -C cpu2 clean
 
 
-.PHONY: all clean $(TARGET)
+.PHONY: all clean $(TARGET) $(TARGET_CPU0) $(TARGET_CPU2)
 
 #########################################################################
 

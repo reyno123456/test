@@ -9,6 +9,7 @@ typedef enum
     UART0_VECTOR_NUM = 16,
     UART1_VECYOR_NUM = 17,
     USB_OTG0_VECTOR_NUM = 56,
+    VEBRC_VECTOR_NUM = 77,
 }IRQ_type;
 
 typedef void(*Irq_handler)(void);

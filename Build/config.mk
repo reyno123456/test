@@ -1,5 +1,6 @@
 # cross compile...
 CROSS_COMPILE = /opt/toolchain/gcc-arm-none-eabi-5_2-2015q4/bin/arm-none-eabi-
+CROSS_COMPILE_LIB_PATH = /opt/toolchain/gcc-arm-none-eabi-5_2-2015q4/lib/gcc/arm-none-eabi/5.2.1/armv7-m
 
 CC      = $(CROSS_COMPILE)gcc
 AR      = $(CROSS_COMPILE)ar
@@ -27,7 +28,7 @@ DEFS = -mthumb -mcpu=cortex-m7 -mlittle-endian -mfpu=fpv4-sp-d16 -mfloat-abi=sof
 
 CFLAGS += $(DEFS)
 
-LDFLAGS = $(LIBS)
+LDFLAGS = $(LIBS) 
 
 INCDIRS =
 
@@ -50,7 +51,7 @@ CHIP = AR8020
 export CHIP
 
 export USB_DEV_CLASS_HID_ENABLE = 1
-
+export CROSS_COMPILE_LIB_PATH
 ###############################################################################
 
 # make all .c

@@ -80,5 +80,6 @@ void SRAM_READY_0_IRQHandler(void);
 void SRAM_READY_1_IRQHandler(void);
 void WIMAX_TX_EN_IRQHandler(void);
 void WIMAX_RX_EN_IRQHandler(void);
+void VEBRC_IRQHandler(void);
 
 #endif
