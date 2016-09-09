@@ -50,10 +50,10 @@
   * @{
   */ 
 #define HID_EPIN_ADDR                 0x81
-#define HID_EPIN_SIZE                 0x04
+#define HID_EPIN_SIZE                 512
 
 #define HID_EPOUT_ADDR                0x01
-#define HID_EPOUT_SIZE                0x04
+#define HID_EPOUT_SIZE                512
 
 #define USB_HID_CONFIG_DESC_SIZ       41
 #define USB_HID_DESC_SIZ              9

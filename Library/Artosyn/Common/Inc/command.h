@@ -4,6 +4,7 @@
 
 extern unsigned char g_commandPos;
 extern char g_commandLine[50];
+extern uint32_t g_sendUSBFlag;
 
 extern void command_init(void);
 extern void command_parse(char *cmd);

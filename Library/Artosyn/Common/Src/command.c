@@ -2,7 +2,8 @@
 #include "command.h"
 #include "sd_host.h"
 #include "debuglog.h"
-
+#include "interrupt.h"
+#include "serial.h"
 #include "sd_host.h"
 #include "stm32f746xx.h"
 #include "debuglog.h"
@@ -13,10 +14,14 @@
 unsigned char g_commandPos;
 char g_commandLine[50];
 
+uint32_t g_sendUSBFlag = 0;
+
 void command_init(void)
 {
     g_commandPos = 0;
     memset(g_commandLine, '\0', 50);
+
+    reg_IrqHandle(UART0_VECTOR_NUM, Drv_UART0_IRQHandler);
 }
 
 void command_parse(char *cmd)
@@ -89,6 +94,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     else if (memcmp(cmdArray[0], "erasesd", 7) == 0)
     {
         command_eraseSdcard(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "sendusb", 7) == 0)
+    {
+        command_sendusb();
     }
     /* error command */
     else
@@ -345,4 +354,10 @@ uint32_t read_reg32(uint32_t *addr)
     dlog_info("Read data = 0x%08x\n", (uint32_t)*reg_addr);
 #endif
     return (*reg_addr);
+}
+
+
+void command_sendusb(void)
+{
+    g_sendUSBFlag = 1;   
 }
