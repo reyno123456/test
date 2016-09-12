@@ -333,8 +333,7 @@ void RTC_IRQHandler(void)
 
 void USB_OTG0_IRQHandler(void)
 {
-    //dlog_info("USB_OTG0_IRQHandler\n");
-    USB_LL_OTG0_IRQHandler();
+    run_irq_hdl(USB_OTG0_VECTOR_NUM);
 }
 
 void USB_OTG1_IRQHandler(void)

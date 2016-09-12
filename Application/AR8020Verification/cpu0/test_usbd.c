@@ -108,6 +108,10 @@ void test_usbd_hid(void)
  //   reg_IrqHandle(USB_OTG0_VECTOR_NUM, USB_OTG0_IRQHandler);
     uint32_t index = 0;
 
+    command_init();
+
+    reg_IrqHandle(USB_OTG0_VECTOR_NUM, USB_LL_OTG0_IRQHandler);
+
     dlog_info("0000\n");
     USBD_Init(&USBD_Device, &HID_Desc, 0);
 
