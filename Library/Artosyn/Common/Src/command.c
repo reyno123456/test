@@ -1,4 +1,3 @@
-
 #include "command.h"
 #include "sd_host.h"
 #include "debuglog.h"
@@ -9,10 +8,13 @@
 #include "debuglog.h"
 #include <string.h>
 #include <stdlib.h>
-
+#include "cmsis_os.h"
 
 unsigned char g_commandPos;
 char g_commandLine[50];
+
+//QueueHandle_t xQueue = NULL;
+osMessageQId usbVideoReadyEvent;
 
 uint32_t g_sendUSBFlag = 0;
 
@@ -359,5 +361,20 @@ uint32_t read_reg32(uint32_t *addr)
 
 void command_sendusb(void)
 {
-    g_sendUSBFlag = 1;   
+    uint32_t        ValueToSend = 0;
+    portBASE_TYPE   xStatus = pdFALSE;
+
+    ValueToSend++;
+
+//    xStatus = xQueueSendFromISR(xQueue, &ValueToSend, &xStatus);
+//    if (xStatus != pdPASS)
+//    {
+//        dlog_info("Could not send to the Queue\n");
+//    }
+    osMessagePut(usbVideoReadyEvent, ValueToSend, 0);
+
 }
+
+
+
+

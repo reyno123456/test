@@ -28,7 +28,7 @@ LDFLAGS += -Bstatic
 LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) $(LD_LIBS)
 
 # source file(s), including c file(s)
-SRC_C   := main_cpu0.c test_freertos.c test_usbd.c ../share/test_i2c_adv7611.c test_usbh.c
+SRC_C   := main_cpu0.c test_freertos.c test_usbd.c ../share/test_i2c_adv7611.c test_usbh.c test_cpu0_application.c raw_video_data.c
 
 CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
 
