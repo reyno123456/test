@@ -18,6 +18,52 @@ osMessageQId usbVideoReadyEvent;
 
 uint32_t g_sendUSBFlag = 0;
 
+/* added by xiongjiangjiang */
+void Drv_UART0_IRQHandler(void)
+{
+    char                  c;
+    unsigned int          status;
+    unsigned int          isrType;
+    volatile uart_type   *uart0_regs;
+
+    uart0_regs = (uart_type *)UART0_BASE; //get_uart_type_by_index(0);
+    status     = uart0_regs->LSR;
+    isrType    = uart0_regs->IIR_FCR;
+
+    /* receive data irq, try to get the data */
+    if (UART_IIR_RECEIVEDATA == (isrType & UART_IIR_RECEIVEDATA))
+    {
+        if ((status & UART_LSR_DATAREADY) == UART_LSR_DATAREADY)
+        {
+            c = uart0_regs->RBR_THR_DLL;
+            /* receive "enter" key */
+            if (c == '\r')
+            {
+                serial_putc('\n');
+
+                /* if g_commandLine is not empty, go to parse command */
+                if (g_commandPos > 0)
+                    command_parse(g_commandLine);
+            }
+            /* receive "backspace" key */
+            else if (c == '\b')
+            {
+                if (g_commandPos > 1)
+                    g_commandLine[--g_commandPos] = '\0';
+                serial_putc('\b');
+                serial_putc(' ');
+                serial_putc('\b');
+            }
+            /* receive normal data */
+            else
+            {
+                serial_putc(c);
+                g_commandLine[g_commandPos++] = c;
+            }
+        }
+    }
+}
+
 void command_init(void)
 {
     g_commandPos = 0;
@@ -331,33 +377,9 @@ void command_eraseSdcard(char *startBlock, char *blockNum)
 
 void delay_ms(uint32_t num)
 {
-    int i;
+    volatile int i;
     for (i = 0; i < num * 100; i++);
 }
-
-void write_reg32(uint32_t *addr, uint32_t data)
-{
-#ifdef ECHO
-
-    dlog_info("Write ADDR = 0x%08x\n", (uint32_t)addr);
-    dlog_info("Write data = 0x%08x\n", (uint32_t)data);
-#endif
-    uint32_t *reg_addr = (uint32_t *)addr;
-    *reg_addr = data;
-}
-
-uint32_t read_reg32(uint32_t *addr)
-{
-#ifdef ECHO
-    dlog_info("Read ADDR = 0x%08x\n", (uint32_t)addr);
-#endif
-    uint32_t *reg_addr = (uint32_t *)addr;
-#ifdef ECHO
-    dlog_info("Read data = 0x%08x\n", (uint32_t)*reg_addr);
-#endif
-    return (*reg_addr);
-}
-
 
 void command_sendusb(void)
 {
@@ -371,7 +393,7 @@ void command_sendusb(void)
 //    {
 //        dlog_info("Could not send to the Queue\n");
 //    }
-//    osMessagePut(usbVideoReadyEvent, ValueToSend, 0);
+    osMessagePut(usbVideoReadyEvent, ValueToSend, 0);
 
 }
 

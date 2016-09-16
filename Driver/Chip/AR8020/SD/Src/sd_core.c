@@ -10,9 +10,11 @@
   *            Peripheral Control functions
   *            Peripheral State functions
   */
+#include <stddef.h>
+#include <stdint.h>
+#include "reg_rw.h"
 #include "sd_core.h"
 #include "stm32f746xx.h"
-#include "command.h"
 #include "FreeRTOSConfig.h"
 #include "memory_config.h"
 

@@ -26,3 +26,17 @@ void Reg_Write32_Mask(uint32_t regAddr, uint32_t regData, uint32_t regDataMask)
      
     *ptr_regAddr = u32_regDataTmp;
 }
+
+void write_reg32(uint32_t *addr, uint32_t data)
+{
+    uint32_t *reg_addr = (uint32_t *)addr;
+    *reg_addr = data;
+}
+
+uint32_t read_reg32(uint32_t *addr)
+{
+    uint32_t *reg_addr = (uint32_t *)addr;
+    return (*reg_addr);
+}
+
+

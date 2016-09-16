@@ -1,6 +1,5 @@
 #include "serial.h"
 #include "stddef.h"
-#include "command.h"
 
 /*********************************************************
  * Generic UART APIs
@@ -97,54 +96,6 @@ char uart_getc(unsigned char index)
 /*********************************************************
  * Serial(UART0) APIs
  *********************************************************/
-
-/* added by xiongjiangjiang */
-extern unsigned char g_commandPos;
-extern char g_commandLine[50];
-void Drv_UART0_IRQHandler(void)
-{
-    char                  c;
-    unsigned int          status;
-    unsigned int          isrType;
-    volatile uart_type   *uart0_regs;
-
-    uart0_regs = get_uart_type_by_index(0);
-    status     = uart0_regs->LSR;
-    isrType    = uart0_regs->IIR_FCR;
-
-    /* receive data irq, try to get the data */
-    if (UART_IIR_RECEIVEDATA == (isrType & UART_IIR_RECEIVEDATA))
-    {
-        if ((status & UART_LSR_DATAREADY) == UART_LSR_DATAREADY)
-        {
-            c = uart0_regs->RBR_THR_DLL;
-            /* receive "enter" key */
-            if (c == '\r')
-            {
-                serial_putc('\n');
-
-                /* if g_commandLine is not empty, go to parse command */
-                if (g_commandPos > 0)
-                    command_parse(g_commandLine);
-            }
-            /* receive "backspace" key */
-            else if (c == '\b')
-            {
-                if (g_commandPos > 1)
-                    g_commandLine[--g_commandPos] = '\0';
-                serial_putc('\b');
-                serial_putc(' ');
-                serial_putc('\b');
-            }
-            /* receive normal data */
-            else
-            {
-                serial_putc(c);
-                g_commandLine[g_commandPos++] = c;
-            }
-        }
-    }
-}
 
 void serial_init(void)
 {

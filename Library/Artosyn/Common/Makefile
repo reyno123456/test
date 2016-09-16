@@ -23,8 +23,7 @@ SRC_C   := Src/string.c \
            Src/printf.c \
            Src/memory.c \
            Src/debuglog.c \
-           Src/interrupt.c \
-           Src/command.c
+           Src/interrupt.c
 
 INCDIRS :=  -IInc \
             -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
@@ -50,7 +49,6 @@ install:
 	@cp -f Inc/debuglog.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/interrupt.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/interrupt_internal.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f Inc/command.h $(OUTPUT_HEADER_STAGING_DIR)
 	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)
 

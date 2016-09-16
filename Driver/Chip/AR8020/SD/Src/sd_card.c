@@ -11,9 +11,11 @@
   *           + Peripheral State functions
   */
 
+#include <stddef.h>
+#include <stdint.h>
+#include "reg_rw.h"
 #include "sd_core.h"
 #include "sd_card.h"
-#include "command.h"
 #include "stm32f746xx.h"
 #include "debuglog.h"
 
