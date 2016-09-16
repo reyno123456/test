@@ -1,18 +1,47 @@
 #include "debuglog.h"
 #include "i2c.h"
+#include "adv_7611.h"
 
-#define TAR_24C256_ADDR       0x051
+#define TAR_24C256_ADDR       0x51
+#define TAR_ADV7611_ADDR      (0x98 >> 1)
 
-#define TAR_ADDR TAR_24C256_ADDR
+#define I2C_COMPONENT_NUM  I2C_Component_0
 
-void I2C_Initial(void)
+#define RX_I2C_IO_MAP_ADDR              (0x98 >> 1)
+#define RX_I2C_CP_MAP_ADDR              (0x44 >> 1)
+#define RX_I2C_VDP_MAP_ADDR             (0x48 >> 1)
+#define RX_I2C_AFE_DPLL_MAP_ADDR        (0x4C >> 1)
+#define RX_I2C_REPEATER_MAP_ADDR        (0x64 >> 1)
+#define RX_I2C_HDMI_MAP_ADDR            (0x68 >> 1)
+#define RX_I2C_EDID_MAP_ADDR            (0x6C >> 1)
+#define RX_I2C_ESDP_MAP_ADDR            (0x70 >> 1)
+#define RX_I2C_DPP_MAP_ADDR             (0x78 >> 1)
+#define RX_I2C_AVLINK_MAP_ADDR          (0x84 >> 1)
+#define RX_I2C_CEC_MAP_ADDR             (0x80 >> 1)
+#define RX_I2C_INFOFRAME_MAP_ADDR       (0x7C >> 1)
+#define RX_I2C_TEST_MAP1_ADDR           (0x60 >> 1)
+#define RX_I2C_SDP_MAP_ADDR             (0x90 >> 1)
+#define RX_I2C_SDP_IO_MAP_ADDR          (0x94 >> 1)
+
+static void ADV_7611_WriteByte(unsigned char slv_addr, unsigned char sub_addr, unsigned char val)
 {
-    I2C_Init(I2C_Component_1, I2C_Master_Mode, TAR_ADDR, I2C_Fast_Speed);
+    unsigned char sub_addr_tmp = sub_addr;
+    I2C_Master_Write_Data(I2C_COMPONENT_NUM, slv_addr >> 1, (uint8_t*)&sub_addr_tmp, 1, &val, 1);
+}
+
+static unsigned char ADV_7611_ReadByte(unsigned char slv_addr, unsigned char sub_addr)
+{
+    unsigned char val = 0;
+    unsigned char sub_addr_tmp = sub_addr;
+    I2C_Master_Read_Data(I2C_COMPONENT_NUM, slv_addr >> 1, (uint8_t*)&sub_addr_tmp, 1, &val, 1);
+    return val;
 }
 
 void test_adv7611(void)
 {
-
+    ADV_7611_Initial();
+    ADV_7611_DumpOutEdidData();
+    ADV_7611_DumpOutDefaultSettings();
 }
 
 void test_24c256(void)
@@ -21,7 +50,7 @@ void test_24c256(void)
     unsigned short rd_start_addr = 0;
     unsigned int size = 60;
 	
-    I2C_Initial();
+	I2C_Init(I2C_COMPONENT_NUM, I2C_Master_Mode, TAR_24C256_ADDR, I2C_Fast_Speed);
 	
     dlog_info("I2C_Initial finished!\n");
 
@@ -33,17 +62,17 @@ void test_24c256(void)
     {
         data_src[0] = i; data_src[1] = i+1; data_src[2] = i+2; data_src[3] = i+3; data_src[4] = i+4; data_src[5] = i+5;
         dlog_info("%d, %d,%d,%d,%d,%d,%d\n", wr_start_addr, data_src[0],  data_src[1], data_src[2], data_src[3], data_src[4], data_src[5]);
-        I2C_Master_Write_Data(I2C_Component_1, (uint8_t*)&wr_start_addr, 2, data_src, 6);
+        I2C_Master_Write_Data(I2C_COMPONENT_NUM, TAR_24C256_ADDR, (uint8_t*)&wr_start_addr, 2, data_src, 6);
         wr_start_addr += 6;
     }
 
     dlog_info("%d, %d,%d,%d,%d,%d,%d\n", wr_start_addr, data_src[0],  data_src[1], data_src[2], data_src[3], data_src[4], data_src[5]);
     data_src[0] = i; data_src[1] = i+1; data_src[2] = i+2; data_src[3] = i+3; data_src[4] = i+4; data_src[5] = i+5;
-    I2C_Master_Write_Data(I2C_Component_1, (uint8_t*)&wr_start_addr, 2, data_src, 4);
+    I2C_Master_Write_Data(I2C_COMPONENT_NUM, TAR_24C256_ADDR, (uint8_t*)&wr_start_addr, 2, data_src, 4);
 
     dlog_info("I2C_Master_Write_Data finished!\n");
 
-    I2C_Master_Read_Data(I2C_Component_1, (uint8_t*)&rd_start_addr, 2, data_chk, size);
+    I2C_Master_Read_Data(I2C_COMPONENT_NUM, TAR_24C256_ADDR, (uint8_t*)&rd_start_addr, 2, data_chk, size);
     for(i = 0; i < size; i++)
     {
         dlog_info("%d, data_chk = %d\n", rd_start_addr+i, data_chk[i]);

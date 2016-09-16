@@ -48,7 +48,10 @@ export ARFLAGS
 export RM
 
 CHIP = AR8020
+BOARD = AR8020TEST
+
 export CHIP
+export BOARD
 
 export USB_DEV_CLASS_HID_ENABLE = 1
 export CROSS_COMPILE_LIB_PATH

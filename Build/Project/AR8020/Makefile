@@ -17,7 +17,8 @@ include $(BUILD_DIR)/config.mk
 ###############################################################################
 
 LIBS := $(TOP_DIR)/Bootload/AR8020 \
-        $(TOP_DIR)/Driver/Chip/ \
+        $(TOP_DIR)/Driver/Chip \
+        $(TOP_DIR)/Driver/Board \
         $(TOP_DIR)/Kernel/FreeRTOS \
         $(TOP_DIR)/Library/Artosyn/Common \
         $(TOP_DIR)/Library/ThirdParty/CMSIS \

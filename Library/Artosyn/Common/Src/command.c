@@ -371,7 +371,7 @@ void command_sendusb(void)
 //    {
 //        dlog_info("Could not send to the Queue\n");
 //    }
-    osMessagePut(usbVideoReadyEvent, ValueToSend, 0);
+//    osMessagePut(usbVideoReadyEvent, ValueToSend, 0);
 
 }
 
