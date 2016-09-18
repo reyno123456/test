@@ -2,6 +2,16 @@
 #include "test_freertos.h"
 #include "test_i2c_adv7611.h"
 
+void *malloc(size_t size)
+{
+    return pvPortMalloc(size);
+}
+
+void free(void* p)
+{
+    vPortFree(p);
+}
+
 /**
  * @brief  CPU L1-Cache enable.
  * @param  None

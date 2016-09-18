@@ -23,7 +23,8 @@ LIB = lib$(CHIP)drv.a
 CPU_NUMBER = cpu2
 
 # source file(s), including c file(s)
-SRC_C := UART/Src/serial.c \
+SRC_C := SysCtl/Src/reg_rw.c \
+         UART/Src/serial.c \
          H264Encoder/Src/h264_encoder.c \
          H264Encoder/Src/enc_internal.c \
          H264Encoder/Src/vsoc_enc.c \

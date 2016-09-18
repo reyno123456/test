@@ -30,21 +30,27 @@ SECTIONS
 
     .rodata :
     {
-        _rodata_start = . ;
         *(.rodata*)
         __etext = . ;
         . = ALIGN(4) ;
-        _rodata_end = . ;
     } > ITCM2
 
-    .data : AT (_rodata_end)
+    .ARM.exidx :
+    {
+        *(.ARM.exidx*)
+        *(.gnu.linkonce.armexidx.*)
+        . = ALIGN(4) ;
+        _data_lma_start = . ;
+    } > ITCM2
+
+    .data :
     {
         _data_start = . ;
         *(.data)
         . = ALIGN(4);
         *(.ramcode)
         _data_end = . ;
-    } > DTCM2
+    } > DTCM2 AT > ITCM2
 
     .bss :
     {
