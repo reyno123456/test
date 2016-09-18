@@ -4,8 +4,8 @@ ENTRY(_start)
 
 MEMORY
 {
-    startup : ORIGIN = 0x00000000, LENGTH = 0x10000
-    ram     : ORIGIN = 0x20000000, LENGTH = 0x10000
+    ITCM2 : ORIGIN = 0x00000000, LENGTH = 0x10000
+    DTCM2 : ORIGIN = 0x20000000, LENGTH = 0x10000
 }
 
 SECTIONS
@@ -14,49 +14,46 @@ SECTIONS
     {
         __startup = . ;
         *(.vectors)
-    } > startup
+    } > ITCM2
 
     .start :
     {
         *(.start)
-    } > startup
+    } > ITCM2
 
     .text :
     {
         ___c_start = . ;
         text_start = . ;
         *(.text)
-    } > startup
+    } > ITCM2
 
     .rodata :
     {
+        _rodata_start = . ;
         *(.rodata*)
         __etext = . ;
-    } > startup
+        . = ALIGN(4) ;
+        _rodata_end = . ;
+    } > ITCM2
 
-    .data_array :
+    .data : AT (_rodata_end)
     {
-        *(.data_array*)
-        __etext = . ;
-    } > startup
-
-    .data :
-    {
+        _data_start = . ;
         *(.data)
         . = ALIGN(4);
         *(.ramcode)
-    } > ram
+        _data_end = . ;
+    } > DTCM2
 
     .bss :
     {
+        _bss_start = .;
         *(.bss)
         *(COMMON)
-    } > ram
-
-    .stack :
-    {
-        *(.stack)
-    } > ram
+        . = ALIGN(4);
+        _bss_end = .;
+    } > DTCM2
 }
 
 

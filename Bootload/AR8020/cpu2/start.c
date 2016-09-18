@@ -29,9 +29,27 @@ unsigned int vectors[] __attribute__((section(".vectors"))) = {
         [78 ... 165] = (unsigned int)&default_isr
 };
 
+extern int _rodata_end;
+extern int _data_start;
+extern int _data_end;
+extern int _bss_start;
+extern int _bss_end;
+
 void __attribute__((section(".start"))) _start(void)
 {
-	main();
+    int* src = &_rodata_end;
+    int* dst = &_data_start;
+    while (dst < &_data_end)
+    {
+        *dst++ = *src++;
+    }
+    dst = &_bss_start;
+    while (dst < &_bss_end)
+    {
+        *dst++ = 0;
+    }
+
+    main();
 }
 
 void default_isr(void)
