@@ -2,6 +2,7 @@
 #include "serial.h"
 #include "test_i2c_adv7611.h"
 #include "test_h264_encoder.h"
+#include "test_BB.h"
 
 void USB_LL_OTG0_IRQHandler(void)
 {
@@ -37,10 +38,10 @@ int main(void)
     serial_init();
     dlog_info("main function start \n");
     
-    test_BB_SKY();
-    dlog_info("test_BB_SKY Done \n");
+    //test_BB_SKY();
+    //dlog_info("test_BB_SKY Done \n");
     
-    //test_h264_encoder();
+    test_h264_encoder();
 
 #if 0
     /* Enable the CPU Cache */

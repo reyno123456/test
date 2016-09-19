@@ -12,7 +12,7 @@ void test_BB_SKY(void)
 }
 
 
-void test_BB_Grnd(void)
+void test_BB_Grd(void)
 {
     STRU_BB_initType initGrdType = {
         .en_mode = BB_GRD_MODE,

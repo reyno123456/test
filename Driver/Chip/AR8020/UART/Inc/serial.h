@@ -14,8 +14,8 @@
 #define	UART8_BASE               0x40580000
 #define UART9_BASE               0xA0000000
 
-//#define CLK_FREQ                 50000000    // clock frequency
-#define CLK_FREQ                 80000000    // clock frequency
+#define CLK_FREQ                 50000000    // clock frequency
+//#define CLK_FREQ               80000000    // clock frequency
 
 #define UART_FCR_ENABLE_FIFO     0x01
 #define UART_FCR_CLEAR_RCVR      0x02
