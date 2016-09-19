@@ -3,7 +3,6 @@
 #include "usbd_hid.h"
 #include "debuglog.h"
 #include "interrupt.h"
-#include "interrupt_internal.h"
 #include "command.h"
 #include "cmsis_os.h"
 #include "raw_video_data.h"
@@ -42,7 +41,7 @@ static void Application_USBVideoTask(void const * argument)
     dlog_info("start usb video task\n");
 
     /* register interrupt for usb device */
-    reg_IrqHandle(USB_OTG0_VECTOR_NUM, USB_LL_OTG0_IRQHandler);
+    reg_IrqHandle(OTG_INTR0_VECTOR_NUM, USB_LL_OTG0_IRQHandler);
 
     USBD_Init(&USBD_Device, &HID_Desc, 0);
 

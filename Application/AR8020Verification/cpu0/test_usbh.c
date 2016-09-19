@@ -8,7 +8,6 @@
 #include "ff_gen_drv.h"
 #include "usbh_diskio.h"
 #include "interrupt.h"
-#include "interrupt_internal.h"
 
 /* USB Host Global Variables */
 USBH_HandleTypeDef   hUSBHost;
@@ -244,7 +243,7 @@ void test_usbh(void)
 
     dlog_info("start test_usbh\n");
 
-    reg_IrqHandle(USB_OTG0_VECTOR_NUM, USB_OTG0_IRQHandler);
+    reg_IrqHandle(OTG_INTR0_VECTOR_NUM, USB_LL_OTG0_IRQHandler);
 
     USBH_Init(&hUSBHost, USBH_UserPorcess, 0);
 

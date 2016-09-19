@@ -3,7 +3,6 @@
 #include "usbd_hid.h"
 #include "debuglog.h"
 #include "interrupt.h"
-#include "interrupt_internal.h"
 #include "command.h"
 #include "raw_video_data.h"
 
@@ -20,7 +19,7 @@ void test_usbd_hid(void)
 
     command_init();
 
-    reg_IrqHandle(USB_OTG0_VECTOR_NUM, USB_LL_OTG0_IRQHandler);
+    reg_IrqHandle(OTG_INTR0_VECTOR_NUM, USB_LL_OTG0_IRQHandler);
 
     dlog_info("0000\n");
     USBD_Init(&USBD_Device, &HID_Desc, 0);

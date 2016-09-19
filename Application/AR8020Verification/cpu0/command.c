@@ -69,7 +69,7 @@ void command_init(void)
     g_commandPos = 0;
     memset(g_commandLine, '\0', 50);
 
-    reg_IrqHandle(UART0_VECTOR_NUM, Drv_UART0_IRQHandler);
+    reg_IrqHandle(UART_INTR0_VECTOR_NUM, Drv_UART0_IRQHandler);
 }
 
 void command_parse(char *cmd)

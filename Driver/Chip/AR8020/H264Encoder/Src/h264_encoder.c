@@ -25,7 +25,7 @@ int H264_Encoder_Init(void)
     sdram_init_check(); 
     dlog_info("sdram init OK\n");
 
-    reg_IrqHandle(VEBRC_VECTOR_NUM, VEBRC_IRQ_Wrap_Handler);
+    reg_IrqHandle(VIDEO_ARMCM7_IRQ_VECTOR_NUM, VEBRC_IRQ_Wrap_Handler);
 
     NVIC_ISER->ISER1 = 0x30000000;
 
