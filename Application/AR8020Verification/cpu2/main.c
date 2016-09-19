@@ -32,10 +32,15 @@ int main(void)
 {
     int tmp;
   
+    (*(volatile unsigned int *)0x40B0008C) = 0x00500000; //PATCH for FPGA version, PIN MUX for UART9
+   
     serial_init();
     dlog_info("main function start \n");
-
-    test_h264_encoder();
+    
+    test_BB_SKY();
+    dlog_info("test_BB_SKY Done \n");
+    
+    //test_h264_encoder();
 
 #if 0
     /* Enable the CPU Cache */

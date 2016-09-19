@@ -29,7 +29,7 @@ int H264_Encoder_Init(void)
 
     NVIC_ISER->ISER1 = 0x30000000;
 
-#if 1 // Test in emulator    
+#if 0 // Test in emulator    
     GPIO_CFG_PTR p_gpio_cfg = (GPIO_CFG_PTR)0x40b0007c;
     p_gpio_cfg->SFR_PAD_CTRL0   = 0x00000000;
     p_gpio_cfg->SFR_PAD_CTRL1   = 0x00000000;
@@ -44,9 +44,11 @@ int H264_Encoder_Init(void)
 #endif
 
     /* BR - 0: 8Mbps, 1: 1Mbps, 4: 4Mbps, 8: 500kbps, 10: 10Mbps */
-    init_view0( 1280, 720, 10, 30, 1); //init_view0( 1920, 1080, 10, 30, 10);
+    //init_view0( 1280, 720, 10, 30, 1); //init_view0( 1920, 1080, 10, 30, 10);
+    init_view0( 640, 480, 10, 60, 1); //init_view1( 1920, 1080, 10, 30, 10);
     v0_poweron_rc_params_set = 1;
-    init_view1( 1280, 720, 10, 30, 1); //init_view1( 1920, 1080, 10, 30, 10);
+    //init_view1( 1280, 720, 10, 30, 1); //init_view1( 1920, 1080, 10, 30, 10);
+    init_view1( 640, 480, 10, 60, 1); //init_view1( 1920, 1080, 10, 30, 10);
     v1_poweron_rc_params_set = 1;
 
     my_v0_initial_all( );

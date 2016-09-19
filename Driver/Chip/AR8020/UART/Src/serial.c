@@ -38,6 +38,9 @@ static uart_type* get_uart_type_by_index(unsigned char index)
     case 8:
         uart_regs = (uart_type *)UART8_BASE;
         break;
+    case 9:
+        uart_regs = (uart_type *)UART9_BASE;
+        break;        
     default:
         uart_regs = (uart_type *)NULL;
         break;
@@ -79,6 +82,14 @@ void uart_putc(unsigned char index, char c)
     }
 }
 
+void uart_puts(unsigned char index, const char *s)
+{
+    while (*s)
+    {
+        uart_putc(index, *s++);
+    }
+}
+
 char uart_getc(unsigned char index)
 {
     char tmp = 0;
@@ -97,9 +108,10 @@ char uart_getc(unsigned char index)
  * Serial(UART0) APIs
  *********************************************************/
 
+
 void serial_init(void)
 {
-    uart_init(0, 115200);
+    uart_init(0, 57600);
 }
 
 void serial_putc(char c)
@@ -113,10 +125,7 @@ void serial_putc(char c)
 
 void serial_puts(const char *s)
 {
-    while (*s)
-    {
-        serial_putc(*s++);
-    }
+    uart_puts(0, s);
 }
 
 char serial_getc(void)

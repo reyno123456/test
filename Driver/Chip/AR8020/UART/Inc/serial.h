@@ -12,8 +12,10 @@
 #define	UART6_BASE               0x40560000
 #define	UART7_BASE               0x40570000
 #define	UART8_BASE               0x40580000
+#define UART9_BASE               0xA0000000
 
-#define CLK_FREQ                 50000000    // clock frequency
+//#define CLK_FREQ                 50000000    // clock frequency
+#define CLK_FREQ                 80000000    // clock frequency
 
 #define UART_FCR_ENABLE_FIFO     0x01
 #define UART_FCR_CLEAR_RCVR      0x02
@@ -64,6 +66,7 @@ typedef struct {
 
 void uart_init(unsigned char index, unsigned int baud_rate);
 void uart_putc(unsigned char index, char c);
+void uart_puts(unsigned char index, const char *s);
 char uart_getc(unsigned char index);
 
 void serial_init(void);
