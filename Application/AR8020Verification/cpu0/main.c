@@ -36,7 +36,7 @@ int main(void)
 {
   int tmp;
   
-  serial_init();
+  serial_init(0, 115200);
   dlog_info("main function start \n");
 
   /* Enable the CPU Cache */

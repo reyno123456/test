@@ -1,5 +1,5 @@
-#include "serial.h"
 #include "stddef.h"
+#include "serial.h"
 
 /*********************************************************
  * Generic UART APIs
@@ -108,29 +108,33 @@ char uart_getc(unsigned char index)
  * Serial(UART0) APIs
  *********************************************************/
 
-
-void serial_init(void)
+static unsigned char g_u8SerialUartIndex = 0xFF;
+void serial_init(unsigned char index, unsigned int baud_rate)
 {
-    uart_init(0, 57600);
+    uart_init(index, baud_rate);
+    g_u8SerialUartIndex = index;
 }
 
 void serial_putc(char c)
 {
     if (c == '\n')
     {
-        uart_putc(0, '\r');
+        uart_putc(g_u8SerialUartIndex, '\r');
     }
-    uart_putc(0, c);
+    uart_putc(g_u8SerialUartIndex, c);
 }
 
 void serial_puts(const char *s)
 {
-    uart_puts(0, s);
+    while (*s)
+    {
+        serial_putc(*s++);
+    }
 }
 
 char serial_getc(void)
 {
-    return uart_getc(0);
+    return uart_getc(g_u8SerialUartIndex);
 }
 
 

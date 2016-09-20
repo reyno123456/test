@@ -69,7 +69,7 @@ void uart_putc(unsigned char index, char c);
 void uart_puts(unsigned char index, const char *s);
 char uart_getc(unsigned char index);
 
-void serial_init(void);
+void serial_init(unsigned char index, unsigned int baud_rate);
 void serial_putc(char c);
 void serial_puts(const char *s);
 char serial_getc(void);

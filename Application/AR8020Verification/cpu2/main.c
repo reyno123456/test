@@ -35,7 +35,7 @@ int main(void)
   
     (*(volatile unsigned int *)0x40B0008C) = 0x00500000; //PATCH for FPGA version, PIN MUX for UART9
    
-    serial_init();
+    serial_init(9, 115200);
     dlog_info("main function start \n");
     
     //test_BB_SKY();
