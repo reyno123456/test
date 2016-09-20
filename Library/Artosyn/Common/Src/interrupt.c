@@ -1,5 +1,6 @@
 #include "interrupt.h"
 #include "debuglog.h"
+#include "reg_map.h"
 
 #define MAX_IRQ_VECTROS		(99)
 
@@ -33,6 +34,69 @@ static inline run_irq_hdl(IRQ_type vct)
     if(handlers[vct] != 0)
     {
         (handlers[vct])();
+    }
+}
+
+void INTR_NVIC_EnableIRQ(IRQ_type vct)
+{
+    int32_t IRQn = vct - UART_INTR0_VECTOR_NUM; 
+    NVIC_CTRL->ISER[(((uint32_t)(int32_t)IRQn) >> 5UL)] = (uint32_t)(1UL << (((uint32_t)(int32_t)IRQn) & 0x1FUL));
+}
+
+void INTR_NVIC_DisableIRQ(IRQ_type vct)
+{
+    int32_t IRQn = vct - UART_INTR0_VECTOR_NUM;
+    NVIC_CTRL->ICER[(((uint32_t)(int32_t)IRQn) >> 5UL)] = (uint32_t)(1UL << (((uint32_t)(int32_t)IRQn) & 0x1FUL));
+}
+
+uint32_t INTR_NVIC_GetPendingIRQ(IRQ_type vct)
+{
+    int32_t IRQn = vct - UART_INTR0_VECTOR_NUM;
+    return((uint32_t)(((NVIC_CTRL->ISPR[(((uint32_t)(int32_t)IRQn) >> 5UL)] & (1UL << (((uint32_t)(int32_t)IRQn) & 0x1FUL))) != 0UL) ? 1UL : 0UL));
+}
+
+void INTR_NVIC_SetPendingIRQ(IRQ_type vct)
+{
+    int32_t IRQn = vct - UART_INTR0_VECTOR_NUM;
+    NVIC_CTRL->ISPR[(((uint32_t)(int32_t)IRQn) >> 5UL)] = (uint32_t)(1UL << (((uint32_t)(int32_t)IRQn) & 0x1FUL));
+}
+
+void INTR_NVIC_ClearPendingIRQ(IRQ_type vct)
+{
+    int32_t IRQn = vct - UART_INTR0_VECTOR_NUM;
+    NVIC_CTRL->ICPR[(((uint32_t)(int32_t)IRQn) >> 5UL)] = (uint32_t)(1UL << (((uint32_t)(int32_t)IRQn) & 0x1FUL));
+}
+
+uint32_t INTR_NVIC_GetActiveIRQ(IRQ_type vct)
+{
+    int32_t IRQn = vct - UART_INTR0_VECTOR_NUM;
+    return((uint32_t)(((NVIC_CTRL->IABR[(((uint32_t)(int32_t)IRQn) >> 5UL)] & (1UL << (((uint32_t)(int32_t)IRQn) & 0x1FUL))) != 0UL) ? 1UL : 0UL));
+}
+
+void INTR_NVIC_SetIRQPriority(IRQ_type vct, uint32_t priority)
+{
+    int32_t IRQn = vct - UART_INTR0_VECTOR_NUM;
+    if((int32_t)IRQn < 0)
+    {
+        SCB_CTRL->SHPR[(((uint32_t)(int32_t)IRQn) & 0xFUL)-4UL] = (uint8_t)((priority << (8 - __NVIC_CTRL_PRIO_BITS)) & (uint32_t)0xFFUL);
+    }
+    else
+    {
+        NVIC_CTRL->IP[((uint32_t)(int32_t)IRQn)] = (uint8_t)((priority << (8 - __NVIC_CTRL_PRIO_BITS)) & (uint32_t)0xFFUL);
+    }
+}
+
+uint32_t INTR_NVIC_GetIRQPriority(IRQ_type vct)
+{
+    int32_t IRQn = vct - UART_INTR0_VECTOR_NUM;
+
+    if((int32_t)IRQn < 0)
+    {
+        return(((uint32_t)SCB_CTRL->SHPR[(((uint32_t)(int32_t)IRQn) & 0xFUL)-4UL] >> (8 - __NVIC_CTRL_PRIO_BITS)));
+    }
+    else
+    {
+        return(((uint32_t)NVIC_CTRL->IP[((uint32_t)(int32_t)IRQn)] >> (8 - __NVIC_CTRL_PRIO_BITS)));
     }
 }
 

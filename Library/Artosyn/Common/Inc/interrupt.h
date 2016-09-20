@@ -1,6 +1,9 @@
 #ifndef __ISR__H
 #define __ISR__H
 
+#include <stddef.h>
+#include <stdint.h>
+
 typedef enum
 {
     UART_INTR0_VECTOR_NUM = 16,                 //16
@@ -108,6 +111,15 @@ typedef void(*Irq_handler)(void);
 
 int reg_IrqHandle(IRQ_type vct, Irq_handler hdl);
 int rmv_IrqHandle(IRQ_type vct);
+
+void INTR_NVIC_EnableIRQ(IRQ_type vct);
+void INTR_NVIC_DisableIRQ(IRQ_type vct);
+uint32_t INTR_NVIC_GetPendingIRQ(IRQ_type vct);
+void INTR_NVIC_SetPendingIRQ(IRQ_type vct);
+void INTR_NVIC_ClearPendingIRQ(IRQ_type vct);
+uint32_t INTR_NVIC_GetActiveIRQ(IRQ_type vct);
+void INTR_NVIC_SetIRQPriority(IRQ_type vct, uint32_t priority);
+uint32_t INTR_NVIC_GetIRQPriority(IRQ_type vct);
 
 void SYSTICK_IRQHandler(void);
 

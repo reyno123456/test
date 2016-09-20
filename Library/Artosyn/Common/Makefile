@@ -26,6 +26,7 @@ SRC_C   := Src/string.c \
            Src/interrupt.c
 
 INCDIRS :=  -IInc \
+            -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc \
             -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
             -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Device/ST/STM32F7xx/Include \
             -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \
