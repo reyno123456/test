@@ -25,13 +25,15 @@ CPU_NUMBER = cpu2
 # source file(s), including c file(s)
 SRC_C := SysCtl/Src/reg_rw.c \
          SysCtl/Src/systicks.c \
+         SysCtl/Src/inter_core.c \
          UART/Src/serial.c \
          H264Encoder/Src/h264_encoder.c \
          H264Encoder/Src/enc_internal.c \
          H264Encoder/Src/vsoc_enc.c \
          H264Encoder/Src/brc.c \
          SPI/Src/spi.c \
-         BB/Src/BB_ctrl.c
+         BB/Src/BB_ctrl.c \
+         SRAM/Src/sram_bb.c
 
 INCDIRS := -IUART/Inc \
            -IH264Encoder/Inc \
@@ -44,6 +46,7 @@ INCDIRS := -IUART/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SD/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/BB/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SPI/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/SRAM/Inc \
            -I$(TOP_DIR)/Configure/Include
 
 # object file(s)
@@ -64,6 +67,7 @@ install:
 	@cp -f H264Encoder/Inc/h264_encoder.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SPI/Inc/spi.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/BB_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."
