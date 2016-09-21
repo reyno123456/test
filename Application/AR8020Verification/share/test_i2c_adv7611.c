@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "debuglog.h"
 #include "i2c.h"
 #include "adv_7611.h"
@@ -6,6 +7,7 @@
 #define TAR_ADV7611_ADDR      (0x98 >> 1)
 
 #define I2C_COMPONENT_NUM  I2C_Component_0
+#define ADV_7611_I2C_COMPONENT_NUM I2C_Component_0
 
 #define RX_I2C_IO_MAP_ADDR              (0x98 >> 1)
 #define RX_I2C_CP_MAP_ADDR              (0x44 >> 1)
@@ -26,15 +28,33 @@
 static void ADV_7611_WriteByte(unsigned char slv_addr, unsigned char sub_addr, unsigned char val)
 {
     unsigned char sub_addr_tmp = sub_addr;
-    I2C_Master_Write_Data(I2C_COMPONENT_NUM, slv_addr >> 1, (uint8_t*)&sub_addr_tmp, 1, &val, 1);
+    unsigned char val_tmp = val;
+    I2C_Master_Write_Data(ADV_7611_I2C_COMPONENT_NUM, slv_addr >> 1, &sub_addr_tmp, 1, &val_tmp, 1);
 }
 
 static unsigned char ADV_7611_ReadByte(unsigned char slv_addr, unsigned char sub_addr)
 {
-    unsigned char val = 0;
     unsigned char sub_addr_tmp = sub_addr;
-    I2C_Master_Read_Data(I2C_COMPONENT_NUM, slv_addr >> 1, (uint8_t*)&sub_addr_tmp, 1, &val, 1);
+    unsigned char val = 0;
+    I2C_Master_Read_Data(ADV_7611_I2C_COMPONENT_NUM, slv_addr >> 1, &sub_addr_tmp, 1, &val, 1);
     return val;
+}
+
+void command_readSDV7611(char *slvAddr, char *regAddr)
+{
+    unsigned char slvAddrTmp = strtoul(slvAddr, NULL, 0);
+    unsigned char regAddrTmp = strtoul(regAddr, NULL, 0);
+    unsigned char val = ADV_7611_ReadByte(slvAddrTmp, regAddrTmp);
+    dlog_info("Read: 0x%x, 0x%x. Val: 0x%x", slvAddrTmp, regAddrTmp, val);
+}
+
+void command_writeSDV7611(char *slvAddr, char *regAddr, char *regVal)
+{
+    unsigned char slvAddrTmp = strtoul(slvAddr, NULL, 0);
+    unsigned char regAddrTmp = strtoul(regAddr, NULL, 0);
+    unsigned char regValTmp  = strtoul(regVal, NULL, 0);
+    ADV_7611_WriteByte(slvAddrTmp, regAddrTmp, regValTmp);
+    dlog_info("Wrte: 0x%x, 0x%x, 0x%x", slvAddrTmp, regAddrTmp, regValTmp);
 }
 
 void test_adv7611(void)
@@ -50,7 +70,7 @@ void test_24c256(void)
     unsigned short rd_start_addr = 0;
     unsigned int size = 60;
 	
-	I2C_Init(I2C_COMPONENT_NUM, I2C_Master_Mode, TAR_24C256_ADDR, I2C_Fast_Speed);
+    I2C_Init(I2C_COMPONENT_NUM, I2C_Master_Mode, TAR_24C256_ADDR, I2C_Fast_Speed);
 	
     dlog_info("I2C_Initial finished!\n");
 
