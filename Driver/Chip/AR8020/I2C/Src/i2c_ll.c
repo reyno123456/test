@@ -38,6 +38,12 @@ static STRU_I2C_Controller stru_i2cControllerArray[MAX_I2C_CONTOLLER_NUMBER] =
         .parameter.master.speed = I2C_Unknown_Speed,
         .parameter.master.addr = 0,
     },
+    {
+        .u32_i2cRegBaseAddr = BASE_ADDR_I2C5,
+        .en_i2cMode = I2C_Unknown_Mode,
+        .parameter.master.speed = I2C_Unknown_Speed,
+        .parameter.master.addr = 0,
+    },
 };
 
 static void I2C_LL_RefreshConfigRegisters(STRU_I2C_Controller* ptr_i2cController)

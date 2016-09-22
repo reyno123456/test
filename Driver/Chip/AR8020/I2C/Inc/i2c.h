@@ -10,7 +10,8 @@ typedef enum
     I2C_Component_1,
     I2C_Component_2,
     I2C_Component_3,
-    I2C_Component_4
+    I2C_Component_4,
+    I2C_Component_5
 } EN_I2C_COMPONENT;
 
 typedef enum
