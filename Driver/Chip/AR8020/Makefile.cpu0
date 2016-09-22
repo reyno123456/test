@@ -65,6 +65,7 @@ install:
 	@cp -f I2C/Inc/i2c.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SD/Inc/* $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SRAM/Inc/sram.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f SRAM/Inc/sram_common.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:

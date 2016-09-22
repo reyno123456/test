@@ -68,6 +68,8 @@ install:
 	@cp -f SPI/Inc/spi.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/BB_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f SRAM/Inc/sram_bb.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f SRAM/Inc/sram_common.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."
