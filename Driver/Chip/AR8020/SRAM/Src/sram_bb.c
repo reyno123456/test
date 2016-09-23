@@ -19,13 +19,13 @@ void SRAM_BB_BypassVideoConfig(void)
     BB_SPI_WriteByte(PAGE2, 0x58, 0x00);
 
     /* Set the start address of sram for bb bypass channel 0*/
-    Reg_Write32(SRAM_WR_ADDR_OFFSET_0, SRAM_BASE_ADDRESS + SRAM_BB_BYPASS_OFFSET_0);
+    Reg_Write32(SRAM_WR_ADDR_OFFSET_0, SRAM_BB_BYPASS_OFFSET_0);
 
     /* Set the max num of SRAM_READY interrupt trigger signal */
     Reg_Write32(SRAM_WR_MAX_LEN_0, SRAM_DMA_READY_LEN);
 
     /* Set the start address of sram for bb bypass channel 1*/
-    Reg_Write32(SRAM_WR_ADDR_OFFSET_1, SRAM_BASE_ADDRESS + SRAM_BB_BYPASS_OFFSET_1);
+    Reg_Write32(SRAM_WR_ADDR_OFFSET_1, SRAM_BB_BYPASS_OFFSET_1);
 
     /* Set the max num of SRAM_READY interrupt trigger signal */
     Reg_Write32(SRAM_WR_MAX_LEN_1, SRAM_DMA_READY_LEN);
