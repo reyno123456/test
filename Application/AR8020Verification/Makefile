@@ -34,15 +34,20 @@ $(TARGET): $(TARGET_CPU0) $(TARGET_CPU2)
 $(TARGET_CPU0):
 	@$(MAKE) -C cpu0 all
 
+$(TARGET_CPU1):
+	@$(MAKE) -C cpu1 all
+
 $(TARGET_CPU2):
 	@$(MAKE) -C cpu2 all
 
+
 clean:
 	@$(MAKE) -C cpu0 clean
+	@$(MAKE) -C cpu1 clean
 	@$(MAKE) -C cpu2 clean
 
 
-.PHONY: all clean $(TARGET) $(TARGET_CPU0) $(TARGET_CPU2)
+.PHONY: all clean $(TARGET) $(TARGET_CPU0) $(TARGET_CPU1) $(TARGET_CPU2)
 
 #########################################################################
 

@@ -19,11 +19,14 @@ include $(BUILD_DIR)/config.mk
 all:
 	@$(MAKE) -C $(CHIP) -f Makefile.cpu0 clean
 	@$(MAKE) -C $(CHIP) -f Makefile.cpu0 all
+	@$(MAKE) -C $(CHIP) -f Makefile.cpu1 clean
+	@$(MAKE) -C $(CHIP) -f Makefile.cpu1 all
 	@$(MAKE) -C $(CHIP) -f Makefile.cpu2 clean
 	@$(MAKE) -C $(CHIP) -f Makefile.cpu2 all
 
 clean:
 	@$(MAKE) -C $(CHIP) -f Makefile.cpu0 clean
+	@$(MAKE) -C $(CHIP) -f Makefile.cpu1 clean
 	@$(MAKE) -C $(CHIP) -f Makefile.cpu2 clean
 
 .PHONY: all clean

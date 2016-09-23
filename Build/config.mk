@@ -1,5 +1,5 @@
 # cross compile...
-CROSS_COMPILE = /opt/toolchain/gcc-arm-none-eabi-5_2-2015q4/bin/arm-none-eabi-
+CROSS_COMPILE = arm-none-eabi-
 CROSS_COMPILE_LIB_PATH = /opt/toolchain/gcc-arm-none-eabi-5_2-2015q4/lib/gcc/arm-none-eabi/5.2.1/armv7-m
 
 CC      = $(CROSS_COMPILE)gcc
@@ -8,6 +8,7 @@ LD      = $(CROSS_COMPILE)ld
 OBJCOPY = $(CROSS_COMPILE)objcopy
 OBJDUMP = $(CROSS_COMPILE)objdump
 NM      = $(CROSS_COMPILE)nm
+AS      = $(CROSS_COMPILE)as
 
 ARFLAGS = cr
 RM = -rm -rf
@@ -46,6 +47,7 @@ export INCDIRS
 export AR
 export ARFLAGS
 export RM
+export AS
 
 CHIP = AR8020
 BOARD = AR8020TEST

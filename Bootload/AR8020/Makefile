@@ -18,10 +18,12 @@ include $(BUILD_DIR)/config.mk
 
 all:
 	@$(MAKE) -C cpu0 all
+	@$(MAKE) -C cpu1 all
 	@$(MAKE) -C cpu2 all
 
 clean:
 	@$(MAKE) -C cpu0 clean
+	@$(MAKE) -C cpu1 clean
 	@$(MAKE) -C cpu2 clean
 
 .PHONY: all clean
