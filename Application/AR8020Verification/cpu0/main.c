@@ -53,6 +53,8 @@ int main(void)
   HAL_Init();
 
   dlog_info("HAL_Init done \n");
+  
+  command_init();
 
   /* FreeRTOS task test*/
   TestTask();

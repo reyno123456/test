@@ -6,6 +6,9 @@
 #define m7_malloc pvPortMalloc
 #define m7_free vPortFree
 
+void command_TestTask(void);
+void command_TestTaskQuit(void);
+
 /* creat by minzhao */
 void vTask1(void const * argument);
 void vTask2(void const * argument);

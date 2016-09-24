@@ -19,4 +19,6 @@
 #define RX_I2C_SDP_MAP_ADDR             (0x90)
 #define RX_I2C_SDP_IO_MAP_ADDR          (0x94)
 
+#define ADV761x_CRYSTAL_CLK 28636363
+
 #endif

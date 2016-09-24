@@ -9,6 +9,8 @@
 
 static QueueHandle_t xQueue = NULL;
 static SemaphoreHandle_t xMutex;
+static unsigned char task1_log_ignore = 1;
+static unsigned char task2_log_ignore = 1;
 
 void vTask1( void const * argument)
 {
@@ -16,7 +18,10 @@ void vTask1( void const * argument)
 
 	for (;;)
 	{
-		dlog_info("Task1 is running\n");
+        if (task1_log_ignore == 0)
+	    {
+            dlog_info("Task1 is running\n");
+        }
 		osDelay(1500);
 	}
 }
@@ -27,7 +32,10 @@ void vTask2( void const * argument)
 
 	for (;;)
 	{
-		dlog_info("Task2 is running\n");
+        if (task2_log_ignore == 0)
+        {
+            dlog_info("Task2 is running\n");
+        }
 		osDelay(3000);
 	}
 }
@@ -165,3 +173,14 @@ void TestMem(void)
 	for (;;);
 }
 
+void command_TestTask(void)
+{
+    task1_log_ignore = 0;
+    task2_log_ignore = 0;
+}
+
+void command_TestTaskQuit(void)
+{
+    task1_log_ignore = 1;
+    task2_log_ignore = 1;
+}

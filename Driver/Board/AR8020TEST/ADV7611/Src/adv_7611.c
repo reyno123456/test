@@ -381,6 +381,8 @@ static void ADV_7611_Delay(unsigned int count)
 
 static void ADV_7611_GenericInitial(void)
 {
+    ADV_7611_WriteByte(0x98, 0x1B, 0x01);
+    ADV_7611_Delay(100);
     ADV_7611_WriteTable(adv_i2c_addr_table);
     ADV_7611_WriteTable(hdmi_edid_table);
     ADV_7611_Delay(1000);
@@ -391,6 +393,44 @@ void ADV_7611_Initial(void)
 {
     ADV_7611_I2CInitial();
     ADV_7611_GenericInitial();
+}
+
+void ADV_7611_GetVideoFormat(uint32_t* widthPtr, uint32_t* hightPtr, uint32_t* framteratePtr)
+{
+    uint32_t val1 = 0;
+    uint32_t val2 = 0;
+    uint32_t width = 0;
+    uint32_t hight = 0;
+    uint32_t frame_rate = 0;
+
+    uint32_t bl_clk = 0;
+    uint32_t hfreq = 0;
+    uint32_t field0_hight = 0,  field1_hight = 0, field_hight = 0;
+    uint32_t vfreq = 0;
+
+    val1 = ADV_7611_ReadByte(0x68, 0x07) & 0x1F;
+    val2 = ADV_7611_ReadByte(0x68, 0x08);
+    width = (val1 << 8) + val2;
+ 
+    val1 = ADV_7611_ReadByte(0x68, 0x09) & 0x1F;
+    val2 = ADV_7611_ReadByte(0x68, 0x0a);
+    hight = (val1 << 8) + val2;
+    
+    field0_hight = ((ADV_7611_ReadByte(0x68, 0x26) & 0x3f) << 8) | ADV_7611_ReadByte(0x68, 0x27);
+    field1_hight = ((ADV_7611_ReadByte(0x68, 0x28) & 0x3f) << 8) | ADV_7611_ReadByte(0x68, 0x29);
+    field_hight = (field0_hight + field1_hight) / 4;
+    bl_clk = ((ADV_7611_ReadByte(0x44, 0xb1) & 0x3f) << 8) | ADV_7611_ReadByte(0x44, 0xb2);
+
+    if ((field_hight != 0) && (bl_clk != 0))
+    {
+        hfreq = (ADV761x_CRYSTAL_CLK * 8) / bl_clk;
+        vfreq = hfreq / field_hight;
+        frame_rate = vfreq;
+     }
+     
+     *widthPtr = width;
+     *hightPtr = hight;
+     *framteratePtr = frame_rate;
 }
 
 void ADV_7611_DumpOutEdidData(void)

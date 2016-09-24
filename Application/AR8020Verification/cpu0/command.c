@@ -9,6 +9,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include "cmsis_os.h"
+#include "test_i2c_adv7611.h"
+#include "test_freertos.h"
 
 unsigned char g_commandPos;
 char g_commandLine[50];
@@ -147,11 +149,43 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_sendusb();
     }
+    else if (memcmp(cmdArray[0], "hdmiinit", strlen("hdmiinit")) == 0)
+    {
+        command_initADV7611();
+    }
+    else if (memcmp(cmdArray[0], "hdmigetvideoformat", strlen("hdmigetvideoformat")) == 0)
+    {
+        uint32_t width, hight, framterate;
+        command_readADV7611VideoFormat(&width, &hight, &framterate);
+        dlog_info("width %d, hight %d, framterate %d\n", width, hight, framterate);
+    }
+    else if (memcmp(cmdArray[0], "hdmiread", strlen("hdmiread")) == 0)
+    {
+        command_readSDV7611(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "freertos_task", strlen("freertos_task")) == 0)
+    {
+        command_TestTask();
+    }
+    else if (memcmp(cmdArray[0], "freertos_taskquit", strlen("freertos_taskquit")) == 0)
+    {
+        command_TestTaskQuit();
+    }
     /* error command */
     else
     {
-
-        dlog_error("command not found!\n");
+        dlog_error("Command not found. Please use the commands like:\n");
+        dlog_error("read <address>");
+        dlog_error("write <address> <data>");
+        dlog_error("readsd <startBlock> <blockNum>");
+        dlog_error("writesd <startBlock> <blockNum> <data>");
+        dlog_error("erasesd");
+        dlog_error("sendusb");
+        dlog_error("hdmiinit");
+        dlog_error("hdmigetvideoformat");
+        dlog_error("hdmiread <slv address> <reg address>");
+        dlog_error("freertos_task");
+        dlog_error("freertos_taskquit");
     }
 
     /* must init to receive new data from serial */

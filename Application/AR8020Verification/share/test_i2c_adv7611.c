@@ -57,7 +57,12 @@ void command_writeSDV7611(char *slvAddr, char *regAddr, char *regVal)
     dlog_info("Wrte: 0x%x, 0x%x, 0x%x", slvAddrTmp, regAddrTmp, regValTmp);
 }
 
-void test_adv7611(void)
+void command_readADV7611VideoFormat(uint32_t* widthPtr, uint32_t* hightPtr, uint32_t* framteratePtr)
+{
+    ADV_7611_GetVideoFormat(widthPtr, hightPtr, framteratePtr);
+}
+
+void command_initADV7611(void)
 {
     ADV_7611_Initial();
     ADV_7611_DumpOutEdidData();
