@@ -47,10 +47,10 @@ $(TARGET): $(OBJ_C)
 	$(OBJCOPY) -O binary $(TARGET).elf $@
 	$(OBJDUMP) -D $(TARGET).elf > $(TARGET).dis
 	$(NM) $(TARGET).elf > $(TARGET).map
-	$(UTILITY_DIR)/bin2mif $@ $(TARGET).mif 32768 64
+	#$(UTILITY_DIR)/bin2mif $@ $(TARGET).mif 32768 64
 	#cp $(TARGET).mif  $(OUTPUT_DIR)
-	perl ../../../Utility/mif2ini.pl  $(TARGET).mif
-	mv itcm_init.txt  itcm_init_cpu1.txt
+	#perl ../../../Utility/mif2ini.pl  $(TARGET).mif
+	#mv itcm_init.txt  itcm_init_cpu1.txt
 
 	#for flash boot
 	../../../Utility/bin2flash.exe  -f $(TARGET)  -o  load_spiflash_cpu1.txt
@@ -58,7 +58,8 @@ $(TARGET): $(OBJ_C)
 	#cp load_spiflash_cpu1.txt /SCRATCH/lab06/Zebu/Zebu_UC_20160531_formin/EMU/RUN_SD
 clean:
 	rm -f $(OBJ_C) .depend 
-	rm -f $(TARGET) $(TARGET).elf  $(TARGET).bin  $(TARGET).dis  $(TARGET).mif  $(TARGET).map $(OUTPUT_DIR)/$(TARGET).mif load_spiflash.txt itcm_init*
+	rm -f $(TARGET) $(TARGET).elf  $(TARGET).bin  $(TARGET).dis  $(TARGET).mif  $(TARGET).map $(OUTPUT_DIR)/$(TARGET).mif 
+	rm -f load_spiflash_cpu1.txt 
 
 
 .PHONY: all clean $(TARGET)

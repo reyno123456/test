@@ -1,7 +1,5 @@
 #include "debuglog.h"
 
-
-int globalvalue = 1;
 /**
   * @brief  Main program
   * @param  None
@@ -9,8 +7,7 @@ int globalvalue = 1;
   */
 int main(void)
 {
-    serial_init(1);
-    int localvalue = 1;
+    serial_init(1, 115200);
     dlog_info("cpu1 start!!! \n");
 
 

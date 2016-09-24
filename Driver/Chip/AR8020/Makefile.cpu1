@@ -26,22 +26,13 @@ CPU_NUMBER = cpu1
 # source file(s), including c file(s)
 SRC_C := SysCtl/Src/reg_rw.c \
          UART/Src/serial.c \
-         SD/Src/sd_core.c \
-         SD/Src/sd_card.c \
-         SD/Src/sd_host.c \
-         I2C/Src/i2c_ll.c \
-         I2C/Src/i2c.c
 
 INCDIRS := -ISysCtl/Inc \
-           -ISD/Inc \
-           -IUART/Inc \
-           -II2C/Inc \
            -I$(TOP_DIR)/Configure \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Device/ST/STM32F7xx/Include \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \
            -I$(TOP_DIR)/Library/Artosyn/Common/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
-           -I$(TOP_DIR)/Driver/Chip/AR8020/SD/Inc \
            -I$(TOP_DIR)/Configure/Include
 
 # object file(s)
@@ -60,14 +51,11 @@ install:
 	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)/$(CPU_NUMBER)
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@cp -f UART/Inc/serial.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f I2C/Inc/i2c.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f SD/Inc/* $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."
 	@$(RM) $(LIB) $(OBJ_C) $(obj).depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB)
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/serial.h
-	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/sd_*
 
 .PHONY: all clean install
 #########################################################################
