@@ -120,8 +120,18 @@ void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsig
     WRITE_WORD((ENC_REG_ADDR+(0x00<<2)),0x00900736);
     WRITE_WORD((ENC_REG_ADDR+(0x01<<2)),((width<<16)+(height&0xffff)));
     WRITE_WORD((ENC_REG_ADDR+(0x02<<2)),(0x00004D28|((gop&0xff)<<24)|((fps&0xff)<<16)));
-    WRITE_WORD((ENC_REG_ADDR+(0x03<<2)),0x00000000);
-    WRITE_WORD((ENC_REG_ADDR+(0x04<<2)),0xF0008000);
+
+    if ((width == 720) && (height == 480))
+    {
+        WRITE_WORD((ENC_REG_ADDR+(0x03<<2)),0x003C000F);
+        WRITE_WORD((ENC_REG_ADDR+(0x04<<2)),0xF01E0008);
+    }
+    else
+    {
+        WRITE_WORD((ENC_REG_ADDR+(0x03<<2)),0x00000000);
+        WRITE_WORD((ENC_REG_ADDR+(0x04<<2)),0xF0008000);
+    }
+
 	WRITE_WORD((ENC_REG_ADDR+(0x05<<2)),(0x00030000|(((width+15)/16)&0xffff))); //bu
 
     if( br == 8 || br == 1 || br == 2)  // <= 2Mbps 
@@ -162,19 +172,34 @@ void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsig
     WRITE_WORD((ENC_REG_ADDR+(0x12<<2)),0x1D1E0401);
 
     WRITE_WORD((ENC_REG_ADDR+(0x32<<2)),0x18212931);
+    
+#ifdef RUN_IN_EMULATOR    // Test in emulator      
     WRITE_WORD((ENC_REG_ADDR+(0x33<<2)),0x39414A08);
     WRITE_WORD((ENC_REG_ADDR+(0x34<<2)),0x00000000);
     WRITE_WORD((ENC_REG_ADDR+(0x35<<2)),0x00000000);
     WRITE_WORD((ENC_REG_ADDR+(0x36<<2)),0x00000000);
     WRITE_WORD((ENC_REG_ADDR+(0x37<<2)),0x00000000);
+#else
+    WRITE_WORD((ENC_REG_ADDR+(0x33<<2)),0x39414A00);
+#endif
 }
 
 void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsigned int fps, unsigned int br) {
     WRITE_WORD((ENC_REG_ADDR+(0x19<<2)),0x00900736);
     WRITE_WORD((ENC_REG_ADDR+(0x1a<<2)),((width<<16)+(height&0xffff)));
     WRITE_WORD((ENC_REG_ADDR+(0x1b<<2)),(0x00004D28|((gop&0xff)<<24)|((fps&0xff)<<16)));
-    WRITE_WORD((ENC_REG_ADDR+(0x1c<<2)),0x00000000);
-    WRITE_WORD((ENC_REG_ADDR+(0x1d<<2)),0xF0008000);
+
+    if ((width == 720) && (height == 480))
+    {
+        WRITE_WORD((ENC_REG_ADDR+(0x1c<<2)),0x003C000F);
+        WRITE_WORD((ENC_REG_ADDR+(0x1d<<2)),0xF01E0008);
+    }
+    else
+    {
+        WRITE_WORD((ENC_REG_ADDR+(0x1c<<2)),0x00000000);
+        WRITE_WORD((ENC_REG_ADDR+(0x1d<<2)),0xF0008000);
+    }
+
     WRITE_WORD((ENC_REG_ADDR+(0x1e<<2)),(0x00030000|(((width+15)/16)&0xffff))); //bu
 
     if( br == 8 || br == 1 || br == 2)  // <= 2Mbps 
@@ -215,11 +240,15 @@ void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsig
     }
     WRITE_WORD((ENC_REG_ADDR+(0x2b<<2)),0x11120401);
     WRITE_WORD((ENC_REG_ADDR+(0x32<<2)),0x18212931);
+#ifdef RUN_IN_EMULATOR    // Test in emulator  
     WRITE_WORD((ENC_REG_ADDR+(0x33<<2)),0x39414A08);
     WRITE_WORD((ENC_REG_ADDR+(0x34<<2)),0x00000000);
     WRITE_WORD((ENC_REG_ADDR+(0x35<<2)),0x00000000);
     WRITE_WORD((ENC_REG_ADDR+(0x36<<2)),0x00000000);
     WRITE_WORD((ENC_REG_ADDR+(0x37<<2)),0x00000000);
+#else
+    WRITE_WORD((ENC_REG_ADDR+(0x33<<2)),0x39414A00);
+#endif
 }
 void open_view0( unsigned int rc_en ){ // hold until SDRAM initial done
     unsigned int i,t0,t1;
@@ -241,6 +270,20 @@ void open_view0( unsigned int rc_en ){ // hold until SDRAM initial done
     }
 
 }
+
+void close_view0(void)
+{
+    unsigned int t0;
+
+    READ_WORD(0xa0010000,t0);
+    t0 &= ~0x01000000;
+    WRITE_WORD(0xa0010000,t0);
+
+    READ_WORD((ENC_REG_ADDR+(0x05<<2)),t0);
+    t0 &= ~0x01000000;
+    WRITE_WORD((ENC_REG_ADDR+(0x05<<2)),t0);
+}
+
 void open_view1( unsigned int rc_en ){ // hold until SDRAM initial done
     unsigned int i,t0,t1;
     while(1){
@@ -259,4 +302,17 @@ void open_view1( unsigned int rc_en ){ // hold until SDRAM initial done
         t0=t0|0x01000000;
         WRITE_WORD((ENC_REG_ADDR+(0x1e<<2)),t0);
     }
+}
+
+void close_view1(void)
+{
+    unsigned int t0;
+
+    READ_WORD(0xa0010064,t0);
+    t0 &= ~0x01000000;
+    WRITE_WORD(0xa0010064,t0);
+
+    READ_WORD((ENC_REG_ADDR+(0x1e<<2)),t0);
+    t0 &= ~0x01000000;
+    WRITE_WORD((ENC_REG_ADDR+(0x1e<<2)),t0);
 }
