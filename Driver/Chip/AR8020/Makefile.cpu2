@@ -27,6 +27,8 @@ SRC_C := SysCtl/Src/reg_rw.c \
          SysCtl/Src/systicks.c \
          SysCtl/Src/inter_core.c \
          UART/Src/serial.c \
+         I2C/Src/i2c_ll.c \
+         I2C/Src/i2c.c \
          H264Encoder/Src/h264_encoder.c \
          H264Encoder/Src/enc_internal.c \
          H264Encoder/Src/vsoc_enc.c \
@@ -38,6 +40,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
 INCDIRS := -IUART/Inc \
            -IH264Encoder/Inc \
            -ISysCtl/Inc \
+           -II2C/Inc \
            -I$(TOP_DIR)/Configure \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Device/ST/STM32F7xx/Include \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \
@@ -66,6 +69,7 @@ install:
 	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f H264Encoder/Inc/h264_encoder.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SPI/Inc/spi.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f I2C/Inc/i2c.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/BB_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SRAM/Inc/sram_bb.h $(OUTPUT_HEADER_STAGING_DIR)

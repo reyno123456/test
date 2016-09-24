@@ -22,13 +22,13 @@ include $(BUILD_DIR)/config.mk
 CPU_NUMBER = cpu2
 
 # libs
-LD_LIBS := -lbootload -lAR8020drv -lcommon -lgcc
+LD_LIBS := -lbootload -lboard -lAR8020drv -lcommon -lgcc
 
 LDFLAGS += -Bstatic
 LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) -L$(CROSS_COMPILE_LIB_PATH) $(LD_LIBS)
 
 # source file(s), including c file(s)
-SRC_C   := main.c test_h264_encoder.c test_BB.c test_sram_bb.c
+SRC_C   := main.c command.c test_h264_encoder.c test_BB.c test_sram_bb.c
 
 CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
 
