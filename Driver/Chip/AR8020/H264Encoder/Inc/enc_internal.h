@@ -37,5 +37,15 @@
 void encoder_delay(unsigned int delay);
 void sdram_init_check(void);
 
+typedef struct
+{
+    unsigned int resW;
+    unsigned int resH;
+    unsigned int gop;
+    unsigned int framerate;
+    unsigned int bitrate;
+    unsigned char brc_enable;
+} STRU_EncoderStatus;
+
 #endif
 

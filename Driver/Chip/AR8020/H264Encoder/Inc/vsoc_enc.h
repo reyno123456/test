@@ -233,13 +233,13 @@ typedef struct ENC_REG_STRUCT {
 #define PAGE3_WORD_REG0     0x00000000
 
 
-
-
-
 void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsigned int fps, unsigned int br);
 void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsigned int fps, unsigned int br);
 void open_view0( unsigned int rc_en );
+void close_view0(void);
 void open_view1( unsigned int rc_en );
+void close_view1(void);
+
 
 #endif
 
