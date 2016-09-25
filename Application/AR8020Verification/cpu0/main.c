@@ -56,11 +56,14 @@ int main(void)
   
   command_init();
 
-  /* FreeRTOS task test*/
-  TestTask();
-
   /* We should never get here as control is now taken by the scheduler */
-  for( ;; );
+  for( ;; )
+  {
+    if (command_getEnterStatus() == 1)
+    {
+      command_fulfill();
+    }
+  }
 } 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

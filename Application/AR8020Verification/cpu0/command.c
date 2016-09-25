@@ -12,12 +12,12 @@
 #include "test_i2c_adv7611.h"
 #include "test_freertos.h"
 
-unsigned char g_commandPos;
-char g_commandLine[50];
+static unsigned char g_commandPos;
+static char g_commandLine[50];
+static unsigned char g_commandEnter = 0;
 
 //QueueHandle_t xQueue = NULL;
 osMessageQId usbVideoReadyEvent;
-
 uint32_t g_sendUSBFlag = 0;
 
 /* added by xiongjiangjiang */
@@ -45,7 +45,9 @@ void Drv_UART0_IRQHandler(void)
 
                 /* if g_commandLine is not empty, go to parse command */
                 if (g_commandPos > 0)
-                    command_parse(g_commandLine);
+                {
+                    g_commandEnter = 1;
+                }
             }
             /* receive "backspace" key */
             else if (c == '\b')
@@ -72,6 +74,17 @@ void command_init(void)
     memset(g_commandLine, '\0', 50);
 
     reg_IrqHandle(UART_INTR0_VECTOR_NUM, Drv_UART0_IRQHandler);
+}
+
+unsigned char command_getEnterStatus(void)
+{
+    return g_commandEnter;
+}
+
+void command_fulfill(void)
+{
+    command_parse(g_commandLine);
+    g_commandEnter = 0;
 }
 
 void command_parse(char *cmd)
@@ -174,7 +187,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     /* error command */
     else
     {
-        dlog_error("Command not found. Please use the commands like:\n");
+        dlog_error("Command not found. Please use the commands like:");
         dlog_error("read <address>");
         dlog_error("write <address> <data>");
         dlog_error("readsd <startBlock> <blockNum>");
