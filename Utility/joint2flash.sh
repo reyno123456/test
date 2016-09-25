@@ -62,11 +62,8 @@ for i in {0..3}
 do
 	shiftlen=$[ i * 8 ]
 	tmp=`echo $cpu1length $shiftlen | awk '{print rshift($1,$2)}'`
-	echo $tmp
 	tmp=`echo $tmp | awk '{print and($1,255)}'`
-	echo $tmp
 	tmphex=$(dec2hex $tmp)
-	echo $tmphex
 	echo $tmphex >> $output
 done
 
@@ -75,12 +72,10 @@ cat $cpu1 >> $output
 #add size of cpu2 to flash.image
 for i in {0..3}
 do
-	echo $i
 	shiftlen=$[ i * 8 ]
 	tmp=`echo $cpu2length $shiftlen | awk '{print rshift($1,$2)}'`
 	tmp=`echo $tmp | awk '{print and($1,255)}'`
 	tmphex=$(dec2hex $tmp)
-	echo $tmphex
 	echo $tmphex >> $output
 done
 cat $cpu2 >> $output

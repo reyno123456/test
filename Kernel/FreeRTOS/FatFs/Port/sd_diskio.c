@@ -57,7 +57,7 @@ DRESULT SD_write (BYTE, const BYTE*, DWORD, UINT);
 DRESULT SD_ioctl (BYTE, BYTE, void*);
 #endif  /* _USE_IOCTL == 1 */
 
-const Diskio_drvTypeDef  SD_Driver =
+Diskio_drvTypeDef  SD_Driver =
 {
   SD_initialize,
   SD_status,

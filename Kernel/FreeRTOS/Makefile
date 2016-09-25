@@ -106,6 +106,10 @@ clean:
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/event_groups.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/ff.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/ffconf.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/ff_gen_drv.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/diskio.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/integer.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/usbh_diskio.h
 
 .PHONY: all clean install
 #########################################################################

@@ -43,17 +43,21 @@ $(TARGET_CPU2):
 	@$(MAKE) -C cpu2 all
 
 install:
+	@echo "Creating the flash image..."
 	@cp ./cpu0/$(TARGET_CPU0).txt  .
 	@cp ./cpu1/$(TARGET_CPU1).txt  .
 	@cp ./cpu2/$(TARGET_CPU2).txt  .
 	../../Utility/joint2flash.sh -i $(TARGET_CPU0).txt $(TARGET_CPU1).txt $(TARGET_CPU2).txt -o $(TARGET_FLASH)
 	@cp $(TARGET_FLASH) ../../Output
+	@echo "Creat the flash image done."
 
 clean:
 	@$(MAKE) -C cpu0 clean
 	@$(MAKE) -C cpu1 clean
 	@$(MAKE) -C cpu2 clean
-	@rm -rf $(TARGET_CPU0).txt $(TARGET_CPU1).txt $(TARGET_CPU2).txt 
+	@rm -f $(TARGET_CPU0).txt $(TARGET_CPU1).txt $(TARGET_CPU2).txt 
+	@rm -f $(TARGET_FLASH)
+	@rm -f ../../Output/$(TARGET_FLASH)
 
 
 .PHONY: all clean $(TARGET) $(TARGET_CPU0) $(TARGET_CPU1) $(TARGET_CPU2)
