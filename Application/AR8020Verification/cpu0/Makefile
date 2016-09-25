@@ -37,6 +37,7 @@ OBJ_C   := $(patsubst %.c,%.o,$(SRC_C))
 
 # executable file
 TARGET = ar8020_cpu0
+TARGET_FLASH = ar8020_cpu0.txt
 
 ###############################################################################
 
@@ -49,10 +50,12 @@ $(TARGET): $(OBJ_C)
 	$(NM) $(TARGET).elf > $(TARGET).map
 	$(UTILITY_DIR)/bin2mif $@ $(TARGET).mif 32768 64
 	cp $(TARGET).mif  $(OUTPUT_DIR)
+	../../../Utility/bin2flash.exe -f $(TARGET) -o $(TARGET_FLASH)
 
 clean:
 	rm -f $(OBJ_C) .depend 
 	rm -f $(TARGET) $(TARGET).elf  $(TARGET).bin  $(TARGET).dis  $(TARGET).mif  $(TARGET).map $(OUTPUT_DIR)/$(TARGET).mif
+	rm -f $(TARGET_FLASH)
 
 
 .PHONY: all clean $(TARGET)

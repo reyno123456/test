@@ -24,12 +24,14 @@ TARGET = ar8020_all
 TARGET_CPU0 = ar8020_cpu0
 TARGET_CPU1 = ar8020_cpu1
 TARGET_CPU2 = ar8020_cpu2
+TARGET_FLASH = ar8020_flash
 
 ###############################################################################
 
 all: .depend $(TARGET)
 
-$(TARGET): $(TARGET_CPU0) $(TARGET_CPU2) 
+$(TARGET): $(TARGET_CPU0) $(TARGET_CPU1) $(TARGET_CPU2) 
+
 
 $(TARGET_CPU0):
 	@$(MAKE) -C cpu0 all
@@ -40,11 +42,18 @@ $(TARGET_CPU1):
 $(TARGET_CPU2):
 	@$(MAKE) -C cpu2 all
 
+install:
+	@cp ./cpu0/$(TARGET_CPU0).txt  .
+	@cp ./cpu1/$(TARGET_CPU1).txt  .
+	@cp ./cpu2/$(TARGET_CPU2).txt  .
+	../../Utility/joint2flash.sh -i $(TARGET_CPU0).txt $(TARGET_CPU1).txt $(TARGET_CPU2).txt -o $(TARGET_FLASH)
+	@cp $(TARGET_FLASH) ../../Output
 
 clean:
 	@$(MAKE) -C cpu0 clean
 	@$(MAKE) -C cpu1 clean
 	@$(MAKE) -C cpu2 clean
+	@rm -rf $(TARGET_CPU0).txt $(TARGET_CPU1).txt $(TARGET_CPU2).txt 
 
 
 .PHONY: all clean $(TARGET) $(TARGET_CPU0) $(TARGET_CPU1) $(TARGET_CPU2)

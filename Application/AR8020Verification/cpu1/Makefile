@@ -37,6 +37,7 @@ OBJ_C   := $(patsubst %.c,%.o,$(SRC_C))
 
 # executable file
 TARGET = ar8020_cpu1
+TARGET_FLASH = ar8020_cpu1.txt
 
 ###############################################################################
 
@@ -53,13 +54,13 @@ $(TARGET): $(OBJ_C)
 	#mv itcm_init.txt  itcm_init_cpu1.txt
 
 	#for flash boot
-	../../../Utility/bin2flash.exe  -f $(TARGET)  -o  load_spiflash_cpu1.txt
+	../../../Utility/bin2flash.exe  -f $(TARGET)  -o  $(TARGET_FLASH)
 	#cp $(TARGET).map  $(TARGET).elf itcm_init_cpu1.txt /SCRATCH/lab06/Zebu/Zebu_UC_20160531_formin/EMU/RUN_SD/m7_elf/freeatos_itcm/
 	#cp load_spiflash_cpu1.txt /SCRATCH/lab06/Zebu/Zebu_UC_20160531_formin/EMU/RUN_SD
 clean:
 	rm -f $(OBJ_C) .depend 
 	rm -f $(TARGET) $(TARGET).elf  $(TARGET).bin  $(TARGET).dis  $(TARGET).mif  $(TARGET).map $(OUTPUT_DIR)/$(TARGET).mif 
-	rm -f load_spiflash_cpu1.txt 
+	rm -f $(TARGET_FLASH)
 
 
 .PHONY: all clean $(TARGET)
