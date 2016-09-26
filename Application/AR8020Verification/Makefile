@@ -26,12 +26,19 @@ TARGET_CPU1 = ar8020_cpu1
 TARGET_CPU2 = ar8020_cpu2
 TARGET_FLASH = ar8020_flash
 
+APPLICATION_SCENARIO ?= sky
+
 ###############################################################################
 
-all: .depend $(TARGET)
+sky: APPLICATION_SCENARIO := sky
+sky: all
+
+ground: APPLICATION_SCENARIO := ground
+ground: all
+
+all: .depend $(TARGET) install
 
 $(TARGET): $(TARGET_CPU0) $(TARGET_CPU1) $(TARGET_CPU2) 
-
 
 $(TARGET_CPU0):
 	@$(MAKE) -C cpu0 all
@@ -40,7 +47,8 @@ $(TARGET_CPU1):
 	@$(MAKE) -C cpu1 all
 
 $(TARGET_CPU2):
-	@$(MAKE) -C cpu2 all
+	@$(MAKE) -C cpu2 all APPLICATION_SCENARIO=$(APPLICATION_SCENARIO)
+	@echo $(APPLICATION_SCENARIO) > .APPLICATION_SCENARIO
 
 install:
 	@echo "Creating the flash image..."
@@ -54,7 +62,7 @@ install:
 clean:
 	@$(MAKE) -C cpu0 clean
 	@$(MAKE) -C cpu1 clean
-	@$(MAKE) -C cpu2 clean
+	@$(MAKE) -C cpu2 clean APPLICATION_SCENARIO=`cat .APPLICATION_SCENARIO`
 	@rm -f $(TARGET_CPU0).txt $(TARGET_CPU1).txt $(TARGET_CPU2).txt 
 	@rm -f $(TARGET_FLASH)
 	@rm -f ../../Output/$(TARGET_FLASH)

@@ -28,7 +28,13 @@ LDFLAGS += -Bstatic
 LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) -L$(CROSS_COMPILE_LIB_PATH) $(LD_LIBS)
 
 # source file(s), including c file(s)
-SRC_C   := main.c command.c test_h264_encoder.c test_BB.c test_sram_bb.c
+ifeq ($(APPLICATION_SCENARIO), sky)
+    SRC_C   := main_sky.c command.c test_h264_encoder.c test_BB.c test_sram_bb.c
+endif
+
+ifeq ($(APPLICATION_SCENARIO), ground)
+    SRC_C   := main_ground.c command.c test_h264_encoder.c test_BB.c test_sram_bb.c
+endif
 
 CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
 
