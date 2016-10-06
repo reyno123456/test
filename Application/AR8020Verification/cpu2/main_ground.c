@@ -1,7 +1,9 @@
 #include "debuglog.h"
 #include "serial.h"
-#include "adv_7611.h"
-#include "h264_encoder.h"
+#include "test_i2c_adv7611.h"
+#include "test_h264_encoder.h"
+#include "test_BB.h"
+#include "test_BBctrl.h"
 
 /**
   * @brief  Main program
@@ -18,9 +20,11 @@ int main(void)
     dlog_info("main function start \n");
     
     command_init();
+    
+    test_BB_Grd();
 
-    ADV_7611_Initial();
-    H264_Encoder_Init();
+    //ADV_7611_Initial();
+    //H264_Encoder_Init();
 
     for( ;; );
 } 

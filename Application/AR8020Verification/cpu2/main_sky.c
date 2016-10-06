@@ -2,6 +2,7 @@
 #include "serial.h"
 #include "adv_7611.h"
 #include "h264_encoder.h"
+#include "BB_ctrl.h"
 
 /**
   * @brief  Main program
@@ -19,8 +20,9 @@ int main(void)
     
     command_init();
 
-    ADV_7611_Initial();
+    //ADV_7611_Initial();
     H264_Encoder_Init();
+    test_BB_SKY();
 
     for( ;; );
 } 

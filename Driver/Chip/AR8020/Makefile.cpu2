@@ -25,6 +25,7 @@ CPU_NUMBER = cpu2
 # source file(s), including c file(s)
 SRC_C := SysCtl/Src/reg_rw.c \
          SysCtl/Src/systicks.c \
+         SysCtl/Src/timer.c \
          SysCtl/Src/inter_core.c \
          UART/Src/serial.c \
          I2C/Src/i2c_ll.c \
@@ -34,6 +35,11 @@ SRC_C := SysCtl/Src/reg_rw.c \
          H264Encoder/Src/vsoc_enc.c \
          H264Encoder/Src/brc.c \
          SPI/Src/spi.c \
+         BB/Src/sky_controller.c \
+         BB/Src/grd_controller.c \
+         BB/Src/sys_peripheral_init.c \
+         BB/Src/sys_peripheral_communication.c \
+         BB/Src/config_baseband_frqdata.c \
          BB/Src/BB_ctrl.c \
          SRAM/Src/sram_bb.c
 
@@ -71,7 +77,11 @@ install:
 	@cp -f SPI/Inc/spi.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f I2C/Inc/i2c.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/BB_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f BB/Inc/config_functions_sel.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f BB/Inc/grd_controller.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f BB/Inc/sky_controller.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f SysCtl/Inc/timer.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SRAM/Inc/sram_bb.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SRAM/Inc/sram_common.h $(OUTPUT_HEADER_STAGING_DIR)
 
