@@ -1,1 +1,6 @@
 ar8020
+*.txt
+.*
+cpu0/ar8020_cpu0
+cpu1/ar8020_cpu1
+cpu2/ar8020_cpu2

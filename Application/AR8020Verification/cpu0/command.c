@@ -176,6 +176,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_readSDV7611(cmdArray[1], cmdArray[2]);
     }
+    else if (memcmp(cmdArray[0], "hdmiwrite", strlen("hdmiwrite")) == 0)
+    {
+        command_writeSDV7611(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
     else if (memcmp(cmdArray[0], "freertos_task", strlen("freertos_task")) == 0)
     {
         command_TestTask();
@@ -183,6 +187,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     else if (memcmp(cmdArray[0], "freertos_taskquit", strlen("freertos_taskquit")) == 0)
     {
         command_TestTaskQuit();
+    }
+    else if (memcmp(cmdArray[0], "test24c256", strlen("test24c256")) == 0)
+    {
+        command_Test24C256();
     }
     /* error command */
     else
@@ -197,8 +205,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("hdmiinit");
         dlog_error("hdmigetvideoformat");
         dlog_error("hdmiread <slv address> <reg address>");
+        dlog_error("hdmiwrite <slv address> <reg address> <reg value>");
         dlog_error("freertos_task");
         dlog_error("freertos_taskquit");
+        dlog_error("test24c256");        
     }
 
     /* must init to receive new data from serial */

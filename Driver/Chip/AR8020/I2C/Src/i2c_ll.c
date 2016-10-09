@@ -62,22 +62,22 @@ static void I2C_LL_RefreshConfigRegisters(STRU_I2C_Controller* ptr_i2cController
             {
                 i2c_reg->IC_CON &= ~(7<<2);             // [4]:addr_mst in 7-bit; [3]:addr_slv in 7-bit; [2:1]=01,standard mode;
                 i2c_reg->IC_CON |= (3<<0 | 3<<5);       // [1]; [0]:enable master-mode;[6]:disbale i2c slave-only mode; [5]:enable ic_restart
-                i2c_reg->IC_FS_SCL_HCNT = 0xc8;         // set high period of SCL = 0x1e(2d-fs) | 0xc8(ss) | 0x03(hs)
-                i2c_reg->IC_FS_SCL_LCNT = 0xeb;         // set low period of  SCL = 0x4b(50-fs) | 0xeb(ss) | 0x08(hs)
+                i2c_reg->IC_SS_SCL_HCNT = ROUNDUP_DIVISION(4000 * 2 * I2C_IN_CLOCK_MHZ, 1000);    // set high period of SCL 4000 * 2 ns
+                i2c_reg->IC_SS_SCL_LCNT = ROUNDUP_DIVISION(4700 * 2 * I2C_IN_CLOCK_MHZ, 1000);    // set low period of SCL 4700 * 2 ns
             }
             else if (ptr_i2cController->parameter.master.speed == I2C_Fast_Speed)  // fast speed
             {
                 i2c_reg->IC_CON &= ~(3<<3 | 1<<1);      // [4]:addr_mst in 7-bit; [3]:addr_slv in 7-bit; [2:1]=2,fast mode;
                 i2c_reg->IC_CON |= (5<<0 | 3<<5);       // [2]; [0]:enable master-mode;[6]:disbale i2c slave-only mode; [5]:enable ic_restart
-                i2c_reg->IC_FS_SCL_HCNT = 0x2d;         // set high period of SCL = 0x1e(2d-fs)
-                i2c_reg->IC_FS_SCL_LCNT = 0x50;         // set low period of  SCL = 0x4b(50-fs)
+                i2c_reg->IC_FS_SCL_HCNT = ROUNDUP_DIVISION(600 * 2 * I2C_IN_CLOCK_MHZ, 1000);         // set high period of SCL 600 * 2 ns
+                i2c_reg->IC_FS_SCL_LCNT = ROUNDUP_DIVISION(1300 * 2 * I2C_IN_CLOCK_MHZ, 1000);        // set low period of SCL 1300 * 2 ns
             }
             else if (ptr_i2cController->parameter.master.speed == I2C_High_Speed)  // high mode
             {
                 i2c_reg->IC_CON &= ~(3<<3);             // [4]:addr_mst in 7-bit; [3]:addr_slv in 7-bit; [2:1]=11,high speed mode;
                 i2c_reg->IC_CON |= (7<<0 | 3<<5);       // [2:1]=0x11; [0]:enable master-mode;[6]:disbale i2c slave-only mode; [5]:enable ic_restart
-                i2c_reg->IC_FS_SCL_HCNT = 0x03;         // set high period of SCL = 0x03(hs)
-                i2c_reg->IC_FS_SCL_LCNT = 0x08;         // set low period of  SCL = 0x08(hs)
+                i2c_reg->IC_HS_SCL_HCNT = ROUNDUP_DIVISION(160 * 2 * I2C_IN_CLOCK_MHZ, 1000);         // set high period of SCL 160 * 2 ns
+                i2c_reg->IC_HS_SCL_LCNT = ROUNDUP_DIVISION(320 * 2 * I2C_IN_CLOCK_MHZ, 1000);         // set low period of SCL 320 * 2 ns
             }
             
             i2c_reg->IC_TAR = ptr_i2cController->parameter.master.addr;  // set address of target slave

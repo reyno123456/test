@@ -7,7 +7,7 @@
 #define TAR_ADV7611_ADDR      (0x98 >> 1)
 
 #define I2C_COMPONENT_NUM  I2C_Component_0
-#define ADV_7611_I2C_COMPONENT_NUM I2C_Component_0
+#define ADV_7611_I2C_COMPONENT_NUM I2C_Component_2
 
 #define RX_I2C_IO_MAP_ADDR              (0x98 >> 1)
 #define RX_I2C_CP_MAP_ADDR              (0x44 >> 1)
@@ -69,6 +69,11 @@ void command_initADV7611(void)
     ADV_7611_DumpOutDefaultSettings();
 }
 
+void command_Test24C256(void)
+{
+    test_24c256();
+}
+
 void test_24c256(void)
 {
     unsigned short wr_start_addr = 0;
@@ -97,6 +102,7 @@ void test_24c256(void)
 
     dlog_info("I2C_Master_Write_Data finished!\n");
 
+    memset(data_chk, 0, sizeof(data_chk));
     I2C_Master_Read_Data(I2C_COMPONENT_NUM, TAR_24C256_ADDR, (uint8_t*)&rd_start_addr, 2, data_chk, size);
     for(i = 0; i < size; i++)
     {

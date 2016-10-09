@@ -16,6 +16,10 @@
 
 #define I2C_CMD_ID_START 0x10000
 
+#define I2C_IN_CLOCK_MHZ 32
+
+#define ROUNDUP_DIVISION(a, b) ((a % b) ? ((a / b) + 1) : (a / b))
+
 typedef enum
 {
     I2C_CMD_SET_MODE = I2C_CMD_ID_START,
