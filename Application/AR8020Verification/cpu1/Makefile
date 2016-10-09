@@ -48,15 +48,8 @@ $(TARGET): $(OBJ_C)
 	$(OBJCOPY) -O binary $(TARGET).elf $@
 	$(OBJDUMP) -D $(TARGET).elf > $(TARGET).dis
 	$(NM) $(TARGET).elf > $(TARGET).map
-	#$(UTILITY_DIR)/bin2mif $@ $(TARGET).mif 32768 64
-	#cp $(TARGET).mif  $(OUTPUT_DIR)
-	#perl ../../../Utility/mif2ini.pl  $(TARGET).mif
-	#mv itcm_init.txt  itcm_init_cpu1.txt
-
-	#for flash boot
 	../../../Utility/bin2flash.exe  -f $(TARGET)  -o  $(TARGET_FLASH)
-	#cp $(TARGET).map  $(TARGET).elf itcm_init_cpu1.txt /SCRATCH/lab06/Zebu/Zebu_UC_20160531_formin/EMU/RUN_SD/m7_elf/freeatos_itcm/
-	#cp load_spiflash_cpu1.txt /SCRATCH/lab06/Zebu/Zebu_UC_20160531_formin/EMU/RUN_SD
+
 clean:
 	rm -f $(OBJ_C) .depend 
 	rm -f $(TARGET) $(TARGET).elf  $(TARGET).bin  $(TARGET).dis  $(TARGET).mif  $(TARGET).map $(OUTPUT_DIR)/$(TARGET).mif 
