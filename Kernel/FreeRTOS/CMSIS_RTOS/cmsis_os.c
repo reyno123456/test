@@ -79,8 +79,8 @@
 
 #include <string.h>
 #include "cmsis_os.h"
-#include "uart.h"
-
+#include "debuglog.h"
+  
 extern void xPortSysTickHandler(void);
 
 /* Convert from CMSIS type osPriority to FreeRTOS priority number */

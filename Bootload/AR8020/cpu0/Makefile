@@ -21,13 +21,13 @@ LIB = libbootload.a
 CPU_NUMBER = cpu0
 
 # source file(s), including c file(s)
-SRC_C   := start.c
+SRC_C   := start.s
 
 INCDIRS := -I$(TOP_DIR)/Library/Artosyn/Common/Inc \
            -I$(TOP_DIR)/Kernel/FreeRTOS/CMSIS_RTOS
  
 # object file(s)
-OBJ_C   := $(patsubst %.c,%.o,$(SRC_C))
+OBJ_C   := $(patsubst %.s,%.o,$(SRC_C))
 
 CFLAGS +=
 

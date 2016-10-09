@@ -22,13 +22,13 @@ include $(BUILD_DIR)/config.mk
 CPU_NUMBER = cpu1
 
 # libs
-LD_LIBS := -lbootload -lAR8020drv -lcommon -lgcc
+LD_LIBS := -lbootload -lAR8020drv -lcommon -lgcc -lfreertos -lboard -lusb
 
 LDFLAGS += -Bstatic
 LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) -L$(CROSS_COMPILE_LIB_PATH) $(LD_LIBS)
 
 # source file(s), including c file(s)
-SRC_C   := main.c
+SRC_C   := main.c test_freertos.c command.c
 
 CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
 

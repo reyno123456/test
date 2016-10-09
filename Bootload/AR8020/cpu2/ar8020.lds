@@ -1,65 +1,69 @@
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
-ENTRY(_start)
+ENTRY(vectors)
+
+/* Highest address of the user mode stack */
+_estack = 0x20004000;     /* end of RAM */
+
 
 MEMORY
 {
-    ITCM2 : ORIGIN = 0x00000000, LENGTH = 0x10000
-    DTCM2 : ORIGIN = 0x20000000, LENGTH = 0x10000
+    ITCM2      : ORIGIN = 0x00000000, LENGTH = 0x10000
+    DTCM2      : ORIGIN = 0x20000000, LENGTH = 0x10000
+    DTCM2_DATA : ORIGIN = 0X20004000, LENGTH = 0X10000
 }
 
 SECTIONS
 {
     .vectors :
     {
-        __startup = . ;
-        *(.vectors)
+        *(.isr_vectors)
     } > ITCM2
 
     .start :
     {
-        *(.start)
+        *(.start*)
     } > ITCM2
+
 
     .text :
     {
-        ___c_start = . ;
-        text_start = . ;
+        _text_start = . ;
         *(.text)
     } > ITCM2
 
+    _text_end = _text_start + SIZEOF(.text) ;
+    
+
+    _data_start = . ;
     .rodata :
     {
         *(.rodata*)
-        __etext = . ;
-        . = ALIGN(4) ;
-    } > ITCM2
+    } > DTCM2_DATA AT> ITCM2
 
-    .ARM.exidx :
+   /* .data_array :
     {
-        *(.ARM.exidx*)
-        *(.gnu.linkonce.armexidx.*)
-        . = ALIGN(4) ;
-        _data_lma_start = . ;
-    } > ITCM2
-
+        *(.data_array*)
+    } > DTCM2_DATA AT> ITCM2
+    */
     .data :
     {
-        _data_start = . ;
         *(.data)
         . = ALIGN(4);
         *(.ramcode)
-        _data_end = . ;
-    } > DTCM2 AT > ITCM2
+    } > DTCM2_DATA AT> ITCM2
+
+    _data_end = _data_start + SIZEOF(.rodata) + SIZEOF(.data); 
 
     .bss :
     {
         _bss_start = .;
         *(.bss)
         *(COMMON)
-        . = ALIGN(4);
         _bss_end = .;
-    } > DTCM2
+    } > DTCM2_DATA AT> ITCM2
+
+
 }
 
 

@@ -108,12 +108,19 @@ __attribute__((weak)) void osSystickHandler(void)
 {
 }
 
+/*
 __attribute__((weak)) void SYSTICK_IRQHandler(void)
 {
     Inc_sysTicks();
     osSystickHandler();
 }
+*/
 
+void SYSTICK_IRQHandler(void)
+{
+    Inc_sysTicks();
+    osSystickHandler();
+}
 void IRQHandler_16(void)  { run_irq_hdl(16);  }
 void IRQHandler_17(void)  { run_irq_hdl(17);  }
 void IRQHandler_18(void)  { run_irq_hdl(18);  }

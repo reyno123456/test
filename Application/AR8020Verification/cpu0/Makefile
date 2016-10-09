@@ -53,6 +53,10 @@ $(TARGET): $(OBJ_C)
 	cp $(TARGET).mif  $(OUTPUT_DIR)
 	../../../Utility/bin2flash.exe -f $(TARGET) -o $(TARGET_FLASH)
 
+	cp $(TARGET) -f /LnxShare/mzhao
+	chown 4294967294 /LnxShare/mzhao/$(TARGET)
+	chgrp 10513 /LnxShare/mzhao/$(TARGET)
+
 clean:
 	rm -f $(OBJ_C) .depend 
 	rm -f $(TARGET) $(TARGET).elf  $(TARGET).bin  $(TARGET).dis  $(TARGET).mif  $(TARGET).map $(OUTPUT_DIR)/$(TARGET).mif

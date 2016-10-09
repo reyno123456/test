@@ -10,7 +10,7 @@ MEMORY
 {
     ITCM1      : ORIGIN = 0x00000000, LENGTH = 0x40000
     DTCM1      : ORIGIN = 0x20000000, LENGTH = 0x40000
-    DTCM1_DATA : ORIGIN = 0X20004000, LENGTH = 0X40000
+    DTCM1_DATA : ORIGIN = 0X20000000, LENGTH = 0X40000
 }
 
 SECTIONS
@@ -39,22 +39,25 @@ SECTIONS
     .rodata :
     {
         *(.rodata*)
-    } > DTCM1_DATA AT> ITCM1
+    } > ITCM1
 
     .data :
     {
         *(.data)
         . = ALIGN(4);
         *(.ramcode)
-    } > DTCM1_DATA AT> ITCM1
+    } > ITCM1
 
+    _data_end = _data_start + SIZEOF(.rodata) + SIZEOF(.data);
+    
     .bss :
     {
+        _bss_start = .; 
         *(.bss)
         *(COMMON)
-    } > DTCM1_DATA AT> ITCM1
+        _bss_end = .;
+    } > ITCM1
 
-    _data_end = _data_start + SIZEOF(.rodata) + SIZEOF(.data) + SIZEOF(.bss);
 
 }
 

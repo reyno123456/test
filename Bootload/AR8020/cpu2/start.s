@@ -9,8 +9,8 @@
 #include "debuglog.h"
 #include "interrupt.h"
 
-.equ  ITCM1,        0x00000000
-.equ  DTCM1_DATA,   0x20000000
+.equ  ITCM2,        0x00000000
+.equ  DTCM2_DATA,   0x20004000
 .equ  HEAP_START,   0x20010000
 .equ  HEAP_END,     0x20000000
 .equ  DATA_START,   0x20018000
@@ -33,9 +33,6 @@
 .word  _data_start
 /* end address for the .data/rodata/bss section. */
 .word  _data_end
-
-.word  _bss_start
-.word  _bss_end
 
 /**
  * @brief  This is the code that gets called when the processor first
@@ -61,13 +58,13 @@ CopyInitData:
   str  r3, [r0, r1]
   adds  r1, r1, #4
 LoopCopyData:
-  ldr  r0, =DTCM1_DATA                 /* The start addr of Dtcm0 */
+  ldr  r0, =DTCM2_DATA                 /* The start addr of Dtcm0 */
   ldr  r3, =_data_end             /* The end addr of data image */
   adds  r2, r4, r1
   cmp  r2, r3
   bcc  CopyInitData
 
-/* clear the bss section */
+  /* clear the bss section */
   ldr r0, =0x0
   ldr r1, =_bss_start
   ldr r2, =_bss_end
@@ -76,7 +73,6 @@ LoopClearBss:
   add r1, r1, #4
   cmp r1, r2
   bcc LoopClearBss
-
 /* branch to main */
   bl main
 
