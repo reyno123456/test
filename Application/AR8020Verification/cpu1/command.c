@@ -20,7 +20,7 @@ osMessageQId usbVideoReadyEvent;
 uint32_t g_sendUSBFlag = 0;
 
 /* added by xiongjiangjiang */
-void Drv_UART0_IRQHandler(void)
+void Drv_UART1_IRQHandler(void)
 {
     char                  c;
     unsigned int          status;
@@ -72,7 +72,7 @@ void command_init(void)
     g_commandPos = 0;
     memset(g_commandLine, '\0', 50);
 
-    reg_IrqHandle(UART_INTR0_VECTOR_NUM, Drv_UART0_IRQHandler);
+    reg_IrqHandle(UART_INTR1_VECTOR_NUM, Drv_UART1_IRQHandler);
 }
 
 unsigned char command_getEnterStatus(void)

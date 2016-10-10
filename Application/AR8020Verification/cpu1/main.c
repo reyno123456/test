@@ -25,9 +25,6 @@ int main(void)
     serial_init(1, 115200);
     dlog_info("cpu1 start!!! \n");
     CPU_CACHE_Enable();
-   
-    uint32_t test_reg = Reg_Read32((uint32_t)0xe000ed08);
-    dlog_info("test_reg = %x\n", test_reg);
 
     HAL_NVIC_SetPriority(Uart0_IRQn, 1, 1);
     HAL_NVIC_EnableIRQ(Uart0_IRQn);

@@ -16,13 +16,13 @@ int main(void)
     (*(volatile unsigned int *)0x40B0008C) = 0x00500000; //PATCH for FPGA version, PIN MUX for UART9
    
     serial_init(2, 115200);
-    dlog_info("main function start \n");
+    dlog_info("cpu2 start!!! \n");
     
     command_init();
 
-    //ADV_7611_Initial();
-    H264_Encoder_Init();
-    test_BB_SKY();
+    // //ADV_7611_Initial();
+    //H264_Encoder_Init();
+    //test_BB_SKY();
 
     for( ;; );
 } 

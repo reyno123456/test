@@ -58,6 +58,9 @@ install:
 	../../Utility/joint2flash.sh -i $(TARGET_CPU0).txt $(TARGET_CPU1).txt $(TARGET_CPU2).txt -o $(TARGET_FLASH)
 	@echo "Creat the flash image done."
 
+	@cp $(TARGET_FLASH) /LnxShare/mzhao/
+	@chown 4294967294 /LnxShare/mzhao/$(TARGET_FLASH)
+	@chgrp 10513 /LnxShare/mzhao/$(TARGET_FLASH)
 clean:
 	@$(MAKE) -C cpu0 clean
 	@$(MAKE) -C cpu1 clean

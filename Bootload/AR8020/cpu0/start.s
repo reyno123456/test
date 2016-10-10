@@ -288,7 +288,6 @@ vectors:
   .word     IRQHandler_96
   .word     IRQHandler_97
   .word     IRQHandler_98
-  
 /*******************************************************************************
 *
 * Provide weak aliases for each Exception handler to the Default_Handler. 

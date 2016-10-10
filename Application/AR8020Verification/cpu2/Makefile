@@ -54,8 +54,6 @@ $(TARGET): $(OBJ_C)
 	$(OBJCOPY) -O binary $(TARGET).elf $@
 	$(OBJDUMP) -D $(TARGET).elf > $(TARGET).dis
 	$(NM) $(TARGET).elf > $(TARGET).map
-	$(UTILITY_DIR)/bin2mif $@ $(TARGET).mif 32768 64
-	cp $(TARGET).mif  $(OUTPUT_DIR)
 	../../../Utility/bin2flash.exe -f $(TARGET)  -o $(TARGET_FLASH)
 
 clean:
