@@ -189,10 +189,10 @@ uint8_t I2C_LL_IOCtl(STRU_I2C_Controller* ptr_i2cController, ENUM_I2C_CMD_ID en_
             i2c_reg->IC_DATA_CMD |= (1<<8);         // Read enable, IC_DATA_CMD[8]=0x1
             
             /* Wait till data is ready */
-            while(Reg_Read32((unsigned int)i2c_reg + 0x70) & (1 << 5)) //i2c_reg->IC_STATUS
+            do
             {
                 I2C_LL_Delay(1000);
-            }
+            } while(Reg_Read32((unsigned int)i2c_reg + 0x70) & (1 << 5)); //i2c_reg->IC_STATUS
 
             /* Read data */
             *ptr_i2cCommandVal = Reg_Read32((unsigned int)i2c_reg + 0x10) & 0xFF; //i2c_reg->IC_DATA_CMD;

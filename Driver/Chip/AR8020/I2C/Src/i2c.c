@@ -73,8 +73,8 @@ static void I2C_Master_Wait_Till_Idle(EN_I2C_COMPONENT en_component)
     	idle = 0;
         while(idle != 1)
         {
+            I2C_LL_Delay(1000);
             I2C_LL_IOCtl(dev, I2C_CMD_GET_M_IDLE, &idle);
-            I2C_LL_Delay(5000);
         }
     }
     else
