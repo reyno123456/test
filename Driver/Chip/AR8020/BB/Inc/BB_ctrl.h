@@ -72,5 +72,5 @@ void BB_uart10_spi_sel(uint32_t sel_dat);
 int BB_SPI_WriteByteMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t data, uint8_t mask);
 int BB_SPI_ReadByteMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t mask);
 int BB_softReset(ENUM_RST_MODE en_mode);
-
+int BB_SPI_init(void);
 #endif

@@ -285,7 +285,7 @@ static uint8_t  USBD_HID_Init (USBD_HandleTypeDef *pdev,
                  USBD_EP_TYPE_INTR,
                  HID_EPOUT_SIZE);
 
-//  pdev->pClassData = USBD_malloc(sizeof (USBD_HID_HandleTypeDef));
+//  pdev->pClassData = malloc(sizeof (USBD_HID_HandleTypeDef));
   pdev->pClassData = &g_usbdHidData;
 
   if(pdev->pClassData == NULL)
@@ -319,7 +319,7 @@ static uint8_t  USBD_HID_DeInit (USBD_HandleTypeDef *pdev,
   /* FRee allocated memory */
   if(pdev->pClassData != NULL)
   {
-    USBD_free(pdev->pClassData);
+    //free(pdev->pClassData);
     pdev->pClassData = NULL;
   } 
   

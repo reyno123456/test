@@ -31,7 +31,7 @@ static STRU_BB_ctrl_ctx BB_ctx = {
     .en_TRXctrl = BB_RESET_UNKNOWN,
 };
 
-static int BB_SPI_init(void)
+int BB_SPI_init(void)
 {
     STRU_SPI_InitTypes init = {
         .ctrl0   = 0x47,        // [15:12]: Control Frame Size ;[11]: Shift Register Loop 0: Normal Mode, 1: test mode;[10] Slave Output Enable;

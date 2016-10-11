@@ -3,5 +3,7 @@
 
 #include "usbd_core.h"
 
+void TestUsbd_InitHid(void);
+
 
 #endif

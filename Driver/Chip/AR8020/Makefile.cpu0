@@ -25,13 +25,17 @@ CPU_NUMBER = cpu0
 # source file(s), including c file(s)
 SRC_C := SysCtl/Src/reg_rw.c \
          SysCtl/Src/inter_core.c \
+         SysCtl/Src/pll_ctrl.c \
+         SysCtl/Src/systicks.c \
          UART/Src/serial.c \
          SD/Src/sd_core.c \
          SD/Src/sd_card.c \
          SD/Src/sd_host.c \
          I2C/Src/i2c_ll.c \
          I2C/Src/i2c.c \
-         SRAM/Src/sram.c
+         SRAM/Src/sram.c \
+         BB/Src/BB_ctrl.c \
+         SPI/Src/spi.c
 
 INCDIRS := -ISysCtl/Inc \
            -ISD/Inc \
@@ -44,6 +48,8 @@ INCDIRS := -ISysCtl/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SD/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SRAM/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/BB/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/SPI/Inc \
            -I$(TOP_DIR)/Configure/Include
 
 # object file(s)
@@ -67,6 +73,8 @@ install:
 	@cp -f SRAM/Inc/sram.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SRAM/Inc/sram_common.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f SysCtl/Inc/pll_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f SysCtl/Inc/systicks.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."

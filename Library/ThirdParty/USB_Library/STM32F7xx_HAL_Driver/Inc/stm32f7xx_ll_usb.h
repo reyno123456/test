@@ -395,7 +395,7 @@ typedef struct
 
 /* add for dma address and dtcm address convert */
 #define DTCM_START_ADDR            0x20000000
-#define DTCM_END_ADDR              0x2003FFFF
+#define DTCM_END_ADDR              0x20080000
 #define DTCM_DMA_ADDR_OFFSET       0x24080000
 
 
