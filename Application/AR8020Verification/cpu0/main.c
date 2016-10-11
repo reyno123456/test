@@ -1,6 +1,7 @@
 #include "debuglog.h"
 #include "test_freertos.h"
 #include "test_i2c_adv7611.h"
+#include "pll_ctrl.h"
 
 void *malloc(size_t size)
 {
@@ -35,7 +36,8 @@ static void CPU_CACHE_Enable(void)
 int main(void)
 {
   int tmp;
-  
+
+  PLLCTRL_SetCoreClk(CORE_PLL_CLK);
   serial_init(0, 115200);
   dlog_info("cpu0 start!!! \n");
 
@@ -55,6 +57,8 @@ int main(void)
   dlog_info("HAL_Init done \n");
   
   command_init();
+
+  TestUsbd_InitHid();
 
   /* We should never get here as control is now taken by the scheduler */
   for( ;; )
