@@ -32,23 +32,25 @@ SECTIONS
         *(.text)
     } > ITCM1
 
-    _text_end = _text_start + SIZEOF(.text) ;
     
-    _data_start = . ;
 
     .rodata :
     {
         *(.rodata*)
     } > ITCM1
 
+    _text_end = _text_start + SIZEOF(.text) + SIZEOF(.rodata);
+
+    _data_start = . ;
+
     .data :
     {
         *(.data)
         . = ALIGN(4);
         *(.ramcode)
-    } > ITCM1
+    } > DTCM1 AT > ITCM1
 
-    _data_end = _data_start + SIZEOF(.rodata) + SIZEOF(.data);
+    _data_end = _data_start + SIZEOF(.data);
     
     .bss :
     {
@@ -56,7 +58,7 @@ SECTIONS
         *(.bss)
         *(COMMON)
         _bss_end = .;
-    } > ITCM1
+    } > DTCM1
 
 
 }

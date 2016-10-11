@@ -120,7 +120,7 @@ Infinite_Loop:
   .word     default_isr
   .word     default_isr
   .word     PendSV_Handler
-  .word     SYSTICK_IRQHandler
+  .word     default_isr
   .word     IRQHandler_16,
   .word     IRQHandler_17,
   .word     IRQHandler_18,
