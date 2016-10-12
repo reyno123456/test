@@ -166,6 +166,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_initADV7611();
     }
+    else if (memcmp(cmdArray[0], "hdmidump", strlen("hdmidump")) == 0)
+    {
+        command_dumpADV7611Settings();
+    }
     else if (memcmp(cmdArray[0], "hdmigetvideoformat", strlen("hdmigetvideoformat")) == 0)
     {
         uint32_t width, hight, framterate;
@@ -188,9 +192,13 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_TestTaskQuit();
     }
-    else if (memcmp(cmdArray[0], "test24c256", strlen("test24c256")) == 0)
+    else if (memcmp(cmdArray[0], "test24c256write", strlen("test24c256write")) == 0)
     {
-        command_Test24C256();
+        command_Test24C256Write(cmdArray[1]);
+    }
+    else if (memcmp(cmdArray[0], "test24c256read", strlen("test24c256read")) == 0)
+    {
+        command_Test24C256Read(cmdArray[1]);
     }
     /* error command */
     else
@@ -203,12 +211,14 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("erasesd");
         dlog_error("sendusb");
         dlog_error("hdmiinit");
+        dlog_error("hdmidump");
         dlog_error("hdmigetvideoformat");
         dlog_error("hdmiread <slv address> <reg address>");
         dlog_error("hdmiwrite <slv address> <reg address> <reg value>");
         dlog_error("freertos_task");
         dlog_error("freertos_taskquit");
-        dlog_error("test24c256");        
+        dlog_error("test24c256write <i2c port>");
+        dlog_error("test24c256read <i2c port>");
     }
 
     /* must init to receive new data from serial */
