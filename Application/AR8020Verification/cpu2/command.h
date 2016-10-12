@@ -1,7 +1,7 @@
 #ifndef __COMMAND__H
 #define __COMMAND__H
 #include <stdint.h>
-
-void command_init(void);
+extern uint32_t UartNum;
+void command_init();
 
 #endif

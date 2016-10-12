@@ -10,15 +10,50 @@
 
 static unsigned char g_commandPos;
 static char g_commandLine[50];
+uint32_t UartNum;
 
-static void Drv_UART_IRQHandler(void)
+static void Drv_UART_IRQHandler(uint uart_num)
 {
     char                  c;
     unsigned int          status;
     unsigned int          isrType;
     volatile uart_type   *uart_regs;
+    switch(UartNum)
+    {
+        case 0:
+            uart_regs = (uart_type *)UART0_BASE;
+            break;
+        case 1:
+            uart_regs = (uart_type *)UART1_BASE;
+            break;
+        case 2:
+            uart_regs = (uart_type *)UART2_BASE;
+            break;
+        case 3:
+            uart_regs = (uart_type *)UART3_BASE;
+            break;
+        case 4:
+            uart_regs = (uart_type *)UART4_BASE;
+            break;
+        case 5:
+            uart_regs = (uart_type *)UART5_BASE;
+            break;
+        case 6:
+            uart_regs = (uart_type *)UART6_BASE;
+            break;
+        case 7:
+            uart_regs = (uart_type *)UART7_BASE;
+            break;
+        case 8:
+            uart_regs = (uart_type *)UART8_BASE;
+            break;
+        case 9:
+            uart_regs = (uart_type *)UART9_BASE;
+            break;
+        default:
+            break;
+    }
 
-    uart_regs = (uart_type *)UART9_BASE;
     status     = uart_regs->LSR;
     isrType    = uart_regs->IIR_FCR;
 
@@ -56,12 +91,49 @@ static void Drv_UART_IRQHandler(void)
     }
 }
 
-void command_init(void)
+void command_init(uint32_t uart_num)
 {
     g_commandPos = 0;
     memset(g_commandLine, '\0', 50);
-    reg_IrqHandle(VIDEO_UART9_INTR_VECTOR_NUM, Drv_UART_IRQHandler);
-    INTR_NVIC_EnableIRQ(VIDEO_UART9_INTR_VECTOR_NUM);
+    IRQ_type vector_num;
+    switch(UartNum)
+    {
+        case 0:
+            vector_num = UART_INTR0_VECTOR_NUM;
+            break;
+        case 1:
+            vector_num = UART_INTR1_VECTOR_NUM;
+            break;
+        case 2:
+            vector_num = UART_INTR2_VECTOR_NUM;
+            break;
+        case 3:
+            vector_num = UART_INTR3_VECTOR_NUM;
+            break;
+        case 4:
+            vector_num = UART_INTR4_VECTOR_NUM;
+            break;
+        case 5:
+            vector_num = UART_INTR5_VECTOR_NUM;
+            break;
+        case 6:
+            vector_num = UART_INTR6_VECTOR_NUM;
+            break;
+        case 7:
+            vector_num = UART_INTR7_VECTOR_NUM;
+            break;
+        case 8:
+            vector_num = UART_INTR8_VECTOR_NUM;
+            break;
+        case 9:
+            vector_num = VIDEO_UART9_INTR_VECTOR_NUM;
+            break;
+        default:
+            break;
+    }
+    INTR_NVIC_SetIRQPriority(vector_num, 1);
+    INTR_NVIC_EnableIRQ(vector_num);
+    reg_IrqHandle(vector_num, Drv_UART_IRQHandler);
 }
 
 void command_reset(void)

@@ -1,6 +1,6 @@
 #include "debuglog.h"
 #include "test_freertos.h"
-
+#include "command.h"
 /**
  * @brief  CPU L1-Cache enable.
  * @param  None
@@ -15,6 +15,12 @@ static void CPU_CACHE_Enable(void)
   SCB_EnableDCache();
 }
 
+void console_init(uint32_t uart_num, uint32_t baut_rate)
+{
+  serial_init(uart_num, baut_rate);
+  UartNum = uart_num;
+  command_init();
+}
 /**
   * @brief  Main program
   * @param  None
@@ -22,16 +28,14 @@ static void CPU_CACHE_Enable(void)
   */
 int main(void)
 {
-    serial_init(1, 115200);
+    /* initialize the uart */
+    console_init(1,115200);
     dlog_info("cpu1 start!!! \n");
     CPU_CACHE_Enable();
 
-    HAL_NVIC_SetPriority(Uart0_IRQn, 1, 1);
-    HAL_NVIC_EnableIRQ(Uart0_IRQn);
     HAL_Init();
     dlog_info("HAL_Init done \n");
 
-    command_init();
     /* We should never get here as control is now taken by the scheduler */
     for( ;; )
     {
