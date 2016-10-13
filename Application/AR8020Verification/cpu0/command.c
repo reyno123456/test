@@ -4,7 +4,6 @@
 #include "interrupt.h"
 #include "serial.h"
 #include "sd_host.h"
-#include "stm32f746xx.h"
 #include "debuglog.h"
 #include <string.h>
 #include <stdlib.h>

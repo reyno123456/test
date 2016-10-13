@@ -21,7 +21,7 @@ int main(void)
   
     (*(volatile unsigned int *)0x40B0008C) = 0x00500000; //PATCH for FPGA version, PIN MUX for UART9
     /* initialize the uart */
-    console_init(0, 115200);   
+    console_init(2, 115200);   
     dlog_info("cpu2 start!!! \n");
     
 

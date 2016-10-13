@@ -45,7 +45,7 @@ int main(void)
 
   PLLCTRL_SetCoreClk(CORE_PLL_CLK);
   /* initialize the uart */
-  console_init(2,115200);
+  console_init(0,115200);
   dlog_info("cpu0 start!!! \n");
 
   /* Enable the CPU Cache */
