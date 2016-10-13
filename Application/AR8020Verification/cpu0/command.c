@@ -15,29 +15,63 @@
 static unsigned char g_commandPos;
 static char g_commandLine[50];
 static unsigned char g_commandEnter = 0;
+uint32_t UartNum;
 
 //QueueHandle_t xQueue = NULL;
 osMessageQId usbVideoReadyEvent;
 uint32_t g_sendUSBFlag = 0;
 
 /* added by xiongjiangjiang */
-void Drv_UART0_IRQHandler(void)
+void Drv_UART_IRQHandler(void)
 {
     char                  c;
     unsigned int          status;
     unsigned int          isrType;
-    volatile uart_type   *uart0_regs;
-
-    uart0_regs = (uart_type *)UART0_BASE; //get_uart_type_by_index(0);
-    status     = uart0_regs->LSR;
-    isrType    = uart0_regs->IIR_FCR;
+    volatile uart_type   *uart_regs;
+    switch(UartNum)
+    {
+        case 0:
+            uart_regs = (uart_type *)UART0_BASE;
+            break;
+        case 1:
+            uart_regs = (uart_type *)UART1_BASE;
+            break;
+        case 2:
+            uart_regs = (uart_type *)UART2_BASE;
+            break;
+        case 3:
+            uart_regs = (uart_type *)UART3_BASE;
+            break;
+        case 4:
+            uart_regs = (uart_type *)UART4_BASE;
+            break;
+        case 5:
+            uart_regs = (uart_type *)UART5_BASE;
+            break;
+        case 6:
+            uart_regs = (uart_type *)UART6_BASE;
+            break;
+        case 7:
+            uart_regs = (uart_type *)UART7_BASE;
+            break;
+        case 8:
+            uart_regs = (uart_type *)UART8_BASE;
+            break;
+        case 9:
+            uart_regs = (uart_type *)UART9_BASE;
+            break;
+        default:
+            break;
+    }
+    status     = uart_regs->LSR;
+    isrType    = uart_regs->IIR_FCR;
 
     /* receive data irq, try to get the data */
     if (UART_IIR_RECEIVEDATA == (isrType & UART_IIR_RECEIVEDATA))
     {
         if ((status & UART_LSR_DATAREADY) == UART_LSR_DATAREADY)
         {
-            c = uart0_regs->RBR_THR_DLL;
+            c = uart_regs->RBR_THR_DLL;
             /* receive "enter" key */
             if (c == '\r')
             {
@@ -68,14 +102,56 @@ void Drv_UART0_IRQHandler(void)
     }
 }
 
-void command_init(void)
+void command_init()
 {
     g_commandPos = 0;
     memset(g_commandLine, '\0', 50);
-
-    reg_IrqHandle(UART_INTR0_VECTOR_NUM, Drv_UART0_IRQHandler);
+    IRQ_type vector_num;
+    switch(UartNum)
+    {
+        case 0:
+            vector_num = UART_INTR0_VECTOR_NUM;
+            break;
+        case 1:
+            vector_num = UART_INTR1_VECTOR_NUM;
+            break;
+        case 2:
+            vector_num = UART_INTR2_VECTOR_NUM;
+            break;
+        case 3:
+            vector_num = UART_INTR3_VECTOR_NUM;
+            break;
+        case 4:
+            vector_num = UART_INTR4_VECTOR_NUM;
+            break;
+        case 5:
+            vector_num = UART_INTR5_VECTOR_NUM;
+            break;
+        case 6:
+            vector_num = UART_INTR6_VECTOR_NUM;
+            break;
+        case 7:
+            vector_num = UART_INTR7_VECTOR_NUM;
+            break;
+        case 8:
+            vector_num = UART_INTR8_VECTOR_NUM;
+            break;
+        case 9:
+            vector_num = VIDEO_UART9_INTR_VECTOR_NUM;
+            break;
+        default:
+            break;
+    }
+    INTR_NVIC_EnableIRQ(vector_num);
+    INTR_NVIC_SetIRQPriority(vector_num, 1);
+    reg_IrqHandle(vector_num, Drv_UART_IRQHandler);
 }
 
+void command_reset(void)
+{
+    g_commandPos = 0;
+    memset(g_commandLine, '\0', 50);
+}
 unsigned char command_getEnterStatus(void)
 {
     return g_commandEnter;
@@ -222,7 +298,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     }
 
     /* must init to receive new data from serial */
-    command_init();
+    command_reset();
 }
 
 unsigned int command_str2uint(char *str)

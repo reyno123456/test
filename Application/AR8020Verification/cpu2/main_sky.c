@@ -1,9 +1,15 @@
 #include "debuglog.h"
-#include "serial.h"
 #include "adv_7611.h"
 #include "h264_encoder.h"
 #include "BB_ctrl.h"
+#include "command.h"
 
+void console_init(uint32_t uart_num, uint32_t baut_rate)
+{
+  serial_init(uart_num, baut_rate);
+  UartNum = uart_num;
+  command_init();
+}
 /**
   * @brief  Main program
   * @param  None
@@ -14,11 +20,10 @@ int main(void)
     int tmp;
   
     (*(volatile unsigned int *)0x40B0008C) = 0x00500000; //PATCH for FPGA version, PIN MUX for UART9
-   
-    serial_init(2, 115200);
+    /* initialize the uart */
+    console_init(0, 115200);   
     dlog_info("cpu2 start!!! \n");
     
-    command_init();
 
     //ADV_7611_Initial();
     //H264_Encoder_Init();

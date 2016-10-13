@@ -3,8 +3,9 @@
 #include <stdint.h>
 
 extern uint32_t g_sendUSBFlag;
+extern uint32_t UartNum;
 
-void command_init(void);
+void command_init();
 unsigned char command_getEnterStatus(void);
 void command_fulfill(void);
 

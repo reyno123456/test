@@ -121,17 +121,17 @@ Infinite_Loop:
   .word     default_isr
   .word     PendSV_Handler
   .word     default_isr
-  .word     IRQHandler_16,
-  .word     IRQHandler_17,
-  .word     IRQHandler_18,
-  .word     IRQHandler_19,
-  .word     IRQHandler_20,
-  .word     IRQHandler_21,
-  .word     IRQHandler_22,
-  .word     IRQHandler_23,
-  .word     IRQHandler_24,
-  .word     IRQHandler_25,
-  .word     IRQHandler_26,
+  .word     IRQHandler_16
+  .word     IRQHandler_17
+  .word     IRQHandler_18
+  .word     IRQHandler_19
+  .word     IRQHandler_20
+  .word     IRQHandler_21
+  .word     IRQHandler_22
+  .word     IRQHandler_23
+  .word     IRQHandler_24
+  .word     IRQHandler_25
+  .word     IRQHandler_26
   .word     IRQHandler_27
   .word     IRQHandler_28
   .word     IRQHandler_29

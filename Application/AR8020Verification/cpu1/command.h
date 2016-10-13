@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 extern uint32_t g_sendUSBFlag;
+extern uint32_t UartNum;
 
 void command_init(void);
 unsigned char command_getEnterStatus(void);
