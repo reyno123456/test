@@ -634,7 +634,7 @@ void wimax_vsoc_rx_isr()
     start_timer(init_timer0_0);
 }
 
-void TIM2_IRQHandler(void)
+void TIM0_IRQHandler(void)
 {
     Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_0);
 
@@ -657,7 +657,7 @@ void TIM2_IRQHandler(void)
 }
 
 
-void TIM3_IRQHandler(void)
+void TIM1_IRQHandler(void)
 {
     INTR_NVIC_ClearPendingIRQ(TIMER_INTR01_VECTOR_NUM);
     if(Timer1_Delay2_Cnt < 560)

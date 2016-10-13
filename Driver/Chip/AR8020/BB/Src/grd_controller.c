@@ -1143,10 +1143,10 @@ void Grd_Osdmsg_Ptf(void)
 
 void wimax_vsoc_tx_isr(void)
 {
-   INTR_NVIC_DisableIRQ(BB_TX_ENABLE_VECTOR_NUM);
-   start_timer(init_timer0_0);
-   
-   INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
+    INTR_NVIC_DisableIRQ(BB_TX_ENABLE_VECTOR_NUM);
+    start_timer(init_timer0_0);
+    printf("TX!\r\n");
+    INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
 }
 
 
