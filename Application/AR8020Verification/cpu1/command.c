@@ -18,7 +18,7 @@ static unsigned char g_commandEnter = 0;
 //QueueHandle_t xQueue = NULL;
 osMessageQId usbVideoReadyEvent;
 uint32_t g_sendUSBFlag = 0;
-uint32_t UartNum;
+uint32_t UartNum = 0;
 
 /* added by xiongjiangjiang */
 void Drv_UART_IRQHandler(void)

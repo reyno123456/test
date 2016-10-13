@@ -1191,8 +1191,6 @@ typedef struct
 #define SPDIFRX_BASE          (APB1PERIPH_BASE + 0x4000)
 #define USART2_BASE           (APB1PERIPH_BASE + 0x4400)
 #define USART3_BASE           (APB1PERIPH_BASE + 0x4800)
-#define UART4_BASE            (APB1PERIPH_BASE + 0x4C00)
-#define UART5_BASE            (APB1PERIPH_BASE + 0x5000)
 #define I2C1_BASE             (APB1PERIPH_BASE + 0x5400)
 #define I2C2_BASE             (APB1PERIPH_BASE + 0x5800)
 #define I2C3_BASE             (APB1PERIPH_BASE + 0x5C00)
@@ -1202,8 +1200,6 @@ typedef struct
 #define CEC_BASE              (APB1PERIPH_BASE + 0x6C00)
 #define PWR_BASE              (APB1PERIPH_BASE + 0x7000)
 #define DAC_BASE              (APB1PERIPH_BASE + 0x7400)
-#define UART7_BASE            (APB1PERIPH_BASE + 0x7800)
-#define UART8_BASE            (APB1PERIPH_BASE + 0x7C00)
 
 /*!< APB2 peripherals */
 #define TIM1_BASE             (APB2PERIPH_BASE + 0x0000)

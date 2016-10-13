@@ -4,7 +4,6 @@
 #include "debuglog.h"
 #include "interrupt.h"
 #include "serial.h"
-#include "stm32f746xx.h"
 #include "cmsis_os.h"
 #include "test_h264_encoder.h"
 
