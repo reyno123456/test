@@ -10,6 +10,7 @@
 #include "cmsis_os.h"
 #include "test_i2c_adv7611.h"
 #include "test_freertos.h"
+#include "test_quadspi.h"
 
 static unsigned char g_commandPos;
 static char g_commandLine[50];
@@ -275,6 +276,14 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_Test24C256Read(cmdArray[1]);
     }
+    else if (memcmp(cmdArray[0], "test_quadspi_speed", strlen("test_quadspi_speed")) == 0)
+    {
+        command_setQuadSPISpeed(cmdArray[1]);
+    }
+    else if (memcmp(cmdArray[0], "test_quadspi_data", strlen("test_quadspi_data")) == 0)
+    {
+        command_testQuadSPISpeedData();
+    }
     /* error command */
     else
     {
@@ -294,6 +303,8 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("freertos_taskquit");
         dlog_error("test24c256write <i2c port>");
         dlog_error("test24c256read <i2c port>");
+        dlog_error("test_quadspi_speed <speed enum>");
+        dlog_error("test_quadspi_data");        
     }
 
     /* must init to receive new data from serial */
