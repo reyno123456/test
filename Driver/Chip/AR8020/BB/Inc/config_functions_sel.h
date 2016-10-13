@@ -186,10 +186,5 @@
 #define PC_UPFDBEG       0x21    // Upload flash begin flag.
 #define PC_GSUART        0x22    // Upload grd tx sky through UARST.
 
-
-
-
-
-
 #endif
 

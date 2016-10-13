@@ -15,6 +15,8 @@
 #include "config_functions_sel.h"
 #include <stdint.h>
 #include "debuglog.h"
+
+
 #ifdef BASEBAND_GRD
 /**
   * @brief Ground Controller Structure definition
@@ -126,7 +128,6 @@ struct CURRENT_ALTER_OTHERS_FRQ
   uint8_t   frqchannel; /*!< Specifies the working frq channel.*/
   uint32_t  poweravr;   /*!< Specifies the power average of working frq channel.*/
   uint32_t  powerwave;  /*!< Specifies the power wave of working frq channel.*/
-
 };
 
 struct SNR_PERCYC
@@ -141,7 +142,7 @@ void Grd_Parm_Initial(void);
 void Grd_Write_Rcfrq(uint8_t i);
 void Grd_Write_Itworkfrq(uint8_t i);
 void Grd_Write_Itsweepfrq(uint8_t i);
-void Grd_Id_Initial(void);   //ground init
+void Grd_Id_Initial(void);
 
 // Read Reg[EB] of baseband , lock or not.
 uint8_t Grd_Baseband_Fec_Lock(void);
@@ -160,7 +161,7 @@ void Grd_Frqsnr_Array(void);
 void Grd_Qamsnr_Array(void);
 void Grd_Frq_Snrblock_Determine(uint16_t iMCS);
 uint8_t Grd_Sweeppower_Fluctuate_Average(void);     //扫频的波动性和平均值
-void Grd_Ldpc_Err_Num_Statistics(void);    //2 // 2 sec
+void Grd_Ldpc_Err_Num_Statistics(void);             //2 // 2 sec
 uint8_t Grd_Ldpc_Block_Determine(void);
 void Grd_Itfrq_Hopping(void);
 void Grd_Working_Qam_Change(void);
@@ -168,8 +169,9 @@ void Grd_Txmsg_Qam_Change(void);
 void Grd_Qamflag_Clear(void);
 void Grd_IT_Controller(void);
 void Grd_Osdmsg_Ptf(void);
-void TIM2_IRQHandler(void);
-void TIM3_IRQHandler(void);
+
+void TIM0_IRQHandler(void);
+void TIM1_IRQHandler(void);
 
 #endif
 #endif

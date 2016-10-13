@@ -25,7 +25,4 @@ struct IT_FRQ_CHANNEL               //  Image Transmissions Freq Channnel
 
 #define MAX_RC_FRQ_SIZE (12)
 
-#define MAX_RC_FRQ_SIZE  (8)
-
-
 #endif

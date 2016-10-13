@@ -3,7 +3,6 @@
 #include "test_i2c_adv7611.h"
 #include "test_h264_encoder.h"
 #include "test_BB.h"
-#include "test_BBctrl.h"
 
 /**
   * @brief  Main program

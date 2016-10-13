@@ -12,10 +12,10 @@
 #define     BB_SPI_TEST         (0)
 #define     RF_SPI_TEST         (0)
 
-#define VSOC_GLOBAL2_BASE           0xA0030000
-#define BB_SPI_UART_SEL             0x9c
+#define     VSOC_GLOBAL2_BASE   (0xA0030000)
+#define     BB_SPI_UART_SEL     (0x9c)
 
-#define _FPGA_BB_
+#undef _FPGA_BB_
 
 typedef struct
 {
@@ -102,7 +102,7 @@ static void BB_regs_init(ENUM_BB_MODE en_mode)
     uint32_t page_cnt=0;
     BB_ctx.en_curMode = en_mode;
     const uint8_t *regs = (en_mode == BB_SKY_MODE) ? (const uint8_t *)BB_sky_regs : (const uint8_t *)BB_grd_regs;
-    dlog_info("%d %d \n", en_mode, regs);
+    
     for(page_cnt = 0 ; page_cnt < 4; page_cnt ++)
     {
         uint32_t addr_cnt=0;
@@ -110,15 +110,17 @@ static void BB_regs_init(ENUM_BB_MODE en_mode)
         ENUM_REG_PAGES page = (page_cnt==0)? PAGE0: \
                               ((page_cnt==1)?PAGE1: \
                               ((page_cnt==2)?PAGE2:PAGE3));
+        /*
+         * PAGE setting including in the regs array.
+        */
+        BB_ctx.en_curPage = page;
 
         for(addr_cnt = 0; addr_cnt < 256; addr_cnt++)
         {
-            BB_SPI_WriteByte(page, (uint8_t)addr_cnt, *regs);
+            BB_SPI_curPageWriteByte((uint8_t)addr_cnt, *regs);
             regs++;
         }
-	}
-    
-    printf("addr 0x0 = %d \n", BB_SPI_ReadByte(PAGE2, 0));
+    }
 }
 
 
@@ -129,7 +131,6 @@ int BB_softReset(ENUM_RST_MODE en_mode)
     */
     if(en_mode == BB_GRD_MODE)
     {
-        #if 0
         #ifdef _FPGA_BB_
             BB_SPI_WriteByte(PAGE1,0x90,0x80);
             BB_SPI_WriteByte(PAGE1,0x90,0x00);
@@ -137,15 +138,16 @@ int BB_softReset(ENUM_RST_MODE en_mode)
             BB_SPI_WriteByte(PAGE1,0x98,0x81);
             BB_SPI_WriteByte(PAGE1,0x98,0x01);
         #endif
-        #endif
         
-        BB_SPI_WriteByte(PAGE2,0x00,0x81);
-        BB_SPI_WriteByte(PAGE2,0x00,0xB0);
+        BB_SPI_curPageWriteByte(0x00,0xB2);
+        BB_SPI_curPageWriteByte(0x00,0xB0);
+		BB_ctx.en_curPage = PAGE2;
     }
     else
     {        
-        BB_SPI_WriteByte(PAGE2, 0x00, 0x81);
-        BB_SPI_WriteByte(PAGE2, 0x00, 0x80);
+        BB_SPI_curPageWriteByte(0x00, 0x81);
+        BB_SPI_curPageWriteByte(0x00, 0x80);
+		BB_ctx.en_curPage = PAGE2;
     }
     return 0;
 }
@@ -177,9 +179,7 @@ int BB_TRX_ctrl(ENUM_TRX_CTRL en_trx)
             }
         }
     }    
-    /*
-     * Todo: add reg setting to support IT_RC_MODE.
-    */
+
     return 0;
 }
 
@@ -194,6 +194,7 @@ int BB_GrdReceive(ENUM_RCV_enable en_rcv)
 
     dat = (en_rcv == GRD_RCV_ENABLE) ? (dat&0xF7) : (dat|0x08);
     BB_SPI_WriteByte(PAGE2, 0x20, dat);
+    
     return 0;
 }
 
@@ -262,7 +263,7 @@ void BB_init(STRU_BB_initType *ptr_initType)
         RF_8003x_spi_init(ptr_initType->en_mode);
         BB_SPI_curPageWriteByte(0x01,0x02);     //SPI change into 8020
     }
-        
+    
     #if 0
     if(ptr_initType->en_mode == BB_GRD_MODE)
     {
@@ -270,18 +271,14 @@ void BB_init(STRU_BB_initType *ptr_initType)
     }
     #endif
 
-    //BB_softReset(BB_RESET_TXRX);
     if (BB_SKY_MODE == ptr_initType->en_mode)
     {
         // reset 8020 wimax
-        BB_SPI_WriteByte(PAGE2, 0x00, 0x81);
-        BB_SPI_WriteByte(PAGE2, 0x00, 0x80);
+        //BB_SPI_WriteByte(PAGE2, 0x00, 0x81);
+        //BB_SPI_WriteByte(PAGE2, 0x00, 0x80);
     }
     else
     {
-        //  reset 8020 wimax
-        BB_SPI_WriteByte(PAGE1, 0x00, 0x40);
-    
     #ifdef _FPGA_BB_
         BB_SPI_WriteByte(PAGE1, 0x90, 0x80);
         BB_SPI_WriteByte(PAGE1, 0x90, 0x00);
@@ -289,24 +286,11 @@ void BB_init(STRU_BB_initType *ptr_initType)
         BB_SPI_WriteByte(PAGE1, 0x98, 0x01);
     #endif
         
-        BB_SPI_WriteByte(PAGE1,0x00,0x81);
+        BB_SPI_WriteByte(PAGE1,0x00,0xB1);
         BB_SPI_WriteByte(PAGE2,0x00,0xB0);
-
-        {
-            uint loop = 0;
-            while(loop++ < 20000);
-        }
-        BB_SPI_WriteByte(PAGE2,0x20,0xd4);
     }
-
-    #if 0
-    if(ptr_initType->en_rcvEnable)
-    {
-        BB_GrdReceive(ptr_initType->en_rcvEnable);
-    }
-    #endif
     
-    printf("reg %d %d\n", BB_SPI_ReadByte(PAGE2, 0x00), BB_SPI_ReadByte(PAGE2, 0x01));
+    dlog_info("%s", "BB_init Done \n");
 }
 
 

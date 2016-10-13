@@ -20,9 +20,9 @@ int main(void)
     
     command_init();
 
-    // //ADV_7611_Initial();
+    //ADV_7611_Initial();
     //H264_Encoder_Init();
-    //test_BB_SKY();
+    test_BB_SKY();
 
     for( ;; );
 } 

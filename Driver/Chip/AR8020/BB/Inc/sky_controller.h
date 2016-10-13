@@ -34,6 +34,13 @@ typedef struct
 
 }Sky_FlagTypeDef;
 
+enum EN_AGC_MODE
+{
+    FAR_AGC     = 0,
+    NEAR_AGC    = 1,
+    UNKOWN_AGC  = 0xff,
+};
+
 typedef struct
 {
      uint8_t RCChannel;       /*!< Specifies the remote controller working in freq channel.
@@ -57,7 +64,9 @@ typedef struct
      uint8_t CntAGCGain;     /*!< Specifies the cnt of remote controller unlock.
                                     This parameter can be a value of @ref <1,2,3...>   */
 
+     enum EN_AGC_MODE en_agcmode;  /*!< Specifies the agcmode */
 
+     uint8_t workfrq;  
 }Sky_HanlderTypeDef;
 
 

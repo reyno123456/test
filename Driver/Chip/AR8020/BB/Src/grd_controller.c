@@ -8,12 +8,13 @@
 #include <stdlib.h>
 #include <math.h>
 #include <timer.h>
+#include "reg_rw.h"
 #include "config_baseband_frqdata.h"
-#include "config_rcfrq_pattern.h"
 #include "config_baseband_register.h"
 #include "sys_peripheral_communication.h"
 #include "BB_ctrl.h"
 #include "sys_peripheral_init.h"
+
 
 extern struct RC_FRQ_CHANNEL Rc_frq[];
 extern struct IT_FRQ_CHANNEL It_frq[];
@@ -29,9 +30,9 @@ Grd_FlagTypeDef   GrdState;
 Grd_HandleTypeDef GrdStruct;
 Grd_QAMTypeDef    GrdQam;
 
-uint8_t  Timer2_Delay_Cnt  = 0;
-uint8_t  Timer3_Delay1_Cnt = 0;
-uint32_t Timer3_Delay2_Cnt = 0;
+uint8_t  Timer0_Delay_Cnt  = 0;
+uint8_t  Timer1_Delay1_Cnt = 0;
+uint32_t Timer1_Delay2_Cnt = 0;
 
 void wimax_vsoc_tx_isr();
 
@@ -67,18 +68,15 @@ void Grd_Parm_Initial(void)
     GrdQam.Up16qam12=DISABLE;
     GrdQam.Upqpsk12=DISABLE;
     
-    Timer2_Init();
-//    printf("Grd_Parm_Initial %d %d %d\r\n",init_timer0_0.base_time_group,init_timer0_0.time_num,init_timer0_0.ctrl);
-    Grd_Timer3_Init();
- //   printf("Grd_Parm_Initial %d %d %d\r\n",init_timer0_0.base_time_group,init_timer0_0.time_num,init_timer0_0.ctrl);
- //   printf("Grd_Parm_Initial %d %d %d\r\n",init_timer0_1.base_time_group,init_timer0_1.time_num,init_timer0_1.ctrl);
-    start_timer(init_timer0_0);
+    Timer0_Init();
+    Grd_Timer1_Init();
+
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
     reg_IrqHandle(BB_TX_ENABLE_VECTOR_NUM, wimax_vsoc_tx_isr);
     INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);    
 }
 
-// ???????
+
 
 #define RC_ID_PAGE      (PAGE2)
 
@@ -91,13 +89,11 @@ void Grd_Parm_Initial(void)
 
 void Grd_Id_Initial(void)
 {
-#if 0
-    BB_SPI_WriteByte(RC_ID_PAGE, RC_ID_BIT39_32_REG, RC_ID_BIT39_32);     //RC_id_bits[39:32]
+    BB_SPI_WriteByte(RC_ID_PAGE, RC_ID_BIT39_32_REG, RC_ID_BIT39_32);
     BB_SPI_WriteByte(RC_ID_PAGE, RC_ID_BIT31_24_REG, RC_ID_BIT31_24);
     BB_SPI_WriteByte(RC_ID_PAGE, RC_ID_BIT23_16_REG, RC_ID_BIT23_16);
     BB_SPI_WriteByte(RC_ID_PAGE, RC_ID_BIT15_08_REG, RC_ID_BIT15_08);
     BB_SPI_WriteByte(RC_ID_PAGE, RC_ID_BIT07_00_REG, RC_ID_BIT07_00);	
-#endif
 }
 
 
@@ -105,10 +101,10 @@ void Grd_Id_Initial(void)
 void Grd_Write_Rcfrq(uint8_t frqchannel)
 {
     #if defined( GRD_RF8003_2P3) || defined( GRD_RF8003_2P4)
-        BB_SPI_WriteByte(RC_ID_PAGE, AGC3_b, Rc_frq[frqchannel].frq1);
-        BB_SPI_WriteByte(RC_ID_PAGE, AGC3_a, Rc_frq[frqchannel].frq2);
-        BB_SPI_WriteByte(RC_ID_PAGE, AGC3_9, Rc_frq[frqchannel].frq3);
-        BB_SPI_WriteByte(RC_ID_PAGE, AGC3_8, Rc_frq[frqchannel].frq4);
+        BB_SPI_WriteByte(PAGE2, AGC3_a, Rc_frq[frqchannel].frq1);
+        BB_SPI_WriteByte(PAGE2, AGC3_b, Rc_frq[frqchannel].frq2);
+        BB_SPI_WriteByte(PAGE2, AGC3_c, Rc_frq[frqchannel].frq3);
+        BB_SPI_WriteByte(PAGE2, AGC3_d, Rc_frq[frqchannel].frq4);  
     #else
         BB_SPI_WriteByte(RC_ID_PAGE, AGC3_a, Rc_frq[frqchannel].frq1 );
         BB_SPI_WriteByte(RC_ID_PAGE, AGC3_b, Rc_frq[frqchannel].frq2 );
@@ -121,15 +117,8 @@ void Grd_Write_Rcfrq(uint8_t frqchannel)
 
 void Grd_RC_Controller(void)
 {
-    Grd_Write_Rcfrq(RCFH_PATTERN[GrdStruct.RCChannel]);
-    
-    Txosd_Buffer[2] = GrdStruct.RCChannel;
-    
-    if( GrdStruct.RCChannel < MAX_RC_FRQ_SIZE )
-    {
-        GrdStruct.RCChannel += 1;
-    }
-    else
+    GrdStruct.RCChannel += 1;
+    if(GrdStruct.RCChannel >=  MAX_RC_FRQ_SIZE)
     {
         GrdStruct.RCChannel = 0;
     }
@@ -377,7 +366,7 @@ void Grd_Sweeping_Before_Fec_Locked(void)
         {
             GrdStruct.SweepCyccnt = 0;
             GrdState.Endsweep = ENABLE;
-            printf("%s", "SweepEnd\r\n");
+            printf("%s", "SE\r\n");
         }
         else
         {
@@ -789,6 +778,7 @@ void Grd_Itfrq_Hopping(void)
 
     if(GrdStruct.Harqcnt >= 2 )
     {
+    #if 0
         printf("Harqcnt %d\r\n", GrdStruct.Harqcnt);
         GrdStruct.Harqcnt=0;
         switch(QAM_MODE)
@@ -862,6 +852,7 @@ void Grd_Itfrq_Hopping(void)
             }
             break;
         }
+    #endif    
     }
 }
 
@@ -1161,32 +1152,29 @@ void wimax_vsoc_tx_isr(void)
 
 void wimax_vsoc_rx_isr()
 {
-   //timer isr?;
-   
-//   uart_print_str(VSOC_UART9_BASE,"BB_RX\n");
 }
 //*********************TX RX initial(14ms irq)**************
 
-int TIM2_count = 0;
-void TIM2_IRQHandler(void)
+int TIM0_count = 0;
+void TIM0_IRQHandler(void)
 {
     Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_0);
-    if( TIM2_count++ % 500 == 0)
+    if( TIM0_count++ % 500 == 0)
     {
         printf("T %s\r\n", Grd_Baseband_Fec_Lock() ? "Lock": "unlock");
     }
-    switch (Timer2_Delay_Cnt)
+    switch (Timer0_Delay_Cnt)
     {
         case 0:
         {
-            Timer2_Delay_Cnt ++ ;
+            Timer0_Delay_Cnt ++ ;
         } 
         break;
 
         case 1:
         {
-            Timer2_Delay_Cnt=0;
-            
+            Timer0_Delay_Cnt=0;
+            INTR_NVIC_ClearPendingIRQ(BB_TX_ENABLE_VECTOR_NUM); //clear pending after TX Enable is LOW.
             INTR_NVIC_EnableIRQ(TIMER_INTR01_VECTOR_NUM);
             start_timer(init_timer0_1);
             INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
@@ -1198,19 +1186,19 @@ void TIM2_IRQHandler(void)
 }
 
 
-void TIM3_IRQHandler(void)
+void TIM1_IRQHandler(void)
 {
     Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_1);
     
-    switch (Timer3_Delay1_Cnt)
+    switch (Timer1_Delay1_Cnt)
     {
         case 0:
-            Timer3_Delay1_Cnt++;
+            Timer1_Delay1_Cnt++;
             break;
         
         case 1:
             {
-                Timer3_Delay1_Cnt++;
+                Timer1_Delay1_Cnt++;
                 Grd_Getsnr(0);
                 Grd_RC_Controller();
                 Grd_IT_Controller();
@@ -1218,49 +1206,49 @@ void TIM3_IRQHandler(void)
             break;
         case 2:
             {
-                Timer3_Delay1_Cnt++;
+                Timer1_Delay1_Cnt++;
                 Grd_Getsnr(1);
             } 
             break;
             
         case 3:
             {
-                Timer3_Delay1_Cnt++;
+                Timer1_Delay1_Cnt++;
                 Grd_Getsnr(2);
             } 
             break;
         
         case 4:
             {
-                Timer3_Delay1_Cnt++;
+                Timer1_Delay1_Cnt++;
                 Grd_Getsnr(3);
             } 
             break;
         
         case 5:
             {
-                Timer3_Delay1_Cnt++;
+                Timer1_Delay1_Cnt++;
                 Grd_Getsnr(4);
             } 
             break;
             
         case 6:
             {
-                Timer3_Delay1_Cnt++;
+                Timer1_Delay1_Cnt++;
                 Grd_Getsnr(5);
             } 
             break;
         
         case 7:
             {
-                Timer3_Delay1_Cnt++;
+                Timer1_Delay1_Cnt++;
                 Grd_Getsnr(6);
             }  
             break;
         case 8:
             {
                 stop_timer(init_timer0_1);
-                Timer3_Delay1_Cnt = 0;
+                Timer1_Delay1_Cnt = 0;
                 Grd_Getsnr(7);
                 Grd_Frqsnr_Array();
                 INTR_NVIC_DisableIRQ(TIMER_INTR01_VECTOR_NUM);
@@ -1270,7 +1258,7 @@ void TIM3_IRQHandler(void)
             break;
         default:
             {
-                Timer3_Delay1_Cnt++;
+                Timer1_Delay1_Cnt++;
             }
             break;
     }
