@@ -2,16 +2,7 @@
 #define __BB_CTRL_
 
 #include <stdint.h>
-
-typedef enum
-{
-    PAGE0 = 0x00,
-    PAGE1 = 0x40,
-    PAGE2 = 0x80,
-    PAGE3 = 0xc0,
-    PAGE_UNKNOW = 0xFF,
-} ENUM_REG_PAGES;
-
+#include "BB_spi.h"
 
 typedef enum
 {

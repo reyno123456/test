@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <timer.h>
+#include "BB_spi.h"
 #include "reg_rw.h"
 #include "config_baseband_frqdata.h"
 #include "config_baseband_register.h"

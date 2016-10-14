@@ -1,14 +1,11 @@
 #include <stdint.h>
 #include "debuglog.h"
-#include "spi.h"
+#include "BB_spi.h"
 #include "BB_ctrl.h"
 #include "BB_init_regs.h"
 #include "reg_rw.h"
 
-#define     BB_SPI_BASE_IDX     (SPI_7)
-#define     CLKRATE_MHZ	        (9)             //9MHz SPI clkrate
 
-#define     BB_TEST_UART        (9)
 #define     BB_SPI_TEST         (0)
 #define     RF_SPI_TEST         (0)
 
@@ -31,71 +28,6 @@ static STRU_BB_ctrl_ctx BB_ctx = {
     .en_TRXctrl = BB_RESET_UNKNOWN,
 };
 
-int BB_SPI_init(void)
-{
-    STRU_SPI_InitTypes init = {
-        .ctrl0   = 0x47,        // [15:12]: Control Frame Size ;[11]: Shift Register Loop 0: Normal Mode, 1: test mode;[10] Slave Output Enable;
-                                // [9:8]: Transfer_mode,2'b00:Trans and Receive;[7:6] SCPOL,SCPH (SPI Oper_Mode),2'b0: mode0 ; 2'b3: mode3 ;
-                                // [5:4] FRF=2'b00: SPI Protocal; [3:0]=0x7:data frame size = 8bit; 
-        .clk_Mhz = CLKRATE_MHZ, //
-        .Tx_Fthr = 0x03,        // transmit FIFO Threshold Level <=3
-        .Rx_Ftlr = 0x6,         // receive FIFO Threshold Level  >=6
-        .SER     = 0x01         // slave enbale
-    };
-
-    SPI_master_init(BB_SPI_BASE_IDX, &init);
-}
-
-static int BB_SPI_curPageWriteByte(uint8_t addr, uint8_t data)
-{
-    uint8_t wdata[] = {0x0e, addr, data};
-    return SPI_write_read(BB_SPI_BASE_IDX, wdata, sizeof(wdata), 0, 0); 
-}
-
-static uint8_t BB_SPI_curPageReadByte(uint8_t addr)
-{
-    uint8_t rbuf[3];
-    uint8_t wdata[] = {0x0f, addr, addr};
-    SPI_write_read(BB_SPI_BASE_IDX, wdata, sizeof(wdata), rbuf, 3);
-
-    return rbuf[2];
-}
-
-int BB_SPI_WriteByte(ENUM_REG_PAGES page, uint8_t addr, uint8_t data)
-{
-    //if(BB_ctx.en_curPage != page)
-    {
-        uint8_t dat = BB_SPI_curPageReadByte(0x00);
-        BB_SPI_curPageWriteByte(0x00, (dat & 0x3F) | page);
-
-        BB_ctx.en_curPage = page;
-    }
-
-    return BB_SPI_curPageWriteByte(addr, data);        
-}
-
-uint8_t BB_SPI_ReadByte(ENUM_REG_PAGES page, uint8_t addr)
-{
-    //if(BB_ctx.en_curPage != page)
-    {
-        uint8_t dat = BB_SPI_curPageReadByte(0x00);
-        BB_SPI_curPageWriteByte(0x00, (dat & 0x3F) | page);
-    }
-    
-    return BB_SPI_curPageReadByte(addr);
-}
-
-int BB_SPI_WriteByteMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t data, uint8_t mask)
-{
-    uint8_t ori = BB_SPI_ReadByte(page, addr);
-    data = (ori & (~mask)) | data;
-    return BB_SPI_curPageWriteByte(addr, data);   
-}
-
-int BB_SPI_ReadByteMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t mask)
-{
-    return BB_SPI_ReadByte(page, addr) & mask;
-}
 
 static void BB_regs_init(ENUM_BB_MODE en_mode)
 {
@@ -274,8 +206,8 @@ void BB_init(STRU_BB_initType *ptr_initType)
     if (BB_SKY_MODE == ptr_initType->en_mode)
     {
         // reset 8020 wimax
-        //BB_SPI_WriteByte(PAGE2, 0x00, 0x81);
-        //BB_SPI_WriteByte(PAGE2, 0x00, 0x80);
+        BB_SPI_WriteByte(PAGE2, 0x00, 0x81);
+        BB_SPI_WriteByte(PAGE2, 0x00, 0x80);
     }
     else
     {

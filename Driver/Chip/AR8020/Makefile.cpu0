@@ -36,6 +36,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
          SRAM/Src/sram.c \
          BB/Src/BB_ctrl.c \
          SPI/Src/spi.c \
+         SPI/Src/BB_spi.c \
          QuadSPI/Src/quad_spi_ctl.c
 
 INCDIRS := -ISysCtl/Inc \
@@ -71,6 +72,8 @@ install:
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@cp -f UART/Inc/serial.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f I2C/Inc/i2c.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f SPI/Inc/spi.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f SPI/Inc/BB_spi.h $(OUTPUT_HEADER_STAGING_DIR)    
 	@cp -f SD/Inc/* $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SRAM/Inc/sram.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SRAM/Inc/sram_common.h $(OUTPUT_HEADER_STAGING_DIR)
