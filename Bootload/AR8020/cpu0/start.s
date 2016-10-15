@@ -10,7 +10,8 @@
 #include "interrupt.h"
 #include <serial.h>
 
-.equ  ITCM0,              0x00000000
+.equ  ITCM0_VECTOR_START, 0x00000000
+.equ  ITCM0,              0x00000300
 .equ  ITCM1,              0x44100000
 .equ  ITCM2,              0xB0000000
 
@@ -38,6 +39,7 @@
 /* defined in linker script */
 /* start address for the initialization values of the .data section. */
 .word  _vectors_start
+.word  _vectors_end
 /* start address for the text section */
 .word  _text_start
 /* end address for the text section */
@@ -72,6 +74,25 @@ Reset_Handler:
   ldr  sp,  =_estack             /* set stack pointer */
 
 /* Copy CPU0 */
+/* Copy the vectors from flash to ITCM0 */
+  movs r1, #0
+  ldr  r4, =_vectors_start     /* The start addr of vectors in flash */
+  ldr  r0, =ITCM0_VECTOR_START       /* The start addr of vector in itcm0 */
+  b  LoopCopyVector
+CopyVector:
+  ldr  r3, =_vectors_start
+  ldr  r3, [r3, r1]
+  str  r3, [r0, r1]
+  adds  r1, r1, #4
+LoopCopyVector:
+  ldr  r3, =_vectors_end       /* The end addr of code image */
+  adds r2, r4, r1
+  cmp  r2, r3
+  bcc  CopyVector
+  mov  r1, #0
+  ldr  r2, =0xe000ed08
+  str  r1,[r2] 
+
 /* Copy the code from flash to ITCM0 */
   movs r1, #0
   ldr  r4, =_text_start     /* The start addr of code image */ 

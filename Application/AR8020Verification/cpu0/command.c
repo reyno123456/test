@@ -284,6 +284,22 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_testQuadSPISpeedData();
     }
+    else if (memcmp(cmdArray[0], "test_init_flash", strlen("test_init_flash")) == 0)
+    {
+        command_initWinbondNorFlash();
+    }
+    else if (memcmp(cmdArray[0], "test_erase_flash", strlen("test_erase_flash")) == 0)
+    {
+        command_eraseWinbondNorFlash(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "test_write_flash", strlen("test_write_flash")) == 0)
+    {
+        command_writeWinbondNorFlash(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
+    else if (memcmp(cmdArray[0], "test_read_flash", strlen("test_read_flash")) == 0)
+    {
+        command_readWinbondNorFlash(cmdArray[1], cmdArray[2]);
+    }    
     /* error command */
     else
     {
@@ -304,7 +320,11 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("test24c256write <i2c port>");
         dlog_error("test24c256read <i2c port>");
         dlog_error("test_quadspi_speed <speed enum>");
-        dlog_error("test_quadspi_data");        
+        dlog_error("test_quadspi_data"); 
+        dlog_error("test_init_flash");
+        dlog_error("test_erase_flash <erase type> <flash start address>");
+        dlog_error("test_write_flash <flash start address> <size> <value>");
+        dlog_error("test_read_flash <flash start address> <size>");            
     }
 
     /* must init to receive new data from serial */

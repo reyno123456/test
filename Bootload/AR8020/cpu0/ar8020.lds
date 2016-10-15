@@ -10,7 +10,7 @@ _Data_Size = 0x20000;      /* amount of Data */
 
 MEMORY 
 {
-        ITCM0     : ORIGIN = 0x00000000, LENGTH = 0x80000
+        ITCM0     : ORIGIN = 0x00000300, LENGTH = 0x80000
         /*DTCM0     : ORIGIN = 0x20000000, LENGTH = 0x80000*/
         DTCM0_RO  : ORIGIN = 0X20018000, LENGTH = 0x80000
         FLASH     : ORIGIN = 0x10000000, LENGTH = 0x80000
