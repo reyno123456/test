@@ -32,6 +32,8 @@ enum timer_error
     timer_full = -1
 };
 
+#define TIM_CLC_MHZ    (125)   
+
 #define TIMER_SUCCESS 0
 #define TIMER_FULL -1
 #define TIMER_NOT_TIME -2
@@ -100,9 +102,6 @@ uint32_t init_timer(init_timer_st time_st, uint32_t time);
 void run_timer(void);
 uint32_t add_timer(uint32_t timer_us, void *call_back, uint32_t reload);
 uint32_t start_timer(init_timer_st time_st);
-uint32_t register_timer(init_timer_st time_st, uint32_t time); 
-
-
-
+uint32_t register_timer(init_timer_st time_st, uint32_t time_us); 
 
 #endif

@@ -643,7 +643,7 @@ void TIM0_IRQHandler(void)
     {
         Sky_Search_Right_ID();
     }
-    else                                   // ²»¶ÔÆµ
+    else                                   // 2????¦Ì
     {
         SkyState.CmdsearchID = DISABLE;
         SkyState.Rcmissing = ENABLE;

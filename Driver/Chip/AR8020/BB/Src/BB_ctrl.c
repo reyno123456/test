@@ -79,7 +79,7 @@ int BB_softReset(ENUM_RST_MODE en_mode)
     {        
         BB_SPI_curPageWriteByte(0x00, 0x81);
         BB_SPI_curPageWriteByte(0x00, 0x80);
-		BB_ctx.en_curPage = PAGE2;
+        BB_ctx.en_curPage = PAGE2;
     }
     return 0;
 }
@@ -89,8 +89,8 @@ int BB_selectVideoPath(ENUM_VID_PATH path)
 {
     if (BB_ctx.en_VIDPath != path)
     {
-		uint8_t dat = BB_SPI_ReadByte(PAGE1, 0x8d) | 0xC0;
-		BB_SPI_WriteByte(PAGE1, 0x8d, dat); 
+        uint8_t dat = BB_SPI_ReadByte(PAGE1, 0x8d) | 0xC0;
+        BB_SPI_WriteByte(PAGE1, 0x8d, dat); 
 
         BB_ctx.en_VIDPath = path;
     }

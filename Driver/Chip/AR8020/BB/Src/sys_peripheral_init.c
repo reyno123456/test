@@ -13,7 +13,6 @@ init_timer_st init_timer0_1;
 void TIM0_IRQHandler(void);
 void TIM1_IRQHandler(void);
 
-#define TIM_CLC     (125)
 
 void Timer0_Init(void)
 {
@@ -23,11 +22,11 @@ void Timer0_Init(void)
 	init_timer0_0.ctrl |= TIME_ENABLE | USER_DEFINED;
     
 	#ifdef BASEBAND_SKY
-	register_timer(init_timer0_0, TIM_CLC*100*22*4);    //(1000*2.2));  
+	register_timer(init_timer0_0, 8800); 
 	#endif
     
 	#ifdef BASEBAND_GRD
-	register_timer(init_timer0_0, TIM_CLC*100*30);      //(1000*2.65));  
+	register_timer(init_timer0_0, 5000); 
 	#endif
     
 	reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, TIM0_IRQHandler);
@@ -39,7 +38,7 @@ void Sky_Timer1_Init(void)
   init_timer0_1.time_num = 1;
   init_timer0_1.ctrl = 0;
   init_timer0_1.ctrl |= TIME_ENABLE | USER_DEFINED;
-  register_timer(init_timer0_1, TIM_CLC*1000*1);//(1000*1));  
+  register_timer(init_timer0_1, 1000);
   reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, TIM1_IRQHandler);
 }
 
@@ -49,6 +48,6 @@ void Grd_Timer1_Init(void)
   init_timer0_1.time_num = 1;
   init_timer0_1.ctrl = 0;
   init_timer0_1.ctrl |= TIME_ENABLE | USER_DEFINED;
-  register_timer(init_timer0_1, TIM_CLC*10*125);//(1000*1.25));  
+  register_timer(init_timer0_1, 1250);
   reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, TIM1_IRQHandler);
 }

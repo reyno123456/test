@@ -3,6 +3,6 @@
 
 void test_BB_SKY(void);
 
-void test_BB_Grd(void);
+void BB_debug_print_init(void);
 
 #endif

@@ -5,13 +5,16 @@
 #include "interrupt.h"
 #include "serial.h"
 #include "cmsis_os.h"
+#include "BB_spi.h"
+#include "test_BB.h"
 #include "test_h264_encoder.h"
 
 static unsigned char g_commandPos;
 static char g_commandLine[50];
+static unsigned char g_commandEnter = 0;
 uint32_t UartNum;
 
-static void Drv_UART_IRQHandler(uint uart_num)
+void Drv_UART_IRQHandler(void)
 {
     char                  c;
     unsigned int          status;
@@ -69,7 +72,9 @@ static void Drv_UART_IRQHandler(uint uart_num)
 
                 /* if g_commandLine is not empty, go to parse command */
                 if (g_commandPos > 0)
-                    command_parse(g_commandLine);
+                {
+                    g_commandEnter = 1;
+                }
             }
             /* receive "backspace" key */
             else if (c == '\b')
@@ -90,7 +95,7 @@ static void Drv_UART_IRQHandler(uint uart_num)
     }
 }
 
-void command_init(uint32_t uart_num)
+void command_init()
 {
     g_commandPos = 0;
     memset(g_commandLine, '\0', 50);
@@ -130,8 +135,8 @@ void command_init(uint32_t uart_num)
         default:
             break;
     }
-    INTR_NVIC_SetIRQPriority(vector_num, 1);
     INTR_NVIC_EnableIRQ(vector_num);
+    INTR_NVIC_SetIRQPriority(vector_num, 1);
     reg_IrqHandle(vector_num, Drv_UART_IRQHandler);
 }
 
@@ -139,6 +144,16 @@ void command_reset(void)
 {
     g_commandPos = 0;
     memset(g_commandLine, '\0', 50);
+}
+unsigned char command_getEnterStatus(void)
+{
+    return g_commandEnter;
+}
+
+void command_fulfill(void)
+{
+    command_parse(g_commandLine);
+    g_commandEnter = 0;
 }
 
 void command_parse(char *cmd)
@@ -200,12 +215,42 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_encoder_update_video(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
+    else if (memcmp(cmdArray[0], "BB_SPI_ReadByte", strlen("BB_SPI_ReadByte")) == 0)
+    {
+        uint8_t cmdPage = strtoul(cmdArray[1], NULL, 0);
+        ENUM_REG_PAGES page = (cmdPage==0)? PAGE0: \
+                              ((cmdPage==1)?PAGE1: \
+                              ((cmdPage==2)?PAGE2:PAGE3));
+        uint8_t addr = strtoul(cmdArray[1], NULL, 0);
+        uint8_t regvalue = BB_SPI_ReadByte(page, addr);
+        
+        dlog_info("Regvalue %0.2x Page %d  Addr%0.2x", regvalue, cmdPage, addr);
+    } 
+    else if (memcmp(cmdArray[0], "BB_SPI_WriteByte", strlen("BB_SPI_WriteByte")) == 0)
+    {
+        uint8_t cmdPage = strtoul(cmdArray[1], NULL, 0);
+        ENUM_REG_PAGES page = (cmdPage==0)? PAGE0: \
+                              ((cmdPage==1)?PAGE1: \
+                              ((cmdPage==2)?PAGE2:PAGE3));
+        uint8_t addr = strtoul(cmdArray[1], NULL, 0);
+        uint8_t value = strtoul(cmdArray[2], NULL, 0);
+        BB_SPI_WriteByte(page, addr, value);
+        
+        dlog_info("RegWrite Page %d  Addr%0.2x %0.2x", cmdPage, addr, value);
+    }       
+    else if (memcmp(cmdArray[0], "BB_debug_print_init", strlen("BB_debug_print_init")) == 0)
+    {
+        BB_debug_print_init();
+    }
     else 
     {
         dlog_error("Command not found! Please use commands like:\n");
         dlog_error("encoder_dump_brc");
         dlog_error("encoder_update_brc <br>");
         dlog_error("encoder_update_video_format <W> <H> <F>");
+        dlog_error("BB_debug_print_init()");
+        dlog_error("BB_SPI_ReadByte <page> <addr>");
+        dlog_error("BB_SPI_WriteByte <page> <addr> <value>");   
     }
 
     /* must reset to receive new data from serial */

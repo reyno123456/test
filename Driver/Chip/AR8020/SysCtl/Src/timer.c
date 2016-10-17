@@ -325,12 +325,15 @@ uint32_t init_timer(init_timer_st time_st, uint32_t time)
     }
 }
 
-uint32_t register_timer(init_timer_st time_st, uint32_t time) 
+
+uint32_t register_timer(init_timer_st time_st, uint32_t time_us) 
 {
     uint32_t ctrl = time_st.ctrl;
     uint32_t timer_num = time_st.time_num;
     uint32_t isr_tmp = 0;
+    uint32_t time = TIM_CLC_MHZ * time_us;
     memset((&timer_queue), 0, sizeof(timer_handle_st)*10);
+    
     dlog_info("init_timer %d %d %d\n",time_st.base_time_group,timer_num,ctrl);
     if(timer_num > 7 || time_st.base_time_group > 2)
     {

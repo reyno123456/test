@@ -72,7 +72,7 @@ void Grd_Parm_Initial(void)
     Timer0_Init();
     Grd_Timer1_Init();
 
-    INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
+    //INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
     reg_IrqHandle(BB_TX_ENABLE_VECTOR_NUM, wimax_vsoc_tx_isr);
     INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);    
 }
@@ -216,7 +216,7 @@ void Grd_Write_Itworkfrq(uint8_t sweepfrqcnt)
 }
 
 
-#define FEC_LOCK_REG (0xc8+0x12)
+#define FEC_LOCK_REG    (0xda)
 
 // Read Reg[EB] of baseband , lock or not.
 uint8_t Grd_Baseband_Fec_Lock(void)
@@ -367,7 +367,7 @@ void Grd_Sweeping_Before_Fec_Locked(void)
         {
             GrdStruct.SweepCyccnt = 0;
             GrdState.Endsweep = ENABLE;
-            printf("%s", "SE\r\n");
+            //printf("%s", "SE\r\n");
         }
         else
         {
@@ -1142,12 +1142,19 @@ void Grd_Osdmsg_Ptf(void)
     #endif
 }
 
+
 void wimax_vsoc_tx_isr(void)
 {
+    static int tx_count = 0;
     INTR_NVIC_DisableIRQ(BB_TX_ENABLE_VECTOR_NUM);
     start_timer(init_timer0_0);
-    printf("TX!\r\n");
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
+    
+    if(tx_count++ >= 1000)
+    {
+        printf("TX1\n");
+        tx_count = 0;        
+    }
 }
 
 
@@ -1156,14 +1163,23 @@ void wimax_vsoc_rx_isr()
 }
 //*********************TX RX initial(14ms irq)**************
 
-int TIM0_count = 0;
+
 void TIM0_IRQHandler(void)
 {
+	static int TIM0_count = 0;
     Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_0);
-    if( TIM0_count++ % 500 == 0)
+    if( TIM0_count++ >= 1000)
     {
-        printf("T %s\r\n", Grd_Baseband_Fec_Lock() ? "Lock": "unlock");
+        TIM0_count = 0;
+        printf("TIM0\r\n");
     }
+    
+
+    INTR_NVIC_ClearPendingIRQ(BB_TX_ENABLE_VECTOR_NUM); //clear pending after TX Enable is LOW.
+    INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);
+    INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
+    
+    #if 0
     switch (Timer0_Delay_Cnt)
     {
         case 0:
@@ -1184,6 +1200,7 @@ void TIM0_IRQHandler(void)
         } 
         break;
     }
+    #endif
 }
 
 
