@@ -19,17 +19,23 @@ int main(void)
 {
     int tmp;
   
-    (*(volatile unsigned int *)0x40B0008C) = 0x00500000; //PATCH for FPGA version, PIN MUX for UART9
+    //(*(volatile unsigned int *)0x40B0008C) = 0x00500000; //PATCH for FPGA version, PIN MUX for UART9
     /* initialize the uart */
     console_init(2, 115200);   
     dlog_info("cpu2 start!!! \n");
     
-
     //ADV_7611_Initial();
     //H264_Encoder_Init();
-    test_BB_SKY();
+    
+    test_BB();
 
-    for( ;; );
+    for( ;; )
+    {
+        if (command_getEnterStatus() == 1)
+        {
+            command_fulfill();
+        }
+    }
 } 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
