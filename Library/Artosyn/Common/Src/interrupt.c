@@ -108,19 +108,22 @@ __attribute__((weak)) void osSystickHandler(void)
 {
 }
 
-/*
-__attribute__((weak)) void SYSTICK_IRQHandler(void)
-{
-    Inc_sysTicks();
-    osSystickHandler();
-}
-*/
-
 void SYSTICK_IRQHandler(void)
 {
     Inc_sysTicks();
     osSystickHandler();
 }
+
+// To replace the weak function in start.s
+void default_isr(void)
+{
+}
+
+// To replace the weak function in start.s
+void hardfault_isr(void)
+{
+}
+
 void IRQHandler_16(void)  { run_irq_hdl(16);  }
 void IRQHandler_17(void)  { run_irq_hdl(17);  }
 void IRQHandler_18(void)  { run_irq_hdl(18);  }
