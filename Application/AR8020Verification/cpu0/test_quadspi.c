@@ -1,6 +1,9 @@
+#include <stdlib.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "quad_spi_ctl.h"
+#include <string.h>
+#include "quad_spi_ctrl.h"
+#include "nor_flash.h"
 #include "test_quadspi.h"
 #include "debuglog.h"
 #include "stm32f746xx.h"
@@ -101,7 +104,7 @@ void command_initWinbondNorFlash(void)
     //20h
     QUAD_SPI_UpdateInstruct(QUAD_SPI_INSTR_20, 0x609c80, 0x17);
     //D8h
-    QUAD_SPI_UpdateInstruct(QUAD_SPI_INSTR_21, 0x609f600, 0x17);
+    QUAD_SPI_UpdateInstruct(QUAD_SPI_INSTR_21, 0x609f60, 0x17);
 }
 
 void command_eraseWinbondNorFlash(char* type_str, char* start_addr_str)
@@ -150,7 +153,7 @@ void command_writeWinbondNorFlash(char* start_addr_str, char* size_str, char* va
 
     for (i = 0; i < size; i++)
     {
-        QUAD_SPI_WriteByte(start_addr++, val);
+        QUAD_SPI_WriteByte(start_addr++, val++);
     }
 
     QUAD_SPI_CheckBusy();
@@ -179,4 +182,105 @@ void command_readWinbondNorFlash(char* start_addr_str, char* size_str)
 
     dlog_info("Read finished!");
 }
+
+void command_testAllNorFlashOperations(char* start_addr_str, char* size_str, char* val_str)
+{
+    unsigned char val = strtoul(val_str, NULL, 0);
+    uint32_t start_addr = strtoul(start_addr_str, NULL, 0);
+    uint32_t size = strtoul(size_str, NULL, 0);
+
+    uint8_t* buf = malloc(size);
+    if (buf)
+    {
+        uint32_t i = 0;
+        for(i = 0; i < size; i++)
+        {
+            buf[i] = val + i;
+        }
+    }
+    else
+    {
+        dlog_error("malloc error!");
+    }
+
+    dlog_info("Nor flash init start ...");
+    NOR_FLASH_Init();
+    dlog_info("Nor flash init end");
+
+    dlog_info("Nor flash sector erase start ...");
+    NOR_FLASH_EraseSector(start_addr);
+    dlog_info("Nor flash sector erase end");
+
+    dlog_info("Nor flash read start ...");
+    command_readWinbondNorFlash(start_addr_str, size_str);
+    dlog_info("Nor flash read end");
+
+    dlog_info("Nor flash write start ...");
+    if (buf)
+    {
+        NOR_FLASH_WriteByteBuffer(start_addr, buf, size);
+    }
+    dlog_info("Nor flash write end");
+
+    dlog_info("Nor flash read start ...");
+    command_readWinbondNorFlash(start_addr_str, size_str);
+    dlog_info("Nor flash read end");    
+
+    dlog_info("Nor flash sector erase start ...");
+    NOR_FLASH_EraseSector(start_addr);
+    dlog_info("Nor flash sector erase end");
+
+    dlog_info("Nor flash read start ...");
+    command_readWinbondNorFlash(start_addr_str, size_str);
+    dlog_info("Nor flash read end");
+
+    dlog_info("Nor flash write start ...");
+    if (buf)
+    {
+        NOR_FLASH_WriteByteBuffer(start_addr, buf, size);
+    }
+    dlog_info("Nor flash write end");
+
+    dlog_info("Nor flash read start ...");
+    command_readWinbondNorFlash(start_addr_str, size_str);
+    dlog_info("Nor flash read end");
+
+    dlog_info("Nor flash block erase start ...");
+    NOR_FLASH_EraseBlock(start_addr);
+    dlog_info("Nor flash block erase end");    
+
+    dlog_info("Nor flash read start ...");
+    command_readWinbondNorFlash(start_addr_str, size_str);
+    dlog_info("Nor flash read end");
+
+    dlog_info("Nor flash write start ...");
+    if (buf)
+    {
+        NOR_FLASH_WriteByteBuffer(start_addr, buf, size);
+    }
+    dlog_info("Nor flash write end");
+
+    dlog_info("Nor flash read start ...");
+    command_readWinbondNorFlash(start_addr_str, size_str);
+    dlog_info("Nor flash read end");
+
+#if 0
+    dlog_info("Nor flash chip erase start ...");
+    NOR_FLASH_EraseChip();
+    dlog_info("Nor flash chip erase end");
+
+    dlog_info("Nor flash read start ...");
+    command_readWinbondNorFlash(start_addr_str, size_str);
+    dlog_info("Nor flash read end");
+#endif
+
+    if (buf)
+    {
+        free(buf);
+        buf = 0;
+    }
+
+    dlog_info("test finished!");
+}
+
 

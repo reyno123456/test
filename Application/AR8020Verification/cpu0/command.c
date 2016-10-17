@@ -299,7 +299,11 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     else if (memcmp(cmdArray[0], "test_read_flash", strlen("test_read_flash")) == 0)
     {
         command_readWinbondNorFlash(cmdArray[1], cmdArray[2]);
-    }    
+    }
+    else if (memcmp(cmdArray[0], "test_nor_flash_all", strlen("test_nor_flash_all")) == 0)
+    {
+        command_testAllNorFlashOperations(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
     /* error command */
     else
     {
@@ -324,7 +328,8 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("test_init_flash");
         dlog_error("test_erase_flash <erase type> <flash start address>");
         dlog_error("test_write_flash <flash start address> <size> <value>");
-        dlog_error("test_read_flash <flash start address> <size>");            
+        dlog_error("test_read_flash <flash start address> <size>");
+        dlog_error("test_nor_flash_all <flash start address> <size> <value>");
     }
 
     /* must init to receive new data from serial */

@@ -37,7 +37,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
          BB/Src/BB_ctrl.c \
          SPI/Src/spi.c \
          SPI/Src/BB_spi.c \
-         QuadSPI/Src/quad_spi_ctl.c
+         QuadSPI/Src/quad_spi_ctrl.c
 
 INCDIRS := -ISysCtl/Inc \
            -ISD/Inc \
@@ -80,7 +80,7 @@ install:
 	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/pll_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/systicks.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f QuadSPI/Inc/quad_spi_ctl.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f QuadSPI/Inc/quad_spi_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."
