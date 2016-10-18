@@ -52,7 +52,7 @@ static uart_type* get_uart_type_by_index(unsigned char index)
 void uart_init(unsigned char index, unsigned int baud_rate)
 {
     int devisor;
-    uart_type *uart_regs;
+    volatile uart_type *uart_regs;
     uart_regs = get_uart_type_by_index(index);
 
     if (uart_regs != NULL)
@@ -93,7 +93,7 @@ void uart_puts(unsigned char index, const char *s)
 char uart_getc(unsigned char index)
 {
     char tmp = 0;
-    uart_type *uart_regs = get_uart_type_by_index(index);
+    volatile uart_type *uart_regs = get_uart_type_by_index(index);
 
     if (uart_regs != NULL)
     {
