@@ -319,7 +319,7 @@ static unsigned char hdmi_default_settings[][3] =
 
 static unsigned char adv_i2c_addr_table[][3] =
 {
-    //{0x98, 0xFF, 0x80},                         //I2C reset
+    //{0x98, 0xFF, 0x80},                       //I2C reset
     {0x98, 0xF4, RX_I2C_CEC_MAP_ADDR},          //CEC
     {0x98, 0xF5, RX_I2C_INFOFRAME_MAP_ADDR},    //INFOFRAME
     {0x98, 0xF8, RX_I2C_AFE_DPLL_MAP_ADDR},     //DPLL
@@ -327,23 +327,36 @@ static unsigned char adv_i2c_addr_table[][3] =
     {0x98, 0xFA, RX_I2C_EDID_MAP_ADDR},         //EDID
     {0x98, 0xFB, RX_I2C_HDMI_MAP_ADDR},         //HDMI
     {0x98, 0xFD, RX_I2C_CP_MAP_ADDR},           //CP
-    {0xFF, 0xFF, 0xFF},     //End flag
-    {0xFF, 0xFF, 0xFF}      //End flag
+    {0xFF, 0xFF, 0xFF}                          //End flag
 };
+
+static void ADV_7611_Delay(unsigned int count)
+{
+    volatile unsigned int i = count;
+    while (i--);
+}
 
 static void ADV_7611_I2CInitial(void)
 {
-    I2C_Init(ADV_7611_I2C_COMPONENT_NUM, I2C_Master_Mode, RX_I2C_IO_MAP_ADDR >> 1, I2C_Fast_Speed);
+    static uint8_t i2c_initialized = 0;
+    if (i2c_initialized == 0)
+    {
+        I2C_Init(ADV_7611_I2C_COMPONENT_NUM, I2C_Master_Mode, RX_I2C_IO_MAP_ADDR >> 1, I2C_Fast_Speed);
+        ADV_7611_Delay(100);
+        ADV_7611_WriteByte(0x98, 0x1B, 0x01);
+        ADV_7611_Delay(100);
+        i2c_initialized = 1;
+    }
 }
 
-static void ADV_7611_WriteByte(unsigned char slv_addr, unsigned char sub_addr, unsigned char val)
+void ADV_7611_WriteByte(uint8_t slv_addr, uint8_t sub_addr, uint8_t val)
 {
     unsigned char sub_addr_tmp = sub_addr;
     unsigned char val_tmp = val;
     I2C_Master_Write_Data(ADV_7611_I2C_COMPONENT_NUM, slv_addr >> 1, &sub_addr_tmp, 1, &val_tmp, 1);
 }
 
-static unsigned char ADV_7611_ReadByte(unsigned char slv_addr, unsigned char sub_addr)
+uint8_t ADV_7611_ReadByte(uint8_t slv_addr, uint8_t sub_addr)
 {
     unsigned char sub_addr_tmp = sub_addr;
     unsigned char val = 0;
@@ -352,9 +365,10 @@ static unsigned char ADV_7611_ReadByte(unsigned char slv_addr, unsigned char sub
 }
 
 #define MAX_TABLE_ITEM_COUNT 2000
-static void ADV_7611_WriteTable(unsigned char(*reg_table)[3])
+static void ADV_7611_WriteTable(uint8_t index, unsigned char(*reg_table)[3])
 {
     unsigned int i = 0;
+    unsigned char slv_addr_offset = (index == 0) ? 0 : 2; 
     
     while (i < MAX_TABLE_ITEM_COUNT)
     {
@@ -368,34 +382,34 @@ static void ADV_7611_WriteTable(unsigned char(*reg_table)[3])
             break;
         }
 
-        ADV_7611_WriteByte(reg_table[i][0], reg_table[i][1], reg_table[i][2]);
+        if (adv_i2c_addr_table == reg_table)
+        {
+            ADV_7611_WriteByte(reg_table[i][0] + slv_addr_offset, reg_table[i][1], reg_table[i][2] + slv_addr_offset);
+        }
+        else
+        {
+            ADV_7611_WriteByte(reg_table[i][0] + slv_addr_offset, reg_table[i][1], reg_table[i][2]);
+        }
+        
         i++;
     }
 }
 
-static void ADV_7611_Delay(unsigned int count)
+static void ADV_7611_GenericInitial(uint8_t index)
 {
-    volatile unsigned int i = count;
-    while (i--);
-}
-
-static void ADV_7611_GenericInitial(void)
-{
-    ADV_7611_WriteByte(0x98, 0x1B, 0x01);
-    ADV_7611_Delay(100);
-    ADV_7611_WriteTable(adv_i2c_addr_table);
-    ADV_7611_WriteTable(hdmi_edid_table);
+    ADV_7611_WriteTable(index, adv_i2c_addr_table);
+    ADV_7611_WriteTable(index, hdmi_edid_table);
     ADV_7611_Delay(1000);
-    ADV_7611_WriteTable(hdmi_default_settings);
+    ADV_7611_WriteTable(index, hdmi_default_settings);
 }
 
-void ADV_7611_Initial(void)
+void ADV_7611_Initial(uint8_t index)
 {
     ADV_7611_I2CInitial();
-    ADV_7611_GenericInitial();
+    ADV_7611_GenericInitial(index);
 }
 
-void ADV_7611_GetVideoFormat(uint32_t* widthPtr, uint32_t* hightPtr, uint32_t* framteratePtr)
+void ADV_7611_GetVideoFormat(uint8_t index, uint32_t* widthPtr, uint32_t* hightPtr, uint32_t* framteratePtr)
 {
     uint32_t val1 = 0;
     uint32_t val2 = 0;
@@ -408,18 +422,21 @@ void ADV_7611_GetVideoFormat(uint32_t* widthPtr, uint32_t* hightPtr, uint32_t* f
     uint32_t field0_hight = 0,  field1_hight = 0, field_hight = 0;
     uint32_t vfreq = 0;
 
-    val1 = ADV_7611_ReadByte(0x68, 0x07) & 0x1F;
-    val2 = ADV_7611_ReadByte(0x68, 0x08);
+    uint8_t hdmi_i2c_addr = (index == 0) ? RX_I2C_HDMI_MAP_ADDR : (RX_I2C_HDMI_MAP_ADDR + 2);
+    uint8_t cp_i2c_addr = (index == 0) ? RX_I2C_CP_MAP_ADDR : (RX_I2C_CP_MAP_ADDR + 2);
+
+    val1 = ADV_7611_ReadByte(hdmi_i2c_addr, 0x07) & 0x1F;
+    val2 = ADV_7611_ReadByte(hdmi_i2c_addr, 0x08);
     width = (val1 << 8) + val2;
  
-    val1 = ADV_7611_ReadByte(0x68, 0x09) & 0x1F;
-    val2 = ADV_7611_ReadByte(0x68, 0x0a);
+    val1 = ADV_7611_ReadByte(hdmi_i2c_addr, 0x09) & 0x1F;
+    val2 = ADV_7611_ReadByte(hdmi_i2c_addr, 0x0a);
     hight = (val1 << 8) + val2;
     
-    field0_hight = ((ADV_7611_ReadByte(0x68, 0x26) & 0x3f) << 8) | ADV_7611_ReadByte(0x68, 0x27);
-    field1_hight = ((ADV_7611_ReadByte(0x68, 0x28) & 0x3f) << 8) | ADV_7611_ReadByte(0x68, 0x29);
+    field0_hight = ((ADV_7611_ReadByte(hdmi_i2c_addr, 0x26) & 0x3f) << 8) | ADV_7611_ReadByte(hdmi_i2c_addr, 0x27);
+    field1_hight = ((ADV_7611_ReadByte(hdmi_i2c_addr, 0x28) & 0x3f) << 8) | ADV_7611_ReadByte(hdmi_i2c_addr, 0x29);
     field_hight = (field0_hight + field1_hight) / 4;
-    bl_clk = ((ADV_7611_ReadByte(0x44, 0xb1) & 0x3f) << 8) | ADV_7611_ReadByte(0x44, 0xb2);
+    bl_clk = ((ADV_7611_ReadByte(cp_i2c_addr, 0xb1) & 0x3f) << 8) | ADV_7611_ReadByte(cp_i2c_addr, 0xb2);
 
     if ((field_hight != 0) && (bl_clk != 0))
     {
@@ -433,10 +450,12 @@ void ADV_7611_GetVideoFormat(uint32_t* widthPtr, uint32_t* hightPtr, uint32_t* f
      *framteratePtr = frame_rate;
 }
 
-void ADV_7611_DumpOutEdidData(void)
+void ADV_7611_DumpOutEdidData(uint8_t index)
 {
     dlog_info("\n\n\n-----------------------------------------\n\n");
     dlog_info("Edid Data:");
+
+    unsigned char slv_addr_offset = (index == 0) ? 0 : 2; 
 
     unsigned int i;
     unsigned char val = 0;
@@ -452,27 +471,29 @@ void ADV_7611_DumpOutEdidData(void)
             break;
         }
 
-        val = ADV_7611_ReadByte(hdmi_edid_table[i][0], hdmi_edid_table[i][1]);
+        val = ADV_7611_ReadByte(hdmi_edid_table[i][0] + slv_addr_offset, hdmi_edid_table[i][1]);
         
         if (val == hdmi_edid_table[i][2])
         {
-            dlog_info("0x%x, 0x%x, 0x%x", hdmi_edid_table[i][0], hdmi_edid_table[i][1], val);
+            dlog_info("0x%x, 0x%x, 0x%x", hdmi_edid_table[i][0] + slv_addr_offset, hdmi_edid_table[i][1], val);
         }
         else
         {
-            dlog_info("0x%x, 0x%x, 0x%x, Error: right value 0x%x!", hdmi_edid_table[i][0], hdmi_edid_table[i][1], val, hdmi_edid_table[i][2]);
+            dlog_info("0x%x, 0x%x, 0x%x, Error: right value 0x%x!", hdmi_edid_table[i][0] + slv_addr_offset, hdmi_edid_table[i][1], val, hdmi_edid_table[i][2]);
         }
     }
     
     dlog_info("\n\n-----------------------------------------\n\n\n");
 }
 
-void ADV_7611_DumpOutDefaultSettings(void)
+void ADV_7611_DumpOutDefaultSettings(uint8_t index)
 {
     dlog_info("\n\n\n-----------------------------------------\n\n");
     dlog_info("I2C Address Table:");
     unsigned int i;
     unsigned char val = 0;
+
+    unsigned char slv_addr_offset = (index == 0) ? 0 : 2; 
 
     for (i = 1; ; i++)
     {
@@ -486,15 +507,15 @@ void ADV_7611_DumpOutDefaultSettings(void)
             break;
         }
 
-        val = ADV_7611_ReadByte(adv_i2c_addr_table[i][0], adv_i2c_addr_table[i][1]);
+        val = ADV_7611_ReadByte(adv_i2c_addr_table[i][0] + slv_addr_offset, adv_i2c_addr_table[i][1]);
         
-        if (val == adv_i2c_addr_table[i][2])
+        if (val == (adv_i2c_addr_table[i][2] + slv_addr_offset))
         {
-            dlog_info("0x%x, 0x%x, 0x%x", adv_i2c_addr_table[i][0], adv_i2c_addr_table[i][1], val);
+            dlog_info("0x%x, 0x%x, 0x%x", adv_i2c_addr_table[i][0] + slv_addr_offset, adv_i2c_addr_table[i][1], val);
         }
         else
         {
-            dlog_info("0x%x, 0x%x, 0x%x, Error: right value 0x%x!", adv_i2c_addr_table[i][0], adv_i2c_addr_table[i][1], val, adv_i2c_addr_table[i][2]);            
+            dlog_info("0x%x, 0x%x, 0x%x, Error: right value 0x%x!", adv_i2c_addr_table[i][0] + slv_addr_offset, adv_i2c_addr_table[i][1], val, adv_i2c_addr_table[i][2] + slv_addr_offset);            
         }
     }
  
@@ -511,15 +532,15 @@ void ADV_7611_DumpOutDefaultSettings(void)
             break;
         }
 
-        val = ADV_7611_ReadByte(hdmi_default_settings[i][0], hdmi_default_settings[i][1]);
+        val = ADV_7611_ReadByte(hdmi_default_settings[i][0] + slv_addr_offset, hdmi_default_settings[i][1]);
 
         if (val == hdmi_default_settings[i][2])
         {
-            dlog_info("0x%x, 0x%x, 0x%x", hdmi_default_settings[i][0], hdmi_default_settings[i][1], val);
+            dlog_info("0x%x, 0x%x, 0x%x", hdmi_default_settings[i][0] + slv_addr_offset, hdmi_default_settings[i][1], val);
         }
         else
         {
-            dlog_info("0x%x, 0x%x, 0x%x, Error: right value 0x%x!", hdmi_default_settings[i][0], hdmi_default_settings[i][1], val, hdmi_default_settings[i][2]);
+            dlog_info("0x%x, 0x%x, 0x%x, Error: right value 0x%x!", hdmi_default_settings[i][0] + slv_addr_offset, hdmi_default_settings[i][1], val, hdmi_default_settings[i][2]);
         }
     }
     

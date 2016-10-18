@@ -4,6 +4,8 @@
 #include "adv_7611.h"
 
 #define TAR_24C256_ADDR       0x51
+
+#if 0
 #define TAR_ADV7611_ADDR      (0x98 >> 1)
 
 #define ADV_7611_I2C_COMPONENT_NUM I2C_Component_2
@@ -38,8 +40,9 @@ static unsigned char ADV_7611_ReadByte(unsigned char slv_addr, unsigned char sub
     I2C_Master_Read_Data(ADV_7611_I2C_COMPONENT_NUM, slv_addr >> 1, &sub_addr_tmp, 1, &val, 1);
     return val;
 }
+#endif
 
-void command_readSDV7611(char *slvAddr, char *regAddr)
+void command_readADV7611(char *slvAddr, char *regAddr)
 {
     unsigned char slvAddrTmp = strtoul(slvAddr, NULL, 0);
     unsigned char regAddrTmp = strtoul(regAddr, NULL, 0);
@@ -47,7 +50,7 @@ void command_readSDV7611(char *slvAddr, char *regAddr)
     dlog_info("Read: 0x%x, 0x%x. Val: 0x%x", slvAddrTmp, regAddrTmp, val);
 }
 
-void command_writeSDV7611(char *slvAddr, char *regAddr, char *regVal)
+void command_writeADV7611(char *slvAddr, char *regAddr, char *regVal)
 {
     unsigned char slvAddrTmp = strtoul(slvAddr, NULL, 0);
     unsigned char regAddrTmp = strtoul(regAddr, NULL, 0);
@@ -56,21 +59,24 @@ void command_writeSDV7611(char *slvAddr, char *regAddr, char *regVal)
     dlog_info("Wrte: 0x%x, 0x%x, 0x%x", slvAddrTmp, regAddrTmp, regValTmp);
 }
 
-void command_readADV7611VideoFormat(uint32_t* widthPtr, uint32_t* hightPtr, uint32_t* framteratePtr)
+void command_readADV7611VideoFormat(char *index_str, uint32_t* widthPtr, uint32_t* hightPtr, uint32_t* framteratePtr)
 {
-    ADV_7611_GetVideoFormat(widthPtr, hightPtr, framteratePtr);
+    unsigned char index = strtoul(index_str, NULL, 0);
+    ADV_7611_GetVideoFormat(index, widthPtr, hightPtr, framteratePtr);
 }
 
-void command_initADV7611(void)
+void command_initADV7611(char *index_str)
 {
-    ADV_7611_Initial();
+    unsigned char index = strtoul(index_str, NULL, 0);
+    ADV_7611_Initial(index);
     dlog_info("ADV7611 Initial finished!\n");
 }
 
-void command_dumpADV7611Settings(void)
+void command_dumpADV7611Settings(char *index_str)
 {
-    ADV_7611_DumpOutEdidData();
-    ADV_7611_DumpOutDefaultSettings();
+    unsigned char index = strtoul(index_str, NULL, 0);
+    ADV_7611_DumpOutEdidData(index);
+    ADV_7611_DumpOutDefaultSettings(index);
 }
 
 void test_24c256_write(unsigned char i2c_num);

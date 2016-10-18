@@ -240,25 +240,25 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     }
     else if (memcmp(cmdArray[0], "hdmiinit", strlen("hdmiinit")) == 0)
     {
-        command_initADV7611();
+        command_initADV7611(cmdArray[1]);
     }
     else if (memcmp(cmdArray[0], "hdmidump", strlen("hdmidump")) == 0)
     {
-        command_dumpADV7611Settings();
+        command_dumpADV7611Settings(cmdArray[1]);
     }
     else if (memcmp(cmdArray[0], "hdmigetvideoformat", strlen("hdmigetvideoformat")) == 0)
     {
         uint32_t width, hight, framterate;
-        command_readADV7611VideoFormat(&width, &hight, &framterate);
+        command_readADV7611VideoFormat(cmdArray[1], &width, &hight, &framterate);
         dlog_info("width %d, hight %d, framterate %d\n", width, hight, framterate);
     }
     else if (memcmp(cmdArray[0], "hdmiread", strlen("hdmiread")) == 0)
     {
-        command_readSDV7611(cmdArray[1], cmdArray[2]);
+        command_readADV7611(cmdArray[1], cmdArray[2]);
     }
     else if (memcmp(cmdArray[0], "hdmiwrite", strlen("hdmiwrite")) == 0)
     {
-        command_writeSDV7611(cmdArray[1], cmdArray[2], cmdArray[3]);
+        command_writeADV7611(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
     else if (memcmp(cmdArray[0], "freertos_task", strlen("freertos_task")) == 0)
     {
@@ -314,9 +314,9 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("writesd <startBlock> <blockNum> <data>");
         dlog_error("erasesd");
         dlog_error("sendusb");
-        dlog_error("hdmiinit");
-        dlog_error("hdmidump");
-        dlog_error("hdmigetvideoformat");
+        dlog_error("hdmiinit <index>");
+        dlog_error("hdmidump <index>");
+        dlog_error("hdmigetvideoformat <index>");
         dlog_error("hdmiread <slv address> <reg address>");
         dlog_error("hdmiwrite <slv address> <reg address> <reg value>");
         dlog_error("freertos_task");
