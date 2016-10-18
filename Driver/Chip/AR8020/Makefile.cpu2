@@ -20,6 +20,8 @@ include $(BUILD_DIR)/config.mk
 # static library name
 LIB = lib$(CHIP)drv.a
 
+CFLAGS += -O1
+
 CPU_NUMBER = cpu2
 
 # source file(s), including c file(s)
