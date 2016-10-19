@@ -27,10 +27,7 @@ int main(void)
     
     test_BB_grd();
 
-    //ADV_7611_Initial();
-    //H264_Encoder_Init();
-
-      /* We should never get here as control is now taken by the scheduler */
+    /* We should never get here as control is now taken by the scheduler */
     for( ;; )
     {
         if (command_getEnterStatus() == 1)

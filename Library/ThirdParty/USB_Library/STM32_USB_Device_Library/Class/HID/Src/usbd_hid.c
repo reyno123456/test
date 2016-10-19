@@ -495,7 +495,7 @@ static uint8_t  *USBD_HID_GetCfgDesc (uint16_t *length)
   * @param  epnum: endpoint index
   * @retval status
   */
-extern volatile uint32_t   sendFinish;
+volatile uint32_t   sendFinish;
 
 static uint8_t  USBD_HID_DataIn (USBD_HandleTypeDef *pdev, 
                               uint8_t epnum)

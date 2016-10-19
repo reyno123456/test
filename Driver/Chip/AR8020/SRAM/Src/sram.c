@@ -8,14 +8,12 @@
 extern volatile uint32_t  sramReady0;
 extern volatile uint32_t  sramReady1;
 
+
 void SRAM_Ready0IRQHandler(void)
 {
     uint32_t     dataLen;
 
     dataLen    = *((uint32_t *)SRAM_DATA_VALID_LEN_0);
-
-    /* DATA is in SRAM, here to trigger corresponding task to process  */
-    dlog_info("receive DATA in SRAM 0: 0x%08x\n", dataLen);
 
    // dlog_info("dataLen0: 0x%08x\n", dataLen);
 
@@ -33,9 +31,7 @@ void SRAM_Ready1IRQHandler(void)
     uint32_t     lastPacketLen;
 
     dataLen    = *((uint32_t *)SRAM_DATA_VALID_LEN_1);
-
-    /* DATA is in SRAM, here to trigger corresponding task to process  */
-    dlog_info("receive DATA in SRAM 1: 0x%08x\n", dataLen);
+    
 #if 0
     packetCount    = dataLen + 127;
     packetCount    >>= 7;
