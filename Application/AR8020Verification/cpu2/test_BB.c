@@ -129,9 +129,9 @@ void BB_debug_print_init_grd(void)
     timer0_0.ctrl = 0;
     timer0_0.ctrl |= TIME_ENABLE | USER_DEFINED;
     
-    register_timer(timer0_0, 4000*1000);    //4s
+    TIM_RegisterTimer(timer0_0, 4000*1000);    //4s
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
-    start_timer(timer0_0);
+    TIM_StartTimer(timer0_0);
 
     reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, TIM0_BB_Grd_handler);
     
@@ -146,9 +146,9 @@ void BB_debug_print_init_sky(void)
     timer0_0.ctrl = 0;
     timer0_0.ctrl |= TIME_ENABLE | USER_DEFINED;
     
-    register_timer(timer0_0, 4000*1000);    //4s
+    TIM_RegisterTimer(timer0_0, 4000*1000);    //4s
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
-    start_timer(timer0_0);
+    TIM_StartTimer(timer0_0);
 
     reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, TIM0_BB_Sky_handler);    
 }

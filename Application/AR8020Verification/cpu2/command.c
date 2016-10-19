@@ -7,7 +7,11 @@
 #include "cmsis_os.h"
 #include "BB_spi.h"
 #include "test_BB.h"
+#include "test_spi.h"
+#include "test_timer.h"
 #include "test_h264_encoder.h"
+#include "test_i2c_adv7611.h"
+
 
 static unsigned char g_commandPos;
 static char g_commandLine[50];
@@ -253,7 +257,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     else if (memcmp(cmdArray[0], "test_sram_bb", strlen("test_sram_bb")) == 0)
     {
         test_sram_bb();
-    }  	
+    }   
     else if (memcmp(cmdArray[0], "hdmiinit", strlen("hdmiinit")) == 0)
     {
         command_initADV7611(cmdArray[1]);
@@ -292,7 +296,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("hdmiread <slv address> <reg address>");
         dlog_error("hdmiwrite <slv address> <reg address> <reg value>");
         dlog_error("BB_uart10_spi_sel <value>");
-        dlog_error("test_sram_bb");		
+        dlog_error("test_sram_bb");     
     }
 
     /* must reset to receive new data from serial */

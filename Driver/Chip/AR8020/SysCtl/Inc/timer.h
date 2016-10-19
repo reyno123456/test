@@ -9,9 +9,10 @@
 
 typedef struct init_timer
 {
-    uint32_t base_time_group;
-    uint32_t time_num;
-    uint32_t ctrl;
+    uint8_t base_time_group;
+    uint8_t time_num;
+    uint8_t ctrl;
+    uint8_t reserved;
 
 } init_timer_st;
 
@@ -28,17 +29,18 @@ typedef struct timer_handle
 
 enum timer_error
 {
-    timer_success = 0,
-    timer_full = -1
+    TIMER_SUCCESS = 0,
+    TIMER_FULL,
+    TIMER_NOT_TIME,
+    TIMER_NOEXISTENT
 };
-
-#define TIM_CLC_MHZ    (125)   
-
+#define TIM_CLC_MHZ    (125)
+/*
 #define TIMER_SUCCESS 0
 #define TIMER_FULL -1
 #define TIMER_NOT_TIME -2
 #define TIMER_NOEXISTENT -3
-
+*/
 #define TIME_ENABLE 1
 #define TIME_INT_MASK (0x1 << 2) 
 #define TIME_PWM_ENABLE (0x1 << 3)
@@ -50,6 +52,8 @@ enum timer_error
 #define BASE_ADDR_TIMER0 0x40000000
 #define BASE_ADDR_TIMER1 0x40040000
 #define BASE_ADDR_TIMER2 0x40080000
+
+#define TMREOI 0xa4
 
 #define TMRNEOI_0         0x0C 
 #define TMRNEOI_1         0x20 
@@ -96,12 +100,16 @@ enum timer_error
 #define CNT2_5            0xC4
 #define CNT2_6            0xC8
 #define CNT2_7            0xCC
-uint32_t stop_timer(init_timer_st time_st);
-uint32_t del_timer(uint32_t timer_us);
-uint32_t init_timer(init_timer_st time_st, uint32_t time);
-void run_timer(void);
-uint32_t add_timer(uint32_t timer_us, void *call_back, uint32_t reload);
-uint32_t start_timer(init_timer_st time_st);
-uint32_t register_timer(init_timer_st time_st, uint32_t time_us); 
+
+ 
+void TIM_RegisterTimer(init_timer_st time_st, uint32_t time_us);
+void TIM_StartTimer(init_timer_st time_st);
+void TIM_StopTimer(init_timer_st time_st);
+void TIM_ClearNvic(init_timer_st time_st);
+
+void TIM_RegisterPwm(init_timer_st time_st, uint32_t low_us, uint32_t high_us);
+void TIM_StartPwm(init_timer_st time_st);
+void TIM_StopPwm(init_timer_st time_st);
+
 
 #endif

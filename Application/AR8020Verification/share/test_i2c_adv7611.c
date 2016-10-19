@@ -79,12 +79,12 @@ void command_dumpADV7611Settings(char *index_str)
     ADV_7611_DumpOutDefaultSettings(index);
 }
 
-void test_24c256_write(unsigned char i2c_num);
+void test_24c256_write(unsigned char i2c_num,unsigned char value);
 void test_24c256_read(unsigned char i2c_num);
 
-void command_Test24C256Write(char* i2c_num_str)
+void command_Test24C256Write(char* i2c_num_str,char* i2c_value)
 {
-    test_24c256_write(strtoul(i2c_num_str, NULL, 0));
+    test_24c256_write(strtoul(i2c_num_str, NULL, 0),strtoul(i2c_num_str, NULL, 0));
 }
 
 void command_Test24C256Read(char* i2c_num_str)
@@ -93,22 +93,22 @@ void command_Test24C256Read(char* i2c_num_str)
     test_24c256_read(strtoul(i2c_num_str, NULL, 0));
 }
 
-void test_24c256_write(unsigned char i2c_num)
+void test_24c256_write(unsigned char i2c_num,unsigned char value)
 {
     unsigned short wr_start_addr = 0;
     unsigned short rd_start_addr = 0;
     unsigned int size = 60;
     unsigned char i2c_comp_num = i2c_num;
-	
+    
     I2C_Init(i2c_comp_num, I2C_Master_Mode, TAR_24C256_ADDR, I2C_Fast_Speed);
-	
+    
     dlog_info("i2c_comp_num %d I2C_Initial finished!\n", i2c_comp_num);
 
     int i;
     unsigned char data_src[] = {61, 62, 63, 64, 65, 66};
     unsigned char data_chk[64];
 
-    for (i = 0; i < size; i += 6)
+    for (i = value; i < size; i += 6)
     {
         data_src[0] = i; data_src[1] = i+1; data_src[2] = i+2; data_src[3] = i+3; data_src[4] = i+4; data_src[5] = i+5;
         dlog_info("%d, %d,%d,%d,%d,%d,%d\n", wr_start_addr, data_src[0],  data_src[1], data_src[2], data_src[3], data_src[4], data_src[5]);
@@ -129,9 +129,9 @@ void test_24c256_read(unsigned char i2c_num)
     unsigned short rd_start_addr = 0;
     unsigned int size = 60;
     unsigned char i2c_comp_num = i2c_num;
-	
+    
     I2C_Init(i2c_comp_num, I2C_Master_Mode, TAR_24C256_ADDR, I2C_Standard_Speed);
-	
+    
     dlog_info("i2c_comp_num %d I2C_Initial finished!\n", i2c_comp_num);
 
     int i;

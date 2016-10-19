@@ -633,7 +633,7 @@ void wimax_vsoc_rx_isr()
     INTR_NVIC_DisableIRQ(BB_RX_ENABLE_VECTOR_NUM);   
 
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
-    start_timer(init_timer0_0);
+    TIM_StartTimer(init_timer0_0);
 }
 
 void Sky_TIM0_IRQHandler(void)
@@ -654,7 +654,7 @@ void Sky_TIM0_IRQHandler(void)
     //Sky_Adjust_AGCGain();
 
     INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
-    stop_timer(init_timer0_0);
+    TIM_StartTimer(init_timer0_0);
     INTR_NVIC_EnableIRQ(BB_RX_ENABLE_VECTOR_NUM);  
 }
 
@@ -679,18 +679,18 @@ void Sky_Timer1_Init(void)
   init_timer0_1.time_num = 1;
   init_timer0_1.ctrl = 0;
   init_timer0_1.ctrl |= TIME_ENABLE | USER_DEFINED;
-  register_timer(init_timer0_1, 1000);
+  TIM_RegisterTimer(init_timer0_1, 1000);
   reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, Sky_TIM1_IRQHandler);
 }
 
 void Sky_Timer0_Init(void)
 {
-	init_timer0_0.base_time_group = 0;
-	init_timer0_0.time_num = 0;
+  init_timer0_0.base_time_group = 0;
+  init_timer0_0.time_num = 0;
     init_timer0_0.ctrl = 0;
-	init_timer0_0.ctrl |= TIME_ENABLE | USER_DEFINED;
+  init_timer0_0.ctrl |= TIME_ENABLE | USER_DEFINED;
 
-	register_timer(init_timer0_0, 8800); 
+  TIM_RegisterTimer(init_timer0_0, 8800); 
         
-	reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, Sky_TIM0_IRQHandler);
+  reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, Sky_TIM0_IRQHandler);
 }

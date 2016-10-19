@@ -27,6 +27,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
          SysCtl/Src/inter_core.c \
          SysCtl/Src/pll_ctrl.c \
          SysCtl/Src/systicks.c \
+		 SysCtl/Src/timer.c \
          UART/Src/serial.c \
          SD/Src/sd_core.c \
          SD/Src/sd_card.c \

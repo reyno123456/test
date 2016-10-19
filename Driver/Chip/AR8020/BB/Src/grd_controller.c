@@ -93,7 +93,7 @@ void Grd_Id_Initial(void)
     BB_SPI_WriteByte(RC_ID_PAGE, RC_ID_BIT31_24_REG, RC_ID_BIT31_24);
     BB_SPI_WriteByte(RC_ID_PAGE, RC_ID_BIT23_16_REG, RC_ID_BIT23_16);
     BB_SPI_WriteByte(RC_ID_PAGE, RC_ID_BIT15_08_REG, RC_ID_BIT15_08);
-    BB_SPI_WriteByte(RC_ID_PAGE, RC_ID_BIT07_00_REG, RC_ID_BIT07_00);	
+    BB_SPI_WriteByte(RC_ID_PAGE, RC_ID_BIT07_00_REG, RC_ID_BIT07_00);   
 }
 
 
@@ -1146,7 +1146,7 @@ void wimax_vsoc_tx_isr(void)
 {
     static int tx_count = 0;
     INTR_NVIC_DisableIRQ(BB_TX_ENABLE_VECTOR_NUM);
-    start_timer(init_timer0_0);
+    TIM_StartTimer(init_timer0_0);
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
     
     if(tx_count++ >= 1000)
@@ -1165,7 +1165,7 @@ void wimax_vsoc_rx_isr()
 
 void Grd_TIM0_IRQHandler(void)
 {
-	static int TIM0_count = 0;
+    static int TIM0_count = 0;
     Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_0);
     if( TIM0_count++ >= 1000)
     {
@@ -1192,10 +1192,10 @@ void Grd_TIM0_IRQHandler(void)
             Timer0_Delay_Cnt=0;
             INTR_NVIC_ClearPendingIRQ(BB_TX_ENABLE_VECTOR_NUM); //clear pending after TX Enable is LOW.
             INTR_NVIC_EnableIRQ(TIMER_INTR01_VECTOR_NUM);
-            start_timer(init_timer0_1);
+            TIM_StartTim(init_timer0_1);
             INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
             
-            stop_timer(init_timer0_0);
+            TIM_StartTim(init_timer0_0);
         } 
         break;
     }
@@ -1264,7 +1264,7 @@ void Grd_TIM1_IRQHandler(void)
             break;
         case 8:
             {
-                stop_timer(init_timer0_1);
+                TIM_StartTimer(init_timer0_1);
                 Timer1_Delay1_Cnt = 0;
                 Grd_Getsnr(7);
                 Grd_Frqsnr_Array();
@@ -1287,19 +1287,19 @@ void Grd_Timer1_Init(void)
   init_timer0_1.time_num = 1;
   init_timer0_1.ctrl = 0;
   init_timer0_1.ctrl |= TIME_ENABLE | USER_DEFINED;
-  register_timer(init_timer0_1, 1250);
+  TIM_RegisterTimer(init_timer0_1, 1250);
   reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, Grd_TIM1_IRQHandler);
 }
 
 
 void Grd_Timer0_Init(void)
 {
-	init_timer0_0.base_time_group = 0;
-	init_timer0_0.time_num = 0;
+    init_timer0_0.base_time_group = 0;
+    init_timer0_0.time_num = 0;
     init_timer0_0.ctrl = 0;
-	init_timer0_0.ctrl |= TIME_ENABLE | USER_DEFINED;
+    init_timer0_0.ctrl |= TIME_ENABLE | USER_DEFINED;
     
-	register_timer(init_timer0_0, 5000); 
+    TIM_RegisterTimer(init_timer0_0, 5000); 
     
-	reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, Grd_TIM0_IRQHandler);
+    reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, Grd_TIM0_IRQHandler);
 }

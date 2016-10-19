@@ -25,16 +25,22 @@ CPU_NUMBER = cpu1
 
 # source file(s), including c file(s)
 SRC_C := SysCtl/Src/reg_rw.c \
+		 SysCtl/Src/timer.c \
          UART/Src/serial.c \
+         SysCtl/Src/systicks.c \
+         I2C/Src/i2c_ll.c \
+         I2C/Src/i2c.c \
+         SPI/Src/spi.c
 
 INCDIRS := -ISysCtl/Inc \
+		   -II2C/Inc \
            -I$(TOP_DIR)/Configure \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Device/ST/STM32F7xx/Include \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \
            -I$(TOP_DIR)/Library/Artosyn/Common/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/SPI/Inc \
            -I$(TOP_DIR)/Configure/Include
-
 # object file(s)
 OBJ_C     := $(patsubst %.c,%.o,$(SRC_C))
 

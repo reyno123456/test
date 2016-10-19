@@ -6,7 +6,7 @@ void command_dumpADV7611Settings(char *index_str);
 void command_readADV7611(char *slvAddr, char *regAddr);
 void command_writeADV7611(char *slvAddr, char *regAddr, char *regVal);
 void command_readADV7611VideoFormat(char *index_str, uint32_t* widthPtr, uint32_t* hightPtr, uint32_t* framteratePtr);
-void command_Test24C256Write(char* i2c_num_str);
+void command_Test24C256Write(char* i2c_num_str,char* i2c_value);
 void command_Test24C256Read(char* i2c_num_str);
 
 #endif
