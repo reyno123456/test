@@ -35,7 +35,7 @@ ifeq ($(APPLICATION_SCENARIO), sky)
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
-    SRC_C   := main_ground.c command.c test_h264_encoder.c test_BB.c test_sram_bb.c
+    SRC_C   := main_ground.c command.c test_h264_encoder.c test_BB.c test_sram_bb.c ../share/test_i2c_adv7611.c
 endif
 
 CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
