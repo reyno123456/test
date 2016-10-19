@@ -137,7 +137,7 @@ HAL_StatusTypeDef USB_CoreInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef c
     //USBx->GAHBCFG |= (USB_OTG_GAHBCFG_HBSTLEN_1 | USB_OTG_GAHBCFG_HBSTLEN_2);
     USBx->GAHBCFG |= (USB_OTG_GAHBCFG_HBSTLEN_0); 
     USBx->GAHBCFG |= USB_OTG_GAHBCFG_DMAEN;
-  }  
+  }
 
   USBx->GUSBCFG &= ~(USB_OTG_GUSBCFG_TRDT | USB_OTG_GUSBCFG_TOCAL);
   USBx->GUSBCFG |= (USB_OTG_GUSBCFG_TRDT_0 | USB_OTG_GUSBCFG_TRDT_3 | USB_OTG_GUSBCFG_TOCAL_0);
@@ -601,6 +601,11 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeDe
     if (dma == 1)
     {
       tmp = (uint32_t)(ep->dma_addr);
+
+      /* temp add for test */
+      uint32_t  *regAddr;
+      regAddr  = 0x40b00074;
+      *regAddr |= 0x2;
 
       if ((tmp >= DTCM_START_ADDR) && (tmp <= DTCM_END_ADDR))
       {

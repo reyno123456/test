@@ -29,5 +29,7 @@ void PLLCTRL_SetCoreClk(uint32_t pllClk)
 
     BB_SPI_WriteByte(PAGE1, 0xA1, clk_low);
     BB_SPI_WriteByte(PAGE1, 0xA2, clk_high);
+
+    SPI_UART_SEL    = 0x0;
 }
 

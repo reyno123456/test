@@ -495,6 +495,8 @@ static uint8_t  *USBD_HID_GetCfgDesc (uint16_t *length)
   * @param  epnum: endpoint index
   * @retval status
   */
+extern volatile uint32_t   sendFinish;
+
 static uint8_t  USBD_HID_DataIn (USBD_HandleTypeDef *pdev, 
                               uint8_t epnum)
 {
@@ -502,6 +504,13 @@ static uint8_t  USBD_HID_DataIn (USBD_HandleTypeDef *pdev,
   /* Ensure that the FIFO is empty before a new transfer, this condition could 
   be caused by  a new transfer before the end of the previous transfer */
   ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state = HID_IDLE;
+
+  /* temp add for finish */
+  uint32_t  *regAddr = 0x40b00074;
+  *regAddr   &= 0xFFFFFFFD;
+
+  sendFinish = 1;
+
   return USBD_OK;
 }
 
