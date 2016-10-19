@@ -98,17 +98,15 @@ int main(void)
           }
 
       }
-	   /* We should never get here as control is now taken by the scheduler */
-	 if (command_getEnterStatus() == 1)
-	 {
-	   command_fulfill();
-	 }	  
   }
 
- 
+  /* We should never get here as control is now taken by the scheduler */
   for( ;; )
   {
-
+    if (command_getEnterStatus() == 1)
+    {
+      command_fulfill();
+    }
   }
 } 
 

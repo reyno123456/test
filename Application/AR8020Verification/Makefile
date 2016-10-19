@@ -38,17 +38,17 @@ ground: all
 
 all: .depend $(TARGET) install
 
-$(TARGET): $(TARGET_CPU0) $(TARGET_CPU1) $(TARGET_CPU2) 
+$(TARGET): $(TARGET_CPU0) $(TARGET_CPU1) $(TARGET_CPU2)
+	@echo $(APPLICATION_SCENARIO) > .APPLICATION_SCENARIO 
 
 $(TARGET_CPU0):
-	@$(MAKE) -C cpu0 all
+	@$(MAKE) -C cpu0 all APPLICATION_SCENARIO=$(APPLICATION_SCENARIO)
 
 $(TARGET_CPU1):
 	@$(MAKE) -C cpu1 all
 
 $(TARGET_CPU2):
 	@$(MAKE) -C cpu2 all APPLICATION_SCENARIO=$(APPLICATION_SCENARIO)
-	@echo $(APPLICATION_SCENARIO) > .APPLICATION_SCENARIO
 
 install:
 	@echo "Creating the flash image..."
@@ -58,7 +58,7 @@ install:
 	../../Utility/joint2flash.sh -i $(TARGET_CPU0).txt $(TARGET_CPU1).txt $(TARGET_CPU2).txt -o $(TARGET_FLASH)
 	@echo "Creat the flash image done."
 clean:
-	@$(MAKE) -C cpu0 clean
+	@$(MAKE) -C cpu0 clean APPLICATION_SCENARIO=`cat .APPLICATION_SCENARIO`
 	@$(MAKE) -C cpu1 clean
 	@$(MAKE) -C cpu2 clean APPLICATION_SCENARIO=`cat .APPLICATION_SCENARIO`
 	@rm -f $(TARGET_CPU0).txt $(TARGET_CPU1).txt $(TARGET_CPU2).txt 
