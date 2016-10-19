@@ -110,7 +110,17 @@ static void I2C_Master_Wait_Till_TX_FIFO_Empty(EN_I2C_COMPONENT en_component)
 uint8_t I2C_Init(EN_I2C_COMPONENT en_component, ENUM_I2C_Mode en_i2cMode, uint16_t u16_i2cAddr, ENUM_I2C_Speed en_i2cSpeed)
 {
     STRU_I2C_Controller* dev = I2C_LL_GetI2CController(en_component);
-    
+
+    // IO MUX
+    if (en_component == I2C_Component_2)
+    {
+        Reg_Write32_Mask(SFR_PAD_CTRL7_REG, 0, BIT(14) | BIT(15) | BIT(16) | BIT(17));
+    }
+    else if (en_component == I2C_Component_5)
+    {
+        Reg_Write32_Mask(SFR_PAD_CTRL7_REG, BIT(14) | BIT(16), BIT(14) | BIT(15) | BIT(16) | BIT(17));
+    }
+
     if (dev)
     {
     	uint32_t tmpValue;

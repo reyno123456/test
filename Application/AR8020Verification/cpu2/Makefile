@@ -31,7 +31,7 @@ LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 
 # source file(s), including c file(s)
 ifeq ($(APPLICATION_SCENARIO), sky)
-    SRC_C   := main_sky.c command.c test_h264_encoder.c test_BB.c test_sram_bb.c
+    SRC_C   := main_sky.c command.c test_h264_encoder.c test_BB.c test_sram_bb.c ../share/test_i2c_adv7611.c
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
