@@ -24,10 +24,12 @@ int main(void)
     console_init(2, 115200);   
     dlog_info("cpu2 start!!! \n");
     
-    //ADV_7611_Initial();
-    //H264_Encoder_Init();
+    ADV_7611_Initial(0);
+    ADV_7611_Initial(1);
     
-    test_BB();
+    H264_Encoder_Init();
+    
+    test_BB_sky();
 
     for( ;; )
     {

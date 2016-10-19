@@ -117,14 +117,14 @@ void vsoc_enc_enable(){
 
 
 void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsigned int fps, unsigned int br) {
-    WRITE_WORD((ENC_REG_ADDR+(0x00<<2)),0x00900736);
+    WRITE_WORD((ENC_REG_ADDR+(0x00<<2)),0x00910736);
     WRITE_WORD((ENC_REG_ADDR+(0x01<<2)),((width<<16)+(height&0xffff)));
     WRITE_WORD((ENC_REG_ADDR+(0x02<<2)),(0x00004D28|((gop&0xff)<<24)|((fps&0xff)<<16)));
 
     if ((width == 720) && (height == 480))
     {
         WRITE_WORD((ENC_REG_ADDR+(0x03<<2)),0x003C000F);
-        WRITE_WORD((ENC_REG_ADDR+(0x04<<2)),0xF01E0008);
+        WRITE_WORD((ENC_REG_ADDR+(0x04<<2)),0xF01E8008);
     }
     else
     {
@@ -185,14 +185,14 @@ void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsig
 }
 
 void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsigned int fps, unsigned int br) {
-    WRITE_WORD((ENC_REG_ADDR+(0x19<<2)),0x00900736);
+    WRITE_WORD((ENC_REG_ADDR+(0x19<<2)),0x00910736);
     WRITE_WORD((ENC_REG_ADDR+(0x1a<<2)),((width<<16)+(height&0xffff)));
     WRITE_WORD((ENC_REG_ADDR+(0x1b<<2)),(0x00004D28|((gop&0xff)<<24)|((fps&0xff)<<16)));
 
     if ((width == 720) && (height == 480))
     {
         WRITE_WORD((ENC_REG_ADDR+(0x1c<<2)),0x003C000F);
-        WRITE_WORD((ENC_REG_ADDR+(0x1d<<2)),0xF01E0008);
+        WRITE_WORD((ENC_REG_ADDR+(0x1d<<2)),0xF01E8008);
     }
     else
     {

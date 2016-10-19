@@ -7,7 +7,7 @@
 //#define  GRD_RF8003_2P3
 
 #define  GRD_RF8003_2P4
-//#define  SKY_RF8003_2P4
+#define  SKY_RF8003_2P4
 
 //#define  GRD_RF9363_2P3
 //#define  GRD_RF9363_2P4
@@ -45,9 +45,10 @@
 
 #endif
 
-
+#if 0
 #if (defined BASEBAND_SKY && defined BASEBAND_GRD)
     #error "defined BOTH BASEBAND_SKY AND BASEBAND_GRD"
+#endif
 #endif
 
 #if (!defined BASEBAND_SKY && !defined BASEBAND_GRD)

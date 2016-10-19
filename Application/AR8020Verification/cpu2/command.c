@@ -238,10 +238,22 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         
         dlog_info("RegWrite Page %d  Addr%0.2x %0.2x", cmdPage, addr, value);
     }       
-    else if (memcmp(cmdArray[0], "BB_debug_print_init", strlen("BB_debug_print_init")) == 0)
+    else if (memcmp(cmdArray[0], "BB_debug_print_init_grd", strlen("BB_debug_print_init_grd")) == 0)
     {
-        BB_debug_print_init();
+        BB_debug_print_init_grd();
     }
+    else if (memcmp(cmdArray[0], "BB_debug_print_init_sky", strlen("BB_debug_print_init_sky")) == 0)
+    {
+        BB_debug_print_init_sky();
+    }
+    else if (memcmp(cmdArray[0], "BB_uart10_spi_sel", strlen("BB_uart10_spi_sel")) == 0)
+    {
+        BB_uart10_spi_sel( strtoul(cmdArray[1], NULL, 0) );
+    }
+    else if (memcmp(cmdArray[0], "test_sram_bb", strlen("test_sram_bb")) == 0)
+    {
+        test_sram_bb();
+    }  	
     else if (memcmp(cmdArray[0], "hdmiinit", strlen("hdmiinit")) == 0)
     {
         command_initADV7611(cmdArray[1]);
@@ -270,7 +282,8 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("encoder_dump_brc");
         dlog_error("encoder_update_brc <br>");
         dlog_error("encoder_update_video_format <W> <H> <F>");
-        dlog_error("BB_debug_print_init()");
+        dlog_error("BB_debug_print_init_sky");
+        dlog_error("BB_debug_print_init_grd");
         dlog_error("BB_SPI_ReadByte <page> <addr>");
         dlog_error("BB_SPI_WriteByte <page> <addr> <value>");
         dlog_error("hdmiinit <index>");
@@ -278,6 +291,8 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("hdmigetvideoformat <index>");
         dlog_error("hdmiread <slv address> <reg address>");
         dlog_error("hdmiwrite <slv address> <reg address> <reg value>");
+        dlog_error("BB_uart10_spi_sel <value>");
+        dlog_error("test_sram_bb");		
     }
 
     /* must reset to receive new data from serial */

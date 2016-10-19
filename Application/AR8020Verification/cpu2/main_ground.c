@@ -25,7 +25,7 @@ int main(void)
     console_init(2, 115200);
     dlog_info("main ground function start \n");
     
-    test_BB();
+    test_BB_grd();
 
     //ADV_7611_Initial();
     //H264_Encoder_Init();

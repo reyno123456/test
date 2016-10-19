@@ -10,26 +10,17 @@
 #include "BB_ctrl.h"
 #include "BB_spi.h"
 
-#ifdef BASEBAND_GRD
 #include "grd_controller.h"
-#endif
-
-#ifdef BASEBAND_SKY
 #include "sky_controller.h"
-#endif
-
-static int test_bbctrl(void);
 
 
-void test_BB(void)
+static int test_bbctrl_sky(void);
+static int test_bbctrl_grd(void);
+
+void test_BB_sky(void)
 {
-#ifdef BASEBAND_SKY 
     ENUM_BB_MODE cur_mode = BB_SKY_MODE;
     char *log = "test BB sky mode \n";
-#else
-    ENUM_BB_MODE cur_mode = BB_GRD_MODE;
-    char *log = "test BB Ground mode \n";
-#endif
 
     STRU_BB_initType initType = {
         .en_mode = cur_mode,
@@ -38,22 +29,40 @@ void test_BB(void)
     BB_uart10_spi_sel(0x00000003);
     BB_init(&initType);
     
-    //test_bbctrl();
+    //test_bbctrl_sky();
     //BB_uart10_spi_sel(0x00000000);
     printf("%s", log);
 }
 
-static int test_bbctrl(void)
+void test_BB_grd(void)
 {
-	#ifdef BASEBAND_GRD
-        Grd_Parm_Initial();
-        //Grd_Id_Initial();
-	#endif
+    ENUM_BB_MODE cur_mode = BB_GRD_MODE;
+    char *log = "test BB Ground mode \n";
 
-	#ifdef BASEBAND_SKY
-        Sky_Parm_Initial();
-        //Sky_Id_Initial();
-	#endif
+    STRU_BB_initType initType = {
+        .en_mode = cur_mode,
+    };
+ 
+    BB_uart10_spi_sel(0x00000003);
+    BB_init(&initType);
+    
+    //test_bbctrl_grd();
+    //BB_uart10_spi_sel(0x00000000);
+    printf("%s", log);
+}
+
+static int test_bbctrl_sky(void)
+{
+    Sky_Parm_Initial();
+    //Sky_Id_Initial();
+	
+	Sys_Parm_Init();
+}
+
+static int test_bbctrl_grd(void)
+{
+    Grd_Parm_Initial();
+    //Grd_Id_Initial();
 	
 	Sys_Parm_Init();
 }
@@ -112,7 +121,7 @@ void TIM0_BB_Sky_handler(void)
 }
 
 
-void BB_debug_print_init(void)
+void BB_debug_print_init_grd(void)
 {
     init_timer_st timer0_0;
     timer0_0.base_time_group = 0;
@@ -124,12 +133,23 @@ void BB_debug_print_init(void)
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
     start_timer(timer0_0);
 
-    #ifdef BASEBAND_GRD
-        reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, TIM0_BB_Grd_handler);
-    #else
-        reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, TIM0_BB_Sky_handler);
-    #endif
+    reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, TIM0_BB_Grd_handler);
     
 }
 
+
+void BB_debug_print_init_sky(void)
+{
+    init_timer_st timer0_0;
+    timer0_0.base_time_group = 0;
+    timer0_0.time_num = 0;
+    timer0_0.ctrl = 0;
+    timer0_0.ctrl |= TIME_ENABLE | USER_DEFINED;
+    
+    register_timer(timer0_0, 4000*1000);    //4s
+    INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
+    start_timer(timer0_0);
+
+    reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, TIM0_BB_Sky_handler);    
+}
 

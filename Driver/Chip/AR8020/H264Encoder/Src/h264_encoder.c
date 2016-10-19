@@ -67,8 +67,8 @@ int H264_Encoder_Init(void)
     my_v1_initial_all( );
     dlog_info("View1 Initial Done\n");
 
-    /* Enable view 0 */
-    open_view0( 1 ); 
+    /* Enable view 1 */
+    open_view1( 1 ); 
     g_stEncoderStatus[0].brc_enable = 1;
 
     return 1;

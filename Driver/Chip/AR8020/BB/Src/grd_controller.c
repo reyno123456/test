@@ -2,7 +2,7 @@
 #include "config_functions_sel.h"
 #include "debuglog.h"
 
-#ifdef BASEBAND_GRD
+
 #include "interrupt.h"
 #include "stdio.h"
 #include <stdlib.h>
@@ -23,9 +23,8 @@ extern Sys_FlagTypeDef SysState;
 
 extern uint8_t Txosd_Buffer[];
 
-extern init_timer_st init_timer0_0;
-extern init_timer_st init_timer0_1;
-
+static init_timer_st init_timer0_0;
+static init_timer_st init_timer0_1;
 
 Grd_FlagTypeDef   GrdState;
 Grd_HandleTypeDef GrdStruct;
@@ -1164,7 +1163,7 @@ void wimax_vsoc_rx_isr()
 //*********************TX RX initial(14ms irq)**************
 
 
-void TIM0_IRQHandler(void)
+void Grd_TIM0_IRQHandler(void)
 {
 	static int TIM0_count = 0;
     Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_0);
@@ -1204,7 +1203,7 @@ void TIM0_IRQHandler(void)
 }
 
 
-void TIM1_IRQHandler(void)
+void Grd_TIM1_IRQHandler(void)
 {
     Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_1);
     
@@ -1281,4 +1280,26 @@ void TIM1_IRQHandler(void)
             break;
     }
 }
-#endif
+
+void Grd_Timer1_Init(void)
+{
+  init_timer0_1.base_time_group = 0;
+  init_timer0_1.time_num = 1;
+  init_timer0_1.ctrl = 0;
+  init_timer0_1.ctrl |= TIME_ENABLE | USER_DEFINED;
+  register_timer(init_timer0_1, 1250);
+  reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, Grd_TIM1_IRQHandler);
+}
+
+
+void Grd_Timer0_Init(void)
+{
+	init_timer0_0.base_time_group = 0;
+	init_timer0_0.time_num = 0;
+    init_timer0_0.ctrl = 0;
+	init_timer0_0.ctrl |= TIME_ENABLE | USER_DEFINED;
+    
+	register_timer(init_timer0_0, 5000); 
+    
+	reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, Grd_TIM0_IRQHandler);
+}

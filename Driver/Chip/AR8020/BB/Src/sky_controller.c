@@ -12,13 +12,13 @@
 #include "sky_controller.h"
 #include "config_functions_sel.h"
 
-#ifdef BASEBAND_SKY
 #include <timer.h>
 #include "interrupt.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <stdint.h>
+#include "reg_rw.h"
 #include "config_baseband_register.h"
 #include "config_baseband_frqdata.h"
 #include "sys_peripheral_communication.h"
@@ -30,8 +30,7 @@ extern Sys_FlagTypeDef  SysState;
 extern struct RC_FRQ_CHANNEL Rc_frq[];
 extern struct IT_FRQ_CHANNEL It_frq[];
 extern uint8_t Txosd_Buffer[];
-extern init_timer_st init_timer0_0;
-extern init_timer_st init_timer0_1;
+
 Sky_FlagTypeDef SkyState;
 Sky_HanlderTypeDef SkyStruct;
 IDRx_TypeDef IdStruct;
@@ -40,6 +39,8 @@ uint8_t  Timer1_Delay1_Cnt = 0;
 uint32_t Timer1_Delay2_Cnt = 0;
 uint32_t Device_ID[6]={0};//flash stored.
 
+static init_timer_st init_timer0_0;
+static init_timer_st init_timer0_1;
 
 void Sky_Parm_Initial(void)
 {
@@ -635,7 +636,7 @@ void wimax_vsoc_rx_isr()
     start_timer(init_timer0_0);
 }
 
-void TIM0_IRQHandler(void)
+void Sky_TIM0_IRQHandler(void)
 {
     Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_0);
 
@@ -658,7 +659,7 @@ void TIM0_IRQHandler(void)
 }
 
 
-void TIM1_IRQHandler(void)
+void Sky_TIM1_IRQHandler(void)
 {
     INTR_NVIC_ClearPendingIRQ(TIMER_INTR01_VECTOR_NUM);
     if(Timer1_Delay2_Cnt < 560)
@@ -672,4 +673,24 @@ void TIM1_IRQHandler(void)
     }
 }
 
-#endif
+void Sky_Timer1_Init(void)
+{
+  init_timer0_1.base_time_group = 0;
+  init_timer0_1.time_num = 1;
+  init_timer0_1.ctrl = 0;
+  init_timer0_1.ctrl |= TIME_ENABLE | USER_DEFINED;
+  register_timer(init_timer0_1, 1000);
+  reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, Sky_TIM1_IRQHandler);
+}
+
+void Sky_Timer0_Init(void)
+{
+	init_timer0_0.base_time_group = 0;
+	init_timer0_0.time_num = 0;
+    init_timer0_0.ctrl = 0;
+	init_timer0_0.ctrl |= TIME_ENABLE | USER_DEFINED;
+
+	register_timer(init_timer0_0, 8800); 
+        
+	reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, Sky_TIM0_IRQHandler);
+}
