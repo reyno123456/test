@@ -5,8 +5,8 @@
 
 
 
-extern volatile uint32_t  sramReady0;
-extern volatile uint32_t  sramReady1;
+volatile uint32_t  sramReady0;
+volatile uint32_t  sramReady1;
 
 
 void SRAM_Ready0IRQHandler(void)
