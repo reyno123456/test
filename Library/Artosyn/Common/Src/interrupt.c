@@ -29,7 +29,7 @@ int rmv_IrqHandle(IRQ_type vct)
     return 1;
 }
 
-static inline run_irq_hdl(IRQ_type vct)
+static inline void run_irq_hdl(IRQ_type vct)
 {
     if(handlers[vct] != 0)
     {

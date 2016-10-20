@@ -45,4 +45,29 @@ enum
     #define dlog_info(fmt, arg...)   do{} while(0)
 #endif
 
+#define USE_SRAM_DEBUG_LOG_BUFFER
+
+// 8K * 3 SRAM space
+enum
+{
+    SRAM_DEBUG_LOG_SPACE_0 = 0,
+    SRAM_DEBUG_LOG_SPACE_1,
+    SRAM_DEBUG_LOG_SPACE_2,
+    SRAM_DEBUG_LOG_SPACE_UNKNOWN,
+};
+
+#define DEBUG_LOG_BUFFER_WRITE_NO_OVERLAP
+
+#define SRAM_DEBUG_LOG_BUFFER_ST_ADDR_0  0x210FB000
+#define SRAM_DEBUG_LOG_BUFFER_END_ADDR_0 0x210FCFFF
+
+#define SRAM_DEBUG_LOG_BUFFER_ST_ADDR_1  0x210FC000
+#define SRAM_DEBUG_LOG_BUFFER_END_ADDR_1 0x210FDFFF
+
+#define SRAM_DEBUG_LOG_BUFFER_ST_ADDR_2  0x210FE000
+#define SRAM_DEBUG_LOG_BUFFER_END_ADDR_2 0x210FFFFF
+
+void dlog_init(unsigned int index);
+unsigned int dlog_output(unsigned int byte_num);
+
 #endif

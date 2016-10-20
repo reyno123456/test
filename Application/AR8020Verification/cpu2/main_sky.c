@@ -7,6 +7,7 @@
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
   serial_init(uart_num, baut_rate);
+  dlog_init(uart_num);
   UartNum = uart_num;
   command_init();
 }
@@ -37,6 +38,8 @@ int main(void)
         {
             command_fulfill();
         }
+
+        dlog_output(1);
     }
 } 
 
