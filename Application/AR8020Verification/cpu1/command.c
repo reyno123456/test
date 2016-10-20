@@ -12,7 +12,7 @@
 #include "test_spi.h"
 #include "test_timer.h"
 #include "test_freertos.h"
-
+#include "gpio.h"
 #include "test_i2c_adv7611.h"
 
 static unsigned char g_commandPos;
@@ -284,6 +284,18 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_Test24C256Read(cmdArray[1]);
     }
+    else if (memcmp(cmdArray[0], "test_TestGpioNormalRange", strlen("test_TestGpioNormalRange")) == 0)
+    {
+        command_TestGpioNormalRange(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
+    else if (memcmp(cmdArray[0], "test_TestGpioNormal", strlen("test_TestGpioNormal")) == 0)
+    {
+        command_TestGpioNormal(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "test_TestGpioInterrupt", strlen("test_TestGpioInterrupt")) == 0)
+    {
+        command_TestGpioInterrupt(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
     /* error command */
     else
     {
@@ -307,7 +319,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("test_spi_id <spi_port>");
         dlog_error("test_spi_write_read <spi_port>");
         dlog_error("test_spi_erase <spi_port>");
-        
+        dlog_error("test_nor_flash_all <flash start address> <size> <value>");
+        dlog_error("test_TestGpioNormal <gpionum> <highorlow>");
+        dlog_error("test_TestGpioNormalRange <gpionum1> <gpionum2> <highorlow>");
+        dlog_error("test_TestGpioInterrupt <gpionum> <inttype> <polarity>");
         dlog_error("test24c256write <i2c port> <i2c_value>");
         dlog_error("test24c256read <i2c port>");
     }

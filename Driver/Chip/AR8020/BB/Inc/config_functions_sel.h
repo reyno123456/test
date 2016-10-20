@@ -8,7 +8,8 @@
 
 #define  GRD_RF8003_2P4
 #define  SKY_RF8003_2P4
-
+#define  BB_GPIO (1)
+#define  BB_GPIO_PIN (64)
 //#define  GRD_RF9363_2P3
 //#define  GRD_RF9363_2P4
 //#define  GRD_RF9363_2P5

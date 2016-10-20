@@ -11,7 +11,7 @@
 #include "test_timer.h"
 #include "test_h264_encoder.h"
 #include "test_i2c_adv7611.h"
-
+#include "gpio.h"
 
 static unsigned char g_commandPos;
 static char g_commandLine[50];
@@ -280,6 +280,18 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_writeADV7611(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
+    else if (memcmp(cmdArray[0], "test_TestGpioNormalRange", strlen("test_TestGpioNormalRange")) == 0)
+    {
+        command_TestGpioNormalRange(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
+    else if (memcmp(cmdArray[0], "test_TestGpioNormal", strlen("test_TestGpioNormal")) == 0)
+    {
+        command_TestGpioNormal(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "test_TestGpioInterrupt", strlen("test_TestGpioInterrupt")) == 0)
+    {
+        command_TestGpioInterrupt(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
     else 
     {
         dlog_error("Command not found! Please use commands like:\n");
@@ -297,6 +309,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("hdmiwrite <slv address> <reg address> <reg value>");
         dlog_error("BB_uart10_spi_sel <value>");
         dlog_error("test_sram_bb");     
+        dlog_error("test_nor_flash_all <flash start address> <size> <value>");
+        dlog_error("test_TestGpioNormal <gpionum> <highorlow>");
+        dlog_error("test_TestGpioNormalRange <gpionum1> <gpionum2> <highorlow>");
+        dlog_error("test_TestGpioInterrupt <gpionum> <inttype> <polarity>");
     }
 
     /* must reset to receive new data from serial */

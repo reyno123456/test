@@ -102,14 +102,14 @@ enum timer_error
 #define CNT2_7            0xCC
 
  
-void TIM_RegisterTimer(init_timer_st time_st, uint32_t time_us);
-void TIM_StartTimer(init_timer_st time_st);
-void TIM_StopTimer(init_timer_st time_st);
-void TIM_ClearNvic(init_timer_st time_st);
+uint8_t TIM_RegisterTimer(init_timer_st time_st, uint32_t time_us);
+uint8_t TIM_StartTimer(init_timer_st time_st);
+uint8_t TIM_StopTimer(init_timer_st time_st);
+uint8_t TIM_ClearNvic(init_timer_st time_st);
 
-void TIM_RegisterPwm(init_timer_st time_st, uint32_t low_us, uint32_t high_us);
-void TIM_StartPwm(init_timer_st time_st);
-void TIM_StopPwm(init_timer_st time_st);
+uint8_t TIM_RegisterPwm(init_timer_st time_st, uint32_t low_us, uint32_t high_us);
+uint8_t TIM_StartPwm(init_timer_st time_st);
+uint8_t TIM_StopPwm(init_timer_st time_st);
 
 
 #endif

@@ -15,7 +15,7 @@
 #include "sys_peripheral_communication.h"
 #include "BB_ctrl.h"
 #include "sys_peripheral_init.h"
-
+#include "gpio.h"
 
 extern struct RC_FRQ_CHANNEL Rc_frq[];
 extern struct IT_FRQ_CHANNEL It_frq[];
@@ -36,6 +36,22 @@ uint32_t Timer1_Delay2_Cnt = 0;
 
 void wimax_vsoc_tx_isr();
 
+void Grd_GpioInterruptInit(uint8_t gpionum, uint8_t intrtype, uint8_t polarity)
+{
+
+    GPIO_SetPinDirect(gpionum, GPIO_DATA_DIRECT_INPUT);
+    GPIO_SetPinCtrl(gpionum, GPIO_CTRL_SOFTWARE);
+    GPIO_SetMode(gpionum, GPIO_MODE_1);
+    GPIO_Intr_SetPinIntrEn(gpionum, GPIO_INTEN_INTERRUPT);
+    GPIO_Intr_SetPinIntrMask(gpionum, GPIO_MASK_MASK);
+    GPIO_Intr_SetPinIntrType(gpionum, intrtype);
+    GPIO_Intr_SetPinIntrPol(gpionum, polarity); 
+    GPIO_SetPinDebounce(gpionum, GPIO_DEBOUNCE_ON);
+    reg_IrqHandle(GPIO_INTR_N0_VECTOR_NUM + (gpionum>>5), wimax_vsoc_tx_isr);
+    INTR_NVIC_EnableIRQ(GPIO_INTR_N0_VECTOR_NUM + (gpionum>>5));
+    dlog_info("GpioInterruptInit %x  %x %x",gpionum, intrtype, polarity);
+
+}
 void Grd_Parm_Initial(void)
 {
     GrdStruct.RCChannel=1;
@@ -68,12 +84,16 @@ void Grd_Parm_Initial(void)
     GrdQam.Up16qam12=DISABLE;
     GrdQam.Upqpsk12=DISABLE;
     
-    Timer0_Init();
+    Grd_Timer0_Init();
     Grd_Timer1_Init();
 
     //INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
+#if BB_GPIO
+    Grd_GpioInterruptInit(BB_GPIO_PIN, 1, 1);
+#else    
     reg_IrqHandle(BB_TX_ENABLE_VECTOR_NUM, wimax_vsoc_tx_isr);
-    INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);    
+    INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);
+#endif
 }
 
 
@@ -1145,7 +1165,11 @@ void Grd_Osdmsg_Ptf(void)
 void wimax_vsoc_tx_isr(void)
 {
     static int tx_count = 0;
+#if BB_GPIO
+    GPIO_Intr_ClearIntr(BB_GPIO_PIN);
+#else
     INTR_NVIC_DisableIRQ(BB_TX_ENABLE_VECTOR_NUM);
+#endif
     TIM_StartTimer(init_timer0_0);
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
     

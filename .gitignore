@@ -6,3 +6,5 @@
 *.map
 *.mif
 *.depend
+.nfs*
+Output/

@@ -31,6 +31,7 @@ void test_BB_sky(void)
     
     //test_bbctrl_sky();
     //BB_uart10_spi_sel(0x00000000);
+    BB_debug_print_init_sky();
     printf("%s", log);
 }
 
@@ -48,6 +49,7 @@ void test_BB_grd(void)
     
     //test_bbctrl_grd();
     //BB_uart10_spi_sel(0x00000000);
+    BB_debug_print_init_grd();
     printf("%s", log);
 }
 
@@ -55,16 +57,16 @@ static int test_bbctrl_sky(void)
 {
     Sky_Parm_Initial();
     //Sky_Id_Initial();
-	
-	Sys_Parm_Init();
+    
+    Sys_Parm_Init();
 }
 
 static int test_bbctrl_grd(void)
 {
     Grd_Parm_Initial();
     //Grd_Id_Initial();
-	
-	Sys_Parm_Init();
+    
+    Sys_Parm_Init();
 }
 
 
@@ -114,7 +116,7 @@ void TIM0_BB_Sky_handler(void)
     }
     
     RC_lock = BB_SPI_ReadByte(PAGE2, 0xd9);
-    if(  RC_lock != 0x07)
+    if(RC_lock != 0x07)
     {
         BB_softReset(BB_SKY_MODE );
     }

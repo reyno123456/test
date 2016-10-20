@@ -25,7 +25,7 @@
 #include "BB_ctrl.h"
 #include "sys_peripheral_init.h"
 #include "debuglog.h"
-
+#include "gpio.h"
 extern Sys_FlagTypeDef  SysState;
 extern struct RC_FRQ_CHANNEL Rc_frq[];
 extern struct IT_FRQ_CHANNEL It_frq[];
@@ -42,6 +42,20 @@ uint32_t Device_ID[6]={0};//flash stored.
 static init_timer_st init_timer0_0;
 static init_timer_st init_timer0_1;
 
+void Grd_GpioInterruptInit(uint8_t gpionum, uint8_t intrtype, uint8_t polarity)
+{
+
+	GPIO_SetPinDirect(gpionum, GPIO_DATA_DIRECT_INPUT);
+	GPIO_SetPinCtrl(gpionum, GPIO_CTRL_SOFTWARE);
+	GPIO_SetMode(gpionum, GPIO_MODE_1);
+	GPIO_Intr_SetPinIntrEn(gpionum, GPIO_INTEN_INTERRUPT);
+	GPIO_Intr_SetPinIntrMask(gpionum, GPIO_MASK_MASK);
+	GPIO_Intr_SetPinIntrType(gpionum, intrtype);
+	GPIO_Intr_SetPinIntrPol(gpionum, polarity);	
+	GPIO_SetPinDebounce(gpionum, GPIO_DEBOUNCE_ON);
+	reg_IrqHandle(GPIO_INTR_N0_VECTOR_NUM + (gpionum>>5), wimax_vsoc_rx_isr);
+  INTR_NVIC_EnableIRQ(GPIO_INTR_N0_VECTOR_NUM + (gpionum>>5));
+}
 void Sky_Parm_Initial(void)
 {
     SkyStruct.RCChannel=9;
@@ -61,9 +75,13 @@ void Sky_Parm_Initial(void)
     Timer0_Init();
     Sky_Timer1_Init();
 
+#if BB_GPIO
+    Grd_GpioInterruptInit(BB_GPIO_PIN, 1, 1);
+#else    
     reg_IrqHandle(BB_RX_ENABLE_VECTOR_NUM, wimax_vsoc_rx_isr);
+
     INTR_NVIC_EnableIRQ(BB_RX_ENABLE_VECTOR_NUM);
-    
+#endif    
     printf("%s", "Sky_Parm_Initial Done\n");
 }
 
@@ -630,8 +648,11 @@ void wimax_vsoc_tx_isr()
 
 void wimax_vsoc_rx_isr()
 {
+#if BB_GPIO
+    GPIO_Intr_ClearIntr(BB_GPIO_PIN);
+#else
     INTR_NVIC_DisableIRQ(BB_RX_ENABLE_VECTOR_NUM);   
-
+#endif
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
     TIM_StartTimer(init_timer0_0);
 }

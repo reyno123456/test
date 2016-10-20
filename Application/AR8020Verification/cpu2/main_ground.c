@@ -7,6 +7,7 @@
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
   serial_init(uart_num, baut_rate);
+  dlog_init(uart_num);
   UartNum = uart_num;
   command_init();
 }
@@ -27,16 +28,15 @@ int main(void)
     
     test_BB_grd();
 
-    //ADV_7611_Initial();
-    //H264_Encoder_Init();
-
-      /* We should never get here as control is now taken by the scheduler */
+    /* We should never get here as control is now taken by the scheduler */
     for( ;; )
     {
         if (command_getEnterStatus() == 1)
         {
             command_fulfill();
         }
+
+        dlog_output(1);
     }
 } 
 

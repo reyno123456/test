@@ -13,6 +13,7 @@
 #include "test_timer.h"
 #include "test_spi.h"
 #include "test_quadspi.h"
+#include "test_gpio.h"
 
 static unsigned char g_commandPos;
 static char g_commandLine[50];
@@ -338,6 +339,19 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_testAllNorFlashOperations(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
+    else if (memcmp(cmdArray[0], "test_TestGpioNormalRange", strlen("test_TestGpioNormalRange")) == 0)
+    {
+        command_TestGpioNormalRange(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
+    else if (memcmp(cmdArray[0], "test_TestGpioNormal", strlen("test_TestGpioNormal")) == 0)
+    {
+        command_TestGpioNormal(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "test_TestGpioInterrupt", strlen("test_TestGpioInterrupt")) == 0)
+    {
+        command_TestGpioInterrupt(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
+
     /* error command */
     else
     {
@@ -357,7 +371,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("freertos_taskquit");
         dlog_error("test24c256write <i2c port> <i2c_value>");
         dlog_error("test24c256read <i2c port>");
-		dlog_error("test_timer <TIM Group> <TIM Num> <TIM Count>");
+        dlog_error("test_timer <TIM Group> <TIM Num> <TIM Count>");
         dlog_error("test_timerused");
         dlog_error("test_timerall");
         dlog_error("test_pwm <PWM Group> <PWM Num> <PWM low> <PWM high>");
@@ -372,6 +386,9 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("test_write_flash <flash start address> <size> <value>");
         dlog_error("test_read_flash <flash start address> <size>");
         dlog_error("test_nor_flash_all <flash start address> <size> <value>");
+        dlog_error("test_TestGpioNormal <gpionum> <highorlow>");
+        dlog_error("test_TestGpioNormalRange <gpionum1> <gpionum2> <highorlow>");
+        dlog_error("test_TestGpioInterrupt <gpionum> <inttype> <polarity>");
     }
 
     /* must init to receive new data from serial */

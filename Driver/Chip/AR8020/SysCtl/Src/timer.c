@@ -6,7 +6,7 @@
 static timer_handle_st timer_queue[10];
 static volatile uint32_t g_timer_us;
 
-void TIM_ClearNvic(init_timer_st time_st)
+uint8_t TIM_ClearNvic(init_timer_st time_st)
 {
     uint8_t u8_TimNum = time_st.time_num;
     uint8_t u8_TimGroup = time_st.base_time_group;
@@ -35,7 +35,7 @@ void TIM_Config(uint32_t addr,
     Reg_Write32(addr + cnt2_offset,  cnt2);               // load the count2
 }
 
-void TIM_StopTimer(init_timer_st time_st)
+uint8_t TIM_StopTimer(init_timer_st time_st)
 {
     uint8_t u8_TimNum = time_st.time_num;
     uint8_t u8_TimGroup = time_st.base_time_group;
@@ -52,12 +52,12 @@ void TIM_StopTimer(init_timer_st time_st)
     Reg_Write32(u32_TimBaseAddr + CTRL_0+(u8_TimNum*0x14), u8_TimCtrl & 0xfffffffe);
 }
 
-void TIM_StopPwm(init_timer_st time_st)
+uint8_t TIM_StopPwm(init_timer_st time_st)
 {   
-    TIM_StopTimer(time_st);
+     return TIM_StopTimer(time_st);
 }
 
-void TIM_StartTimer(init_timer_st time_st)
+uint8_t TIM_StartTimer(init_timer_st time_st)
 {
     uint8_t u8_TimNum = time_st.time_num;
     uint8_t u8_TimGroup = time_st.base_time_group;
@@ -73,12 +73,12 @@ void TIM_StartTimer(init_timer_st time_st)
     Reg_Write32(u32_TimBaseAddr + CTRL_0+(u8_TimNum*0x14), time_st.ctrl);   
 }
 
-void TIM_StartPwm(init_timer_st time_st)
+uint8_t TIM_StartPwm(init_timer_st time_st)
 {
-    TIM_StartTimer(time_st);
+    return TIM_StartTimer(time_st);
 }
 
-void TIM_RegisterTimer(init_timer_st time_st, uint32_t time_us) 
+uint8_t TIM_RegisterTimer(init_timer_st time_st, uint32_t time_us) 
 {
     uint8_t u8_TimNum = time_st.time_num;
     uint8_t u8_TimCtrl = time_st.ctrl;
@@ -97,7 +97,7 @@ void TIM_RegisterTimer(init_timer_st time_st, uint32_t time_us)
                      0x00, CNT2_0+(u8_TimNum*0x04));
 }
 
-void TIM_RegisterPwm(init_timer_st time_st, uint32_t low_us, uint32_t high_us) 
+uint8_t TIM_RegisterPwm(init_timer_st time_st, uint32_t low_us, uint32_t high_us) 
 {
     uint8_t u8_TimNum = time_st.time_num;
     uint8_t u8_TimCtrl = time_st.ctrl;

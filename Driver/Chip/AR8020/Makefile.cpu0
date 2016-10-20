@@ -28,6 +28,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
          SysCtl/Src/pll_ctrl.c \
          SysCtl/Src/systicks.c \
 		 SysCtl/Src/timer.c \
+		 SysCtl/Src/gpio.c \
          UART/Src/serial.c \
          SD/Src/sd_core.c \
          SD/Src/sd_card.c \
@@ -83,6 +84,7 @@ install:
 	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/pll_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/systicks.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f SysCtl/Inc/gpio.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f QuadSPI/Inc/quad_spi_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:

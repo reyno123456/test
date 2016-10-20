@@ -26,6 +26,7 @@ CPU_NUMBER = cpu1
 # source file(s), including c file(s)
 SRC_C := SysCtl/Src/reg_rw.c \
 		 SysCtl/Src/timer.c \
+		 SysCtl/Src/gpio.c \
          UART/Src/serial.c \
          SysCtl/Src/systicks.c \
          I2C/Src/i2c_ll.c \

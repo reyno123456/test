@@ -46,7 +46,7 @@ int H264_Encoder_Init(void)
 #endif
 
     /* BR - 0: 8Mbps, 1: 1Mbps, 4: 4Mbps, 8: 500kbps, 10: 10Mbps */
-    init_view0( 720, 480, 10, 60, 1);
+    init_view0( 1920, 1080, 10, 60, 1);
     v0_poweron_rc_params_set = 1;
     g_stEncoderStatus[0].resW = 720;
     g_stEncoderStatus[0].resH = 480;
@@ -54,7 +54,7 @@ int H264_Encoder_Init(void)
     g_stEncoderStatus[0].framerate = 60;
     g_stEncoderStatus[0].bitrate = 1;
 
-    init_view1( 720, 480, 10, 60, 1);
+    init_view1( 1920, 1080, 10, 60, 1);
     v1_poweron_rc_params_set = 1;
     g_stEncoderStatus[1].resW = 720;
     g_stEncoderStatus[1].resH = 480;
