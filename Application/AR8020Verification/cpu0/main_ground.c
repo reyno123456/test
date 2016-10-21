@@ -79,13 +79,15 @@ void usb_data_dump(void)
   */
 int main(void)
 {
-  int tmp;
-
   sramReady0  = 0;
   sramReady1  = 0;
   sendFinish = 0;
 
-  PLLCTRL_SetCoreClk(CORE_PLL_CLK);
+  BB_SPI_init();
+
+  PLLCTRL_SetCoreClk(CPU0_CPU1_CORE_PLL_CLK, CPU0_ID);
+  PLLCTRL_SetCoreClk(CPU2_CORE_PLL_CLK, CPU2_ID);
+
   /* initialize the uart */
   console_init(0,115200);
   dlog_info("cpu0 start!!! \n");

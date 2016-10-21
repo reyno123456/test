@@ -46,9 +46,11 @@ void console_init(uint32_t uart_num, uint32_t baut_rate)
   */
 int main(void)
 {
-  int tmp;
+  BB_SPI_init();
 
-  PLLCTRL_SetCoreClk(CORE_PLL_CLK);
+  PLLCTRL_SetCoreClk(CPU0_CPU1_CORE_PLL_CLK, CPU0_ID);
+  PLLCTRL_SetCoreClk(CPU2_CORE_PLL_CLK, CPU2_ID);
+
   /* initialize the uart */
   console_init(0,115200);
   dlog_info("cpu0 start!!! \n");
