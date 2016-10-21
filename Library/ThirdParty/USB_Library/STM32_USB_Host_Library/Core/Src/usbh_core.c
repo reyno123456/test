@@ -339,7 +339,7 @@ USBH_StatusTypeDef  USBH_Start  (USBH_HandleTypeDef *phost)
   USBH_LL_Start(phost);
   
   /* Activate VBUS on the port */ 
-  USBH_LL_DriverVBUS (phost, TRUE);
+  //USBH_LL_DriverVBUS (phost, TRUE);
   
   return USBH_OK;  
 }
@@ -356,7 +356,7 @@ USBH_StatusTypeDef  USBH_Stop   (USBH_HandleTypeDef *phost)
   USBH_LL_Stop(phost);  
   
   /* DeActivate VBUS on the port */ 
-  USBH_LL_DriverVBUS (phost, FALSE);
+  //USBH_LL_DriverVBUS (phost, FALSE);
   
   /* FRee Control Pipes */
   USBH_FreePipe  (phost, phost->Control.pipe_in);
@@ -401,7 +401,7 @@ USBH_StatusTypeDef  USBH_Process(USBH_HandleTypeDef *phost)
 {
   __IO USBH_StatusTypeDef status = USBH_FAIL;
   uint8_t idx = 0;
-  
+
   switch (phost->gState)
   {
   case HOST_IDLE :
@@ -612,7 +612,7 @@ USBH_StatusTypeDef  USBH_Process(USBH_HandleTypeDef *phost)
 static USBH_StatusTypeDef USBH_HandleEnum (USBH_HandleTypeDef *phost)
 {
   USBH_StatusTypeDef Status = USBH_BUSY;  
-  
+
   switch (phost->EnumState)
   {
   case ENUM_IDLE:  

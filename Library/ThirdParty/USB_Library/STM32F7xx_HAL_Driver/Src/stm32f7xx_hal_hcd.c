@@ -529,7 +529,6 @@ void HAL_HCD_IRQHandler(HCD_HandleTypeDef *hhcd)
     /* Handle Host Port Interrupts */
     if(__HAL_HCD_GET_FLAG(hhcd, USB_OTG_GINTSTS_HPRTINT))
     {
-      serial_puts("HAL_HCD_IRQHandler\n");
       HCD_Port_IRQHandler (hhcd);
     }
     
@@ -667,7 +666,6 @@ HAL_StatusTypeDef HAL_HCD_Start(HCD_HandleTypeDef *hhcd)
   __HAL_LOCK(hhcd); 
   serial_puts("2 \n");
   __HAL_HCD_ENABLE(hhcd);
-  USB_EnableGlobalInt (hhcd->Instance);
   serial_puts("3 \n");
   USB_DriveVbus(hhcd->Instance, 1);  
   serial_puts("4 \n");
@@ -1161,8 +1159,7 @@ static void HCD_Port_IRQHandler  (HCD_HandleTypeDef *hhcd)
   
   hprt0_dup &= ~(USB_OTG_HPRT_PENA | USB_OTG_HPRT_PCDET |\
                  USB_OTG_HPRT_PENCHNG | USB_OTG_HPRT_POCCHNG );
-
-  serial_puts("HCD_Port_IRQHandler\n");
+  
   /* Check whether Port Connect detected */
   if((hprt0 & USB_OTG_HPRT_PCDET) == USB_OTG_HPRT_PCDET)
   {  

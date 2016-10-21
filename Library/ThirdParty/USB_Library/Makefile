@@ -19,7 +19,16 @@ include $(BUILD_DIR)/config.mk
 LIB = libusb.a
 
 # source file(s), including c file(s)
-SRC_C   := STM32_USB_Host_Library/Class/AUDIO/Src/usbh_audio.c \
+SRC_C   := STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.c \
+           STM32_USB_Host_Library/Class/MSC/Src/usbh_msc.c \
+           STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_scsi.c \
+           STM32_USB_Host_Library/Core/Src/usbh_conf.c \
+           STM32_USB_Host_Library/Core/Src/usbh_core.c \
+           STM32_USB_Host_Library/Core/Src/usbh_ctlreq.c \
+           STM32_USB_Host_Library/Core/Src/usbh_ioreq.c \
+           STM32_USB_Host_Library/Core/Src/usbh_pipes.c
+
+#SRC_C   := STM32_USB_Host_Library/Class/AUDIO/Src/usbh_audio.c \
            STM32_USB_Host_Library/Class/CDC/Src/usbh_cdc.c \
            STM32_USB_Host_Library/Class/HID/Src/usbh_hid.c \
            STM32_USB_Host_Library/Class/HID/Src/usbh_hid_keybd.c \

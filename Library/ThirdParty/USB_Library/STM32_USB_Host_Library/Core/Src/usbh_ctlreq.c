@@ -535,7 +535,7 @@ USBH_StatusTypeDef USBH_CtlReq     (USBH_HandleTypeDef *phost,
 {
   USBH_StatusTypeDef status;
   status = USBH_BUSY;
-  
+
   switch (phost->RequestState)
   {
   case CMD_SEND:
@@ -584,7 +584,7 @@ static USBH_StatusTypeDef USBH_HandleControl (USBH_HandleTypeDef *phost)
   uint8_t direction;  
   USBH_StatusTypeDef status = USBH_BUSY;
   USBH_URBStateTypeDef URB_Status = USBH_URB_IDLE;
-  
+
   switch (phost->Control.state)
   {
   case CTRL_SETUP:
@@ -599,6 +599,7 @@ static USBH_StatusTypeDef USBH_HandleControl (USBH_HandleTypeDef *phost)
   case CTRL_SETUP_WAIT:
     
     URB_Status = USBH_LL_GetURBState(phost, phost->Control.pipe_out); 
+
     /* case SETUP packet sent successfully */
     if(URB_Status == USBH_URB_DONE)
     { 
@@ -695,7 +696,7 @@ static USBH_StatusTypeDef USBH_HandleControl (USBH_HandleTypeDef *phost)
                       phost->Control.buff, 
                       phost->Control.length , 
                       phost->Control.pipe_out,
-                      1);
+                      0);
      phost->Control.timer = phost->Timer;
     phost->Control.state = CTRL_DATA_OUT_WAIT;
     break;
@@ -791,7 +792,7 @@ static USBH_StatusTypeDef USBH_HandleControl (USBH_HandleTypeDef *phost)
                       0,
                       0,
                       phost->Control.pipe_out,
-                      1);
+                      0);
      phost->Control.timer = phost->Timer;
     phost->Control.state = CTRL_STATUS_OUT_WAIT;
     break;

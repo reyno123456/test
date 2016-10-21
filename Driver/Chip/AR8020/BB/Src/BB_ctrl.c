@@ -49,7 +49,13 @@ static void BB_regs_init(ENUM_BB_MODE en_mode)
 
         for(addr_cnt = 0; addr_cnt < 256; addr_cnt++)
         {
-            BB_SPI_curPageWriteByte((uint8_t)addr_cnt, *regs);
+            if(page==PAGE1 && (addr_cnt==0xa1||addr_cnt==0xa2||addr_cnt==0xa4||addr_cnt==0xa5))
+            {}
+            else
+            {
+                BB_SPI_curPageWriteByte((uint8_t)addr_cnt, *regs);
+            }
+
             regs++;
         }
     }

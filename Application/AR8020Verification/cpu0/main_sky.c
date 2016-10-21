@@ -60,7 +60,7 @@ int main(void)
 
   dlog_info("HAL_Init done \n");
 
-  TestUsbd_InitHid();
+  //test_usbh();
 
   /* We should never get here as control is now taken by the scheduler */
   for( ;; )

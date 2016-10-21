@@ -68,7 +68,7 @@ USBH_StatusTypeDef  USBH_LL_Init (USBH_HandleTypeDef *phost)
   hhcd.Init.Sof_enable = 0;
   hhcd.Init.speed = HCD_SPEED_HIGH;
   hhcd.Init.vbus_sensing_enable = 0;
-  hhcd.Init.use_external_vbus = 1;
+  hhcd.Init.use_external_vbus = 0;
   hhcd.Init.lpm_enable = 0;
   
   /* Link the driver to the stack */

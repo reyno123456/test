@@ -243,7 +243,8 @@ __weak HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
   /*Configure the SysTick to have interrupt in 1ms time basis*/
   //HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
   //HAL_SYSTICK_Config(60000);
-  HAL_SYSTICK_Config(6000);
+//  HAL_SYSTICK_Config(6000);
+  HAL_SYSTICK_Config(250000);
 
   /*Configure the SysTick IRQ priority */
   HAL_NVIC_SetPriority(SysTick_IRQn, TickPriority ,0);

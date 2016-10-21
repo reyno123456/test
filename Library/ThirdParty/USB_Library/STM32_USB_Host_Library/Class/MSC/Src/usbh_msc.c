@@ -120,6 +120,8 @@ USBH_ClassTypeDef  USBH_msc =
   NULL,
 };
 
+MSC_HandleTypeDef    g_mscHandleTypeDef;
+
 
 /**
   * @}
@@ -163,7 +165,9 @@ static USBH_StatusTypeDef USBH_MSC_InterfaceInit (USBH_HandleTypeDef *phost)
   {
     USBH_SelectInterface (phost, interface);
     
-    phost->pActiveClass->pData = (MSC_HandleTypeDef *)USBH_malloc (sizeof(MSC_HandleTypeDef));
+    //phost->pActiveClass->pData = (MSC_HandleTypeDef *)USBH_malloc (sizeof(MSC_HandleTypeDef));
+    phost->pActiveClass->pData = (MSC_HandleTypeDef *)&g_mscHandleTypeDef;
+
     MSC_Handle =  (MSC_HandleTypeDef *) phost->pActiveClass->pData;
     
     if(phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].bEndpointAddress & 0x80)
@@ -252,7 +256,7 @@ USBH_StatusTypeDef USBH_MSC_InterfaceDeInit (USBH_HandleTypeDef *phost)
 
   if(phost->pActiveClass->pData)
   {
-    USBH_free (phost->pActiveClass->pData);
+    //USBH_free (phost->pActiveClass->pData);
     phost->pActiveClass->pData = 0;
   }
   
@@ -443,7 +447,7 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
              (MSC_Handle->unit[MSC_Handle->current_lun].sense.key == SCSI_SENSE_KEY_NOT_READY) )   
           {
             
-            if((phost->Timer - MSC_Handle->timer) < 10000)
+            if((phost->Timer - MSC_Handle->timer) > 10000)
             {
               MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_TEST_UNIT_READY;
               break;
