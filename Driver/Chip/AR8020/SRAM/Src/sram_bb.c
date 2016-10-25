@@ -8,12 +8,13 @@ void SRAM_BB_BypassVideoConfig(void)
     uint8_t      temp;
 
     /* Base Band bypass data, directly write to SRAM */
+    #if 0
     temp    = BB_SPI_ReadByte(PAGE1, 0x8d);
     temp   |= 0x40;
     BB_SPI_WriteByte(PAGE1, 0x8d, temp);
 
-    BB_SPI_WriteByte(PAGE2, 0x56, 0x06);
-
+    BB_SPIWriteByte(PAGE2, 0x56, 0x06);
+    #endif
     /* Threshold of usb_fifo in BaseBand */
 //    BB_SPI_WriteByte(PAGE2, 0x57, 0x20);
 //    BB_SPI_WriteByte(PAGE2, 0x58, 0x00);

@@ -74,6 +74,7 @@ static int test_bbctrl_grd(void)
  * this Function for demo only...
 */
 static int open_video_path = 0;
+
 void TIM0_BB_Grd_handler(void)
 {
     uint8_t print_reg[][2] =  {
@@ -91,10 +92,22 @@ void TIM0_BB_Grd_handler(void)
         printf("%0.2x %0.2x\n", print_reg[idx][1], BB_SPI_ReadByte(print_reg[idx][0], print_reg[idx][1]));
     }
     
-    if( BB_SPI_ReadByte(PAGE2, 0xda) & 0x01 )   //LDPC Lock
+    if( open_video_path ==0 && BB_SPI_ReadByte(PAGE2, 0xda) & 0x01 )   //LDPC Lock
     {
         BB_SPI_WriteByteMask(PAGE1, 0x8d, 0xc0, 0xc0);
+        open_video_path = 1;
         printf("VPATH %0.2x\n", BB_SPI_ReadByte(PAGE1, 0x8d));
+    }
+    
+    if(BB_SPI_ReadByte(PAGE2, 0xcc) == 0x80) //Data Full
+    {
+        #define DMA_READY_0                0x40B00038
+        #define DMA_READY_1                0x40B0003C
+
+        Reg_Write32(DMA_READY_0, 1);
+        Reg_Write32(DMA_READY_1, 1);
+        
+        printf("Reset SRAM DMA %x \n", BB_SPI_ReadByte(PAGE2, 0xcc));
     }
 }
 
@@ -131,7 +144,7 @@ void BB_debug_print_init_grd(void)
     timer0_0.ctrl = 0;
     timer0_0.ctrl |= TIME_ENABLE | USER_DEFINED;
     
-    TIM_RegisterTimer(timer0_0, 4000*1000);    //4s
+    TIM_RegisterTimer(timer0_0, 2000*1000);    //2s
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
     TIM_StartTimer(timer0_0);
 
