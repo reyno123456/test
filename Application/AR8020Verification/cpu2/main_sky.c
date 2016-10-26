@@ -1,3 +1,4 @@
+#include "serial.h"
 #include "debuglog.h"
 #include "adv_7611.h"
 #include "h264_encoder.h"
@@ -6,10 +7,10 @@
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
-  serial_init(uart_num, baut_rate);
-  dlog_init(uart_num);
-  UartNum = uart_num;
-  command_init();
+    serial_init(uart_num, baut_rate);
+    dlog_init(uart_num);
+    UartNum = uart_num;
+    command_init();
 }
 /**
   * @brief  Main program
@@ -17,9 +18,7 @@ void console_init(uint32_t uart_num, uint32_t baut_rate)
   * @retval None
   */
 int main(void)
-{
-    int tmp;
-  
+{  
     //(*(volatile unsigned int *)0x40B0008C) = 0x00500000; //PATCH for FPGA version, PIN MUX for UART9
     /* initialize the uart */
     console_init(2, 115200);   
@@ -27,7 +26,6 @@ int main(void)
     
     ADV_7611_Initial(0);
     ADV_7611_Initial(1);
-    
     H264_Encoder_Init();
     
     test_BB_sky();

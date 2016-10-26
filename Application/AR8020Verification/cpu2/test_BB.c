@@ -10,10 +10,6 @@
 #include "BB_ctrl.h"
 #include "BB_spi.h"
 
-#include "grd_controller.h"
-#include "sky_controller.h"
-
-
 static int test_bbctrl_sky(void);
 static int test_bbctrl_grd(void);
 
@@ -29,9 +25,11 @@ void test_BB_sky(void)
     BB_uart10_spi_sel(0x00000003);
     BB_init(&initType);
     
-    //test_bbctrl_sky();
-    //BB_uart10_spi_sel(0x00000000);
+    #if 0
+    test_bbctrl_sky();
+    #else
     BB_debug_print_init_sky();
+    #endif
     printf("%s", log);
 }
 
@@ -47,9 +45,11 @@ void test_BB_grd(void)
     BB_uart10_spi_sel(0x00000003);
     BB_init(&initType);
     
-    //test_bbctrl_grd();
-    //BB_uart10_spi_sel(0x00000000);
+    #if 0
+    test_bbctrl_grd();
+    #else
     BB_debug_print_init_grd();
+    #endif
     printf("%s", log);
 }
 
@@ -149,7 +149,6 @@ void BB_debug_print_init_grd(void)
     TIM_StartTimer(timer0_0);
 
     reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, TIM0_BB_Grd_handler);
-    
 }
 
 

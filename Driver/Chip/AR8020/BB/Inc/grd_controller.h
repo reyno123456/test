@@ -17,7 +17,6 @@
 #include "debuglog.h"
 
 
-#ifdef BASEBAND_GRD
 /**
   * @brief Ground Controller Structure definition
   */
@@ -160,7 +159,7 @@ void Grd_Getsnr(uint8_t i);  //get SNR value at present
 void Grd_Frqsnr_Array(void);
 void Grd_Qamsnr_Array(void);
 void Grd_Frq_Snrblock_Determine(uint16_t iMCS);
-uint8_t Grd_Sweeppower_Fluctuate_Average(void);     //扫频的波动性和平均值
+uint8_t Grd_Sweeppower_Fluctuate_Average(void);     //é¨?μμ?2¨?ˉD?oí???ù?μ
 void Grd_Ldpc_Err_Num_Statistics(void);             //2 // 2 sec
 uint8_t Grd_Ldpc_Block_Determine(void);
 void Grd_Itfrq_Hopping(void);
@@ -170,8 +169,5 @@ void Grd_Qamflag_Clear(void);
 void Grd_IT_Controller(void);
 void Grd_Osdmsg_Ptf(void);
 
-void TIM0_IRQHandler(void);
-void TIM1_IRQHandler(void);
-
-#endif
+void wimax_vsoc_tx_isr();
 #endif

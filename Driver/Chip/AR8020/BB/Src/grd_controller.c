@@ -1,13 +1,11 @@
-#include "grd_controller.h"
-#include "config_functions_sel.h"
-#include "debuglog.h"
-
-
-#include "interrupt.h"
-#include "stdio.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <timer.h>
+
+#include "config_functions_sel.h"
+#include "debuglog.h"
+#include "interrupt.h"
+#include "timer.h"
 #include "BB_spi.h"
 #include "reg_rw.h"
 #include "config_baseband_frqdata.h"
@@ -15,7 +13,8 @@
 #include "sys_peripheral_communication.h"
 #include "BB_ctrl.h"
 #include "sys_peripheral_init.h"
-#include "gpio.h"
+#include "grd_controller.h"
+
 
 extern struct RC_FRQ_CHANNEL Rc_frq[];
 extern struct IT_FRQ_CHANNEL It_frq[];
@@ -30,28 +29,10 @@ Grd_FlagTypeDef   GrdState;
 Grd_HandleTypeDef GrdStruct;
 Grd_QAMTypeDef    GrdQam;
 
-uint8_t  Timer0_Delay_Cnt  = 0;
-uint8_t  Timer1_Delay1_Cnt = 0;
-uint32_t Timer1_Delay2_Cnt = 0;
+static uint8_t  Timer0_Delay_Cnt  = 0;
+static uint8_t  Timer1_Delay1_Cnt = 0;
+static uint32_t Timer1_Delay2_Cnt = 0;
 
-void wimax_vsoc_tx_isr();
-
-void Grd_GpioInterruptInit(uint8_t gpionum, uint8_t intrtype, uint8_t polarity)
-{
-
-    GPIO_SetPinDirect(gpionum, GPIO_DATA_DIRECT_INPUT);
-    GPIO_SetPinCtrl(gpionum, GPIO_CTRL_SOFTWARE);
-    GPIO_SetMode(gpionum, GPIO_MODE_1);
-    GPIO_Intr_SetPinIntrEn(gpionum, GPIO_INTEN_INTERRUPT);
-    GPIO_Intr_SetPinIntrMask(gpionum, GPIO_MASK_MASK);
-    GPIO_Intr_SetPinIntrType(gpionum, intrtype);
-    GPIO_Intr_SetPinIntrPol(gpionum, polarity); 
-    GPIO_SetPinDebounce(gpionum, GPIO_DEBOUNCE_ON);
-    reg_IrqHandle(GPIO_INTR_N0_VECTOR_NUM + (gpionum>>5), wimax_vsoc_tx_isr);
-    INTR_NVIC_EnableIRQ(GPIO_INTR_N0_VECTOR_NUM + (gpionum>>5));
-    dlog_info("GpioInterruptInit %x  %x %x",gpionum, intrtype, polarity);
-
-}
 void Grd_Parm_Initial(void)
 {
     GrdStruct.RCChannel=1;
@@ -87,18 +68,11 @@ void Grd_Parm_Initial(void)
     Grd_Timer0_Init();
     Grd_Timer1_Init();
 
-    //INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
-#if BB_GPIO
-    Grd_GpioInterruptInit(BB_GPIO_PIN, 1, 1);
-#else    
     reg_IrqHandle(BB_TX_ENABLE_VECTOR_NUM, wimax_vsoc_tx_isr);
     INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);
-#endif
 }
 
-
-
-#define RC_ID_PAGE      (PAGE2)
+#define RC_ID_PAGE          (PAGE2)
 
 #define RC_ID_BIT07_00_REG  (0x5f)
 #define RC_ID_BIT15_08_REG  (0x5e)
@@ -117,31 +91,24 @@ void Grd_Id_Initial(void)
 }
 
 
-// write remote controller frq channnel in baseband_grd.
 void Grd_Write_Rcfrq(uint8_t frqchannel)
 {
-    #if defined( GRD_RF8003_2P3) || defined( GRD_RF8003_2P4)
-        BB_SPI_WriteByte(PAGE2, AGC3_a, Rc_frq[frqchannel].frq1);
-        BB_SPI_WriteByte(PAGE2, AGC3_b, Rc_frq[frqchannel].frq2);
-        BB_SPI_WriteByte(PAGE2, AGC3_c, Rc_frq[frqchannel].frq3);
-        BB_SPI_WriteByte(PAGE2, AGC3_d, Rc_frq[frqchannel].frq4);  
-    #else
-        BB_SPI_WriteByte(RC_ID_PAGE, AGC3_a, Rc_frq[frqchannel].frq1 );
-        BB_SPI_WriteByte(RC_ID_PAGE, AGC3_b, Rc_frq[frqchannel].frq2 );
-        BB_SPI_WriteByte(RC_ID_PAGE, AGC3_c, Rc_frq[frqchannel].frq3 );
-        BB_SPI_WriteByte(RC_ID_PAGE, AGC3_d, Rc_frq[frqchannel].frq4 );
-        BB_SPI_WriteByte(RC_ID_PAGE, AGC3_e, Rc_frq[frqchannel].frq5 );
-    #endif
+    BB_SPI_WriteByte(PAGE2, AGC3_a, Rc_frq[frqchannel].frq1);
+    BB_SPI_WriteByte(PAGE2, AGC3_b, Rc_frq[frqchannel].frq2);
+    BB_SPI_WriteByte(PAGE2, AGC3_c, Rc_frq[frqchannel].frq3);
+    BB_SPI_WriteByte(PAGE2, AGC3_d, Rc_frq[frqchannel].frq4);  
 }
 
 
 void Grd_RC_Controller(void)
 {
-    GrdStruct.RCChannel += 1;
+    GrdStruct.RCChannel ++;
     if(GrdStruct.RCChannel >=  MAX_RC_FRQ_SIZE)
     {
         GrdStruct.RCChannel = 0;
     }
+
+    Grd_Write_Rcfrq(GrdStruct.RCChannel);
 }
 
 /**
@@ -386,7 +353,6 @@ void Grd_Sweeping_Before_Fec_Locked(void)
         {
             GrdStruct.SweepCyccnt = 0;
             GrdState.Endsweep = ENABLE;
-            //printf("%s", "SE\r\n");
         }
         else
         {
@@ -1164,157 +1130,94 @@ void Grd_Osdmsg_Ptf(void)
 
 void wimax_vsoc_tx_isr(void)
 {
-    static int tx_count = 0;
-#if BB_GPIO
-    GPIO_Intr_ClearIntr(BB_GPIO_PIN);
-#else
     INTR_NVIC_DisableIRQ(BB_TX_ENABLE_VECTOR_NUM);
-#endif
     TIM_StartTimer(init_timer0_0);
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
-    
-    if(tx_count++ >= 1000)
-    {
-        printf("TX1\n");
-        tx_count = 0;        
-    }
 }
-
-
-void wimax_vsoc_rx_isr()
-{
-}
-//*********************TX RX initial(14ms irq)**************
 
 
 void Grd_TIM0_IRQHandler(void)
 {
-    static int TIM0_count = 0;
     Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_0);
-    if( TIM0_count++ >= 1000)
-    {
-        TIM0_count = 0;
-        printf("TIM0\r\n");
-    }
-    
 
-    INTR_NVIC_ClearPendingIRQ(BB_TX_ENABLE_VECTOR_NUM); //clear pending after TX Enable is LOW.
+    //Enable BB_TX intr
+    INTR_NVIC_ClearPendingIRQ(BB_TX_ENABLE_VECTOR_NUM); //clear pending after TX Enable is LOW. MUST
     INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);
-    INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
-    
-    #if 0
-    switch (Timer0_Delay_Cnt)
-    {
-        case 0:
-        {
-            Timer0_Delay_Cnt ++ ;
-        } 
-        break;
 
-        case 1:
-        {
-            Timer0_Delay_Cnt=0;
-            INTR_NVIC_ClearPendingIRQ(BB_TX_ENABLE_VECTOR_NUM); //clear pending after TX Enable is LOW.
-            INTR_NVIC_EnableIRQ(TIMER_INTR01_VECTOR_NUM);
-            TIM_StartTim(init_timer0_1);
-            INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
-            
-            TIM_StartTim(init_timer0_0);
-        } 
-        break;
-    }
-    #endif
+    //Disable TIM0 intr
+    INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
+    TIM_StopTimer(init_timer0_0);
+    
+    //Enable TIM1 intr
+    TIM_StartTimer(init_timer0_1);
+    INTR_NVIC_EnableIRQ(TIMER_INTR01_VECTOR_NUM);   
 }
 
 
 void Grd_TIM1_IRQHandler(void)
 {
     Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_1);
-    
     switch (Timer1_Delay1_Cnt)
     {
         case 0:
             Timer1_Delay1_Cnt++;
+            Grd_Getsnr(0);
             break;
-        
         case 1:
-            {
-                Timer1_Delay1_Cnt++;
-                Grd_Getsnr(0);
-                Grd_RC_Controller();
-                Grd_IT_Controller();
-            } 
+            Timer1_Delay1_Cnt++;
+            Grd_Getsnr(1);
             break;
         case 2:
-            {
-                Timer1_Delay1_Cnt++;
-                Grd_Getsnr(1);
-            } 
+            Timer1_Delay1_Cnt++;
+            Grd_Getsnr(2);
             break;
-            
+        
         case 3:
-            {
-                Timer1_Delay1_Cnt++;
-                Grd_Getsnr(2);
-            } 
+            Timer1_Delay1_Cnt++;
+            Grd_RC_Controller();
+            //Grd_IT_Controller();                
+            Grd_Getsnr(3);
             break;
         
         case 4:
-            {
-                Timer1_Delay1_Cnt++;
-                Grd_Getsnr(3);
-            } 
-            break;
-        
-        case 5:
-            {
-                Timer1_Delay1_Cnt++;
-                Grd_Getsnr(4);
-            } 
+            Timer1_Delay1_Cnt++;
+            Grd_Getsnr(4);
             break;
             
-        case 6:
-            {
-                Timer1_Delay1_Cnt++;
-                Grd_Getsnr(5);
-            } 
+        case 5:
+            Timer1_Delay1_Cnt++;
+            Grd_Getsnr(5);
             break;
         
+        case 6:
+            Timer1_Delay1_Cnt++;
+            Grd_Getsnr(6);
+            break;
         case 7:
-            {
-                Timer1_Delay1_Cnt++;
-                Grd_Getsnr(6);
-            }  
+            INTR_NVIC_DisableIRQ(TIMER_INTR01_VECTOR_NUM);                
+            TIM_StopTimer(init_timer0_1);
+            
+            Timer1_Delay1_Cnt = 0;
+            Grd_Getsnr(7);
+            Grd_Frqsnr_Array();
             break;
-        case 8:
-            {
-                TIM_StartTimer(init_timer0_1);
-                Timer1_Delay1_Cnt = 0;
-                Grd_Getsnr(7);
-                Grd_Frqsnr_Array();
-                INTR_NVIC_DisableIRQ(TIMER_INTR01_VECTOR_NUM);
-                INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);
-                
-            }
-            break;
+            
         default:
-            {
-                Timer1_Delay1_Cnt++;
-            }
+            Timer1_Delay1_Cnt = 0;
+            dlog_error("delay error\n");
             break;
     }
 }
 
 void Grd_Timer1_Init(void)
 {
-  init_timer0_1.base_time_group = 0;
-  init_timer0_1.time_num = 1;
-  init_timer0_1.ctrl = 0;
-  init_timer0_1.ctrl |= TIME_ENABLE | USER_DEFINED;
-  TIM_RegisterTimer(init_timer0_1, 1250);
-  reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, Grd_TIM1_IRQHandler);
+    init_timer0_1.base_time_group = 0;
+    init_timer0_1.time_num = 1;
+    init_timer0_1.ctrl = 0;
+    init_timer0_1.ctrl |= TIME_ENABLE | USER_DEFINED;
+    TIM_RegisterTimer(init_timer0_1, 1200);
+    reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, Grd_TIM1_IRQHandler);
 }
-
 
 void Grd_Timer0_Init(void)
 {
@@ -1323,7 +1226,7 @@ void Grd_Timer0_Init(void)
     init_timer0_0.ctrl = 0;
     init_timer0_0.ctrl |= TIME_ENABLE | USER_DEFINED;
     
-    TIM_RegisterTimer(init_timer0_0, 5000); 
-    
+    TIM_RegisterTimer(init_timer0_0, 3600);
+
     reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, Grd_TIM0_IRQHandler);
 }

@@ -8,54 +8,10 @@
 
 #define  GRD_RF8003_2P4
 #define  SKY_RF8003_2P4
-#define  BB_GPIO (1)
-#define  BB_GPIO_PIN (64)
-//#define  GRD_RF9363_2P3
-//#define  GRD_RF9363_2P4
-//#define  GRD_RF9363_2P5
 
-//#define  GRD_RF9361_3P4
-//#define  GRD_RF9361_3P5
-//#define  GRD_RF9361_3P6
 
-#if defined(GRD_RF8003_2P3) || defined(GRD_RF8003_2P4) || defined(GRD_RF9363_2P3) ||\
-    defined(GRD_RF9363_2P4) || defined(GRD_RF9363_2P5) || defined(GRD_RF9361_3P4) ||\
-    defined(GRD_RF9361_3P5) || defined(GRD_RF9361_3P6)
 
-  #define BASEBAND_GRD
-
-#endif
 //**********************  sel the sky( rf & frq )   **************************
-
-//#define  SKY_RF8003_2P3
-//#define  SKY_RF8003_2P4
-
-//#define  SKY_RF9363_2P3
-//#define  SKY_RF9363_2P4
-//#define  SKY_RF9363_2P5
-
-//#define  SKY_RF9361_3P4
-//#define  SKY_RF9361_3P5
-//#define  SKY_RF9361_3P6
-
-#if defined(SKY_RF8003_2P3) || defined(SKY_RF8003_2P4) || defined(SKY_RF9363_2P3) ||\
-    defined(SKY_RF9363_2P4) || defined(SKY_RF9363_2P5) || defined(SKY_RF9361_3P4) ||\
-    defined(SKY_RF9361_3P5) || defined(SKY_RF9361_3P6)
-
-  #define BASEBAND_SKY
-
-#endif
-
-#if 0
-#if (defined BASEBAND_SKY && defined BASEBAND_GRD)
-    #error "defined BOTH BASEBAND_SKY AND BASEBAND_GRD"
-#endif
-#endif
-
-#if (!defined BASEBAND_SKY && !defined BASEBAND_GRD)
-    #error "BASEBAND_SKY or BASEBAND_GRD is not defined"
-#endif
-
 
 #if defined(GRD_RF8003_2P3) || defined(SKY_RF8003_2P3) || defined(GRD_RF8003_2P4) ||\
     defined(SKY_RF8003_2P4)
@@ -85,8 +41,8 @@
 
  #define  PAGE_1             0x80
  #define  PAGE_2             0x7F
- #define ID_SEARCH_MAX_TIMES 0x28
- #define ID_MATCH_MAX_TIMES  0x05
+ #define  ID_SEARCH_MAX_TIMES 0x28
+ #define  ID_MATCH_MAX_TIMES  0x05
  #define  RC_ID_BIT39_32     0x55     //Gound ID Values in Reg[03..07](high-->low).
  #define  RC_ID_BIT31_24     0xF0
  #define  RC_ID_BIT23_16     0x55

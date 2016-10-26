@@ -13,7 +13,7 @@
 #define __SKY_CONTROLLER_H
 
 #include "config_functions_sel.h"
-#ifdef BASEBAND_SKY
+
 #include <stdint.h>
 
 /**
@@ -86,6 +86,7 @@ typedef struct
    uint8_t rcid1;       /*!< Specifies the bit[07:00]of remote controller id.*/
 
 } IDRx_TypeDef[ID_SEARCH_MAX_TIMES];
+
 typedef enum
 {
   FLASH_BUSY_1 = 1,
@@ -114,10 +115,6 @@ void Sky_Rc_Hopping (void);
 void Sky_Adjust_AGCGain(void);
 void Sky_Adjust_AGCGain_SearchID(uint8_t i);
 void Sky_Hanlde_SpecialIrq(void);
-void TIM2_IRQHandler(void);
-void TIM3_IRQHandler(void);
-void wimax_vsoc_tx_isr(void);
 void wimax_vsoc_rx_isr(void);
 
-#endif
 #endif

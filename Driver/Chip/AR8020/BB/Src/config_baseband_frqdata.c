@@ -1,13 +1,6 @@
 #include "config_baseband_frqdata.h"
 #include "config_functions_sel.h"
 
-#include "stdint.h"
-#if defined(GRD_RF8003_2P3) || defined(SKY_RF8003_2P3)
-#endif
-
-#if defined(GRD_RF8003_2P4) || defined(SKY_RF8003_2P4)
-
-
 
 const struct RC_FRQ_CHANNEL Rc_frq[MAX_RC_FRQ_SIZE] = {         // 2.4G
     { 0,0x00,0x00,0x00,0x4b }, { 1,0x00,0x00,0x00,0x4c },
@@ -25,4 +18,3 @@ const struct IT_FRQ_CHANNEL It_frq[MAX_RC_FRQ_SIZE] = {    //2.4G
     { 4,0x00,0x00,0x00,0x51 }, { 5,0x00,0x00,0x00,0x52 },
     { 6,0x00,0x00,0x00,0x53 }, { 7,0x00,0x00,0x00,0x54 },
 };
-#endif
