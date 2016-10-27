@@ -81,7 +81,7 @@ int main(void)
 {
   sramReady0  = 0;
   sramReady1  = 0;
-  sendFinish = 0;
+  sendFinish  = 1;
 
   BB_SPI_init();
 
