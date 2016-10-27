@@ -96,6 +96,7 @@ typedef enum {
     
 }USB_OTG_HCStateTypeDef;
 
+
 /** 
   * @brief  PCD Initialization Structure definition  
   */
@@ -399,7 +400,9 @@ typedef struct
 #define DTCM_DMA_ADDR_OFFSET       0x24080000
 
 
-
+#define USB_OTG_ENDIAN                 (*((volatile uint32_t *)0x40B00074))
+#define USB_OTG_SET_BIG_ENDIAN()       (USB_OTG_ENDIAN | 0x00000002)
+#define USB_OTG_SET_LITTLE_ENDIAN()    (USB_OTG_ENDIAN & 0xFFFFFFFD)
 
 
 /* Exported functions --------------------------------------------------------*/
@@ -456,6 +459,7 @@ HAL_StatusTypeDef USB_DoPing(USB_OTG_GlobalTypeDef *USBx , uint8_t ch_num);
 HAL_StatusTypeDef USB_StopHost(USB_OTG_GlobalTypeDef *USBx);
 
 void              USB_LL_OTG0_IRQHandler(void);
+void              USB_LL_OTG1_IRQHandler(void);
 
 /**
   * @}

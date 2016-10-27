@@ -27,8 +27,9 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbh_core.h"
+#include "debuglog.h"
 
-HCD_HandleTypeDef hhcd;
+HCD_HandleTypeDef hhcd[2];
 
 /**
   * @brief  USBH_LL_Init 
@@ -36,52 +37,51 @@ HCD_HandleTypeDef hhcd;
   * @param  phost: Host handle
   * @retval USBH Status
   */
-USBH_StatusTypeDef  USBH_LL_Init (USBH_HandleTypeDef *phost)
+USBH_StatusTypeDef  USBH_LL_Init(USBH_HandleTypeDef *phost)
 {
-#ifdef USE_USB_FS  
-  /* Set the LL Driver parameters */
-  hhcd.Instance = USB_OTG_FS;
-  hhcd.Init.Host_channels = 11; 
-  hhcd.Init.dma_enable = 0;
-  hhcd.Init.low_power_enable = 0;
-  hhcd.Init.phy_itface = HCD_PHY_EMBEDDED; 
-  hhcd.Init.Sof_enable = 0;
-  hhcd.Init.speed = HCD_SPEED_FULL;
-  hhcd.Init.vbus_sensing_enable = 0;
-  hhcd.Init.lpm_enable = 0;
-  
-  /* Link the driver to the stack */
-  hhcd.pData = phost;
-  phost->pData = &hhcd;
-  
-  /* Initialize the LL Driver */
-  HAL_HCD_Init(&hhcd);
-#endif
+    uint8_t                 usbId;
+    HCD_HandleTypeDef      *pHcdHandle;
 
-#ifdef USE_USB_HS
-  /* Set the LL driver parameters */
-  hhcd.Instance = USB_OTG_HS;
-  hhcd.Init.Host_channels = 6; 
-  hhcd.Init.dma_enable = 1;
-  hhcd.Init.low_power_enable = 0;
-  hhcd.Init.phy_itface = HCD_PHY_ULPI;
-  hhcd.Init.Sof_enable = 0;
-  hhcd.Init.speed = HCD_SPEED_HIGH;
-  hhcd.Init.vbus_sensing_enable = 0;
-  hhcd.Init.use_external_vbus = 0;
-  hhcd.Init.lpm_enable = 0;
-  
-  /* Link the driver to the stack */
-  hhcd.pData = phost;
-  phost->pData = &hhcd;
-  
-  /* Initialize the LL driver */
-  HAL_HCD_Init(&hhcd);
-  
-#endif /*USE_USB_HS*/ 
-  USBH_LL_SetTimer(phost, HAL_HCD_GetCurrentFrame(&hhcd));
+    usbId               = phost->id;
 
-  return USBH_OK;
+    if (usbId > 1)
+    {
+        dlog_error("usb ID should not exceed 1!\n");
+
+        return USBH_FAIL;
+    }
+
+    pHcdHandle          = &hhcd[usbId];
+
+    if (0 == usbId)
+    {
+        pHcdHandle->Instance = USB_OTG0_HS;
+    }
+    else
+    {
+        pHcdHandle->Instance = USB_OTG1_HS;
+    }
+
+    pHcdHandle->Init.Host_channels = 6; 
+    pHcdHandle->Init.dma_enable = 1;
+    pHcdHandle->Init.low_power_enable = 0;
+    pHcdHandle->Init.phy_itface = HCD_PHY_ULPI;
+    pHcdHandle->Init.Sof_enable = 0;
+    pHcdHandle->Init.speed = HCD_SPEED_HIGH;
+    pHcdHandle->Init.vbus_sensing_enable = 0;
+    pHcdHandle->Init.use_external_vbus = 0;
+    pHcdHandle->Init.lpm_enable = 0;
+    
+    /* Link the driver to the stack */
+    pHcdHandle->pData   = phost;
+    phost->pData        = pHcdHandle;
+    
+    /* Initialize the LL driver */
+    HAL_HCD_Init(pHcdHandle);
+
+    USBH_LL_SetTimer(phost, HAL_HCD_GetCurrentFrame(pHcdHandle));
+
+    return USBH_OK;
 }
 
 /**
@@ -335,14 +335,20 @@ USBH_StatusTypeDef  USBH_LL_DriverVBUS (USBH_HandleTypeDef *phost, uint8_t state
   */
 USBH_StatusTypeDef   USBH_LL_SetToggle   (USBH_HandleTypeDef *phost, uint8_t pipe, uint8_t toggle)   
 {
-  if(hhcd.hc[pipe].ep_is_in)
-  {
-    hhcd.hc[pipe].toggle_in = toggle;
-  }
-  else
-  {
-    hhcd.hc[pipe].toggle_out = toggle;
-  }
+    uint8_t                 usbId;
+    HCD_HandleTypeDef      *pHcdHandle;
+
+    usbId                   = phost->id;
+    pHcdHandle              = &hhcd[usbId];
+
+    if(pHcdHandle->hc[pipe].ep_is_in)
+    {
+        pHcdHandle->hc[pipe].toggle_in  = toggle;
+    }
+    else
+    {
+        pHcdHandle->hc[pipe].toggle_out = toggle;
+    }
 
   return USBH_OK; 
 }
@@ -356,18 +362,24 @@ USBH_StatusTypeDef   USBH_LL_SetToggle   (USBH_HandleTypeDef *phost, uint8_t pip
   */
 uint8_t  USBH_LL_GetToggle   (USBH_HandleTypeDef *phost, uint8_t pipe)   
 {
-  uint8_t toggle = 0;
+    uint8_t                 toggle;
+    uint8_t                 usbId;
+    HCD_HandleTypeDef      *pHcdHandle;
 
-  if(hhcd.hc[pipe].ep_is_in)
-  {
-    toggle = hhcd.hc[pipe].toggle_in;
-  }
-  else
-  {
-    toggle = hhcd.hc[pipe].toggle_out;
-  }  
+    toggle          = 0;
+    usbId           = phost->id;
+    pHcdHandle      = &hhcd[usbId];
 
-  return toggle; 
+    if(pHcdHandle->hc[pipe].ep_is_in)
+    {
+        toggle = pHcdHandle->hc[pipe].toggle_in;
+    }
+    else
+    {
+        toggle = pHcdHandle->hc[pipe].toggle_out;
+    }  
+
+    return toggle; 
 }
 /**
   * @brief  USBH_Delay 

@@ -39,7 +39,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern HCD_HandleTypeDef hhcd;
+extern HCD_HandleTypeDef hhcd[2];
+
 
 /** @addtogroup USBH_OTG_DRIVER
   * @{

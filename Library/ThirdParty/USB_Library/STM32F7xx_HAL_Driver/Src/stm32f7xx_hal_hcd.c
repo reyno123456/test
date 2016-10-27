@@ -265,23 +265,22 @@ void  HAL_HCD_MspInit(HCD_HandleTypeDef *hhcd)
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_HCD_MspInit could be implemented in the user file
    */
-  if(hhcd->Instance == USB_OTG_FS)
-  {
-    /* Set USBFS Interrupt priority */
-    HAL_NVIC_SetPriority(OTG_FS_IRQn, 6, 0);
-    
-    /* Enable USBFS Interrupt */
-    HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
-  }
-  else if(hhcd->Instance == USB_OTG_HS)
+  if(hhcd->Instance == USB_OTG0_HS)
   {
     /* Set USBHS Interrupt priority */
-    HAL_NVIC_SetPriority(OTG_HS_IRQn, 6, 0);
-    
-    /* Enable USBHS Interrupt */
-    HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
-  }
+    HAL_NVIC_SetPriority(OTG0_HS_IRQn, 6, 0);
 
+    /* Enable USBHS Interrupt */
+    HAL_NVIC_EnableIRQ(OTG0_HS_IRQn);
+  }
+  else if(hhcd->Instance == USB_OTG1_HS)
+  {
+    /* Set USBFS Interrupt priority */
+    HAL_NVIC_SetPriority(OTG1_HS_IRQn, 6, 0);
+
+    /* Enable USBFS Interrupt */
+    HAL_NVIC_EnableIRQ(OTG1_HS_IRQn);
+  }
 }
 
 /**
@@ -294,17 +293,9 @@ void  HAL_HCD_MspDeInit(HCD_HandleTypeDef *hhcd)
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_HCD_MspDeInit could be implemented in the user file
    */
-  if(hhcd->Instance == USB_OTG_FS)
-  {
-    /* Disable USB FS Clocks */ 
-    __HAL_RCC_USB_OTG_FS_CLK_DISABLE();
-  }
-  else if(hhcd->Instance == USB_OTG_HS)
-  {
-    /* Disable USB HS Clocks */ 
-    __HAL_RCC_USB_OTG_HS_CLK_DISABLE();
-    __HAL_RCC_USB_OTG_HS_ULPI_CLK_DISABLE();
-  }
+  /* Disable USB HS Clocks */ 
+  __HAL_RCC_USB_OTG_HS_CLK_DISABLE();
+  __HAL_RCC_USB_OTG_HS_ULPI_CLK_DISABLE();
 }
 
 /**

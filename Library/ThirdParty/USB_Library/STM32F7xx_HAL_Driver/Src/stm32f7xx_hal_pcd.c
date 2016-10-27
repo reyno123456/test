@@ -75,7 +75,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
 #include "usbd_def.h"
-
+#include "debuglog.h"
 /** @addtogroup STM32F7xx_HAL_Driver
   * @{
   */
@@ -240,36 +240,21 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef *hpcd)
             the HAL_PCD_MspInit could be implemented in the user file
    */
   
-  if(hpcd->Instance == USB_OTG_FS)
+  if(hpcd->Instance == USB_OTG1_HS)
   {
     /* Set USBFS Interrupt priority */
-    HAL_NVIC_SetPriority(OTG_FS_IRQn, 5, 0);
+    HAL_NVIC_SetPriority(OTG1_HS_IRQn, 5, 0);
     
     /* Enable USBFS Interrupt */
-    HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
-
-    if(hpcd->Init.low_power_enable == 1)
-    {
-      /* Enable EXTI Line 18 for USB wakeup*/
-      __HAL_USB_OTG_FS_WAKEUP_EXTI_CLEAR_FLAG();
-      __HAL_USB_OTG_FS_WAKEUP_EXTI_ENABLE_RISING_EDGE();
-      __HAL_USB_OTG_FS_WAKEUP_EXTI_ENABLE_IT();
-      
-      /* Set EXTI Wakeup Interrupt priority*/
-      HAL_NVIC_SetPriority(OTG_FS_WKUP_IRQn, 0, 0);
-      
-      /* Enable EXTI Interrupt */
-      HAL_NVIC_EnableIRQ(OTG_FS_WKUP_IRQn);          
-    }
-
+    HAL_NVIC_EnableIRQ(OTG1_HS_IRQn);
   }
-  else if(hpcd->Instance == USB_OTG_HS)
+  else if(hpcd->Instance == USB_OTG0_HS)
   {
     /* Set USBHS Interrupt to the lowest priority */
-    HAL_NVIC_SetPriority(OTG_HS_IRQn, 5, 0);
-    
+    HAL_NVIC_SetPriority(OTG0_HS_IRQn, 5, 0);
+
     /* Enable USBHS Interrupt */
-    HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
+    HAL_NVIC_EnableIRQ(OTG0_HS_IRQn);
   }
 
 }
@@ -284,19 +269,9 @@ void HAL_PCD_MspDeInit(PCD_HandleTypeDef *hpcd)
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_PCD_MspDeInit could be implemented in the user file
    */
-  if(hpcd->Instance == USB_OTG_FS)
-  {  
-    /* Disable USB FS Clock */
-    __HAL_RCC_USB_OTG_FS_CLK_DISABLE();
-    __HAL_RCC_SYSCFG_CLK_DISABLE();
-  }
-  else if(hpcd->Instance == USB_OTG_HS)
-  {  
-    /* Disable USB HS Clocks */
-    __HAL_RCC_USB_OTG_HS_CLK_DISABLE();
-    __HAL_RCC_SYSCFG_CLK_DISABLE();
-  }  
-
+  /* Disable USB HS Clocks */
+  __HAL_RCC_USB_OTG_HS_CLK_DISABLE();
+  __HAL_RCC_SYSCFG_CLK_DISABLE();
 }
 
 /**
@@ -346,6 +321,9 @@ HAL_StatusTypeDef HAL_PCD_Stop(PCD_HandleTypeDef *hpcd)
   __HAL_UNLOCK(hpcd); 
   return HAL_OK;
 }
+extern volatile uint32_t sendFinish;
+extern uint32_t g_sendUSBFlag;
+extern USBD_HandleTypeDef USBD_Device;
 
 /**
   * @brief  This function handles PCD interrupt request.
@@ -358,7 +336,7 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
   uint32_t i = 0, ep_intr = 0, epint = 0, epnum = 0;
   uint32_t fifoemptymsk = 0, temp = 0;
   USB_OTG_EPTypeDef *ep;
-    
+
   /* ensure that we are in device mode */
   if (USB_GetMode(hpcd->Instance) == USB_OTG_MODE_DEVICE)
   {
@@ -515,6 +493,29 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
         HAL_PCD_SuspendCallback(hpcd);
       }
       __HAL_PCD_CLEAR_FLAG(hpcd, USB_OTG_GINTSTS_USBSUSP);
+
+      USB_OTG_SET_LITTLE_ENDIAN();
+
+      g_sendUSBFlag = 0;
+
+      /* to resolve the problem of unplug during the transmit */
+      if (sendFinish == 0)
+      {
+        sendFinish = 1;
+
+        if (hpcd->Instance == USB_OTG0_HS)
+        {
+            dlog_info("restart usb0\n");
+            USBD_LL_Init(&USBD_Device);
+            HAL_PCD_Start(USBD_Device.pData);
+        }
+        else if (hpcd->Instance == USB_OTG1_HS)
+        {
+            dlog_info("restart usb1\n");
+            USBD_LL_Init(&USBD_Device);
+            HAL_PCD_Start(USBD_Device.pData);
+        }
+      }
     }
     
     /* Handle LPM Interrupt */ 
@@ -563,7 +564,7 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
       
       /* setup EP0 to receive SETUP packets */
       USB_EP0_OutStart(hpcd->Instance, hpcd->Init.dma_enable, (uint8_t *)hpcd->Setup);
-        
+
       __HAL_PCD_CLEAR_FLAG(hpcd, USB_OTG_GINTSTS_USBRST);
     }
     
@@ -758,8 +759,6 @@ void HAL_PCD_SuspendCallback(PCD_HandleTypeDef *hpcd)
             the HAL_PCD_SuspendCallback could be implemented in the user file
    */ 
   USBD_LL_Suspend(hpcd->pData);
-            
-
 }
 
 /**
@@ -1031,7 +1030,7 @@ HAL_StatusTypeDef HAL_PCD_EP_Transmit(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, 
   ep->xfer_count = 0;
   ep->is_in = 1;
   ep->num = ep_addr & 0x7F;
-  
+
   if (hpcd->Init.dma_enable == 1)
   {
     ep->dma_addr = (uint32_t)pBuf;  

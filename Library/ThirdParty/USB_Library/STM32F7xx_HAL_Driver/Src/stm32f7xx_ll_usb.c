@@ -109,7 +109,7 @@ HAL_StatusTypeDef USB_CoreInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef c
     /* Init The ULPI Interface */
     //USBx->GUSBCFG &= ~(USB_OTG_GUSBCFG_TSDPS | USB_OTG_GUSBCFG_ULPIFSLS | USB_OTG_GUSBCFG_PHYSEL);
     USBx->GUSBCFG &= ~(USB_OTG_GUSBCFG_TSDPS | USB_OTG_GUSBCFG_PHYSEL | USB_OTG_GUSBCFG_UTMISEL | USB_OTG_GUSBCFG_PHYIF);
-   
+
     /* Select vbus source */
     USBx->GUSBCFG &= ~(USB_OTG_GUSBCFG_ULPIEVBUSD | USB_OTG_GUSBCFG_ULPIEVBUSI);
     if(cfg.use_external_vbus == 1)
@@ -568,7 +568,7 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeDe
 {
   uint16_t pktcnt = 0;
   uint32_t tmp = 0;
-  
+
   /* IN endpoint */
   if (ep->is_in == 1)
   {
@@ -590,7 +590,7 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeDe
       USBx_INEP(ep->num)->DIEPTSIZ &= ~(USB_OTG_DIEPTSIZ_PKTCNT); 
       USBx_INEP(ep->num)->DIEPTSIZ |= (USB_OTG_DIEPTSIZ_PKTCNT & (((ep->xfer_len + ep->maxpacket -1)/ ep->maxpacket) << 19)) ;
       USBx_INEP(ep->num)->DIEPTSIZ |= (USB_OTG_DIEPTSIZ_XFRSIZ & ep->xfer_len); 
-      
+
       if (ep->type == EP_TYPE_ISOC)
       {
         USBx_INEP(ep->num)->DIEPTSIZ &= ~(USB_OTG_DIEPTSIZ_MULCNT); 
@@ -603,9 +603,7 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeDe
       tmp = (uint32_t)(ep->dma_addr);
 
       /* temp add for test */
-      uint32_t  *regAddr;
-      regAddr  = 0x40b00074;
-      *regAddr |= 0x2;
+      USB_OTG_SET_BIG_ENDIAN();
 
       if ((tmp >= DTCM_START_ADDR) && (tmp <= DTCM_END_ADDR))
       {
@@ -639,7 +637,7 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeDe
         USBx_INEP(ep->num)->DIEPCTL |= USB_OTG_DIEPCTL_SD0PID_SEVNFRM;
       }
     } 
-    
+
     /* EP enable, IN data in FIFO */
     USBx_INEP(ep->num)->DIEPCTL |= (USB_OTG_DIEPCTL_CNAK | USB_OTG_DIEPCTL_EPENA);
     
@@ -1198,15 +1196,7 @@ HAL_StatusTypeDef USB_HostInit (USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef 
   USBx->GCCFG |= USB_OTG_GCCFG_VBDEN;
   
   /* Disable the FS/LS support mode only */
-  if((cfg.speed == USB_OTG_SPEED_FULL)&&
-     (USBx != USB_OTG_FS))
-  {
-    USBx_HOST->HCFG |= USB_OTG_HCFG_FSLSS; 
-  }
-  else
-  {
-    USBx_HOST->HCFG &= ~(USB_OTG_HCFG_FSLSS);  
-  }
+  USBx_HOST->HCFG &= ~(USB_OTG_HCFG_FSLSS);  
 
   /* Make sure the FIFOs are flushed. */
   USB_FlushTxFifo(USBx, 0x10 ); /* all Tx FIFOs */
@@ -1230,23 +1220,10 @@ HAL_StatusTypeDef USB_HostInit (USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef 
   /* Clear any pending interrupts */
   USBx->GINTSTS = 0xFFFFFFFF;
 
-  
-  if(USBx == USB_OTG_FS)
-  {
-    /* set Rx FIFO size */
-    USBx->GRXFSIZ  = (uint32_t )0x80; 
-    USBx->DIEPTXF0_HNPTXFSIZ = (uint32_t )(((0x60 << 16)& USB_OTG_NPTXFD) | 0x80);
-    USBx->HPTXFSIZ = (uint32_t )(((0x40 << 16)& USB_OTG_HPTXFSIZ_PTXFD) | 0xE0);
-
-  }
-
-  else
-  {
-    /* set Rx FIFO size */
-    USBx->GRXFSIZ  = (uint32_t )0x200; 
-    USBx->DIEPTXF0_HNPTXFSIZ = (uint32_t )(((0x100 << 16)& USB_OTG_NPTXFD) | 0x200);
-    USBx->HPTXFSIZ = (uint32_t )(((0xE0 << 16)& USB_OTG_HPTXFSIZ_PTXFD) | 0x300);
-  }
+  /* set Rx FIFO size */
+  USBx->GRXFSIZ  = (uint32_t )0x200; 
+  USBx->DIEPTXF0_HNPTXFSIZ = (uint32_t )(((0x100 << 16)& USB_OTG_NPTXFD) | 0x200);
+  USBx->HPTXFSIZ = (uint32_t )(((0xE0 << 16)& USB_OTG_HPTXFSIZ_PTXFD) | 0x300);
   
   /* Enable the common interrupts */
   if (cfg.dma_enable == DISABLE)
@@ -1419,10 +1396,7 @@ HAL_StatusTypeDef USB_HC_Init(USB_OTG_GlobalTypeDef *USBx,
     } 
     else 
     {
-      if(USBx != USB_OTG_FS)
-      {
-        USBx_HC(ch_num)->HCINTMSK |= (USB_OTG_HCINTMSK_NYET | USB_OTG_HCINTMSK_ACKM);
-      }
+      USBx_HC(ch_num)->HCINTMSK |= (USB_OTG_HCINTMSK_NYET | USB_OTG_HCINTMSK_ACKM);
     }
     break;
   case EP_TYPE_INTR:
@@ -1501,13 +1475,8 @@ HAL_StatusTypeDef USB_HC_StartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_HCTypeDe
   uint32_t tmpreg = 0;
 
   uint32_t tmp;
-  //int *dma_addr_0 = (int *)0x21000f10;
-  //int *dma_addr_1 = (int *)0x21000f1c;   
 
-  //volatile int *dma_addr_00 = (int *)0x21000010;
-  //volatile int *dma_addr_01 = (int *)0x2100001c; 
-  
-  if((USBx != USB_OTG_FS) && (hc->speed == USB_OTG_SPEED_HIGH))
+  if(hc->speed == USB_OTG_SPEED_HIGH)
   {
     if((dma == 0) && (hc->do_ping == 1))
     {
@@ -1540,9 +1509,7 @@ HAL_StatusTypeDef USB_HC_StartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_HCTypeDe
   {
     hc->xfer_len = num_packets * hc->max_packet;
   }
-  
-  
-  
+
   /* Initialize the HCTSIZn register */
   USBx_HC(hc->ch_num)->HCTSIZ = (((hc->xfer_len) & USB_OTG_HCTSIZ_XFRSIZ)) |\
     ((num_packets << 19) & USB_OTG_HCTSIZ_PKTCNT) |\
@@ -1770,16 +1737,27 @@ HAL_StatusTypeDef USB_StopHost(USB_OTG_GlobalTypeDef *USBx)
 
 void USB_LL_OTG0_IRQHandler(void)
 {
-  if (USB_OTG_HS->GINTSTS & 0x01)
+  if (USB_OTG0_HS->GINTSTS & 0x01)
   {
-    HAL_HCD_IRQHandler(&hhcd);
+    HAL_HCD_IRQHandler(&hhcd[0]);
   }
   else
   {
-    HAL_PCD_IRQHandler(&hpcd);
+    HAL_PCD_IRQHandler(&hpcd[0]);
   }
 }
 
+void USB_LL_OTG1_IRQHandler(void)
+{
+  if (USB_OTG1_HS->GINTSTS & 0x01)
+  {
+    HAL_HCD_IRQHandler(&hhcd[1]);
+  }
+  else
+  {
+    HAL_PCD_IRQHandler(&hpcd[1]);
+  }
+}
 
 
 /**

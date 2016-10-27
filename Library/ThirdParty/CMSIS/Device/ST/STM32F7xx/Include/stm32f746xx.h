@@ -133,9 +133,9 @@ typedef enum IRQn
   UART5_IRQn                  = 53,     /*!< UART5 global Interrupt                                            */
   TIM6_DAC_IRQn               = 54,     /*!< TIM6 global and DAC1&2 underrun error  interrupts                 */
   TIM7_IRQn                   = 55,     /*!< TIM7 global interrupt                                             */
-  OTG_HS_IRQn                 = 56,
+  OTG0_HS_IRQn                = 56,
  // DMA2_Stream0_IRQn           = 56,     /*!< DMA2 Stream 0 global Interrupt                                    */
-  DMA2_Stream1_IRQn           = 57,     /*!< DMA2 Stream 1 global Interrupt                                    */
+  OTG1_HS_IRQn                = 57,     /*!< USB OTG FS global Interrupt                                       */
   DMA2_Stream2_IRQn           = 58,     /*!< DMA2 Stream 2 global Interrupt                                    */
   DMA2_Stream3_IRQn           = 59,     /*!< DMA2 Stream 3 global Interrupt                                    */
   DMA2_Stream4_IRQn           = 60,     /*!< DMA2 Stream 4 global Interrupt                                    */
@@ -1281,8 +1281,8 @@ typedef struct
 #define DBGMCU_BASE           ((uint32_t )0xE0042000)
 
 /*!< USB registers base address */
-#define USB_OTG_HS_PERIPH_BASE               ((uint32_t )0x43000000)
-#define USB_OTG_FS_PERIPH_BASE               ((uint32_t )0x43F00000)
+#define USB_OTG0_HS_PERIPH_BASE               ((uint32_t )0x43000000)
+#define USB_OTG1_HS_PERIPH_BASE               ((uint32_t )0x43100000)
 
 #define USB_OTG_GLOBAL_BASE                  ((uint32_t )0x000)
 #define USB_OTG_DEVICE_BASE                  ((uint32_t )0x800)
@@ -1404,8 +1404,8 @@ typedef struct
 #define FMC_Bank5_6         ((FMC_Bank5_6_TypeDef *) FMC_Bank5_6_R_BASE)
 #define QUADSPI             ((QUADSPI_TypeDef *) QSPI_R_BASE)
 #define DBGMCU              ((DBGMCU_TypeDef *) DBGMCU_BASE)
-#define USB_OTG_FS          ((USB_OTG_GlobalTypeDef *) USB_OTG_FS_PERIPH_BASE)
-#define USB_OTG_HS          ((USB_OTG_GlobalTypeDef *) USB_OTG_HS_PERIPH_BASE)
+#define USB_OTG0_HS          ((USB_OTG_GlobalTypeDef *) USB_OTG0_HS_PERIPH_BASE)
+#define USB_OTG1_HS          ((USB_OTG_GlobalTypeDef *) USB_OTG1_HS_PERIPH_BASE)
 
 /**
   * @}

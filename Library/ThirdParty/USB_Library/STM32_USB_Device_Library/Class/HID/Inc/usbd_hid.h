@@ -49,7 +49,7 @@
 /** @defgroup USBD_HID_Exported_Defines
   * @{
   */ 
-#define HID_EPIN_ADDR                 0x81
+#define HID_EPIN_ADDR                 0x86
 #define HID_EPIN_SIZE                 512
 
 #define HID_EPOUT_ADDR                0x01
@@ -101,8 +101,6 @@ USBD_HID_HandleTypeDef;
 /**
   * @}
   */ 
-
-extern void USBD_HID_InitGlobal(void);
 
 
 /** @defgroup USBD_CORE_Exported_Macros

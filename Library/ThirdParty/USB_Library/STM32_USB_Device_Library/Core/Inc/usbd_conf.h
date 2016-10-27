@@ -40,7 +40,7 @@
 #include <string.h>
 #include "data_type.h"
 
-extern PCD_HandleTypeDef hpcd;
+extern PCD_HandleTypeDef hpcd[2];
 
 
 /** @addtogroup STM32_USB_DEVICE_LIBRARY

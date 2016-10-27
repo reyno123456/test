@@ -27,6 +27,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_core.h"
+#include "usbd_hid.h"
 
 /** @addtogroup STM32_USBD_DEVICE_LIBRARY
 * @{
@@ -431,8 +432,7 @@ USBD_StatusTypeDef USBD_LL_Reset(USBD_HandleTypeDef  *pdev)
   
   if (pdev->pClassData) 
     pdev->pClass->DeInit(pdev, pdev->dev_config);  
- 
-  
+
   return USBD_OK;
 }
 
@@ -462,6 +462,9 @@ USBD_StatusTypeDef USBD_LL_Suspend(USBD_HandleTypeDef  *pdev)
 {
   pdev->dev_old_state =  pdev->dev_state;
   pdev->dev_state  = USBD_STATE_SUSPENDED;
+
+  ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state = HID_IDLE;
+
   return USBD_OK;
 }
 
@@ -475,6 +478,7 @@ USBD_StatusTypeDef USBD_LL_Suspend(USBD_HandleTypeDef  *pdev)
 USBD_StatusTypeDef USBD_LL_Resume(USBD_HandleTypeDef  *pdev)
 {
   pdev->dev_state = pdev->dev_old_state;  
+
   return USBD_OK;
 }
 

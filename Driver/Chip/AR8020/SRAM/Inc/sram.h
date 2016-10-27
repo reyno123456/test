@@ -8,8 +8,8 @@
 #define DMA_READY_1                0x40B0003C
 
 
-#define SRAM_DATA_VALID_LEN_0      0x40B00040
-#define SRAM_DATA_VALID_LEN_1      0x40B00044
+#define SRAM_DATA_VALID_LEN_0      (*((volatile unsigned int *)0x40B00040))
+#define SRAM_DATA_VALID_LEN_1      (*((volatile unsigned int *)0x40B00044))
 
 
 void SRAM_Ready0IRQHandler(void);

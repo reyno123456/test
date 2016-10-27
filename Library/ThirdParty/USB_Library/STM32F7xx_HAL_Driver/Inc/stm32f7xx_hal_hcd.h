@@ -232,8 +232,8 @@ uint32_t                HAL_HCD_GetCurrentSpeed(HCD_HandleTypeDef *hhcd);
 /** @defgroup HCD_Instance_definition HCD Instance definition
   * @{
   */
-#define IS_HCD_ALL_INSTANCE(INSTANCE) (((INSTANCE) == USB_OTG_FS) || \
-                                       ((INSTANCE) == USB_OTG_HS))
+#define IS_HCD_ALL_INSTANCE(INSTANCE) (((INSTANCE) == USB_OTG0_HS) || \
+                                       ((INSTANCE) == USB_OTG1_HS))
 /**
   * @}
   */
