@@ -139,11 +139,11 @@ int32_t SPI_write_read(ENUM_SPI_COMPONENT en_id,
 		busy = 0;
 		if(u32_wsize > 0)
 		{
-			uint32_t start = Get_sysTick();
+			uint32_t start = SysTicks_GetTickCount();
 			do{
 				state = Reg_Read32(SPI_BaseList[en_id]+SR);
 				busy = state & 0x01;
-			}while(busy && Get_sysTick() - start < SPI_DEF_TIMEOUT_TICKS);
+			}while(busy && SysTicks_GetTickCount() - start < SPI_DEF_TIMEOUT_TICKS);
 		}    
 		if(busy)
 		{

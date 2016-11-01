@@ -100,7 +100,7 @@ uint32_t INTR_NVIC_GetIRQPriority(IRQ_type vct)
     }
 }
 
-__attribute__((weak)) void Inc_sysTicks(void)
+__attribute__((weak)) void SysTicks_IncTickCount(void)
 {
 }
 
@@ -110,7 +110,7 @@ __attribute__((weak)) void osSystickHandler(void)
 
 void SYSTICK_IRQHandler(void)
 {
-    Inc_sysTicks();
+    SysTicks_IncTickCount();
     osSystickHandler();
 }
 

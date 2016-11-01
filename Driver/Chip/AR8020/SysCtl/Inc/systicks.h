@@ -3,10 +3,14 @@
 
 #include <stdint.h>
 
-void Inc_sysTicks(void);
+#define MAX_SYS_TICK_COUNT (0xFFFFFFFFUL)
 
-uint32_t Get_sysTick(void);
+void SysTicks_Init(uint32_t ticks);
+void SysTicks_IncTickCount(void);
+uint32_t SysTicks_GetTickCount(void);
+void SysTicks_DelayMS(uint32_t msDelay);
 
-void Delay_sysTick(uint32_t Delay);
+void msleep(uint32_t millisecs);
+void ssleep(uint32_t seconds);
 
 #endif

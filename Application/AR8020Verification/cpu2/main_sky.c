@@ -1,5 +1,6 @@
 #include "serial.h"
 #include "debuglog.h"
+#include "systicks.h"
 #include "adv_7611.h"
 #include "h264_encoder.h"
 #include "test_BB.h"
@@ -22,6 +23,8 @@ int main(void)
     /* initialize the uart */
     console_init(2, 115200);   
     dlog_info("cpu2 start!!! \n");
+
+    SysTicks_Init(166000);
     
     ADV_7611_Initial(0);
     ADV_7611_Initial(1);
@@ -38,7 +41,8 @@ int main(void)
             command_fulfill();
         }
 
-        dlog_output(100);
+        dlog_output(200);
+        SysTicks_DelayMS(20);
     }
 } 
 
