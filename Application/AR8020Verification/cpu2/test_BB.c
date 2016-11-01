@@ -29,6 +29,7 @@ void test_BB_sky(void)
     test_bbctrl_sky();
     #else
     BB_debug_print_init_sky();
+    BB_SPI_WriteByte(PAGE2, 0x06, 0x44);
     #endif
     printf("%s", log);
 }

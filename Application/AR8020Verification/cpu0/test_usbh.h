@@ -25,6 +25,8 @@ void test_DisplayFile(char *path, uint8_t recuLevel);
 void test_ProcessOperation(void);
 void USBH_UserPorcess(USBH_HandleTypeDef *phost, uint8_t id);
 void test_usbh(void);
+void USBH_ApplicationInit(void);
+void USBH_MountUSBDisk(void);
 
 
 

@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include "sram.h"
-#include "sram_common.h"
 #include "debuglog.h"
 
 
@@ -11,59 +10,12 @@ volatile uint32_t  sramReady1;
 
 void SRAM_Ready0IRQHandler(void)
 {
-    uint32_t     dataLen;
-
-    dataLen    = *((uint32_t *)SRAM_DATA_VALID_LEN_0);
-
-   // dlog_info("dataLen0: 0x%08x\n", dataLen);
-
-   // SRAM_Ready0Confirm();
-   //
-   sramReady0 = 1;
+    sramReady0 = 1;
 }
 
 void SRAM_Ready1IRQHandler(void)
 {
-    uint32_t     dataLen;
-    uint32_t     index;
-    uint8_t      *buff;
-    uint32_t     packetCount;
-    uint32_t     lastPacketLen;
-
-    dataLen    = *((uint32_t *)SRAM_DATA_VALID_LEN_1);
-    
-#if 0
-    packetCount    = dataLen + 127;
-    packetCount    >>= 7;
-
-    lastPacketLen  = dataLen - ((packetCount - 1)  << 7);
-
-    buff           = SRAM_BASE_ADDRESS + (SRAM_BB_BYPASS_OFFSET_1 << 2);
-
-    for (index = 0; index < (packetCount - 1); index++)
-    {
-        USBD_HID_SendReport(&USBD_Device, (uint8_t *)(buff + ( index << 9 )), 0x200);
-    }
-    
-    USBD_HID_SendReport(&USBD_Device, (uint8_t *)(buff + ( index << 9 )), (lastPacketLen << 2));
-#endif
-//    volatile uint32_t  *regCount = 0x40b00048;
-//    *regCount = 1;
-   sramReady1 = 1;
-
-
-
-#if 0
-    dlog_info("0x21000000: 0x%08x\n", *((uint32_t *)0x21000000));
-    dlog_info("0x21000004: 0x%08x\n", *((uint32_t *)0x21000004));
-    dlog_info("0x21000008: 0x%08x\n", *((uint32_t *)0x21000008));
-    dlog_info("0x2100000C: 0x%08x\n", *((uint32_t *)0x2100000C));
-    dlog_info("0x21000010: 0x%08x\n", *((uint32_t *)0x21000010));
-    dlog_info("0x21000014: 0x%08x\n", *((uint32_t *)0x21000014));
-    dlog_info("0x21000018: 0x%08x\n", *((uint32_t *)0x21000018));
-    dlog_info("0x2100001C: 0x%08x\n", *((uint32_t *)0x2100001C));
-#endif
-//    SRAM_Ready1Confirm();
+    sramReady1 = 1;
 }
 
 
@@ -80,5 +32,50 @@ void SRAM_Ready1Confirm(void)
     Reg_Write32(DMA_READY_1, 1);
 }
 
+
+void SRAM_GROUND_BypassVideoConfig(void)
+{
+    uint8_t      temp;
+
+    /* Base Band bypass data, directly write to SRAM */
+    #if 0
+    temp    = BB_SPI_ReadByte(PAGE1, 0x8d);
+    temp   |= 0x40;
+    BB_SPI_WriteByte(PAGE1, 0x8d, temp);
+
+    BB_SPIWriteByte(PAGE2, 0x56, 0x06);
+    #endif
+    /* Threshold of usb_fifo in BaseBand */
+
+    /* Set the start address of sram for bb bypass channel 0*/
+    Reg_Write32(SRAM_WR_ADDR_OFFSET_0, SRAM_BB_BYPASS_OFFSET_0);
+
+    /* Set the max num of SRAM_READY interrupt trigger signal */
+    Reg_Write32(SRAM_WR_MAX_LEN_0, SRAM_DMA_READY_LEN);
+
+    /* Set the start address of sram for bb bypass channel 1*/
+    Reg_Write32(SRAM_WR_ADDR_OFFSET_1, SRAM_BB_BYPASS_OFFSET_1);
+
+    /* Set the max num of SRAM_READY interrupt trigger signal */
+    Reg_Write32(SRAM_WR_MAX_LEN_1, SRAM_DMA_READY_LEN);
+
+}
+
+
+void SRAM_SKY_BypassVideoConfig(uint32_t channel)
+{
+    if (0 == channel)
+    {
+        Reg_Write32(SRAM_VIEW0_ENABLE_ADDR, 1);
+    }
+    else
+    {
+        Reg_Write32(SRAM_VIEW1_ENABLE_ADDR, 4);
+    }
+
+    Reg_Write32(SRAM_SKY_MASTER_ID_ADDR, SRAM_SKY_MASTER_ID_VALUE);
+
+    Reg_Write32(SRAM_SKY_MASTER_ID_MASK_ADDR, SRAM_SKY_MASTER_ID_MASK_VALUE);
+}
 
 

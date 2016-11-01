@@ -27,8 +27,8 @@ SRC_C := SysCtl/Src/reg_rw.c \
          SysCtl/Src/inter_core.c \
          SysCtl/Src/pll_ctrl.c \
          SysCtl/Src/systicks.c \
-		 SysCtl/Src/timer.c \
-		 SysCtl/Src/gpio.c \
+         SysCtl/Src/timer.c \
+         SysCtl/Src/gpio.c \
          UART/Src/serial.c \
          SD/Src/sd_core.c \
          SD/Src/sd_card.c \
@@ -36,7 +36,6 @@ SRC_C := SysCtl/Src/reg_rw.c \
          I2C/Src/i2c_ll.c \
          I2C/Src/i2c.c \
          SRAM/Src/sram.c \
-         SRAM/Src/sram_bb.c \
          BB/Src/BB_ctrl.c \
          SPI/Src/spi.c \
          SPI/Src/BB_spi.c \
@@ -79,8 +78,6 @@ install:
 	@cp -f SPI/Inc/BB_spi.h $(OUTPUT_HEADER_STAGING_DIR)    
 	@cp -f SD/Inc/* $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SRAM/Inc/sram.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f SRAM/Inc/sram_common.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f SRAM/Inc/sram_bb.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/pll_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/systicks.h $(OUTPUT_HEADER_STAGING_DIR)

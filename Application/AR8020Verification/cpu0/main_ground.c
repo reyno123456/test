@@ -5,6 +5,7 @@
 #include "command.h"
 #include "test_usbd.h"
 #include "test_sram.h"
+#include "sram.h"
 
 extern USBD_HandleTypeDef USBD_Device;
 
@@ -46,29 +47,38 @@ void console_init(uint32_t uart_num, uint32_t baut_rate)
 
 void usb_data_dump(void)
 {
+    uint8_t         *buff0;
+    uint8_t         *buff1;
+    uint32_t         dataLen0;
+    uint32_t         dataLen1;
+
+    buff0           = SRAM_BUFF_0_ADDRESS;
+    buff1           = SRAM_BUFF_1_ADDRESS;
+
     if ((sramReady0 == 1)||(sramReady1 == 1))
     {
-        //    for (index = 0; index < 16; index++)
-        //    {
-          sendFinish = 0;
-        //        USBD_HID_SendReport(&USBD_Device, (uint8_t *)(0x21002000 + ( index << 9 )), 8192);
-        //        (sendCount)++;
-        //    }
+        sendFinish = 0;
 
-          if (sramReady0 == 1)
-          {
-              sramReady0 = 0;
-              USBD_HID_SendReport(&USBD_Device, (uint8_t *)0x21000000, 8192);
-              while(sendFinish == 0);
-              SRAM_Ready0Confirm();
-          }
-          else if (sramReady1 == 1)
-          {
-              sramReady1 = 0;
-              USBD_HID_SendReport(&USBD_Device, (uint8_t *)0x21002000, 8192);
-              while(sendFinish == 0);
-              SRAM_Ready1Confirm();
-          }
+        if (sramReady0 == 1)
+        {
+            sramReady0      = 0;
+            dataLen0        = SRAM_DATA_VALID_LEN_0;
+            dataLen0        = (dataLen0 << 2);
+
+            USBD_HID_SendReport(&USBD_Device, buff0, dataLen0);
+            while(sendFinish == 0);
+            SRAM_Ready0Confirm();
+        }
+        else if (sramReady1 == 1)
+        {
+            sramReady1 = 0;
+            dataLen1        = SRAM_DATA_VALID_LEN_1;
+            dataLen1        = (dataLen1 << 2);
+
+            USBD_HID_SendReport(&USBD_Device, buff1, dataLen1);
+            while(sendFinish == 0);
+            SRAM_Ready1Confirm();
+        }
     }
 }
 
