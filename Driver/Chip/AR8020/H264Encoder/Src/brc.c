@@ -209,7 +209,7 @@ int VEBRC_IRQ_Handler( )
                 }
                 my_rc_ac_br(0);
                 if(rca.v0_re_bitrate==1 && rca.v0_fd_last_row==1) // change bit rate
-                    READ_WORD(V0_BR_ADDR,rca.v0_new_bitrate); //read br
+                    READ_WORD(V0_BR_ADDR,rca.v0_bit_rate); //read br
 
                 READ_WORD(V0_MAD_ADDR,v0_mad_tmp); //read mad
                 READ_WORD(V0_HBITS_ADDR,v0_hbits_tmp); //read hbits
@@ -255,7 +255,7 @@ int VEBRC_IRQ_Handler( )
                 }
                 my_rc_ac_br(1);
                 if(rca.v1_re_bitrate==1 && rca.v1_fd_last_row==1) // change bit rate
-                    READ_WORD(V1_BR_ADDR,rca.v1_new_bitrate); //read br
+                    READ_WORD(V1_BR_ADDR,rca.v1_bit_rate); //read br
 
                 READ_WORD(V1_MAD_ADDR,v1_mad_tmp); //read mad
                 READ_WORD(V1_HBITS_ADDR,v1_hbits_tmp); //read hbits
@@ -301,7 +301,7 @@ int VEBRC_IRQ_Handler( )
                 }
                 my_rc_ac_br(1);
                 if(rca.v1_re_bitrate==1 && rca.v1_fd_last_row==1) // change bit rate
-                    READ_WORD(V1_BR_ADDR,rca.v1_new_bitrate); //read br
+                    READ_WORD(V1_BR_ADDR,rca.v1_bit_rate); //read br
 
                 READ_WORD(V0_MAD_ADDR,v1_mad_tmp); //read mad
                 READ_WORD(V0_HBITS_ADDR,v1_hbits_tmp); //read hbits
@@ -426,8 +426,8 @@ void my_v0_feedback( )
     rca.v0_fd_last_row = (i>>8)&0x1;
     //rca.fd_cpu_test = (i>>7)&0x1;
     rca.v0_fd_irq_en = (i>>4)&0x1;
-    if(rca.v0_re_bitrate==0)
-        rca.v0_re_bitrate = (i>>3)&0x1;
+    //if(rca.v0_re_bitrate==0)
+    rca.v0_re_bitrate = (i>>3)&0x1;
     //if(rca.v0_fd_reset==0)
     rca.v0_fd_reset = (i>>2)&0x1;
     rca.v0_fd_iframe = (i>>1)&0x1;
@@ -447,8 +447,8 @@ void my_v1_feedback( )
     rca.v1_fd_row_cnt = (i>>9)&0x7f;
     rca.v1_fd_last_row = (i>>8)&0x1;
     rca.v1_fd_irq_en = (i>>4)&0x1;
-    if(rca.v1_re_bitrate==0)
-        rca.v1_re_bitrate = (i>>3)&0x1;
+    //if(rca.v1_re_bitrate==0)
+    rca.v1_re_bitrate = (i>>3)&0x1;
     //if(rca.v1_fd_reset==0)
     rca.v1_fd_reset = (i>>2)&0x1;
     rca.v1_fd_iframe = (i>>1)&0x1;
@@ -921,6 +921,7 @@ void my_v0_rc_init_seq( )
     rca.v0_BUCFMAD_8p[i] = 0;
   }
 
+  rca.v0_PrevBitRate = rca.v0_bit_rate; //lhumod
   //compute the total number of MBs in a frame
   if(rca.v0_basicunit >= rca.v0_FrameSizeInMbs)
     rca.v0_basicunit = rca.v0_FrameSizeInMbs;
@@ -1019,7 +1020,7 @@ void my_v0_rc_init_GOP(int np)
     if(rca.v0_RCUpdateMode == RC_MODE_3) // running this only once !!!
     {
         // calculate allocated bits for each type of frame
-        gop_bits = (!rca.v0_intra_period? 1:rca.v0_intra_period) * rca.v0_frame_bs;
+        gop_bits = (!rca.v0_intra_period? 1:rca.v0_intra_period) * (rca.v0_bit_rate/rca.v0_framerate);
         denom = 1;
         
         if(rca.v0_intra_period>=1)
@@ -1045,11 +1046,11 @@ void my_v0_rc_init_GOP(int np)
     OverBits=-rca.v0_RemainingBits;
 
     //initialize the lower bound and the upper bound for the target bits of each frame, HRD consideration
-    rca.v0_LowerBound  = rca.v0_RemainingBits + rca.v0_frame_bs;
+    rca.v0_LowerBound  = rca.v0_RemainingBits + (rca.v0_bit_rate/rca.v0_framerate);
     rca.v0_UpperBound1 = rca.v0_RemainingBits + (rca.v0_bit_rate<<1); //2.048
 
     //compute the total number of bits for the current GOP
-    gop_bits = (1+np)*rca.v0_frame_bs; //  rca.bit_rate/rca.framerate); // + 0.5);
+    gop_bits = (1+np)*(rca.v0_bit_rate/rca.v0_framerate);
     rca.v0_RemainingBits += gop_bits;
     rca.v0_Np = np;
 
@@ -1121,14 +1122,14 @@ void my_v0_rc_init_pict(int mult)
     if ( rca.v0_type==P_SLICE || ((rca.v0_RCUpdateMode==RC_MODE_1 || (rca.v0_type==I_SLICE&&rca.v0_RCUpdateMode==RC_MODE_3)) && (!(rca.v0_gop_cnt==0 && rca.v0_frame_cnt==0))) ) // lhulhu
     {
       //// for CBR ...
-      // if(prc->PrevBitRate!=prc->bit_rate)
-      //   generic_RC->RemainingBits +=(int) floor((prc->bit_rate-prc->PrevBitRate)*(prc->Np + prc->Nb)/prc->frame_rate+0.5);
-      if(rca.v0_re_bitrate == 1)
+      if(rca.v0_PrevBitRate!=rca.v0_bit_rate)
+        rca.v0_RemainingBits += (rca.v0_bit_rate - rca.v0_PrevBitRate)*rca.v0_Np/rca.v0_framerate;
+      /*if(rca.v0_re_bitrate == 1)
       {
         rca.v0_re_bitrate = 0;
         rca.v0_RemainingBits += (rca.v0_new_bitrate - rca.v0_bit_rate)*rca.v0_Np/rca.v0_framerate;
         rca.v0_bit_rate = rca.v0_new_bitrate;
-      }
+      }*/
 
       // Frame - Level
       if(rca.v0_BasicUnit >= rca.v0_FrameSizeInMbs)
@@ -1208,7 +1209,7 @@ void my_v0_rc_init_pict(int mult)
             {
 //18              rca.Target = (int) floor( rca.RemainingBits / rca.Np + 0.5);
                 rca.v0_Target = rca.v0_RemainingBits/rca.v0_Np;
-                tmp_T=my_imax(0, (rca.v0_frame_bs - ((rca.v0_CurrentBufferFullness-rca.v0_TargetBufferLevel)>>1)));
+                tmp_T=my_imax(0, ((rca.v0_bit_rate/rca.v0_framerate) - ((rca.v0_CurrentBufferFullness-rca.v0_TargetBufferLevel)>>1)));
 //s              rca.Target = ((rca.Target-tmp_T)/rca.BETAP) + tmp_T;
                 rca.v0_Target = (rca.v0_Target+tmp_T)>>1;
             }
@@ -1221,7 +1222,7 @@ void my_v0_rc_init_pict(int mult)
         {
 //18          rca.Target = (int)(floor(rca.RemainingBits/rca.Np + 0.5));
           rca.v0_Target = rca.v0_RemainingBits/rca.v0_Np;
-          tmp_T = my_imax(0, (rca.v0_frame_bs - ((rca.v0_CurrentBufferFullness-rca.v0_TargetBufferLevel)>>1)));
+          tmp_T = my_imax(0, ((rca.v0_bit_rate/rca.v0_framerate) - ((rca.v0_CurrentBufferFullness-rca.v0_TargetBufferLevel)>>1)));
 
 //s          rca.Target = ((rca.Target-tmp_T)*rca.BETAP) + tmp_T;
           rca.v0_Target = ((rca.v0_Target+tmp_T)>>1);
@@ -1256,6 +1257,7 @@ void my_v0_rc_init_pict(int mult)
       rca.v0_NumberofBasicUnitTextureBits = 0;
       rca.v0_TotalMADBasicUnit = 0;
     }
+    rca.v0_PrevBitRate = rca.v0_bit_rate; // lhumod
 }
 
 
@@ -1282,7 +1284,7 @@ void my_v0_rc_update_pict(int nbits) // after frame running once
   }
 /////////////////////////////////////////////////////
 
-  delta_bits=nbits - rca.v0_frame_bs;
+  delta_bits=nbits - (rca.v0_bit_rate/rca.v0_framerate);
   // remaining # of bits in GOP
   rca.v0_RemainingBits -= nbits;
   rca.v0_CurrentBufferFullness += delta_bits;
@@ -1756,7 +1758,7 @@ int my_v0_updateQPRC0( )
         else
         {
           m_Bits = rca.v0_Target-m_Hp;
-          m_Bits = my_imax(m_Bits, (rca.v0_frame_bs/MINVALUE));
+          m_Bits = my_imax(m_Bits, ((rca.v0_bit_rate/rca.v0_framerate)/MINVALUE));
 
           my_v0_updateModelQPFrame( m_Bits );
 
@@ -2241,7 +2243,7 @@ void my_v0_updateModelQPBU( int m_Qp )
   //compute the number of texture bits
   m_Bits -=rca.v0_PAveHeaderBits2;
 
-  m_Bits=my_imax(m_Bits,(rca.v0_frame_bs/(MINVALUE*rca.v0_TotalNumberofBasicUnit)));
+  m_Bits=my_imax(m_Bits,((rca.v0_bit_rate/rca.v0_framerate)/(MINVALUE*rca.v0_TotalNumberofBasicUnit)));
 
   //dtmp = rca.v0_CurrentMAD*rca.v0_CurrentMAD*rca.v0_m_X1*rca.v0_m_X1 + 4*rca.v0_m_X2*rca.v0_CurrentMAD*m_Bits;
   dtmp_8p = ((long long)rca.v0_CurrentMAD_8p>>6)*((long long)rca.v0_CurrentMAD_8p>>6)*((long long)rca.v0_m_X1_8p>>6)*((long long)rca.v0_m_X1_8p>>6) + \
@@ -2709,6 +2711,7 @@ void my_v1_rc_init_seq( )
     rca.v1_BUCFMAD_8p[i] = 0;
   }
 
+  rca.v1_PrevBitRate = rca.v1_bit_rate; //lhumod
   //compute the total number of MBs in a frame
   if(rca.v1_basicunit >= rca.v1_FrameSizeInMbs)
     rca.v1_basicunit = rca.v1_FrameSizeInMbs;
@@ -2807,7 +2810,7 @@ void my_v1_rc_init_GOP(int np)
     if(rca.v1_RCUpdateMode == RC_MODE_3) // running this only once !!!
     {
         // calculate allocated bits for each type of frame
-        gop_bits = (!rca.v1_intra_period? 1:rca.v1_intra_period)* rca.v1_frame_bs;
+        gop_bits = (!rca.v1_intra_period? 1:rca.v1_intra_period)* (rca.v1_bit_rate/rca.v1_framerate);
         denom = 1;
         
         if(rca.v1_intra_period>=1)
@@ -2833,11 +2836,11 @@ void my_v1_rc_init_GOP(int np)
     OverBits=-rca.v1_RemainingBits;
 
     //initialize the lower bound and the upper bound for the target bits of each frame, HRD consideration
-    rca.v1_LowerBound  = rca.v1_RemainingBits + rca.v1_frame_bs;
+    rca.v1_LowerBound  = rca.v1_RemainingBits + (rca.v1_bit_rate/rca.v1_framerate);
     rca.v1_UpperBound1 = rca.v1_RemainingBits + (rca.v1_bit_rate<<1); //2.048
 
     //compute the total number of bits for the current GOP
-    gop_bits = (1+np)*rca.v1_frame_bs; //  rca.bit_rate/rca.framerate); // + 0.5);
+    gop_bits = (1+np)*(rca.v1_bit_rate/rca.v1_framerate);
     rca.v1_RemainingBits += gop_bits;
     rca.v1_Np = np;
 
@@ -2908,14 +2911,14 @@ void my_v1_rc_init_pict(int mult)
     if ( rca.v1_type==P_SLICE || ((rca.v1_RCUpdateMode==RC_MODE_1 || (rca.v1_type==I_SLICE&&rca.v1_RCUpdateMode==RC_MODE_3)) && (!(rca.v1_gop_cnt==0 && rca.v1_frame_cnt==0))) ) // lhulhu
     {
       //// for CBR ...
-      // if(prc->PrevBitRate!=prc->bit_rate)
-      //   generic_RC->RemainingBits +=(int) floor((prc->bit_rate-prc->PrevBitRate)*(prc->Np + prc->Nb)/prc->frame_rate+0.5);
-      if(rca.v1_re_bitrate == 1)
+      if(rca.v1_PrevBitRate!=rca.v1_bit_rate)
+        rca.v1_RemainingBits += (rca.v1_bit_rate - rca.v1_PrevBitRate)*rca.v1_Np/rca.v1_framerate;
+      /*if(rca.v1_re_bitrate == 1)
       {
         rca.v1_re_bitrate = 0;
         rca.v1_RemainingBits += (rca.v1_new_bitrate - rca.v1_bit_rate)*rca.v1_Np/rca.v1_framerate;
         rca.v1_bit_rate = rca.v1_new_bitrate;
-      }
+      }*/
 
       // Frame - Level
       if(rca.v1_BasicUnit >= rca.v1_FrameSizeInMbs)
@@ -2995,7 +2998,7 @@ void my_v1_rc_init_pict(int mult)
             {
 //18              rca.Target = (int) floor( rca.RemainingBits / rca.Np + 0.5);
                 rca.v1_Target = rca.v1_RemainingBits/rca.v1_Np;
-                tmp_T=my_imax(0, (rca.v1_frame_bs - ((rca.v1_CurrentBufferFullness-rca.v1_TargetBufferLevel)>>1)));
+                tmp_T=my_imax(0, ((rca.v1_bit_rate/rca.v1_framerate) - ((rca.v1_CurrentBufferFullness-rca.v1_TargetBufferLevel)>>1)));
 //s              rca.Target = ((rca.Target-tmp_T)/rca.BETAP) + tmp_T;
                 rca.v1_Target = (rca.v1_Target+tmp_T)>>1;
             }
@@ -3009,7 +3012,7 @@ void my_v1_rc_init_pict(int mult)
 //18          rca.Target = (int)(floor(rca.RemainingBits/rca.Np + 0.5));
 
           rca.v1_Target = rca.v1_RemainingBits/rca.v1_Np;
-          tmp_T = my_imax(0, (rca.v1_frame_bs - ((rca.v1_CurrentBufferFullness-rca.v1_TargetBufferLevel)>>1)));
+          tmp_T = my_imax(0, ((rca.v1_bit_rate/rca.v1_framerate) - ((rca.v1_CurrentBufferFullness-rca.v1_TargetBufferLevel)>>1)));
 //s          rca.Target = ((rca.Target-tmp_T)*rca.BETAP) + tmp_T;
           rca.v1_Target = ((rca.v1_Target+tmp_T)>>1);
         }
@@ -3043,6 +3046,7 @@ void my_v1_rc_init_pict(int mult)
       rca.v1_NumberofBasicUnitTextureBits = 0;
       rca.v1_TotalMADBasicUnit = 0;
     }
+    rca.v1_PrevBitRate = rca.v1_bit_rate; //lhumod
 }
 
 
@@ -3069,7 +3073,7 @@ void my_v1_rc_update_pict(int nbits) // after frame running once
   }
 /////////////////////////////////////////////////////
 
-  delta_bits=nbits - rca.v1_frame_bs;
+  delta_bits=nbits - (rca.v1_bit_rate/rca.v1_framerate);
   // remaining # of bits in GOP
   rca.v1_RemainingBits -= nbits;
   rca.v1_CurrentBufferFullness += delta_bits;
@@ -3543,7 +3547,7 @@ int my_v1_updateQPRC0( )
         else
         {
           m_Bits = rca.v1_Target-m_Hp;
-          m_Bits = my_imax(m_Bits, (rca.v1_frame_bs/MINVALUE));
+          m_Bits = my_imax(m_Bits, ((rca.v1_bit_rate/rca.v1_framerate)/MINVALUE));
 
           my_v1_updateModelQPFrame( m_Bits );
 
@@ -4029,7 +4033,7 @@ void my_v1_updateModelQPBU( int m_Qp )
   //compute the number of texture bits
   m_Bits -=rca.v1_PAveHeaderBits2;
 
-  m_Bits=my_imax(m_Bits,(rca.v1_frame_bs/(MINVALUE*rca.v1_TotalNumberofBasicUnit)));
+  m_Bits=my_imax(m_Bits,((rca.v1_bit_rate/rca.v1_framerate)/(MINVALUE*rca.v1_TotalNumberofBasicUnit)));
 
   //dtmp = rca.v1_CurrentMAD*rca.v1_CurrentMAD*rca.v1_m_X1*rca.v1_m_X1 + 4*rca.v1_m_X2*rca.v1_CurrentMAD*m_Bits;
   dtmp_8p = ((long long)rca.v1_CurrentMAD_8p>>6)*((long long)rca.v1_CurrentMAD_8p>>6)*((long long)rca.v1_m_X1_8p>>6)*((long long)rca.v1_m_X1_8p>>6) + \

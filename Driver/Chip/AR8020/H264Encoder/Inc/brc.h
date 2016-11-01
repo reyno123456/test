@@ -52,6 +52,7 @@ struct my_rc{
   int    v0_c1_over; //
   int    v0_re_bitrate;
   int    v0_new_bitrate;
+  int    v0_PrevBitRate;// lhumod
   int    v0_cmadequ0;// lhumod
   int    v0_TotalFrameMAD;// lhumod
   int    v0_RCEnableAutoConfigGOP;// @lhu
@@ -205,6 +206,7 @@ struct my_rc{
   int    v1_re_bitrate;
   int    v1_new_bitrate;
   int    v1_cmadequ0;// lhumod
+  int    v1_PrevBitRate;// lhumod
   int    v1_TotalFrameMAD;// lhumod
   int    v1_RCEnableAutoConfigGOP;// @lhu
   int    v1_RCEnableAutoConfigIOPRatio;// @lhu
