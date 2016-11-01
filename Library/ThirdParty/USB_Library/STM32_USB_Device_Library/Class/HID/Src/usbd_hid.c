@@ -179,7 +179,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ]  __ALIGN_
   USB_DESC_TYPE_ENDPOINT, /*bDescriptorType:*/
   
   HID_EPIN_ADDR,     /*bEndpointAddress: Endpoint Address (IN)*/
-  0x03,          /*bmAttributes: Interrupt endpoint*/
+  0x02,          /*bmAttributes: Interrupt endpoint*/
   LOBYTE(HID_EPIN_SIZE), /*wMaxPacketSize: 4 Byte max */
   HIBYTE(HID_EPIN_SIZE),
   HID_HS_BINTERVAL,          /*bInterval: Polling Interval (10 ms)*/
@@ -187,7 +187,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ]  __ALIGN_
   0x07,
   USB_DESC_TYPE_ENDPOINT,
   HID_EPOUT_ADDR,
-  0x03,
+  0x02,
   LOBYTE(HID_EPOUT_SIZE),
   LOBYTE(HID_EPOUT_SIZE),
   HID_HS_BINTERVAL,

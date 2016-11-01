@@ -1,11 +1,10 @@
 #include "test_sram.h"
 #include "interrupt.h"
 #include "sram.h"
-#include "sram_bb.h"
 
 void test_sram_init(void)
 {
-    SRAM_BB_BypassVideoConfig();
+    SRAM_GROUND_BypassVideoConfig();
 
     /* register the irq handler */
     reg_IrqHandle(BB_SRAM_READY_IRQ_0_VECTOR_NUM, SRAM_Ready0IRQHandler);

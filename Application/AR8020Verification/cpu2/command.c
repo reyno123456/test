@@ -255,10 +255,6 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         BB_uart10_spi_sel( strtoul(cmdArray[1], NULL, 0) );
     }
-    else if (memcmp(cmdArray[0], "test_sram_bb", strlen("test_sram_bb")) == 0)
-    {
-        test_sram_bb();
-    }   
     else if (memcmp(cmdArray[0], "hdmiinit", strlen("hdmiinit")) == 0)
     {
         command_initADV7611(cmdArray[1]);
@@ -313,7 +309,6 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("hdmiread <slv address> <reg address>");
         dlog_error("hdmiwrite <slv address> <reg address> <reg value>");
         dlog_error("BB_uart10_spi_sel <value>");
-        dlog_error("test_sram_bb");     
         dlog_error("test_nor_flash_all <flash start address> <size> <value>");
         dlog_error("test_TestGpioNormal <gpionum> <highorlow>");
         dlog_error("test_TestGpioNormalRange <gpionum1> <gpionum2> <highorlow>");

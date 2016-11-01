@@ -9,11 +9,15 @@
 #include "usbh_diskio.h"
 #include "interrupt.h"
 
+#define USB_VIDEO_BYPASS_SIZE_ONCE      (8192)
+#define USB_VIDEO_BYPASS_DEST_ADDR      (0xB1000000)
+
 /* USB Host Global Variables */
 USBH_HandleTypeDef   hUSBHost;
 FATFS                USBH_fatfs;
-FIL                  MyFile;
-uint8_t              rtext[200];
+FIL                  MyUSBFile;
+uint8_t              fileOpened = 0;
+uint8_t              rtext[1024];
 uint8_t              wtext[] = "USB Host Library : Mass Stroage Example";
 
 
@@ -25,7 +29,7 @@ void test_OperateFile(void)
     uint32_t          bytesread;
     uint32_t          bytesWritten;
 
-    fileResult = f_open(&MyFile, "0:USBHost.txt", FA_CREATE_ALWAYS | FA_WRITE);
+    fileResult = f_open(&MyUSBFile, "0:USBHost.txt", FA_CREATE_ALWAYS | FA_WRITE);
 
     if (FR_OK != fileResult)
     {
@@ -34,9 +38,9 @@ void test_OperateFile(void)
         return;
     }
 
-    fileResult = f_write(&MyFile, wtext, sizeof(wtext), (void *)&bytesWritten);
+    fileResult = f_write(&MyUSBFile, wtext, sizeof(wtext), (void *)&bytesWritten);
 
-    f_close(&MyFile);
+    f_close(&MyUSBFile);
 
     if((bytesWritten == 0) || (fileResult != FR_OK))
     {
@@ -45,27 +49,27 @@ void test_OperateFile(void)
         return;
     }
 
-    fileResult = f_open(&MyFile, "0:USBHost.txt", FA_READ);
+    fileResult = f_open(&MyUSBFile, "0:USBHost.txt", FA_READ);
 
-    if(f_open(&MyFile, "0:USBHost.txt", FA_READ) != FR_OK)
+    if(f_open(&MyUSBFile, "0:USBHost.txt", FA_READ) != FR_OK)
     {
         dlog_error("open read file error: %d");
 
         return;
     }
 
-    fileResult = f_read(&MyFile, rtext, sizeof(rtext), (void *)&bytesread);
+    fileResult = f_read(&MyUSBFile, rtext, sizeof(rtext), (void *)&bytesread);
 
     if((bytesread == 0) || (fileResult != FR_OK))
     {
         dlog_error("Cannot Read from the file \n");
 
-        f_close(&MyFile);
+        f_close(&MyUSBFile);
 
         return;
     }
 
-    f_close(&MyFile);
+    f_close(&MyUSBFile);
 
     if (bytesread == bytesWritten)
     {
@@ -163,6 +167,76 @@ void test_DisplayFile(char *path, uint8_t recuLevel)
 }
 
 
+void test_usbDiskBypassVideo(void)
+{
+    FRESULT             fileResult;
+    uint32_t            bytesread;
+    uint8_t            *destAddr;
+
+    bytesread           = 0;
+    destAddr            = USB_VIDEO_BYPASS_DEST_ADDR;
+
+    if (APPLICATION_READY == Appli_state)
+    {
+        if (fileOpened == 0)
+        {
+            fileOpened = 1;
+
+            fileResult = f_open(&MyUSBFile, "0:usbtest.264", FA_READ);
+
+            if(fileResult != FR_OK)
+            {
+                dlog_error("open file error: %d\n", (uint32_t)fileResult);
+
+                return;
+            }
+        }
+#if 0
+        fileResult = f_lseek(&MyUSBFile, byteToSeek);
+
+        if(fileResult != FR_OK)
+        {
+            dlog_error("seek file error: %d\,", (uint32_t)fileResult);
+
+            return;
+        }
+#endif
+        fileResult = f_read(&MyUSBFile, destAddr, USB_VIDEO_BYPASS_SIZE_ONCE, (void *)&bytesread);
+
+        if(fileResult != FR_OK)
+        {
+            dlog_error("Cannot Read from the file \n");
+
+            f_close(&MyUSBFile);
+
+            return;
+        }
+
+        dlog_info("write done!\n");
+
+        if (bytesread < USB_VIDEO_BYPASS_SIZE_ONCE)
+        {
+            dlog_info("read 0x%08x!\n", (uint32_t)bytesread);
+            fileOpened = 0;
+
+            f_close(&MyUSBFile);
+        }
+        else
+        {
+            dlog_info("read 0x%08x!\n", (uint32_t)bytesread);
+        }
+
+        return;
+    }
+    else
+    {
+        fileOpened = 0;
+
+        f_close(&MyUSBFile);
+    }
+}
+
+
 void test_ProcessOperation(void)
 {
     switch (fileOperation.state)
@@ -237,12 +311,8 @@ void USBH_UserPorcess(USBH_HandleTypeDef *phost, uint8_t id)
 }
 
 
-void test_usbh(void)
+void USBH_ApplicationInit(void)
 {
-    FRESULT   fileResult;
-
-    dlog_info("start test_usbh\n");
-
     reg_IrqHandle(OTG_INTR0_VECTOR_NUM, USB_LL_OTG0_IRQHandler);
 
     USBH_Init(&hUSBHost, USBH_UserPorcess, 0);
@@ -250,6 +320,12 @@ void test_usbh(void)
     USBH_RegisterClass(&hUSBHost, USBH_MSC_CLASS);
 
     USBH_Start(&hUSBHost);
+}
+
+
+void USBH_MountUSBDisk(void)
+{
+    FRESULT   fileResult;
 
     FATFS_LinkDriver(&USBH_Driver, "0:/");
 
@@ -261,16 +337,26 @@ void test_usbh(void)
 
         return;
     }
+}
+
+void test_usbh(void)
+{
+    USBH_ApplicationInit();
+
+    USBH_MountUSBDisk();
 
     dlog_info("start to operate file\n");
 
-    fileOperation.state     = FILE_OPERATION_START;
-    fileOperation.operated  = 0;
+    //fileOperation.state     = FILE_OPERATION_START;
+    //fileOperation.operated  = 0;
 
     while (1)
     {
         USBH_Process(&hUSBHost);
 
-        test_ProcessOperation();
+        //test_ProcessOperation();
+        test_usbDiskBypassVideo();
     }
 }
+
+
