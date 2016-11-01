@@ -423,13 +423,15 @@ uint8_t USBD_HID_SendReport     (USBD_HandleTypeDef  *pdev,
                                  uint16_t len)
 {
   USBD_HID_HandleTypeDef     *hhid = (USBD_HID_HandleTypeDef*)pdev->pClassData;
-  
+
+  sendFinish        = 1;
+
   if (pdev->dev_state == USBD_STATE_CONFIGURED )
   {
     if(hhid->state == HID_IDLE)
     {
-      sendFinish = 0;
-      hhid->state = HID_BUSY;
+      sendFinish    = 0;
+      hhid->state   = HID_BUSY;
       USBD_LL_Transmit (pdev, 
                         HID_EPIN_ADDR,                                      
                         report,
