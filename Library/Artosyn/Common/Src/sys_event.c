@@ -32,14 +32,14 @@ static uint8_t releaseSysEventList(void)
     return TRUE;
 }
 
-static uint8_t enableInterrupts(void)
+static inline void enableInterrupts(void)
 {
-    return TRUE;
+    __asm volatile ("cpsie i");
 }
 
-static uint8_t disableInterrupts(void)
+static inline void disableInterrupts(void)
 {
-    return TRUE;
+    __asm volatile ("cpsid i");
 }
 
 /**
@@ -313,9 +313,6 @@ static uint8_t removeNotifiedSysEventNode(STRU_NotifiedSysEvent_Node* pNode)
     STRU_NotifiedSysEvent_Node** ppFirstNode;
     STRU_NotifiedSysEvent_Node** ppLastNode;
 
-    // Avoid event notification in ISR functions to change the notified event list at the same time
-    disableInterrupts();
-
     ppFirstNode = &g_notifiedSysEventList;
     ppLastNode  = &g_notifiedSysEventList_tail;
  
@@ -324,6 +321,9 @@ static uint8_t removeNotifiedSysEventNode(STRU_NotifiedSysEvent_Node* pNode)
         return FALSE;  
     }
     
+    // Avoid event notification in ISR functions to change the notified event list at the same time
+    disableInterrupts();
+
     if(pNode == *ppFirstNode)
     {
         // The head node to be removed
