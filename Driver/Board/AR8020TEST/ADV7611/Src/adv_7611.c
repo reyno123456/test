@@ -1,9 +1,11 @@
 #include <stddef.h>
 #include <stdint.h>
+#include "data_type.h"
 #include "adv_define.h"
 #include "i2c.h"
 #include "adv_7611.h"
 #include "debuglog.h"
+#include "sys_event.h"
 
 static unsigned char hdmi_edid_table[][3] =
 {
@@ -330,6 +332,19 @@ static unsigned char adv_i2c_addr_table[][3] =
     {0xFF, 0xFF, 0xFF}                          //End flag
 };
 
+static STRU_ADV7611Format g_ADV7611SupportedFormatArray[] =
+{
+    {720,  480,  60},
+    {1280, 720,  30},
+    {1280, 720,  50},
+    {1280, 720,  60},
+    {1920, 1080, 30},
+    {1920, 1080, 50},
+    {1920, 1080, 60},
+};
+
+static STRU_ADV7611Status g_ADV7611Status = {0};
+
 static void ADV_7611_Delay(unsigned int count)
 {
     volatile unsigned int i = count;
@@ -403,10 +418,92 @@ static void ADV_7611_GenericInitial(uint8_t index)
     ADV_7611_WriteTable(index, hdmi_default_settings);
 }
 
+static uint8_t ADV_7611_CheckVideoFormatSupportOrNot(uint32_t width, uint32_t hight, uint32_t framerate)
+{
+    uint8_t i = 0;
+    uint8_t array_size = sizeof(g_ADV7611SupportedFormatArray)/sizeof(g_ADV7611SupportedFormatArray[0]);
+
+    for (i = 0; i < array_size; i++)
+    {
+        if ((width == g_ADV7611SupportedFormatArray[i].width) &&
+            (hight == g_ADV7611SupportedFormatArray[i].hight) &&
+            (framerate == g_ADV7611SupportedFormatArray[i].framerate))
+        {
+            break;
+        }
+    }
+
+    if (i < array_size)
+    {
+        return TRUE;
+    }
+    else
+    {
+        return FALSE;
+    }
+}
+
+static uint8_t ADV_7611_CheckVideoFormatChangeOrNot(uint8_t index, uint32_t width, uint32_t hight, uint32_t framerate)
+{
+    if (index >= 2)
+    {
+        return FALSE;
+    }
+    
+    if ((g_ADV7611Status.video_format[index].width != width) ||
+        (g_ADV7611Status.video_format[index].hight != hight) ||
+        (g_ADV7611Status.video_format[index].framerate!= framerate))
+    {
+        return TRUE;
+    }
+    else
+    {
+        return FALSE;
+    }
+}
+
+static void ADV_7611_CheckFormatStatus(uint8_t index, uint8_t no_diff_check)
+{
+    uint32_t width, hight, framerate;
+    ADV_7611_GetVideoFormat(index, &width, &hight, &framerate);
+    if (ADV_7611_CheckVideoFormatSupportOrNot(width, hight, framerate) == TRUE)
+    {
+        if ((no_diff_check == TRUE) || (ADV_7611_CheckVideoFormatChangeOrNot(index, width, hight, framerate) == TRUE))
+        {
+            STRU_SysEvent_ADV7611FormatChangeParameter p;
+            p.index = index;
+            p.width = width;
+            p.hight = hight;
+            p.framerate = framerate;
+            SYS_EVENT_Notify(SYS_EVENT_ID_ADV7611_FORMAT_CHANGE, (void*)&p);
+
+            g_ADV7611Status.video_format[index].width = width;
+            g_ADV7611Status.video_format[index].hight = hight;
+            g_ADV7611Status.video_format[index].framerate = framerate;
+        }
+    }
+}
+
+static void ADV_7611_IdleCallback(void *paramPtr)
+{
+    if (g_ADV7611Status.device_mask & ADV7611_0_DEVICE_ENABLE_MASK)
+    {
+        ADV_7611_CheckFormatStatus(0, FALSE);
+    }
+    
+    if (g_ADV7611Status.device_mask & ADV7611_1_DEVICE_ENABLE_MASK)
+    {
+        ADV_7611_CheckFormatStatus(1, FALSE);
+    }
+}
+
 void ADV_7611_Initial(uint8_t index)
 {
     ADV_7611_I2CInitial();
     ADV_7611_GenericInitial(index);
+    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_IDLE, ADV_7611_IdleCallback);
+    g_ADV7611Status.device_mask |= (1 << index);
+    dlog_info("HDMI ADV7611 %d init finished!", index);
 }
 
 void ADV_7611_GetVideoFormat(uint8_t index, uint32_t* widthPtr, uint32_t* hightPtr, uint32_t* framteratePtr)

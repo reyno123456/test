@@ -18,8 +18,7 @@ void console_init(uint32_t uart_num, uint32_t baut_rate)
   * @retval None
   */
 int main(void)
-{  
-    //(*(volatile unsigned int *)0x40B0008C) = 0x00500000; //PATCH for FPGA version, PIN MUX for UART9
+{
     /* initialize the uart */
     console_init(2, 115200);   
     dlog_info("cpu2 start!!! \n");
@@ -32,13 +31,14 @@ int main(void)
 
     for( ;; )
     {
+        SYS_EVENT_Process();
+        
         if (command_getEnterStatus() == 1)
         {
             command_fulfill();
         }
 
-        dlog_output(1);
+        dlog_output(100);
     }
 } 
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -122,7 +122,7 @@ char *strchr(const char *s, int c)
 	return (char *)s;
 }
 
-#undef memset
+//#undef memset
 
 void *memset(void *s, int c, size_t count)
 {

@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include "debuglog.h"
 
 typedef long Align;/*for alignment to long boundary*/
 
@@ -54,6 +55,7 @@ void *sbrk(ptrdiff_t increment)
 
     if ((new < mem_malloc_start) || (new > mem_malloc_end))
     {
+        dlog_error("malloc out of boundary!");
         return (void *)MORECORE_FAILURE;
     }
 

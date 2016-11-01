@@ -61,9 +61,7 @@ SECTIONS
         *(.bss)
         *(COMMON)
         _bss_end = .;
-    } > DTCM2_DATA AT> ITCM2
-
-
+    } > DTCM2_DATA
 }
 
 

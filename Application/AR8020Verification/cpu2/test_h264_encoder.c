@@ -13,5 +13,5 @@ void command_encoder_update_brc(unsigned char br)
 
 void command_encoder_update_video(unsigned int width, unsigned int hight, unsigned int framerate)
 {
-    H264_Encoder_UpdateVideoInfo(0, width, hight, framerate);
+    //H264_Encoder_UpdateVideoInfo(0, width, hight, framerate);
 }

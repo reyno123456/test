@@ -6,10 +6,66 @@
 #include "vsoc_enc.h"
 #include "interrupt.h"
 #include "reg_map.h"
-
-//#define RUN_IN_EMULATOR
+#include "sys_event.h"
 
 static STRU_EncoderStatus g_stEncoderStatus[2] = { 0 };
+
+static int H264_Encoder_UpdateVideoInfo(unsigned char view, unsigned int resW, unsigned int resH, unsigned int framerate)
+{
+    if (view > 2)
+    {
+        return 0;
+    }
+    
+    if(g_stEncoderStatus[view].resW != resW ||
+       g_stEncoderStatus[view].resH != resH ||
+       g_stEncoderStatus[view].framerate != framerate)
+    {
+        if (view == 0)
+        {
+            INTR_NVIC_DisableIRQ(VIDEO_ARMCM7_IRQ_VECTOR_NUM);
+            close_view0();
+            init_view0(resW, resH, g_stEncoderStatus[0].gop, framerate, g_stEncoderStatus[0].bitrate);
+            my_v0_initial_all( );
+            open_view0(g_stEncoderStatus[0].brc_enable);
+            if (g_stEncoderStatus[0].brc_enable)
+            {
+                INTR_NVIC_EnableIRQ(VIDEO_ARMCM7_IRQ_VECTOR_NUM);
+            }
+        }
+        else if (view == 1)
+        {
+            INTR_NVIC_DisableIRQ(VIDEO_ARMCM7_IRQ_VECTOR_NUM);
+            close_view1();
+            init_view1(resW, resH, g_stEncoderStatus[1].gop, framerate, g_stEncoderStatus[1].bitrate);
+            my_v1_initial_all( );
+            open_view1(g_stEncoderStatus[1].brc_enable);
+            if (g_stEncoderStatus[0].brc_enable)
+            {
+                INTR_NVIC_EnableIRQ(VIDEO_ARMCM7_IRQ_VECTOR_NUM);
+            }
+        }
+        
+        g_stEncoderStatus[view].resW = resW;
+        g_stEncoderStatus[view].resH = resH;
+        g_stEncoderStatus[view].framerate = framerate;
+
+        dlog_info("Video format change: %d, %d, %d, %d\n", view, resW, resH, framerate);
+    }
+
+    return 1;
+}
+
+static void H264_Encoder_InputVideoFormatChangeCallback(void* p)
+{
+    uint8_t index  = ((STRU_SysEvent_ADV7611FormatChangeParameter*)p)->index;
+    uint16_t width = ((STRU_SysEvent_ADV7611FormatChangeParameter*)p)->width;
+    uint16_t hight = ((STRU_SysEvent_ADV7611FormatChangeParameter*)p)->hight;
+    uint8_t framerate = ((STRU_SysEvent_ADV7611FormatChangeParameter*)p)->framerate;
+
+    // ADV7611 0,1 is connected to H264 encoder 1,0
+    H264_Encoder_UpdateVideoInfo((index == 0) ? 1 : 0, width, hight, framerate);    
+}
 
 void VEBRC_IRQ_Wrap_Handler(void)
 {
@@ -28,77 +84,21 @@ int H264_Encoder_Init(void)
     dlog_info("sdram init OK\n");
 
     reg_IrqHandle(VIDEO_ARMCM7_IRQ_VECTOR_NUM, VEBRC_IRQ_Wrap_Handler);
+    INTR_NVIC_DisableIRQ(VIDEO_ARMCM7_IRQ_VECTOR_NUM);
 
-    NVIC_ISER->ISER1 = 0x30000000;
-
-#ifdef RUN_IN_EMULATOR    // Test in emulator    
-    GPIO_CFG_PTR p_gpio_cfg = (GPIO_CFG_PTR)0x40b0007c;
-    p_gpio_cfg->SFR_PAD_CTRL0   = 0x00000000;
-    p_gpio_cfg->SFR_PAD_CTRL1   = 0x00000000;
-    p_gpio_cfg->SFR_PAD_CTRL2   = 0x50000000;
-    p_gpio_cfg->SFR_PAD_CTRL3   = 0xFFFFF005;
-    p_gpio_cfg->SFR_PAD_CTRL4   = 0x005FFFFF;
-    p_gpio_cfg->SFR_PAD_CTRL5   = 0xFFF00000;
-    p_gpio_cfg->SFR_PAD_CTRL6   = 0x0F000FFF;
-    p_gpio_cfg->SFR_PAD_CTRL7   = 0x00014000;
-    p_gpio_cfg->SFR_PAD_CTRL8   = 0x00000000;
-    p_gpio_cfg->SFR_DEBUG0      = 0x00000001;
-#endif
-
-    /* BR - 0: 8Mbps, 1: 1Mbps, 4: 4Mbps, 8: 500kbps, 10: 10Mbps */
-    //init_view0( 1920, 1080, 10, 60, 1);
-    init_view0( 1280, 720, 10, 60, 1);
-    v0_poweron_rc_params_set = 1;
-    g_stEncoderStatus[0].resW = 720;
-    g_stEncoderStatus[0].resH = 480;
     g_stEncoderStatus[0].gop = 10;
-    g_stEncoderStatus[0].framerate = 60;
-    g_stEncoderStatus[0].bitrate = 1;
-
-    //init_view1( 1920, 1080, 10, 60, 1);
-    init_view1( 1280, 720, 10, 60, 1);
-    v1_poweron_rc_params_set = 1;
-    g_stEncoderStatus[1].resW = 720;
-    g_stEncoderStatus[1].resH = 480;
-    g_stEncoderStatus[1].gop = 10;
-    g_stEncoderStatus[1].framerate = 60;
-    g_stEncoderStatus[1].bitrate = 1;
-
-    my_v0_initial_all( );
-    dlog_info("View0 Initial Done\n");
-    my_v1_initial_all( );
-    dlog_info("View1 Initial Done\n");
-
-    /* Enable view 1 */
-    open_view1( 1 ); 
     g_stEncoderStatus[0].brc_enable = 1;
+    g_stEncoderStatus[0].bitrate = 1;
+    v0_poweron_rc_params_set = 1;
+
+    g_stEncoderStatus[1].gop = 10;
+    g_stEncoderStatus[1].brc_enable = 1;
+    g_stEncoderStatus[1].bitrate = 1;
+    v1_poweron_rc_params_set = 1;
+
+    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_ADV7611_FORMAT_CHANGE, H264_Encoder_InputVideoFormatChangeCallback);
 
     return 1;
-}
-
-int H264_Encoder_UpdateVideoInfo(unsigned char view, unsigned int resW, unsigned int resH, unsigned int framerate)
-{
-    if(g_stEncoderStatus[view].resW != resW ||
-       g_stEncoderStatus[view].resH != resH ||
-       g_stEncoderStatus[view].framerate != framerate)
-    {
-        if (view == 0)
-        {
-            close_view0();
-            init_view0(resW, resH, g_stEncoderStatus[0].gop, framerate, g_stEncoderStatus[0].bitrate);
-            open_view0(g_stEncoderStatus[0].brc_enable);
-        }
-        else if (view == 1)
-        {
-            close_view1();
-            init_view1(resW, resH, g_stEncoderStatus[1].gop, framerate, g_stEncoderStatus[1].bitrate);
-            open_view1(g_stEncoderStatus[1].brc_enable);
-        }
-        
-        g_stEncoderStatus[view].resW = resW;
-        g_stEncoderStatus[view].resH = resH;
-        g_stEncoderStatus[view].framerate = framerate;
-    }
 }
 
 int H264_Encoder_UpdateBitrate(unsigned char view, unsigned char br)
@@ -107,15 +107,27 @@ int H264_Encoder_UpdateBitrate(unsigned char view, unsigned char br)
     {
         if (view == 0)
         {
+            INTR_NVIC_DisableIRQ(VIDEO_ARMCM7_IRQ_VECTOR_NUM);
             close_view0();
             init_view0(g_stEncoderStatus[0].resW, g_stEncoderStatus[0].resH, g_stEncoderStatus[0].gop, g_stEncoderStatus[0].framerate, br);
+            my_v0_initial_all( );
             open_view0(g_stEncoderStatus[0].brc_enable);
+            if (g_stEncoderStatus[0].brc_enable)
+            {
+                INTR_NVIC_EnableIRQ(VIDEO_ARMCM7_IRQ_VECTOR_NUM);
+            }
         }
         else if (view == 1)
         {
+            INTR_NVIC_DisableIRQ(VIDEO_ARMCM7_IRQ_VECTOR_NUM);
             close_view1();
             init_view1(g_stEncoderStatus[1].resW, g_stEncoderStatus[1].resH, g_stEncoderStatus[1].gop, g_stEncoderStatus[1].framerate, br);
+            my_v1_initial_all( );
             open_view1(g_stEncoderStatus[1].brc_enable);
+            if (g_stEncoderStatus[1].brc_enable)
+            {
+                INTR_NVIC_EnableIRQ(VIDEO_ARMCM7_IRQ_VECTOR_NUM);
+            }
         }
         g_stEncoderStatus[view].bitrate = br;
     }
