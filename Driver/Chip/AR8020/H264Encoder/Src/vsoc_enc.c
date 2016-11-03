@@ -180,7 +180,7 @@ void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsig
     WRITE_WORD((ENC_REG_ADDR+(0x36<<2)),0x00000000);
     WRITE_WORD((ENC_REG_ADDR+(0x37<<2)),0x00000000);
 #else
-    WRITE_WORD((ENC_REG_ADDR+(0x33<<2)),0x39414A00);
+    WRITE_WORD((ENC_REG_ADDR+(0x33<<2)),0x39414A80);
 #endif
 }
 
@@ -247,7 +247,7 @@ void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsig
     WRITE_WORD((ENC_REG_ADDR+(0x36<<2)),0x00000000);
     WRITE_WORD((ENC_REG_ADDR+(0x37<<2)),0x00000000);
 #else
-    WRITE_WORD((ENC_REG_ADDR+(0x33<<2)),0x39414A00);
+    WRITE_WORD((ENC_REG_ADDR+(0x33<<2)),0x39414A80);
 #endif
 }
 void open_view0( unsigned int rc_en ){ // hold until SDRAM initial done

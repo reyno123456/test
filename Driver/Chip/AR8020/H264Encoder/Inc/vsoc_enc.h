@@ -127,6 +127,8 @@ typedef struct ENC_REG_STRUCT {
 #define 	VSOC_ENC_REG_BASE	0xA0010000	// master
 #define 	ENC_REG_ADDR        0xA0010000	// master
 
+#define     VSOC_SOFT_RESET     0xA0030034
+
 //=== VSOC_ENC Register Mapping ===//
 //#define VIEW0_IMG_WR_EN         0
 //#define VIEW0_EN                0

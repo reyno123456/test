@@ -39,6 +39,7 @@ void sdram_init_check(void);
 
 typedef struct
 {
+    unsigned char running;
     unsigned int resW;
     unsigned int resH;
     unsigned int gop;
