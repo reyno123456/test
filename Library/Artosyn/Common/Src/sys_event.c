@@ -286,25 +286,54 @@ static uint8_t removeExistedSysEventHandlerNode(STRU_RegisteredSysEvent_Node* pE
  * Internal functions about notified event node
  **/
 
-static STRU_NotifiedSysEvent_Node* findNotifiedSysEventNodeByPriority(uint32_t priorityMask)
+static STRU_NotifiedSysEvent_Node* findNotifiedSysEventNodeByPriority(void)
 {
     STRU_NotifiedSysEvent_Node* pNode = g_notifiedSysEventList;
+    STRU_NotifiedSysEvent_Node* pFirstHighNode = NULL;
+    STRU_NotifiedSysEvent_Node* pFirstMidiumNode = NULL;
+    STRU_NotifiedSysEvent_Node* pFirstLowNode = NULL;
     
     if(NULL == pNode)
     {
         return NULL;  
     }
-    
+
     while(NULL != pNode)
-    {  
-        if(pNode->event_id & priorityMask)
+    {
+        if((pNode->event_id & SYS_EVENT_LEVEL_HIGH_MASK) && (NULL == pFirstHighNode))
         {
-            return pNode;
+            pFirstHighNode = pNode;
+            // When the fisrt hight priority node is found, stop the list parse.
+            return pFirstHighNode;
+        }
+        else if((pNode->event_id & SYS_EVENT_LEVEL_MIDIUM_MASK) && (NULL == pFirstMidiumNode))
+        {
+            pFirstMidiumNode = pNode;
+        }
+        else if((pNode->event_id & SYS_EVENT_LEVEL_LOW_MASK) && (NULL == pFirstLowNode))
+        {
+            pFirstLowNode = pNode;
+        }
+        else
+        {
+            dlog_error("The system event ID priority level is not right!");
         }
         
         pNode = pNode ->next;  
-    }  
-      
+    }
+
+    if(NULL != pFirstMidiumNode)
+    {
+        // No high priority node is found, choose the first midium priority node.
+        return pFirstMidiumNode;
+    }
+
+    if(NULL != pFirstLowNode)
+    {
+        // No high priority and midium priority node is found, choose the first low priority node.
+        return pFirstLowNode;
+    }
+    
     return NULL;
 }
 
@@ -507,17 +536,7 @@ uint8_t SYS_EVENT_Process(void)
     acquireSysEventList();
 
     // Get the notification node with the highest priority in the notification list
-    STRU_NotifiedSysEvent_Node* processNode = findNotifiedSysEventNodeByPriority(SYS_EVENT_LEVEL_HIGH_MASK);
-
-    if (processNode == NULL)
-    {
-        processNode = findNotifiedSysEventNodeByPriority(SYS_EVENT_LEVEL_MIDIUM_MASK);
-
-        if (processNode == NULL)
-        {
-            processNode = findNotifiedSysEventNodeByPriority(SYS_EVENT_LEVEL_LOW_MASK);
-        }
-    }
+    STRU_NotifiedSysEvent_Node* processNode = findNotifiedSysEventNodeByPriority();
 
     if (processNode != NULL)
     {
