@@ -108,10 +108,16 @@ n_tx_ant        RW  [7:7] 1 0x1
 
 // custom
 
-#define IT_FREQ_TX    ((uint8_t)0x60 )
-#define RC_FREQ_TX    ((uint8_t)0x61 )
-#define QAM_CHANGE    ((uint8_t)0x62 )
-#define RC_FH_PATTERN ((uint8_t)0x63 )
+#define IT_FREQ_TX_0    ((uint8_t)0x60 )
+#define IT_FREQ_TX_1    ((uint8_t)0x61 )
+
+#define RC_FREQ_TX_0    ((uint8_t)0x62 )
+#define RC_FREQ_TX_1    ((uint8_t)0x63 )
+
+#define QAM_CHANGE_0    ((uint8_t)0x64 )
+#define QAM_CHANGE_1    ((uint8_t)0x65 )
+
+#define RC_FH_PATTERN   ((uint8_t)0x66 )
 
 
 #define CALI_0_1     ((uint8_t)(0xD0+0x00))/* page 0 0xD0+0x00
@@ -168,23 +174,11 @@ n_tx_ant        RW  [7:7] 1 0x1
                                            [1]reg_tx_iq_on
                                            [0]reg_tx_gain_on
                                        */
-#define CA_2       ((uint8_t)0xA2 )     /*
-                                           [7]reg_filter3_gain_sel
-                                           [6]reg_tx_iq_swap
-                                           [5]reg_fix_rx_cali
-                                           [4]reg_rx_iter_on
-                                           [3]reg_tx_iqmis_debug
-                                           [2]reg_tx_amdet_debug
-                                           [1]reg_tx_debug_mode
-                                           [0]reg_tx_iter_on
-                                        */
-#define CA_3       ((uint8_t)0xA3 )     /*
-                                           [7]  reg_tssi_cali_fix
-                                           [6:4]reserved
-                                           [3:2]reg_tssi_time_option
-                                           [1]  reg_tssi_diff
-                                           [0]  reg_tssi_cali_on
-                                        */
+
+#define     SWEEP_ENERGY_HIGH       (0xa2)
+#define     SWEEP_ENERGY_MID        (0xa3)
+#define     SWEEP_ENERGY_LOW        (0xa4)
+
 #define CA_5       ((uint8_t)0xA5 )     /*
                                           [7:0]reg_fix_tx_sign; 1: minus; 0:plus
                                           [7]  reg_txa_ofs_i_sign
@@ -296,18 +290,6 @@ n_tx_ant        RW  [7:7] 1 0x1
 #define FEC_10       ((uint8_t)(0x53))  //PAGE2_rc_id[15:8]   0x03 RW  [7:0]
 #define FEC_11       ((uint8_t)(0x54))  //PAGE2_rc_id[7:0]    0x04 RW  [7:0]
 
-
-/*#define AGC3_0     ((uint8_t)0xB0 )     //reg_aggc_work_frequency[7:0].
-#define AGC3_1     ((uint8_t)0xB1 )     //reg_aggc_work_frequency[15:8].
-#define AGC3_2     ((uint8_t)0xB2 )     //reg_aggc_work_frequency[23:16].
-#define AGC3_3     ((uint8_t)0xB3 )     //reg_aggc_work_frequency[31:24].
-#define AGC3_4     ((uint8_t)0xB4 )     //reg_aggc_work_frequency[39:32].
-#define AGC3_5     ((uint8_t)0xB5 )     //reg_aggc_sweep_frequency[7:0].
-#define AGC3_6     ((uint8_t)0xB6 )     //reg_aggc_sweep_frequency[15:8].
-#define AGC3_7     ((uint8_t)0xB7 )     //reg_aggc_sweep_frequency[23:16].
-#define AGC3_8     ((uint8_t)0xB8 )     //reg_aggc_sweep_frequency[31:24].
-#define AGC3_9     ((uint8_t)0xB9 )     //reg_aggc_sweep_frequency[39:32].*/
-
 #define AGC3_0     ((uint8_t)0x10 )     //reg_aggc_work_frequency[7:0].
 #define AGC3_1     ((uint8_t)0x11 )     //reg_aggc_work_frequency[15:8].
 #define AGC3_2     ((uint8_t)0x12 )     //reg_aggc_work_frequency[23:16].
@@ -369,9 +351,6 @@ n_tx_ant        RW  [7:7] 1 0x1
                                                [2:4] coderate
                                                [0:1] QAM
                                             */
-#define TLV_MASK    (0x60)
-#define CR_MASK     (0x1C)
-#define QAM_MASK    (0x03)
 
 
 #define FEC_1_RD    ((uint8_t)0xD2 )  //[7:0]Dec_rc_id[39:32]
@@ -379,26 +358,12 @@ n_tx_ant        RW  [7:7] 1 0x1
 #define FEC_2_RD_2  ((uint8_t)0xD4 )  //[7:0]Dec_rc_id[23:16]
 #define FEC_2_RD_3  ((uint8_t)0xD5 )  //[7:0]Dec_rc_id[15:8]
 #define FEC_2_RD_4  ((uint8_t)0xD6 )  //[7:0]Dec_rc_id[7:0]
-/*
-0xc8  0x0a  0xD2  dec_rc_id[39:32]  RO  7 0 8     dec_rc_id FEC_1_RD
-0xc8  0x0b  0xD3  dec_rc_id[31:24]  RO  7 0 8       FEC_2_RD
-0xc8  0x0c  0xD4  dec_rc_id[23:16]  RO  7 0 8       FEC_2_RD
-0xc8  0x0d  0xD5  dec_rc_id[15:8] RO  7 0 8       FEC_2_RD
-0xc8  0x0e  0xD6  dec_rc_id[7:0]  RO  7 0 8       FEC_2_RD
-*/
+
 
 #define FEC_3_RD_1  ((uint8_t)0xE7 )  //Ldpc_err_num_rd[15:8]
 
 #define FEC_3_RD_2  ((uint8_t)0xE8 )  //Ldpc_err_num_rd[7:0]
 
-//#define FEC_4_RD    ((uint8_t)0xE9 )  
-                                          /*
-                                          PAGE2
-                                          [7]    Rc_err_flg
-                                          [6:2]  Reserved
-                                          [1]    crc_check_ok
-                                          [0]    id_match
-                                          */
 #define FEC_4_RD    ((uint8_t)0xD9 )      /*PAGE2   0xc8  0x11  0xD9                                       
                                           rc_err_flg  RO  [7:7]
                                           nr_check_ok_hold  RO  [2:2]
@@ -425,14 +390,21 @@ n_tx_ant        RW  [7:7] 1 0x1
 #define FEC_9_RD    ((uint8_t)0xEE )   //Harq_ldpc_err_num_rd [15:8]
 #define FEC_10_RD   ((uint8_t)0xEF )   //Fec_debug_sel?Harq_ldpc_err_pkg: Harq_ldpc_err_num_rd[7:0]
 
-
-
 //
-#define CE_01         ((uint8_t) 0x31)
-#define CE_9_RD       ((uint8_t) 0xD9)      //SNR_DOUT [15:8]
-#define CE_A_RD       ((uint8_t) 0xDA)      //SNR_DOUT [7:0]
+#define     CE_01                   (0x31)
+#define     CE_9_RD                 (0xD9)      //SNR_DOUT [15:8]
+#define     CE_A_RD                 (0xDA)      //SNR_DOUT [7:0]
 
+#define     GRD_RC_ID_BIT07_00_REG  (0x5f)
+#define     GRD_RC_ID_BIT15_08_REG  (0x5e)
+#define     GRD_RC_ID_BIT23_16_REG  (0x5d)
+#define     GRD_RC_ID_BIT31_24_REG  (0x5c)
+#define     GRD_RC_ID_BIT39_32_REG  (0x5b)
 
+#define     SWEEP_FREQ_0        (0x14)
+#define     SWEEP_FREQ_1        (0x15)
+#define     SWEEP_FREQ_2        (0x16)
+#define     SWEEP_FREQ_3        (0x17)
 
 #endif
 

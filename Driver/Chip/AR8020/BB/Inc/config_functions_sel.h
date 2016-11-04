@@ -4,50 +4,30 @@
 
 //**********************  sel the ground( rf & frq )  **********************
 
-//#define  GRD_RF8003_2P3
-
 #define  GRD_RF8003_2P4
 #define  SKY_RF8003_2P4
 
-
-
 //**********************  sel the sky( rf & frq )   **************************
+#define  POWER_GATE         (0x40)        //Reg[c5/c6] power #define  POWER_Thresholds.
+#define  AAGC_GAIN_FAR      (0x16)
+#define  AAGC_GAIN_NEAR     (0x30)
 
-#if defined(GRD_RF8003_2P3) || defined(SKY_RF8003_2P3) || defined(GRD_RF8003_2P4) ||\
-    defined(SKY_RF8003_2P4)
+#define  QAM_BPSK           (0x00 << 6)
+#define  QAM_4QAM           (0x01 << 6)
+#define  QAM_16QAM          (0x02 << 6)
+#define  QAM_64QAM          (0x03 << 6)
 
-     #define  POWER_GATE     0x40     //Reg[c5/c6] power #define  POWER_Thresholds.
-     #define  AAGC_GAIN_FAR  0x16
-     #define  AAGC_GAIN_NEAR 0x30
-     #define  RC_FRQ_NUM     0x20
-     #define  IT_FRQ_NUM     0x07
-     #define  QAM_BPSK       (0x10 << 1)
-     #define  QAM_4QAM       (0x30 << 1)
-     #define  QAM_16QAM      (0x50 << 1)
-     #define  QAM_64QAM      (0x70 << 1)
-#else
-
-     #define  POWER_GATE     0x40     //Reg[c5/c6] power #define  POWER_Thresholds.
-     #define  AAGC_GAIN_FAR  0x4C
-     #define  AAGC_GAIN_NEAR 0x30
-     #define  RC_FRQ_NUM     0x28
-     #define  IT_FRQ_NUM     0x08
-     #define  QAM_BPSK       0x90
-     #define  QAM_4QAM       0xB0
-     #define  QAM_16QAM      0xD0
-     #define  QAM_64QAM      0xF0
-#endif
 //*****************  define page1 or page2  ********************
 
- #define  PAGE_1             0x80
- #define  PAGE_2             0x7F
- #define  ID_SEARCH_MAX_TIMES 0x28
- #define  ID_MATCH_MAX_TIMES  0x05
- #define  RC_ID_BIT39_32     0x55     //Gound ID Values in Reg[03..07](high-->low).
- #define  RC_ID_BIT31_24     0xF0
- #define  RC_ID_BIT23_16     0x55
- #define  RC_ID_BIT15_08     0xF0
- #define  RC_ID_BIT07_00     0x55
+ #define  PAGE_1                0x80
+ #define  PAGE_2                0x7F
+ #define  ID_SEARCH_MAX_TIMES   0x28
+ #define  ID_MATCH_MAX_TIMES    0x05
+ #define  RC_ID_BIT39_32        0x55     //Gound ID Values in Reg[03..07](high-->low).
+ #define  RC_ID_BIT31_24        0xF0
+ #define  RC_ID_BIT23_16        0x55
+ #define  RC_ID_BIT15_08        0xF0
+ #define  RC_ID_BIT07_00        0x55
 
  #define  SKY_RC_FRQ_INIT    0x01     //Sky Initial Freq Value.
  #define  SKY_ID_BIT39_32    0xFF     //Gound ID Values in Reg[03..07](high-->low).

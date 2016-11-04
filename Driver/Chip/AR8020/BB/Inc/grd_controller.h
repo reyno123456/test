@@ -16,7 +16,6 @@
 #include <stdint.h>
 #include "debuglog.h"
 
-
 /**
   * @brief Ground Controller Structure definition
   */
@@ -71,9 +70,9 @@ typedef struct
                                  This parameter can be a value of @ref <1,2,3...>  */
    uint8_t Ldpcreadcnt;       /*!< Specifies the cnt of statistics Ldpc err num .
                                  This parameter can be a value of @ref <Reg[E7][E8]>  */
-
-
+    uint8_t workfrqcnt;         /*!< Specifies the current IT working frequency .*/
 }Grd_HandleTypeDef;
+
 
 typedef struct
 {
@@ -141,7 +140,6 @@ void Grd_Parm_Initial(void);
 void Grd_Write_Rcfrq(uint8_t i);
 void Grd_Write_Itworkfrq(uint8_t i);
 void Grd_Write_Itsweepfrq(uint8_t i);
-void Grd_Id_Initial(void);
 
 // Read Reg[EB] of baseband , lock or not.
 uint8_t Grd_Baseband_Fec_Lock(void);
@@ -159,7 +157,7 @@ void Grd_Getsnr(uint8_t i);  //get SNR value at present
 void Grd_Frqsnr_Array(void);
 void Grd_Qamsnr_Array(void);
 void Grd_Frq_Snrblock_Determine(uint16_t iMCS);
-uint8_t Grd_Sweeppower_Fluctuate_Average(void);     //¨¦¡§?¦Ì¦Ì?2¡§?¡¥D?o¨ª???¨´?¦Ì
+uint8_t Grd_Sweeppower_Fluctuate_Average(void);     //?¡ì|??¨¬?|¡§?|¡§??2??¨¬??¡ê¡èD?o?¡ìa????¡ì???|¡§?
 void Grd_Ldpc_Err_Num_Statistics(void);             //2 // 2 sec
 uint8_t Grd_Ldpc_Block_Determine(void);
 void Grd_Itfrq_Hopping(void);
@@ -170,4 +168,8 @@ void Grd_IT_Controller(void);
 void Grd_Osdmsg_Ptf(void);
 
 void wimax_vsoc_tx_isr();
+
+void Grd_Timer1_Init(void);
+
+void Grd_Timer0_Init(void);
 #endif

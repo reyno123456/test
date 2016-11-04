@@ -43,30 +43,33 @@ enum EN_AGC_MODE
 
 typedef struct
 {
-     uint8_t RCChannel;       /*!< Specifies the remote controller working in freq channel.
-                                    This parameter can be a value of @ref <RC_FREQ_MODE>   */
-     uint8_t ITChannel;       /*!< Specifies the image transmission working frq channel from ground.
-                                    This parameter can be a value of @ref <IT_FREQ_MODE>   */
-     uint8_t FindIDcnt;       /*!< Specifies the cnt of sky rx from the ground's id.
-                                    This parameter can be a value of @ref <1,2,3...>   */
-     uint8_t Timerirqcnt;     /*!< Specifies the cnt of 560ms irq.
-                                    This parameter can be a value of @ref <1,2,3...>   */
-     uint8_t OptID;           /*!< Specifies the optimum ID selecting of ID sequency.
-                                    This parameter can be a value of @ref <1,2,3...>   */
-     uint8_t IDsearchcnt;        /*!< Specifies the cnt of matching ID successfulling.
-                                    This parameter can be a value of @ref <1,2,3...>   */
-     uint8_t IDmatcnt;        /*!< Specifies the cnt of matching ID successfulling.
-                                    This parameter can be a value of @ref <1,2,3...>   */
-     uint8_t Rcunlockcnt;     /*!< Specifies the cnt of remote controller unlock.
-                                    This parameter can be a value of @ref <1,2,3...>   */
-     uint8_t Changeqammode;     /*!< Specifies the cnt of remote controller unlock.
-                                    This parameter can be a value of @ref <1,2,3...>   */
-     uint8_t CntAGCGain;     /*!< Specifies the cnt of remote controller unlock.
-                                    This parameter can be a value of @ref <1,2,3...>   */
+    uint8_t RCChannel;       /*!< Specifies the remote controller working in freq channel.
+                                This parameter can be a value of @ref <RC_FREQ_MODE>   */
+    uint8_t ITChannel;       /*!< Specifies the image transmission working frq channel from ground.
+                                This parameter can be a value of @ref <IT_FREQ_MODE>   */
+    uint8_t FindIDcnt;       /*!< Specifies the cnt of sky rx from the ground's id.
+                                This parameter can be a value of @ref <1,2,3...>   */
+    uint8_t Timerirqcnt;     /*!< Specifies the cnt of 560ms irq.
+                                This parameter can be a value of @ref <1,2,3...>   */
+    uint8_t OptID;           /*!< Specifies the optimum ID selecting of ID sequency.
+                                This parameter can be a value of @ref <1,2,3...>   */
+    uint8_t IDsearchcnt;        /*!< Specifies the cnt of matching ID successfulling.
+                                This parameter can be a value of @ref <1,2,3...>   */
+    uint8_t IDmatcnt;        /*!< Specifies the cnt of matching ID successfulling.
+                                This parameter can be a value of @ref <1,2,3...>   */
+    uint8_t Rcunlockcnt;     /*!< Specifies the cnt of remote controller unlock.
+                                This parameter can be a value of @ref <1,2,3...>   */
+    uint8_t Changeqammode;     /*!< Specifies the cnt of remote controller unlock.
+                                    This parameter can be a value of @ref <1,2,3...>   */                                
+    uint8_t CntAGCGain;     /*!< Specifies the cnt of remote controller unlock.
+                                This parameter can be a value of @ref <1,2,3...>   */
 
-     enum EN_AGC_MODE en_agcmode;  /*!< Specifies the agcmode */
+    enum EN_AGC_MODE en_agcmode;  /*!< Specifies the agcmode */
 
-     uint8_t workfrq;  
+    uint8_t workfrq;
+    
+    uint8_t rc_error;
+    uint8_t rc_crc_ok;
 }Sky_HanlderTypeDef;
 
 
@@ -84,30 +87,18 @@ typedef struct
    uint8_t rcid3;       /*!< Specifies the bit[23:16]of remote controller id.*/
    uint8_t rcid2;       /*!< Specifies the bit[15:08]of remote controller id.*/
    uint8_t rcid1;       /*!< Specifies the bit[07:00]of remote controller id.*/
-
 } IDRx_TypeDef[ID_SEARCH_MAX_TIMES];
 
-typedef enum
-{
-  FLASH_BUSY_1 = 1,
-  FLASH_ERROR_PG_1,
-  FLASH_ERROR_WRP_1,
-  FLASH_COMPLETE_1,
-  FLASH_TIMEOUT_1
 
-}FLASH_Status;
-
-
-void Sky_Parm_Initial(void);
 void Sky_Write_Rcfrq(uint8_t frqchannel);
 void Sky_Write_Rchopfrq(void);
 void Grd_Write_Itfrq(uint8_t itfrqcnt);
-void Sky_Id_Initial(void);
 uint8_t Sky_Id_Match(void);
 uint8_t Sky_Crc_Check_Ok(void);
 uint8_t Sky_Rc_Err_Flag(void);      //0xE9[]:0x80
 uint8_t Sky_Rc_Zero(void);      //0xE9[]:0x00
-uint8_t  Min_of_Both(uint8_t a, uint8_t b );
+
+uint8_t Min_of_Both(uint8_t a, uint8_t b );
 void Sky_Record_Idpower( uint8_t i );
 uint8_t Sky_Getopt_Id(void);
 void Sky_Search_Right_ID(void);
@@ -117,4 +108,7 @@ void Sky_Adjust_AGCGain_SearchID(uint8_t i);
 void Sky_Hanlde_SpecialIrq(void);
 void wimax_vsoc_rx_isr(void);
 
+void Sky_Timer0_Init(void);
+
+void Sky_Timer1_Init(void);
 #endif

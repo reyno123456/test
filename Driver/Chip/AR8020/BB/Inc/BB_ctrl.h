@@ -54,14 +54,16 @@ typedef struct
 }STRU_BB_initType;
 
 
-int BB_SPI_WriteByte(ENUM_REG_PAGES page, uint8_t addr, uint8_t data);
-uint8_t BB_SPI_ReadByte(ENUM_REG_PAGES page, uint8_t addr);
-
 void BB_init(STRU_BB_initType *ptr_initType);
 
 void BB_uart10_spi_sel(uint32_t sel_dat);
-int BB_SPI_WriteByteMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t data, uint8_t mask);
-int BB_SPI_ReadByteMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t mask);
+
 int BB_softReset(ENUM_RST_MODE en_mode);
-int BB_SPI_init(void);
+
+uint8_t BB_set_Rcfrq(uint8_t ch);
+uint8_t BB_set_ITfrq(uint8_t ch);
+uint8_t BB_set_sweepfrq(uint8_t ch);
+uint8_t BB_ReadReg(ENUM_REG_PAGES page, uint8_t addr);
+uint8_t BB_WriteReg(ENUM_REG_PAGES page, uint8_t addr, uint8_t data);
+
 #endif

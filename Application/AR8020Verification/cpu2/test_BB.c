@@ -16,7 +16,7 @@ static int test_bbctrl_grd(void);
 void test_BB_sky(void)
 {
     ENUM_BB_MODE cur_mode = BB_SKY_MODE;
-    char *log = "test BB sky mode \n";
+    char *log = "IN BB sky mode \n";
 
     STRU_BB_initType initType = {
         .en_mode = cur_mode,
@@ -25,11 +25,10 @@ void test_BB_sky(void)
     BB_uart10_spi_sel(0x00000003);
     BB_init(&initType);
     
-    #if 0
+    #if 1
     test_bbctrl_sky();
     #else
     BB_debug_print_init_sky();
-    BB_SPI_WriteByte(PAGE2, 0x06, 0x44);
     #endif
     printf("%s", log);
 }
@@ -37,7 +36,7 @@ void test_BB_sky(void)
 void test_BB_grd(void)
 {
     ENUM_BB_MODE cur_mode = BB_GRD_MODE;
-    char *log = "test BB Ground mode \n";
+    char *log = "IN BB  Ground mode \r\n";
 
     STRU_BB_initType initType = {
         .en_mode = cur_mode,
@@ -46,27 +45,24 @@ void test_BB_grd(void)
     BB_uart10_spi_sel(0x00000003);
     BB_init(&initType);
     
-    #if 0
+    #if 1
     test_bbctrl_grd();
     #else
     BB_debug_print_init_grd();
     #endif
-    printf("%s", log);
 }
 
 static int test_bbctrl_sky(void)
 {
     Sky_Parm_Initial();
     //Sky_Id_Initial();
-    
     Sys_Parm_Init();
 }
 
 static int test_bbctrl_grd(void)
 {
     Grd_Parm_Initial();
-    //Grd_Id_Initial();
-    
+    BB_Grd_Id_Initial();
     Sys_Parm_Init();
 }
 
@@ -167,4 +163,3 @@ void BB_debug_print_init_sky(void)
 
     reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, TIM0_BB_Sky_handler);    
 }
-

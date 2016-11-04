@@ -6,7 +6,6 @@
 #include "debuglog.h"
 #include "interrupt.h"
 #include "timer.h"
-#include "BB_spi.h"
 #include "reg_rw.h"
 #include "config_baseband_frqdata.h"
 #include "config_baseband_register.h"
@@ -15,11 +14,7 @@
 #include "sys_peripheral_init.h"
 #include "grd_controller.h"
 
-
-extern struct RC_FRQ_CHANNEL Rc_frq[];
-extern struct IT_FRQ_CHANNEL It_frq[];
 extern Sys_FlagTypeDef SysState;
-
 extern uint8_t Txosd_Buffer[];
 
 static init_timer_st init_timer0_0;
@@ -29,16 +24,14 @@ Grd_FlagTypeDef   GrdState;
 Grd_HandleTypeDef GrdStruct;
 Grd_QAMTypeDef    GrdQam;
 
-static uint8_t  Timer0_Delay_Cnt  = 0;
 static uint8_t  Timer1_Delay1_Cnt = 0;
-static uint32_t Timer1_Delay2_Cnt = 0;
 
 void Grd_Parm_Initial(void)
 {
     GrdStruct.RCChannel=1;
     GrdStruct.ITManualChannel=0;
     GrdStruct.ITAutoChannel=0;
-    GrdStruct.Sweepfrqunlock=0;
+    GrdStruct.Sweepfrqunlock=0xff;
     GrdStruct.Sweepfrqlock=0;
     GrdStruct.ITTxChannel=0;
     GrdStruct.Harqcnt=0;
@@ -47,6 +40,7 @@ void Grd_Parm_Initial(void)
     GrdStruct.CgITfrqspan=0;
     GrdStruct.SweepCyccnt=0;
     GrdStruct.ITunlkcnt=0;
+    GrdStruct.workfrqcnt = 0xff;
 
     GrdState.ITManualmode = DISABLE;
     GrdState.ITAutomode = ENABLE;
@@ -72,31 +66,13 @@ void Grd_Parm_Initial(void)
     INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);
 }
 
-#define RC_ID_PAGE          (PAGE2)
-
-#define RC_ID_BIT07_00_REG  (0x5f)
-#define RC_ID_BIT15_08_REG  (0x5e)
-#define RC_ID_BIT23_16_REG  (0x5d)
-#define RC_ID_BIT31_24_REG  (0x5c)
-#define RC_ID_BIT39_32_REG  (0x5b)
-
-
-void Grd_Id_Initial(void)
+void BB_Grd_Id_Initial(void)
 {
-    BB_SPI_WriteByte(RC_ID_PAGE, RC_ID_BIT39_32_REG, RC_ID_BIT39_32);
-    BB_SPI_WriteByte(RC_ID_PAGE, RC_ID_BIT31_24_REG, RC_ID_BIT31_24);
-    BB_SPI_WriteByte(RC_ID_PAGE, RC_ID_BIT23_16_REG, RC_ID_BIT23_16);
-    BB_SPI_WriteByte(RC_ID_PAGE, RC_ID_BIT15_08_REG, RC_ID_BIT15_08);
-    BB_SPI_WriteByte(RC_ID_PAGE, RC_ID_BIT07_00_REG, RC_ID_BIT07_00);   
-}
-
-
-void Grd_Write_Rcfrq(uint8_t frqchannel)
-{
-    BB_SPI_WriteByte(PAGE2, AGC3_a, Rc_frq[frqchannel].frq1);
-    BB_SPI_WriteByte(PAGE2, AGC3_b, Rc_frq[frqchannel].frq2);
-    BB_SPI_WriteByte(PAGE2, AGC3_c, Rc_frq[frqchannel].frq3);
-    BB_SPI_WriteByte(PAGE2, AGC3_d, Rc_frq[frqchannel].frq4);  
+    BB_WriteReg(PAGE2, GRD_RC_ID_BIT39_32_REG, RC_ID_BIT39_32);
+    BB_WriteReg(PAGE2, GRD_RC_ID_BIT31_24_REG, RC_ID_BIT31_24);
+    BB_WriteReg(PAGE2, GRD_RC_ID_BIT23_16_REG, RC_ID_BIT23_16);
+    BB_WriteReg(PAGE2, GRD_RC_ID_BIT15_08_REG, RC_ID_BIT15_08);
+    BB_WriteReg(PAGE2, GRD_RC_ID_BIT07_00_REG, RC_ID_BIT07_00);
 }
 
 
@@ -108,7 +84,7 @@ void Grd_RC_Controller(void)
         GrdStruct.RCChannel = 0;
     }
 
-    Grd_Write_Rcfrq(GrdStruct.RCChannel);
+    BB_set_Rcfrq(GrdStruct.RCChannel);
 }
 
 /**
@@ -117,8 +93,8 @@ void Grd_RC_Controller(void)
       * @illustrate
       *
          (+) Ground write image transmissions frequency in baseband.
-            --Grd_Write_Itsweepfrq();
-            --Grd_Write_Itworkfrq();
+            --BB_set_sweepfrq();
+            --Grd_Write_Itfrq();
          (+) Grd_Id_Initial().
          (+) Grd_RC_Controller().
 
@@ -128,11 +104,11 @@ void Grd_RC_Controller(void)
       */
 
 /*!< Specifies the struct of sweeping power with image transmissions.*/
-struct SWEEP_POWER SP[IT_FRQ_NUM]={0};
+struct SWEEP_POWER SP[MAX_RC_FRQ_SIZE]={0};
 /*!< Specifies the frequency sequency in method of sweeping power.*/
-struct FRQ_SEQ_ORDER FSO[IT_FRQ_NUM]={0};
+struct FRQ_SEQ_ORDER FSO[MAX_RC_FRQ_SIZE]={0};
 /*!< Specifies the data structure of working at current / alternative / others.*/
-struct CURRENT_ALTER_OTHERS_FRQ CAOF[IT_FRQ_NUM]={0};
+struct CURRENT_ALTER_OTHERS_FRQ CAOF[MAX_RC_FRQ_SIZE]={0};
 /*!< Specifies the data structure of SNR 8 times in one cycle.*/
 struct SNR_PERCYC SNRPC[SNRNUM_PER_CYC]={0};
 /*!< Specifies the data structure of SNR 4*14ms in 4 cycles.
@@ -144,120 +120,71 @@ uint32_t Snr_Qam_Block[QAM_SNR_BLOCK_ROWS][QAM_SNR_BLOCK_LISTS]={0};
 /*!< Specifies the data structure of ldpc err num in every cycles.*/
 uint16_t  Ldpc_Block[LDPC_STATIC_NUM]={0};
 
-const uint8_t ITTX_FRQ[8]={0xE0,0xE1,0xE2,0xE3,0xE4,0xE5,0xE6,0xE7};
-
-// write image transmissions sweeping frq channnel in baseband_grd.
-
-
-#define SWEEP_FREQ_0 (0x14) //
-#define SWEEP_FREQ_1 (0x15)
-#define SWEEP_FREQ_2 (0x16)
-#define SWEEP_FREQ_3 (0x17)
-
-void Grd_Write_Itsweepfrq(uint8_t frqchannel)
+//write IT ch and 
+void Grd_Write_Itfrq(uint8_t ch)
 {
-    #if defined( GRD_RF8003_2P3) || defined( GRD_RF8003_2P4)
-        BB_SPI_WriteByte(PAGE2, SWEEP_FREQ_0, It_frq[frqchannel].frq1);
-        BB_SPI_WriteByte(PAGE2, SWEEP_FREQ_1, It_frq[frqchannel].frq2);
-        BB_SPI_WriteByte(PAGE2, SWEEP_FREQ_2, It_frq[frqchannel].frq3);
-        BB_SPI_WriteByte(PAGE2, SWEEP_FREQ_3, It_frq[frqchannel].frq4);
-    #else
-        #if 0
-            BB_SPI_WriteByte(AGC3_5, It_frq[frqchannel].frq1);
-            BB_SPI_WriteByte(AGC3_6, It_frq[frqchannel].frq2);
-            BB_SPI_WriteByte(AGC3_7, It_frq[frqchannel].frq3);
-            BB_SPI_WriteByte(AGC3_8, It_frq[frqchannel].frq4);
-            BB_SPI_WriteByte(AGC3_9, It_frq[frqchannel].frq5);
-        #else
-            printf("Todo: Grd_Write_Itsweepfrq \n");
-        #endif
-    #endif
-}
+    if(GrdStruct.workfrqcnt != ch)
+    {
+        BB_set_ITfrq(ch);
+        //Notify sky
+        BB_WriteReg(PAGE2, IT_FREQ_TX_0, 0xE0 + ch);
+        BB_WriteReg(PAGE2, IT_FREQ_TX_1, 0xE0 + ch);
 
-static uint8_t workfrqcnt = 0xff;
-void Grd_Write_Itworkfrq(uint8_t sweepfrqcnt)
-{
-    #if defined( GRD_RF8003_2P3) || defined( GRD_RF8003_2P4)
-        if(workfrqcnt != sweepfrqcnt)
-        {
-            BB_SPI_WriteByte(PAGE2, AGC3_0, It_frq[sweepfrqcnt].frq1);
-            BB_SPI_WriteByte(PAGE2, AGC3_1, It_frq[sweepfrqcnt].frq2);
-            BB_SPI_WriteByte(PAGE2, AGC3_2, It_frq[sweepfrqcnt].frq3);
-            BB_SPI_WriteByte(PAGE2, AGC3_3, It_frq[sweepfrqcnt].frq4);
-
-            printf("G=>%d\r\n", sweepfrqcnt);
-            workfrqcnt = sweepfrqcnt;
-        }
-    #else
-        #if 0
-        BB_SPI_WriteByte(PAGE2, AGC3_0, It_frq[sweepfrqcnt].frq1);
-        BB_SPI_WriteByte(PAGE2, AGC3_1, It_frq[sweepfrqcnt].frq2);
-        BB_SPI_WriteByte(PAGE2, AGC3_2, It_frq[sweepfrqcnt].frq3);
-        BB_SPI_WriteByte(PAGE2, AGC3_3, It_frq[sweepfrqcnt].frq4);
-        BB_SPI_WriteByte(PAGE2, AGC3_4, It_frq[sweepfrqcnt].frq5);
-        #else
-        printf("Todo: Grd_Write_Itworkfrq \n");
-        #endif
-    #endif
+        GrdStruct.workfrqcnt = ch;        
+        printf("G=>%d\r\n", ch);       
+    }
 }
 
 
-#define FEC_LOCK_REG    (0xda)
-
-// Read Reg[EB] of baseband , lock or not.
 uint8_t Grd_Baseband_Fec_Lock(void)
 {
-    uint8_t data = BB_SPI_ReadByte(PAGE2, FEC_LOCK_REG) & 0x01 ;
-    
+    static uint8_t status = 0xff;
+    uint8_t data = BB_ReadReg(PAGE2, FEC_5_RD) & 0x01;
+    if(status != data)
+    {
+        printf("ML:%d\r\n", data);
+        status = data;
+    }
     return data;
 }
 
-
-#define SWEEP_ENERGY_LOW    (0x02)
-#define SWEEP_ENERGY_MID    (0x03)
-#define SWEEP_ENERGY_HIGH   (0x04)
-
-
-void Grd_Sweeping_Energy_Statistic(uint8_t i)
+void Grd_Sweeping_Energy_Statistic(uint8_t ch)
 {
-    uint8_t   eData = 0;
     uint32_t  Energy_Hgh = 0;
     uint32_t  Energy_Mid = 0;
     uint32_t  Energy_Low = 0;
+    
+    Energy_Low = BB_ReadReg(PAGE2, SWEEP_ENERGY_LOW);
+    Energy_Mid = BB_ReadReg(PAGE2, SWEEP_ENERGY_MID);
+    Energy_Hgh = BB_ReadReg(PAGE2, SWEEP_ENERGY_HIGH);
+    
+    SP[ch].frqchannel= ch;
+    SP[ch].powerall1=SP[ch].powerall2;
+    SP[ch].powerall2=SP[ch].powerall3;
+    SP[ch].powerall3=SP[ch].powerall4;
+    SP[ch].powerall4=((Energy_Hgh<<16)|(Energy_Mid<<8)|Energy_Low);
+    SP[ch].poweravr=(SP[ch].powerall1+SP[ch].powerall2+SP[ch].powerall3+SP[ch].powerall4)>>2;
 
-    Energy_Low = BB_SPI_ReadByte(PAGE2, SWEEP_ENERGY_LOW);
-    Energy_Mid = BB_SPI_ReadByte(PAGE2, SWEEP_ENERGY_MID);
-    Energy_Hgh = BB_SPI_ReadByte(PAGE2, SWEEP_ENERGY_HIGH);
-
-    SP[i].frqchannel= i;
-    SP[i].powerall1=SP[i].powerall2;
-    SP[i].powerall2=SP[i].powerall3;
-    SP[i].powerall3=SP[i].powerall4;
-    SP[i].powerall4=((Energy_Hgh<<16)|(Energy_Mid<<8)|Energy_Low);
-    SP[i].poweravr=(SP[i].powerall1+SP[i].powerall2+SP[i].powerall3+SP[i].powerall4)>>2;
-
-    if((SP[i].powerall1>=SP[i].powerall2)&&(SP[i].powerall1>=SP[i].powerall3)&&(SP[i].powerall1>=SP[i].powerall4))
+    if((SP[ch].powerall1>=SP[ch].powerall2)&&(SP[ch].powerall1>=SP[ch].powerall3)&&(SP[ch].powerall1>=SP[ch].powerall4))
     {
-        SP[i].powerwave =SP[i].powerall1 - SP[i].poweravr;
+        SP[ch].powerwave =SP[ch].powerall1 - SP[ch].poweravr;
     }
-    else if((SP[i].powerall2>=SP[i].powerall1)&&(SP[i].powerall2>=SP[i].powerall3)&&(SP[i].powerall2>=SP[i].powerall4))
+    else if((SP[ch].powerall2>=SP[ch].powerall1)&&(SP[ch].powerall2>=SP[ch].powerall3)&&(SP[ch].powerall2>=SP[ch].powerall4))
     {
-        SP[i].powerwave =(SP[i].powerall2-SP[i].poweravr);
+        SP[ch].powerwave =(SP[ch].powerall2-SP[ch].poweravr);
     }
-    else if((SP[i].powerall3>=SP[i].powerall1)&&(SP[i].powerall3>=SP[i].powerall2)&&(SP[i].powerall3>=SP[i].powerall4))
+    else if((SP[ch].powerall3>=SP[ch].powerall1)&&(SP[ch].powerall3>=SP[ch].powerall2)&&(SP[ch].powerall3>=SP[ch].powerall4))
     {
-        SP[i].powerwave =(SP[i].powerall3-SP[i].poweravr);
+        SP[ch].powerwave =(SP[ch].powerall3-SP[ch].poweravr);
     }
-    else if((SP[i].powerall4>=SP[i].powerall1)&&(SP[i].powerall4>=SP[i].powerall2)&&(SP[i].powerall4>=SP[i].powerall3))
+    else if((SP[ch].powerall4>=SP[ch].powerall1)&&(SP[ch].powerall4>=SP[ch].powerall2)&&(SP[ch].powerall4>=SP[ch].powerall3))
     {
-        SP[i].powerwave =(SP[i].powerall4-SP[i].poweravr);
+        SP[ch].powerwave =(SP[ch].powerall4-SP[ch].poweravr);
     }
 
-    Txosd_Buffer[8]=((SP[i].poweravr&0xFF0000)>>16);
-
-    Txosd_Buffer[9]=((SP[i].poweravr&0xFF00)>>8);
-
-    Txosd_Buffer[10]=SP[i].poweravr;
+    Txosd_Buffer[8]=((SP[ch].poweravr&0xFF0000)>>16);
+    Txosd_Buffer[9]=((SP[ch].poweravr&0xFF00)>>8);
+    Txosd_Buffer[10]=SP[ch].poweravr;
 }
 
 /**
@@ -296,20 +223,20 @@ void Grd_Itfrq_Sort(uint8_t num)   // sort  SP[]-->FSO[]
                 FSO[j+1].frqchannel = num_temp;
                 FSO[j+1].powerwave = iw_temp;
             }
-         }
-     }
+        }
+    }
 }
 
 void Grd_Alterfrq_Updute(uint8_t Itfrqchannel)
 {
-    uint8_t m_caf = IT_FRQ_NUM;
+    uint8_t m_caf = MAX_RC_FRQ_SIZE;
     uint8_t i = 0;
     uint8_t j = 0;
     uint32_t k_temp = 0;
     uint8_t num_temp = 0;
     uint8_t iw_temp = 0;
 
-    for( i=1; i<IT_FRQ_NUM; i++ )
+    for( i=1; i<MAX_RC_FRQ_SIZE; i++ )
     {
         m_caf -= 1;
         for(j=1;j<m_caf;j++)
@@ -337,46 +264,49 @@ void Grd_Alterfrq_Updute(uint8_t Itfrqchannel)
   */
 void Grd_Sweeping_Before_Fec_Locked(void)
 {
-    Grd_Write_Itsweepfrq(GrdStruct.Sweepfrqunlock );
-    Grd_Sweeping_Energy_Statistic(GrdStruct.Sweepfrqunlock );
-
-    Txosd_Buffer[7]= GrdStruct.Sweepfrqunlock ;
-
-    if(GrdStruct.Sweepfrqunlock < IT_FRQ_NUM-1)
+    if(GrdStruct.Sweepfrqunlock == 0xff)
     {
-        GrdStruct.Sweepfrqunlock += 1;
+        BB_set_sweepfrq(0);
+        GrdStruct.Sweepfrqunlock = 0; //To get engergy next cycle
     }
     else
     {
-        GrdStruct.Sweepfrqunlock = 0;
-        if(GrdStruct.SweepCyccnt >= 6)
+        Grd_Sweeping_Energy_Statistic(GrdStruct.Sweepfrqunlock);
+        Txosd_Buffer[7]= GrdStruct.Sweepfrqunlock;
+
+        GrdStruct.Sweepfrqunlock++;
+        if(GrdStruct.Sweepfrqunlock >= MAX_RC_FRQ_SIZE)
         {
-            GrdStruct.SweepCyccnt = 0;
-            GrdState.Endsweep = ENABLE;
+            GrdStruct.Sweepfrqunlock = 0;
+            if(GrdStruct.SweepCyccnt >= 6)
+            {
+                GrdStruct.SweepCyccnt = 0;
+                GrdState.Endsweep = ENABLE;
+            }
+            else
+            {
+                GrdStruct.SweepCyccnt++;
+            }
         }
-        else
-        {
-            GrdStruct.SweepCyccnt ++;
-        }
+        
+        BB_set_sweepfrq(GrdStruct.Sweepfrqunlock );
+        Grd_Itfrq_Sort(MAX_RC_FRQ_SIZE);
     }
-    Grd_Itfrq_Sort(IT_FRQ_NUM);
 }
 
 
 void Grd_Sweeping_After_Fec_Locked(void)
 {
-    Grd_Write_Itsweepfrq(CAOF[GrdStruct.Sweepfrqlock].frqchannel);
+    BB_set_sweepfrq(CAOF[GrdStruct.Sweepfrqlock].frqchannel);
     Grd_Sweeping_Energy_Statistic(CAOF[GrdStruct.Sweepfrqlock].frqchannel);
     CAOF[GrdStruct.Sweepfrqlock].frqchannel = SP[CAOF[GrdStruct.Sweepfrqlock].frqchannel].frqchannel;
     CAOF[GrdStruct.Sweepfrqlock].poweravr = SP[CAOF[GrdStruct.Sweepfrqlock].frqchannel].poweravr;
     CAOF[GrdStruct.Sweepfrqlock].powerwave = SP[CAOF[GrdStruct.Sweepfrqlock].frqchannel].powerwave;
-    Grd_Alterfrq_Updute(IT_FRQ_NUM);
+    Grd_Alterfrq_Updute(MAX_RC_FRQ_SIZE);
 
-    if(GrdStruct.Sweepfrqlock < IT_FRQ_NUM-1)
-    {
-        GrdStruct.Sweepfrqlock += 1;
-    }
-    else
+    GrdStruct.Sweepfrqlock += 1;
+    
+    if(GrdStruct.Sweepfrqlock >= MAX_RC_FRQ_SIZE)
     {
         GrdStruct.Sweepfrqlock = 0;
     }
@@ -385,12 +315,10 @@ void Grd_Sweeping_After_Fec_Locked(void)
 /**
   * @brief  Get the best working frq channel according to sweeping results.
   * @param  iflag: the diff case of getting image transmissions frq channel.
-               (1) get the diff image frq channel to lock.
-               (2) get the first image transmission frq channel to FEC lock.
-               (3) image transmissions frq channel hopping.
-  *
+    (1) get the diff image frq channel to lock.
+    (2) get the first image transmission frq channel to FEC lock.
+    (3) image transmissions frq channel hopping.
   */
-
 void Grd_Get_Itfrq(uint8_t iflag)
 {
     uint8_t icur=0;
@@ -399,19 +327,20 @@ void Grd_Get_Itfrq(uint8_t iflag)
     uint8_t  num_temp=0;
     uint32_t aver_temp=0;
     uint32_t wa_temp=0;
+    
+    GrdStruct.ITTxCnt = 1;
+    GrdState.Allowjglock=DISABLE;
 
     switch (iflag)
     {
         case 0 :
             {
-                for(icnt=0; icnt<IT_FRQ_NUM; icnt++)
+                for(icnt=0; icnt<MAX_RC_FRQ_SIZE; icnt++)
                 {
                     if(GrdStruct.ITTxChannel != FSO[icnt].frqchannel)
                     {
                         GrdStruct.ITTxChannel = FSO[icnt].frqchannel;
-                        GrdState.Allowjglock=DISABLE;
-                        GrdStruct.ITTxCnt=1;
-                        for(icur=0;icur<IT_FRQ_NUM;icur++)
+                        for(icur=0;icur<MAX_RC_FRQ_SIZE;icur++)
                         {
                             CAOF[icur].frqchannel = FSO[icur].frqchannel;
                             CAOF[icur].poweravr = FSO[icur].poweravr;
@@ -419,17 +348,16 @@ void Grd_Get_Itfrq(uint8_t iflag)
                         }
                     }
                 }
+                printf("Ch0:%d\r\n", GrdStruct.ITTxChannel);
             } 
             break;
 
         case 1 :
             {
                 GrdStruct.ITTxChannel = FSO[0].frqchannel;
-                GrdStruct.ITTxCnt = 1;
-                GrdState.Allowjglock=DISABLE;
-                printf("ITCh 1: %d\r\n", GrdStruct.ITTxChannel);
+                printf("Ch1:%d\r\n", GrdStruct.ITTxChannel);
                 
-                for(icur=0;icur<IT_FRQ_NUM;icur++)
+                for(icur=0;icur<MAX_RC_FRQ_SIZE;icur++)
                 {
                     CAOF[icur].frqchannel=FSO[icur].frqchannel;
                     CAOF[icur].poweravr=FSO[icur].poweravr;
@@ -440,29 +368,26 @@ void Grd_Get_Itfrq(uint8_t iflag)
             
         case 2 :
             {
-                GrdStruct.ITTxChannel= CAOF[1].frqchannel;
-                GrdStruct.ITTxCnt = 1;
-                GrdState.Allowjglock =DISABLE;
-                
-                printf("ITCh 2: %d\n", GrdStruct.ITTxChannel);
+                GrdStruct.ITTxChannel= CAOF[1].frqchannel;                
+                printf("Ch2:%d\n", GrdStruct.ITTxChannel);
 
-                num_temp= CAOF[0].frqchannel;
-                aver_temp= CAOF[0].poweravr;
-                wa_temp= CAOF[0].powerwave;
+                num_temp    = CAOF[0].frqchannel;
+                aver_temp   = CAOF[0].poweravr;
+                wa_temp     = CAOF[0].powerwave;
 
-                for(icur2=0;icur2<IT_FRQ_NUM-1;icur2++)
+                for(icur2=0;icur2<MAX_RC_FRQ_SIZE-1;icur2++)
                 {
-                    CAOF[icur2].frqchannel = CAOF[icur2+1].frqchannel;
-                    CAOF[icur2].poweravr = CAOF[icur2+1].poweravr;
-                    CAOF[icur2].powerwave = CAOF[icur2+1].powerwave;
+                    CAOF[icur2].frqchannel  = CAOF[icur2+1].frqchannel;
+                    CAOF[icur2].poweravr    = CAOF[icur2+1].poweravr;
+                    CAOF[icur2].powerwave   = CAOF[icur2+1].powerwave;
                 }
 
-                CAOF[IT_FRQ_NUM-1].frqchannel = num_temp;
-                CAOF[IT_FRQ_NUM-1].poweravr = aver_temp;
-                CAOF[IT_FRQ_NUM-1].powerwave = wa_temp;
+                CAOF[MAX_RC_FRQ_SIZE-1].frqchannel   = num_temp;
+                CAOF[MAX_RC_FRQ_SIZE-1].poweravr     = aver_temp;
+                CAOF[MAX_RC_FRQ_SIZE-1].powerwave    = wa_temp;
             } 
             break;
-        }
+    }
 }
 
 
@@ -480,16 +405,6 @@ void Grd_Fecunlock_Getfrq(void)
         {
             Grd_Get_Itfrq(0);
         }
-    }
-}
-
-int current_frq = 0xff; //remove to structure
-void Grd_Txmsg_Frq_Change(uint8_t i)
-{
-    if(current_frq != i)
-    {
-        current_frq = i;
-        BB_SPI_WriteByte(PAGE2, IT_FREQ_TX, ITTX_FRQ[i]);  //????? 
     }
 }
 
@@ -512,17 +427,10 @@ void Grd_Getsnr(uint8_t i)  //get SNR value at present
     static int pre_snr = 0xffffffff;
     SNRPC[i].num= i;
 
-    SNRPC[i].snrhgh= BB_SPI_ReadByte(PAGE2, BB_SNR_REG_0);
-    SNRPC[i].snrlow= BB_SPI_ReadByte(PAGE2, BB_SNR_REG_1);
+    SNRPC[i].snrhgh= BB_ReadReg(PAGE2, BB_SNR_REG_0);
+    SNRPC[i].snrlow= BB_ReadReg(PAGE2, BB_SNR_REG_1);
       
     SNRPC[i].snrall= (SNRPC[i].snrhgh<<8)|SNRPC[i].snrlow;
-    #if 0
-    if(pre_snr != SNRPC[i].snrall )
-    {
-        printf("SNR: %d %x\n", i, SNRPC[i].snrall);
-        pre_snr = SNRPC[i].snrall;
-    }
-    #endif
 }
 
 void Grd_Frqsnr_Array(void)
@@ -664,15 +572,15 @@ void Grd_Ldpc_Err_Num_Statistics(void)    //2 // 2 sec
         Ldpc_Block[ldpc_cnt] = Ldpc_Block[ldpc_cnt+1];
     }
         
-    ldpc_err_num_rd_low =  BB_SPI_ReadByte(PAGE2, LDPC_ERR_LOW_REG);
-    ldpc_err_num_rd_hgh =  BB_SPI_ReadByte(PAGE2, LDPC_ERR_HIGH_REG);
+    ldpc_err_num_rd_low =  BB_ReadReg(PAGE2, LDPC_ERR_LOW_REG);
+    ldpc_err_num_rd_hgh =  BB_ReadReg(PAGE2, LDPC_ERR_HIGH_REG);
     
     Ldpc_Block[LDPC_STATIC_NUM-1] = (ldpc_err_num_rd_hgh<<8)|ldpc_err_num_rd_low;
 
     GrdStruct.Ldpcreadcnt++;
-    if(GrdStruct.Ldpcreadcnt>LDPC_STATIC_NUM)
+    if(GrdStruct.Ldpcreadcnt > LDPC_STATIC_NUM)
     {
-        GrdState.Ldpcjgflag=ENABLE;
+        GrdState.Ldpcjgflag=ENABLE; //if count more than LDPC_STATIC_NUM times
     }
     else
     {
@@ -686,12 +594,14 @@ uint8_t Grd_Ldpc_Block_Determine(void)
     uint8_t arr_cnt=0;
     uint8_t ldpc_err_num=0;
 
-    if(ENABLE==GrdState.Ldpcjgflag)
+    if(ENABLE == GrdState.Ldpcjgflag)
     {
         for(arr_cnt=0;arr_cnt<LDPC_STATIC_NUM-1;arr_cnt++)
         {
             if(Ldpc_Block[arr_cnt]>0x10)  
+            {
                 ldpc_err_num++;
+            }
         }
         
         if(ldpc_err_num > 0)
@@ -746,6 +656,10 @@ void Baseband_MsgOSD_Ptf(void)
 #endif
 }
 
+uint8_t Grd_get_QAM(void)
+{
+    return BB_ReadReg(PAGE2, GRD_FEC_QAM_CR_TLV) & 0x03;
+}
 
 void Grd_Itfrq_Hopping(void)
 {
@@ -759,13 +673,13 @@ void Grd_Itfrq_Hopping(void)
         GrdStruct.CgITfrqspan = 10;
     }
 
-    GrdStruct.Harqcnt = (BB_SPI_ReadByteMask(PAGE2, FEC_5_RD, 0xf0)) >>4;
-    QAM_MODE = BB_SPI_ReadByteMask(PAGE2, GRD_FEC_QAM_CR_TLV, QAM_MASK);
+    GrdStruct.Harqcnt = BB_ReadReg(PAGE2, FEC_5_RD) >>4;
+    QAM_MODE = Grd_get_QAM();
 
+    #if 0
     if(GrdStruct.Harqcnt >= 2 )
     {
-    #if 0
-        printf("Harqcnt %d\r\n", GrdStruct.Harqcnt);
+        printf("Hrq%d\r\n", GrdStruct.Harqcnt);
         GrdStruct.Harqcnt=0;
         switch(QAM_MODE)
         {
@@ -837,11 +751,10 @@ void Grd_Itfrq_Hopping(void)
                 }
             }
             break;
-        }
-    #endif    
+        }    
     }
+    #endif
 }
-
 
 void Grd_Working_Qam_Change(void)
 {
@@ -850,16 +763,16 @@ void Grd_Working_Qam_Change(void)
     uint32_t snr_aver = 0;
     uint8_t  iQAM=0;
 
-    iQAM = BB_SPI_ReadByteMask(PAGE2, GRD_FEC_QAM_CR_TLV, QAM_MASK);
+    iQAM = Grd_get_QAM();
     switch (iQAM)
     {
         case 0:
         {
-            for(icnt=0;icnt<SNRNUM_PER_CYC ;icnt++)
+            for(icnt=0; icnt < SNRNUM_PER_CYC; icnt++)
             {
                 if(SNRPC[icnt].snrall> 2*MCS3_0_THRE)       //BPSK  1/2  +3dB
                 {
-                  SNRPC[icnt].snrall = 2* MCS3_0_THRE;
+                    SNRPC[icnt].snrall = 2* MCS3_0_THRE;
                 }
             }
             Grd_Qamsnr_Array();
@@ -883,7 +796,7 @@ void Grd_Working_Qam_Change(void)
             }
         } 
         break;
-        
+
     case 1:                       // 4QAM 1/2 +3dB
         {
             for(icnt=0;icnt<SNRNUM_PER_CYC ;icnt++)
@@ -915,7 +828,7 @@ void Grd_Working_Qam_Change(void)
             }
         } 
         break;
-        
+
     case 2:  //16QAM 1/2  +3dB
         {
             for(icnt=0;icnt<SNRNUM_PER_CYC ;icnt++)
@@ -941,16 +854,16 @@ void Grd_Working_Qam_Change(void)
                 if(snr_aver <= MCS3_1_THRE) 
                     {}// GrdQam.Downbpsk12= ENABLE;
                 else 
-                    GrdQam.Downqpsk12= ENABLE;
+                    GrdQam.Downqpsk12 = ENABLE;
             }
             if(Grd_Ldpc_Block_Determine())
             {
-                GrdQam.Up64qam12= ENABLE;
-                GrdStruct.Ldpcreadcnt=0;
+                GrdQam.Up64qam12 = ENABLE;
+                GrdStruct.Ldpcreadcnt = 0;
             }
         } 
         break;
-        
+
     case 3:                         //64 QAM 1/2  +3dB
         {
             for(icnt=0;icnt<SNRNUM_PER_CYC ;icnt++)
@@ -989,38 +902,43 @@ void Grd_Working_Qam_Change(void)
     }
 }
 
+
 void Grd_Txmsg_Qam_Change(void)
 {
-    uint8_t iData9=0;
-
     if( ENABLE==GrdQam.Downbpsk12)  // BPSK_1/2  0x90
     {       
-        BB_SPI_WriteByte(PAGE2, QAM_CHANGE, 0xF1);        
+        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF1);        
+        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF1);        
     }
 
     if(ENABLE==GrdQam.Downqpsk12)   //QPSK_1/2   0xB0
     {       
-        BB_SPI_WriteByte(PAGE2, QAM_CHANGE, 0xF3);       
+        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF3);       
+        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF3);       
     }
 
     if(ENABLE==GrdQam.Down16qam12)  //16QAM_1/2    0xD0
     {
-        BB_SPI_WriteByte(PAGE2, QAM_CHANGE, 0xF7);
+        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF7);
+        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF7);
     }
 
     //MCS_UP
     if(ENABLE==GrdQam.Upqpsk12) //QPSK_1/2   0xB0
     {      
-        BB_SPI_WriteByte(PAGE2, QAM_CHANGE, 0xF3);
+        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF3);
+        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF3);
     }
 
     if(ENABLE==GrdQam.Up16qam12)  //16QAM_1/2    0xD0
     {      
-        BB_SPI_WriteByte(PAGE2, QAM_CHANGE, 0xF7);
+        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF7);
+        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF7);
     }
     if(ENABLE==GrdQam.Up64qam12)  //64QAM_1/2    0xF0
     {
-        BB_SPI_WriteByte(PAGE2, QAM_CHANGE, 0xF9);
+        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF9);
+        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF9);
     }
 }
 
@@ -1051,32 +969,30 @@ void Grd_IT_Controller(void)
     {
         if(ENABLE == GrdState.GetfrqOnly)
         {
-            Grd_Get_Itfrq(1);
+            Grd_Get_Itfrq(1);   //when system bootup and end of sweep, select 1 channel for IT.
             GrdState.GetfrqOnly = DISABLE;
         }
-        
-        switch(GrdStruct.ITTxCnt)
+
+        switch(GrdStruct.ITTxCnt) //GrdStruct.ITTxCnt: set to 1 when call Grd_Get_Itfrq.
         {
-            case 1:  GrdStruct.ITTxCnt=2;
-                break;
-            
-            case 2:  
-                {
-                    GrdStruct.ITTxCnt = 0;
-                    GrdState.Allowjglock = ENABLE;
-                    Grd_Write_Itworkfrq(GrdStruct.ITTxChannel);
-                    Txosd_Buffer[3]= GrdStruct.ITTxChannel;
-                };
+            case 1:
+                GrdStruct.ITTxCnt=2;
                 break;
 
-            default: 
+            case 2:
                 GrdStruct.ITTxCnt = 0;
+                GrdState.Allowjglock = ENABLE;
+                Grd_Write_Itfrq(GrdStruct.ITTxChannel);
+                Txosd_Buffer[3]= GrdStruct.ITTxChannel;
+                break;
+
+            default:
+                GrdStruct.ITTxCnt = 0;
+                break;
         }
-        
-        Grd_Txmsg_Frq_Change(GrdStruct.ITTxChannel);       //Trans to sky
     }
     
-    if(ENABLE == GrdState.Allowjglock)
+    if(ENABLE == GrdState.Allowjglock) //after ch switch, check the lock
     {
         if(Grd_Baseband_Fec_Lock())
         {
@@ -1095,11 +1011,11 @@ void Grd_IT_Controller(void)
                 Grd_Txmsg_Qam_Change();
                 Grd_Qamflag_Clear();
             }
-       }
-       else
-       {
+        }
+        else
+        {
             Grd_Fecunlock_Getfrq();
-       }
+        }
     }
 }
 
@@ -1169,13 +1085,13 @@ void Grd_TIM1_IRQHandler(void)
             break;
         case 2:
             Timer1_Delay1_Cnt++;
+            Grd_RC_Controller();
             Grd_Getsnr(2);
             break;
         
         case 3:
             Timer1_Delay1_Cnt++;
-            Grd_RC_Controller();
-            //Grd_IT_Controller();                
+            Grd_IT_Controller();                
             Grd_Getsnr(3);
             break;
         

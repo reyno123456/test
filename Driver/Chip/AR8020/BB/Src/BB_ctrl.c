@@ -4,7 +4,8 @@
 #include "BB_ctrl.h"
 #include "BB_init_regs.h"
 #include "reg_rw.h"
-
+#include "config_baseband_register.h"
+#include "config_baseband_frqdata.h"
 
 #define     BB_SPI_TEST         (0)
 #define     RF_SPI_TEST         (0)
@@ -12,7 +13,6 @@
 #define     VSOC_GLOBAL2_BASE   (0xA0030000)
 #define     BB_SPI_UART_SEL     (0x9c)
 
-#undef _FPGA_BB_
 
 typedef struct
 {
@@ -22,10 +22,31 @@ typedef struct
     ENUM_VID_PATH en_VIDPath;
 }STRU_BB_ctrl_ctx;
 
+
 static STRU_BB_ctrl_ctx BB_ctx = {
     .en_curPage = PAGE_UNKNOW,
     .en_curMode = BB_MODE_UNKNOWN,
     .en_TRXctrl = BB_RESET_UNKNOWN,
+};
+
+
+const struct RC_FRQ_CHANNEL Rc_frq[MAX_RC_FRQ_SIZE] = {     // 2.4G
+    { 0,0x00,0x00,0x00,0x4b }, { 1,0x00,0x00,0x00,0x4c },
+    { 2,0x00,0x00,0x00,0x4d }, { 3,0x00,0x00,0x00,0x4e },
+    { 4,0x00,0x00,0x00,0x4f }, { 5,0x00,0x00,0x00,0x50 },
+    { 6,0x00,0x00,0x00,0x51 }, { 7,0x00,0x00,0x00,0x52 },
+    { 8,0x00,0x00,0x00,0x53 }, { 9,0x00,0x00,0x00,0x54 },
+    { 10,0x00,0x00,0x00,0x55}, { 11,0x00,0x00,0x00,0x56}
+};
+
+
+const struct IT_FRQ_CHANNEL It_frq[MAX_RC_FRQ_SIZE] = {     //2.4G
+    { 0,0x00,0x00,0x00,0x4b }, { 1,0x00,0x00,0x00,0x4c },
+    { 2,0x00,0x00,0x00,0x4d }, { 3,0x00,0x00,0x00,0x4e },
+    { 4,0x00,0x00,0x00,0x4f }, { 5,0x00,0x00,0x00,0x50 },
+    { 6,0x00,0x00,0x00,0x51 }, { 7,0x00,0x00,0x00,0x52 },
+    { 8,0x00,0x00,0x00,0x53 }, { 9,0x00,0x00,0x00,0x54 },
+    { 10,0x00,0x00,0x00,0x55}, { 11,0x00,0x00,0x00,0x56}
 };
 
 
@@ -55,7 +76,6 @@ static void BB_regs_init(ENUM_BB_MODE en_mode)
             {
                 BB_SPI_curPageWriteByte((uint8_t)addr_cnt, *regs);
             }
-
             regs++;
         }
     }
@@ -69,14 +89,6 @@ int BB_softReset(ENUM_RST_MODE en_mode)
     */
     if(en_mode == BB_GRD_MODE)
     {
-        #ifdef _FPGA_BB_
-            BB_SPI_WriteByte(PAGE1,0x90,0x80);
-            BB_SPI_WriteByte(PAGE1,0x90,0x00);
-            
-            BB_SPI_WriteByte(PAGE1,0x98,0x81);
-            BB_SPI_WriteByte(PAGE1,0x98,0x01);
-        #endif
-        
         BB_SPI_curPageWriteByte(0x00,0xB2);
         BB_SPI_curPageWriteByte(0x00,0xB0);
 		BB_ctx.en_curPage = PAGE2;
@@ -171,7 +183,7 @@ void RF_8003x_spi_init(ENUM_BB_MODE mode)
         uint8_t data = SPI_Read8003(idx*2);
         dlog_info("%d %d \n", idx, data);
         #endif
-    }   
+    }
 }
 
 void BB_init(STRU_BB_initType *ptr_initType)
@@ -195,7 +207,7 @@ void BB_init(STRU_BB_initType *ptr_initType)
     #endif
     
     BB_regs_init(ptr_initType->en_mode);
-
+    
     {
         BB_SPI_curPageWriteByte(0x01,0x01);     //SPI change into 8003
         RF_8003x_spi_init(ptr_initType->en_mode);
@@ -217,13 +229,6 @@ void BB_init(STRU_BB_initType *ptr_initType)
     }
     else
     {
-    #ifdef _FPGA_BB_
-        BB_SPI_WriteByte(PAGE1, 0x90, 0x80);
-        BB_SPI_WriteByte(PAGE1, 0x90, 0x00);
-        BB_SPI_WriteByte(PAGE1, 0x98, 0x81);
-        BB_SPI_WriteByte(PAGE1, 0x98, 0x01);
-    #endif
-        
         BB_SPI_WriteByte(PAGE1,0x00,0xB1);
         BB_SPI_WriteByte(PAGE2,0x00,0xB0);
     }
@@ -235,4 +240,73 @@ void BB_init(STRU_BB_initType *ptr_initType)
 void BB_uart10_spi_sel(uint32_t sel_dat)
 {
     write_reg32( (uint32_t *)(VSOC_GLOBAL2_BASE + BB_SPI_UART_SEL),	sel_dat);
+}
+
+
+uint8_t BB_WriteReg(ENUM_REG_PAGES page, uint8_t addr, uint8_t data)
+{
+    if(BB_ctx.en_curPage != page)
+    {
+        BB_SPI_WriteByte(page, addr, data);
+        BB_ctx.en_curPage = page;
+    }
+    else
+    {
+        BB_SPI_curPageWriteByte(addr, data);
+    }
+}
+
+uint8_t BB_ReadReg(ENUM_REG_PAGES page, uint8_t addr)
+{
+    uint8_t reg;
+    if(BB_ctx.en_curPage != page)
+    {
+        reg = BB_SPI_ReadByte(page, addr);
+        BB_ctx.en_curPage = page;
+    }
+    else
+    {
+        reg = BB_SPI_curPageReadByte(addr);
+    }
+    return reg;
+}
+
+uint8_t BB_set_sweepfrq(uint8_t ch)
+{
+    if(ch < sizeof(It_frq) / sizeof(It_frq[0]))
+    {
+        BB_WriteReg(PAGE2, SWEEP_FREQ_0, It_frq[ch].frq1);
+        BB_WriteReg(PAGE2, SWEEP_FREQ_1, It_frq[ch].frq2);
+        BB_WriteReg(PAGE2, SWEEP_FREQ_2, It_frq[ch].frq3);
+        BB_WriteReg(PAGE2, SWEEP_FREQ_3, It_frq[ch].frq4);
+        return 0;
+    }
+    
+    return 1;    
+}
+
+uint8_t BB_set_ITfrq(uint8_t ch)
+{
+    if(ch < sizeof(It_frq) / sizeof(It_frq[0]))
+    {
+        BB_WriteReg(PAGE2, AGC3_0, It_frq[ch].frq1);
+        BB_WriteReg(PAGE2, AGC3_1, It_frq[ch].frq2);
+        BB_WriteReg(PAGE2, AGC3_2, It_frq[ch].frq3);
+        BB_WriteReg(PAGE2, AGC3_3, It_frq[ch].frq4);
+        return 0;
+    }
+    return 1;
+}
+
+uint8_t BB_set_Rcfrq(uint8_t ch)
+{
+    if(ch < sizeof(Rc_frq) / sizeof(Rc_frq[0]))
+    {
+        BB_WriteReg(PAGE2, AGC3_a, Rc_frq[ch].frq1);
+        BB_WriteReg(PAGE2, AGC3_b, Rc_frq[ch].frq2);
+        BB_WriteReg(PAGE2, AGC3_c, Rc_frq[ch].frq3);
+        BB_WriteReg(PAGE2, AGC3_d, Rc_frq[ch].frq4); 
+        return 0;
+    }
+    return 1;    
 }
