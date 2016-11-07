@@ -4,7 +4,7 @@
 #include <string.h>
 #include "debuglog.h"
 
-#include "config_functions_sel.h"
+//#include "config_functions_sel.h"
 #include "timer.h"
 #include "interrupt.h"
 #include "BB_ctrl.h"
