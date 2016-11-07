@@ -140,9 +140,9 @@ void command_init()
         default:
             break;
     }
+    reg_IrqHandle(vector_num, Drv_UART_IRQHandler);
     INTR_NVIC_EnableIRQ(vector_num);
     INTR_NVIC_SetIRQPriority(vector_num, 1);
-    reg_IrqHandle(vector_num, Drv_UART_IRQHandler);
 }
 
 void command_reset(void)
