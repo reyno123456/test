@@ -24,12 +24,14 @@ CFLAGS += -O1
 CPU_NUMBER = cpu2
 
 # libs
-LD_LIBS := -lbootload -lboard -lAR8020drv -lcommon -lgcc
+LD_LIBS := -lboard -lAR8020drv -lcommon -lgcc
 
 LDFLAGS += -Bstatic
 LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) -L$(CROSS_COMPILE_LIB_PATH) $(LD_LIBS)
 
-# source file(s), including c file(s)
+# source file(s), including *.s *.c file(s)
+SRC_S   := $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/start.s
+
 ifeq ($(APPLICATION_SCENARIO), sky)
     SRC_C   := main_sky.c command.c test_h264_encoder.c test_BB.c ../share/test_i2c_adv7611.c ../share/test_gpio.c ../share/test_sysevent.c
 
@@ -42,7 +44,7 @@ endif
 CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
 
 # object file(s)
-OBJ_C   := $(patsubst %.c,%.o,$(SRC_C))
+OBJ_C   := $(patsubst %.s,%.o,$(SRC_S)) $(patsubst %.c,%.o,$(SRC_C))
 
 # executable file
 TARGET = ar8020_cpu2

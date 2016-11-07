@@ -22,18 +22,19 @@ include $(BUILD_DIR)/config.mk
 CPU_NUMBER = cpu1
 
 # libs
-LD_LIBS := -lbootload -lfreertos -lusb -lboard -lAR8020drv -lcommon -lgcc
+LD_LIBS := -lfreertos -lusb -lboard -lAR8020drv -lcommon -lgcc
 
 LDFLAGS += -Bstatic
 LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) -L$(CROSS_COMPILE_LIB_PATH) $(LD_LIBS)
 
-# source file(s), including c file(s)
+# source file(s), including *.s *.c file(s)
+SRC_S   := $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/start.s
 SRC_C   := main.c test_freertos.c command.c ../share/test_timer.c ../share/test_spi.c ../share/test_i2c_adv7611.c ../share/test_gpio.c
 
 CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
 
 # object file(s)
-OBJ_C   := $(patsubst %.c,%.o,$(SRC_C))
+OBJ_C   := $(patsubst %.s,%.o,$(SRC_S)) $(patsubst %.c,%.o,$(SRC_C)) 
 
 # executable file
 TARGET = ar8020_cpu1

@@ -9,8 +9,7 @@
 #include "debuglog.h"
 #include "interrupt.h"
 
-.equ  ITCM0,   0x00000000
-.equ  DTCM0,   0x20004000
+.equ  DTCM0, 0x20003000
 
 .syntax unified
 .cpu cortex-m7
@@ -30,6 +29,9 @@
 /* end address for the .data/rodata/bss section. */
 .word  _data_end
 
+.word  _bss_start
+.word  _bss_end
+
 /**
  * @brief  This is the code that gets called when the processor first
  *          starts execution following a reset event. Only the absolutely
@@ -38,15 +40,15 @@
  * @param  None
  * @retval : None
 */
-    .section  .start.Reset_Handler
+  .section  .start.Reset_Handler
   .weak  Reset_Handler
   .type  Reset_Handler, %function
 Reset_Handler:  
   ldr  sp,  =_estack             /* set stack pointer */
 
-/* copy the CPU2 data from ITCM0 to DTCM2 */
+/* copy the CPU0 data from ITCM0 to DTCM0 */
   movs r1, #0
-  ldr  r4, =_data_start           /* The start addr of data image */ 
+  ldr  r4, =_data_start           /* The start addr of data image */
   b  LoopCopyData
 CopyInitData:
   ldr  r3, =_data_start
@@ -69,6 +71,7 @@ LoopClearBss:
   add r1, r1, #4
   cmp r1, r2
   bcc LoopClearBss
+
 /* branch to main */
   bl main
 
@@ -96,7 +99,7 @@ Infinite_Loop:
   .type   vectors, %object
   .size   vectors, .-vectors
    
-vectors:
+  vectors:
   .word     _estack
   .word     Reset_Handler
   .word     default_isr
@@ -204,19 +207,19 @@ vectors:
 * this definition.
 * 
 *******************************************************************************/
-.weak      default_isr
-.thumb_set default_isr,Default_Handler
+   .weak      default_isr
+   .thumb_set default_isr,Default_Handler
 
-.weak      hardfault_isr
-.thumb_set hardfault_isr,Default_Handler
+   .weak      hardfault_isr
+   .thumb_set hardfault_isr,Default_Handler
 
-.weak      SVC_Handler
-.thumb_set SVC_Handler,Default_Handler
+   .weak      SVC_Handler
+   .thumb_set SVC_Handler,Default_Handler
 
-.weak      PendSV_Handler
-.thumb_set PendSV_Handler,Default_Handler
+   .weak      PendSV_Handler
+   .thumb_set PendSV_Handler,Default_Handler
 
-.weak      SYSTICK_IRQHandler
-.thumb_set SYSTICK_IRQHandler,Default_Handler
+   .weak      SYSTICK_IRQHandler
+   .thumb_set SYSTICK_IRQHandler,Default_Handler
 
 

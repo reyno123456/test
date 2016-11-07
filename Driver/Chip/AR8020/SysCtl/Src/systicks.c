@@ -22,6 +22,20 @@ void SysTicks_Init(uint32_t ticks)
 }
 
 /**
+  * @brief This function is uninit system tick module.
+  * @note None
+  * @retval None
+  */
+void SysTicks_UnInit(void)
+{
+    SysTick->CTRL  &= ~(SysTick_CTRL_CLKSOURCE_Msk |
+                        SysTick_CTRL_TICKINT_Msk   |
+                        SysTick_CTRL_ENABLE_Msk);                     /* Disable SysTick IRQ and SysTick Timer */
+
+    return (0UL);                                                     /* Function successful */
+}
+
+/**
   * @brief This function is called to increment a global variable "g_u32SysTickCount"
   *        used as application time base.
   * @note In the default implementation, this variable is incremented each in Systick ISR.

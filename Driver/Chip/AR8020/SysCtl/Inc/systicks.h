@@ -6,6 +6,7 @@
 #define MAX_SYS_TICK_COUNT (0xFFFFFFFFUL)
 
 void SysTicks_Init(uint32_t ticks);
+void SysTicks_UnInit(void);
 void SysTicks_IncTickCount(void);
 uint32_t SysTicks_GetTickCount(void);
 void SysTicks_DelayMS(uint32_t msDelay);
