@@ -25,6 +25,9 @@ int main(void)
     console_init(2, 115200);
     dlog_info("main ground function start \n");
     
+    SysTicks_Init(166000);
+    SysTicks_DelayMS(5); //delay to wait cpu0 bootup and set the PLL register
+       
     test_BB_grd();
 
     /* We should never get here as control is now taken by the scheduler */
