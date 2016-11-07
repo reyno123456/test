@@ -154,6 +154,48 @@ void command_init(uint8_t uart_num)
     INTR_NVIC_EnableIRQ(vector_num);
 }
 
+void command_uninit(void)
+{
+    IRQ_type vector_num;
+    switch(UartNum)
+    {
+        case 0:
+            vector_num = UART_INTR0_VECTOR_NUM;
+            break;
+        case 1:
+            vector_num = UART_INTR1_VECTOR_NUM;
+            break;
+        case 2:
+            vector_num = UART_INTR2_VECTOR_NUM;
+            break;
+        case 3:
+            vector_num = UART_INTR3_VECTOR_NUM;
+            break;
+        case 4:
+            vector_num = UART_INTR4_VECTOR_NUM;
+            break;
+        case 5:
+            vector_num = UART_INTR5_VECTOR_NUM;
+            break;
+        case 6:
+            vector_num = UART_INTR6_VECTOR_NUM;
+            break;
+        case 7:
+            vector_num = UART_INTR7_VECTOR_NUM;
+            break;
+        case 8:
+            vector_num = UART_INTR8_VECTOR_NUM;
+            break;
+        case 9:
+            vector_num = VIDEO_UART9_INTR_VECTOR_NUM;
+            break;
+        default:
+            break;
+    }
+
+    INTR_NVIC_DisableIRQ(vector_num);
+}
+
 void command_reset(void)
 {
     g_commandPos = 0;

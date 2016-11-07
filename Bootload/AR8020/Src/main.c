@@ -93,6 +93,7 @@ int main(void)
 
     if (g_bootloadmode == 0)
     {
+        command_uninit();
         SysTicks_UnInit(); 
         boot_app();
     }
