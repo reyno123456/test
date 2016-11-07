@@ -15,7 +15,7 @@
 #include "config_functions_sel.h"
 
 #include <stdint.h>
-
+#include "BB_ctrl.h"
 /**
   * @brief Sky Controller Structure definition
   */
@@ -59,7 +59,7 @@ typedef struct
                                 This parameter can be a value of @ref <1,2,3...>   */
     uint8_t Rcunlockcnt;     /*!< Specifies the cnt of remote controller unlock.
                                 This parameter can be a value of @ref <1,2,3...>   */
-    uint8_t Changeqammode;     /*!< Specifies the cnt of remote controller unlock.
+    EN_BB_QAM cur_QAM;     /*!< Specifies the cnt of remote controller unlock.
                                     This parameter can be a value of @ref <1,2,3...>   */                                
     uint8_t CntAGCGain;     /*!< Specifies the cnt of remote controller unlock.
                                 This parameter can be a value of @ref <1,2,3...>   */
@@ -69,7 +69,11 @@ typedef struct
     uint8_t workfrq;
     
     uint8_t rc_error;
+    
     uint8_t rc_crc_ok;
+    
+    uint8_t support_br_change;  /*!< Specifies the modulation<QAM, LDPC, bandwidth change */
+    
 }Sky_HanlderTypeDef;
 
 
@@ -79,15 +83,16 @@ typedef struct
 typedef struct
 {
    uint8_t num;
-   uint8_t powerc5;     /*!< Specifies the value of baseband Reg[C5].*/
-   uint8_t powerc6;     /*!< Specifies the value of baseband Reg[C6].*/
-   uint8_t powermin;    /*!< Specifies the min of <Reg[C5],Reg[C6]>.*/
+   uint8_t aagc1;     /*!< Specifies the value of baseband Reg[C5].*/
+   uint8_t aagc2;     /*!< Specifies the value of baseband Reg[C6].*/
+   uint8_t aagcmin;    /*!< Specifies the min of <Reg[C5],Reg[C6]>.*/
+   
    uint8_t rcid5;       /*!< Specifies the bit[39:32]of remote controller id.*/
    uint8_t rcid4;       /*!< Specifies the bit[31:24]of remote controller id.*/
    uint8_t rcid3;       /*!< Specifies the bit[23:16]of remote controller id.*/
    uint8_t rcid2;       /*!< Specifies the bit[15:08]of remote controller id.*/
    uint8_t rcid1;       /*!< Specifies the bit[07:00]of remote controller id.*/
-} IDRx_TypeDef[ID_SEARCH_MAX_TIMES];
+} STRU_RCID_power[ID_SEARCH_MAX_TIMES]; 
 
 
 void Sky_Write_Rcfrq(uint8_t frqchannel);
@@ -108,7 +113,4 @@ void Sky_Adjust_AGCGain_SearchID(uint8_t i);
 void Sky_Hanlde_SpecialIrq(void);
 void wimax_vsoc_rx_isr(void);
 
-void Sky_Timer0_Init(void);
-
-void Sky_Timer1_Init(void);
 #endif

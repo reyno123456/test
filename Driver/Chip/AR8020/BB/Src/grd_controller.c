@@ -7,58 +7,52 @@
 #include "interrupt.h"
 #include "timer.h"
 #include "reg_rw.h"
-#include "config_baseband_frqdata.h"
 #include "config_baseband_register.h"
-#include "sys_peripheral_communication.h"
 #include "BB_ctrl.h"
-#include "sys_peripheral_init.h"
 #include "grd_controller.h"
 
-extern Sys_FlagTypeDef SysState;
-extern uint8_t Txosd_Buffer[];
 
 static init_timer_st init_timer0_0;
 static init_timer_st init_timer0_1;
-
-Grd_FlagTypeDef   GrdState;
-Grd_HandleTypeDef GrdStruct;
-Grd_QAMTypeDef    GrdQam;
-
 static uint8_t  Timer1_Delay1_Cnt = 0;
+
+static Grd_FlagTypeDef   GrdState;
+static Grd_HandleTypeDef GrdStruct;
+static Grd_QAMTypeDef    GrdQam;
 
 void Grd_Parm_Initial(void)
 {
-    GrdStruct.RCChannel=1;
-    GrdStruct.ITManualChannel=0;
-    GrdStruct.ITAutoChannel=0;
-    GrdStruct.Sweepfrqunlock=0xff;
-    GrdStruct.Sweepfrqlock=0;
-    GrdStruct.ITTxChannel=0;
-    GrdStruct.Harqcnt=0;
-    GrdStruct.ReHarqcnt=0;
-    GrdStruct.ITTxCnt=0;
-    GrdStruct.CgITfrqspan=0;
-    GrdStruct.SweepCyccnt=0;
-    GrdStruct.ITunlkcnt=0;
-    GrdStruct.workfrqcnt = 0xff;
+    GrdStruct.RCChannel         = 1;
+    GrdStruct.ITManualChannel   = 0;
+    GrdStruct.ITAutoChannel     = 0;
+    GrdStruct.Sweepfrqunlock    = 0xff;
+    GrdStruct.Sweepfrqlock      = 0;
+    GrdStruct.ITTxChannel       = 0;
+    GrdStruct.Harqcnt           = 0;
+    GrdStruct.ReHarqcnt         = 0;
+    GrdStruct.ITTxCnt           = 0;
+    GrdStruct.CgITfrqspan       = 0;
+    GrdStruct.SweepCyccnt       = 0;
+    GrdStruct.ITunlkcnt         = 0;
+    GrdStruct.workfrqcnt        = 0xff;
 
-    GrdState.ITManualmode = DISABLE;
-    GrdState.ITAutomode = ENABLE;
-    GrdState.GetITfrq = DISABLE;
-    GrdState.RegetITfrq = DISABLE;
-    GrdState.Endsweep = DISABLE;
-    GrdState.GetfrqOnly= ENABLE;
-    GrdState.FEClock = DISABLE;
-    GrdState.Allowjglock=DISABLE;
+    GrdState.ITManualmode   = DISABLE;
+    GrdState.ITAutomode     = ENABLE;
+    GrdState.GetITfrq       = DISABLE;
+    GrdState.RegetITfrq     = DISABLE;
+    GrdState.Endsweep       = DISABLE;
+    GrdState.GetfrqOnly     = ENABLE;
+    GrdState.FEClock        = DISABLE;
+    GrdState.Allowjglock    = DISABLE;
 
-    GrdQam.Down16qam12=DISABLE;
-    GrdQam.Downqpsk12=DISABLE;
-    GrdQam.Downbpsk12=DISABLE;
-    
-    GrdQam.Up64qam12=DISABLE;
-    GrdQam.Up16qam12=DISABLE;
-    GrdQam.Upqpsk12=DISABLE;
-    
+    GrdQam.Down16qam12      = DISABLE;
+    GrdQam.Downqpsk12       = DISABLE;
+    GrdQam.Downbpsk12       = DISABLE;
+   
+    GrdQam.Up64qam12        = DISABLE;
+    GrdQam.Up16qam12        = DISABLE;
+    GrdQam.Upqpsk12         = DISABLE;
+
     Grd_Timer0_Init();
     Grd_Timer1_Init();
 
@@ -76,9 +70,9 @@ void BB_Grd_Id_Initial(void)
 }
 
 
-void Grd_RC_Controller(void)
+void Grd_RC_jumpNextCh(void)
 {
-    GrdStruct.RCChannel ++;
+    GrdStruct.RCChannel++;
     if(GrdStruct.RCChannel >=  MAX_RC_FRQ_SIZE)
     {
         GrdStruct.RCChannel = 0;
@@ -86,22 +80,6 @@ void Grd_RC_Controller(void)
 
     BB_set_Rcfrq(GrdStruct.RCChannel);
 }
-
-/**
-      * @brief  Ground Image Transmission Section.
-      *
-      * @illustrate
-      *
-         (+) Ground write image transmissions frequency in baseband.
-            --BB_set_sweepfrq();
-            --Grd_Write_Itfrq();
-         (+) Grd_Id_Initial().
-         (+) Grd_RC_Controller().
-
-      * @{
-      *
-      * @}
-      */
 
 /*!< Specifies the struct of sweeping power with image transmissions.*/
 struct SWEEP_POWER SP[MAX_RC_FRQ_SIZE]={0};
@@ -118,9 +96,9 @@ uint32_t Snr_Frq_Block[FRQ_SNR_BLOCK_ROWS][FRQ_SNR_BLOCK_LISTS]={0};
    The last list is average.*/
 uint32_t Snr_Qam_Block[QAM_SNR_BLOCK_ROWS][QAM_SNR_BLOCK_LISTS]={0};
 /*!< Specifies the data structure of ldpc err num in every cycles.*/
-uint16_t  Ldpc_Block[LDPC_STATIC_NUM]={0};
+uint16_t Ldpc_Block[LDPC_STATIC_NUM]={0};
 
-//write IT ch and 
+
 void Grd_Write_Itfrq(uint8_t ch)
 {
     if(GrdStruct.workfrqcnt != ch)
@@ -130,8 +108,8 @@ void Grd_Write_Itfrq(uint8_t ch)
         BB_WriteReg(PAGE2, IT_FREQ_TX_0, 0xE0 + ch);
         BB_WriteReg(PAGE2, IT_FREQ_TX_1, 0xE0 + ch);
 
-        GrdStruct.workfrqcnt = ch;        
-        printf("G=>%d\r\n", ch);       
+        GrdStruct.workfrqcnt = ch;
+        printf("G=>%d\r\n", ch);
     }
 }
 
@@ -145,6 +123,7 @@ uint8_t Grd_Baseband_Fec_Lock(void)
         printf("ML:%d\r\n", data);
         status = data;
     }
+    
     return data;
 }
 
@@ -181,10 +160,6 @@ void Grd_Sweeping_Energy_Statistic(uint8_t ch)
     {
         SP[ch].powerwave =(SP[ch].powerall4-SP[ch].poweravr);
     }
-
-    Txosd_Buffer[8]=((SP[ch].poweravr&0xFF0000)>>16);
-    Txosd_Buffer[9]=((SP[ch].poweravr&0xFF00)>>8);
-    Txosd_Buffer[10]=SP[ch].poweravr;
 }
 
 /**
@@ -272,7 +247,6 @@ void Grd_Sweeping_Before_Fec_Locked(void)
     else
     {
         Grd_Sweeping_Energy_Statistic(GrdStruct.Sweepfrqunlock);
-        Txosd_Buffer[7]= GrdStruct.Sweepfrqunlock;
 
         GrdStruct.Sweepfrqunlock++;
         if(GrdStruct.Sweepfrqunlock >= MAX_RC_FRQ_SIZE)
@@ -289,7 +263,7 @@ void Grd_Sweeping_Before_Fec_Locked(void)
             }
         }
         
-        BB_set_sweepfrq(GrdStruct.Sweepfrqunlock );
+        BB_set_sweepfrq(GrdStruct.Sweepfrqunlock);
         Grd_Itfrq_Sort(MAX_RC_FRQ_SIZE);
     }
 }
@@ -417,32 +391,27 @@ void Grd_Fecunlock_Getfrq(void)
 +) get the SNR array of frq in 4*14ms.
             (+) get the SNR array of QAM in 32*14ms.
   *
-  */
-
-#define BB_SNR_REG_0    (0xc0)
-#define BB_SNR_REG_1    (0xc1)
-
-void Grd_Getsnr(uint8_t i)  //get SNR value at present
+*/
+void Grd_Getsnr(uint8_t i)
 {
-    static int pre_snr = 0xffffffff;
     SNRPC[i].num= i;
 
-    SNRPC[i].snrhgh= BB_ReadReg(PAGE2, BB_SNR_REG_0);
-    SNRPC[i].snrlow= BB_ReadReg(PAGE2, BB_SNR_REG_1);
-      
-    SNRPC[i].snrall= (SNRPC[i].snrhgh<<8)|SNRPC[i].snrlow;
+    SNRPC[i].snrhgh = BB_ReadReg(PAGE2, SNR_REG_0);
+    SNRPC[i].snrlow = BB_ReadReg(PAGE2, SNR_REG_1);
+
+    SNRPC[i].snrall = (SNRPC[i].snrhgh<<8)|SNRPC[i].snrlow;
 }
 
 void Grd_Frqsnr_Array(void)
 {
-    uint8_t inum=0;
-    uint8_t irows=0;
-    uint8_t jlists=0;
-    uint8_t inum_2=0;
+    uint8_t inum   = 0;
+    uint8_t irows  = 0;
+    uint8_t inum_2 = 0;
 
-    for(irows=0;irows<FRQ_SNR_BLOCK_ROWS-1;irows++)
+    for(irows = 0; irows < FRQ_SNR_BLOCK_ROWS-1; irows++)
     {
-        for(jlists=0;jlists<FRQ_SNR_BLOCK_LISTS;jlists++)
+        uint8_t jlists = 0;
+        for(jlists=0; jlists<FRQ_SNR_BLOCK_LISTS; jlists++)
         {
             Snr_Frq_Block[irows][jlists]=Snr_Frq_Block[irows+1][jlists];
         }
@@ -458,28 +427,25 @@ void Grd_Frqsnr_Array(void)
     }
 
     Snr_Frq_Block[FRQ_SNR_BLOCK_ROWS-1][FRQ_SNR_BLOCK_LISTS-1]=Snr_Frq_Block[FRQ_SNR_BLOCK_ROWS-1][FRQ_SNR_BLOCK_LISTS-1]>>3;
-
-    Txosd_Buffer[13]=((Snr_Frq_Block[FRQ_SNR_BLOCK_ROWS-1][FRQ_SNR_BLOCK_LISTS-1]&0xFF00)>>8);
-    Txosd_Buffer[14]=Snr_Frq_Block[FRQ_SNR_BLOCK_ROWS-1][FRQ_SNR_BLOCK_LISTS-1];
 }
 
 void Grd_Qamsnr_Array(void)
 {
-    uint8_t  inum=0;
-    uint8_t  inum2=0;
-    uint8_t  irows=0;
-    uint8_t  jlists=0;
+    uint8_t  inum  =0;
+    uint8_t  inum2 =0;
+    uint8_t  irows =0;
 
-    for(irows=0;irows<QAM_SNR_BLOCK_ROWS-1;irows++)
+    for(irows=0; irows<QAM_SNR_BLOCK_ROWS-1; irows++)
     {
-        for(jlists=0;jlists<QAM_SNR_BLOCK_LISTS;jlists++)
+        uint8_t  jlists=0;
+        for(jlists=0; jlists<QAM_SNR_BLOCK_LISTS; jlists++)
         {
-            Snr_Qam_Block[irows][jlists]=Snr_Qam_Block[irows+1][jlists];
+            Snr_Qam_Block[irows][jlists] = Snr_Qam_Block[irows+1][jlists];
         }
     }
     for(inum=0;inum<QAM_SNR_BLOCK_LISTS-1;inum++)     //the last data
     {
-        Snr_Qam_Block[QAM_SNR_BLOCK_ROWS-1][inum]=SNRPC[inum].snrall;
+        Snr_Qam_Block[QAM_SNR_BLOCK_ROWS-1][inum]= SNRPC[inum].snrall;
     }
     for(inum2=0;inum2<QAM_SNR_BLOCK_LISTS-1;inum2++)    //Sum
     {
@@ -503,15 +469,15 @@ void Grd_Qamsnr_Array(void)
   */
 void Grd_Frq_Snrblock_Determine(uint16_t iMCS)
 {
-    uint8_t jrows=0;
     uint8_t jlist=0;
     uint8_t snr_list_cnt=0;
     uint8_t snr_rows_cnt=0;
 
-    for(jlist=0;jlist<FRQ_SNR_BLOCK_LISTS-1;jlist++)
+    for(jlist=0; jlist<FRQ_SNR_BLOCK_LISTS-1; jlist++)
     {
         if(Snr_Frq_Block[0][jlist] < iMCS)
         {
+            uint8_t jrows=0;
             for(jrows=0;jrows<FRQ_SNR_BLOCK_ROWS;jrows++)
             {
                 if(Snr_Frq_Block[jrows][jlist]<iMCS)
@@ -523,6 +489,7 @@ void Grd_Frq_Snrblock_Determine(uint16_t iMCS)
             }
          }
     }
+    
     if(snr_list_cnt>=2)
     {
         GrdState.RegetITfrq=ENABLE;
@@ -536,7 +503,7 @@ void Grd_Frq_Snrblock_Determine(uint16_t iMCS)
              fluctuate is smallest.
   *
   */
-uint8_t Grd_Sweeppower_Fluctuate_Average(void)     //??????????
+uint8_t Grd_Sweeppower_Fluctuate_Average(void)
 {
     uint8_t iwa=0;
     uint8_t wave_cnt=0;
@@ -556,9 +523,6 @@ uint8_t Grd_Sweeppower_Fluctuate_Average(void)     //??????????
         return 0;
 }
 
-
-#define LDPC_ERR_LOW_REG    (0xdf)
-#define LDPC_ERR_HIGH_REG   (0xde)
 
 void Grd_Ldpc_Err_Num_Statistics(void)    //2 // 2 sec
 {
@@ -594,6 +558,8 @@ uint8_t Grd_Ldpc_Block_Determine(void)
     uint8_t arr_cnt=0;
     uint8_t ldpc_err_num=0;
 
+    return 1;
+    #if 0
     if(ENABLE == GrdState.Ldpcjgflag)
     {
         for(arr_cnt=0;arr_cnt<LDPC_STATIC_NUM-1;arr_cnt++)
@@ -618,50 +584,24 @@ uint8_t Grd_Ldpc_Block_Determine(void)
     {
         return 0;
     }
+    #endif
 }
 
 
 void Baseband_MsgOSD_Ptf(void)
 {
 #if 0
-    uint8_t iData_page_temp;
-    
-    Txosd_Buffer[0]=0x55;
-    Txosd_Buffer[1]=0xaa;
-    
-    //  Txosd_Buffer[7]= 0x00;
-    iData_page_temp= Spi_Baseband_ReadWrite(spiRead, FSM_0, 0x00);   //page2
-    Spi_Baseband_ReadWrite(spiWrite, FSM_0 , iData_page_temp& PAGE_2);
-
-    Txosd_Buffer[8]/*iData_C3_temp */= Spi_Baseband_ReadWrite(spiRead, AAGC_0_RD, 0x00);
-    Txosd_Buffer[9]/*iData_C7_temp*/ = Spi_Baseband_ReadWrite(spiRead, AAGC_4_RD, 0x00);
-    Txosd_Buffer[10]/*iData_C4_temp*/= Spi_Baseband_ReadWrite(spiRead, AAGC_1_RD, 0x00);
-    Txosd_Buffer[4]/*iData_C5_temp*/= Spi_Baseband_ReadWrite(spiRead, AAGC_2_RD, 0x00);
-    Txosd_Buffer[5]/*iData_C6_temp*/= Spi_Baseband_ReadWrite(spiRead, AAGC_3_RD, 0x00);
-    
-    Txosd_Buffer[6]/*iData_Eb_temp*/= Spi_Baseband_ReadWrite(spiRead, FEC_6_RD , 0x00);
-    Txosd_Buffer[11]/*iData_E0_temp*/= Spi_Baseband_ReadWrite(spiRead, FEC_0_RD , 0x00);
-    
-    Txosd_Buffer[13]/*iData_SNRH_temp*/ = Spi_Baseband_ReadWrite(spiRead, CE_9_RD, 0x00);
-    Txosd_Buffer[14]/*iData_SNRL_temp*/ = Spi_Baseband_ReadWrite(spiRead, CE_A_RD, 0x00);
-    Txosd_Buffer[12]/*iData_EA_temp*/ = Spi_Baseband_ReadWrite(spiRead, FEC_5_RD, 0x00);
-    Txosd_Buffer[15]/*iData_E7_temp*/ = Spi_Baseband_ReadWrite(spiRead, FEC_3_RD_1, 0x00);
-    Txosd_Buffer[16]/*iData_E8_temp*/= Spi_Baseband_ReadWrite(spiRead, FEC_3_RD_2, 0x00);
-    Txosd_Buffer[17]/*iData_EE_temp*/ = Spi_Baseband_ReadWrite(spiRead, FEC_9_RD, 0x00);
-    Txosd_Buffer[18]/*iData_EF_temp*/ = Spi_Baseband_ReadWrite(spiRead, FEC_10_RD, 0x00);
-    Spi_Baseband_ReadWrite(spiWrite, FSM_0 , iData_page_temp);
-
-    Txosd_Buffer[19]=0;
-    //HAL_UART_Transmit(&Uart1Handle, (u8 *)&Txosd_Buffer, 20, 0xFFFF);
+    HAL_UART_Transmit(&Uart1Handle, (u8 *)&Txosd_Buffer, 20, 0xFFFF);
 #endif
+
 }
 
-uint8_t Grd_get_QAM(void)
+EN_BB_QAM Grd_get_QAM(void)
 {
-    return BB_ReadReg(PAGE2, GRD_FEC_QAM_CR_TLV) & 0x03;
+    return (EN_BB_QAM)(BB_ReadReg(PAGE2, GRD_FEC_QAM_CR_TLV) & 0x03);
 }
 
-void Grd_Itfrq_Hopping(void)
+void Grd_ITfrq_Hopping(void)
 {
     uint8_t iData_harq  = 0;
     uint8_t iData_qam   = 0;
@@ -676,16 +616,14 @@ void Grd_Itfrq_Hopping(void)
     GrdStruct.Harqcnt = BB_ReadReg(PAGE2, FEC_5_RD) >>4;
     QAM_MODE = Grd_get_QAM();
 
-    #if 0
-    if(GrdStruct.Harqcnt >= 2 )
+    if(GrdStruct.Harqcnt >= 2)
     {
-        printf("Hrq%d\r\n", GrdStruct.Harqcnt);
         GrdStruct.Harqcnt=0;
         switch(QAM_MODE)
         {
-            case 0:  
-            {                                //   BPSK_90
-                if( GrdStruct.CgITfrqspan>=SPAN_ALTFRQ )
+            case MOD_BPSK:
+            {
+                if( GrdStruct.CgITfrqspan >= SPAN_ALTFRQ)
                 {
                     Grd_Frq_Snrblock_Determine(BPSK1_2);
                     if(ENABLE == GrdState.RegetITfrq)
@@ -700,9 +638,9 @@ void Grd_Itfrq_Hopping(void)
             }   
             break;
             
-            case 1:  
-            {                                //   QPSK_B0 (1/2)
-                if( GrdStruct.CgITfrqspan>=SPAN_ALTFRQ )
+            case MOD_4QAM:  
+            {
+                if( GrdStruct.CgITfrqspan >= SPAN_ALTFRQ)
                 {
                     Grd_Frq_Snrblock_Determine(QPSK1_2);
                     if(ENABLE ==GrdState.RegetITfrq)
@@ -718,9 +656,9 @@ void Grd_Itfrq_Hopping(void)
             }
             break;
             
-            case 2:
-            {                                //   16QAM (1/2)
-                if( GrdStruct.CgITfrqspan>=SPAN_ALTFRQ )
+            case MOD_16QAM:
+            {
+                if( GrdStruct.CgITfrqspan >= SPAN_ALTFRQ)
                 {
                     Grd_Frq_Snrblock_Determine(QAM16_1_2);
                     if(ENABLE ==GrdState.RegetITfrq)
@@ -735,9 +673,9 @@ void Grd_Itfrq_Hopping(void)
             }
             break;
             
-            case 3:  
-            {                                //   64QAM (1/2)
-                if( GrdStruct.CgITfrqspan>=SPAN_ALTFRQ )
+            case MOD_64QAM:  
+            {
+                if( GrdStruct.CgITfrqspan >= SPAN_ALTFRQ)
                 {
                     Grd_Frq_Snrblock_Determine(QAM64_1_2);
                     if(ENABLE ==GrdState.RegetITfrq)
@@ -753,34 +691,48 @@ void Grd_Itfrq_Hopping(void)
             break;
         }    
     }
-    #endif
 }
+
 
 void Grd_Working_Qam_Change(void)
 {
-    uint8_t  icnt = 0;
-    uint8_t  snr_cnt=0;
+    uint8_t  icnt     = 0;
+    uint8_t  snr_cnt  = 0;
     uint32_t snr_aver = 0;
-    uint8_t  iQAM=0;
-
-    iQAM = Grd_get_QAM();
+    EN_BB_QAM iQAM    = Grd_get_QAM();
+    
+    #if 0
+    static uint8_t t = 0;
+    static uint8_t m = 0;
+    if(t++ > 50)
+    {
+        t = 0;
+        dlog_info("Q%d %d", iQAM, m);
+        dlog_info("\r\n%0.4x %0.4x %0.4x %0.4x %0.4x %0.4x %0.4x %0.4x %0.4x\r\n", 
+            Snr_Qam_Block[m][0], Snr_Qam_Block[m][1], Snr_Qam_Block[m][2],
+            Snr_Qam_Block[m][3], Snr_Qam_Block[m][4], Snr_Qam_Block[m][5],
+            Snr_Qam_Block[m][6], Snr_Qam_Block[m][7], Snr_Qam_Block[m][8]
+            );
+        m = (m+1) % QAM_SNR_BLOCK_ROWS;
+    }
+    #endif
     switch (iQAM)
     {
-        case 0:
+        case MOD_BPSK:
         {
             for(icnt=0; icnt < SNRNUM_PER_CYC; icnt++)
             {
-                if(SNRPC[icnt].snrall> 2*MCS3_0_THRE)       //BPSK  1/2  +3dB
+                if(SNRPC[icnt].snrall > 2 * MCS3_0_THRE)         
                 {
                     SNRPC[icnt].snrall = 2* MCS3_0_THRE;
                 }
             }
             Grd_Qamsnr_Array();
-            for(snr_cnt=0;snr_cnt<QAM_SNR_BLOCK_ROWS;snr_cnt++)
+            for(snr_cnt=0; snr_cnt<QAM_SNR_BLOCK_ROWS; snr_cnt++)
             {
-                snr_aver = snr_aver + Snr_Qam_Block[snr_cnt][QAM_SNR_BLOCK_LISTS-1];
+                snr_aver += Snr_Qam_Block[snr_cnt][QAM_SNR_BLOCK_LISTS-1];
             }
-            snr_aver = snr_aver>>5;
+            snr_aver = (snr_aver>>5);
             if(snr_aver > MCS3_1_THRE)
             {
                 Grd_Ldpc_Err_Num_Statistics();
@@ -791,25 +743,25 @@ void Grd_Working_Qam_Change(void)
             }
             if(Grd_Ldpc_Block_Determine())
             {
-                GrdQam.Upqpsk12= ENABLE;
+                GrdQam.Upqpsk12 = ENABLE;
                 GrdStruct.Ldpcreadcnt=0;
             }
         } 
         break;
 
-    case 1:                       // 4QAM 1/2 +3dB
+    case MOD_4QAM:
         {
             for(icnt=0;icnt<SNRNUM_PER_CYC ;icnt++)
             {
-                if(SNRPC[icnt].snrall >2* MCS3_1_THRE)
+                if(SNRPC[icnt].snrall > 2* MCS3_1_THRE)
                 {
                     SNRPC[icnt].snrall = 2* MCS3_1_THRE;
                 }
             }
             Grd_Qamsnr_Array();
-            for(snr_cnt=0;snr_cnt<QAM_SNR_BLOCK_ROWS;snr_cnt++)
+            for(snr_cnt=0; snr_cnt<QAM_SNR_BLOCK_ROWS; snr_cnt++)
             {
-                snr_aver = snr_aver + Snr_Qam_Block[snr_cnt][QAM_SNR_BLOCK_LISTS-1];
+                snr_aver += Snr_Qam_Block[snr_cnt][QAM_SNR_BLOCK_LISTS-1];
             }
             snr_aver=snr_aver>>5;
             if(snr_aver > MCS3_3_THRE)
@@ -829,19 +781,19 @@ void Grd_Working_Qam_Change(void)
         } 
         break;
 
-    case 2:  //16QAM 1/2  +3dB
+    case MOD_16QAM:
         {
             for(icnt=0;icnt<SNRNUM_PER_CYC ;icnt++)
             {
-                if(SNRPC[icnt].snrall >2* MCS3_3_THRE)
+                if(SNRPC[icnt].snrall > 2* MCS3_3_THRE)
                 {
-                    SNRPC[icnt].snrall =2* MCS3_3_THRE;
+                    SNRPC[icnt].snrall = 2* MCS3_3_THRE;
                 }
             }
             Grd_Qamsnr_Array();
             for(snr_cnt=0;snr_cnt<QAM_SNR_BLOCK_ROWS;snr_cnt++)
             {
-                snr_aver = snr_aver + Snr_Qam_Block[snr_cnt][QAM_SNR_BLOCK_LISTS-1];
+                snr_aver += Snr_Qam_Block[snr_cnt][QAM_SNR_BLOCK_LISTS-1];
             }
             snr_aver=snr_aver>>5;
             if(snr_aver > MCS3_4_THRE)
@@ -856,6 +808,7 @@ void Grd_Working_Qam_Change(void)
                 else 
                     GrdQam.Downqpsk12 = ENABLE;
             }
+
             if(Grd_Ldpc_Block_Determine())
             {
                 GrdQam.Up64qam12 = ENABLE;
@@ -864,11 +817,11 @@ void Grd_Working_Qam_Change(void)
         } 
         break;
 
-    case 3:                         //64 QAM 1/2  +3dB
+    case MOD_64QAM:
         {
-            for(icnt=0;icnt<SNRNUM_PER_CYC ;icnt++)
+            for(icnt=0; icnt<SNRNUM_PER_CYC ;icnt++)
             {
-                if(SNRPC[icnt].snrall >2* MCS3_4_THRE)
+                if(SNRPC[icnt].snrall > 2* MCS3_4_THRE)
                 {
                     SNRPC[icnt].snrall = 2*MCS3_4_THRE;
                 }
@@ -876,7 +829,7 @@ void Grd_Working_Qam_Change(void)
             Grd_Qamsnr_Array();
             for(snr_cnt=0;snr_cnt<QAM_SNR_BLOCK_ROWS;snr_cnt++)
             {
-                snr_aver = snr_aver + Snr_Qam_Block[snr_cnt][8];
+                snr_aver += Snr_Qam_Block[snr_cnt][8];
             }
             snr_aver = snr_aver >> 5;
             if(snr_aver <= MCS3_4_THRE)
@@ -889,7 +842,7 @@ void Grd_Working_Qam_Change(void)
                     }
                     else
                     {
-                      GrdQam.Downqpsk12=ENABLE;
+                        GrdQam.Downqpsk12=ENABLE;
                     }
                 }
                 else
@@ -899,22 +852,26 @@ void Grd_Working_Qam_Change(void)
             }
         } 
         break;
+        
+    default:
+        break;
     }
 }
 
 
 void Grd_Txmsg_Qam_Change(void)
 {
+#if 0
     if( ENABLE==GrdQam.Downbpsk12)  // BPSK_1/2  0x90
     {       
-        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF1);        
-        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF1);        
+        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF1);
+        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF1);
     }
 
     if(ENABLE==GrdQam.Downqpsk12)   //QPSK_1/2   0xB0
     {       
-        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF3);       
-        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF3);       
+        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF3);
+        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF3);
     }
 
     if(ENABLE==GrdQam.Down16qam12)  //16QAM_1/2    0xD0
@@ -922,23 +879,24 @@ void Grd_Txmsg_Qam_Change(void)
         BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF7);
         BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF7);
     }
+#endif
 
     //MCS_UP
     if(ENABLE==GrdQam.Upqpsk12) //QPSK_1/2   0xB0
     {      
-        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF3);
-        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF3);
+        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF0 | (uint8_t)MOD_4QAM);
+        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF0 | (uint8_t)MOD_4QAM);
     }
 
     if(ENABLE==GrdQam.Up16qam12)  //16QAM_1/2    0xD0
-    {      
-        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF7);
-        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF7);
+    {
+        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF0 | (uint8_t)MOD_16QAM);
+        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF0 | (uint8_t)MOD_16QAM);
     }
     if(ENABLE==GrdQam.Up64qam12)  //64QAM_1/2    0xF0
     {
-        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF9);
-        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF9);
+        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF0 | (uint8_t)MOD_64QAM);
+        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF0 | (uint8_t)MOD_64QAM);
     }
 }
 
@@ -953,8 +911,7 @@ void Grd_Qamflag_Clear(void)
     GrdQam.Downqpsk12   = DISABLE;
 }
 
-
-void Grd_IT_Controller(void)
+void Grd_sweep(void)
 {
     if(DISABLE == GrdState.FEClock)
     {
@@ -964,7 +921,12 @@ void Grd_IT_Controller(void)
     {
         Grd_Sweeping_After_Fec_Locked();
     }
+}
 
+
+void Grd_IT_Controller(void)
+{
+    Grd_sweep();
     if(ENABLE == GrdState.Endsweep)
     {
         if(ENABLE == GrdState.GetfrqOnly)
@@ -983,7 +945,6 @@ void Grd_IT_Controller(void)
                 GrdStruct.ITTxCnt = 0;
                 GrdState.Allowjglock = ENABLE;
                 Grd_Write_Itfrq(GrdStruct.ITTxChannel);
-                Txosd_Buffer[3]= GrdStruct.ITTxChannel;
                 break;
 
             default:
@@ -992,21 +953,16 @@ void Grd_IT_Controller(void)
         }
     }
     
-    if(ENABLE == GrdState.Allowjglock) //after ch switch, check the lock
+    //if(ENABLE == GrdState.Allowjglock) //after ch switch, check the lock
     {
         if(Grd_Baseband_Fec_Lock())
         {
-            GrdState.FEClock=ENABLE;
+            GrdState.FEClock = ENABLE;
             GrdStruct.ITunlkcnt=0;
 
-            if( ENABLE == GrdState.ITManualmode)
+            if( ENABLE == GrdState.ITAutomode)
             {
-                GrdState.ITAutomode = DISABLE;
-            }
-            else if( ENABLE == GrdState.ITAutomode)
-            {
-                GrdState.ITManualmode = DISABLE;
-                Grd_Itfrq_Hopping();
+                Grd_ITfrq_Hopping();
                 Grd_Working_Qam_Change();
                 Grd_Txmsg_Qam_Change();
                 Grd_Qamflag_Clear();
@@ -1017,30 +973,6 @@ void Grd_IT_Controller(void)
             Grd_Fecunlock_Getfrq();
         }
     }
-}
-
-void Grd_Osdmsg_Ptf(void)
-{
-    #if 0
-    uint8_t iData_page_temp=0;
-
-    Txosd_Buffer[0]=0x55;
-    Txosd_Buffer[1]=0xaa;
-    iData_page_temp= Spi_Baseband_ReadWrite(spiRead, FSM_0, 0x00);   //page2
-    Spi_Baseband_ReadWrite(spiWrite, FSM_0 , iData_page_temp& PAGE_2);
-    Txosd_Buffer[6]/*iData_EB_temp*/= Spi_Baseband_ReadWrite(spiRead, FEC_6_RD, 0x00);
-    Txosd_Buffer[11]/*iData_E0_temp*/= Spi_Baseband_ReadWrite(spiRead, FEC_0_RD, 0x00);
-    Txosd_Buffer[4]/*iData_C5_temp*/= Spi_Baseband_ReadWrite(spiRead, AAGC_2_RD, 0x00);
-    Txosd_Buffer[5]/*iData_C6_temp*/= Spi_Baseband_ReadWrite(spiRead, AAGC_3_RD, 0x00);
-    Txosd_Buffer[15]/*iData_E7_temp*/ = Spi_Baseband_ReadWrite(spiRead, FEC_3_RD_1, 0x00);
-    Txosd_Buffer[16]/*iData_E8_temp*/= Spi_Baseband_ReadWrite(spiRead, FEC_3_RD_2, 0x00);
-    Txosd_Buffer[17]/*iData_EE_temp */= Spi_Baseband_ReadWrite(spiRead, FEC_9_RD, 0x00);
-    Txosd_Buffer[18]/*iData_EF_temp */= Spi_Baseband_ReadWrite(spiRead, FEC_10_RD, 0x00);
-    Spi_Baseband_ReadWrite(spiWrite, FSM_0 , iData_page_temp);
-
-    Txosd_Buffer[19]=0;
-    SysState.TxcyosdOnly=ENABLE;
-    #endif
 }
 
 
@@ -1072,43 +1004,47 @@ void Grd_TIM0_IRQHandler(void)
 
 void Grd_TIM1_IRQHandler(void)
 {
-    Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_1);
+    Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_1); //disable the intr.
+    
     switch (Timer1_Delay1_Cnt)
     {
         case 0:
             Timer1_Delay1_Cnt++;
             Grd_Getsnr(0);
             break;
+            
         case 1:
             Timer1_Delay1_Cnt++;
             Grd_Getsnr(1);
             break;
+
         case 2:
             Timer1_Delay1_Cnt++;
-            Grd_RC_Controller();
+            Grd_RC_jumpNextCh();
             Grd_Getsnr(2);
             break;
-        
+
         case 3:
             Timer1_Delay1_Cnt++;
-            Grd_IT_Controller();                
+            Grd_IT_Controller();
             Grd_Getsnr(3);
             break;
-        
+
         case 4:
             Timer1_Delay1_Cnt++;
             Grd_Getsnr(4);
             break;
-            
+
         case 5:
             Timer1_Delay1_Cnt++;
             Grd_Getsnr(5);
             break;
-        
+
         case 6:
             Timer1_Delay1_Cnt++;
             Grd_Getsnr(6);
             break;
+
         case 7:
             INTR_NVIC_DisableIRQ(TIMER_INTR01_VECTOR_NUM);                
             TIM_StopTimer(init_timer0_1);
@@ -1131,7 +1067,7 @@ void Grd_Timer1_Init(void)
     init_timer0_1.time_num = 1;
     init_timer0_1.ctrl = 0;
     init_timer0_1.ctrl |= TIME_ENABLE | USER_DEFINED;
-    TIM_RegisterTimer(init_timer0_1, 1200);
+    TIM_RegisterTimer(init_timer0_1, 1200); //1.2ms
     reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, Grd_TIM1_IRQHandler);
 }
 
@@ -1142,7 +1078,7 @@ void Grd_Timer0_Init(void)
     init_timer0_0.ctrl = 0;
     init_timer0_0.ctrl |= TIME_ENABLE | USER_DEFINED;
     
-    TIM_RegisterTimer(init_timer0_0, 3600);
+    TIM_RegisterTimer(init_timer0_0, 3600); //3.6ms
 
     reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, Grd_TIM0_IRQHandler);
 }

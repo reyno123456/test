@@ -1,6 +1,9 @@
-start_0.o: start_0.c ../../Library/Artosyn/Common/Inc/interrupt.h \
- ../../Library/Artosyn/Common/Inc/interrupt_internal.h \
- ../../Kernel/FreeRTOS/CMSIS_RTOS/cmsis_os.h
-start_2.o: start_2.c ../../Library/Artosyn/Common/Inc/interrupt.h \
- ../../Library/Artosyn/Common/Inc/interrupt_internal.h
- 
+main.o: Src/main.c ../../Output/Staging/Inc/serial.h \
+ ../../Output/Staging/Inc/debuglog.h Inc/command.h \
+ ../../Output/Staging/Inc/interrupt.h \
+ ../../Output/Staging/Inc/quad_spi_ctrl.h \
+ ../../Output/Staging/Inc/systicks.h
+command.o: Src/command.c Inc/command.h ../../Output/Staging/Inc/serial.h \
+ ../../Output/Staging/Inc/debuglog.h ../../Output/Staging/Inc/interrupt.h \
+ ../../Output/Staging/Inc/quad_spi_ctrl.h \
+ ../../Output/Staging/Inc/systicks.h

@@ -38,11 +38,9 @@ SRC_C := SysCtl/Src/reg_rw.c \
          H264Encoder/Src/vsoc_enc.c \
          H264Encoder/Src/brc.c \
          SPI/Src/spi.c \
-	 SPI/Src/BB_spi.c \
+	     SPI/Src/BB_spi.c \
          BB/Src/sky_controller.c \
          BB/Src/grd_controller.c \
-         BB/Src/sys_peripheral_init.c \
-         BB/Src/sys_peripheral_communication.c \
          BB/Src/BB_ctrl.c
 
 INCDIRS := -IUART/Inc \
@@ -79,7 +77,6 @@ install:
 	@cp -f SPI/Inc/spi.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f I2C/Inc/i2c.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/BB_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f BB/Inc/config_functions_sel.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/grd_controller.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/sky_controller.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)

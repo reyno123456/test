@@ -10,51 +10,6 @@
   *          This file contains all registers address for AR8003 or AD9363.
   * ****************************************************************************** */
 
-
-/** @ Register File************************************
-    @ Instruction:
-     Address Space Location  P1: page1, 0x00[7]=1; P2: page2, 0x00[7]=0
-            ________________________________________________________________
-            |-------- Address  -------   Block name    ------- Number (Byte)
-            |      P1&P2:00-01   |                       |
-            |      P2: 02-0F     |   FSM WR              |  48
-            |      P1: 20-3F     |                       |
-            |--------------------------------------------------------
-            |      P1: 02-0F     |   TX WR               |  14
-            |--------------------------------------------------------
-            |      P1: 10-1F     |   ADC/DAC for AR8003  |  16
-            |--------------------------------------------------------
-            |      P1: 40-7F     |   RC_TX RD/WR         |  64
-            |--------------------------------------------------------
-            |      P1: 80-8F     |   TX RD               |  16
-            |--------------------------------------------------------
-            |      P1: 90-9F     |   RF_CALI RD          |  16
-            |--------------------------------------------------------
-            |      P1: A0-BF     |   RF_CALI WR          |  32
-            |--------------------------------------------------------
-            |      P2: 10-1F     |                       |
-            |      P2: A0-AF     |                       |
-            |      P2: B0-BF     |   AGC WR              |  64
-            |      P1: C0-CF     |                       |
-            |--------------------------------------------------------
-            |      P2: 20-2F     |   Frontend WR         |  16
-            |--------------------------------------------------------
-            |      P2: 30-8F     |   CHE and EQU WR      |  96
-            |--------------------------------------------------------
-            |      P2: 90-9F     |   FEC WR              |  16
-            |--------------------------------------------------------
-            |      P2: C0-C7     |   FSM & AGC RD        |   8
-            |--------------------------------------------------------
-            |      P2: C8-CF     |   Frontend RD         |   8
-            |--------------------------------------------------------
-            |      P2: D0-DF     |   CHE and EQU RD      |  16
-            |--------------------------------------------------------
-            |      P2: E0-EF     |   FEC RD              |  16
-            |_____________________________________________________________
-
-* ****************************************************************************** */
-
-//  Page1 & page2: (0x00~0x01)
 #define FSM_0      ((uint8_t)0x00 )  /*[7]page_sel 1: TRX FSM and TX, page1  0: RX, page2
                                       [6]fec_reset_en
                                       [5]fch_reset_en
@@ -74,40 +29,19 @@
 
 // ************                    Page1                ***************
 
-/*
-  *  There are the definitions for the rc_id_bits.
-  */
-//#define TX_2       ((uint8_t)0x02 ) 
-/* PAGE1
-[7]n_tx_ant  1'b1: 2TX, 1'b0: 1TX
-[6:5]QAM_mode
-2'b00: BPSK, 2'b01: QPSK,
-2'b10: 16QAM, 2'b11:64QAM
-[4:3]BandWidth
-2'b00: 2.5MHz, 2'b01: 5MHz,
-2'b10: 10MHz, 2'b11: reserved
-[2:0]code_rate_enum
-3'b0: 1/2  3'b1: 2/3A 3'd2: 2/3B
-3'd3:3/4A  3'd4: 3/4B  3'd5: 5/6
-*/
-//#define TX_2_1     ((uint8_t)0x03 )
-/* page 2
-n_tx_ant        RW  [7:7] 1 0x1
-*/
 #define TX_2       ((uint8_t)0x04 )/* page 2
                                       QAM_mode        RW  [7:6] 2 0x2
                                       BandWidth       RW  [5:3] 3 0x2
                                       code_rate_enum  RW  [2:0] 3 0x0
                                    */
 
-#define TX_3       ((uint8_t)(0x5b))  //RC_id_bits[39:32] 0x5b+0x00
-#define TX_4       ((uint8_t)(0x5c))  //RC_id_bits[31:24] 0x5b+0x01
-#define TX_5       ((uint8_t)(0x5d))  //RC_id_bits[23:16] 0x5b+0x02
-#define TX_6       ((uint8_t)(0x5e))  //RC_id_bits[15:8]  0x5b+0x03
-#define TX_7       ((uint8_t)(0x5f))  //RC_id_bits[7:0]   0x5b+0x04
+#define TX_3       ((uint8_t)(0x5b))  //RC_id_bits[39:32]
+#define TX_4       ((uint8_t)(0x5c))  //RC_id_bits[31:24]
+#define TX_5       ((uint8_t)(0x5d))  //RC_id_bits[23:16]
+#define TX_6       ((uint8_t)(0x5e))  //RC_id_bits[15:8]
+#define TX_7       ((uint8_t)(0x5f))  //RC_id_bits[7:0]
 
 // custom
-
 #define IT_FREQ_TX_0    ((uint8_t)0x60 )
 #define IT_FREQ_TX_1    ((uint8_t)0x61 )
 
@@ -276,13 +210,6 @@ n_tx_ant        RW  [7:7] 1 0x1
 #define AGC_3      ((uint8_t)0x93 ) //reg_aagc_fix_gain2 0x01  RW  [7:0]
 
 
-/*
-#define FEC_7      ((uint8_t)0x97 )     //PAGE2_rc_id[39:32].
-#define FEC_8      ((uint8_t)0x98 )     //PAGE2_rc_id[31:24].
-#define FEC_9      ((uint8_t)0x99 )     //PAGE2_rc_id[23:16].
-#define FEC_10     ((uint8_t)0x9A )     //PAGE2_rc_id[15:8].
-#define FEC_11     ((uint8_t)0x9B )     //PAGE2_rc_id[7:0].
-*/
 //page2 0x50
 #define FEC_7        ((uint8_t)(0x50))  //PAGE2_rc_id[39:32]  0x00 RW  [7:0]
 #define FEC_8        ((uint8_t)(0x51))  //PAGE2_rc_id[31:24]  0x01 RW  [7:0]
@@ -295,21 +222,12 @@ n_tx_ant        RW  [7:7] 1 0x1
 #define AGC3_2     ((uint8_t)0x12 )     //reg_aggc_work_frequency[23:16].
 #define AGC3_3     ((uint8_t)0x13 )     //reg_aggc_work_frequency[31:24].
 
-//#define AGC3_4     ((uint8_t)0x14 )     //reg_aggc_work_frequency[39:32].
-//#define AGC3_5     ((uint8_t)0x14 )     //reg_aggc_sweep_frequency[7:0].
 #define AGC3_6     ((uint8_t)0x14 )     //reg_aggc_sweep_frequency[15:8].
 #define AGC3_7     ((uint8_t)0x15 )     //reg_aggc_sweep_frequency[23:16].
 #define AGC3_8     ((uint8_t)0x16 )     //reg_aggc_sweep_frequency[31:24].
 #define AGC3_9     ((uint8_t)0x17 )     //reg_aggc_sweep_frequency[39:32].
 
 
-/*
-#define AGC3_a     ((uint8_t)0xBA )     //reg_aggc_rc_frequency[7:0].
-#define AGC3_b     ((uint8_t)0xBB )     //reg_aggc_rc_frequency[15:8].
-#define AGC3_c     ((uint8_t)0xBC7 )     //reg_aggc_rc_frequency[23:16].
-#define AGC3_d     ((uint8_t)0xBD )     //reg_aggc_rc_frequency[31:24].
-#define AGC3_e     ((uint8_t)0xBE )     //reg_aggc_rc_frequency[39:32].
-*/
 //page2 0x10
 #define AGC3_a     ((uint8_t)0x18 )     //reg_aggc_rc_frequency[7:0].    0x0b    RW  [7:0] 
 #define AGC3_b     ((uint8_t)0x19 )     //reg_aggc_rc_frequency[15:8].   0x0a    RW  [7:0]  
@@ -317,21 +235,12 @@ n_tx_ant        RW  [7:7] 1 0x1
 #define AGC3_d     ((uint8_t)0x1b )     //reg_aggc_rc_frequency[31:24].  0x08    RW  [7:0]   
 #define AGC3_e     ((uint8_t)0x1e )     //reg_aggc_rc_frequency[39:32].
 
-      
 
-/*
-#define AAGC_0_RD  ((uint8_t)0xC3 )     //Lowest byte of channel power
-#define AAGC_4_RD  ((uint8_t)0xC7 )     //Middle byte of channel power
-#define AAGC_1_RD  ((uint8_t)0xC4 )     //Highest byte of channel power
-*/
 //page2                                       
 #define AAGC_0_RD  ((uint8_t)0x02 )     //Lowest byte of channel power
 #define AAGC_4_RD  ((uint8_t)0x03 )     //Middle byte of channel power
 #define AAGC_1_RD  ((uint8_t)0x04 )     //Highest byte of channel power                                              
-/*
-#define AAGC_2_RD  ((uint8_t)0xA0 )     //[6:0]Rx1_again_final
-#define AAGC_3_RD  ((uint8_t)0xC6 )     //[6:0]Rx2_again_final
-*/
+
 //page2
 #define AAGC_2_RD  ((uint8_t)0xA0 )     //0x00  rx1_gain_all_r  RW  [7:0]
 #define AAGC_3_RD  ((uint8_t)0xA1 )     //0x01  rx2_gain_all_r  RW  [7:0]
@@ -371,10 +280,6 @@ n_tx_ant        RW  [7:7] 1 0x1
                                           id_match  RO  [0:0]
                                           */
 
-//#define FEC_5_RD    ((uint8_t)0xEA )/*[7:4]Harq_times_out
-//                                      [3:0]Debug_fec_sel:rdout_sclr_cnt:{1'b0, Scale_reg_out }
-//                                     */
-
 #define FEC_5_RD    ((uint8_t)0xDA )/*[7:4]Harq_times_out
                                       [3:0]Debug_fec_sel:rdout_sclr_cnt:{1'b0, Scale_reg_out }
                                      */                                     
@@ -405,6 +310,12 @@ n_tx_ant        RW  [7:7] 1 0x1
 #define     SWEEP_FREQ_1        (0x15)
 #define     SWEEP_FREQ_2        (0x16)
 #define     SWEEP_FREQ_3        (0x17)
+
+#define     SNR_REG_0           (0xc0)
+#define     SNR_REG_1           (0xc1)
+
+#define     LDPC_ERR_HIGH_REG   (0xde)
+#define     LDPC_ERR_LOW_REG    (0xdf)
 
 #endif
 

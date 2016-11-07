@@ -56,14 +56,14 @@ static int test_bbctrl_sky(void)
 {
     Sky_Parm_Initial();
     //Sky_Id_Initial();
-    Sys_Parm_Init();
+    //Sys_Parm_Init();
 }
 
 static int test_bbctrl_grd(void)
 {
     Grd_Parm_Initial();
     BB_Grd_Id_Initial();
-    Sys_Parm_Init();
+    //Sys_Parm_Init();
 }
 
 

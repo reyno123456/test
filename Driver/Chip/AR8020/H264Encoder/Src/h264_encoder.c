@@ -79,6 +79,14 @@ static void H264_Encoder_InputVideoFormatChangeCallback(void* p)
     H264_Encoder_UpdateVideoInfo((index == 0) ? 1 : 0, width, hight, framerate);    
 }
 
+/*
+ * br:   0->8M      1->1M       2->2M       3->3M       4->4M
+ *       5->5M      6->6M       7->7M       8->500K     9->9M
+ *       10->10M    11->11M     12->12M     13->13M     14->14M  
+ *       15->15M    16->16M     17->17M     18->18M     19->19M  
+ *       20->20M    21->21M     22->22M     23->23M     24->24M  
+ *       25->25M    26->26M     27->27M     28->28M     29->29M     30->30M
+*/
 int H264_Encoder_UpdateBitrate(unsigned char view, unsigned char br)
 {
     if (view >= 2)
@@ -91,11 +99,44 @@ int H264_Encoder_UpdateBitrate(unsigned char view, unsigned char br)
         H264_Encoder_RestartView(view, g_stEncoderStatus[view].resW, g_stEncoderStatus[view].resH, 
                                  g_stEncoderStatus[view].gop, g_stEncoderStatus[view].framerate, 
                                  br, g_stEncoderStatus[view].brc_enable);
-        g_stEncoderStatus[view].bitrate = br;
         dlog_info("Encoder bitrate change: %d, %d\n", view, br);
     }
-
+    
+    g_stEncoderStatus[view].bitrate = br;
     return 1;
+}
+
+static void H264_Encoder_BBModulationChangeCallback(void* p)
+{
+    uint8_t br = 0;
+    uint8_t max_br = ((STRU_SysEvent_BB_ModulationChange *)p)->BB_MAX_support_br;
+    
+    dlog_info("max_br %d\r\n", max_br);
+    /* BR - 0: 8Mbps, 1: 1Mbps, 4: 4Mbps, 8: 500kbps, 10: 10Mbps */
+    
+    if(max_br >= 10)
+    {
+        br = 10;
+    }
+    else if(max_br >= 8)
+    {
+        br = 0;
+    }
+    else if(max_br >= 4)
+    {
+        br = 4;
+    }
+    else if(max_br >= 1)
+    {
+        br = 1;
+    }
+    else
+    {
+        br = 8;
+    }
+    
+    H264_Encoder_UpdateBitrate(0, br);
+    H264_Encoder_UpdateBitrate(1, br);
 }
 
 static void VEBRC_IRQ_Wrap_Handler(void)
@@ -181,6 +222,7 @@ int H264_Encoder_Init(void)
     v1_poweron_rc_params_set = 1;
 
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_ADV7611_FORMAT_CHANGE, H264_Encoder_InputVideoFormatChangeCallback);
+    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE, H264_Encoder_BBModulationChangeCallback);
 
     return 1;
 }
@@ -208,4 +250,3 @@ void H264_Encoder_DumpFrameCount(void)
     }
     // update_aof();
 }
-

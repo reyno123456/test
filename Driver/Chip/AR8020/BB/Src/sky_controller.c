@@ -12,77 +12,92 @@
 #include "sky_controller.h"
 #include "config_functions_sel.h"
 
-#include <timer.h>
-#include "interrupt.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <stdint.h>
 #include "reg_rw.h"
+#include "timer.h"
+#include "interrupt.h"
+
 #include "config_baseband_register.h"
-#include "config_baseband_frqdata.h"
-#include "sys_peripheral_communication.h"
-#include "BB_ctrl.h"
-#include "sys_peripheral_init.h"
 #include "debuglog.h"
+#include "sys_event.h"
 
-extern Sys_FlagTypeDef  SysState;
-extern uint8_t Txosd_Buffer[];
 
-Sky_FlagTypeDef SkyState;
-Sky_HanlderTypeDef SkyStruct;
-IDRx_TypeDef IdStruct;
-
-uint32_t Device_ID[6]={0};//flash stored.
+Sky_FlagTypeDef     SkyState;
+Sky_HanlderTypeDef  SkyStruct;
+STRU_RCID_power     IdStruct;
 
 static init_timer_st sky_timer0_0;
 static init_timer_st sky_timer0_1;
 
+static void Sky_set_ITQAM_and_notify(EN_BB_QAM mod);
+static void Sky_Timer1_Init(void);
+static void Sky_Timer0_Init(void);
+
 void Sky_Parm_Initial(void)
 {
-    SkyStruct.RCChannel=9;
-    SkyStruct.ITChannel=0;
-    SkyStruct.Timerirqcnt=0 ;
-    SkyStruct.OptID=0;
-    SkyStruct.FindIDcnt=0;
-    SkyStruct.IDsearchcnt =0;
-    SkyStruct.IDmatcnt=0;
-    SkyStruct.en_agcmode = UNKOWN_AGC;
-    SkyStruct.workfrq = 0xff;
-    SkyStruct.Changeqammode = 0;
+    SkyStruct.RCChannel     = 0;
+    SkyStruct.ITChannel     = 0;
+    SkyStruct.Timerirqcnt   = 0;
+    SkyStruct.OptID         = 0;
+    SkyStruct.FindIDcnt     = 0;
+    SkyStruct.IDsearchcnt   = 0;
+    SkyStruct.IDmatcnt      = 0;
+    SkyStruct.en_agcmode    = UNKOWN_AGC;
+    SkyStruct.workfrq       = 0xff;
+    SkyStruct.cur_QAM       = MOD_MAX;
 
-    SkyState.Rcmissing = DISABLE;
-    SkyState.CmdsearchID = ENABLE;
-    SkyState.Cmdtestmode = DISABLE;
+    SkyState.Rcmissing      = DISABLE;
+    SkyState.CmdsearchID    = ENABLE;
+    SkyState.Cmdtestmode    = DISABLE;
     
     Sky_Timer0_Init();
     Sky_Timer1_Init();
-    
+
+    Sky_set_ITQAM_and_notify(MOD_16QAM);
     reg_IrqHandle(BB_RX_ENABLE_VECTOR_NUM, wimax_vsoc_rx_isr);
     INTR_NVIC_EnableIRQ(BB_RX_ENABLE_VECTOR_NUM);
 }
 
 
-#if 0
-/**
-* @brief STORED ID in FLASH.
-*
-* @illustrate
-*
- (+) Flash_Write().
- (+) Flash_Read().
-*/
-uint8_t Flash_Write(uint32_t Start_Addr,uint32_t *p_data,uint32_t size)
+/** 
+ * @brief       Get the BB can support the max bitreate in current modulation.       
+ * @retval      max bitreate(Mbps)
+ */
+static int BB_Sky_GetsupportBR(EN_BB_QAM QAM, EN_BB_LDPC ldpc, EN_BB_BW bw)
 {
+    if(QAM == MOD_BPSK)
+    {
+        return 2;
+    }
+    else if(QAM == MOD_4QAM)
+    {
+        return 5;
+    }
+    else if(QAM == MOD_16QAM)
+    {
+        return 10;
+    }
+    else if(QAM == MOD_64QAM)
+    {
+        return 13;
+    }
 }
 
-uint8_t Flash_Read(uint32_t Start_Addr,uint32_t *p_data,uint32_t size)
-{
+static void Sky_set_ITQAM_and_notify(EN_BB_QAM mod)
+{    
+    BB_set_QAM(mod);
+    printf("!!Q=>%d\r\n", mod);
+
+    STRU_SysEvent_BB_ModulationChange event;
+    event.BB_MAX_support_br = BB_Sky_GetsupportBR(mod, 0, 0);    
+    SYS_EVENT_Notify(SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE, (void*)&event);
 }
-#endif
 
 
-void Sky_Write_Rchopfrq(void)
+void Sky_Write_RChopfrq(void)
 {
     SkyStruct.RCChannel ++;
     if(SkyStruct.RCChannel >=  MAX_RC_FRQ_SIZE)
@@ -94,7 +109,7 @@ void Sky_Write_Rchopfrq(void)
 }
 
 
-void Sky_Write_Itfrq(uint8_t ch)
+void Sky_Write_ITfrq(uint8_t ch)
 {
     if(SkyStruct.workfrq != ch)
     {
@@ -145,8 +160,6 @@ uint8_t Sky_Id_Match(void)
     return (data) ? 1 : 0;
 }
 
-uint8_t  Min_of_Both(uint8_t a, uint8_t b ){return((a < b) ? a : b);}
-
 /**
  * @brief Record the ID and power if Reg[E9]bit1=1 , stored in IdStruct[].
  */
@@ -159,43 +172,39 @@ void Sky_Record_Idpower( uint8_t i )
     IdStruct[i].rcid3 = BB_ReadReg(PAGE2, FEC_2_RD_2);
     IdStruct[i].rcid2 = BB_ReadReg(PAGE2, FEC_2_RD_3);
     IdStruct[i].rcid1 = BB_ReadReg(PAGE2, FEC_2_RD_4);
-    IdStruct[i].powerc5= BB_ReadReg(PAGE2, AAGC_2_RD);
-    IdStruct[i].powerc6 = BB_ReadReg (PAGE2, AAGC_3_RD);
+    
+    IdStruct[i].aagc1 = BB_ReadReg(PAGE2, AAGC_2_RD);
+    IdStruct[i].aagc2 = BB_ReadReg(PAGE2, AAGC_3_RD);
 
-    if((0 == IdStruct[i].powerc5)||(0 == IdStruct[i].powerc6))
+    if(0 == IdStruct[i].aagc1 || IdStruct[i].aagc1 > IdStruct[i].aagc2)
     {
-        if(0 == IdStruct[i].powerc5)
-        {
-            IdStruct[i].powermin = IdStruct[i].powerc6;
-        }
-        else if (0 == IdStruct[i].powerc6)
-        {
-            IdStruct[i].powermin = IdStruct[i].powerc5;
-        }
+        IdStruct[i].aagcmin = IdStruct[i].aagc2;
     }
     else
     {
-       IdStruct[i].powermin = Min_of_Both(IdStruct[i].powerc5, IdStruct[i].powerc6);
+        IdStruct[i].aagcmin = IdStruct[i].aagc1;
     }
 }
 
 uint8_t Sky_Getopt_Id(void)
 {
-    uint8_t inum=0;
-    uint8_t mData=0;
-    uint8_t Optid=0;
-    mData = IdStruct[0].powermin;
-    for(inum = 0; inum<= SkyStruct.IDmatcnt; inum++)
+    uint8_t inum  = 0;
+    uint8_t mData = 0;
+    uint8_t Optid = 0;
+    
+    mData = IdStruct[0].aagcmin;
+    for(inum = 1; inum < SkyStruct.IDmatcnt; inum++)
     {
-        if((IdStruct[inum].powermin <= mData)&&(IdStruct[inum].powermin > 0))
+        //Agc low means power is high
+        if((IdStruct[inum].aagcmin <= mData)&& (IdStruct[inum].aagcmin > 0) )
         {
-            mData = IdStruct[inum].powermin;
+            mData = IdStruct[inum].aagcmin;
             Optid = inum;
         }
     }
+    
     return Optid;
 }
-
 
 
 void Sky_Search_Right_ID(void)
@@ -212,7 +221,7 @@ void Sky_Search_Right_ID(void)
         if(SkyStruct.rc_crc_ok)
         {
             Sky_Record_Idpower(SkyStruct.IDmatcnt);
-            Sky_Write_Rchopfrq();
+            Sky_Write_RChopfrq();
             SkyStruct.IDmatcnt++;
             BB_softReset(BB_SKY_MODE );
         }
@@ -220,7 +229,7 @@ void Sky_Search_Right_ID(void)
         if(SkyStruct.IDsearchcnt >= ID_SEARCH_MAX_TIMES)
         {
             SkyStruct.IDsearchcnt =0;
-            Sky_Write_Rchopfrq();
+            Sky_Write_RChopfrq();
         }
         else
         {
@@ -236,19 +245,13 @@ void Sky_Search_Right_ID(void)
             BB_WriteReg(PAGE2, FEC_10, IdStruct[SkyStruct.OptID].rcid2);
             BB_WriteReg(PAGE2, FEC_11, IdStruct[SkyStruct.OptID].rcid1);
 
-            Device_ID[0] = Device_ID[0]|IdStruct[SkyStruct.OptID].rcid5;
-            Device_ID[1] = Device_ID[1]|IdStruct[SkyStruct.OptID].rcid4;
-            Device_ID[2] = Device_ID[2]|IdStruct[SkyStruct.OptID].rcid3;
-            Device_ID[3] = Device_ID[3]|IdStruct[SkyStruct.OptID].rcid2;
-            Device_ID[4] = Device_ID[4]|IdStruct[SkyStruct.OptID].rcid1;
-
             printf("RCid:%02x%02x%02x%02x%02x\r\n", \
                 IdStruct[SkyStruct.OptID].rcid5, IdStruct[SkyStruct.OptID].rcid4, IdStruct[SkyStruct.OptID].rcid3, \
                 IdStruct[SkyStruct.OptID].rcid2, IdStruct[SkyStruct.OptID].rcid1);
 
-            //Device ID stored in FLASH
-            //Sky_Flash_Write( FLASH_START_PAGE_ADDRESS,Device_ID,5);
-            //Sky_Flash_Read(FLASH_START_PAGE_ADDRESS,read_id,5);
+            /*
+            * Todo: Add Event to notify
+            */
 
             SkyState.CmdsearchID = DISABLE;
             SkyStruct.IDsearchcnt=0;
@@ -263,13 +266,13 @@ void Sky_Search_Right_ID(void)
     {
         if(Sky_Id_Match())
         {
-            Sky_Write_Rchopfrq();
+            Sky_Write_RChopfrq();
             SkyStruct.IDsearchcnt =0;
             SkyState.CmdsearchID = DISABLE;
         }
         else if(SkyStruct.IDsearchcnt>=ID_SEARCH_MAX_TIMES)
         {
-            Sky_Write_Rchopfrq();
+            Sky_Write_RChopfrq();
             BB_softReset(BB_SKY_MODE );
             SkyStruct.IDsearchcnt =0;
         }
@@ -280,50 +283,34 @@ void Sky_Search_Right_ID(void)
     }
 }
 
-static uint8_t Sky_set_QAM(uint8_t mode)
-{
-    uint8_t reg = BB_ReadReg(PAGE2, TX_2);
-    BB_WriteReg(PAGE2, TX_2, (reg & 0x3f) | mode);
-}
-
 void Sky_Rc_Hopping(void)
 {
-    Sky_Write_Rchopfrq();
+    Sky_Write_RChopfrq();
     if(Sky_Id_Match())
     {
         uint8_t data0, data1;
-        SkyStruct.Rcunlockcnt=0;
+
         data0 = BB_ReadReg(PAGE2, IT_FREQ_TX_0);
         data1 = BB_ReadReg(PAGE2, IT_FREQ_TX_1);
         if((data0 == data1) && (0x0e==(data1 >> 4)))
         {
-            Sky_Write_Itfrq(data0 & 0x0F);
+            Sky_Write_ITfrq(data0 & 0x0F);
         }
 
         data0 = BB_ReadReg(PAGE2,QAM_CHANGE_0);
         data1 = BB_ReadReg(PAGE2,QAM_CHANGE_1);
-        if(SkyStruct.Changeqammode!=data0 && data0 == data1 &&
-            (data0==0xF1 || data0==0xF3 || data0==0xF7 || data0==0xF9))
+        
+        if(data0 == data1 && (data0&0xFC) == 0xF0)
         {
-            SkyStruct.Changeqammode = data0;
-            printf("Q=>0x%x\r\n",data0);
-            if(0xF1==data0)
+            EN_BB_QAM mod = (EN_BB_QAM)(data0&0x03);
+            if(SkyStruct.cur_QAM != mod)
             {
-                Sky_set_QAM(QAM_BPSK);
-            }
-            else if(0xF3==data0)
-            {
-                Sky_set_QAM(QAM_4QAM);
-            }
-            else if(0xF7==data0)
-            {
-                Sky_set_QAM(QAM_16QAM);
-            }
-            else if(0xF9==data0)
-            {
-                Sky_set_QAM(QAM_64QAM);
+                Sky_set_ITQAM_and_notify(mod);
+                SkyStruct.cur_QAM = mod;
             }
         }
+
+        SkyStruct.Rcunlockcnt=0;
     }
     else
     {
@@ -333,8 +320,8 @@ void Sky_Rc_Hopping(void)
         }
         if(MAX_RC_FRQ_SIZE <= SkyStruct.Rcunlockcnt)
         {
-            SkyStruct.Rcunlockcnt=0;
-            SkyState.CmdsearchID = ENABLE;
+            SkyStruct.Rcunlockcnt = 0;
+            SkyState.CmdsearchID  = ENABLE;
             SkyState.Rcmissing = ENABLE;
             SkyStruct.IDmatcnt = ID_SEARCH_MAX_TIMES;
         }
@@ -385,48 +372,9 @@ void Sky_Hanlde_SpecialIrq(void)
             SkyStruct.CntAGCGain++;
             Sky_Adjust_AGCGain_SearchID(1);
         }
-        Sky_Write_Rchopfrq();
+        Sky_Write_RChopfrq();
         BB_softReset(BB_SKY_MODE );
     }
-}
-
-void Sky_Osdmsg_Ptf(void)
-{
-#if 0
-    uint8_t iData_page_temp=0;
-
-    Txosd_Buffer[0]=0x55;
-    Txosd_Buffer[1]=0xaa;
-    /*iData_page_temp= Spi_Baseband_ReadWrite(spiRead, FSM_0, 0x00);   //page2
-    Spi_Baseband_ReadWrite(spiWrite, FSM_0 , iData_page_temp& PAGE_2);*/
-
-    Txosd_Buffer[3]=0;
-    Txosd_Buffer[7]=0;
-    Txosd_Buffer[8]/*iData_C3_temp = Spi_Baseband_ReadWrite(spiRead, AAGC_0_RD, 0x00);*/=0;
-    Txosd_Buffer[9]/*iData_C7_temp = Spi_Baseband_ReadWrite(spiRead, AAGC_4_RD, 0x00);*/=0;
-    Txosd_Buffer[10]/*iData_C4_temp= Spi_Baseband_ReadWrite(spiRead, AAGC_1_RD, 0x00);*/=0;
-    //  Txosd_Buffer[4]/*iData_C5_temp*/= Spi_Baseband_ReadWrite(spiRead, AAGC_2_RD, 0x00);
-    //  Txosd_Buffer[5]/*iData_C6_temp*/= Spi_Baseband_ReadWrite(spiRead, AAGC_3_RD, 0x00);
-    //  Txosd_Buffer[6]/*iData_Eb_temp*/= Spi_Baseband_ReadWrite(spiRead, FEC_4_RD , 0x00);
-
-    Txosd_Buffer[4]/*iData_C5_temp*/= BB_ReadReg(PAGE2, AAGC_2_RD);
-    Txosd_Buffer[5]/*iData_C6_temp*/= BB_ReadReg(PAGE2, AAGC_3_RD);
-    Txosd_Buffer[6]/*iData_Eb_temp*/= BB_ReadReg(PAGE2, FEC_4_RD);
-
-    Txosd_Buffer[11]/*iData_E0_temp= Spi_Baseband_ReadWrite(spiRead, FEC_0_RD , 0x00);*/=0;
-
-    Txosd_Buffer[13]/*iData_SNRH_temp = Spi_Baseband_ReadWrite(spiRead, CE_9_RD, 0x00);*/ =0;
-    Txosd_Buffer[14]/*iData_SNRL_temp= Spi_Baseband_ReadWrite(spiRead, CE_A_RD, 0x00);*/ =0;
-
-    Txosd_Buffer[15]/*iData_E7_temp = Spi_Baseband_ReadWrite(spiRead, FEC_3_RD_1, 0x00);*/=0;
-    Txosd_Buffer[16]/*iData_E8_temp= Spi_Baseband_ReadWrite(spiRead, FEC_3_RD_2, 0x00);*/=0;
-    Txosd_Buffer[17]/*iData_EE_temp = Spi_Baseband_ReadWrite(spiRead, FEC_9_RD, 0x00);*/=0;
-    Txosd_Buffer[18]/*iData_EF_temp = Spi_Baseband_ReadWrite(spiRead, FEC_10_RD, 0x00);*/=0;
-    //  Spi_Baseband_ReadWrite(spiWrite, FSM_0 , iData_page_temp);
-
-    Txosd_Buffer[19]=0;
-    SysState.TxcyosdOnly=ENABLE;
-#endif
 }
 
 //*********************TX RX initial(14ms irq)**************

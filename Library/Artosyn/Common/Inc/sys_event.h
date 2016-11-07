@@ -70,7 +70,8 @@ void SYS_EVENT_DumpAllListNodes(void);
 
 // Misc driver event
 
-#define SYS_EVENT_ID_ADV7611_FORMAT_CHANGE        (SYS_EVENT_LEVEL_MIDIUM_MASK | 0x0001)
+#define SYS_EVENT_ID_ADV7611_FORMAT_CHANGE          (SYS_EVENT_LEVEL_MIDIUM_MASK | 0x0001)
+#define SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE           (SYS_EVENT_LEVEL_MIDIUM_MASK | 0x0002)
 
 typedef struct _SysEvent_ADV7611FormatChangeParameter
 {
@@ -80,5 +81,11 @@ typedef struct _SysEvent_ADV7611FormatChangeParameter
     uint8_t  framerate;
     uint8_t  reserve[SYS_EVENT_HANDLER_PARAMETER_LENGTH - 4];
 } STRU_SysEvent_ADV7611FormatChangeParameter;
+
+typedef struct _SysEvent_BB_ModulationChange
+{
+    uint8_t  BB_MAX_support_br; //BB_MAX_support_br: the MAX stream bitrate(MHz) 
+    uint8_t  reserve[SYS_EVENT_HANDLER_PARAMETER_LENGTH - 1];
+} STRU_SysEvent_BB_ModulationChange;
 
 #endif

@@ -12,11 +12,6 @@
 #define  AAGC_GAIN_FAR      (0x16)
 #define  AAGC_GAIN_NEAR     (0x30)
 
-#define  QAM_BPSK           (0x00 << 6)
-#define  QAM_4QAM           (0x01 << 6)
-#define  QAM_16QAM          (0x02 << 6)
-#define  QAM_64QAM          (0x03 << 6)
-
 //*****************  define page1 or page2  ********************
 
  #define  PAGE_1                0x80
@@ -53,22 +48,20 @@
 
 //*****************  define QAM mode threshold  ********************
 
-  #define BPSK1_2            0x004E              //  QAM mode threshold
-  #define QPSK1_2            0x0090
-  #define QPSK2_3            0x00BE
-  #define QAM16_1_2          0x01FD
-  #define QAM64_1_2          0x055E
-  #define QAM64_2_3          0x07EC
+#define BPSK1_2            0x004E              //  QAM mode threshold
+#define QPSK1_2            0x0090
+#define QPSK2_3            0x00BE
+#define QAM16_1_2          0x01FD
+#define QAM64_1_2          0x055E
+#define QAM64_2_3          0x07EC
 
-  #define MCS3_0_THRE        0x009B            //  QAM mode threshold( +3dB )
-  #define MCS3_1_THRE        0x011E
-  #define MCS3_2_THRE        0x0179
-  #define MCS3_3_THRE        0x03F6
-  #define MCS3_4_THRE        0x0AAA
-  #define MCS3_5_THRE        0x0FC6
+#define MCS3_0_THRE        0x009B            //  QAM mode threshold( +3dB )
+#define MCS3_1_THRE        0x011E
+#define MCS3_2_THRE        0x0179
+#define MCS3_3_THRE        0x03F6
+#define MCS3_4_THRE        0x0AAA
+#define MCS3_5_THRE        0x0FC6
 
-
-#define Osdpackage           0x14  //size of osd msg buffer
 
 //communication with cy7c68013,sizeof FIFO(rows,lists)
 #define RxFIFO68013_R        0x64      //rx from 68013

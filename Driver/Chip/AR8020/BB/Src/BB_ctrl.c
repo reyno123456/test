@@ -5,7 +5,6 @@
 #include "BB_init_regs.h"
 #include "reg_rw.h"
 #include "config_baseband_register.h"
-#include "config_baseband_frqdata.h"
 
 #define     BB_SPI_TEST         (0)
 #define     RF_SPI_TEST         (0)
@@ -64,12 +63,13 @@ static void BB_regs_init(ENUM_BB_MODE en_mode)
                               ((page_cnt==1)?PAGE1: \
                               ((page_cnt==2)?PAGE2:PAGE3));
         /*
-         * PAGE setting including in the regs array.
+         * PAGE setting included in the regs array.
         */
         BB_ctx.en_curPage = page;
 
         for(addr_cnt = 0; addr_cnt < 256; addr_cnt++)
         {
+            //PAGE1 reg[0xa1] reg[0xa2] reg[0xa4] reg[0xa5] are PLL setting for cpu0, cpu1, cpu2, set in the sysctrl.c when system init
             if(page==PAGE1 && (addr_cnt==0xa1||addr_cnt==0xa2||addr_cnt==0xa4||addr_cnt==0xa5))
             {}
             else
@@ -84,9 +84,6 @@ static void BB_regs_init(ENUM_BB_MODE en_mode)
 
 int BB_softReset(ENUM_RST_MODE en_mode)
 {
-    /*
-     * todo: support different reset mode.
-    */
     if(en_mode == BB_GRD_MODE)
     {
         BB_SPI_curPageWriteByte(0x00,0xB2);
@@ -213,17 +210,11 @@ void BB_init(STRU_BB_initType *ptr_initType)
         RF_8003x_spi_init(ptr_initType->en_mode);
         BB_SPI_curPageWriteByte(0x01,0x02);     //SPI change into 8020
     }
-    
-    #if 0
-    if(ptr_initType->en_mode == BB_GRD_MODE)
-    {
-        BB_selectVideoPath(ptr_initType->en_vidPath);
-    }
-    #endif
 
+    // reset 8020 wimax
     if (BB_SKY_MODE == ptr_initType->en_mode)
     {
-        // reset 8020 wimax
+        
         BB_SPI_WriteByte(PAGE2, 0x00, 0x81);
         BB_SPI_WriteByte(PAGE2, 0x00, 0x80);
     }
@@ -309,4 +300,19 @@ uint8_t BB_set_Rcfrq(uint8_t ch)
         return 0;
     }
     return 1;    
+}
+
+
+
+void BB_set_QAM(EN_BB_QAM mod)
+{
+    uint8_t data = BB_ReadReg(PAGE2, TX_2);
+    BB_WriteReg(PAGE2, TX_2, (data & 0x3f) | ((uint8_t)mod << 6));
+}
+
+/*
+*/
+EN_BB_QAM BB_get_QAM(EN_BB_QAM mod)
+{
+    return (EN_BB_QAM)(BB_ReadReg(PAGE2, TX_2) >> 6);
 }
