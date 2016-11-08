@@ -316,7 +316,12 @@ static STRU_NotifiedSysEvent_Node* findNotifiedSysEventNodeByPriority(void)
         }
         else
         {
-            dlog_error("The system event ID priority level is not right!");
+            if (((pNode->event_id & SYS_EVENT_LEVEL_HIGH_MASK) || 
+                 (pNode->event_id & SYS_EVENT_LEVEL_MIDIUM_MASK) ||
+                 (pNode->event_id & SYS_EVENT_LEVEL_LOW_MASK)) == 0)
+            {
+                dlog_error("The system event ID 0x%x priority level is not right!", pNode->event_id);
+            }
         }
         
         pNode = pNode ->next;  
@@ -613,7 +618,7 @@ void SYS_EVENT_DumpAllListNodes(void)
     STRU_RegisteredSysEvent_Node* rEventNode = g_registeredSysEventList;
     while(rEventNode != NULL)
     {
-        printf("Registered EventNode: event_id 0x%x\n", rEventNode->event_id);
+        dlog_info("Registered EventNode: event_id 0x%x\n", rEventNode->event_id);
         STRU_RegisteredSysEventHandler_Node* hNode = rEventNode->handler_list;
         while(hNode != NULL)
         {
@@ -626,7 +631,7 @@ void SYS_EVENT_DumpAllListNodes(void)
     STRU_NotifiedSysEvent_Node* nEventNode = g_notifiedSysEventList;
     while(nEventNode != NULL)
     {
-        printf("Notified EventNode: event_id 0x%x\n", nEventNode->event_id);
+        dlog_info("Notified EventNode: event_id 0x%x\n", nEventNode->event_id);
         nEventNode = nEventNode->next;
     }
 }
