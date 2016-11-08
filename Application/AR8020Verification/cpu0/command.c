@@ -358,9 +358,9 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("Command not found. Please use the commands like:");
         dlog_error("read <address>");
         dlog_error("write <address> <data>");
-        dlog_error("readsd <startBlock> <blockNum>");
-        dlog_error("writesd <startBlock> <blockNum> <data>");
-        dlog_error("erasesd");
+        dlog_error("readsd <SrcAddr> <SectorNum>");
+        dlog_error("writesd <DstAddr> <SectorNum> <Srcaddr>");
+        dlog_error("erasesd <startSector> <SectorNum>");
         dlog_error("sendusb");
         dlog_error("hdmiinit <index>");
         dlog_error("hdmidump <index>");
@@ -501,10 +501,10 @@ void command_writeMemory(char *addr, char *value)
     *((unsigned int *)(writeAddress)) = writeValue;
 }
 
-void command_readSdcard(char *Dstaddr, char *BytesNum, char *SrcAddr)
+void command_readSdcard(char *Dstaddr, char *BlockNum)
 {
     unsigned int iDstAddr;
-    unsigned int iBytesNum;
+    unsigned int iBlockNum;
     unsigned int iSrcAddr;
     unsigned int rowIndex;
     unsigned int columnIndex;
@@ -512,84 +512,60 @@ void command_readSdcard(char *Dstaddr, char *BytesNum, char *SrcAddr)
     char *readSdcardBuff;
     char *bufferPos;
 
-    iDstAddr   = command_str2uint(Dstaddr);
-    iBytesNum  = command_str2uint(BytesNum);
-    iSrcAddr   = command_str2uint(SrcAddr);
+    iSrcAddr   = command_str2uint(Dstaddr);
+    iBlockNum  = command_str2uint(BlockNum);
 
-
-
-    dlog_info("readSdcardBuff = 0x%08x\n", readSdcardBuff);
-
-    dlog_info("iDstAddr = 0x%08x\n", iDstAddr);
-
-    dlog_info("iBytesNum = 0x%08x\n", iBytesNum);
-
-    dlog_info("iSrcAddr = 0x%08x\n", iSrcAddr);
-
-#if 0
-    readSdcardBuff = m7_malloc(iBytesNum);
-    memset(readSdcardBuff, '\0', iBytesNum);
+    readSdcardBuff = m7_malloc(iBlockNum * 512);
+    memset(readSdcardBuff, '\0', iBlockNum * 512);
     bufferPos = readSdcardBuff;
 
+    dlog_info("iSrcBlock = 0x%08x\n", iSrcAddr);
+    dlog_info("iBlockNum = 0x%08x\n", iBlockNum);
+    dlog_info("readSdcardBuff = 0x%08x\n", readSdcardBuff);
+
     /* read from sdcard */
-    sd_read(&sdhandle, bufferPos, iBytesNum, iSrcAddr);
+    sd_read(bufferPos, iSrcAddr, iBlockNum);
 
     /* print to serial */
-    for (blockIndex = iDstAddr; blockIndex <= (iDstAddr + iBytesNum / dma.BlockSize); blockIndex++)
+    for (blockIndex = iSrcAddr; blockIndex <= (iSrcAddr + iBlockNum); blockIndex++)
     {
-        dlog_info("block:");
-        dlog_info("%x", blockIndex);
-        dlog_info("==============\n");
-
+        dlog_info("==================block: %x=================",blockIndex);
         for (rowIndex = 0; rowIndex < 16; rowIndex++)
         {
             /* new line */
-            dlog_info("0x");
-            dlog_info("%x", (unsigned int)((rowIndex << 5) + (blockIndex << 9)));
-            dlog_info(':');
-            dlog_info(' ');
-
-            for (columnIndex = 0; columnIndex < 8; columnIndex++)
+            dlog_info("0x%x: ",(unsigned int)((rowIndex << 5) + (blockIndex << 9)));
+            for (columnIndex = 0; columnIndex < 2; columnIndex++)
             {
-                dlog_info("%x", *((unsigned int *)bufferPos));
-                dlog_info(' ');
+                dlog_info("0x%08x 0x%08x 0x%08x 0x%08x", 
+                           *((unsigned int *)bufferPos), 
+                           *((unsigned int *)(bufferPos + 4)), 
+                           *((unsigned int *)(bufferPos + 8)), 
+                           *((unsigned int *)(bufferPos + 12)));
                 bufferPos += 4;
             }
-            dlog_info('\n');
         }
+        dlog_info("\n");
     }
     m7_free(readSdcardBuff);
-#endif
 
 }
 
-void command_writeSdcard(char *Dstaddr, char *BytesNum, char *SrcAddr)
+void command_writeSdcard(char *Dstaddr, char *BlockNum, char *SrcAddr)
 {
     unsigned int iDstAddr;
-    unsigned int iBytesNum;
+    unsigned int iBlockNum;
     unsigned int iSrcAddr;
-    char *writeSdcardBuff;
 
     iDstAddr    = command_str2uint(Dstaddr);
-    iBytesNum   = command_str2uint(BytesNum);
+    iBlockNum   = command_str2uint(BlockNum);
     iSrcAddr    = command_str2uint(SrcAddr);
-#if 0
-    writeSdcardBuff = m7_malloc(iBytesNum);
-    memset(writeSdcardBuff, SrcAddr, iBytesNum);
-
-    /* write to sdcard */
-    sd_write(&sdhandle, iDstAddr, iBytesNum, writeSdcardBuff);
-    m7_free(writeSdcardBuff);
-#endif
-
-
-    dlog_info("writeSdcardBuff = 0x%08x\n", writeSdcardBuff);
-
-    dlog_info("iDstAddr = 0x%08x\n", iDstAddr);
-
-    dlog_info("iBytesNum = 0x%08x\n", iBytesNum);
 
     dlog_info("iSrcAddr = 0x%08x\n", iSrcAddr);
+    dlog_info("iDstBlock = 0x%08x\n", iDstAddr);
+    dlog_info("iBlockNum = 0x%08x\n", iBlockNum);
+
+    /* write to sdcard */
+    sd_write(iDstAddr, iSrcAddr, iBlockNum);
 
 }
 
@@ -602,8 +578,8 @@ void command_eraseSdcard(char *startBlock, char *blockNum)
 
 
     dlog_info("startBlock = 0x%08x\n", iStartBlock);
-    //sd_erase(&sdhandle, iStartBlock, iBlockNum);
-    dlog_info("blockNum = 0x%08x\n", iBlockNum);
+    dlog_info("blockNum = %d\n", iBlockNum);
+    sd_erase(iStartBlock, iBlockNum);
 }
 
 void delay_ms(uint32_t num)

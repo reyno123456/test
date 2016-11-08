@@ -332,253 +332,6 @@ typedef struct
 #define SDMMC_BUS_WIDE_1B                      0x00
 #define SDMMC_BUS_WIDE_4B                      0x02
 
-/**
-  * @brief  Enable the SDMMC device.
-  * @param  __INSTANCE__: SDMMC Instance
-  * @retval None
-  */
-#define __SDMMC_ENABLE(__INSTANCE__)  ((__INSTANCE__)->CLKCR |= SDMMC_CLKCR_CLKEN)
-
-/**
-  * @brief  Disable the SDMMC device.
-  * @param  __INSTANCE__: SDMMC Instance
-  * @retval None
-  */
-#define __SDMMC_DISABLE(__INSTANCE__)  ((__INSTANCE__)->CLKCR &= ~SDMMC_CLKCR_CLKEN)
-
-/**
-  * @brief  Enable the SDMMC DMA transfer.
-  * @param  __INSTANCE__: SDMMC Instance
-  * @retval None
-  */
-#define __SDMMC_DMA_ENABLE(__INSTANCE__)  ((__INSTANCE__)->DCTRL |= SDMMC_DCTRL_DMAEN)
-/**
-  * @brief  Disable the SDMMC DMA transfer.
-  * @param  __INSTANCE__: SDMMC Instance
-  * @retval None
-  */
-#define __SDMMC_DMA_DISABLE(__INSTANCE__)  ((__INSTANCE__)->DCTRL &= ~SDMMC_DCTRL_DMAEN)
-
-/**
-  * @brief  Enable the SDMMC device interrupt.
-  * @param  __INSTANCE__ : Pointer to SDMMC register base
-  * @param  __INTERRUPT__ : specifies the SDMMC interrupt sources to be enabled.
-  *         This parameter can be one or a combination of the following values:
-  *            @arg SDMMC_IT_CCRCFAIL: Command response received (CRC check failed) interrupt
-  *            @arg SDMMC_IT_DCRCFAIL: Data block sent/received (CRC check failed) interrupt
-  *            @arg SDMMC_IT_CTIMEOUT: Command response timeout interrupt
-  *            @arg SDMMC_IT_DTIMEOUT: Data timeout interrupt
-  *            @arg SDMMC_IT_TXUNDERR: Transmit FIFO underrun error interrupt
-  *            @arg SDMMC_IT_RXOVERR:  Received FIFO overrun error interrupt
-  *            @arg SDMMC_IT_CMDREND:  Command response received (CRC check passed) interrupt
-  *            @arg SDMMC_IT_CMDSENT:  Command sent (no response required) interrupt
-  *            @arg SDMMC_IT_DATAEND:  Data end (data counter, SDIDCOUNT, is zero) interrupt
-  *            @arg SDMMC_IT_DBCKEND:  Data block sent/received (CRC check passed) interrupt
-  *            @arg SDMMC_IT_CMDACT:   Command transfer in progress interrupt
-  *            @arg SDMMC_IT_TXACT:    Data transmit in progress interrupt
-  *            @arg SDMMC_IT_RXACT:    Data receive in progress interrupt
-  *            @arg SDMMC_IT_TXFIFOHE: Transmit FIFO Half Empty interrupt
-  *            @arg SDMMC_IT_RXFIFOHF: Receive FIFO Half Full interrupt
-  *            @arg SDMMC_IT_TXFIFOF:  Transmit FIFO full interrupt
-  *            @arg SDMMC_IT_RXFIFOF:  Receive FIFO full interrupt
-  *            @arg SDMMC_IT_TXFIFOE:  Transmit FIFO empty interrupt
-  *            @arg SDMMC_IT_RXFIFOE:  Receive FIFO empty interrupt
-  *            @arg SDMMC_IT_TXDAVL:   Data available in transmit FIFO interrupt
-  *            @arg SDMMC_IT_RXDAVL:   Data available in receive FIFO interrupt
-  *            @arg SDMMC_IT_SDIOIT:   SD I/O interrupt received interrupt
-  * @retval None
-  */
-#define __SDMMC_ENABLE_IT(__INSTANCE__, __INTERRUPT__)  ((__INSTANCE__)->MASK |= (__INTERRUPT__))
-
-/**
-  * @brief  Disable the SDMMC device interrupt.
-  * @param  __INSTANCE__ : Pointer to SDMMC register base
-  * @param  __INTERRUPT__ : specifies the SDMMC interrupt sources to be disabled.
-  *          This parameter can be one or a combination of the following values:
-  *            @arg SDMMC_IT_CCRCFAIL: Command response received (CRC check failed) interrupt
-  *            @arg SDMMC_IT_DCRCFAIL: Data block sent/received (CRC check failed) interrupt
-  *            @arg SDMMC_IT_CTIMEOUT: Command response timeout interrupt
-  *            @arg SDMMC_IT_DTIMEOUT: Data timeout interrupt
-  *            @arg SDMMC_IT_TXUNDERR: Transmit FIFO underrun error interrupt
-  *            @arg SDMMC_IT_RXOVERR:  Received FIFO overrun error interrupt
-  *            @arg SDMMC_IT_CMDREND:  Command response received (CRC check passed) interrupt
-  *            @arg SDMMC_IT_CMDSENT:  Command sent (no response required) interrupt
-  *            @arg SDMMC_IT_DATAEND:  Data end (data counter, SDIDCOUNT, is zero) interrupt
-  *            @arg SDMMC_IT_DBCKEND:  Data block sent/received (CRC check passed) interrupt
-  *            @arg SDMMC_IT_CMDACT:   Command transfer in progress interrupt
-  *            @arg SDMMC_IT_TXACT:    Data transmit in progress interrupt
-  *            @arg SDMMC_IT_RXACT:    Data receive in progress interrupt
-  *            @arg SDMMC_IT_TXFIFOHE: Transmit FIFO Half Empty interrupt
-  *            @arg SDMMC_IT_RXFIFOHF: Receive FIFO Half Full interrupt
-  *            @arg SDMMC_IT_TXFIFOF:  Transmit FIFO full interrupt
-  *            @arg SDMMC_IT_RXFIFOF:  Receive FIFO full interrupt
-  *            @arg SDMMC_IT_TXFIFOE:  Transmit FIFO empty interrupt
-  *            @arg SDMMC_IT_RXFIFOE:  Receive FIFO empty interrupt
-  *            @arg SDMMC_IT_TXDAVL:   Data available in transmit FIFO interrupt
-  *            @arg SDMMC_IT_RXDAVL:   Data available in receive FIFO interrupt
-  *            @arg SDMMC_IT_SDIOIT:   SD I/O interrupt received interrupt
-  * @retval None
-  */
-#define __SDMMC_DISABLE_IT(__INSTANCE__, __INTERRUPT__)  ((__INSTANCE__)->MASK &= ~(__INTERRUPT__))
-
-/**
-  * @brief  Checks whether the specified SDMMC flag is set or not.
-  * @param  __INSTANCE__ : Pointer to SDMMC register base
-  * @param  __FLAG__: specifies the flag to check.
-  *          This parameter can be one of the following values:
-  *            @arg SDMMC_FLAG_CCRCFAIL: Command response received (CRC check failed)
-  *            @arg SDMMC_FLAG_DCRCFAIL: Data block sent/received (CRC check failed)
-  *            @arg SDMMC_FLAG_CTIMEOUT: Command response timeout
-  *            @arg SDMMC_FLAG_DTIMEOUT: Data timeout
-  *            @arg SDMMC_FLAG_TXUNDERR: Transmit FIFO underrun error
-  *            @arg SDMMC_FLAG_RXOVERR:  Received FIFO overrun error
-  *            @arg SDMMC_FLAG_CMDREND:  Command response received (CRC check passed)
-  *            @arg SDMMC_FLAG_CMDSENT:  Command sent (no response required)
-  *            @arg SDMMC_FLAG_DATAEND:  Data end (data counter, SDIDCOUNT, is zero)
-  *            @arg SDMMC_FLAG_DBCKEND:  Data block sent/received (CRC check passed)
-  *            @arg SDMMC_FLAG_CMDACT:   Command transfer in progress
-  *            @arg SDMMC_FLAG_TXACT:    Data transmit in progress
-  *            @arg SDMMC_FLAG_RXACT:    Data receive in progress
-  *            @arg SDMMC_FLAG_TXFIFOHE: Transmit FIFO Half Empty
-  *            @arg SDMMC_FLAG_RXFIFOHF: Receive FIFO Half Full
-  *            @arg SDMMC_FLAG_TXFIFOF:  Transmit FIFO full
-  *            @arg SDMMC_FLAG_RXFIFOF:  Receive FIFO full
-  *            @arg SDMMC_FLAG_TXFIFOE:  Transmit FIFO empty
-  *            @arg SDMMC_FLAG_RXFIFOE:  Receive FIFO empty
-  *            @arg SDMMC_FLAG_TXDAVL:   Data available in transmit FIFO
-  *            @arg SDMMC_FLAG_RXDAVL:   Data available in receive FIFO
-  *            @arg SDMMC_FLAG_SDMMCIT:   SD I/O interrupt received
-  * @retval The new state of SDMMC_FLAG (SET or RESET).
-  */
-#define __SDMMC_GET_FLAG(__INSTANCE__, __FLAG__)  (((__INSTANCE__)->STA &(__FLAG__)) != RESET)
-
-
-/**
-  * @brief  Clears the SDMMC pending flags.
-  * @param  __INSTANCE__ : Pointer to SDMMC register base
-  * @param  __FLAG__: specifies the flag to clear.
-  *          This parameter can be one or a combination of the following values:
-  *            @arg SDMMC_FLAG_CCRCFAIL: Command response received (CRC check failed)
-  *            @arg SDMMC_FLAG_DCRCFAIL: Data block sent/received (CRC check failed)
-  *            @arg SDMMC_FLAG_CTIMEOUT: Command response timeout
-  *            @arg SDMMC_FLAG_DTIMEOUT: Data timeout
-  *            @arg SDMMC_FLAG_TXUNDERR: Transmit FIFO underrun error
-  *            @arg SDMMC_FLAG_RXOVERR:  Received FIFO overrun error
-  *            @arg SDMMC_FLAG_CMDREND:  Command response received (CRC check passed)
-  *            @arg SDMMC_FLAG_CMDSENT:  Command sent (no response required)
-  *            @arg SDMMC_FLAG_DATAEND:  Data end (data counter, SDIDCOUNT, is zero)
-  *            @arg SDMMC_FLAG_DBCKEND:  Data block sent/received (CRC check passed)
-  *            @arg SDMMC_FLAG_SDMMCIT:   SD I/O interrupt received
-  * @retval None
-  */
-#define __SDMMC_CLEAR_FLAG(__INSTANCE__, __FLAG__)  ((__INSTANCE__)->ICR = (__FLAG__))
-
-/**
-  * @brief  Checks whether the specified SDMMC interrupt has occurred or not.
-  * @param  __INSTANCE__ : Pointer to SDMMC register base
-  * @param  __INTERRUPT__: specifies the SDMMC interrupt source to check.
-  *          This parameter can be one of the following values:
-  *            @arg SDMMC_IT_CCRCFAIL: Command response received (CRC check failed) interrupt
-  *            @arg SDMMC_IT_DCRCFAIL: Data block sent/received (CRC check failed) interrupt
-  *            @arg SDMMC_IT_CTIMEOUT: Command response timeout interrupt
-  *            @arg SDMMC_IT_DTIMEOUT: Data timeout interrupt
-  *            @arg SDMMC_IT_TXUNDERR: Transmit FIFO underrun error interrupt
-  *            @arg SDMMC_IT_RXOVERR:  Received FIFO overrun error interrupt
-  *            @arg SDMMC_IT_CMDREND:  Command response received (CRC check passed) interrupt
-  *            @arg SDMMC_IT_CMDSENT:  Command sent (no response required) interrupt
-  *            @arg SDMMC_IT_DATAEND:  Data end (data counter, SDIDCOUNT, is zero) interrupt
-  *            @arg SDMMC_IT_DBCKEND:  Data block sent/received (CRC check passed) interrupt
-  *            @arg SDMMC_IT_CMDACT:   Command transfer in progress interrupt
-  *            @arg SDMMC_IT_TXACT:    Data transmit in progress interrupt
-  *            @arg SDMMC_IT_RXACT:    Data receive in progress interrupt
-  *            @arg SDMMC_IT_TXFIFOHE: Transmit FIFO Half Empty interrupt
-  *            @arg SDMMC_IT_RXFIFOHF: Receive FIFO Half Full interrupt
-  *            @arg SDMMC_IT_TXFIFOF:  Transmit FIFO full interrupt
-  *            @arg SDMMC_IT_RXFIFOF:  Receive FIFO full interrupt
-  *            @arg SDMMC_IT_TXFIFOE:  Transmit FIFO empty interrupt
-  *            @arg SDMMC_IT_RXFIFOE:  Receive FIFO empty interrupt
-  *            @arg SDMMC_IT_TXDAVL:   Data available in transmit FIFO interrupt
-  *            @arg SDMMC_IT_RXDAVL:   Data available in receive FIFO interrupt
-  *            @arg SDMMC_IT_SDIOIT:   SD I/O interrupt received interrupt
-  * @retval The new state of SDMMC_IT (SET or RESET).
-  */
-#define __SDMMC_GET_IT(__INSTANCE__, __INTERRUPT__)  (((__INSTANCE__)->STA &(__INTERRUPT__)) == (__INTERRUPT__))
-
-/**
-  * @brief  Clears the SDMMC's interrupt pending bits.
-  * @param  __INSTANCE__ : Pointer to SDMMC register base
-  * @param  __INTERRUPT__: specifies the interrupt pending bit to clear.
-  *          This parameter can be one or a combination of the following values:
-  *            @arg SDMMC_IT_CCRCFAIL: Command response received (CRC check failed) interrupt
-  *            @arg SDMMC_IT_DCRCFAIL: Data block sent/received (CRC check failed) interrupt
-  *            @arg SDMMC_IT_CTIMEOUT: Command response timeout interrupt
-  *            @arg SDMMC_IT_DTIMEOUT: Data timeout interrupt
-  *            @arg SDMMC_IT_TXUNDERR: Transmit FIFO underrun error interrupt
-  *            @arg SDMMC_IT_RXOVERR:  Received FIFO overrun error interrupt
-  *            @arg SDMMC_IT_CMDREND:  Command response received (CRC check passed) interrupt
-  *            @arg SDMMC_IT_CMDSENT:  Command sent (no response required) interrupt
-  *            @arg SDMMC_IT_DATAEND:  Data end (data counter, SDMMC_DCOUNT, is zero) interrupt
-  *            @arg SDMMC_IT_SDIOIT:   SD I/O interrupt received interrupt
-  * @retval None
-  */
-#define __SDMMC_CLEAR_IT(__INSTANCE__, __INTERRUPT__)  ((__INSTANCE__)->ICR = (__INTERRUPT__))
-
-/**
-  * @brief  Enable Start the SD I/O Read Wait operation.
-  * @param  __INSTANCE__ : Pointer to SDMMC register base
-  * @retval None
-  */
-#define __SDMMC_START_READWAIT_ENABLE(__INSTANCE__)  ((__INSTANCE__)->DCTRL |= SDMMC_DCTRL_RWSTART)
-
-/**
-  * @brief  Disable Start the SD I/O Read Wait operations.
-  * @param  __INSTANCE__ : Pointer to SDMMC register base
-  * @retval None
-  */
-#define __SDMMC_START_READWAIT_DISABLE(__INSTANCE__)  ((__INSTANCE__)->DCTRL &= ~SDMMC_DCTRL_RWSTART)
-
-/**
-  * @brief  Enable Start the SD I/O Read Wait operation.
-  * @param  __INSTANCE__ : Pointer to SDMMC register base
-  * @retval None
-  */
-#define __SDMMC_STOP_READWAIT_ENABLE(__INSTANCE__)  ((__INSTANCE__)->DCTRL |= SDMMC_DCTRL_RWSTOP)
-
-/**
-  * @brief  Disable Stop the SD I/O Read Wait operations.
-  * @param  __INSTANCE__ : Pointer to SDMMC register base
-  * @retval None
-  */
-#define __SDMMC_STOP_READWAIT_DISABLE(__INSTANCE__)  ((__INSTANCE__)->DCTRL &= ~SDMMC_DCTRL_RWSTOP)
-
-/**
-  * @brief  Enable the SD I/O Mode Operation.
-  * @param  __INSTANCE__ : Pointer to SDMMC register base
-  * @retval None
-  */
-#define __SDMMC_OPERATION_ENABLE(__INSTANCE__)  ((__INSTANCE__)->DCTRL |= SDMMC_DCTRL_SDIOEN)
-
-/**
-  * @brief  Disable the SD I/O Mode Operation.
-  * @param  __INSTANCE__ : Pointer to SDMMC register base
-  * @retval None
-  */
-#define __SDMMC_OPERATION_DISABLE(__INSTANCE__)  ((__INSTANCE__)->DCTRL &= ~SDMMC_DCTRL_SDIOEN)
-
-/**
-  * @brief  Enable the SD I/O Suspend command sending.
-  * @param  __INSTANCE__ : Pointer to SDMMC register base
-  * @retval None
-  */
-#define __SDMMC_SUSPEND_CMD_ENABLE(__INSTANCE__)  ((__INSTANCE__)->CMD |= SDMMC_CMD_SDIOSUSPEND)
-
-/**
-  * @brief  Disable the SD I/O Suspend command sending.
-  * @param  __INSTANCE__ : Pointer to SDMMC register base
-  * @retval None
-  */
-#define __SDMMC_SUSPEND_CMD_DISABLE(__INSTANCE__)  ((__INSTANCE__)->CMD &= ~SDMMC_CMD_SDIOSUSPEND)
-
 
 /* Initialization/de-initialization functions  **********************************/
 SDMMC_Status  Core_SDMMC_Init(SDMMC_REG *SDMMCx, SDMMC_InitTypeDef Init);
@@ -668,6 +421,12 @@ uint32_t     Core_SDMMC_GetFIFOCount(SDMMC_REG *SDMMCx);
             read_reg32((uint32_t *)&(SDMMCx->RESP2));
 #define   Core_SDMMC_GetRESP3(SDMMCx) \
             read_reg32((uint32_t *)&(SDMMCx->RESP3));
+#define   Core_SDMMC_GetDBADDR(SDMMCx) \
+            read_reg32((uint32_t *)&(SDMMCx->DBADDR));
+#define   Core_SDMMC_GetCTRL(SDMMCx) \
+            read_reg32((uint32_t *)&(SDMMCx->CTRL));
+#define   Core_SDMMC_GetPWREN(SDMMCx) \
+            read_reg32((uint32_t *)&(SDMMCx->PWREN));
 
 
 #define   Core_SDMMC_WaiteCmdDone(SDMMCx) \
@@ -696,7 +455,7 @@ uint32_t     Core_SDMMC_GetFIFOCount(SDMMC_REG *SDMMCx);
       } while (cmd_start);
 #define   Core_SDMMC_WaiteVoltSwitchInt(SDMMCx)  \
       do { \
-        get_val = Core_SDMMC_GetSTATUS(SDMMCx) \
+        get_val = Core_SDMMC_GetRINTSTS(SDMMCx) \
         volt_switch_int = (get_val & SDMMC_RINTSTS_HTO); \
       } while (!volt_switch_int);
 

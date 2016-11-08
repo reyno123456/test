@@ -221,7 +221,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     /* read sdcard: "readsd $(startBlock) $(blockNum)" */
     else if (memcmp(cmdArray[0], "readsd", 6) == 0)
     {
-        command_readSdcard(cmdArray[1], cmdArray[2], cmdArray[3]);
+        command_readSdcard(cmdArray[1], cmdArray[2]);
     }
     /* write sdcard: "writesd $startBlock) $(blockNum) $(data)" */
     else if (memcmp(cmdArray[0], "writesd", 7) == 0)
@@ -443,7 +443,7 @@ void command_writeMemory(char *addr, char *value)
     *((unsigned int *)(writeAddress)) = writeValue;
 }
 
-void command_readSdcard(char *Dstaddr, char *BytesNum, char *SrcAddr)
+void command_readSdcard(char *Dstaddr, char *BytesNum)
 {
     unsigned int iDstAddr;
     unsigned int iBytesNum;
@@ -456,7 +456,6 @@ void command_readSdcard(char *Dstaddr, char *BytesNum, char *SrcAddr)
 
     iDstAddr   = command_str2uint(Dstaddr);
     iBytesNum  = command_str2uint(BytesNum);
-    iSrcAddr   = command_str2uint(SrcAddr);
 
 
 

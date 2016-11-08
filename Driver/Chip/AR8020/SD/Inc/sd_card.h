@@ -18,6 +18,12 @@ extern "C" {
 
 #include <stdio.h>
 #include "sd_core.h"
+
+/*
+ * Transfer the cpu addr to bus addr
+ */
+#define  DTCMBUSADDR(x)             ((x)+0x24080000)
+#define  ITCMBUSADDR(x)             ((x)+0x44000000)
 /*
  * DMA data Structure definition
  */
@@ -29,6 +35,15 @@ typedef struct
 	uint32_t SectorNum;       /* SectorNum: How many sectors to be read/writen. */
 	uint32_t ListBaseAddr;    /* The address of IDMAC descripter */
 } SDMMC_DMATransTypeDef;
+
+typedef struct
+{
+	uint32_t des0;            /* Control Descriptor */
+	uint32_t des1;			  /* Buffer Sizes */
+	uint32_t des2;			  /* buffer 1 physical address */
+	uint32_t des3;	          /* buffer 2 physical address */
+} IDMAC_DescTypeDef;
+
 /*
  * SD Handle Structure definition
  */
@@ -133,7 +148,7 @@ typedef struct
 {
 	SD_CSDTypedef       SD_csd;         /*!< SD card specific data register         */
 	SD_CIDTypedef       SD_cid;         /*!< SD card identification number register */
-	uint64_t            CardCapacity;   /*!< Card capacity                          */
+	uint64_t            CardCapacity;   /*!< Card capacity[block]                   */
 	uint32_t            CardBlockSize;  /*!< Card block size                        */
 	uint32_t            RCA;            /*!< SD relative card address               */
 	uint32_t            CardType;       /*!< SD card type                           */
@@ -231,6 +246,7 @@ typedef enum
 
 } SD_CardStateTypedef;
 
+
 /** @defgroup SD_Exported_Types_Group9 SD Operation enumeration structure
   * @{
   */
@@ -241,7 +257,7 @@ typedef enum
 	SD_WRITE_SINGLE_BLOCK   = 2,  /*!< Write single block operation     */
 	SD_WRITE_MULTIPLE_BLOCK = 3   /*!< Write multiple blocks operation  */
 
-} SD_OperationTypedef;
+} SD_BlockOperationTypedef;
 
 /**
   * @brief SD Commands Index
@@ -454,7 +470,7 @@ SD_ErrorTypedef Card_SD_Get_CardInfo(SD_HandleTypeDef *hsd, SD_CardInfoTypedef *
 SD_ErrorTypedef Card_SD_WideBusOperation_Config(SD_HandleTypeDef *hsd, uint32_t WideMode);
 SD_ErrorTypedef Card_SD_StopTransfer(SD_HandleTypeDef *hsd);
 SD_ErrorTypedef Card_SD_HighSpeed (SD_HandleTypeDef *hsd);
-
+SD_ErrorTypedef SD_GetState(SD_HandleTypeDef *hsd, uint32_t *CardStatus);
 /* Peripheral State functions  ************************************************/
 /** @defgroup SD_Exported_Functions_Group4 Peripheral State functions
   * @{

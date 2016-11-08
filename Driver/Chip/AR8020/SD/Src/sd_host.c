@@ -6,32 +6,32 @@
 
 SDMMC_Status sd_init()
 {
-	dlog_info("Init SD\n");
 	sdhandle.Instance = SDMMC_ADDR;
-	SD_CardInfoTypedef cardinfo;
+	SD_CardInfoTypedef *cardinfo;
 	SDMMC_Status errorstate = SDMMC_OK;
-	errorstate = Card_SD_Init(&sdhandle, &cardinfo);
+	errorstate = Card_SD_Init(&sdhandle, cardinfo);
 	if (errorstate != SDMMC_OK) {
-		dlog_info("init SD failed!\n");
 		return SDMMC_ERROR;
 	}
-
+	dlog_info("initialize sdcard success!\n");
 	return errorstate;
 }
 
 SDMMC_Status sd_write(uint32_t DstStartAddr, uint32_t SrcStartAddr, uint32_t SectorNum)
 {
-	dlog_info("\nWrite SD");
+	dlog_info("Write SD\n");
 	SDMMC_Status errorstate = SDMMC_OK;
 	SDMMC_DMATransTypeDef dma;
 	dma.BlockSize = 512;
-	// dma.SrcAddr = (uint32_t)DstStartAddr;
-	// dma.DstAddr = SrcStartAddr;                               /* [byte units] */
-	dma.SrcAddr = SrcStartAddr;
-	dma.DstAddr = DstStartAddr;                                  /* [byte units] */
-
+	dma.SrcAddr = (uint32_t )DTCMBUSADDR(SrcStartAddr);
+	dma.DstAddr = (uint32_t )DstStartAddr;                        /* [block units] */
 	dma.SectorNum = SectorNum;
-	dma.ListBaseAddr = SRAM_BASE;
+	dma.ListBaseAddr = 0x440F0000;
+
+	dlog_info("Write: DstStartAddr = %x\n", dma.DstAddr);
+	dlog_info("Write: SrcStartAddr = %x\n", dma.SrcAddr);
+	dlog_info("Write: SectorNum = %d\n", dma.SectorNum);
+
 	if (SectorNum == 1)
 	{
 		errorstate = Card_SD_WriteBlock_DMA(&sdhandle, &dma);	
@@ -40,25 +40,29 @@ SDMMC_Status sd_write(uint32_t DstStartAddr, uint32_t SrcStartAddr, uint32_t Sec
 	{
 		errorstate = Card_SD_WriteMultiBlocks_DMA(&sdhandle, &dma);
 	}
-
+	
 	if (errorstate != SDMMC_OK) {
 		dlog_info("write SD failed!\n");
 		return SDMMC_ERROR;
 	}
-
+	dlog_info("write sdcard %d sectors done. From sector %d to sector %d\n", \
+		         dma.SectorNum, dma.DstAddr, (dma.DstAddr + dma.SectorNum - 1));
 	return errorstate;
 }
 
 SDMMC_Status sd_read(uint32_t DstStartAddr, uint32_t SrcStartAddr, uint32_t SectorNum)
 {
-	dlog_info("\nRead SD\n");
 	SDMMC_Status errorstate = SDMMC_OK;
 	SDMMC_DMATransTypeDef dma;
 	dma.BlockSize = 512;
-	dma.SrcAddr = (uint32_t )SrcStartAddr;                     /* [byte units] */
+	dma.SrcAddr = (uint32_t )SrcStartAddr;                     /* [block units] */
+	dma.DstAddr = (uint32_t )DTCMBUSADDR(DstStartAddr);
 	dma.SectorNum = SectorNum;
-	dma.ListBaseAddr = SRAM_BASE;
-	dma.DstAddr = (uint32_t)DstStartAddr;
+	dma.ListBaseAddr = 0x440F0000;
+
+    dlog_info("Read: DstStartAddr = %x\n", dma.DstAddr);
+	dlog_info("Read: SrcStartAddr = %x\n", dma.SrcAddr);
+	dlog_info("Read: SectorNum = %d\n", dma.SectorNum);
 	if (SectorNum == 1)
 	{
 		errorstate = Card_SD_ReadBlock_DMA(&sdhandle, &dma);
@@ -72,7 +76,8 @@ SDMMC_Status sd_read(uint32_t DstStartAddr, uint32_t SrcStartAddr, uint32_t Sect
 		dlog_info("read SD failed!\n");
 		return SDMMC_ERROR;
 	}
-
+	dlog_info("read sdcard %d sectors done. From sector %d to sector %d\n", \
+		         dma.SectorNum, dma.SrcAddr, (dma.SrcAddr + dma.SectorNum - 1));
 	return errorstate;
 }
 
@@ -80,34 +85,243 @@ SDMMC_Status sd_erase(uint32_t StartAddr, uint32_t SectorNum)
 {
 	dlog_info("Erase SD\n");
 	SDMMC_Status errorstate = SDMMC_OK;
+	dlog_info("Erase: StartSector = %d\n", StartAddr);
+	dlog_info("Erase: SectorNum = %d\n", SectorNum);
 	errorstate = Card_SD_Erase(&sdhandle, StartAddr, SectorNum);  /* [block units] */
 	if (errorstate != SDMMC_OK) {
 		dlog_info("Erase SD failed!\n");
 		return SDMMC_ERROR;
 	}
-
+	dlog_info("erase %d sectors done. From sector %d to sector %d\n", \
+		         SectorNum, StartAddr, (StartAddr + SectorNum - 1));
 	return errorstate;
 }
 
 SDMMC_Status sd_deinit()
 {
-	dlog_info("Deinit SD\n");
+	
 	SDMMC_Status errorstate = SDMMC_OK;
 	errorstate = Card_SD_DeInit(&sdhandle);
 	if (errorstate != SDMMC_OK) {
 		dlog_info("deinit SD failed!\n");
 		return SDMMC_ERROR;
 	}
-
+	dlog_info("remove sdcard success!\n");
 	return errorstate;
 }
 
-SDMMC_Status sd_getstatus()
+SD_CardStateTypedef sd_getcardstatus()
 {
-	return SDMMC_OK;
+	dlog_info("Get Card Status\n");
+	uint32_t RespState = 0;
+	SD_CardStateTypedef cardstate = SD_CARD_TRANSFER;
+	SDMMC_Status errorstate = SDMMC_OK;
+	errorstate = SD_GetState(&sdhandle, (uint32_t *)&RespState);
+	if (errorstate != SDMMC_OK)
+	{
+		dlog_info("Get SD Status failed!\n");
+		return SDMMC_ERROR;
+	}
+
+	cardstate = (SD_CardStateTypedef)((RespState >> 9) & 0x0F);
+	  /* Find SD status according to card state*/
+	if (cardstate == SD_CARD_TRANSFER)
+	{
+		return SD_TRANSFER_OK;
+	}
+	else if(cardstate == SD_CARD_ERROR)
+	{
+		return SD_TRANSFER_ERROR;
+	}
+	else
+	{
+		return SD_TRANSFER_BUSY;
+	}
 }
 
 void sd_getcardinfo(SD_CardInfoTypedef *CardInfo)
 {
 	Card_SD_Get_CardInfo(&sdhandle, CardInfo);
+}
+
+void sd_IRQHandler(void)
+{
+
+    uint32_t status, pending, cdetect;
+   
+	status  = read_reg32(SDMMC_BASE + 0x44);  /* RINTSTS */
+	pending = read_reg32(SDMMC_BASE + 0x40);  /* MINTSTS */
+    cdetect = read_reg32(SDMMC_BASE + 0x50);  /* CDETECT*/
+
+	// dlog_info("RINTSTS = 0x%08x\n", status);
+	// dlog_info("MINTSTS = 0x%08x\n", pending);
+
+	if(pending)
+	{
+	  if (pending & SDMMC_RINTSTS_CARD_DETECT)
+	  {
+	  	if (status & SDMMC_RINTSTS_CARD_DETECT)
+	  	{
+	  		if (!cdetect)
+	  		{
+		        dlog_info("Initializing the SD Card...\n");
+		        write_reg32((SDMMC_BASE + 0x44), status);
+		        sd_init();
+		        write_reg32((SDMMC_BASE + 0x44), 0xFFFFFFFF);
+	  		}
+	  		else
+	  		{
+	  			dlog_info("Removing the SD Card...\n");
+		        write_reg32((SDMMC_BASE + 0x44), status);
+		        sd_deinit();
+		        write_reg32((SDMMC_BASE + 0x44), 0xFFFFFFFF);
+	  		}
+	  	}
+	  }
+	  if (pending & SDMMC_RINTSTS_RESP_ERR)
+	  {
+	  	if (status & SDMMC_RINTSTS_RESP_ERR)
+	  	{
+	        dlog_info("SDMMC_RINTSTS_RESP_ERR\n");
+	        status &= ~SDMMC_RINTSTS_RESP_ERR;
+	        write_reg32((SDMMC_BASE + 0x44), status);
+	        return 0;
+	      
+	  	}
+	  }
+	  if (pending & SDMMC_RINTSTS_CMD_DONE)
+	  {
+	  	if (status & SDMMC_RINTSTS_CMD_DONE)
+	  	{
+	        dlog_info("SDMMC_RINTSTS_CMD_DONE\n");
+	        status &= ~SDMMC_RINTSTS_CMD_DONE;
+	        write_reg32((SDMMC_BASE + 0x44), status);
+	        return 0;
+	      
+	  	}
+	  }
+	  if (pending & SDMMC_RINTSTS_DATA_OVER)
+	  {
+	  	if (status & SDMMC_RINTSTS_DATA_OVER)
+	  	{
+	        dlog_info("SDMMC_RINTSTS_DATA_OVER\n");
+	        status &= ~SDMMC_RINTSTS_DATA_OVER;
+	        write_reg32((SDMMC_BASE + 0x44), status);
+	        return 0;
+	      
+	  	}
+	  }
+	  if (pending & SDMMC_RINTSTS_TXDR)
+	  {
+	  	if (status & SDMMC_RINTSTS_TXDR)
+	  	{
+	        dlog_info("SDMMC_RINTSTS_TXDR\n");
+	        status &= ~SDMMC_RINTSTS_TXDR;
+	        write_reg32((SDMMC_BASE + 0x44), status);
+	        return 0;
+	      
+	  	}
+	  }
+	  if (pending & SDMMC_RINTSTS_RXDR)
+	  {
+	  	if (status & SDMMC_RINTSTS_RXDR)
+	  	{
+	        dlog_info("SDMMC_RINTSTS_RXDR\n");
+	        status &= ~SDMMC_RINTSTS_RXDR;
+	        write_reg32((SDMMC_BASE + 0x44), status);
+	        return 0;
+	      
+	  	}
+	  }
+	  if (pending & SDMMC_RINTSTS_RCRC)
+	  {
+	  	if (status & SDMMC_RINTSTS_RCRC)
+	  	{
+	        dlog_info("SDMMC_RINTSTS_RCRC\n");
+	        status &= ~SDMMC_RINTSTS_RCRC;
+	        write_reg32((SDMMC_BASE + 0x44), status);
+	        return 0;
+	      
+	  	}
+	  }
+	  if (pending & SDMMC_RINTSTS_RTO)
+	  {
+	  	if (status & SDMMC_RINTSTS_RTO)
+	  	{
+	        dlog_info("SDMMC_RINTSTS_RTO\n");
+	        status &= ~SDMMC_RINTSTS_RTO;
+	        write_reg32((SDMMC_BASE + 0x44), status);
+	        return 0;
+	      
+	  	}
+	  }
+	  if (pending & SDMMC_RINTSTS_DRTO)
+	  {
+	  	if (status & SDMMC_RINTSTS_DRTO)
+	  	{
+	        dlog_info("SDMMC_RINTSTS_DRTO\n");
+	        status &= ~SDMMC_RINTSTS_DRTO;
+	        write_reg32((SDMMC_BASE + 0x44), status);
+	        return 0;
+	      
+	  	}
+	  }
+	  if (pending & SDMMC_RINTSTS_HTO)
+	  {
+	  	if (status & SDMMC_RINTSTS_HTO)
+	  	{
+	        dlog_info("SDMMC_RINTSTS_HTO\n");
+	        status &= ~SDMMC_RINTSTS_HTO;
+	        write_reg32((SDMMC_BASE + 0x44), status);
+	        return 0;
+	      
+	  	}
+	  }
+
+	  if (pending & SDMMC_INTMASK_FRUN)
+	  {
+	  	if (status & SDMMC_INTMASK_FRUN)
+	  	{
+	        dlog_info("SDMMC_INTMASK_FRUN\n");
+	        status &= ~SDMMC_INTMASK_FRUN;
+	        write_reg32((SDMMC_BASE + 0x44), status);
+	        return 0;
+	      
+	  	}
+	  }
+	  if (pending & SDMMC_INTMASK_HLE)
+	  {
+	  	if (status & SDMMC_INTMASK_HLE)
+	  	{
+	        dlog_info("SDMMC_INTMASK_HLE\n");
+	        status &= ~SDMMC_INTMASK_HLE;
+	        write_reg32((SDMMC_BASE + 0x44), status);
+	        return 0;
+	      
+	  	}
+	  }
+	  if (pending & SDMMC_INTMASK_SBE)
+	  {
+	  	if (status & SDMMC_INTMASK_SBE)
+	  	{
+	        dlog_info("SDMMC_INTMASK_SBE\n");
+	        status &= ~SDMMC_INTMASK_SBE;
+	        write_reg32((SDMMC_BASE + 0x44), status);
+	        return 0;
+	      
+	  	}
+	  }
+	  if (pending & SDMMC_INTMASK_ACD)
+	  {
+	  	if (status & SDMMC_INTMASK_ACD)
+	  	{
+	        dlog_info("SDMMC_INTMASK_ACD\n");
+	        status &= ~SDMMC_INTMASK_ACD;
+	        write_reg32((SDMMC_BASE + 0x44), status);
+	        return 0;
+	      
+	  	}
+	  }
+	}
+
 }

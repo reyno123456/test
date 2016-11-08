@@ -17,6 +17,7 @@
 #include "stm32f746xx.h"
 #include "FreeRTOSConfig.h"
 #include "memory_config.h"
+#include "debuglog.h"
 
 /**
   * @brief  Get SDMMC Power state.
@@ -48,6 +49,8 @@ SDMMC_Status Core_SDMMC_SendCommand(SDMMC_REG *SDMMCx, SDMMC_CmdInitTypeDef *Com
   tmpreg |= (uint32_t)(Command->CmdIndex | Command->Attribute);
   /* Write to SDMMC CMD register */
   Core_SDMMC_SetCMD(SDMMCx, tmpreg);
+  dlog_info("CMD%d = 0x%x\n", Command->CmdIndex, tmpreg);
+  dlog_info("CMD%dARG = 0x%x\n", Command->CmdIndex, Command->Argument);
   return SDMMC_OK;
 }
 

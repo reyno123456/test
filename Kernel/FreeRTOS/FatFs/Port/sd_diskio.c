@@ -87,7 +87,7 @@ DSTATUS SD_initialize(BYTE lun)
   {
     Stat &= ~STA_NOINIT;
   }
-  dlog_info("\nSD initializa success!");
+  dlog_info("SD initializa success!\n");
   return Stat;
 }
 
@@ -100,7 +100,7 @@ DSTATUS SD_status(BYTE lun)
 {
   Stat = STA_NOINIT;
 
-  if (sd_getstatus() == MSD_OK)
+  if (sd_getcardstatus() == MSD_OK)
   {
     Stat &= ~STA_NOINIT;
   }
@@ -120,18 +120,20 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 {
   DRESULT res = RES_OK;
 
+  dlog_info("buff addr = 0x%x\n", buff);
+  dlog_info("sector = %d\n", sector);
+  dlog_info("count = %d\n", count);
+  
   if (sd_read((uint32_t)buff,
-              (uint32_t) (sector * BLOCK_SIZE),
+              (uint32_t)sector,
               count) != MSD_OK)
   {
     res = RES_ERROR;
   }
-
-  dlog_info("Buff Addr = %x", buff);
-  dlog_info("\nprint read");
-  for (int i = 0; i < 32; ++i)
+  dlog_info("print read");
+  for (int i = 0; i < 8; ++i)
   {
-    dlog_info("\nread byte = %x", buff[i]);
+    dlog_info("read byte = 0x%x\n", buff[i]);
   }
   return res;
 }
@@ -149,13 +151,16 @@ DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
 {
   DRESULT res = RES_OK;
 
-  for (int j = 0; j < 32; ++j)
+  for (int j = 0; j < 8; ++j)
   {
-    dlog_info("\nwrite byte = %x", buff[j]);
+    dlog_info("write byte = 0x%x\n", buff[j]);
   }
+  dlog_info("buff addr = 0x%x\n", buff);
+  dlog_info("sector = %d\n", sector);
+  dlog_info("count = %d\n", count);
 
-  if (sd_write((uint32_t)buff,
-               (uint64_t)(sector * BLOCK_SIZE),
+  if (sd_write((uint64_t)sector,
+               (uint32_t)buff,
                count) != MSD_OK)
   {
     res = RES_ERROR;
@@ -189,8 +194,9 @@ DRESULT SD_ioctl(BYTE lun, BYTE cmd, void *buff)
 
   /* Get number of sectors on the disk (DWORD) */
   case GET_SECTOR_COUNT :
-    sd_getcardinfo(&CardInfo);
-    *(DWORD*)buff = CardInfo.CardCapacity / BLOCK_SIZE;
+    //sd_getcardinfo(&CardInfo);
+    //*(DWORD*)buff = CardInfo.CardCapacity;
+    *(DWORD*)buff = 31275008;
     res = RES_OK;
     break;
 
