@@ -7,22 +7,19 @@
 #include "debuglog.h"
 #include <string.h>
 #include <stdlib.h>
-#include "cmsis_os.h"
 #include "test_i2c_adv7611.h"
 #include "test_freertos.h"
 #include "test_timer.h"
 #include "test_spi.h"
 #include "test_quadspi.h"
 #include "test_gpio.h"
+#include "test_usbh.h"
 
 static unsigned char g_commandPos;
 static char g_commandLine[50];
 static unsigned char g_commandEnter = 0;
 uint32_t UartNum;
 
-//QueueHandle_t xQueue = NULL;
-osMessageQId usbVideoReadyEvent;
-uint32_t g_sendUSBFlag = 0;
 
 /* added by xiongjiangjiang */
 void Drv_UART_IRQHandler(void)
@@ -237,9 +234,9 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_eraseSdcard(cmdArray[1], cmdArray[2]);
     }
-    else if (memcmp(cmdArray[0], "sendusb", 7) == 0)
+    else if (memcmp(cmdArray[0], "bypassvideo", 11) == 0)
     {
-        command_sendusb();
+        command_bypassVideo();
     }
     else if (memcmp(cmdArray[0], "hdmiinit", strlen("hdmiinit")) == 0)
     {
@@ -588,20 +585,13 @@ void delay_ms(uint32_t num)
     for (i = 0; i < num * 100; i++);
 }
 
-void command_sendusb(void)
+void command_bypassVideo(void)
 {
-    uint32_t        ValueToSend = 0;
-    portBASE_TYPE   xStatus = pdFALSE;
+    USBH_APP_TYPE_DEF  usbhAppType;
 
-    ValueToSend++;
+    usbhAppType = USBH_APP_BYPASS_VIDEO;
 
-//    xStatus = xQueueSendFromISR(xQueue, &ValueToSend, &xStatus);
-//    if (xStatus != pdPASS)
-//    {
-//        dlog_info("Could not send to the Queue\n");
-//    }
-    osMessagePut(usbVideoReadyEvent, ValueToSend, 0);
-
+    osMessagePut(USBH_AppEvent, usbhAppType, 0);
 }
 
 

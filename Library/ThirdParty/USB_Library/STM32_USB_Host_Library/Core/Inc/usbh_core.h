@@ -147,8 +147,6 @@ void                 USBH_LL_IncTimer     (USBH_HandleTypeDef *phost);
   * @}
   */ 
 
-void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id);
-
 
 #ifdef __cplusplus
 }

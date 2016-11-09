@@ -322,7 +322,6 @@ HAL_StatusTypeDef HAL_PCD_Stop(PCD_HandleTypeDef *hpcd)
   return HAL_OK;
 }
 extern volatile uint32_t sendFinish;
-extern uint32_t g_sendUSBFlag;
 extern USBD_HandleTypeDef USBD_Device;
 
 /**
@@ -495,8 +494,6 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
       __HAL_PCD_CLEAR_FLAG(hpcd, USB_OTG_GINTSTS_USBSUSP);
 
       USB_OTG_SET_LITTLE_ENDIAN();
-
-      g_sendUSBFlag = 0;
 
       /* to resolve the problem of unplug during the transmit */
       if (sendFinish == 0)

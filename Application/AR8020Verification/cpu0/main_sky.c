@@ -4,9 +4,10 @@
 #include "pll_ctrl.h"
 #include "command.h"
 #include "test_usbd.h"
+#include "test_usbh.h"
 #include "test_sram.h"
+#include "cmsis_os.h"
 
-extern USBD_HandleTypeDef USBD_Device;
 
 void *malloc(size_t size)
 {
@@ -39,6 +40,22 @@ void console_init(uint32_t uart_num, uint32_t baut_rate)
   UartNum = uart_num;
   command_init();
 }
+
+
+static void IO_Task(void)
+{
+    while (1)
+    {
+        if (command_getEnterStatus() == 1)
+        {
+            command_fulfill();
+        }
+
+        dlog_output(1);
+    }
+}
+
+
 /**
   * @brief  Main program
   * @param  None
@@ -60,19 +77,20 @@ int main(void)
 
   HAL_Init();
 
-  dlog_info("HAL_Init done \n");
+  osThreadDef(USBHMAIN_Task, USBH_MainTask, osPriorityNormal, 0, 8 * 128);
+  osThreadCreate(osThread(USBHMAIN_Task), NULL);
 
-  //test_usbh();
+  osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 8 * 128);
+  osThreadCreate(osThread(IOTask), NULL);
+
+  osMessageQDef(osqueue, 1, uint16_t);
+  USBH_AppEvent = osMessageCreate(osMessageQ(osqueue),NULL);
+
+  osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
   for( ;; )
   {
-    if (command_getEnterStatus() == 1)
-    {
-      command_fulfill();
-    }
-
-    dlog_output(1);
   }
 } 
 

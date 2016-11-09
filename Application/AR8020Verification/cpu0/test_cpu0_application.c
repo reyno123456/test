@@ -7,10 +7,8 @@
 #include "cmsis_os.h"
 #include "raw_video_data.h"
 
-USBD_HandleTypeDef USBD_Device;
-
-extern osMessageQId usbVideoReadyEvent;
-extern uint32_t g_sendUSBFlag;
+extern USBD_HandleTypeDef USBD_Device;
+osMessageQId usbVideoReadyEvent;
 
 
 void Application_InitResource(void)
