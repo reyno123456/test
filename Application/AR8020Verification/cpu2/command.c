@@ -293,6 +293,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_TestSysEventIdle();
     }
+    else if(memcmp(cmdArray[0], "Sky_set_ITQAM_and_notify", strlen("Sky_set_ITQAM_and_notify")) == 0)
+    {
+        Sky_set_ITQAM_and_notify(strtoul(cmdArray[1], NULL, 0));
+    }    
     else 
     {
         dlog_error("Command not found! Please use commands like:\n");
@@ -314,6 +318,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("test_TestGpioNormalRange <gpionum1> <gpionum2> <highorlow>");
         dlog_error("test_TestGpioInterrupt <gpionum> <inttype> <polarity>");
         dlog_error("test_SysEventIdle");
+        dlog_error("Sky_set_ITQAM_and_notify");
     }
 
     /* must reset to receive new data from serial */

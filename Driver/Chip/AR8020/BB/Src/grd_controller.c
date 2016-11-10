@@ -18,7 +18,6 @@ static uint8_t  Timer1_Delay1_Cnt = 0;
 
 static Grd_FlagTypeDef   GrdState;
 static Grd_HandleTypeDef GrdStruct;
-static Grd_QAMTypeDef    GrdQam;
 
 void Grd_Parm_Initial(void)
 {
@@ -44,14 +43,6 @@ void Grd_Parm_Initial(void)
     GrdState.GetfrqOnly     = ENABLE;
     GrdState.FEClock        = DISABLE;
     GrdState.Allowjglock    = DISABLE;
-
-    GrdQam.Down16qam12      = DISABLE;
-    GrdQam.Downqpsk12       = DISABLE;
-    GrdQam.Downbpsk12       = DISABLE;
-   
-    GrdQam.Up64qam12        = DISABLE;
-    GrdQam.Up16qam12        = DISABLE;
-    GrdQam.Upqpsk12         = DISABLE;
 
     Grd_Timer0_Init();
     Grd_Timer1_Init();
@@ -110,6 +101,8 @@ void Grd_Write_Itfrq(uint8_t ch)
 
         GrdStruct.workfrqcnt = ch;
         printf("G=>%d\r\n", ch);
+
+        Grd_Txmsg_Qam_Change(MOD_BPSK, 0); //switch to Low QAM
     }
 }
 
@@ -400,6 +393,14 @@ void Grd_Getsnr(uint8_t i)
     SNRPC[i].snrlow = BB_ReadReg(PAGE2, SNR_REG_1);
 
     SNRPC[i].snrall = (SNRPC[i].snrhgh<<8)|SNRPC[i].snrlow;
+#if 0
+    static int count = 0;
+    if(count++ > 5000 && i == 7)
+    {
+        dlog_info("SNR: %0.4x %0.4x %0.4x %0.4x %0.4x %0.4x %0.4x \r\n", SNRPC[0].snrall, SNRPC[1].snrall, SNRPC[2].snrall, SNRPC[3].snrall, SNRPC[4].snrall, SNRPC[5].snrall, SNRPC[6].snrall, SNRPC[7].snrall);
+        count = 0;
+    }
+#endif
 }
 
 void Grd_Frqsnr_Array(void)
@@ -434,10 +435,10 @@ void Grd_Qamsnr_Array(void)
     uint8_t  inum  =0;
     uint8_t  inum2 =0;
     uint8_t  irows =0;
+    uint8_t  jlists=0;
 
     for(irows=0; irows<QAM_SNR_BLOCK_ROWS-1; irows++)
     {
-        uint8_t  jlists=0;
         for(jlists=0; jlists<QAM_SNR_BLOCK_LISTS; jlists++)
         {
             Snr_Qam_Block[irows][jlists] = Snr_Qam_Block[irows+1][jlists];
@@ -524,9 +525,8 @@ uint8_t Grd_Sweeppower_Fluctuate_Average(void)
 }
 
 
-void Grd_Ldpc_Err_Num_Statistics(void)    //2 // 2 sec
+void Grd_Ldpc_Err_Num_Statistics(void)
 {
-    uint8_t   cpage=0;
     uint8_t   ldpc_cnt=0;
     uint16_t  ldpc_err_num_rd_low=0;
     uint16_t  ldpc_err_num_rd_hgh=0;
@@ -541,50 +541,45 @@ void Grd_Ldpc_Err_Num_Statistics(void)    //2 // 2 sec
     
     Ldpc_Block[LDPC_STATIC_NUM-1] = (ldpc_err_num_rd_hgh<<8)|ldpc_err_num_rd_low;
 
-    GrdStruct.Ldpcreadcnt++;
     if(GrdStruct.Ldpcreadcnt > LDPC_STATIC_NUM)
     {
-        GrdState.Ldpcjgflag=ENABLE; //if count more than LDPC_STATIC_NUM times
+        GrdState.Ldpcjgflag = ENABLE; //if count more than LDPC_STATIC_NUM times
     }
     else
     {
-        GrdState.Ldpcjgflag=DISABLE;
+        GrdStruct.Ldpcreadcnt++;
+        GrdState.Ldpcjgflag = DISABLE;
     }
 }
 
 
+/*
+ * return 0: Error
+ *        1: statistic end and no Error.
+ *        2: statistic not end
+*/
 uint8_t Grd_Ldpc_Block_Determine(void)
 {
     uint8_t arr_cnt=0;
     uint8_t ldpc_err_num=0;
+    uint32_t sum = 0;
 
-    return 1;
-    #if 0
-    if(ENABLE == GrdState.Ldpcjgflag)
+    Grd_Ldpc_Err_Num_Statistics();
+    if(ENABLE != GrdState.Ldpcjgflag)
     {
-        for(arr_cnt=0;arr_cnt<LDPC_STATIC_NUM-1;arr_cnt++)
+        return 2;
+    }
+    
+    for(arr_cnt=0;arr_cnt<LDPC_STATIC_NUM-1;arr_cnt++)
+    {
+        if(Ldpc_Block[arr_cnt]>0x10)
         {
-            if(Ldpc_Block[arr_cnt]>0x10)  
-            {
-                ldpc_err_num++;
-            }
-        }
-        
-        if(ldpc_err_num > 0)
-        {
-            ldpc_err_num=0;
+            printf("--ERR:%d\r\n", Ldpc_Block[arr_cnt]);
             return 0;
         }
-        else
-        {
-            return 1;
-        }
     }
-    else
-    {
-        return 0;
-    }
-    #endif
+    
+    return 1;
 }
 
 
@@ -598,7 +593,16 @@ void Baseband_MsgOSD_Ptf(void)
 
 EN_BB_QAM Grd_get_QAM(void)
 {
-    return (EN_BB_QAM)(BB_ReadReg(PAGE2, GRD_FEC_QAM_CR_TLV) & 0x03);
+    static uint8_t iqam = 0xff;
+
+    EN_BB_QAM qam = (EN_BB_QAM)(BB_ReadReg(PAGE2, GRD_FEC_QAM_CR_TLV) & 0x03);
+    if(iqam != qam)
+    {
+        iqam = qam;
+        printf("-QAM:%d ",qam);
+    }
+    
+    return qam;
 }
 
 void Grd_ITfrq_Hopping(void)
@@ -616,6 +620,7 @@ void Grd_ITfrq_Hopping(void)
     GrdStruct.Harqcnt = BB_ReadReg(PAGE2, FEC_5_RD) >>4;
     QAM_MODE = Grd_get_QAM();
 
+    #if 0
     if(GrdStruct.Harqcnt >= 2)
     {
         GrdStruct.Harqcnt=0;
@@ -691,224 +696,180 @@ void Grd_ITfrq_Hopping(void)
             break;
         }    
     }
+    #endif
 }
 
+
+typedef struct
+{
+    EN_BB_QAM qam;
+    EN_BB_LDPC ldpc;
+    uint16_t snr_thr;
+}STRU_MOD_SNR_THR;
+
+STRU_MOD_SNR_THR stru_mod_snr_map[] = 
+{
+    {MOD_BPSK,  LDPC_1_2, 0x029B},
+    {MOD_4QAM,  LDPC_1_2, 0x041E},
+    {MOD_16QAM, LDPC_1_2, 0x08F6},
+    {MOD_64QAM, LDPC_1_2, 0x0AAA},
+};
+
+    
+uint16_t get_mod_snr_thr(EN_BB_QAM qam, EN_BB_LDPC ldpc)
+{
+    uint8_t i = 0;
+    uint8_t size = sizeof(stru_mod_snr_map) / sizeof(stru_mod_snr_map[0]);
+    for(i = 0 ; i < size ; i++)
+    {
+        if(stru_mod_snr_map[i].qam == qam)  //Todo: match QAM, LDPC
+        {
+            return stru_mod_snr_map[i].snr_thr;
+        }
+    }
+
+    dlog_error("QAM:%d ldpc:%d\r\n", qam, ldpc);
+}
+
+uint16_t get_up_mode_snr_thr(EN_BB_QAM qam, EN_BB_LDPC ldpc)
+{
+    uint8_t i = 0;
+    uint8_t size = sizeof(stru_mod_snr_map) / sizeof(stru_mod_snr_map[0]);
+    for(i = 0 ; i < size ; i++)
+    {
+        if(stru_mod_snr_map[i].qam > qam)   //Todo: match QAM, LDPC
+        {
+            return stru_mod_snr_map[i].snr_thr;
+        }
+    }
+
+    return stru_mod_snr_map[size-1].snr_thr; //64QAM
+}
+
+uint16_t get_down_mode_snr_thr(EN_BB_QAM qam, EN_BB_LDPC ldpc)
+{
+    uint8_t i = 0;
+    uint8_t size = sizeof(stru_mod_snr_map) / sizeof(stru_mod_snr_map[0]);
+    for(i = size; i >=1; i--)
+    {
+        if(stru_mod_snr_map[i-1].qam < qam) //Todo: match QAM, LDPC
+        {
+            return stru_mod_snr_map[i-1].snr_thr;
+        }
+    }
+    
+    return stru_mod_snr_map[0].snr_thr;
+}
+
+uint16_t Grd_Get_aver_SNR(EN_BB_QAM qam, EN_BB_LDPC ldpc)
+{
+    uint8_t icnt = 0;
+    uint32_t snr_sum = 0;
+    
+    for(icnt=0; icnt < SNRNUM_PER_CYC; icnt++)
+    {
+        if(SNRPC[icnt].snrall > 2 * get_mod_snr_thr(qam, 0))
+        {
+            SNRPC[icnt].snrall = 2 * get_mod_snr_thr(qam, 0);
+        }
+    }
+    Grd_Qamsnr_Array();
+
+    for(icnt=0; icnt<QAM_SNR_BLOCK_ROWS; icnt++)
+    {
+        snr_sum += Snr_Qam_Block[icnt][QAM_SNR_BLOCK_LISTS-1];
+    }
+    
+    return (uint16_t)(snr_sum >>5);
+}
+
+
+void Grd_Txmsg_Qam_Change(EN_BB_QAM qam, EN_BB_LDPC ldpc)
+{
+    printf("GS =>%d \r\n", qam);
+    BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF0 | (uint8_t)qam);
+    BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF0 | (uint8_t)qam);
+}
+
+void switch_to_up_mod(EN_BB_QAM qam, EN_BB_LDPC ldpc)
+{
+    uint8_t i = 0;
+    uint8_t size = sizeof(stru_mod_snr_map) / sizeof(stru_mod_snr_map[0]);
+    EN_BB_QAM next_qam = MOD_64QAM;
+    
+    for(i = 0 ; i < size ; i++)
+    {
+        if(stru_mod_snr_map[i].qam > qam) //Todo: match QAM, LDPC
+        {
+            next_qam = stru_mod_snr_map[i].qam;
+            break;
+        }
+    }
+   
+   Grd_Txmsg_Qam_Change(next_qam, 0);
+}
+
+void switch_to_down_mod(EN_BB_QAM qam, EN_BB_LDPC ldpc)
+{
+    uint8_t i = 0;
+    uint8_t size = sizeof(stru_mod_snr_map) / sizeof(stru_mod_snr_map[0]);
+    EN_BB_QAM next_qam = MOD_BPSK;
+    
+    for(i = size ; i > 0 ; i--)
+    {
+        if(stru_mod_snr_map[i].qam < qam) //Todo: match QAM, LDPC
+        {
+            next_qam = stru_mod_snr_map[i].qam;
+            break;
+        }
+    }
+   
+   Grd_Txmsg_Qam_Change(next_qam, 0);
+}
+
+#define is_highest_mod(qam, ldpc) (qam==MOD_64QAM)
+#define is_lowest_mod(qam, ldpc)  (qam==MOD_BPSK)
 
 void Grd_Working_Qam_Change(void)
 {
-    uint8_t  icnt     = 0;
-    uint8_t  snr_cnt  = 0;
-    uint32_t snr_aver = 0;
-    EN_BB_QAM iQAM    = Grd_get_QAM();
+    uint8_t mod_change_flag = 0;
+    EN_BB_QAM qam = Grd_get_QAM();
     
-    #if 0
-    static uint8_t t = 0;
-    static uint8_t m = 0;
-    if(t++ > 50)
+    uint16_t snr_aver = Grd_Get_aver_SNR(qam, 0);
+    uint8_t ldpc_ok_flag = Grd_Ldpc_Block_Determine();
+    
+    if(!is_highest_mod(qam, 0))
     {
-        t = 0;
-        dlog_info("Q%d %d", iQAM, m);
-        dlog_info("\r\n%0.4x %0.4x %0.4x %0.4x %0.4x %0.4x %0.4x %0.4x %0.4x\r\n", 
-            Snr_Qam_Block[m][0], Snr_Qam_Block[m][1], Snr_Qam_Block[m][2],
-            Snr_Qam_Block[m][3], Snr_Qam_Block[m][4], Snr_Qam_Block[m][5],
-            Snr_Qam_Block[m][6], Snr_Qam_Block[m][7], Snr_Qam_Block[m][8]
-            );
-        m = (m+1) % QAM_SNR_BLOCK_ROWS;
-    }
-    #endif
-    switch (iQAM)
-    {
-        case MOD_BPSK:
-        {
-            for(icnt=0; icnt < SNRNUM_PER_CYC; icnt++)
-            {
-                if(SNRPC[icnt].snrall > 2 * MCS3_0_THRE)         
-                {
-                    SNRPC[icnt].snrall = 2* MCS3_0_THRE;
-                }
-            }
-            Grd_Qamsnr_Array();
-            for(snr_cnt=0; snr_cnt<QAM_SNR_BLOCK_ROWS; snr_cnt++)
-            {
-                snr_aver += Snr_Qam_Block[snr_cnt][QAM_SNR_BLOCK_LISTS-1];
-            }
-            snr_aver = (snr_aver>>5);
-            if(snr_aver > MCS3_1_THRE)
-            {
-                Grd_Ldpc_Err_Num_Statistics();
-            }
-            else
-            {
-                GrdStruct.Ldpcreadcnt=0;
-            }
-            if(Grd_Ldpc_Block_Determine())
-            {
-                GrdQam.Upqpsk12 = ENABLE;
-                GrdStruct.Ldpcreadcnt=0;
-            }
-        } 
-        break;
-
-    case MOD_4QAM:
-        {
-            for(icnt=0;icnt<SNRNUM_PER_CYC ;icnt++)
-            {
-                if(SNRPC[icnt].snrall > 2* MCS3_1_THRE)
-                {
-                    SNRPC[icnt].snrall = 2* MCS3_1_THRE;
-                }
-            }
-            Grd_Qamsnr_Array();
-            for(snr_cnt=0; snr_cnt<QAM_SNR_BLOCK_ROWS; snr_cnt++)
-            {
-                snr_aver += Snr_Qam_Block[snr_cnt][QAM_SNR_BLOCK_LISTS-1];
-            }
-            snr_aver=snr_aver>>5;
-            if(snr_aver > MCS3_3_THRE)
-            {
-                Grd_Ldpc_Err_Num_Statistics();
-            }
-            if (snr_aver < MCS3_1_THRE)
-            {
-                // GrdQam.Downbpsk12= ENABLE;
-                GrdStruct.Ldpcreadcnt=0;
-            }
-            if(Grd_Ldpc_Block_Determine())
-            {
-                GrdQam.Up16qam12= ENABLE;
-                GrdStruct.Ldpcreadcnt=0;
-            }
-        } 
-        break;
-
-    case MOD_16QAM:
-        {
-            for(icnt=0;icnt<SNRNUM_PER_CYC ;icnt++)
-            {
-                if(SNRPC[icnt].snrall > 2* MCS3_3_THRE)
-                {
-                    SNRPC[icnt].snrall = 2* MCS3_3_THRE;
-                }
-            }
-            Grd_Qamsnr_Array();
-            for(snr_cnt=0;snr_cnt<QAM_SNR_BLOCK_ROWS;snr_cnt++)
-            {
-                snr_aver += Snr_Qam_Block[snr_cnt][QAM_SNR_BLOCK_LISTS-1];
-            }
-            snr_aver=snr_aver>>5;
-            if(snr_aver > MCS3_4_THRE)
-            {
-                Grd_Ldpc_Err_Num_Statistics();
-            }
-            else if(snr_aver < MCS3_3_THRE)
-            {
-                GrdStruct.Ldpcreadcnt=0;
-                if(snr_aver <= MCS3_1_THRE) 
-                    {}// GrdQam.Downbpsk12= ENABLE;
-                else 
-                    GrdQam.Downqpsk12 = ENABLE;
-            }
-
-            if(Grd_Ldpc_Block_Determine())
-            {
-                GrdQam.Up64qam12 = ENABLE;
-                GrdStruct.Ldpcreadcnt = 0;
-            }
-        } 
-        break;
-
-    case MOD_64QAM:
-        {
-            for(icnt=0; icnt<SNRNUM_PER_CYC ;icnt++)
-            {
-                if(SNRPC[icnt].snrall > 2* MCS3_4_THRE)
-                {
-                    SNRPC[icnt].snrall = 2*MCS3_4_THRE;
-                }
-            }
-            Grd_Qamsnr_Array();
-            for(snr_cnt=0;snr_cnt<QAM_SNR_BLOCK_ROWS;snr_cnt++)
-            {
-                snr_aver += Snr_Qam_Block[snr_cnt][8];
-            }
-            snr_aver = snr_aver >> 5;
-            if(snr_aver <= MCS3_4_THRE)
-            {
-                if(snr_aver <= MCS3_3_THRE)
-                {
-                    if(snr_aver <= MCS3_1_THRE)
-                    {
-                        //GrdQam.Downbpsk12=ENABLE;
-                    }
-                    else
-                    {
-                        GrdQam.Downqpsk12=ENABLE;
-                    }
-                }
-                else
-                {
-                    GrdQam.Down16qam12=ENABLE;
-                }
-            }
-        } 
-        break;
+        uint16_t up_snr_thr = get_up_mode_snr_thr(qam, 0);
         
-    default:
-        break;
+        if(ldpc_ok_flag==1 && snr_aver > up_snr_thr)
+        {
+            dlog_info("--%d %0.4x %d %0.4x\r\n", qam, snr_aver, ldpc_ok_flag, up_snr_thr);
+            mod_change_flag = 1;
+            switch_to_up_mod(qam, 0);
+        }
     }
-}
-
-
-void Grd_Txmsg_Qam_Change(void)
-{
-#if 0
-    if( ENABLE==GrdQam.Downbpsk12)  // BPSK_1/2  0x90
-    {       
-        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF1);
-        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF1);
-    }
-
-    if(ENABLE==GrdQam.Downqpsk12)   //QPSK_1/2   0xB0
-    {       
-        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF3);
-        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF3);
-    }
-
-    if(ENABLE==GrdQam.Down16qam12)  //16QAM_1/2    0xD0
+    
+    if( !(is_lowest_mod(qam, 0)))
     {
-        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF7);
-        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF7);
+        uint16_t down_snr_thr  = get_down_mode_snr_thr(qam, 0);
+        if(snr_aver <= down_snr_thr || ldpc_ok_flag==0)
+        {
+            dlog_info("--%d %0.4x %d %0.4x\r\n", qam, snr_aver, ldpc_ok_flag, down_snr_thr);
+            mod_change_flag = 1;
+            switch_to_down_mod(qam, 0);
+        }
     }
-#endif
-
-    //MCS_UP
-    if(ENABLE==GrdQam.Upqpsk12) //QPSK_1/2   0xB0
-    {      
-        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF0 | (uint8_t)MOD_4QAM);
-        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF0 | (uint8_t)MOD_4QAM);
-    }
-
-    if(ENABLE==GrdQam.Up16qam12)  //16QAM_1/2    0xD0
+    
+    if(mod_change_flag == 1)
     {
-        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF0 | (uint8_t)MOD_16QAM);
-        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF0 | (uint8_t)MOD_16QAM);
+        uint8_t i = 0;
+        GrdStruct.Ldpcreadcnt=0; 
+        for(i = 0; i < LDPC_STATIC_NUM; i++)
+        {
+            Ldpc_Block[i] = 0;
+        }
     }
-    if(ENABLE==GrdQam.Up64qam12)  //64QAM_1/2    0xF0
-    {
-        BB_WriteReg(PAGE2, QAM_CHANGE_0, 0xF0 | (uint8_t)MOD_64QAM);
-        BB_WriteReg(PAGE2, QAM_CHANGE_1, 0xF0 | (uint8_t)MOD_64QAM);
-    }
-}
-
-
-void Grd_Qamflag_Clear(void)
-{
-    GrdQam.Up16qam12    = DISABLE;
-    GrdQam.Up64qam12    = DISABLE;
-    GrdQam.Upqpsk12     = DISABLE;
-    GrdQam.Down16qam12  = DISABLE;
-    GrdQam.Downbpsk12   = DISABLE;
-    GrdQam.Downqpsk12   = DISABLE;
 }
 
 void Grd_sweep(void)
@@ -964,8 +925,6 @@ void Grd_IT_Controller(void)
             {
                 Grd_ITfrq_Hopping();
                 Grd_Working_Qam_Change();
-                Grd_Txmsg_Qam_Change();
-                Grd_Qamflag_Clear();
             }
         }
         else
@@ -1012,7 +971,7 @@ void Grd_TIM1_IRQHandler(void)
             Timer1_Delay1_Cnt++;
             Grd_Getsnr(0);
             break;
-            
+
         case 1:
             Timer1_Delay1_Cnt++;
             Grd_Getsnr(1);
@@ -1026,7 +985,6 @@ void Grd_TIM1_IRQHandler(void)
 
         case 3:
             Timer1_Delay1_Cnt++;
-            Grd_IT_Controller();
             Grd_Getsnr(3);
             break;
 
@@ -1052,11 +1010,12 @@ void Grd_TIM1_IRQHandler(void)
             Timer1_Delay1_Cnt = 0;
             Grd_Getsnr(7);
             Grd_Frqsnr_Array();
+            Grd_IT_Controller();            
             break;
-            
+
         default:
             Timer1_Delay1_Cnt = 0;
-            dlog_error("delay error\n");
+            dlog_error("Timer1_Delay1_Cnt error\n");
             break;
     }
 }
