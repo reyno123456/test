@@ -333,9 +333,6 @@ typedef struct
 #define SDMMC_BUS_WIDE_4B                      0x02
 
 
-/* Initialization/de-initialization functions  **********************************/
-SDMMC_Status  Core_SDMMC_Init(SDMMC_REG *SDMMCx, SDMMC_InitTypeDef Init);
-
 /* I/O operation functions  *****************************************************/
 /* Blocking mode: Polling */
 uint32_t     Core_SDMMC_ReadFIFO(SDMMC_REG *SDMMCx);
@@ -354,6 +351,11 @@ uint32_t     Core_SDMMC_GetResponse(SDMMC_REG *SDMMCx, uint32_t Response);
 SDMMC_Status Core_SDMMC_DataConfig(SDMMC_REG *SDMMCx, SDMMC_DataInitTypeDef* Data);
 uint32_t     Core_SDMMC_GetDataCounter(SDMMC_REG *SDMMCx);
 uint32_t     Core_SDMMC_GetFIFOCount(SDMMC_REG *SDMMCx);
+SDMMC_Status Core_SDMMC_WaiteCmdDone(SDMMC_REG *SDMMCx);
+SDMMC_Status Core_SDMMC_WaiteDataOver(SDMMC_REG *SDMMCx);
+SDMMC_Status Core_SDMMC_WaiteCardBusy(SDMMC_REG *SDMMCx);
+SDMMC_Status Core_SDMMC_WaiteCmdStart(SDMMC_REG *SDMMCx);
+
 
 
 /* Power on/off switch for up to 16 cards */
@@ -405,6 +407,8 @@ uint32_t     Core_SDMMC_GetFIFOCount(SDMMC_REG *SDMMCx);
             write_reg32((uint32_t *)&(SDMMCx->CMD),temreg);
 #define   Core_SDMMC_SetCMDARG(SDMMCx, temreg) \
             write_reg32((uint32_t *)&(SDMMCx->CMDARG),temreg);
+#define   Core_SDMMC_SetRST_N(SDMMCx, temreg) \
+            write_reg32((uint32_t *)&(SDMMCx->RST_N ),temreg);
 #define   Core_SDMMC_GetCDETECT(SDMMCx) \
             read_reg32((uint32_t *)&(SDMMCx->CDETECT));
 #define   Core_SDMMC_GetRINTSTS(SDMMCx) \
@@ -427,37 +431,13 @@ uint32_t     Core_SDMMC_GetFIFOCount(SDMMC_REG *SDMMCx);
             read_reg32((uint32_t *)&(SDMMCx->CTRL));
 #define   Core_SDMMC_GetPWREN(SDMMCx) \
             read_reg32((uint32_t *)&(SDMMCx->PWREN));
+#define   Core_SDMMC_GetINTMASK(SDMMCx) \
+            read_reg32((uint32_t *)&(SDMMCx->INTMASK));
+#define   Core_SDMMC_GetMINTSTS(SDMMCx) \
+            read_reg32((uint32_t *)&(SDMMCx->MINTSTS));
+#define   Core_SDMMC_GetUHSREG(SDMMCx, temreg) \
+            read_reg32((uint32_t *)&(SDMMCx->UHSREG));
 
-
-#define   Core_SDMMC_WaiteCmdDone(SDMMCx) \
-      do { \
-        get_val = Core_SDMMC_GetRINTSTS(SDMMCx)  \
-        cmd_done = (get_val & SDMMC_RINTSTS_CMD_DONE);  \
-        dlog_info("Cmd Done?\n"); \
-      } while (!cmd_done);
-#define   Core_SDMMC_WaiteDataOver(SDMMCx) \
-      do { \
-        get_val = Core_SDMMC_GetRINTSTS(SDMMCx)  \
-        data_over = (get_val & SDMMC_RINTSTS_DATA_OVER);  \
-        dlog_info("Data Over?\n");  \
-      } while (!data_over);
-#define   Core_SDMMC_WaiteCardBusy(SDMMCx) \
-      do { \
-        get_val = Core_SDMMC_GetSTATUS(SDMMCx)  \
-        card_busy = (get_val & SDMMC_STATUS_DATA_BUSY);  \
-        dlog_info("Card Busy?\n");   \
-      } while (card_busy);
-#define   Core_SDMMC_WaiteCmdStart(SDMMCx) \
-      do { \
-        get_val = Core_SDMMC_GetCMD(SDMMCx)  \
-        cmd_start = (get_val & SDMMC_CMD_START_CMD); \
-        dlog_info("Cmd Start?\n");  \
-      } while (cmd_start);
-#define   Core_SDMMC_WaiteVoltSwitchInt(SDMMCx)  \
-      do { \
-        get_val = Core_SDMMC_GetRINTSTS(SDMMCx) \
-        volt_switch_int = (get_val & SDMMC_RINTSTS_HTO); \
-      } while (!volt_switch_int);
 
 
 /* SDMMC Cards mode management functions */

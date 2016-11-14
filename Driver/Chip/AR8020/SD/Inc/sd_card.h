@@ -350,8 +350,7 @@ typedef enum
 /**
   * @brief Supported SD Memory Cards
   */
-#define STD_CAPACITY_SD_CARD_V1_1             ((uint32_t)0x00000000)
-#define STD_CAPACITY_SD_CARD_V2_0             ((uint32_t)0x00000001)
+#define STD_CAPACITY_SD_CARD                  ((uint32_t)0x00000000)
 #define HIGH_CAPACITY_SD_CARD                 ((uint32_t)0x00000002)
 #define MULTIMEDIA_CARD                       ((uint32_t)0x00000003)
 #define SECURE_DIGITAL_IO_CARD                ((uint32_t)0x00000004)
@@ -369,12 +368,6 @@ typedef enum
 #define SD_ACMD41_HCS                       BIT(30)
 #define SD_ACMD41_XPC                       BIT(28)
 #define SD_ACMD41_S18R                      BIT(24)
-/**
-  * @brief  Mask for errors Card Status R3 (OCR Register)
-  */
-#define SD_R3_BUSY                          BIT(31)
-#define SD_R3_CCS                           BIT(30)
-#define SD_R3_S18A                          BIT(24)
 
 /**TODO
   * @brief  Masks for R6 Response
