@@ -37,6 +37,10 @@ void SRAM_Ready1Confirm(void);
 void SRAM_GROUND_BypassVideoConfig(void);
 
 
+extern volatile uint32_t  sramReady0;
+extern volatile uint32_t  sramReady1;
+
+
 /*
   *******************************************************
   ****************              SKY              *******************

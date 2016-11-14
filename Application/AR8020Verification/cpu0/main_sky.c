@@ -26,19 +26,19 @@ void free(void* p)
  */
 static void CPU_CACHE_Enable(void)
 {
-  /* Enable I-Cache */
-  SCB_EnableICache();
+    /* Enable I-Cache */
+    SCB_EnableICache();
 
-  /* Enable D-Cache */
-  SCB_EnableDCache();
+    /* Enable D-Cache */
+    SCB_EnableDCache();
 }
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
-  serial_init(uart_num, baut_rate);
-  dlog_init(uart_num);
-  UartNum = uart_num;
-  command_init();
+    serial_init(uart_num, baut_rate);
+    dlog_init(uart_num);
+    UartNum = uart_num;
+    command_init();
 }
 
 
@@ -63,35 +63,36 @@ static void IO_Task(void)
   */
 int main(void)
 {
-  BB_SPI_init();
+    BB_SPI_init();
 
-  PLLCTRL_SetCoreClk(CPU0_CPU1_CORE_PLL_CLK, CPU0_ID);
-  PLLCTRL_SetCoreClk(CPU2_CORE_PLL_CLK, CPU2_ID);
+    PLLCTRL_SetCoreClk(CPU0_CPU1_CORE_PLL_CLK, CPU0_ID);
+    PLLCTRL_SetCoreClk(CPU2_CORE_PLL_CLK, CPU2_ID);
 
-  /* initialize the uart */
-  console_init(0,115200);
-  dlog_info("cpu0 start!!! \n");
+    /* initialize the uart */
+    console_init(0,115200);
+    dlog_info("cpu0 start!!! \n");
 
-  /* Enable the CPU Cache */
-  CPU_CACHE_Enable();
+    /* Enable the CPU Cache */
+    CPU_CACHE_Enable();
 
-  HAL_Init();
+    HAL_Init();
 
-  osThreadDef(USBHMAIN_Task, USBH_MainTask, osPriorityNormal, 0, 8 * 128);
-  osThreadCreate(osThread(USBHMAIN_Task), NULL);
+    /* Create Main Task */
+    osThreadDef(USBHMAIN_Task, USBH_MainTask, osPriorityNormal, 0, 4 * 128);
+    osThreadCreate(osThread(USBHMAIN_Task), NULL);
 
-  osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 8 * 128);
-  osThreadCreate(osThread(IOTask), NULL);
+    osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 4 * 128);
+    osThreadCreate(osThread(IOTask), NULL);
 
-  osMessageQDef(osqueue, 1, uint16_t);
-  USBH_AppEvent = osMessageCreate(osMessageQ(osqueue),NULL);
+    osMessageQDef(osqueue, 1, uint16_t);
+    USBH_AppEvent = osMessageCreate(osMessageQ(osqueue),NULL);
 
-  osKernelStart();
+    osKernelStart();
 
-  /* We should never get here as control is now taken by the scheduler */
-  for( ;; )
-  {
-  }
+    /* We should never get here as control is now taken by the scheduler */
+    for( ;; )
+    {
+    }
 } 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

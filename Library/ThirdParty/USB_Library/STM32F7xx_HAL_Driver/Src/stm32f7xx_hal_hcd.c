@@ -295,8 +295,8 @@ void  HAL_HCD_MspDeInit(HCD_HandleTypeDef *hhcd)
             the HAL_HCD_MspDeInit could be implemented in the user file
    */
   /* Disable USB HS Clocks */ 
-  __HAL_RCC_USB_OTG_HS_CLK_DISABLE();
-  __HAL_RCC_USB_OTG_HS_ULPI_CLK_DISABLE();
+  //__HAL_RCC_USB_OTG_HS_CLK_DISABLE();
+  //__HAL_RCC_USB_OTG_HS_ULPI_CLK_DISABLE();
 }
 
 /**

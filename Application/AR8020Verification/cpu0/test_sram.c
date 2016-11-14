@@ -20,9 +20,3 @@ void test_sram_init(void)
 }
 
 
-void test_sram_task(void)
-{
-    
-}
-
-

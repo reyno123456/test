@@ -250,7 +250,10 @@ USBD_StatusTypeDef USBD_LL_Transmit(USBD_HandleTypeDef *pdev,
                                     uint8_t *pbuf,
                                     uint16_t size)
 {
-  HAL_PCD_EP_Transmit(pdev->pData, ep_addr, pbuf, size);
+  if (HAL_OK != HAL_PCD_EP_Transmit(pdev->pData, ep_addr, pbuf, size))
+  {
+    return USBD_BUSY;
+  }
 
   return USBD_OK;
 }

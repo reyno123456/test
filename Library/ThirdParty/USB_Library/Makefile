@@ -110,7 +110,8 @@ SRC_C += STM32F7xx_HAL_Driver/Src/stm32f7xx_hal.c \
          STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc.c \
          STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc_ex.c
 
-INCDIRS += -ISTM32F7xx_HAL_Driver/Inc
+INCDIRS += -ISTM32F7xx_HAL_Driver/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/SRAM/Inc
 
 
 

@@ -1,20 +1,52 @@
 #include <stdint.h>
 #include "sram.h"
 #include "debuglog.h"
+#include "usbd_def.h"
 
 
-
-volatile uint32_t  sramReady0;
-volatile uint32_t  sramReady1;
+volatile uint32_t               sramReady0;
+volatile uint32_t               sramReady1;
+extern USBD_HandleTypeDef       USBD_Device;
 
 
 void SRAM_Ready0IRQHandler(void)
 {
+    uint8_t         *buff;
+    uint32_t         dataLen;
+
+    buff            = SRAM_BUFF_0_ADDRESS;
+
+    dataLen         = SRAM_DATA_VALID_LEN_0;
+    dataLen         = (dataLen << 2);
+
+    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buff, dataLen))
+    {
+        dlog_error("HID0 Send Error!\n");
+
+        SRAM_Ready0Confirm();
+    }
+
     sramReady0 = 1;
 }
 
+
 void SRAM_Ready1IRQHandler(void)
 {
+    uint8_t         *buff;
+    uint32_t         dataLen;
+
+    buff            = SRAM_BUFF_1_ADDRESS;
+
+    dataLen         = SRAM_DATA_VALID_LEN_1;
+    dataLen         = (dataLen << 2);
+
+    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buff, dataLen))
+    {
+        dlog_error("HID1 Send Error!\n");
+
+        SRAM_Ready1Confirm();
+    }
+
     sramReady1 = 1;
 }
 
@@ -23,6 +55,8 @@ void SRAM_Ready0Confirm(void)
 {
     /* confirm to Baseband that the SRAM data has been processed, ready to receive new data */
     Reg_Write32(DMA_READY_0, 1);
+
+    sramReady0 = 0;
 }
 
 
@@ -30,6 +64,8 @@ void SRAM_Ready1Confirm(void)
 {
     /* confirm to Baseband that the SRAM data has been processed, ready to receive new data */
     Reg_Write32(DMA_READY_1, 1);
+
+    sramReady1 = 0;
 }
 
 

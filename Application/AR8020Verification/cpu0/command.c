@@ -20,7 +20,6 @@ static char g_commandLine[50];
 static unsigned char g_commandEnter = 0;
 uint32_t UartNum;
 
-
 /* added by xiongjiangjiang */
 void Drv_UART_IRQHandler(void)
 {
@@ -234,9 +233,13 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_eraseSdcard(cmdArray[1], cmdArray[2]);
     }
-    else if (memcmp(cmdArray[0], "bypassvideo", 11) == 0)
+    else if (memcmp(cmdArray[0], "startbypassvideo", strlen("startbypassvideo")) == 0)
     {
-        command_bypassVideo();
+        command_startBypassVideo();
+    }
+    else if (memcmp(cmdArray[0], "stopbypassvideo", strlen("stopbypassvideo")) == 0)
+    {
+        command_stopBypassVideo();
     }
     else if (memcmp(cmdArray[0], "hdmiinit", strlen("hdmiinit")) == 0)
     {
@@ -358,7 +361,6 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("readsd <SrcAddr> <SectorNum>");
         dlog_error("writesd <DstAddr> <SectorNum> <Srcaddr>");
         dlog_error("erasesd <startSector> <SectorNum>");
-        dlog_error("sendusb");
         dlog_error("hdmiinit <index>");
         dlog_error("hdmidump <index>");
         dlog_error("hdmigetvideoformat <index>");
@@ -386,6 +388,9 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("test_TestGpioNormal <gpionum> <highorlow>");
         dlog_error("test_TestGpioNormalRange <gpionum1> <gpionum2> <highorlow>");
         dlog_error("test_TestGpioInterrupt <gpionum> <inttype> <polarity>");
+        dlog_output(1000);
+        dlog_error("startbypassvideo");
+        dlog_error("stopbypassvideo");
     }
 
     /* must init to receive new data from serial */
@@ -585,15 +590,37 @@ void delay_ms(uint32_t num)
     for (i = 0; i < num * 100; i++);
 }
 
-void command_bypassVideo(void)
+void command_startBypassVideo(void)
 {
-    USBH_APP_TYPE_DEF  usbhAppType;
+    USBH_APP_EVENT_DEF  usbhAppType;
 
-    usbhAppType = USBH_APP_BYPASS_VIDEO;
+    usbhAppType = USBH_APP_START_BYPASS_VIDEO;
 
-    osMessagePut(USBH_AppEvent, usbhAppType, 0);
+    if (0 == g_usbhBypassVideoCtrl.taskActivate)
+    {
+        g_usbhBypassVideoCtrl.taskActivate  = 1;
+        osMessagePut(USBH_AppEvent, usbhAppType, 0);
+    }
+    else
+    {
+        dlog_error("Bypass Video Task is running\n");
+    }
 }
 
+void command_stopBypassVideo(void)
+{
+    USBH_APP_EVENT_DEF  usbhAppType;
 
+    usbhAppType = USBH_APP_STOP_BYPASS_VIDEO;
+
+    if (1 == g_usbhBypassVideoCtrl.taskActivate)
+    {
+        osMessagePut(USBH_AppEvent, usbhAppType, 0);
+    }
+    else
+    {
+        dlog_error("Bypass Video Task is not running\n");
+    }
+}
 
 

@@ -52,6 +52,8 @@
 #include "usbd_ctlreq.h"
 #include "usbd_core.h"
 #include "debuglog.h"
+#include "sram.h"
+
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
   * @{
   */
@@ -252,7 +254,6 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE]  _
 }; 
 
 USBD_HID_HandleTypeDef g_usbdHidData;
-extern volatile uint32_t   sendFinish;
 
 
 /*
@@ -423,23 +424,32 @@ uint8_t USBD_HID_SendReport     (USBD_HandleTypeDef  *pdev,
                                  uint16_t len)
 {
   USBD_HID_HandleTypeDef     *hhid = (USBD_HID_HandleTypeDef*)pdev->pClassData;
-
-  sendFinish        = 1;
+  uint8_t                     ret  = USBD_OK;
 
   if (pdev->dev_state == USBD_STATE_CONFIGURED )
   {
     if(hhid->state == HID_IDLE)
     {
-      sendFinish    = 0;
       hhid->state   = HID_BUSY;
-      USBD_LL_Transmit (pdev, 
-                        HID_EPIN_ADDR,                                      
-                        report,
-                        len);
+      if (USBD_OK != USBD_LL_Transmit (pdev,
+                                       HID_EPIN_ADDR,
+                                       report,
+                                       len))
+      {
+        ret = USBD_BUSY;
+      }
+    }
+    else
+    {
+      ret = USBD_BUSY;
     }
   }
+  else
+  {
+      ret = USBD_FAIL;
+  }
 
-  return USBD_OK;
+  return ret;
 }
 
 /**
@@ -491,8 +501,6 @@ static uint8_t  *USBD_HID_GetCfgDesc (uint16_t *length)
   * @param  epnum: endpoint index
   * @retval status
   */
-volatile uint32_t   sendFinish;
-
 static uint8_t  USBD_HID_DataIn (USBD_HandleTypeDef *pdev, 
                               uint8_t epnum)
 {
@@ -504,7 +512,14 @@ static uint8_t  USBD_HID_DataIn (USBD_HandleTypeDef *pdev,
   /* temp add for finish */
   USB_OTG_SET_LITTLE_ENDIAN();
 
-  sendFinish = 1;
+  if (1 == sramReady0)
+  {
+    SRAM_Ready0Confirm();
+  }
+  else if(1 == sramReady1)
+  {
+    SRAM_Ready1Confirm();
+  }
 
   return USBD_OK;
 }
