@@ -296,6 +296,7 @@ int8_t BOOTLOAD_CopyDataToITCM(FIL MyFile,uint32_t u32_TCMADDR)
         }
         
         dlog_info("upgrade cpu%d %d%%",u32_iCount-1,((u32_cpuAppSize-u32_readCount)*100/u32_cpuAppSize));
+        dlog_output(100);
         if(0 != g_u8CheckSum)
         {
             uint32_t  u32_checkSumArray = 0;
