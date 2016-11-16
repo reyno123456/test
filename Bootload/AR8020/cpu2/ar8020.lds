@@ -3,14 +3,13 @@ OUTPUT_ARCH(arm)
 ENTRY(vectors)
 
 /* Highest address of the user mode stack */
-_estack = 0x20004000;     /* end of RAM */
+_estack = 0x2000FFFF;     /* end of RAM */
 
 
 MEMORY
 {
     ITCM2      : ORIGIN = 0x00000000, LENGTH = 0x10000
     DTCM2      : ORIGIN = 0x20000000, LENGTH = 0x10000
-    DTCM2_DATA : ORIGIN = 0X20004000, LENGTH = 0X10000
 }
 
 SECTIONS
@@ -39,19 +38,19 @@ SECTIONS
     .rodata :
     {
         *(.rodata*)
-    } > DTCM2_DATA AT> ITCM2
+    } > DTCM2 AT> ITCM2
 
    /* .data_array :
     {
         *(.data_array*)
-    } > DTCM2_DATA AT> ITCM2
+    } > DTCM2 AT> ITCM2
     */
     .data :
     {
         *(.data)
         . = ALIGN(4);
         *(.ramcode)
-    } > DTCM2_DATA AT> ITCM2
+    } > DTCM2 AT> ITCM2
 
     _data_end = _data_start + SIZEOF(.rodata) + SIZEOF(.data); 
 
@@ -61,7 +60,7 @@ SECTIONS
         *(.bss)
         *(COMMON)
         _bss_end = .;
-    } > DTCM2_DATA
+    } > DTCM2
 }
 
 

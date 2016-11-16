@@ -9,7 +9,7 @@
 #include "debuglog.h"
 #include "interrupt.h"
 
-.equ  DTCM0, 0x20003000
+.equ  DTCM0, 0x20000000
 
 .syntax unified
 .cpu cortex-m7
@@ -46,7 +46,7 @@
 Reset_Handler:  
   ldr  sp,  =_estack             /* set stack pointer */
 
-/* copy the CPU0 data from ITCM0 to DTCM0 */
+/* copy the BOOT data to DTCM0 */
   movs r1, #0
   ldr  r4, =_data_start           /* The start addr of data image */
   b  LoopCopyData

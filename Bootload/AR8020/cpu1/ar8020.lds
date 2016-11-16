@@ -3,14 +3,13 @@ OUTPUT_ARCH(arm)
 ENTRY(vectors)
 
 /* Highest address of the user mode stack */
-_estack = 0x20004000;     /* end of RAM */
+_estack = 0x2003FFFF;     /* end of RAM */
 
 
 MEMORY
 {
     ITCM1      : ORIGIN = 0x00000000, LENGTH = 0x40000
     DTCM1      : ORIGIN = 0x20000000, LENGTH = 0x40000
-    DTCM1_DATA : ORIGIN = 0X20000000, LENGTH = 0X40000
 }
 
 SECTIONS

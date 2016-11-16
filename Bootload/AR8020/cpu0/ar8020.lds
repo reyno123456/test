@@ -3,7 +3,7 @@ OUTPUT_ARCH(arm)
 ENTRY(vectors)
 
 /* Highest address of the user mode stack */
-_estack = 0x20004000;     /* end of RAM */
+_estack = 0x2007FFFF;     /* end of RAM */
 
 MEMORY
 {

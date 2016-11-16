@@ -9,12 +9,7 @@
 #include "debuglog.h"
 #include "interrupt.h"
 
-.equ  ITCM1,        0x00000000
 .equ  DTCM1_DATA,   0x20000000
-.equ  HEAP_START,   0x20010000
-.equ  HEAP_END,     0x20000000
-.equ  DATA_START,   0x20018000
-
 
 .syntax unified
 .cpu cortex-m7

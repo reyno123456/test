@@ -76,7 +76,6 @@ install:
 	@cp -f cpu1/start.s $(OUTPUT_LIB_STAGING_DIR)/cpu1/
 	@cp -f cpu2/ar8020.lds $(OUTPUT_LIB_STAGING_DIR)/cpu2/
 	@cp -f cpu2/start.s $(OUTPUT_LIB_STAGING_DIR)/cpu2/
-	cp ar8020_boot /LnxShare/zyma/ar8020_boot.bin
 
 clean:
 	rm -f $(OBJ_C) .depend 
