@@ -6,13 +6,16 @@
 #include "interrupt.h"
 #include "quad_spi_ctrl.h"
 #include "systicks.h"
-
+#include "sd_boot.h"
+#include "boot.h"
 static unsigned char g_commandPos;
 static char g_commandLine[50];
 static unsigned char g_commandEnter = 0;
 static uint32_t UartNum;
 extern uint8_t g_bootloadmode;
-
+//uint32_t g_sendUSBFlag = 0;
+extern void boot_app(void);
+extern void check(void);
 void Drv_UART_IRQHandler(void)
 {
     char                  c;
@@ -208,7 +211,47 @@ unsigned char command_getEnterStatus(void)
 
 void command_run(char *cmdArray[], unsigned int cmdNum)
 {
+
+    if (memcmp(cmdArray[0], "run_app", strlen("run_app")) == 0)
+    {
+        BOOTLOAD_copyFromNorToITCM();
+        BOOTLOAD_bootApp();
+    }
+    else if (memcmp(cmdArray[0], "sd_upgradeapp", strlen("sd_upgradeapp")) == 0)
+    {
+        BOOTLOAD_UpdataFromSDToNor();
+    }
+    else if (memcmp(cmdArray[0], "sd_boot", strlen("sd_boot")) == 0)
+    {
+        BOOTLOAD_BootFromSD();
+    }
+    /*else if (memcmp(cmdArray[0], "sd_upgradeappwithcheck", strlen("sd_upgradeappwithcheck")) == 0)
+    {
+        BOOTLOAD_BootFromSD();
+    }
+    else if (memcmp(cmdArray[0], "sd_bootwithcheck", strlen("sd_bootwithcheck")) == 0)
+    {
+        BOOTLOAD_BootFromSD();
+    }*/
+    else
+    {
+        dlog_error("%s Command not found. Please use the commands like:",cmdArray[0]);
+        dlog_error("run_app");
+        dlog_error("sd_upgradeapp");
+        dlog_error("sd_boot");
+        /*
+        dlog_error("uart_updataBoot");
+        dlog_error("sd_updataBoot");
+        dlog_error("usb_updataBoot");
+        
+        
+        dlog_error("usb_updataApp");
+        dlog_error("data");                       
+        dlog_error("usb_boot");
+        */
+    }
     command_reset();
+
 }
 
 void command_parse(char *cmd)
@@ -262,4 +305,8 @@ void command_fulfill(void)
     g_commandEnter = 0;
 }
 
-
+void delay_ms(uint32_t num)
+{
+    volatile int i;
+    for (i = 0; i < num * 100; i++);
+}

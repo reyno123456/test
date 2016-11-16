@@ -5,5 +5,5 @@
 void command_init(uint8_t uart_num);
 unsigned char command_getEnterStatus(void);
 void command_fulfill(void);
-
+void command_uninit(void);
 #endif
