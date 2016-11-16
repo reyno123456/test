@@ -1,9 +1,0 @@
-main.o: Src/main.c ../../Output/Staging/Inc/serial.h \
- ../../Output/Staging/Inc/debuglog.h Inc/command.h \
- ../../Output/Staging/Inc/interrupt.h \
- ../../Output/Staging/Inc/quad_spi_ctrl.h \
- ../../Output/Staging/Inc/systicks.h
-command.o: Src/command.c Inc/command.h ../../Output/Staging/Inc/serial.h \
- ../../Output/Staging/Inc/debuglog.h ../../Output/Staging/Inc/interrupt.h \
- ../../Output/Staging/Inc/quad_spi_ctrl.h \
- ../../Output/Staging/Inc/systicks.h

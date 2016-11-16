@@ -8,6 +8,7 @@ BUILD_DIR ?= $(TOP_DIR)/Build
 OUTPUT_DIR ?= $(TOP_DIR)/Output
 OUTPUT_HEADER_STAGING_DIR ?= $(OUTPUT_DIR)/Staging/Inc
 OUTPUT_LIB_STAGING_DIR ?= $(OUTPUT_DIR)/Staging/Lib
+SRC_C_DIR ?= $(TOP_DIR)/Driver/Chip/AR8020
 
 # utility file director
 UTILITY_DIR ?= $(TOP_DIR)/Utility
@@ -20,17 +21,29 @@ include $(BUILD_DIR)/config.mk
 ###############################################################################
 # libs
 CPU_NUMBER := cpu0
-#LD_LIBS := -lfreertos -lAR8020drv -lcommon  
-LD_LIBS := -lAR8020drv -lcommon
+#LD_LIBS := -lfreertos -lAR8020drv -lcommon  -lusb
+LD_LIBS := -lAR8020drv -lcommon -lboard -lfreertos
 
 LDFLAGS += -Bstatic
 LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) $(LD_LIBS)
-
+                 
 # source file(s), including c file(s)
-SRC_S   := Src/start.s 
-SRC_C   := Src/main.c Src/command.c
+SRC_S   :=  Src/start.s 
+SRC_C   :=  Src/main.c \
+			Src/command.c \
+			Src/sd_boot.c \
+			Src/boot.c \
+			$(SRC_C_DIR)/SD/Src/sd_core.c \
+         	$(SRC_C_DIR)/SD/Src/sd_card.c \
+         	$(SRC_C_DIR)/SD/Src/sd_host.c \
 
-CFLAGS += -I ./Inc -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include
+CFLAGS +=   -I./Inc \
+			-I$(OUTPUT_HEADER_STAGING_DIR) \
+			-I$(TOP_DIR)/Configure/Include \
+			-I$(SRC_C_DIR)/SD/Inc \
+			-I$(SRC_C_DIR)/SysCtl/Inc \
+			-I$(TOP_DIR)/Library/ThirdParty/CMSIS/Device/ST/STM32F7xx/Include \
+            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \
 
 # object file(s)
 OBJ_C   := $(patsubst %.s,%.o,$(SRC_S)) $(patsubst %.c,%.o,$(SRC_C)) 
@@ -48,7 +61,7 @@ all: .depend $(TARGET) install
 $(TARGET): $(OBJ_C)
 	$(LD) $^ $(LDFLAGS) -TSrc/ar8020_boot.lds -o $(TARGET).elf 
 	$(OBJCOPY) -O binary $(TARGET).elf $@
-	$(OBJDUMP) -D $(TARGET).elf > $(TARGET).dis
+	$(OBJDUMP) -D -S $(TARGET).elf > $(TARGET).dis
 	$(NM) $(TARGET).elf > $(TARGET).map
 	../../Utility/bin2flash.exe -f $(TARGET) -o $(TARGET_FLASH)
 
@@ -63,6 +76,7 @@ install:
 	@cp -f cpu1/start.s $(OUTPUT_LIB_STAGING_DIR)/cpu1/
 	@cp -f cpu2/ar8020.lds $(OUTPUT_LIB_STAGING_DIR)/cpu2/
 	@cp -f cpu2/start.s $(OUTPUT_LIB_STAGING_DIR)/cpu2/
+	cp ar8020_boot /LnxShare/zyma/ar8020_boot.bin
 
 clean:
 	rm -f $(OBJ_C) .depend 
