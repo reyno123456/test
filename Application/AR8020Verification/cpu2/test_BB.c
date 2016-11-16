@@ -163,3 +163,18 @@ void BB_debug_print_init_sky(void)
 
     reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, TIM0_BB_Sky_handler);    
 }
+
+void command_Grd_set_it_skip_mode_ch(char* runmodeStr, char* itchStr)
+{
+    uint8_t runmode = strtoul(runmodeStr, NULL, 0);
+    uint8_t itch = strtoul(itchStr, NULL, 0);
+    
+    grd_set_it_skip_mode_ch(runmode, itch);
+}
+
+void command_Grd_set_it_ch(char* itchStr)
+{
+    uint8_t itch = strtoul(itchStr, NULL, 0);
+    grd_set_it_ch(itch);
+}
+

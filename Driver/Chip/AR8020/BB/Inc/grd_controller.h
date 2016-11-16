@@ -16,142 +16,34 @@
 #include <stdint.h>
 #include "debuglog.h"
 
-/**
-  * @brief Ground Controller Structure definition
-  */
-
-typedef struct
-{
-   uint8_t ITManualmode;      /*!< Specifies the flag of image transmission working in manual.
-                                 This parameter can be a value of @ref <enable,disable>  */
-   uint8_t ITAutomode;        /*!< Specifies the flag of image transmission working in auto.
-                                 This parameter can be a value of @ref <enable,disable>  */
-   uint8_t FEClock;           /*!< Specifies the flag of image transmission FEC lock.
-                                 This parameter can be a value of @ref <enable,disable>  */
-   uint8_t GetITfrq;          /*!< Specifies the flag of getting image transmission frq from sweeping results.
-                                 This parameter can be a value of @ref <enable,disable>  */
-   uint8_t RegetITfrq;        /*!< Specifies the flag of getting image transmission frq from sweeping results again .
-                                 This parameter can be a value of @ref <enable,disable>  */
-   uint8_t Endsweep;          /*!< Specifies the flag of sweeping  is end .
-                                 This parameter can be a value of @ref <enable,disable>  */
-   uint8_t GetfrqOnly;        /*!< Specifies the flag of get image frq after sweeping only in manual mode.
-                                 This parameter can be a value of @ref <enable,disable>  */
-   uint8_t Allowjglock;       /*!< Specifies the flag of permitting to judge image tr lock.
-                                 This parameter can be a value of @ref <enable,disable>  */
-   uint8_t Ldpcjgflag;       /*!< Specifies the flag of satisfy thre of ldpc err num.
-                                 This parameter can be a value of @ref <enable,disable>  */
-} Grd_FlagTypeDef;
-
-typedef struct
-{
-   uint8_t RCChannel;         /*!< Specifies the remote controller working in freq channel.
-                                    This parameter can be a value of @ref <RC_FREQ_MODE>   */
-   uint8_t ITManualChannel;   /*!< Specifies the image transmission in manual at frq.
-                                    This parameter can be a value of @ref <IM_FREQ_MODE>  */
-   uint8_t ITAutoChannel;     /*!< Specifies the image transmission in auto at frq.
-                                 This parameter can be a value of @ref <IM_FREQ_MODE>  */
-   uint8_t ITTxChannel;       /*!< Specifies the ground tx the image transmission frq to the sky.
-                                 This parameter can be a value of @ref <IM_FREQ_MODE>  */
-   uint8_t ITTxCnt;           /*!< Specifies the ground tx the image transmission frq counts.
-                                 This parameter can be a value of @ref <1,2>  */
-   uint8_t Sweepfrqunlock;    /*!< Specifies the sweeping frq before FEC lock .
-                                 This parameter can be a value of @ref <IM_FREQ_MODE>  */
-   uint8_t Sweepfrqlock;      /*!< Specifies the sweeping frq after FEC lock .
-                                 This parameter can be a value of @ref <IM_FREQ_MODE>  */
-   uint8_t Harqcnt;           /*!< Specifies the cnts of retransmissions.
-                                 This parameter can be a value of @ref <Reg[0xEA]>  */
-   uint8_t ReHarqcnt;         /*!< Specifies the cnts of retransmissions continuously.
-                                 This parameter can be a value of @ref <Reg[0xEA]>  */
-   uint8_t SweepCyccnt;       /*!< Specifies the cnts of sweeping cycle.
-                                 This parameter can be a value of @ref <1,2,3...>  */
-   uint32_t ITunlkcnt;         /*!< Specifies the cnts of FEC is unlock.
-                                 This parameter can be a value of @ref <Reg[0xEB]>  */
-   uint8_t CgITfrqspan;       /*!< Specifies the time span of change image transmission frq.
-                                 This parameter can be a value of @ref <1,2,3...>  */
-   uint8_t Ldpcreadcnt;       /*!< Specifies the cnt of statistics Ldpc err num .
-                                 This parameter can be a value of @ref <Reg[E7][E8]>  */
-    uint8_t workfrqcnt;         /*!< Specifies the current IT working frequency .*/
-}Grd_HandleTypeDef;
-
-
 //*************************  Data Structure Define  **********************
 
-
-// stored sweeping power in baseband.
-struct SWEEP_POWER
-{
-  uint8_t   frqchannel;  /*!< Specifies the frq channel of image transmissions.*/
-
-  uint32_t  powerall1;   /*!< Specifies the power total of working frq channel.*/
-  uint32_t  powerall2;   /*!< Specifies the power total of working frq channel.*/
-  uint32_t  powerall3;   /*!< Specifies the power total of working frq channel.*/
-  uint32_t  powerall4;   /*!< Specifies the power total of working frq channel.*/
-
-  uint32_t  poweravr;   /*!< Specifies the power average of working frq channel.*/
-
-  uint16_t  powerwave;  /*!< Specifies the power wave of working frq channel.*/
-
-};
-
-//The frequency sequency in method of sweeping power .
-struct FRQ_SEQ_ORDER
-{
-  uint8_t   frqchannel; /*!< Specifies the working frq channel.*/
-  uint32_t  poweravr;   /*!< Specifies the power average of working frq channel.*/
-  uint32_t  powerwave;  /*!< Specifies the power wave of working frq channel.*/
-};
-
-//Data structure of working at current / alternative / others.
-struct CURRENT_ALTER_OTHERS_FRQ
-{
-  uint8_t   frqchannel; /*!< Specifies the working frq channel.*/
-  uint32_t  poweravr;   /*!< Specifies the power average of working frq channel.*/
-  uint32_t  powerwave;  /*!< Specifies the power wave of working frq channel.*/
-};
-
-struct SNR_PERCYC
-{
-  uint8_t  num;        /*!< Specifies the cnt of reading snr values in baseband.*/
-  uint32_t snrhgh;     /*!< Specifies the high 7 bits of snr values in baseband.*/
-  uint32_t snrlow;     /*!< Specifies the low 7 bits of snr values in baseband.*/
-  uint32_t snrall;     /*!< Specifies the total of snr values in baseband.*/
-};
+void grd_add_snr_daq(void);
 
 void Grd_Parm_Initial(void);
-void Grd_Write_Rcfrq(uint8_t i);
-void Grd_Write_Itworkfrq(uint8_t i);
-void Grd_Write_Itsweepfrq(uint8_t i);
 
-// Read Reg[EB] of baseband , lock or not.
-uint8_t Grd_Baseband_Fec_Lock(void);
-void Grd_Sweeping_Energy_Statistic(uint8_t i);
-void Grd_Itfrq_Sort(uint8_t num);   // sort  SP[]-->FSO[]
-void Grd_Alterfrq_Updute(uint8_t Itfrqchannel);
-void Grd_Sweeping_Before_Fec_Locked(void);
-void Grd_Sweeping_After_Fec_Locked(void);
-
-void Grd_Get_Itfrq(uint8_t iflag);
-void Grd_Fecunlock_Getfrq(void);
-void Grd_Txmsg_Frq_Change(uint8_t i);
-void Grd_Getsnr(uint8_t i);  //get SNR value at present
-
-void Grd_Frqsnr_Array(void);
-void Grd_Qamsnr_Array(void);
-void Grd_Frq_Snrblock_Determine(uint16_t iMCS);
-uint8_t Grd_Sweeppower_Fluctuate_Average(void);     //??¨¬|??¡§??|?¡ì?|?¡ì??2??¡§????¨º?¨¨D?o??¨¬a?????¨¬???|?¡ì?
-void Grd_Ldpc_Err_Num_Statistics(void);             //2 // 2 sec
-uint8_t Grd_Ldpc_Block_Determine(void);
-void Grd_Itfrq_Hopping(void);
-void Grd_Working_Qam_Change(void);
-void Grd_IT_Controller(void);
-void Grd_Osdmsg_Ptf(void);
-
-void wimax_vsoc_tx_isr();
+void wimax_vsoc_tx_isr(void);
 
 void Grd_Timer1_Init(void);
 
 void Grd_Timer0_Init(void);
 
-uint8_t Grd_get_filtered_Br(void);
+void grd_rc_hopfreq(void);
+
+void grd_set_it_work_freq(uint8_t ch);
+
+void reset_it_span_cnt(void);
+
+uint8_t grd_is_bb_fec_lock(void);
+
+uint8_t is_it_need_skip_freq(uint8_t qam_ldpc);
+
+void grd_set_it_skip_freq(uint8_t ch);
+
+void grd_set_txmsg_qam_change(EN_BB_QAM qam, EN_BB_BW bw, EN_BB_LDPC ldpc);
+
+uint8_t merge_qam_ldpc_to_index(EN_BB_QAM qam, EN_BB_LDPC ldpc);
+
+uint8_t snr_static_for_qam_change(uint16_t threshod_left_section,uint16_t threshold_right_section);
 
 #endif
