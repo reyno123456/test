@@ -49,6 +49,8 @@ INCDIRS := -ISysCtl/Inc \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Device/ST/STM32F7xx/Include \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \
            -I$(TOP_DIR)/Library/Artosyn/Common/Inc \
+           -I$(TOP_DIR)/Library/ThirdParty/USB_Library/STM32_USB_Device_Library/Core/Inc \
+           -I$(TOP_DIR)/Library/ThirdParty/USB_Library/STM32F7xx_HAL_Driver/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SD/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SRAM/Inc \

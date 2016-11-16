@@ -181,6 +181,12 @@ void RF_8003x_spi_init(ENUM_BB_MODE mode)
         dlog_info("%d %d \n", idx, data);
         #endif
     }
+    
+    {
+        //add patch, reset 8003
+        SPI_Write8003(0x15 *2, 0x51);
+        SPI_Write8003(0x15 *2, 0x50);
+    }
 }
 
 void BB_init(STRU_BB_initType *ptr_initType)

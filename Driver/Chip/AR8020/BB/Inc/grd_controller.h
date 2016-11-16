@@ -74,25 +74,6 @@ typedef struct
 }Grd_HandleTypeDef;
 
 
-typedef struct
-{
-   uint8_t Upqpsk12;          /*!< Specifies the flag of changing QAM mode to qpsk 1/2.
-                                 This parameter can be a value of @ref <enable,disable>  */
-   uint8_t Up16qam12;         /*!< Specifies the flag of changing QAM mode to 16QAM 1/2.
-                                 This parameter can be a value of @ref <enable,disable>  */
-   uint8_t Up64qam12;         /*!< Specifies the flag of changing QAM mode to 64QAM 1/2.
-                                 This parameter can be a value of @ref <enable,disable>  */
-
-   uint8_t Down16qam12;       /*!< Specifies the flag of changing QAM mode to 16QAM 1/2.
-                                 This parameter can be a value of @ref <enable,disable>  */
-   uint8_t Downqpsk12;        /*!< Specifies the flag of changing QAM mode to qpsk 1/2.
-                                 This parameter can be a value of @ref <enable,disable>  */
-   uint8_t Downbpsk12;        /*!< Specifies the flag of changing QAM mode to qpsk 1/2.
-                                 This parameter can be a value of @ref <enable,disable>  */
-
-} Grd_QAMTypeDef;
-
-
 //*************************  Data Structure Define  **********************
 
 
@@ -157,13 +138,11 @@ void Grd_Getsnr(uint8_t i);  //get SNR value at present
 void Grd_Frqsnr_Array(void);
 void Grd_Qamsnr_Array(void);
 void Grd_Frq_Snrblock_Determine(uint16_t iMCS);
-uint8_t Grd_Sweeppower_Fluctuate_Average(void);     //?°Ï|??®¨?|°ß?|°ß??2??®¨??°Í°ËD?o?°Ïa????°Ï???|°ß?
+uint8_t Grd_Sweeppower_Fluctuate_Average(void);     //??®¨|??°ß??|?°Ï?|?°Ï??2??°ß????®∫?®®D?o??®¨a?????®¨???|?°Ï?
 void Grd_Ldpc_Err_Num_Statistics(void);             //2 // 2 sec
 uint8_t Grd_Ldpc_Block_Determine(void);
 void Grd_Itfrq_Hopping(void);
 void Grd_Working_Qam_Change(void);
-void Grd_Txmsg_Qam_Change(void);
-void Grd_Qamflag_Clear(void);
 void Grd_IT_Controller(void);
 void Grd_Osdmsg_Ptf(void);
 
@@ -172,4 +151,7 @@ void wimax_vsoc_tx_isr();
 void Grd_Timer1_Init(void);
 
 void Grd_Timer0_Init(void);
+
+uint8_t Grd_get_filtered_Br(void);
+
 #endif

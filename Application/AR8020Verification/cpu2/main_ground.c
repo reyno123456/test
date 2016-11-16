@@ -26,7 +26,7 @@ int main(void)
     dlog_info("main ground function start \n");
     
     SysTicks_Init(166000);
-    SysTicks_DelayMS(5); //delay to wait cpu0 bootup and set the PLL register
+    SysTicks_DelayMS(10); //delay to wait cpu0 bootup and set the PLL register
        
     test_BB_grd();
 

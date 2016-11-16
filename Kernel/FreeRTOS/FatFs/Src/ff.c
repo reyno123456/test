@@ -2534,8 +2534,6 @@ FRESULT f_open (
     BYTE mode			/* Access mode and file open mode flags */
 )
 {
-	dlog_info("f_open in \n");
-
 	FRESULT res;
 	DIR dj;
 	BYTE *dir;
@@ -2656,7 +2654,6 @@ FRESULT f_open (
 		}
 	}
 
-	dlog_info("f_open out \n");
 	LEAVE_FF(dj.fs, res);
 }
 

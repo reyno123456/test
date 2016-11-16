@@ -76,6 +76,8 @@
 #include "stm32f7xx_hal.h"
 #include "usbd_def.h"
 #include "debuglog.h"
+#include "sram.h"
+
 /** @addtogroup STM32F7xx_HAL_Driver
   * @{
   */
@@ -270,8 +272,8 @@ void HAL_PCD_MspDeInit(PCD_HandleTypeDef *hpcd)
             the HAL_PCD_MspDeInit could be implemented in the user file
    */
   /* Disable USB HS Clocks */
-  __HAL_RCC_USB_OTG_HS_CLK_DISABLE();
-  __HAL_RCC_SYSCFG_CLK_DISABLE();
+//  __HAL_RCC_USB_OTG_HS_CLK_DISABLE();
+//  __HAL_RCC_SYSCFG_CLK_DISABLE();
 }
 
 /**
@@ -321,8 +323,6 @@ HAL_StatusTypeDef HAL_PCD_Stop(PCD_HandleTypeDef *hpcd)
   __HAL_UNLOCK(hpcd); 
   return HAL_OK;
 }
-extern volatile uint32_t sendFinish;
-extern uint32_t g_sendUSBFlag;
 extern USBD_HandleTypeDef USBD_Device;
 
 /**
@@ -495,26 +495,23 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
       __HAL_PCD_CLEAR_FLAG(hpcd, USB_OTG_GINTSTS_USBSUSP);
 
       USB_OTG_SET_LITTLE_ENDIAN();
-
-      g_sendUSBFlag = 0;
-
+      
       /* to resolve the problem of unplug during the transmit */
-      if (sendFinish == 0)
+      if ((1 == sramReady0) || (1 == sramReady1))
       {
-        sendFinish = 1;
+          dlog_info("restart usb\n");
+          USBD_LL_Init(&USBD_Device);
+          HAL_PCD_Start(USBD_Device.pData);
+      }
 
-        if (hpcd->Instance == USB_OTG0_HS)
-        {
-            dlog_info("restart usb0\n");
-            USBD_LL_Init(&USBD_Device);
-            HAL_PCD_Start(USBD_Device.pData);
-        }
-        else if (hpcd->Instance == USB_OTG1_HS)
-        {
-            dlog_info("restart usb1\n");
-            USBD_LL_Init(&USBD_Device);
-            HAL_PCD_Start(USBD_Device.pData);
-        }
+      if (1 == sramReady0)
+      {
+          SRAM_Ready0Confirm();
+      }
+
+      if (1 == sramReady1)
+      {
+          SRAM_Ready1Confirm();
       }
     }
     

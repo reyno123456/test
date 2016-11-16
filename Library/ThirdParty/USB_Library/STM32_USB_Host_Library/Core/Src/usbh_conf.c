@@ -394,31 +394,4 @@ void  USBH_Delay (uint32_t Delay)
 
 
 
-/* USB Host Application State */
-void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
-{
-    switch (id)
-    {
-    case HOST_USER_SELECT_CONFIGURATION:
-        break;
-
-    case HOST_USER_DISCONNECTION:
-        Appli_state = APPLICATION_DISCONNECT;
-
-    case HOST_USER_CLASS_ACTIVE:
-        Appli_state = APPLICATION_READY;
-
-    case HOST_USER_CONNECTION:
-        break;
-
-    default:
-        break;
-    }
-}
-
-
-
-
-
-
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

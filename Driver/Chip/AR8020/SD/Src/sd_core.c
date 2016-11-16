@@ -49,10 +49,64 @@ SDMMC_Status Core_SDMMC_SendCommand(SDMMC_REG *SDMMCx, SDMMC_CmdInitTypeDef *Com
   tmpreg |= (uint32_t)(Command->CmdIndex | Command->Attribute);
   /* Write to SDMMC CMD register */
   Core_SDMMC_SetCMD(SDMMCx, tmpreg);
-  dlog_info("CMD%d = 0x%x\n", Command->CmdIndex, tmpreg);
-  dlog_info("CMD%dARG = 0x%x\n", Command->CmdIndex, Command->Argument);
+  //dlog_info("CMD%d = 0x%x\n", Command->CmdIndex, tmpreg);
+  //dlog_info("CMD%dARG = 0x%x\n", Command->CmdIndex, Command->Argument);
   return SDMMC_OK;
 }
+
+SDMMC_Status Core_SDMMC_WaiteCmdDone(SDMMC_REG *SDMMCx)
+{
+  uint32_t get_val, cmd_done;
+  do {
+    get_val = Core_SDMMC_GetRINTSTS(SDMMCx);
+    cmd_done = (get_val & SDMMC_RINTSTS_CMD_DONE); 
+    // dlog_info("cmd_done?\n");
+  } while (!cmd_done);
+  return SDMMC_OK;
+}
+
+SDMMC_Status Core_SDMMC_WaiteDataOver(SDMMC_REG *SDMMCx)
+{
+  uint32_t get_val, data_over;
+  do {
+    get_val = Core_SDMMC_GetRINTSTS(SDMMCx);
+    data_over = (get_val & SDMMC_RINTSTS_DATA_OVER);
+    // dlog_info("data_over?\n");
+  } while (!data_over);
+  return SDMMC_OK;
+}
+
+SDMMC_Status Core_SDMMC_WaiteCardBusy(SDMMC_REG *SDMMCx)
+{
+  uint32_t get_val, card_busy;
+  do {
+    get_val = Core_SDMMC_GetSTATUS(SDMMCx);
+    card_busy = (get_val & SDMMC_STATUS_DATA_BUSY); 
+    // dlog_info("card_busy?\n");
+  } while (card_busy);
+  return SDMMC_OK;
+}
+
+SDMMC_Status Core_SDMMC_WaiteCmdStart(SDMMC_REG *SDMMCx)
+{
+  uint32_t get_val, cmd_start;
+  do {
+    get_val = Core_SDMMC_GetCMD(SDMMCx); 
+    cmd_start = (get_val & SDMMC_CMD_START_CMD);
+  } while (cmd_start);
+  return SDMMC_OK;
+}
+
+SDMMC_Status Core_SDMMC_WaiteVoltSwitchInt(SDMMC_REG *SDMMCx) 
+{
+  uint32_t get_val, volt_switch_int;
+  do {
+    get_val = Core_SDMMC_GetRINTSTS(SDMMCx);
+    volt_switch_int = (get_val & SDMMC_RINTSTS_HTO);
+  } while (!volt_switch_int);
+  return SDMMC_OK;
+}
+
 
 /**
   * @brief  Return the response received from the card for the last command

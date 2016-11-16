@@ -71,9 +71,6 @@ typedef struct
     uint8_t rc_error;
     
     uint8_t rc_crc_ok;
-    
-    uint8_t support_br_change;  /*!< Specifies the modulation<QAM, LDPC, bandwidth change */
-    
 }Sky_HanlderTypeDef;
 
 

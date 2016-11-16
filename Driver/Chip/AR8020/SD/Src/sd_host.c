@@ -13,13 +13,13 @@ SDMMC_Status sd_init()
 	if (errorstate != SDMMC_OK) {
 		return SDMMC_ERROR;
 	}
-	dlog_info("initialize sdcard success!\n");
+	dlog_info("Initialize SD Success!\n");
 	return errorstate;
 }
 
 SDMMC_Status sd_write(uint32_t DstStartAddr, uint32_t SrcStartAddr, uint32_t SectorNum)
 {
-	dlog_info("Write SD\n");
+	//dlog_info("Write SD\n");
 	SDMMC_Status errorstate = SDMMC_OK;
 	SDMMC_DMATransTypeDef dma;
 	dma.BlockSize = 512;
@@ -28,10 +28,9 @@ SDMMC_Status sd_write(uint32_t DstStartAddr, uint32_t SrcStartAddr, uint32_t Sec
 	dma.SectorNum = SectorNum;
 	dma.ListBaseAddr = 0x440F0000;
 
-	dlog_info("Write: DstStartAddr = %x\n", dma.DstAddr);
-	dlog_info("Write: SrcStartAddr = %x\n", dma.SrcAddr);
-	dlog_info("Write: SectorNum = %d\n", dma.SectorNum);
-
+	dlog_info("DstStartAddr = %x\n",DstStartAddr);
+	dlog_info("SrcStartAddr = %x\n",SrcStartAddr);
+	dlog_info("SectorNum = %x\n",SectorNum);
 	if (SectorNum == 1)
 	{
 		errorstate = Card_SD_WriteBlock_DMA(&sdhandle, &dma);	
@@ -42,10 +41,10 @@ SDMMC_Status sd_write(uint32_t DstStartAddr, uint32_t SrcStartAddr, uint32_t Sec
 	}
 	
 	if (errorstate != SDMMC_OK) {
-		dlog_info("write SD failed!\n");
+		dlog_info("Write SD Failed!\n");
 		return SDMMC_ERROR;
 	}
-	dlog_info("write sdcard %d sectors done. From sector %d to sector %d\n", \
+	dlog_info("Write SD %d Sectors Done. From Sector %d to Sector %d\n", \
 		         dma.SectorNum, dma.DstAddr, (dma.DstAddr + dma.SectorNum - 1));
 	return errorstate;
 }
@@ -60,9 +59,6 @@ SDMMC_Status sd_read(uint32_t DstStartAddr, uint32_t SrcStartAddr, uint32_t Sect
 	dma.SectorNum = SectorNum;
 	dma.ListBaseAddr = 0x440F0000;
 
-    dlog_info("Read: DstStartAddr = %x\n", dma.DstAddr);
-	dlog_info("Read: SrcStartAddr = %x\n", dma.SrcAddr);
-	dlog_info("Read: SectorNum = %d\n", dma.SectorNum);
 	if (SectorNum == 1)
 	{
 		errorstate = Card_SD_ReadBlock_DMA(&sdhandle, &dma);
@@ -73,26 +69,24 @@ SDMMC_Status sd_read(uint32_t DstStartAddr, uint32_t SrcStartAddr, uint32_t Sect
 	}
 	
 	if (errorstate != SDMMC_OK) {
-		dlog_info("read SD failed!\n");
+		dlog_info("Read SD Failed!\n");
 		return SDMMC_ERROR;
 	}
-	dlog_info("read sdcard %d sectors done. From sector %d to sector %d\n", \
+	dlog_info("Read SD %d Sectors Done. From Sector %d to Sector %d\n", \
 		         dma.SectorNum, dma.SrcAddr, (dma.SrcAddr + dma.SectorNum - 1));
 	return errorstate;
 }
 
 SDMMC_Status sd_erase(uint32_t StartAddr, uint32_t SectorNum)
 {
-	dlog_info("Erase SD\n");
+	//dlog_info("Erase SD\n");
 	SDMMC_Status errorstate = SDMMC_OK;
-	dlog_info("Erase: StartSector = %d\n", StartAddr);
-	dlog_info("Erase: SectorNum = %d\n", SectorNum);
 	errorstate = Card_SD_Erase(&sdhandle, StartAddr, SectorNum);  /* [block units] */
 	if (errorstate != SDMMC_OK) {
 		dlog_info("Erase SD failed!\n");
 		return SDMMC_ERROR;
 	}
-	dlog_info("erase %d sectors done. From sector %d to sector %d\n", \
+	dlog_info("Erase %d Sectors Done. From Sector %d to Sector %d\n", \
 		         SectorNum, StartAddr, (StartAddr + SectorNum - 1));
 	return errorstate;
 }
@@ -103,23 +97,23 @@ SDMMC_Status sd_deinit()
 	SDMMC_Status errorstate = SDMMC_OK;
 	errorstate = Card_SD_DeInit(&sdhandle);
 	if (errorstate != SDMMC_OK) {
-		dlog_info("deinit SD failed!\n");
+		dlog_info("Deinit SD Failed!\n");
 		return SDMMC_ERROR;
 	}
-	dlog_info("remove sdcard success!\n");
+	dlog_info("Remove SD Success!\n");
 	return errorstate;
 }
 
 SD_CardStateTypedef sd_getcardstatus()
 {
-	dlog_info("Get Card Status\n");
+	//dlog_info("Get Card Status\n");
 	uint32_t RespState = 0;
 	SD_CardStateTypedef cardstate = SD_CARD_TRANSFER;
 	SDMMC_Status errorstate = SDMMC_OK;
 	errorstate = SD_GetState(&sdhandle, (uint32_t *)&RespState);
 	if (errorstate != SDMMC_OK)
 	{
-		dlog_info("Get SD Status failed!\n");
+		dlog_info("Get SD Status Failed!\n");
 		return SDMMC_ERROR;
 	}
 

@@ -401,8 +401,6 @@ typedef struct
 
 
 #define USB_OTG_ENDIAN                 (*((volatile uint32_t *)0x40B00074))
-//#define USB_OTG_SET_BIG_ENDIAN()       (USB_OTG_ENDIAN | 0x00000002)
-//#define USB_OTG_SET_LITTLE_ENDIAN()    (USB_OTG_ENDIAN & 0xFFFFFFFD)
 #define USB_OTG_SET_BIG_ENDIAN()       (USB_OTG_ENDIAN = (USB_OTG_ENDIAN | 0x00000002))
 #define USB_OTG_SET_LITTLE_ENDIAN()    (USB_OTG_ENDIAN = (USB_OTG_ENDIAN & 0xFFFFFFFD))
 

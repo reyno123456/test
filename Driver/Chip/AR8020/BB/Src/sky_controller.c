@@ -32,7 +32,7 @@ STRU_RCID_power     IdStruct;
 static init_timer_st sky_timer0_0;
 static init_timer_st sky_timer0_1;
 
-static void Sky_set_ITQAM_and_notify(EN_BB_QAM mod);
+void Sky_set_ITQAM_and_notify(EN_BB_QAM mod);
 static void Sky_Timer1_Init(void);
 static void Sky_Timer0_Init(void);
 
@@ -54,45 +54,32 @@ void Sky_Parm_Initial(void)
     SkyState.Cmdtestmode    = DISABLE;
     
     Sky_Timer0_Init();
+    
     Sky_Timer1_Init();
+    TIM_StartTimer(sky_timer0_1);
 
-    Sky_set_ITQAM_and_notify(MOD_16QAM);
+    Sky_set_ITQAM_and_notify(MOD_4QAM);
     reg_IrqHandle(BB_RX_ENABLE_VECTOR_NUM, wimax_vsoc_rx_isr);
     INTR_NVIC_EnableIRQ(BB_RX_ENABLE_VECTOR_NUM);
 }
 
 
-/** 
- * @brief       Get the BB can support the max bitreate in current modulation.       
- * @retval      max bitreate(Mbps)
- */
-static int BB_Sky_GetsupportBR(EN_BB_QAM QAM, EN_BB_LDPC ldpc, EN_BB_BW bw)
+uint8_t mod_br_map[] = 
 {
-    if(QAM == MOD_BPSK)
-    {
-        return 2;
-    }
-    else if(QAM == MOD_4QAM)
-    {
-        return 5;
-    }
-    else if(QAM == MOD_16QAM)
-    {
-        return 10;
-    }
-    else if(QAM == MOD_64QAM)
-    {
-        return 13;
-    }
-}
+    10, //MOD_BPSK,  LDPC_1_2, encoder br:1M
+    30, //MOD_4QAM,  LDPC_1_2, encoder br:3M
+    50, //MOD_16QAM, LDPC_1_2, encoder br:5M
+    80, //MOD_64QAM, LDPC_1_2, encoder br:8M
+};
 
-static void Sky_set_ITQAM_and_notify(EN_BB_QAM mod)
+
+void Sky_set_ITQAM_and_notify(EN_BB_QAM mod)
 {    
     BB_set_QAM(mod);
-    printf("!!Q=>%d\r\n", mod);
+    printf("!!Q=>%d %d\r\n", mod, mod_br_map[(uint8_t)mod]);
 
     STRU_SysEvent_BB_ModulationChange event;
-    event.BB_MAX_support_br = BB_Sky_GetsupportBR(mod, 0, 0);    
+    event.BB_MAX_support_br = mod_br_map[(uint8_t)mod];
     SYS_EVENT_Notify(SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE, (void*)&event);
 }
 
@@ -249,10 +236,6 @@ void Sky_Search_Right_ID(void)
                 IdStruct[SkyStruct.OptID].rcid5, IdStruct[SkyStruct.OptID].rcid4, IdStruct[SkyStruct.OptID].rcid3, \
                 IdStruct[SkyStruct.OptID].rcid2, IdStruct[SkyStruct.OptID].rcid1);
 
-            /*
-            * Todo: Add Event to notify
-            */
-
             SkyState.CmdsearchID = DISABLE;
             SkyStruct.IDsearchcnt=0;
             SkyStruct.IDmatcnt=0;
@@ -299,7 +282,6 @@ void Sky_Rc_Hopping(void)
 
         data0 = BB_ReadReg(PAGE2,QAM_CHANGE_0);
         data1 = BB_ReadReg(PAGE2,QAM_CHANGE_1);
-        
         if(data0 == data1 && (data0&0xFC) == 0xF0)
         {
             EN_BB_QAM mod = (EN_BB_QAM)(data0&0x03);
@@ -424,7 +406,7 @@ void Sky_TIM1_IRQHandler(void)
     else
     {
         Sky_Hanlde_SpecialIrq();
-        Timer1_Delay2_Cnt  = 0;
+        Timer1_Delay2_Cnt = 0;
     }
 }
 

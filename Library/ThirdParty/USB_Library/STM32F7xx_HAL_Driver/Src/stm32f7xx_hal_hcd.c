@@ -72,7 +72,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal.h"
-#include "uart.h"
+#include "usbh_conf.h"
+#include "debuglog.h"
 
 /** @addtogroup STM32F7xx_HAL_Driver
   * @{
@@ -268,7 +269,7 @@ void  HAL_HCD_MspInit(HCD_HandleTypeDef *hhcd)
   if(hhcd->Instance == USB_OTG0_HS)
   {
     /* Set USBHS Interrupt priority */
-    HAL_NVIC_SetPriority(OTG0_HS_IRQn, 6, 0);
+    HAL_NVIC_SetPriority(OTG0_HS_IRQn, 0, 0);
 
     /* Enable USBHS Interrupt */
     HAL_NVIC_EnableIRQ(OTG0_HS_IRQn);
@@ -276,7 +277,7 @@ void  HAL_HCD_MspInit(HCD_HandleTypeDef *hhcd)
   else if(hhcd->Instance == USB_OTG1_HS)
   {
     /* Set USBFS Interrupt priority */
-    HAL_NVIC_SetPriority(OTG1_HS_IRQn, 6, 0);
+    HAL_NVIC_SetPriority(OTG1_HS_IRQn, 0, 0);
 
     /* Enable USBFS Interrupt */
     HAL_NVIC_EnableIRQ(OTG1_HS_IRQn);
@@ -294,8 +295,8 @@ void  HAL_HCD_MspDeInit(HCD_HandleTypeDef *hhcd)
             the HAL_HCD_MspDeInit could be implemented in the user file
    */
   /* Disable USB HS Clocks */ 
-  __HAL_RCC_USB_OTG_HS_CLK_DISABLE();
-  __HAL_RCC_USB_OTG_HS_ULPI_CLK_DISABLE();
+  //__HAL_RCC_USB_OTG_HS_CLK_DISABLE();
+  //__HAL_RCC_USB_OTG_HS_ULPI_CLK_DISABLE();
 }
 
 /**
@@ -622,6 +623,7 @@ void HAL_HCD_HC_NotifyURBChange_Callback(HCD_HandleTypeDef *hhcd, uint8_t chnum,
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_HCD_HC_NotifyURBChange_Callback could be implemented in the user file
    */
+   
 #if (USBH_USE_OS == 1)   
   USBH_LL_NotifyURBChange(hhcd->pData);
 #endif
@@ -653,15 +655,10 @@ void HAL_HCD_HC_NotifyURBChange_Callback(HCD_HandleTypeDef *hhcd, uint8_t chnum,
   */
 HAL_StatusTypeDef HAL_HCD_Start(HCD_HandleTypeDef *hhcd)
 { 
-  serial_puts("1 \n");
   __HAL_LOCK(hhcd); 
-  serial_puts("2 \n");
   __HAL_HCD_ENABLE(hhcd);
-  serial_puts("3 \n");
   USB_DriveVbus(hhcd->Instance, 1);  
-  serial_puts("4 \n");
   __HAL_UNLOCK(hhcd); 
-  serial_puts("5 \n");
   return HAL_OK;
 }
 
@@ -1043,7 +1040,7 @@ static void HCD_HC_OUT_IRQHandler  (HCD_HandleTypeDef *hhcd, uint8_t chnum)
       if (hhcd->hc[chnum].ep_type == EP_TYPE_BULK)
       {
         hhcd->hc[chnum].toggle_out ^= 1; 
-      }      
+      }
     }
     else if (hhcd->hc[chnum].state == HC_NAK) 
     {
@@ -1078,7 +1075,6 @@ static void HCD_HC_OUT_IRQHandler  (HCD_HandleTypeDef *hhcd, uint8_t chnum)
       USBx_HC(chnum)->HCCHAR &= ~USB_OTG_HCCHAR_CHDIS;         
       USBx_HC(chnum)->HCCHAR |= USB_OTG_HCCHAR_CHENA;      
     }
-    
     __HAL_HCD_CLEAR_HC_INT(chnum, USB_OTG_HCINT_CHH);
     HAL_HCD_HC_NotifyURBChange_Callback(hhcd, chnum, hhcd->hc[chnum].urb_state);  
   }

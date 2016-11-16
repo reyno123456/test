@@ -8,286 +8,99 @@
 #include "ff_gen_drv.h"
 #include "usbh_diskio.h"
 #include "interrupt.h"
+#include "cmsis_os.h"
+#include "test_usbh.h"
 
-#define USB_VIDEO_BYPASS_SIZE_ONCE      (8192)
+
+#define USB_VIDEO_BYPASS_SIZE_ONCE      (16384)
 #define USB_VIDEO_BYPASS_DEST_ADDR      (0xB1000000)
 
+
 /* USB Host Global Variables */
-USBH_HandleTypeDef   hUSBHost;
-FATFS                USBH_fatfs;
-FIL                  MyUSBFile;
-uint8_t              fileOpened = 0;
-uint8_t              rtext[1024];
-uint8_t              wtext[] = "USB Host Library : Mass Stroage Example";
+USBH_HandleTypeDef      hUSBHost;
+FATFS                   USBH_fatfs;
+FIL                     MyUSBFile;
+osMessageQId            USBH_AppEvent;
+USBH_BypassVideoCtrl    g_usbhBypassVideoCtrl = {0};
 
 
-FILE_OPERATION_CONTEXT fileOperation;
 
-void test_OperateFile(void)
-{
-    FRESULT           fileResult;
-    uint32_t          bytesread;
-    uint32_t          bytesWritten;
-
-    fileResult = f_open(&MyUSBFile, "0:USBHost.txt", FA_CREATE_ALWAYS | FA_WRITE);
-
-    if (FR_OK != fileResult)
-    {
-        dlog_error("open or create file error: %d\n", fileResult);
-
-        return;
-    }
-
-    fileResult = f_write(&MyUSBFile, wtext, sizeof(wtext), (void *)&bytesWritten);
-
-    f_close(&MyUSBFile);
-
-    if((bytesWritten == 0) || (fileResult != FR_OK))
-    {
-        dlog_error("write file error: %d!\n", fileResult);
-
-        return;
-    }
-
-    fileResult = f_open(&MyUSBFile, "0:USBHost.txt", FA_READ);
-
-    if(f_open(&MyUSBFile, "0:USBHost.txt", FA_READ) != FR_OK)
-    {
-        dlog_error("open read file error: %d");
-
-        return;
-    }
-
-    fileResult = f_read(&MyUSBFile, rtext, sizeof(rtext), (void *)&bytesread);
-
-    if((bytesread == 0) || (fileResult != FR_OK))
-    {
-        dlog_error("Cannot Read from the file \n");
-
-        f_close(&MyUSBFile);
-
-        return;
-    }
-
-    f_close(&MyUSBFile);
-
-    if (bytesread == bytesWritten)
-    {
-        dlog_info("FatFs data compare SUCCES!\n");
-    }
-    else
-    {
-        dlog_error("FatFs data compare ERROR!\n");
-    }
-
-    return;
-}
-
-
-void test_DisplayFile(char *path, uint8_t recuLevel)
-{
-    FRESULT        fileResult = FR_OK;
-    FILINFO        fno;
-    DIR            dir;
-    char          *fn;
-    char           tmp[14];
-    uint8_t        lineIndex = 0;
-
-#if _USE_LFN
-    static char    lfn[_MAX_LFN + 1];
-    fno.lfname     = lfn;
-    fno.lfsize     = sizeof(lfn);
-#endif
-
-    fileResult     = f_opendir(&dir, path);
-
-    if (FR_OK != fileResult)
-    {
-        dlog_error("open dir fail\n");
-
-        return;
-    }
-    else
-    {
-        while (USBH_MSC_IsReady(&hUSBHost))
-        {
-            fileResult = f_readdir(&dir, &fno);
-
-            if ((FR_OK != fileResult) || (0 == fno.fname[0]) )
-            {
-                break;
-            }
-            if ('.' == fno.fname[0])
-            {
-                continue;
-            }
-
-#if _USE_LFN
-            fn = fno.lfname;
-            memcpy(tmp, fn, fno.lfsize);
-#else
-            fn = fno.fname;
-            memcpy(tmp, fn, 13);
-#endif
-            lineIndex++;
-
-            if (lineIndex > 0)
-            {
-                lineIndex = 0;
-            }
-
-            if(recuLevel == 1)
-            {
-                dlog_info("   |__");
-            }
-            else if(recuLevel == 2)
-            {
-                dlog_info("   |   |__");
-            }
-            if((fno.fattrib & AM_MASK) == AM_DIR)
-            {
-                strcat(tmp, "\n"); 
-                dlog_info("%s", tmp);
-            }
-            else
-            {
-                strcat(tmp, "\n"); 
-                dlog_info("%s", tmp);
-            }
-      
-            if(((fno.fattrib & AM_MASK) == AM_DIR)&&(recuLevel == 2))
-            {
-                test_DisplayFile(fn, 2);
-            }
-        }
-        f_closedir(&dir);
-    }
-
-    return;
-}
-
-
-void test_usbDiskBypassVideo(void)
+void USBH_BypassVideo(void)
 {
     FRESULT             fileResult;
     uint32_t            bytesread;
     uint8_t            *destAddr;
 
+    fileResult          = FR_OK;
     bytesread           = 0;
     destAddr            = USB_VIDEO_BYPASS_DEST_ADDR;
 
-    if (APPLICATION_READY == Appli_state)
+    dlog_info("enter USBH_BypassVideo Task!\n");
+
+    while (1)
     {
-        if (fileOpened == 0)
+        if (osOK == osSemaphoreWait(g_usbhBypassVideoCtrl.semID, osWaitForever))
         {
-            fileOpened = 1;
-
-            fileResult = f_open(&MyUSBFile, "0:usbtest.264", FA_READ);
-
-            if(fileResult != FR_OK)
+            while (1)
             {
-                dlog_error("open file error: %d\n", (uint32_t)fileResult);
+                if ((APPLICATION_READY == Appli_state)
+                  &&(1 == g_usbhBypassVideoCtrl.taskActivate))
+                {
+                    if (g_usbhBypassVideoCtrl.fileOpened == 0)
+                    {
+                        g_usbhBypassVideoCtrl.fileOpened = 1;
 
-                return;
+                        fileResult = f_open(&MyUSBFile, "0:usbtest.264", FA_READ);
+
+                        if(fileResult != FR_OK)
+                        {
+                            dlog_error("open file error: %d\n", (uint32_t)fileResult);
+
+                            break;
+                        }
+                    }
+
+                    fileResult = f_read(&MyUSBFile, destAddr, USB_VIDEO_BYPASS_SIZE_ONCE, (void *)&bytesread);
+
+                    osDelay(200);
+
+                    if(fileResult != FR_OK)
+                    {
+                        g_usbhBypassVideoCtrl.fileOpened    = 0;
+                        f_close(&MyUSBFile);
+
+                        dlog_error("Cannot Read from the file \n");
+
+                        break;
+                    }
+
+                    if (bytesread < USB_VIDEO_BYPASS_SIZE_ONCE)
+                    {
+                        dlog_info("a new round!\n");
+                        g_usbhBypassVideoCtrl.fileOpened    = 0;
+                        f_close(&MyUSBFile);
+                    }
+                }
+                else
+                {
+                    if (1 == g_usbhBypassVideoCtrl.fileOpened)
+                    {
+                        g_usbhBypassVideoCtrl.fileOpened    = 0;
+                        f_close(&MyUSBFile);
+                    }
+
+                    continue;
+                }
+
             }
+
+            g_usbhBypassVideoCtrl.taskActivate  = 0;
         }
-#if 0
-        fileResult = f_lseek(&MyUSBFile, byteToSeek);
-
-        if(fileResult != FR_OK)
-        {
-            dlog_error("seek file error: %d\,", (uint32_t)fileResult);
-
-            return;
-        }
-#endif
-        fileResult = f_read(&MyUSBFile, destAddr, USB_VIDEO_BYPASS_SIZE_ONCE, (void *)&bytesread);
-
-        if(fileResult != FR_OK)
-        {
-            dlog_error("Cannot Read from the file \n");
-
-            f_close(&MyUSBFile);
-
-            return;
-        }
-
-        dlog_info("write done!\n");
-
-        if (bytesread < USB_VIDEO_BYPASS_SIZE_ONCE)
-        {
-            dlog_info("read 0x%08x!\n", (uint32_t)bytesread);
-            fileOpened = 0;
-
-            f_close(&MyUSBFile);
-        }
-        else
-        {
-            dlog_info("read 0x%08x!\n", (uint32_t)bytesread);
-        }
-
-        return;
-    }
-    else
-    {
-        fileOpened = 0;
-
-        f_close(&MyUSBFile);
     }
 }
 
 
-void test_ProcessOperation(void)
-{
-    switch (fileOperation.state)
-    {
-    case FILE_OPERATION_START:
-        if (APPLICATION_READY == Appli_state)
-        {
-            fileOperation.state = FILE_OPERATION_BUSY;
-        }
-
-        break;
-
-    case FILE_OPERATION_BUSY:
-        if (0 == fileOperation.operated)
-        {
-            if (APPLICATION_READY == Appli_state)
-            {
-                test_OperateFile();
-
-                fileOperation.state    = FILE_OPERATION_DISPLAY;
-                fileOperation.operated = 1;
-            }
-        }
-
-        break;
-
-    case FILE_OPERATION_DISPLAY:
-        if (APPLICATION_READY == Appli_state)
-        {
-            test_DisplayFile("0:/", 1);
-
-            fileOperation.state = FILE_OPERATION_START;
-        }
-
-        break;
-
-    default:
-        break;
-    }
-
-    if (APPLICATION_DISCONNECT == Appli_state)
-    {
-        Appli_state            = APPLICATION_IDLE;
-
-        fileOperation.state    = FILE_OPERATION_START;
-        fileOperation.operated = 0;
-    }
-}
-
-
-void USBH_UserPorcess(USBH_HandleTypeDef *phost, uint8_t id)
+void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
 {
     switch(id)
     {
@@ -315,7 +128,7 @@ void USBH_ApplicationInit(void)
 {
     reg_IrqHandle(OTG_INTR0_VECTOR_NUM, USB_LL_OTG0_IRQHandler);
 
-    USBH_Init(&hUSBHost, USBH_UserPorcess, 0);
+    USBH_Init(&hUSBHost, USBH_UserProcess, 0);
 
     USBH_RegisterClass(&hUSBHost, USBH_MSC_CLASS);
 
@@ -339,23 +152,81 @@ void USBH_MountUSBDisk(void)
     }
 }
 
-void test_usbh(void)
+
+void USBH_MainTask(void)
 {
+    osEvent event;
+
     USBH_ApplicationInit();
 
     USBH_MountUSBDisk();
 
-    dlog_info("start to operate file\n");
-
-    //fileOperation.state     = FILE_OPERATION_START;
-    //fileOperation.operated  = 0;
+    dlog_info("usb host main task\n");
 
     while (1)
     {
-        USBH_Process(&hUSBHost);
+        event = osMessageGet(USBH_AppEvent, osWaitForever);
 
-        //test_ProcessOperation();
-        test_usbDiskBypassVideo();
+        if (event.status == osEventMessage)
+        {
+            switch (event.value.v)
+            {
+            case USBH_APP_START_BYPASS_VIDEO:
+                {
+                    /* Need to start a new task */
+                    if (0 == g_usbhBypassVideoCtrl.taskExist)
+                    {
+                        SRAM_SKY_BypassVideoConfig(0);
+
+                        g_usbhBypassVideoCtrl.taskExist = 1;
+
+                        osThreadDef(BypassTask, USBH_BypassVideo, osPriorityIdle, 0, 4 * 128);
+                        g_usbhBypassVideoCtrl.threadID  = osThreadCreate(osThread(BypassTask), NULL);
+
+                        if (g_usbhBypassVideoCtrl.threadID == NULL)
+                        {
+                            g_usbhBypassVideoCtrl.taskExist     = 0;
+
+                            dlog_error("create Video Bypass Task error!\n");
+                        }
+
+                        osSemaphoreDef(bypassVideoSem);
+                        g_usbhBypassVideoCtrl.semID     = osSemaphoreCreate(osSemaphore(bypassVideoSem), 1);
+                    }
+
+                    /* activate the task */
+                    if (0 == g_usbhBypassVideoCtrl.taskActivate)
+                    {
+                        g_usbhBypassVideoCtrl.taskActivate  = 1;
+                        osSemaphoreRelease(g_usbhBypassVideoCtrl.semID);
+                    }
+
+                    break;
+                }
+
+            case USBH_APP_STOP_BYPASS_VIDEO:
+                {
+                    dlog_info("stop bypassvideo task!\n");
+                    g_usbhBypassVideoCtrl.taskActivate   = 0;
+                }
+                break;
+
+            case USBH_APP_CREATE_FILE:
+                break;
+
+            case USBH_APP_READ_FILE:
+                break;
+
+            case USBH_APP_CREATE_FOLDER:
+                break;
+
+            case USBH_APP_SHOW_DIR:
+                break;
+
+            default:
+                break;
+            }
+        }
     }
 }
 

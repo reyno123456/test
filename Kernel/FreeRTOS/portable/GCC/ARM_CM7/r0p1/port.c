@@ -723,7 +723,7 @@ static void vPortEnableVFP( void )
 			The following links provide detailed information:
 			http://www.freertos.org/RTOS-Cortex-M3-M4.html
 			http://www.freertos.org/FAQHelp.html */
-			configASSERT( ucCurrentPriority >= ucMaxSysCallPriority );
+			//configASSERT( ucCurrentPriority >= ucMaxSysCallPriority );
 		}
 
 		/* Priority grouping:  The interrupt controller (NVIC) allows the bits
@@ -739,7 +739,7 @@ static void vPortEnableVFP( void )
 		scheduler.  Note however that some vendor specific peripheral libraries
 		assume a non-zero priority group setting, in which cases using a value
 		of zero will result in unpredicable behaviour. */
-		configASSERT( ( portAIRCR_REG & portPRIORITY_GROUP_MASK ) <= ulMaxPRIGROUPValue );
+		//configASSERT( ( portAIRCR_REG & portPRIORITY_GROUP_MASK ) <= ulMaxPRIGROUPValue );
 	}
 
 #endif /* configASSERT_DEFINED */

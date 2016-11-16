@@ -96,9 +96,14 @@ int H264_Encoder_UpdateBitrate(unsigned char view, unsigned char br)
     
     if (g_stEncoderStatus[view].running && g_stEncoderStatus[view].brc_enable && (g_stEncoderStatus[view].bitrate != br))
     {
-        H264_Encoder_RestartView(view, g_stEncoderStatus[view].resW, g_stEncoderStatus[view].resH, 
-                                 g_stEncoderStatus[view].gop, g_stEncoderStatus[view].framerate, 
-                                 br, g_stEncoderStatus[view].brc_enable);
+        if (view == 0)
+        {
+            Reg_Write32_Mask(ENC_REG_ADDR+(0xA<<2), br << 26, BIT(26) | BIT(27) | BIT(28) | BIT(29) | BIT(30));
+        }
+        else
+        {
+            Reg_Write32_Mask(ENC_REG_ADDR+(0x23<<2), br << 26, BIT(26) | BIT(27) | BIT(28) | BIT(29) | BIT(30));
+        }
         dlog_info("Encoder bitrate change: %d, %d\n", view, br);
     }
     
@@ -108,33 +113,21 @@ int H264_Encoder_UpdateBitrate(unsigned char view, unsigned char br)
 
 static void H264_Encoder_BBModulationChangeCallback(void* p)
 {
-    uint8_t br = 0;
-    uint8_t max_br = ((STRU_SysEvent_BB_ModulationChange *)p)->BB_MAX_support_br;
-    
-    dlog_info("max_br %d\r\n", max_br);
-    /* BR - 0: 8Mbps, 1: 1Mbps, 4: 4Mbps, 8: 500kbps, 10: 10Mbps */
-    
-    if(max_br >= 10)
-    {
-        br = 10;
-    }
-    else if(max_br >= 8)
-    {
-        br = 0;
-    }
-    else if(max_br >= 4)
-    {
-        br = 4;
-    }
-    else if(max_br >= 1)
-    {
-        br = 1;
-    }
-    else
+    uint8_t br = ((STRU_SysEvent_BB_ModulationChange *)p)->BB_MAX_support_br; //100Kbps
+
+    if(br == 5)         //500Kbps
     {
         br = 8;
     }
-    
+    else if(br == 80)   //8Mbps
+    {
+        br = 0;
+    }
+    else
+    {
+        br = br / 10;
+    }
+
     H264_Encoder_UpdateBitrate(0, br);
     H264_Encoder_UpdateBitrate(1, br);
 }

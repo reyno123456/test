@@ -178,6 +178,7 @@ HAL_StatusTypeDef HAL_Init(void)
 HAL_StatusTypeDef HAL_DeInit(void)
 {
   /* Reset of all peripherals */
+  #if 0
   __HAL_RCC_APB1_FORCE_RESET();
   __HAL_RCC_APB1_RELEASE_RESET();
 
@@ -192,7 +193,7 @@ HAL_StatusTypeDef HAL_DeInit(void)
 
   __HAL_RCC_AHB3_FORCE_RESET();
   __HAL_RCC_AHB3_RELEASE_RESET();
-
+  #endif
   /* De-Init the low level hardware */
   HAL_MspDeInit();
     

@@ -19,9 +19,6 @@ static unsigned char g_commandPos;
 static char g_commandLine[50];
 static unsigned char g_commandEnter = 0;
 
-//QueueHandle_t xQueue = NULL;
-osMessageQId usbVideoReadyEvent;
-uint32_t g_sendUSBFlag = 0;
 uint32_t UartNum = 0;
 
 /* added by xiongjiangjiang */
@@ -231,10 +228,6 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     else if (memcmp(cmdArray[0], "erasesd", 7) == 0)
     {
         command_eraseSdcard(cmdArray[1], cmdArray[2]);
-    }
-    else if (memcmp(cmdArray[0], "sendusb", 7) == 0)
-    {
-        command_sendusb();
     }
     else if (memcmp(cmdArray[0], "freertos_task", strlen("freertos_task")) == 0)
     {
@@ -553,21 +546,6 @@ void delay_ms(uint32_t num)
     for (i = 0; i < num * 100; i++);
 }
 
-void command_sendusb(void)
-{
-    uint32_t        ValueToSend = 0;
-    portBASE_TYPE   xStatus = pdFALSE;
-
-    ValueToSend++;
-
-//    xStatus = xQueueSendFromISR(xQueue, &ValueToSend, &xStatus);
-//    if (xStatus != pdPASS)
-//    {
-//        dlog_info("Could not send to the Queue\n");
-//    }
-    osMessagePut(usbVideoReadyEvent, ValueToSend, 0);
-
-}
 
 
 
