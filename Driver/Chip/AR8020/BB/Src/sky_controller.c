@@ -1,134 +1,72 @@
-/**
-  ******************************************************************************
-  * @file    sky_controller c file.
-  * @author  Artosyn AE/FAE Team
-  * @version V1.0
-  * @date    03-21-2016
-  * @brief
-  *
-  *
-  ******************************************************************************
-  */
-#include "sky_controller.h"
-#include "config_functions_sel.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 #include <stdint.h>
+
 #include "reg_rw.h"
 #include "timer.h"
 #include "interrupt.h"
-
+#include "systicks.h"
+#include "config_functions_sel.h"
+#include "sky_controller.h"
 #include "config_baseband_register.h"
+#include "sys_param.h"
 #include "debuglog.h"
 #include "sys_event.h"
 
+#define MAX_SEARCH_ID_NUM  (10)
+#define SEARCH_ID_TIMEOUT  (2000) //ms
 
-Sky_FlagTypeDef     SkyState;
-Sky_HanlderTypeDef  SkyStruct;
-STRU_RCID_power     IdStruct;
+typedef struct
+{
+    uint8_t id[5];
+    uint8_t agc1;
+    uint8_t agc2;
+}SEARCH_IDS;
+
+typedef struct
+{
+    SEARCH_IDS search_ids[MAX_SEARCH_ID_NUM];
+    uint8_t count;
+}SEARCH_IDS_LIST;
+
+static SEARCH_IDS_LIST search_id_list;
+static uint32_t start_time_cnt = 0;
+static uint8_t  sky_rc_channel = 0;
+
+static enum EN_AGC_MODE en_agcmode = UNKOWN_AGC;
+static uint8_t cur_mod_regvalue = 0xff; 
 
 static init_timer_st sky_timer0_0;
 static init_timer_st sky_timer0_1;
 
-void Sky_set_ITQAM_and_notify(EN_BB_QAM mod);
-static void Sky_Timer1_Init(void);
-static void Sky_Timer0_Init(void);
+static int sky_timer0_0_running = 0;
+static int sky_timer0_1_running = 0;
+
 
 void Sky_Parm_Initial(void)
 {
-    SkyStruct.RCChannel     = 0;
-    SkyStruct.ITChannel     = 0;
-    SkyStruct.Timerirqcnt   = 0;
-    SkyStruct.OptID         = 0;
-    SkyStruct.FindIDcnt     = 0;
-    SkyStruct.IDsearchcnt   = 0;
-    SkyStruct.IDmatcnt      = 0;
-    SkyStruct.en_agcmode    = UNKOWN_AGC;
-    SkyStruct.workfrq       = 0xff;
-    SkyStruct.cur_QAM       = MOD_MAX;
+    dev_state = SEARCH_ID;
 
-    SkyState.Rcmissing      = DISABLE;
-    SkyState.CmdsearchID    = ENABLE;
-    SkyState.Cmdtestmode    = DISABLE;
-    
-    Sky_Timer0_Init();
-    
-    Sky_Timer1_Init();
-    TIM_StartTimer(sky_timer0_1);
+    context.it_skip_freq_mode = AUTO;
+    context.rc_skip_freq_mode = AUTO;
+    context.qam_skip_mode == AUTO;
+    context.cur_ch = 0xff;
 
-    Sky_set_ITQAM_and_notify(MOD_4QAM);
+    sky_id_search_init();
+
+    sky_Timer0_Init();
+    sky_Timer1_Init();
+    
+    sky_search_id_timeout_irq_enable();
+
     reg_IrqHandle(BB_RX_ENABLE_VECTOR_NUM, wimax_vsoc_rx_isr);
     INTR_NVIC_EnableIRQ(BB_RX_ENABLE_VECTOR_NUM);
 }
 
 
-uint8_t mod_br_map[] = 
-{
-    10, //MOD_BPSK,  LDPC_1_2, encoder br:1M
-    30, //MOD_4QAM,  LDPC_1_2, encoder br:3M
-    50, //MOD_16QAM, LDPC_1_2, encoder br:5M
-    80, //MOD_64QAM, LDPC_1_2, encoder br:8M
-};
-
-
-void Sky_set_ITQAM_and_notify(EN_BB_QAM mod)
-{    
-    BB_set_QAM(mod);
-    printf("!!Q=>%d %d\r\n", mod, mod_br_map[(uint8_t)mod]);
-
-    STRU_SysEvent_BB_ModulationChange event;
-    event.BB_MAX_support_br = mod_br_map[(uint8_t)mod];
-    SYS_EVENT_Notify(SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE, (void*)&event);
-}
-
-
-void Sky_Write_RChopfrq(void)
-{
-    SkyStruct.RCChannel ++;
-    if(SkyStruct.RCChannel >=  MAX_RC_FRQ_SIZE)
-    {
-        SkyStruct.RCChannel = 0;
-    }
-    
-    BB_set_Rcfrq(SkyStruct.RCChannel);
-}
-
-
-void Sky_Write_ITfrq(uint8_t ch)
-{
-    if(SkyStruct.workfrq != ch)
-    {
-        BB_set_ITfrq(ch);
-        SkyStruct.workfrq = ch;
-        printf("S=>%d\r\n", ch);
-    }
-}
-
-void Sky_set_RCids(uint8_t ids[])
-{
-    uint8_t i;
-    uint8_t addr[] = {FEC_7, FEC_8, FEC_9, FEC_10, FEC_11};
-    for(i=0; i < sizeof(addr); i++)
-    {
-        BB_WriteReg(PAGE2, addr[i], ids[i]);
-    }
-
-    BB_set_Rcfrq(SKY_RC_FRQ_INIT);
-    BB_softReset(BB_SKY_MODE );
-}
-
-/**
-  * @brief  Sky Baseband PAGE2 reg[D9] value.
-  * @illustrate
-  *
-     (+) Reg[E9].bit0 -- Id_Match.
-     (+) Reg[E9].bit1 -- Crc_Check_Ok.
-     (+) Reg[E9].bit7 -- Rc_Err_Flg.
-     (+) Reg[E9]=0   <--> no 14ms irq.
-  */
-uint8_t Sky_Id_Match(void)
+uint8_t sky_id_match(void)
 {
     static int total_count = 0;
     static int lock_count = 0;
@@ -147,215 +85,73 @@ uint8_t Sky_Id_Match(void)
     return (data) ? 1 : 0;
 }
 
-/**
- * @brief Record the ID and power if Reg[E9]bit1=1 , stored in IdStruct[].
- */
-void Sky_Record_Idpower( uint8_t i )
+
+uint8_t mod_br_map[][2] = 
 {
-    IdStruct[i].num = i ;
+    ((MOD_BPSK<<6)  |  (BW_10M <<3)  | LDPC_1_2),  10, //encoder br:1M
+    ((MOD_4QAM<<6)  |  (BW_10M <<3)  | LDPC_1_2),  30, //encoder br:3M
+    ((MOD_4QAM<<6)  |  (BW_10M <<3)  | LDPC_2_3),  40, //encoder br:4M
+    ((MOD_16QAM<<6) |  (BW_10M <<3)  | LDPC_1_2),  50, //encoder br:5M
+    ((MOD_64QAM<<6) |  (BW_10M <<3)  | LDPC_1_2),  60, //encoder br:6M
+    ((MOD_64QAM<<6) |  (BW_10M <<3)  | LDPC_2_3),  70, //encoder br:7M
+};
 
-    IdStruct[i].rcid5 = BB_ReadReg(PAGE2, FEC_1_RD);
-    IdStruct[i].rcid4 = BB_ReadReg(PAGE2, FEC_2_RD_1);
-    IdStruct[i].rcid3 = BB_ReadReg(PAGE2, FEC_2_RD_2);
-    IdStruct[i].rcid2 = BB_ReadReg(PAGE2, FEC_2_RD_3);
-    IdStruct[i].rcid1 = BB_ReadReg(PAGE2, FEC_2_RD_4);
-    
-    IdStruct[i].aagc1 = BB_ReadReg(PAGE2, AAGC_2_RD);
-    IdStruct[i].aagc2 = BB_ReadReg(PAGE2, AAGC_3_RD);
 
-    if(0 == IdStruct[i].aagc1 || IdStruct[i].aagc1 > IdStruct[i].aagc2)
-    {
-        IdStruct[i].aagcmin = IdStruct[i].aagc2;
-    }
-    else
-    {
-        IdStruct[i].aagcmin = IdStruct[i].aagc1;
-    }
-}
-
-uint8_t Sky_Getopt_Id(void)
+void sky_set_ITQAM_and_notify(uint8_t mod)
 {
-    uint8_t inum  = 0;
-    uint8_t mData = 0;
-    uint8_t Optid = 0;
-    
-    mData = IdStruct[0].aagcmin;
-    for(inum = 1; inum < SkyStruct.IDmatcnt; inum++)
+    uint8_t i = 0;
+    uint8_t br = mod_br_map[0][1];
+    for(i = 0; i < sizeof(mod_br_map) / sizeof(mod_br_map[0]); i++)
     {
-        //Agc low means power is high
-        if((IdStruct[inum].aagcmin <= mData)&& (IdStruct[inum].aagcmin > 0) )
+        if(mod_br_map[i][0] == mod)
         {
-            mData = IdStruct[inum].aagcmin;
-            Optid = inum;
+            br = mod_br_map[i][1];
+            break;
         }
     }
     
-    return Optid;
+    printf("!!Q=>0x%.2x %d\r\n", mod, br);
+    BB_WriteReg(PAGE2, TX_2, mod);
+    
+    STRU_SysEvent_BB_ModulationChange event;
+    event.BB_MAX_support_br = br;
+    SYS_EVENT_Notify(SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE, (void*)&event);
 }
 
 
-void Sky_Search_Right_ID(void)
-{    
-    SkyStruct.Rcunlockcnt=0;
-
-    if( SkyStruct.rc_error)
-    {
-        BB_softReset(BB_SKY_MODE );
-    }
-        
-    if(DISABLE==SkyState.Rcmissing)
-    {
-        if(SkyStruct.rc_crc_ok)
-        {
-            Sky_Record_Idpower(SkyStruct.IDmatcnt);
-            Sky_Write_RChopfrq();
-            SkyStruct.IDmatcnt++;
-            BB_softReset(BB_SKY_MODE );
-        }
-
-        if(SkyStruct.IDsearchcnt >= ID_SEARCH_MAX_TIMES)
-        {
-            SkyStruct.IDsearchcnt =0;
-            Sky_Write_RChopfrq();
-        }
-        else
-        {
-            SkyStruct.IDsearchcnt++;
-        }
-
-        if( ID_MATCH_MAX_TIMES <= SkyStruct.IDmatcnt )
-        {
-            SkyStruct.OptID = Sky_Getopt_Id();
-            BB_WriteReg(PAGE2, FEC_7 , IdStruct[SkyStruct.OptID].rcid5);
-            BB_WriteReg(PAGE2, FEC_8 , IdStruct[SkyStruct.OptID].rcid4);
-            BB_WriteReg(PAGE2, FEC_9 , IdStruct[SkyStruct.OptID].rcid3);
-            BB_WriteReg(PAGE2, FEC_10, IdStruct[SkyStruct.OptID].rcid2);
-            BB_WriteReg(PAGE2, FEC_11, IdStruct[SkyStruct.OptID].rcid1);
-
-            printf("RCid:%02x%02x%02x%02x%02x\r\n", \
-                IdStruct[SkyStruct.OptID].rcid5, IdStruct[SkyStruct.OptID].rcid4, IdStruct[SkyStruct.OptID].rcid3, \
-                IdStruct[SkyStruct.OptID].rcid2, IdStruct[SkyStruct.OptID].rcid1);
-
-            SkyState.CmdsearchID = DISABLE;
-            SkyStruct.IDsearchcnt=0;
-            SkyStruct.IDmatcnt=0;
-        }
-        else
-        {
-            SkyState.CmdsearchID = ENABLE;
-        }
-    }
-    else
-    {
-        if(Sky_Id_Match())
-        {
-            Sky_Write_RChopfrq();
-            SkyStruct.IDsearchcnt =0;
-            SkyState.CmdsearchID = DISABLE;
-        }
-        else if(SkyStruct.IDsearchcnt>=ID_SEARCH_MAX_TIMES)
-        {
-            Sky_Write_RChopfrq();
-            BB_softReset(BB_SKY_MODE );
-            SkyStruct.IDsearchcnt =0;
-        }
-        else
-        {
-            SkyStruct.IDsearchcnt ++;
-        }
-    }
-}
-
-void Sky_Rc_Hopping(void)
+void sky_agc_gain_toggle(void)
 {
-    Sky_Write_RChopfrq();
-    if(Sky_Id_Match())
+    if(FAR_AGC == en_agcmode)
     {
-        uint8_t data0, data1;
-
-        data0 = BB_ReadReg(PAGE2, IT_FREQ_TX_0);
-        data1 = BB_ReadReg(PAGE2, IT_FREQ_TX_1);
-        if((data0 == data1) && (0x0e==(data1 >> 4)))
-        {
-            Sky_Write_ITfrq(data0 & 0x0F);
-        }
-
-        data0 = BB_ReadReg(PAGE2,QAM_CHANGE_0);
-        data1 = BB_ReadReg(PAGE2,QAM_CHANGE_1);
-        if(data0 == data1 && (data0&0xFC) == 0xF0)
-        {
-            EN_BB_QAM mod = (EN_BB_QAM)(data0&0x03);
-            if(SkyStruct.cur_QAM != mod)
-            {
-                Sky_set_ITQAM_and_notify(mod);
-                SkyStruct.cur_QAM = mod;
-            }
-        }
-
-        SkyStruct.Rcunlockcnt=0;
+        BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_NEAR);
+        en_agcmode = NEAR_AGC;
     }
     else
     {
-        if(SkyStruct.rc_error)
-        {
-            SkyStruct.Rcunlockcnt++;
-        }
-        if(MAX_RC_FRQ_SIZE <= SkyStruct.Rcunlockcnt)
-        {
-            SkyStruct.Rcunlockcnt = 0;
-            SkyState.CmdsearchID  = ENABLE;
-            SkyState.Rcmissing = ENABLE;
-            SkyStruct.IDmatcnt = ID_SEARCH_MAX_TIMES;
-        }
+        BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_FAR);
+        en_agcmode = FAR_AGC;
     }
 }
 
-void Sky_Adjust_AGCGain(void)
+void sky_auto_adjust_agc_gain(void)
 {
     uint8_t rx1_gain = BB_ReadReg(PAGE2, AAGC_2_RD);
     uint8_t rx2_gain = BB_ReadReg(PAGE2, AAGC_3_RD);
 
-    if((rx1_gain >= POWER_GATE)&&(rx2_gain >= POWER_GATE) \
-        && SkyStruct.en_agcmode != FAR_AGC)
+    if((rx1_gain >= POWER_GATE)&&(rx2_gain >= POWER_GATE) && en_agcmode != FAR_AGC)
     {
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_FAR);
-
-        SkyStruct.en_agcmode = FAR_AGC;
+        en_agcmode = FAR_AGC;
         printf("=>F", rx1_gain, rx2_gain);
     }
      
     if( ((rx1_gain < POWER_GATE)&&(rx2_gain < POWER_GATE)) \
-        && (rx1_gain > 0x00) && (rx2_gain >0x00)  \
-        && SkyStruct.en_agcmode != NEAR_AGC)
+        && (rx1_gain > 0x00) && (rx2_gain >0x00) \
+        && en_agcmode != NEAR_AGC)
     {
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_NEAR);
-        SkyStruct.en_agcmode = NEAR_AGC;
+        en_agcmode = NEAR_AGC;
         printf("=>N", rx1_gain, rx2_gain);
-    }
-}
-
-void Sky_Adjust_AGCGain_SearchID(uint8_t i)
-{
-    BB_WriteReg(PAGE0, AGC_2, (i==0) ? AAGC_GAIN_FAR:AAGC_GAIN_NEAR);
-}
-
-void Sky_Hanlde_SpecialIrq(void)
-{
-    uint8_t reg = BB_ReadReg(PAGE2, FEC_4_RD); //can't use the skystruct, because the 14ms intr may not happen
-    if(reg == 0)
-    {
-        if(SkyStruct.CntAGCGain>2)
-        {
-            SkyStruct.CntAGCGain=0;
-            Sky_Adjust_AGCGain_SearchID(0);
-        }
-        else
-        {
-            SkyStruct.CntAGCGain++;
-            Sky_Adjust_AGCGain_SearchID(1);
-        }
-        Sky_Write_RChopfrq();
-        BB_softReset(BB_SKY_MODE );
     }
 }
 
@@ -369,6 +165,9 @@ void wimax_vsoc_rx_isr()
 
 void Sky_TIM0_IRQHandler(void)
 {
+    sky_timer0_0_running = 1;
+    sky_search_id_timeout_irq_disable();
+
     Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_0);
     INTR_NVIC_ClearPendingIRQ(BB_RX_ENABLE_VECTOR_NUM); //clear pending after TX Enable is LOW. MUST!
     INTR_NVIC_EnableIRQ(BB_RX_ENABLE_VECTOR_NUM);  
@@ -376,28 +175,254 @@ void Sky_TIM0_IRQHandler(void)
     INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
     TIM_StopTimer(sky_timer0_0);
 
-    uint8_t rc_data = BB_ReadReg(PAGE2, FEC_4_RD);
-    SkyStruct.rc_error = (0x80 == rc_data);
-    SkyStruct.rc_crc_ok = ((rc_data & 0x02) ? 1 : 0);
-    //uint8_t rc_id_match = ((rc_data & 0x02) ? 1 : 0);
-    
-    if( ENABLE == SkyState.CmdsearchID)
+    if(sky_timer0_1_running == 0)
     {
-        Sky_Search_Right_ID();
+        sky_physical_link_process();
     }
-    else
-    {
-        SkyState.CmdsearchID = DISABLE;
-        SkyState.Rcmissing = ENABLE;
-        Sky_Rc_Hopping();
-    }
-    //Sky_Adjust_AGCGain();
+
+    sky_timer0_0_running = 0;
 }
 
+
+void sky_rc_hopfreq(void)
+{
+    sky_rc_channel++;
+    if(sky_rc_channel >=  MAX_RC_FRQ_SIZE)
+    {
+        sky_rc_channel = 0;
+    }
+
+    BB_set_Rcfrq(sky_rc_channel);
+}
+
+
+void sky_set_it_freq(uint8_t ch)
+{
+    if(context.cur_ch != ch)
+    {
+        BB_set_ITfrq(ch);
+        printf("S=>%d\r\n", ch);
+    }
+}
+
+void sky_get_id(uint8_t* idptr)
+{
+    idptr[0] = BB_ReadReg(PAGE2, FEC_1_RD);
+    idptr[1] = BB_ReadReg(PAGE2, FEC_2_RD_1);
+    idptr[2] = BB_ReadReg(PAGE2, FEC_2_RD_2);
+    idptr[3] = BB_ReadReg(PAGE2, FEC_2_RD_3);
+    idptr[4] = BB_ReadReg(PAGE2, FEC_2_RD_4);   
+}
+
+void sky_set_id(uint8_t *idptr)
+{
+    uint8_t i;
+    uint8_t addr[] = {FEC_7, FEC_8, FEC_9, FEC_10, FEC_11};
+
+    printf("RCid:%02x%02x%02x%02x%02x\r\n", idptr[0], idptr[1], idptr[2], idptr[3], idptr[4]);                
+    for(i=0; i < sizeof(addr); i++)
+    {
+        BB_WriteReg(PAGE2, addr[i], idptr[i]);
+    }
+}
+
+
+void sky_soft_reset(void)
+{
+    BB_softReset(BB_SKY_MODE);
+}
+
+void sky_physical_link_process(void)
+{
+    if(dev_state == SEARCH_ID)
+    {
+        if(sky_id_search_run())
+        {
+            uint8_t *p_id = sky_id_search_get_best_id();
+            //memcpy(context.id, p_id, 5);
+            sky_set_id(p_id);
+
+            dev_state = CHECK_ID_MATCH;
+            sky_soft_reset();
+        }
+    }
+    else if(dev_state == ID_MATCH_LOCK)
+    {
+        if(context.rc_skip_freq_mode == AUTO)
+        {
+            sky_rc_hopfreq();
+        }
+
+        context.locked = sky_id_match();
+        if(context.locked)
+        {
+            uint8_t data0, data1;
+            context.rc_unlock_cnt = 0;
+            if(context.it_skip_freq_mode == AUTO)
+            {
+                data0 = BB_ReadReg(PAGE2, IT_FREQ_TX_0);
+                data1 = BB_ReadReg(PAGE2, IT_FREQ_TX_1);
+                if((data0 == data1) && (0x0e==(data1 >> 4)))
+                {
+                    sky_set_it_freq(data0 & 0x0f);
+                    context.cur_ch = (data0 & 0x0f);
+                }
+            }
+
+            if(context.qam_skip_mode == AUTO)
+            {
+                data0 = BB_ReadReg(PAGE2, QAM_CHANGE_0);
+                data1 = BB_ReadReg(PAGE2, QAM_CHANGE_1);
+
+                if(data0+1==data1 && cur_mod_regvalue != data0)
+                {
+                    sky_set_ITQAM_and_notify(data0);
+                    cur_mod_regvalue = data0;
+                }
+            }
+        }
+        else
+        {
+            context.rc_unlock_cnt++;
+            // sky_soft_reset();
+        }
+
+        if(MAX_RC_FRQ_SIZE <= context.rc_unlock_cnt)
+        {
+            dev_state = CHECK_ID_MATCH;
+        }
+    }
+    else if(dev_state == CHECK_ID_MATCH)
+    {
+        context.locked = sky_id_match();
+        if(context.locked)
+        {
+            if(context.rc_skip_freq_mode == AUTO)
+            {
+                sky_rc_hopfreq();
+            }
+
+            dev_state = ID_MATCH_LOCK;
+        }
+        else
+        {
+            sky_soft_reset();
+        }
+    }
+
+    sky_auto_adjust_agc_gain();
+}
+
+void sky_id_search_init(void)
+{
+    search_id_list.count = 0;
+}
+
+uint8_t get_rc_status(void)
+{
+    return BB_ReadReg(PAGE2, FEC_4_RD);
+}
+
+
+uint8_t sky_id_search_run(void)
+{    
+    uint8_t rc_status = get_rc_status();
+    
+    #define SKY_RC_ERR(status)  (0x80 == rc_status)
+    #define SKY_CRC_OK(status)  ((status & 0x02) ? 1 : 0)
+    
+    if(SKY_RC_ERR(rc_status))
+    {
+        sky_soft_reset();
+        return FALSE;
+    }
+
+    if(SKY_CRC_OK(rc_status))
+    {
+        sky_get_id(search_id_list.search_ids[search_id_list.count].id);
+
+        //record AGC.
+        search_id_list.search_ids[search_id_list.count].agc1 = BB_ReadReg(PAGE2, AAGC_2_RD);
+        search_id_list.search_ids[search_id_list.count].agc2 = BB_ReadReg(PAGE2, AAGC_3_RD);
+        search_id_list.count += 1;
+
+        //record first get id time
+        if(search_id_list.count == 1)
+        {
+            start_time_cnt = SysTicks_GetTickCount();
+        }
+
+        if(search_id_list.count >= MAX_SEARCH_ID_NUM)
+        {
+            return TRUE;
+        }
+    }
+
+    if(search_id_list.count > 0)
+    {
+        return (SysTicks_GetTickCount() - start_time_cnt > SEARCH_ID_TIMEOUT);
+    }
+
+    return FALSE;
+}
+
+
+uint8_t* sky_id_search_get_best_id(void)
+{
+    uint8_t i,best_id_cnt;
+    uint16_t agc1_agc2;
+    if(search_id_list.count == 1)
+    {
+        return search_id_list.search_ids[0].id;
+    }
+
+    best_id_cnt = 0;
+    agc1_agc2 = search_id_list.search_ids[best_id_cnt].agc1 + search_id_list.search_ids[best_id_cnt].agc2;
+
+    for(i=1;i<search_id_list.count;i++)
+    {
+        if(search_id_list.search_ids[i].agc1 + search_id_list.search_ids[i].agc2 < agc1_agc2)
+        {
+            best_id_cnt = i;
+            agc1_agc2 = search_id_list.search_ids[i].agc1 + search_id_list.search_ids[i].agc2;
+        }
+    }
+
+    return search_id_list.search_ids[best_id_cnt].id;
+}
+
+
+int sky_search_id_timeout_irq_enable()
+{
+    TIM_StartTimer(sky_timer0_1);
+}
+
+int sky_search_id_timeout_irq_disable()
+{
+    TIM_StopTimer(sky_timer0_1);
+}
+
+
+void sky_search_id_timeout(void)
+{
+    if(dev_state == SEARCH_ID )
+    {
+        if(context.rc_skip_freq_mode == AUTO)
+        {
+            sky_rc_hopfreq();
+        }
+
+        sky_agc_gain_toggle();
+        sky_soft_reset();
+    }
+}
 
 void Sky_TIM1_IRQHandler(void)
 {
     static int Timer1_Delay2_Cnt = 0;
+    
+    sky_timer0_1_running = 1; 
+    
     INTR_NVIC_ClearPendingIRQ(TIMER_INTR01_VECTOR_NUM);
     if(Timer1_Delay2_Cnt < 560)
     {
@@ -405,12 +430,18 @@ void Sky_TIM1_IRQHandler(void)
     }
     else
     {
-        Sky_Hanlde_SpecialIrq();
+        if(sky_timer0_0_running == 0) //To avoid the spi access conflict
+        {
+            sky_search_id_timeout();
+        }
         Timer1_Delay2_Cnt = 0;
     }
+
+    sky_timer0_1_running = 0;
 }
 
-void Sky_Timer1_Init(void)
+
+void sky_Timer1_Init(void)
 {
     sky_timer0_1.base_time_group = 0;
     sky_timer0_1.time_num = 1;
@@ -420,7 +451,7 @@ void Sky_Timer1_Init(void)
     reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, Sky_TIM1_IRQHandler);
 }
 
-void Sky_Timer0_Init(void)
+void sky_Timer0_Init(void)
 {
     sky_timer0_0.base_time_group = 0;
     sky_timer0_0.time_num = 0;

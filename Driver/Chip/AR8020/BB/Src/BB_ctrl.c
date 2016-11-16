@@ -4,6 +4,7 @@
 #include "BB_ctrl.h"
 #include "BB_init_regs.h"
 #include "reg_rw.h"
+#include "sys_param.h"
 #include "config_baseband_register.h"
 
 #define     BB_SPI_TEST         (0)
@@ -12,6 +13,8 @@
 #define     VSOC_GLOBAL2_BASE   (0xA0030000)
 #define     BB_SPI_UART_SEL     (0x9c)
 
+
+CONTEXT context;
 
 typedef struct
 {
@@ -94,10 +97,29 @@ int BB_softReset(ENUM_RST_MODE en_mode)
     {        
         BB_SPI_curPageWriteByte(0x00, 0x81);
         BB_SPI_curPageWriteByte(0x00, 0x80);
+        
+        //bug fix: write reset register may fail.
+        int count = 0;
+        while(1)
+        {
+            uint8_t rst = BB_SPI_curPageReadByte(0x00);
+            if(rst != 0x80)
+            {
+                dlog_error("RST:%0.2x %d\r\n", rst, count);
+                BB_SPI_curPageWriteByte(0x00, 0x80);
+                count ++;
+            }
+            else
+            {
+                break;
+            }
+        }
+
         BB_ctx.en_curPage = PAGE2;
     }
     return 0;
 }
+
 
 
 int BB_selectVideoPath(ENUM_VID_PATH path)
@@ -309,16 +331,26 @@ uint8_t BB_set_Rcfrq(uint8_t ch)
 }
 
 
-
 void BB_set_QAM(EN_BB_QAM mod)
 {
     uint8_t data = BB_ReadReg(PAGE2, TX_2);
     BB_WriteReg(PAGE2, TX_2, (data & 0x3f) | ((uint8_t)mod << 6));
 }
 
-/*
-*/
-EN_BB_QAM BB_get_QAM(EN_BB_QAM mod)
+EN_BB_QAM BB_get_QAM(void)
 {
     return (EN_BB_QAM)(BB_ReadReg(PAGE2, TX_2) >> 6);
 }
+
+void BB_set_LDPC(EN_BB_LDPC ldpc)
+{
+    uint8_t data = BB_ReadReg(PAGE2, TX_2);
+    BB_WriteReg(PAGE2, TX_2, (data & 0x07) | (uint8_t)ldpc);
+}
+
+EN_BB_LDPC BB_get_LDPC(void)
+{
+    return (EN_BB_LDPC)(BB_ReadReg(PAGE2, TX_2) & 0x07);
+}
+
+

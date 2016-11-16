@@ -8,9 +8,9 @@
 #define  SKY_RF8003_2P4
 
 //**********************  sel the sky( rf & frq )   **************************
-#define  POWER_GATE         (0x40)        //Reg[c5/c6] power #define  POWER_Thresholds.
-#define  AAGC_GAIN_FAR      (0x16)
-#define  AAGC_GAIN_NEAR     (0x30)
+#define  POWER_GATE         (0x45)        //Reg[c5/c6] power #define  POWER_Thresholds.
+#define  AAGC_GAIN_FAR      (0x12)
+#define  AAGC_GAIN_NEAR     (0x3F)
 
 //*****************  define page1 or page2  ********************
 

@@ -38,9 +38,11 @@ SRC_C := SysCtl/Src/reg_rw.c \
          H264Encoder/Src/vsoc_enc.c \
          H264Encoder/Src/brc.c \
          SPI/Src/spi.c \
-	     SPI/Src/BB_spi.c \
+	 SPI/Src/BB_spi.c \
          BB/Src/sky_controller.c \
          BB/Src/grd_controller.c \
+         BB/Src/grd_sweep.c \
+         BB/Src/BB_snr_service.c \
          BB/Src/BB_ctrl.c
 
 INCDIRS := -IUART/Inc \

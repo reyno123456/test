@@ -2,7 +2,6 @@
 #define __BB_CTRL_
 
 #include <stdint.h>
-
 #include "BB_spi.h"
 
 typedef enum
@@ -54,6 +53,7 @@ typedef struct
     ENUM_RCV_enable en_rcvEnable;
 }STRU_BB_initType;
 
+
 typedef enum _EN_BB_QAM
 {
     MOD_BPSK    = 0x00,
@@ -67,13 +67,14 @@ typedef enum _EN_BB_QAM
 typedef enum _EN_BB_LDPC
 {
     LDPC_1_2    = 0x00,
-    LDPC_2_3,
+    LDPC_2_3    = 0x01,
 }EN_BB_LDPC;
+
 
 typedef enum _EN_BB_BW
 {
-    BW_10M    = 0x00,
-    BW_20M
+    BW_10M  = 0x02,
+    BW_20M  = 0x0,
 }EN_BB_BW;
 
 
@@ -82,6 +83,7 @@ typedef enum
     DISABLE = 0, 
     ENABLE = !DISABLE
 } FunctionalState;
+
 
 struct RC_FRQ_CHANNEL           //  Remote Controller Freq Channnel
 {
@@ -103,7 +105,14 @@ struct IT_FRQ_CHANNEL           //  Image Transmissions Freq Channnel
    uint8_t frq5;
 };
 
+
+#define FALSE   (0)
+#define TRUE    (1)
+
 #define MAX_RC_FRQ_SIZE (12)
+
+#define MAX(a,b) (((a) > (b)) ?  (a) :  (b) )
+
 
 void BB_init(STRU_BB_initType *ptr_initType);
 
@@ -120,5 +129,6 @@ uint8_t BB_set_sweepfrq(uint8_t ch);
 uint8_t BB_ReadReg(ENUM_REG_PAGES page, uint8_t addr);
 
 uint8_t BB_WriteReg(ENUM_REG_PAGES page, uint8_t addr, uint8_t data);
+
 
 #endif

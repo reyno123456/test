@@ -293,10 +293,18 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_TestSysEventIdle();
     }
-    else if(memcmp(cmdArray[0], "Sky_set_ITQAM_and_notify", strlen("Sky_set_ITQAM_and_notify")) == 0)
+    else if(memcmp(cmdArray[0], "sky_set_ITQAM_and_notify", strlen("sky_set_ITQAM_and_notify")) == 0)
     {
-        Sky_set_ITQAM_and_notify(strtoul(cmdArray[1], NULL, 0));
+        sky_set_ITQAM_and_notify(strtoul(cmdArray[1], NULL, 0));
     }    
+    else if(memcmp(cmdArray[0], "command_Grd_set_it_skip_mode_ch", strlen("command_Grd_set_it_skip_mode_ch")) == 0)
+    {
+        command_Grd_set_it_skip_mode_ch(cmdArray[1], cmdArray[2]);
+    }
+    else if(memcmp(cmdArray[0], "command_Grd_set_it_ch", strlen("command_Grd_set_it_ch")) == 0)
+    {
+        command_Grd_set_it_ch(cmdArray[1]);
+    }
     else 
     {
         dlog_error("Command not found! Please use commands like:\n");
@@ -318,7 +326,9 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("test_TestGpioNormalRange <gpionum1> <gpionum2> <highorlow>");
         dlog_error("test_TestGpioInterrupt <gpionum> <inttype> <polarity>");
         dlog_error("test_SysEventIdle");
-        dlog_error("Sky_set_ITQAM_and_notify");
+        dlog_error("sky_set_ITQAM_and_notify");
+        dlog_error("command_Grd_set_it_skip_mode_ch");
+        dlog_error("command_Grd_set_it_ch");
     }
 
     /* must reset to receive new data from serial */
