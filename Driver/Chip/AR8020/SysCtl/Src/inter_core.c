@@ -5,7 +5,7 @@
 #include "reg_map.h"
 #include "sys_event.h"
 #include "lock.h"
-#include "sram.h"
+#include "reg_map.h"
 
 static void InterCore_IRQ0Handler(void);
 static void InterCore_IRQ1Handler(void);
@@ -81,10 +81,23 @@ static void InterCore_TriggerIRQ1(void)
     *((volatile uint32_t *)(INTER_CORE_TRIGGER_REG_ADDR)) |= INTER_CORE_TRIGGER_IRQ1_BITMAP;
 }
 
+static void InterCore_SRAMDCacheDisable(uint8_t type)
+{
+    if (type == 0)
+    {
+        MPU->RNR  = SRAM_MEMORY_MPU_REGION_NUMBER;
+        MPU->RBAR = SRAM_MEMORY_MPU_REGION_ST_ADDR_0 | (1 << 4) | (SRAM_MEMORY_MPU_REGION_NUMBER << 0);
+        MPU->RASR = SRAM_MEMORY_MPU_REGION_ATTR_0;
+        MPU->CTRL = MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_HFNMIENA_Msk | MPU_CTRL_ENABLE_Msk;
+        __asm volatile ("dsb");
+        __asm volatile ("isb");
+    }
+}
+
 void InterCore_Init(void)
 {
     // Init the SRAM data share buffer
-    SRAM_DCacheDisable(0);
+    InterCore_SRAMDCacheDisable(0);
     volatile INTER_CORE_MSG_TYPE* msgPtr = (INTER_CORE_MSG_TYPE*)INTER_CORE_MSG_SHARE_MEMORY_BASE_ADDR;
     memset(msgPtr, 0, sizeof(INTER_CORE_MSG_TYPE)*INTER_CORE_MSG_SHARE_MEMORY_NUMBER);
 

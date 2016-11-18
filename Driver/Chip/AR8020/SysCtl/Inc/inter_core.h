@@ -25,6 +25,24 @@ typedef struct
     uint8_t              data[INTER_CORE_MSG_SHARE_MEMORY_DATA_LENGTH];
 }INTER_CORE_MSG_TYPE;
 
+// SRAM DCache disable
+#define SRAM_MEMORY_MPU_REGION_NUMBER  1
+#define SRAM_MEMORY_MPU_REGION_ST_ADDR_0 0x21004000
+#define SRAM_MEMORY_MPU_REGION_ATTR_0    (0  << 28) | \
+                                         (3  << 24) | \
+                                         (1  << 19) | \
+                                         (0  << 18) | \
+                                         (0  << 17) | \
+                                         (0  << 16) | \
+                                         (0  <<  8) | \
+                                         (11 <<  1) | \
+                                         (1  <<  0)
+
+void SRAM_SKY_BypassVideoConfig(uint32_t channel);
+
+void SRAM_DCacheDisable(uint8_t type);
+
+
 void InterCore_Init(void);
 uint8_t InterCore_SendMsg(INTER_CORE_CPU_ID dst, INTER_CORE_MSG_ID msg, uint8_t* buf, uint32_t length);
 uint8_t InterCore_GetMsg(INTER_CORE_MSG_ID* msg_p, uint8_t* buf, uint32_t max_length);

@@ -5,6 +5,8 @@
 #include "h264_encoder.h"
 #include "test_BB.h"
 #include "command.h"
+#include "sys_event.h"
+#include "inter_core.h"
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
@@ -25,6 +27,8 @@ int main(void)
     dlog_info("cpu2 start!!! \n");
 
     SysTicks_Init(166000);
+
+    InterCore_Init();
     
     ADV_7611_Initial(0);
     ADV_7611_Initial(1);

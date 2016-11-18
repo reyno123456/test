@@ -3,7 +3,6 @@
 #include "debuglog.h"
 #include "usbd_def.h"
 
-
 volatile uint32_t               sramReady0;
 volatile uint32_t               sramReady1;
 extern USBD_HandleTypeDef       USBD_Device;
@@ -113,5 +112,4 @@ void SRAM_SKY_BypassVideoConfig(uint32_t channel)
 
     Reg_Write32(SRAM_SKY_MASTER_ID_MASK_ADDR, SRAM_SKY_MASTER_ID_MASK_VALUE);
 }
-
 

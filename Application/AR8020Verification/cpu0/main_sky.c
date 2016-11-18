@@ -8,6 +8,7 @@
 #include "test_sram.h"
 #include "cmsis_os.h"
 #include "sys_event.h"
+#include "inter_core.h"
 
 void *malloc(size_t size)
 {

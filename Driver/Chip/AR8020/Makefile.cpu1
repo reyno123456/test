@@ -32,12 +32,10 @@ SRC_C := SysCtl/Src/reg_rw.c \
          SysCtl/Src/systicks.c \
          I2C/Src/i2c_ll.c \
          I2C/Src/i2c.c \
-         SPI/Src/spi.c \
-         SRAM/Src/sram.c
+         SPI/Src/spi.c
 
 INCDIRS := -ISysCtl/Inc \
-	   -II2C/Inc \
-           -ISRAM/Inc \
+           -II2C/Inc \
            -I$(TOP_DIR)/Configure \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Device/ST/STM32F7xx/Include \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \
