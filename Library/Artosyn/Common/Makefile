@@ -51,6 +51,7 @@ install:
 	@cp -f Inc/debuglog.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/interrupt.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/sys_event.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/memory.h $(OUTPUT_HEADER_STAGING_DIR)
 	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)
 

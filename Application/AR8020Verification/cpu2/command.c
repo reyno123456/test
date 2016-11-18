@@ -220,6 +220,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_encoder_update_video(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
+    else if (memcmp(cmdArray[0], "BB_data_buf_full", strlen("BB_data_buf_full")) == 0)
+    {
+        command_TestSysEventInterCore(cmdArray[1]);
+    }
     else if (memcmp(cmdArray[0], "BB_SPI_ReadByte", strlen("BB_SPI_ReadByte")) == 0)
     {
         uint8_t cmdPage = strtoul(cmdArray[1], NULL, 0);
@@ -311,6 +315,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("encoder_dump_brc");
         dlog_error("encoder_update_brc <br>");
         dlog_error("encoder_update_video_format <W> <H> <F>");
+        dlog_error("BB_data_buf_full <R>");
         dlog_error("BB_debug_print_init_sky");
         dlog_error("BB_debug_print_init_grd");
         dlog_error("BB_SPI_ReadByte <page> <addr>");

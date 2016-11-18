@@ -1,6 +1,7 @@
 #include "debuglog.h"
 #include "test_freertos.h"
 #include "command.h"
+#include "sys_event.h"
 /**
  * @brief  CPU L1-Cache enable.
  * @param  None
@@ -32,6 +33,9 @@ int main(void)
     /* initialize the uart */
     console_init(1,115200);
     dlog_info("cpu1 start!!! \n");
+
+    InterCore_Init();
+
     CPU_CACHE_Enable();
 
     HAL_Init();
@@ -40,12 +44,14 @@ int main(void)
     /* We should never get here as control is now taken by the scheduler */
     for( ;; )
     {
+      SYS_EVENT_Process();
+
       if (command_getEnterStatus() == 1)
       {
         command_fulfill();
       }
       
-      dlog_output(1);
+      dlog_output(100);
     }
 } 
 

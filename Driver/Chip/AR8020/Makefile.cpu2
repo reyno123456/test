@@ -26,6 +26,7 @@ CPU_NUMBER = cpu2
 
 # source file(s), including c file(s)
 SRC_C := SysCtl/Src/reg_rw.c \
+         SysCtl/Src/inter_core.c \
          SysCtl/Src/systicks.c \
          SysCtl/Src/timer.c \
          SysCtl/Src/gpio.c \
@@ -38,17 +39,19 @@ SRC_C := SysCtl/Src/reg_rw.c \
          H264Encoder/Src/vsoc_enc.c \
          H264Encoder/Src/brc.c \
          SPI/Src/spi.c \
-	 SPI/Src/BB_spi.c \
+         SPI/Src/BB_spi.c \
          BB/Src/sky_controller.c \
          BB/Src/grd_controller.c \
          BB/Src/grd_sweep.c \
          BB/Src/BB_snr_service.c \
-         BB/Src/BB_ctrl.c
+         BB/Src/BB_ctrl.c \
+	 SRAM/Src/sram.c
 
 INCDIRS := -IUART/Inc \
            -IH264Encoder/Inc \
            -ISysCtl/Inc \
            -II2C/Inc \
+           -ISRAM/Inc \
            -I$(TOP_DIR)/Configure \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Device/ST/STM32F7xx/Include \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \

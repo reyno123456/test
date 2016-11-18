@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "debuglog.h"
+#include "memory.h"
 
 typedef long Align;/*for alignment to long boundary*/
 
@@ -64,7 +65,7 @@ void *sbrk(ptrdiff_t increment)
     return (void *)old;
 }
 
-#define NALLOC 16 //1024    /* minimum #units to request */
+#define NALLOC 128 //1024    /* minimum #units to request */
 static Header *morecore(unsigned nu)
 {
     char *cp;
@@ -83,12 +84,12 @@ static Header *morecore(unsigned nu)
     
     up = (Header *)cp;
     up->s.size = nu;
-    free((void *)(up+1));
+    free_simple((void *)(up+1));
     
     return freep;
 }
 
-__attribute__((weak)) void *malloc(size_t size)
+void *malloc_simple(size_t size)
 {
     Header *p, *prevp;
     unsigned int nbytes = size;
@@ -131,7 +132,7 @@ __attribute__((weak)) void *malloc(size_t size)
     }
 }
 
-__attribute__((weak)) void free(void *ap)
+void free_simple(void *ap)
 {
     Header *bp,*p;
     bp = (Header *)ap -1; /* point to block header */
@@ -163,5 +164,15 @@ __attribute__((weak)) void free(void *ap)
     }
     
     freep = p;
+}
+
+__attribute__((weak)) void *malloc(size_t size)
+{
+    return malloc_simple(size);
+}
+
+__attribute__((weak)) void free(void *ap)
+{
+    free_simple(ap);
 }
 

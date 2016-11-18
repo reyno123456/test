@@ -5,6 +5,7 @@
 #include <string.h>
 #include "sys_event.h"
 #include "debuglog.h"
+#include "memory.h"
 
 #define TRUE (1)
 #define FALSE (0)
@@ -76,7 +77,7 @@ static STRU_RegisteredSysEvent_Node* retrieveRegisteredEventNode(uint32_t event_
     if ((get_node == NULL) && (create_if_no == TRUE))
     {
         // Can not find the event ID in the list, then to create a new node for the event ID.
-        STRU_RegisteredSysEvent_Node* pEventNode = (STRU_RegisteredSysEvent_Node*)malloc(sizeof(STRU_RegisteredSysEvent_Node));
+        STRU_RegisteredSysEvent_Node* pEventNode = (STRU_RegisteredSysEvent_Node*)malloc_simple(sizeof(STRU_RegisteredSysEvent_Node));
 
         if (pEventNode != NULL)
         {
@@ -149,7 +150,7 @@ static uint8_t removeRegisteredSysEventNode(STRU_RegisteredSysEvent_Node* pNode)
         pNode->prev->next = pNode->next;  
     }  
   
-    free(pNode);  
+    free_simple(pNode);  
     return TRUE; 
 }
 
@@ -189,7 +190,7 @@ static uint8_t addSysEventHandlerNode(STRU_RegisteredSysEvent_Node* pEventNode, 
     {
         STRU_RegisteredSysEventHandler_Node** ppFirstNode = &(pEventNode->handler_list);
         STRU_RegisteredSysEventHandler_Node** ppLastNode = &(pEventNode->handler_list_tail);
-        STRU_RegisteredSysEventHandler_Node* pNewNode = (STRU_RegisteredSysEventHandler_Node*)malloc(sizeof(STRU_RegisteredSysEventHandler_Node));
+        STRU_RegisteredSysEventHandler_Node* pNewNode = (STRU_RegisteredSysEventHandler_Node*)malloc_simple(sizeof(STRU_RegisteredSysEventHandler_Node));
 
         if (pNewNode != NULL)
         {
@@ -278,7 +279,7 @@ static uint8_t removeExistedSysEventHandlerNode(STRU_RegisteredSysEvent_Node* pE
         pNode->prev->next = pNode->next;  
     }  
   
-    free(pNode);  
+    free_simple(pNode);  
     return TRUE;
 }
 
@@ -391,8 +392,13 @@ static uint8_t removeNotifiedSysEventNode(STRU_NotifiedSysEvent_Node* pNode)
 
     enableInterrupts();
   
-    free(pNode);  
+    free_simple(pNode);  
     return TRUE; 
+}
+
+__attribute__((weak)) uint8_t InterCore_SendMsg(INTER_CORE_CPU_ID dst, INTER_CORE_MSG_ID msg, uint8_t* buf, uint32_t length)
+{
+    dlog_error("InterCore_SendMsg function link is not right!");
 }
 
 /**
@@ -480,7 +486,7 @@ uint8_t SYS_EVENT_Notify_From_ISR(uint32_t event_id, void* parameter)
     STRU_NotifiedSysEvent_Node** ppFirstNode = &g_notifiedSysEventList;
     STRU_NotifiedSysEvent_Node** ppLastNode  = &g_notifiedSysEventList_tail;
 
-    STRU_NotifiedSysEvent_Node* pNewNode = (STRU_NotifiedSysEvent_Node*)malloc(sizeof(STRU_NotifiedSysEvent_Node));
+    STRU_NotifiedSysEvent_Node* pNewNode = (STRU_NotifiedSysEvent_Node*)malloc_simple(sizeof(STRU_NotifiedSysEvent_Node));
 
     if (pNewNode != NULL)
     {
@@ -501,6 +507,16 @@ uint8_t SYS_EVENT_Notify_From_ISR(uint32_t event_id, void* parameter)
         }
 
         *ppLastNode = pNewNode;
+
+        // Inter-Core event nofitication
+        if (event_id & SYS_EVENT_INTER_CORE_MASK)
+        {
+            INTER_CORE_CPU_ID dst = 0;
+
+            dst |= (INTER_CORE_CPU0_ID | INTER_CORE_CPU1_ID | INTER_CORE_CPU2_ID);
+            // Inter-Core message send
+            InterCore_SendMsg(dst, event_id, parameter, SYS_EVENT_HANDLER_PARAMETER_LENGTH);
+        }
 
         retval = TRUE;
     }

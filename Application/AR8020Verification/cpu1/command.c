@@ -395,24 +395,18 @@ void command_readMemory(char *addr)
     for (row = 0; row < 8; row++)
     {
         /* new line */
+        dlog_info("0x%08x: 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x\n ", 
+                  readAddress,
+                  *(uint32_t *)readAddress,
+                  *(uint32_t *)(readAddress + 4),
+                  *(uint32_t *)(readAddress + 8),
+                  *(uint32_t *)(readAddress + 12),
+                  *(uint32_t *)(readAddress + 16),
+                  *(uint32_t *)(readAddress + 20),
+                  *(uint32_t *)(readAddress + 24),
+                  *(uint32_t *)(readAddress + 28));
 
-        dlog_info("0x%08x: ", (unsigned int)readAddress);
-
-        for (column = 0; column < 8; column++)
-        {
-            dlog_info("%08x ", *(unsigned int *)readAddress);
-
-        dlog_info("0x%x: ", readAddress);
-
-        for (column = 0; column < 8; column++)
-        {
-            dlog_info("0x%x: ", readAddress);
-
-            readAddress += 4;
-        }
-        dlog_info("\n");
-        }
-        dlog_info("\n");
+        readAddress += 32;
     }
 }
 

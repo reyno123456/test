@@ -45,6 +45,7 @@ INCDIRS := -ISysCtl/Inc \
            -ISD/Inc \
            -IUART/Inc \
            -II2C/Inc \
+           -ISRAM/Inc \
            -I$(TOP_DIR)/Configure \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Device/ST/STM32F7xx/Include \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \

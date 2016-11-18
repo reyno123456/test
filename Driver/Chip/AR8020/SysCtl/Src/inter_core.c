@@ -1,129 +1,205 @@
 #include "inter_core.h"
 #include "debuglog.h"
+#include "interrupt.h"
 #include "string.h"
 #include "reg_map.h"
+#include "sys_event.h"
+#include "lock.h"
+#include "sram.h"
 
+static void InterCore_IRQ0Handler(void);
+static void InterCore_IRQ1Handler(void);
 
-INTER_CORE_MSG_POOL_TYPE  g_stInterCoreMsgPool[3];
+static void InterCore_ResetIRQ0(void)
+{
+    *((volatile uint32_t *)(INTER_CORE_TRIGGER_REG_ADDR)) &= ~INTER_CORE_TRIGGER_IRQ0_BITMAP;
+}
 
+static void InterCore_ResetIRQ1(void)
+{
+    *((volatile uint32_t *)(INTER_CORE_TRIGGER_REG_ADDR)) &= ~INTER_CORE_TRIGGER_IRQ1_BITMAP;
+}
+
+static void InterCore_IRQ0Handler(void)
+{
+#ifdef INTER_CORE_DEBUG_LOG_ENABLE
+    dlog_info("handler 0\n");
+#endif
+
+    InterCore_ResetIRQ0();
+
+    INTER_CORE_MSG_ID msg = 0; 
+    uint8_t buf[INTER_CORE_MSG_SHARE_MEMORY_DATA_LENGTH];
+    uint32_t max_length = INTER_CORE_MSG_SHARE_MEMORY_DATA_LENGTH;
+
+    // Get all the messages in the SRAM buffer
+    uint8_t mem_cnt = INTER_CORE_MSG_SHARE_MEMORY_NUMBER; // Max count to avoid the endless loop risk
+    while(mem_cnt--)
+    {
+        msg = 0;
+        memset(buf, 0, sizeof(buf));
+        InterCore_GetMsg(&msg, buf, sizeof(buf));
+
+        // Message process
+        if (msg != 0)
+        {
+            // Check whether this message is an inter-core system event
+            if (msg & SYS_EVENT_INTER_CORE_MASK)
+            {
+                // Remove the inter-core mask to avoid the loop notification
+                uint32_t event = msg & ~SYS_EVENT_INTER_CORE_MASK;
+
+                // Notify the message as a system event to the local CPU
+                SYS_EVENT_Notify_From_ISR(event, (void*)buf);
+#ifdef INTER_CORE_DEBUG_LOG_ENABLE
+                dlog_info("Notify event 0x%x by inter core msg", event);
+#endif
+            }
+        }
+        else
+        {
+            break;
+        }
+    }
+}
+
+static void InterCore_IRQ1Handler(void)
+{
+    InterCore_ResetIRQ1();
+#ifdef INTER_CORE_DEBUG_LOG_ENABLE
+    dlog_info("handler 1\n");
+#endif
+}
+
+static void InterCore_TriggerIRQ0(void)
+{
+    *((volatile uint32_t *)(INTER_CORE_TRIGGER_REG_ADDR)) |= INTER_CORE_TRIGGER_IRQ0_BITMAP;
+}
+
+static void InterCore_TriggerIRQ1(void)
+{
+    *((volatile uint32_t *)(INTER_CORE_TRIGGER_REG_ADDR)) |= INTER_CORE_TRIGGER_IRQ1_BITMAP;
+}
 
 void InterCore_Init(void)
 {
-    uint32_t          index;
-    uint32_t          prioritygroup;
+    // Init the SRAM data share buffer
+    SRAM_DCacheDisable(0);
+    volatile INTER_CORE_MSG_TYPE* msgPtr = (INTER_CORE_MSG_TYPE*)INTER_CORE_MSG_SHARE_MEMORY_BASE_ADDR;
+    memset(msgPtr, 0, sizeof(INTER_CORE_MSG_TYPE)*INTER_CORE_MSG_SHARE_MEMORY_NUMBER);
 
-    for (index = 0; index < INTER_CORE_CPU_NUM; index++)
-    {
-        g_stInterCoreMsgPool[index].firstMsgPos = 0;
-        g_stInterCoreMsgPool[index].nextMsgPos  = 0;
-    }
-
-    NVIC_ISER->ISER2 |= 0x00000020;
-    NVIC_ISER->ISER2 |= 0x00000040;
+    // Interrupt enable
+    reg_IrqHandle(VIDEO_GLOBAL2_INTR_RES_VSOC0_VECTOR_NUM, InterCore_IRQ0Handler);
+    INTR_NVIC_EnableIRQ(VIDEO_GLOBAL2_INTR_RES_VSOC0_VECTOR_NUM);
+    /*
+    reg_IrqHandle(VIDEO_GLOBAL2_INTR_RES_VSOC1_VECTOR_NUM, InterCore_IRQ1Handler);
+    INTR_NVIC_EnableIRQ(VIDEO_GLOBAL2_INTR_RES_VSOC1_VECTOR_NUM);
+    */
 }
 
-
-
-void InterCore_SendMsg(INTER_CORE_MSG_TYPE *pstInterCoreMsg)
+uint8_t InterCore_SendMsg(INTER_CORE_CPU_ID dst, INTER_CORE_MSG_ID msg, uint8_t* buf, uint32_t length)
 {
-    INTER_CORE_MSG_POOL_TYPE  *pstDestCpuMsgPool;
-    uint32_t                  *triggerAddr;
+    uint8_t i = 0;
+    volatile INTER_CORE_MSG_TYPE* msgPtr = (INTER_CORE_MSG_TYPE*)INTER_CORE_MSG_SHARE_MEMORY_BASE_ADDR;
 
-    /* put the message into the dest cpu pool */
-    pstDestCpuMsgPool = &g_stInterCoreMsgPool[pstInterCoreMsg->enDstCpuID];
-
-    memcpy(&pstDestCpuMsgPool->stInterCoreMsg[pstDestCpuMsgPool->nextMsgPos], pstInterCoreMsg, sizeof(INTER_CORE_MSG_TYPE));
-
-    if (pstDestCpuMsgPool->nextMsgPos < (INTER_CORE_MSG_POOL_MAX - 1))
+    // Parse the SRAM data buffer to find the section can be used
+    for(i = 0 ; i < INTER_CORE_MSG_SHARE_MEMORY_NUMBER; i++)
     {
-        pstDestCpuMsgPool->nextMsgPos++;
-    }
-    else
-    {
-        pstDestCpuMsgPool->nextMsgPos = 0;
-    }
-
-    if (pstDestCpuMsgPool->firstMsgPos == pstDestCpuMsgPool->nextMsgPos)
-    {
-        dlog_error("dest cpu message pool is full\n");
-    }
-
-    triggerAddr        = INTER_CORE_TRIGGER_REG_ADDR;
-    /* trigger the interrupt to inform the dest cpu */
-    if (INTER_CORE_CPU0_ID == pstInterCoreMsg->enDstCpuID)
-    {
-        *triggerAddr  |= 0x1;
-       // NVIC_ISPR->ISPR2 |= 0x00000060;
-       // NVIC_SetPendingIRQ(INTER_CORE_CPU2_CPU0_TRIGGER);
-    }
-    else if (INTER_CORE_CPU2_ID == pstInterCoreMsg->enDstCpuID)
-    {
-        *triggerAddr  |= 0x2;
-       // NVIC_ISPR->ISPR2 |= 0x00000060;
-       // NVIC_SetPendingIRQ(INTER_CORE_CPU0_CPU2_TRIGGER);
-    }
-}
-
-
-INTER_CORE_MSG_TYPE* InterCore_GetMsg(INTER_CORE_CPU_ID enInterCoreCpuID)
-{
-    INTER_CORE_MSG_POOL_TYPE  *pstMsgPool;
-    INTER_CORE_MSG_TYPE       *pstMsg;
-
-    pstMsgPool = &g_stInterCoreMsgPool[enInterCoreCpuID];
-
-    /* judge the message pool is not empty */
-    if ( (pstMsgPool->nextMsgPos > pstMsgPool->firstMsgPos)
-      && ( (pstMsgPool->nextMsgPos - pstMsgPool->firstMsgPos) > 1) )
-    {
-        pstMsg = &(pstMsgPool->stInterCoreMsg[pstMsgPool->firstMsgPos]);
-
-        pstMsgPool->firstMsgPos++;
-    }
-    else if ( pstMsgPool->firstMsgPos > pstMsgPool->nextMsgPos )
-    {
-        if ( (pstMsgPool->nextMsgPos + INTER_CORE_MSG_POOL_MAX) > (pstMsgPool->firstMsgPos + 1) )
+        if(msgPtr[i].dataAccessed == msgPtr[i].enDstCpuID)
         {
-            pstMsg = &(pstMsgPool->stInterCoreMsg[pstMsgPool->firstMsgPos]);
-
-            pstMsgPool->firstMsgPos++;
-
-            if (pstMsgPool->firstMsgPos == INTER_CORE_MSG_POOL_MAX)
-            {
-                pstMsgPool->firstMsgPos = 0;
-            }
+            break;
         }
     }
-    else
+
+    // Check whether the right section is found
+    if (i == INTER_CORE_MSG_SHARE_MEMORY_NUMBER)
     {
-        dlog_error("message pool is empty\n");
+        dlog_error("SRAM inter CPU share memory buffer is full!");
+        return 0;
     }
 
-    return pstMsg;
+    // Set the other parameters 
+#if defined CPU0_DRV
+    msgPtr[i].enSrcCpuID = INTER_CORE_CPU0_ID;
+#elif defined CPU1_DRV
+    msgPtr[i].enSrcCpuID = INTER_CORE_CPU1_ID;
+#elif defined CPU2_DRV
+    msgPtr[i].enSrcCpuID = INTER_CORE_CPU2_ID;
+#else
+    dlog_error("Error CPU number!");
+    return 0;
+#endif
+    msgPtr[i].enDstCpuID = (dst & (~(msgPtr[i].enSrcCpuID)));    // Unmask the local CPU ID
+    msgPtr[i].dataAccessed = 0;
+    msgPtr[i].enMsgID = msg;
+    memcpy(msgPtr[i].data, buf, (length <= sizeof(msgPtr[i].data)) ? length : sizeof(msgPtr[i].data));
+
+    // Trigger the interrupt
+    InterCore_TriggerIRQ0();
+    
+    return 1;
 }
 
-
-void InterCore_IRQ0Handler(void)
+uint8_t InterCore_GetMsg(INTER_CORE_MSG_ID* msg_p, uint8_t* buf, uint32_t max_length)
 {
-    dlog_info("handler 0\n");
+    uint8_t i = 0;
+    INTER_CORE_CPU_ID dst_filter;
+    volatile INTER_CORE_MSG_TYPE* msgPtr = (INTER_CORE_MSG_TYPE*)INTER_CORE_MSG_SHARE_MEMORY_BASE_ADDR;
+
+    // Check the input pointers
+    if ((msg_p == NULL) || (buf == NULL))
+    {
+        dlog_error("Null Pointer!");
+        return 0;
+    }
+
+    // Filter to filter out other CPU's data
+#if defined CPU0_DRV
+    dst_filter = INTER_CORE_CPU0_ID;
+#elif defined CPU1_DRV
+    dst_filter = INTER_CORE_CPU1_ID;
+#elif defined CPU2_DRV
+    dst_filter = INTER_CORE_CPU2_ID;
+#else
+    dlog_error("Error CPU number!");
+    return 0;
+#endif
+
+    // Check the data buffer to find the current CPU's data
+    for(i = 0 ; i < INTER_CORE_MSG_SHARE_MEMORY_NUMBER; i++)
+    {
+#ifdef INTER_CORE_DEBUG_LOG_ENABLE
+        dlog_info("msgPtr[%d].dataAccessed 0x%x, msgPtr[%d].enDstCpuID 0x%x", i, msgPtr[i].dataAccessed, i, msgPtr[i].enDstCpuID);
+#endif
+        if(((msgPtr[i].dataAccessed & dst_filter) == 0) && ((msgPtr[i].enDstCpuID & dst_filter) != 0))
+        {
+            // Set the data accessed flag of the current CPU
+            // Add lock to avoid multi CPU conflict
+            Lock(&msgPtr[i].lock);
+            msgPtr[i].dataAccessed |= dst_filter;
+            __asm volatile ("dsb"); // Sync to SRAM and make sure other CPUs can access the latest data in SRAM
+            UnLock(&msgPtr[i].lock);
+            break;
+        }
+    }
+
+    // Check whether some message is found
+    if (i == INTER_CORE_MSG_SHARE_MEMORY_NUMBER)
+    {
+#ifdef INTER_CORE_DEBUG_LOG_ENABLE
+        dlog_info("No specified inter CPU message!");
+#endif
+        return 0;
+    }
+    else
+    {
+        dlog_info("Matched inter CPU message 0x%x!", msgPtr[i].enMsgID);
+    }
+
+    // Retrieve the message data
+    *msg_p = msgPtr[i].enMsgID;
+    memcpy(buf, msgPtr[i].data, (max_length <= sizeof(msgPtr[i].data)) ?  max_length : sizeof(msgPtr[i].data));
+
+    return 1;
 }
-
-
-void InterCore_IRQ1Handler(void)
-{
-    dlog_info("handler 1\n");
-}
-
-
-void InterCore_TriggerIRQ0(void)
-{
-    *((uint32_t *)(INTER_CORE_TRIGGER_REG_ADDR)) |= INTER_CORE_TRIGGER_IRQ0_BITMAP;
-}
-
-
-void InterCore_TriggerIRQ1(void)
-{
-    *((uint32_t *)(INTER_CORE_TRIGGER_REG_ADDR)) |= INTER_CORE_TRIGGER_IRQ1_BITMAP;
-}
-
 

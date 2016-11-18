@@ -7,6 +7,16 @@ typedef void (*SYS_Event_Handler)(void *);
 #define SYS_EVENT_LEVEL_HIGH_MASK             0x10000000
 #define SYS_EVENT_LEVEL_MIDIUM_MASK           0x20000000
 #define SYS_EVENT_LEVEL_LOW_MASK              0x40000000
+#define SYS_EVENT_INTER_CORE_MASK             0x80000000
+
+typedef enum
+{
+    INTER_CORE_CPU0_ID = 1,
+    INTER_CORE_CPU1_ID = 2,
+    INTER_CORE_CPU2_ID = 4,
+}INTER_CORE_CPU_ID;
+
+typedef uint32_t INTER_CORE_MSG_ID;
 
 // Registered system event handler list
 
@@ -70,8 +80,10 @@ void SYS_EVENT_DumpAllListNodes(void);
 
 // Misc driver event
 
-#define SYS_EVENT_ID_ADV7611_FORMAT_CHANGE          (SYS_EVENT_LEVEL_MIDIUM_MASK | 0x0001)
-#define SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE           (SYS_EVENT_LEVEL_MIDIUM_MASK | 0x0002)
+#define SYS_EVENT_ID_ADV7611_FORMAT_CHANGE         (SYS_EVENT_LEVEL_MIDIUM_MASK | 0x0001)
+#define SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE          (SYS_EVENT_LEVEL_MIDIUM_MASK | 0x0002)
+#define SYS_EVENT_ID_BB_DATA_BUFFER_FULL           (SYS_EVENT_LEVEL_MIDIUM_MASK | 0x0003 | SYS_EVENT_INTER_CORE_MASK)
+#define SYS_EVENT_ID_BB_DATA_BUFFER_FULL_LOCAL     (SYS_EVENT_LEVEL_MIDIUM_MASK | 0x0003)
 
 typedef struct _SysEvent_ADV7611FormatChangeParameter
 {
@@ -87,5 +99,11 @@ typedef struct _SysEvent_BB_ModulationChange
     uint8_t  BB_MAX_support_br; //BB_MAX_support_br: the MAX stream bitrate(MHz) 
     uint8_t  reserve[SYS_EVENT_HANDLER_PARAMETER_LENGTH - 1];
 } STRU_SysEvent_BB_ModulationChange;
+
+typedef struct _SysEvent_BB_DATA_BUFFER_FULL_RATIO_Change
+{
+    uint8_t  BB_Data_Full_Ratio; // 0x00 - 0x80 
+    uint8_t  reserve[SYS_EVENT_HANDLER_PARAMETER_LENGTH - 1];
+} STRU_SysEvent_BB_DATA_BUFFER_FULL_RATIO_Change;
 
 #endif

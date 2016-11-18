@@ -7,7 +7,7 @@
 #include "test_usbh.h"
 #include "test_sram.h"
 #include "cmsis_os.h"
-
+#include "sys_event.h"
 
 void *malloc(size_t size)
 {
@@ -46,15 +46,15 @@ static void IO_Task(void)
 {
     while (1)
     {
+        SYS_EVENT_Process();
         if (command_getEnterStatus() == 1)
         {
             command_fulfill();
         }
 
-        dlog_output(1);
+        dlog_output(100);
     }
 }
-
 
 /**
   * @brief  Main program
@@ -71,6 +71,8 @@ int main(void)
     /* initialize the uart */
     console_init(0,115200);
     dlog_info("cpu0 start!!! \n");
+
+    InterCore_Init();
 
     /* Enable the CPU Cache */
     CPU_CACHE_Enable();
