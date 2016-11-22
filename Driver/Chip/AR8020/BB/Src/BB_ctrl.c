@@ -87,38 +87,40 @@ static void BB_regs_init(ENUM_BB_MODE en_mode)
 
 int BB_softReset(ENUM_RST_MODE en_mode)
 {
+    uint8_t reg_after_reset;
     if(en_mode == BB_GRD_MODE)
     {
         BB_SPI_curPageWriteByte(0x00,0xB2);
         BB_SPI_curPageWriteByte(0x00,0xB0);
-		BB_ctx.en_curPage = PAGE2;
+        reg_after_reset = 0xB0;
     }
     else
     {        
         BB_SPI_curPageWriteByte(0x00, 0x81);
         BB_SPI_curPageWriteByte(0x00, 0x80);
-        
-        //bug fix: write reset register may fail.
-        int count = 0;
-        while(1)
-        {
-            uint8_t rst = BB_SPI_curPageReadByte(0x00);
-            if(rst != 0x80)
-            {
-                dlog_error("RST:%0.2x %d\r\n", rst, count);
-                BB_SPI_curPageWriteByte(0x00, 0x80);
-                count ++;
-            }
-            else
-            {
-                break;
-            }
-        }
-
-        BB_ctx.en_curPage = PAGE2;
+        reg_after_reset = 0x80;
     }
+
+    //bug fix: write reset register may fail. 
+    int count = 0;
+    while(count++ < 5)
+    {
+        uint8_t rst = BB_SPI_curPageReadByte(0x00);
+        if(rst != reg_after_reset)
+        {
+            BB_SPI_curPageWriteByte(0x00, reg_after_reset);
+            count ++;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    BB_ctx.en_curPage = PAGE2;
     return 0;
 }
+
 
 
 
