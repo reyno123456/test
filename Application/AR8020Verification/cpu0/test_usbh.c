@@ -23,7 +23,55 @@ FIL                     MyUSBFile;
 osMessageQId            USBH_AppEvent;
 USBH_BypassVideoCtrl    g_usbhBypassVideoCtrl = {0};
 
+#define RDWR_SECTOR_SIZE (1024*4)
+void BOOTLOAD_Upgrade(void)
+{
 
+    FRESULT    fileResult;
+    FIL        MyFile;
+    uint32_t   u32_bytesRead= RDWR_SECTOR_SIZE;
+    uint8_t    *u8_arrayRecData = (uint8_t *)0x21004000;
+    uint32_t   u32_recDataSum = 0;
+    uint32_t   u32_norAddr = (0x10000+0x10000000);
+    dlog_info("Nor flash init start ...");
+    NOR_FLASH_Init();
+    dlog_info("Nor flash init end   ...");
+    if (APPLICATION_READY == Appli_state)
+    {
+        fileResult = f_open(&MyFile, "ar8020.bin", FA_READ);
+        if (FR_OK != fileResult)
+        {
+            dlog_info("open or create file error: %d\n", fileResult);
+            return;
+        }                    
+        while(RDWR_SECTOR_SIZE == u32_bytesRead)
+        {
+            
+           // memset(u8_arrayRecData,0,RDWR_SECTOR_SIZE);
+            NOR_FLASH_EraseSector(u32_norAddr);
+            QUAD_SPI_WriteEnable();
+            QUAD_SPI_CheckBusy();
+            fileResult = f_read(&MyFile, u32_norAddr, RDWR_SECTOR_SIZE, (void *)&u32_bytesRead);
+            if((fileResult != FR_OK))
+            {
+                dlog_info("Cannot Read from the file \n");
+                f_close(&MyFile);
+            }
+            QUAD_SPI_CheckBusy();
+            u32_recDataSum+=u32_bytesRead;
+            u32_norAddr += RDWR_SECTOR_SIZE; 
+           // dlog_info("f_read success %d!",u32_bytesRead);
+            dlog_output(100);               
+        }
+        f_close(&MyFile);
+    }
+    else
+    {
+        dlog_info("Appli_state\n");
+    }
+    dlog_info("upgrade ok\n");
+    dlog_output(100);
+}
 
 void USBH_BypassVideo(void)
 {
@@ -210,7 +258,12 @@ void USBH_MainTask(void)
                     g_usbhBypassVideoCtrl.taskActivate   = 0;
                 }
                 break;
-
+            case USBH_UPGRADE:
+                {
+                    osThreadDef(UsbUpgrade, BOOTLOAD_Upgrade, osPriorityIdle, 0, 10 * 128);
+                    osThreadCreate(osThread(UsbUpgrade), NULL);
+                }
+                break;
             case USBH_APP_CREATE_FILE:
                 break;
 

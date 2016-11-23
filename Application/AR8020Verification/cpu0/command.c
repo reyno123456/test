@@ -241,6 +241,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_stopBypassVideo();
     }
+    else if (memcmp(cmdArray[0], "upgrade", strlen("upgrade")) == 0)
+    {
+        command_upgrade();        
+    }
     else if (memcmp(cmdArray[0], "hdmiinit", strlen("hdmiinit")) == 0)
     {
         command_initADV7611(cmdArray[1]);
@@ -391,6 +395,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_output(1000);
         dlog_error("startbypassvideo");
         dlog_error("stopbypassvideo");
+        dlog_error("upgrade");
     }
 
     /* must init to receive new data from serial */
@@ -622,5 +627,13 @@ void command_stopBypassVideo(void)
         dlog_error("Bypass Video Task is not running\n");
     }
 }
+void command_upgrade(void)
+{
+    USBH_APP_EVENT_DEF  usbhAppType;
 
+    usbhAppType = USBH_UPGRADE;
+
+    osMessagePut(USBH_AppEvent, usbhAppType, 0);
+
+}
 
