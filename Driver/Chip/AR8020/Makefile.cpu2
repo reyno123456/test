@@ -44,7 +44,8 @@ SRC_C := SysCtl/Src/reg_rw.c \
          BB/Src/grd_controller.c \
          BB/Src/grd_sweep.c \
          BB/Src/BB_snr_service.c \
-         BB/Src/BB_ctrl.c
+         BB/Src/BB_ctrl.c \
+         BB/Src/BB_uart_com.c
 
 INCDIRS := -IUART/Inc \
            -IH264Encoder/Inc \
@@ -82,6 +83,7 @@ install:
 	@cp -f BB/Inc/BB_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/grd_controller.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/sky_controller.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f BB/Inc/BB_uart_com.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/timer.h $(OUTPUT_HEADER_STAGING_DIR)
 

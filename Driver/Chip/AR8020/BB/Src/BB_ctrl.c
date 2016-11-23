@@ -3,6 +3,7 @@
 #include "BB_spi.h"
 #include "BB_ctrl.h"
 #include "BB_init_regs.h"
+#include "BB_uart_com.h"
 #include "reg_rw.h"
 #include "sys_param.h"
 #include "config_baseband_register.h"
@@ -216,6 +217,7 @@ void RF_8003x_spi_init(ENUM_BB_MODE mode)
 void BB_init(STRU_BB_initType *ptr_initType)
 {
     BB_SPI_init();
+    BB_UARTComInit();
     
     #if (BB_SPI_TEST==1)
     uint8_t i = 0, j =0;

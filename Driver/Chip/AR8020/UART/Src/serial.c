@@ -40,7 +40,10 @@ static uart_type* get_uart_type_by_index(unsigned char index)
         break;
     case 9:
         uart_regs = (uart_type *)UART9_BASE;
-        break;        
+        break;
+    case 10:
+        uart_regs = (uart_type *)UART10_BASE;
+        break;
     default:
         uart_regs = (uart_type *)NULL;
         break;

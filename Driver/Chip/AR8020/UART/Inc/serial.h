@@ -13,6 +13,8 @@
 #define	UART7_BASE               0x40570000
 #define	UART8_BASE               0x40580000
 #define UART9_BASE               0xA0000000
+#define UART10_BASE              0xA0060000 
+
 
 #define CLK_FREQ                 100000000    // clock frequency, 125MHz = half of Core Clk
 //#define CLK_FREQ               80000000    // clock frequency

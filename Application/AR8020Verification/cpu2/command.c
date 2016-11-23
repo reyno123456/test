@@ -309,6 +309,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_Grd_set_it_ch(cmdArray[1]);
     }
+    else if(memcmp(cmdArray[0], "command_test_BB_uart", strlen("command_test_BB_uart")) == 0)
+    {
+        command_test_BB_uart();
+    }
     else 
     {
         dlog_error("Command not found! Please use commands like:\n");
@@ -334,6 +338,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("sky_set_ITQAM_and_notify");
         dlog_error("command_Grd_set_it_skip_mode_ch");
         dlog_error("command_Grd_set_it_ch");
+        dlog_error("command_test_BB_uart");
     }
 
     /* must reset to receive new data from serial */

@@ -9,6 +9,7 @@
 #include "interrupt.h"
 #include "BB_ctrl.h"
 #include "BB_spi.h"
+#include "BB_uart_com.h"
 
 static int test_bbctrl_sky(void);
 static int test_bbctrl_grd(void);
@@ -177,4 +178,27 @@ void command_Grd_set_it_ch(char* itchStr)
     uint8_t itch = strtoul(itchStr, NULL, 0);
     grd_set_it_ch(itch);
 }
+
+static void BBUARTComTest(uint8_t* data_buf, uint8_t length)
+{
+    if (data_buf != NULL)
+    {
+        uint8_t i = 0;
+
+        dlog_info("Receive BB UART data:");
+        for (i = 0; i < length; i ++)
+        {
+            dlog_info("0x%x", data_buf[i]);
+        }
+    }
+}
+
+void command_test_BB_uart(void)
+{
+    BB_UARTComRegisterRXCallback(BBUARTComTest);
+
+    uint8_t data_buf[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    BB_UARTComSendMsg(data_buf, sizeof(data_buf));
+}
+
 
