@@ -219,6 +219,11 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_writeMemory(cmdArray[1], cmdArray[2]);
     }
+    /* initialize sdcard: "initsd" */
+    else if (memcmp(cmdArray[0], "initsd", 6) == 0)
+    {
+        command_initSdcard();
+    }
     /* read sdcard: "readsd $(startBlock) $(blockNum)" */
     else if (memcmp(cmdArray[0], "readsd", 6) == 0)
     {
@@ -362,8 +367,9 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("Command not found. Please use the commands like:");
         dlog_error("read <address>");
         dlog_error("write <address> <data>");
-        dlog_error("readsd <SrcAddr> <SectorNum>");
-        dlog_error("writesd <DstAddr> <SectorNum> <Srcaddr>");
+        dlog_error("initsd");
+        dlog_error("readsd <SrcAddr:0x> <SectorNum:0x>");
+        dlog_error("writesd <DstAddr:0x> <SectorNum:0x> <Srcaddr:0x>");
         dlog_error("erasesd <startSector> <SectorNum>");
         dlog_error("hdmiinit <index>");
         dlog_error("hdmidump <index>");
@@ -526,29 +532,33 @@ void command_readSdcard(char *Dstaddr, char *BlockNum)
     memset(readSdcardBuff, '\0', iBlockNum * 512);
     bufferPos = readSdcardBuff;
 
-    dlog_info("iSrcBlock = 0x%08x\n", iSrcAddr);
-    dlog_info("iBlockNum = 0x%08x\n", iBlockNum);
-    dlog_info("readSdcardBuff = 0x%08x\n", readSdcardBuff);
+    // dlog_info("iSrcBlock = 0x%08x\n", iSrcAddr);
+    // dlog_info("iBlockNum = 0x%08x\n", iBlockNum);
+    // dlog_info("readSdcardBuff = 0x%08x\n", readSdcardBuff);
 
     /* read from sdcard */
     sd_read(bufferPos, iSrcAddr, iBlockNum);
 
     /* print to serial */
-    for (blockIndex = iSrcAddr; blockIndex <= (iSrcAddr + iBlockNum); blockIndex++)
+    for (blockIndex = iSrcAddr; blockIndex < (iSrcAddr + iBlockNum); blockIndex++)
     {
-        dlog_info("==================block: %x=================",blockIndex);
+        dlog_info("==================block: %d=================",blockIndex);
         for (rowIndex = 0; rowIndex < 16; rowIndex++)
         {
             /* new line */
             dlog_info("0x%x: ",(unsigned int)((rowIndex << 5) + (blockIndex << 9)));
-            for (columnIndex = 0; columnIndex < 2; columnIndex++)
+            for (columnIndex = 0; columnIndex < 1; columnIndex++)
             {
-                dlog_info("0x%08x 0x%08x 0x%08x 0x%08x", 
+                dlog_info("0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x", 
                            *((unsigned int *)bufferPos), 
                            *((unsigned int *)(bufferPos + 4)), 
                            *((unsigned int *)(bufferPos + 8)), 
-                           *((unsigned int *)(bufferPos + 12)));
-                bufferPos += 4;
+                           *((unsigned int *)(bufferPos + 12)),
+                           *((unsigned int *)(bufferPos + 16)),
+                           *((unsigned int *)(bufferPos + 20)),
+                           *((unsigned int *)(bufferPos + 24)),
+                           *((unsigned int *)(bufferPos + 28)));
+                bufferPos += 32;
             }
         }
         dlog_info("\n");
@@ -567,9 +577,9 @@ void command_writeSdcard(char *Dstaddr, char *BlockNum, char *SrcAddr)
     iBlockNum   = command_str2uint(BlockNum);
     iSrcAddr    = command_str2uint(SrcAddr);
 
-    dlog_info("iSrcAddr = 0x%08x\n", iSrcAddr);
-    dlog_info("iDstBlock = 0x%08x\n", iDstAddr);
-    dlog_info("iBlockNum = 0x%08x\n", iBlockNum);
+    // dlog_info("iSrcAddr = 0x%08x\n", iSrcAddr);
+    // dlog_info("iDstBlock = 0x%08x\n", iDstAddr);
+    // dlog_info("iBlockNum = 0x%08x\n", iBlockNum);
 
     /* write to sdcard */
     sd_write(iDstAddr, iSrcAddr, iBlockNum);
@@ -584,8 +594,8 @@ void command_eraseSdcard(char *startBlock, char *blockNum)
     iBlockNum   = command_str2uint(blockNum);
 
 
-    dlog_info("startBlock = 0x%08x\n", iStartBlock);
-    dlog_info("blockNum = %d\n", iBlockNum);
+    // dlog_info("startBlock = 0x%08x\n", iStartBlock);
+    // dlog_info("blockNum = %d\n", iBlockNum);
     sd_erase(iStartBlock, iBlockNum);
 }
 

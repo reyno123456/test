@@ -2,7 +2,7 @@
 #include "interrupt.h"
 #include "test_sd.h"
 
-void InitIRQ()
+void InitSDIRQ()
 {
     /* register the irq handler */
     reg_IrqHandle(SD_INTR_VECTOR_NUM, sd_IRQHandler);
@@ -13,7 +13,7 @@ void InitIRQ()
 
 void TestWR()
 {
-	InitIRQ();
+	InitSDIRQ();
 
 	int res;
 	if ((res = sd_init()) != 0)
@@ -147,4 +147,14 @@ void TestFatFs()
 
 	/*##-11- Unlink the micro SD disk I/O driver ###############################*/
 	res = FATFS_UnLinkDriver(SDPath);
+}
+
+void command_initSdcard()
+{
+    InitSDIRQ();
+	int res;
+	if ((res = sd_init()) != 0)
+	{
+		return 0;
+	}
 }

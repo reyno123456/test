@@ -26,11 +26,8 @@ SDMMC_Status sd_write(uint32_t DstStartAddr, uint32_t SrcStartAddr, uint32_t Sec
 	dma.SrcAddr = (uint32_t )DTCMBUSADDR(SrcStartAddr);
 	dma.DstAddr = (uint32_t )DstStartAddr;                        /* [block units] */
 	dma.SectorNum = SectorNum;
-	dma.ListBaseAddr = 0x440F0000;
 
-	dlog_info("DstStartAddr = %x\n",DstStartAddr);
-	dlog_info("SrcStartAddr = %x\n",SrcStartAddr);
-	dlog_info("SectorNum = %x\n",SectorNum);
+
 	if (SectorNum == 1)
 	{
 		errorstate = Card_SD_WriteBlock_DMA(&sdhandle, &dma);	
@@ -57,7 +54,7 @@ SDMMC_Status sd_read(uint32_t DstStartAddr, uint32_t SrcStartAddr, uint32_t Sect
 	dma.SrcAddr = (uint32_t )SrcStartAddr;                     /* [block units] */
 	dma.DstAddr = (uint32_t )DTCMBUSADDR(DstStartAddr);
 	dma.SectorNum = SectorNum;
-	dma.ListBaseAddr = 0x440F0000;
+	
 
 	if (SectorNum == 1)
 	{

@@ -435,8 +435,10 @@ SDMMC_Status Core_SDMMC_WaiteCmdStart(SDMMC_REG *SDMMCx);
             read_reg32((uint32_t *)&(SDMMCx->INTMASK));
 #define   Core_SDMMC_GetMINTSTS(SDMMCx) \
             read_reg32((uint32_t *)&(SDMMCx->MINTSTS));
-#define   Core_SDMMC_GetUHSREG(SDMMCx, temreg) \
+#define   Core_SDMMC_GetUHSREG(SDMMCx) \
             read_reg32((uint32_t *)&(SDMMCx->UHSREG));
+#define   Core_SDMMC_GetBUFADDR(SDMMCx) \
+            read_reg32((uint32_t *)&(SDMMCx->BUFADDR));
 
 
 

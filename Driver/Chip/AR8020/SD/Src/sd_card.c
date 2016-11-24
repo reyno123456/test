@@ -16,10 +16,13 @@
 #include "reg_rw.h"
 #include "sd_core.h"
 #include "sd_card.h"
-#include "stm32f746xx.h"
 #include "debuglog.h"
 
-IDMAC_DescTypeDef Descriptor;
+#define USE_MALLOC_DESC
+
+#ifndef USE_MALLOC_DESC
+  IDMAC_DescTypeDef desc[32] = {0};
+#endif
 /** @defgroup SD_Private_Functions SD Private Functions
   * @{
   */
@@ -109,92 +112,12 @@ SD_ErrorTypedef Card_SD_DeInit(SD_HandleTypeDef *hsd)
   return errorstate;
 }
 
-// SD_ErrorTypedef Card_SD_ReadBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma)
-// {
-//   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
-//   //SDMMC_DataInitTypeDef sdmmc_datainitstructure;
-//   typedef uint32_t *uint32p;
-//   SD_ErrorTypedef errorstate = SD_OK;
-//   uint32_t BlockIndex, NextDesp, Dst_Addr, TotalBlocks;
-//   uint32p DES0, DES1, DES2, DES3;
-//   uint32_t get_val, cmd_done, data_over, card_busy;
-//   uint32_t RestBytes = dma->SectorNum * dma->BlockSize;
-//   /* Initialize handle flags */
-//   hsd->SdTransferCplt  = 0;
-//   hsd->SdTransferErr   = SD_OK;
-
-//   if (hsd->CardType == HIGH_CAPACITY_SD_CARD)
-//   {
-//     dma->BlockSize = 512;
-//   }
-
-//   /* Configure the SD DPSM (Data Path State Machine) */
-//   errorstate = SD_DMAConfig(hsd, dma);
-//   if (errorstate != SD_OK) {
-//     return errorstate;
-//   }
-  
-
-//   for (BlockIndex = 0; BlockIndex < dma->SectorNum; BlockIndex++)
-//   {
-
-//     if (RestBytes < dma->BlockSize)
-//     {
-//       Core_SDMMC_SetBYCTNT(hsd->Instance, RestBytes);
-//     }
-
-//     Dst_Addr = dma->DstAddr + 512 * BlockIndex;
-//     DES0 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x00000000);
-//     DES1 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x00000004);
-//     DES2 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x00000008);
-//     DES3 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x0000000c);
-//     NextDesp = dma->ListBaseAddr + 0x00000010 * (BlockIndex + 1);
-
-//     write_reg32(DES0, SDMMC_DES0_OWN | \
-//                 SDMMC_DES0_CH | \
-//                 SDMMC_DES0_FS | \
-//                 SDMMC_DES0_LD);
-//     write_reg32(DES1, 0x00000200);
-//     write_reg32(DES2, Dst_Addr);
-//     write_reg32(DES3, 0x00000000);
-
-//     /* send CMD17*/
-//     sdmmc_cmdinitstructure.Argument         = dma->SrcAddr + BlockIndex;
-//     sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_READ_SINGLE_BLOCK;
-//     sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
-//     sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
-//         SDMMC_CMD_USE_HOLD_REG | \
-//         SDMMC_CMD_PRV_DAT_WAIT | \
-//         SDMMC_CMD_DAT_EXP      | \
-//         SDMMC_CMD_RESP_CRC     | \
-//         SDMMC_CMD_RESP_EXP;
-//     Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
-//     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-
-//     /* Check for error conditions */
-//     Core_SDMMC_WaiteCmdDone(hsd->Instance);
-//     Core_SDMMC_WaiteDataOver(hsd->Instance);
-//     Core_SDMMC_WaiteCardBusy(hsd->Instance);
-
-//     write_reg32(&(hsd->Instance->DBADDR), NextDesp);
-//     RestBytes -= dma->BlockSize;
-//   }
-
-//   /* Update the SD transfer error in SD handle */
-//   hsd->SdTransferErr = errorstate;
-//   return errorstate;
-// }
 
 SD_ErrorTypedef Card_SD_ReadBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma)
 {
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
-  //SDMMC_DataInitTypeDef sdmmc_datainitstructure;
-  typedef uint32_t *uint32p;
   SD_ErrorTypedef errorstate = SD_OK;
-  uint32_t BlockIndex, NextDesp, Dst_Addr, TotalBlocks;
-  uint32p DES0, DES1, DES2, DES3;
-  uint32_t get_val, cmd_done, data_over, card_busy;
-  uint32_t RestBytes = dma->SectorNum * dma->BlockSize;
+  IDMAC_DescTypeDef desc = {0};
   /* Initialize handle flags */
   hsd->SdTransferCplt  = 0;
   hsd->SdTransferErr   = SD_OK;
@@ -206,55 +129,34 @@ SD_ErrorTypedef Card_SD_ReadBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeD
 
   /* Configure the SD DPSM (Data Path State Machine) */
   errorstate = SD_DMAConfig(hsd, dma);
+  Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc));
+  Core_SDMMC_SetBYCTNT(hsd->Instance, dma->BlockSize);
   if (errorstate != SD_OK) {
     return errorstate;
   }
-  //Core_SDMMC_SetBYCTNT(hsd->Instance, dma->BlockSize);
 
-  for (BlockIndex = 0; BlockIndex < dma->SectorNum; BlockIndex++)
-  {
+  desc.des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH | SDMMC_DES0_LD;
+  desc.des1 = dma->BlockSize;
+  desc.des2 = dma->DstAddr;
+  desc.des3 = 0X0;
 
-    if (RestBytes < dma->BlockSize)
-    {
-      Core_SDMMC_SetBYCTNT(hsd->Instance, RestBytes);
-    }
+  /* send CMD17*/
+  sdmmc_cmdinitstructure.Argument         = dma->SrcAddr;
+  sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_READ_SINGLE_BLOCK;
+  sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
+  sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
+      SDMMC_CMD_USE_HOLD_REG | \
+      SDMMC_CMD_PRV_DAT_WAIT | \
+      SDMMC_CMD_DAT_EXP      | \
+      SDMMC_CMD_RESP_CRC     | \
+      SDMMC_CMD_RESP_EXP;
+  Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+  Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
 
-    Dst_Addr = dma->DstAddr + 512 * BlockIndex;
-    DES0 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x00000000);
-    DES1 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x00000004);
-    DES2 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x00000008);
-    DES3 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x0000000c);
-    NextDesp = dma->ListBaseAddr + 0x00000010 * (BlockIndex + 1);
-
-    write_reg32(DES0, SDMMC_DES0_OWN | \
-                SDMMC_DES0_CH | \
-                SDMMC_DES0_FS | \
-                SDMMC_DES0_LD);
-    write_reg32(DES1, 0x00000200);
-    write_reg32(DES2, Dst_Addr);
-    write_reg32(DES3, 0x00000000);
-
-    /* send CMD17*/
-    sdmmc_cmdinitstructure.Argument         = dma->SrcAddr + BlockIndex;
-    sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_READ_SINGLE_BLOCK;
-    sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
-    sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
-        SDMMC_CMD_USE_HOLD_REG | \
-        SDMMC_CMD_PRV_DAT_WAIT | \
-        SDMMC_CMD_DAT_EXP      | \
-        SDMMC_CMD_RESP_CRC     | \
-        SDMMC_CMD_RESP_EXP;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
-    Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-
-    /* Check for error conditions */
-    Core_SDMMC_WaiteCmdDone(hsd->Instance);
-    Core_SDMMC_WaiteDataOver(hsd->Instance);
-    Core_SDMMC_WaiteCardBusy(hsd->Instance);
-
-    write_reg32(&(hsd->Instance->DBADDR), NextDesp);
-    RestBytes -= dma->BlockSize;
-  }
+  /* Check for error conditions */
+  Core_SDMMC_WaiteCmdDone(hsd->Instance);
+  Core_SDMMC_WaiteDataOver(hsd->Instance);
+  Core_SDMMC_WaiteCardBusy(hsd->Instance);
 
   /* Update the SD transfer error in SD handle */
   hsd->SdTransferErr = errorstate;
@@ -264,11 +166,22 @@ SD_ErrorTypedef Card_SD_ReadBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeD
 SD_ErrorTypedef Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma)
 {
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
-  typedef uint32_t *uint32p;
   SD_ErrorTypedef errorstate = SD_OK;
-  uint32_t BlockIndex, NextDesp, Dst_Addr, TotalBlocks;
-  uint32p DES0, DES1, DES2, DES3;
-  uint32_t get_val, cmd_done, data_over, card_busy;
+  uint32_t BlockIndex, TmpAddr = dma->DstAddr, DstAddr = dma->DstAddr;
+  uint32_t BuffSize = BUFFSIZE8;
+  uint32_t SectorDivid = dma->SectorNum / BuffSize;
+  uint32_t SectorRmd = dma->SectorNum % BuffSize;
+
+#ifdef USE_MALLOC_DESC
+  /* malloc the space for descriptor */
+  IDMAC_DescTypeDef *desc = (IDMAC_DescTypeDef *)malloc(sizeof(IDMAC_DescTypeDef) * (SectorDivid + SectorRmd));
+  if (!desc){
+    dlog_info("Malloc Failed! Exit Read\n");
+    errorstate = SD_ERROR;
+    return errorstate;
+  }
+#endif
+
   /* Initialize handle flags */
   hsd->SdTransferCplt  = 0;
   hsd->SdTransferErr   = SD_OK;
@@ -280,81 +193,141 @@ SD_ErrorTypedef Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATran
 
   /* Configure the SD DPSM (Data Path State Machine) */
   errorstate = SD_DMAConfig(hsd, dma);
+  Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc[0]));
   if (errorstate != SD_OK) {
     return errorstate;
   }
 
-  for (BlockIndex = 0; BlockIndex < dma->SectorNum; BlockIndex++)
+  if (SectorDivid)
   {
+    Core_SDMMC_SetBYCTNT(hsd->Instance, SectorDivid * BuffSize * dma->BlockSize);
+    for (BlockIndex = 0; BlockIndex < SectorDivid; BlockIndex++)
+    {
 
-    Dst_Addr = dma->DstAddr + 512 * BlockIndex;
-    DES0 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x00000000);
-    DES1 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x00000004);
-    DES2 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x00000008);
-    DES3 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x0000000c);
-    NextDesp = dma->ListBaseAddr + 0x00000010 * (BlockIndex + 1);
+      DstAddr = dma->DstAddr + dma->BlockSize * BuffSize * BlockIndex;
 
-    if (BlockIndex == 0)
-    {
-      write_reg32(DES0, SDMMC_DES0_OWN | \
-                SDMMC_DES0_FS | \
-                SDMMC_DES0_CH);
-      write_reg32(DES1, 0x00000200);
-      write_reg32(DES2, Dst_Addr);   //the buffer address
-      write_reg32(DES3, NextDesp);
+      if (BlockIndex == 0 && (SectorDivid != 1))
+      {
+
+        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH;
+        desc[BlockIndex].des1 = dma->BlockSize * BuffSize;
+        desc[BlockIndex].des2 = DstAddr;
+        desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);;
+
+      }
+      else if ((BlockIndex == 0) && (SectorDivid == 1))
+      {
+
+        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH | SDMMC_DES0_LD | SDMMC_DES0_FS;
+        desc[BlockIndex].des1 = dma->BlockSize * BuffSize;
+        desc[BlockIndex].des2 = DstAddr;
+        desc[BlockIndex].des3 = 0x0;
+        TmpAddr = DstAddr + dma->BlockSize * BuffSize;
+      }
+      else if (BlockIndex == SectorDivid - 1)
+      {
+
+        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH | SDMMC_DES0_LD;
+        desc[BlockIndex].des1 = dma->BlockSize * BuffSize;
+        desc[BlockIndex].des2 = DstAddr;
+        desc[BlockIndex].des3 = 0x0;
+        TmpAddr = DstAddr + dma->BlockSize * BuffSize;
+      }
+      else
+      {
+        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH;
+        desc[BlockIndex].des1 = dma->BlockSize * BuffSize;
+        desc[BlockIndex].des2 = DstAddr;
+        desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);;
+      }
     }
-    else if (BlockIndex == dma->SectorNum - 1)
-    {
-      write_reg32(DES0, SDMMC_DES0_OWN | \
-                SDMMC_DES0_CH | \
-                SDMMC_DES0_LD);
-      write_reg32(DES1, 0x00000200);
-      write_reg32(DES2, Dst_Addr);   //the buffer address
-      write_reg32(DES3, 0x00000000); 
-    }
-    else
-    {
-      write_reg32(DES0, SDMMC_DES0_OWN | \
-                SDMMC_DES0_CH);
-      write_reg32(DES1, 0x00000200);
-      write_reg32(DES2, Dst_Addr);   //the buffer address
-      write_reg32(DES3, NextDesp);
-    }
+    /* send CMD18 */
+    sdmmc_cmdinitstructure.Argument         = dma->SrcAddr;
+    sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_READ_MULTIPLE_BLOCK;
+    sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
+    sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
+        SDMMC_CMD_USE_HOLD_REG | \
+        SDMMC_CMD_PRV_DAT_WAIT | \
+        SDMMC_CMD_SEND_STOP    | \
+        SDMMC_CMD_DAT_EXP      | \
+        SDMMC_CMD_RESP_CRC     | \
+        SDMMC_CMD_RESP_EXP;
+    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
+    /* Check for error conditions */
+    Core_SDMMC_WaiteCmdDone(hsd->Instance);
+    //Core_SDMMC_WaiteDataOver(hsd->Instance);
+    Core_SDMMC_WaiteCardBusy(hsd->Instance);
   }
-  /* send CMD18 */
-  sdmmc_cmdinitstructure.Argument         = dma->SrcAddr;
-  sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_READ_MULTIPLE_BLOCK;
-  sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
-  sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
-      SDMMC_CMD_USE_HOLD_REG | \
-      SDMMC_CMD_PRV_DAT_WAIT | \
-      SDMMC_CMD_SEND_STOP    | \
-      SDMMC_CMD_DAT_EXP      | \
-      SDMMC_CMD_RESP_CRC     | \
-      SDMMC_CMD_RESP_EXP;
-  Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
-  Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
 
-  /* Check for error conditions */
-  Core_SDMMC_WaiteCmdDone(hsd->Instance);
-  //Core_SDMMC_WaiteDataOver(hsd->Instance);
-  Core_SDMMC_WaiteCardBusy(hsd->Instance);
+  if (SectorRmd)
+  {
+    Core_SDMMC_SetBYCTNT(hsd->Instance, SectorRmd * dma->BlockSize);
+    // dlog_info("------------read rmd-----------------\n");
+    for (BlockIndex = 0; BlockIndex < SectorRmd; BlockIndex++)
+    {
+
+      DstAddr = TmpAddr + dma->BlockSize * BlockIndex;
+
+      if (BlockIndex == 0)
+      {
+
+        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH;
+        desc[BlockIndex].des1 = dma->BlockSize;
+        desc[BlockIndex].des2 = DstAddr;
+        desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);;
+
+      }
+      else if (BlockIndex == SectorDivid - 1)
+      {
+
+        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH | SDMMC_DES0_LD;
+        desc[BlockIndex].des1 = dma->BlockSize;
+        desc[BlockIndex].des2 = DstAddr;
+        desc[BlockIndex].des3 = 0x0;
+      }
+      else
+      {
+        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH;
+        desc[BlockIndex].des1 = dma->BlockSize;
+        desc[BlockIndex].des2 = DstAddr;
+        desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);;
+      }
+    }
+    /* send CMD18 */
+    sdmmc_cmdinitstructure.Argument         = dma->SrcAddr;
+    sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_READ_MULTIPLE_BLOCK;
+    sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
+    sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
+        SDMMC_CMD_USE_HOLD_REG | \
+        SDMMC_CMD_PRV_DAT_WAIT | \
+        SDMMC_CMD_SEND_STOP    | \
+        SDMMC_CMD_DAT_EXP      | \
+        SDMMC_CMD_RESP_CRC     | \
+        SDMMC_CMD_RESP_EXP;
+    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
+    /* Check for error conditions */
+    Core_SDMMC_WaiteCmdDone(hsd->Instance);
+    //Core_SDMMC_WaiteDataOver(hsd->Instance);
+    Core_SDMMC_WaiteCardBusy(hsd->Instance);
+  }
+
+  /* free the space applied from heap */
+#ifdef USE_MALLOC_DESC
+  free(desc);
+#endif
   /* Update the SD transfer error in SD handle */
   hsd->SdTransferErr = errorstate;
   return errorstate;
 }
 
-/*
- *   The original writesingleblock SD function, works well;
- */
+
 SD_ErrorTypedef Card_SD_WriteBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma)
 {
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
   SD_ErrorTypedef errorstate = SD_OK;
-  typedef uint32_t *uint32p;
-  uint32_t BlockIndex, NextDesp, SrcAddr;
-  uint32p DES0, DES1, DES2, DES3;
-  uint32_t get_val, cmd_done, data_over, card_busy;
+  IDMAC_DescTypeDef desc = {0};
   /* Initialize handle flags */
   hsd->SdTransferCplt  = 0;
   hsd->SdTransferErr   = SD_OK;
@@ -368,51 +341,35 @@ SD_ErrorTypedef Card_SD_WriteBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransType
 
   /* Configure the SD DPSM (Data Path State Machine) */
   errorstate = SD_DMAConfig(hsd, dma);
+  Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc));
+  Core_SDMMC_SetBYCTNT(hsd->Instance, dma->BlockSize);
   if (errorstate != SD_OK) {
     dlog_info("SD_DMAConfig Fail\n");
     return errorstate;
   }
 
-  for (BlockIndex = 0; BlockIndex < dma->SectorNum; BlockIndex++)
-  {
-    SrcAddr = dma->SrcAddr + dma->BlockSize * BlockIndex;
-    DES0 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x00000000);
-    DES1 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x00000004);
-    DES2 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x00000008);
-    DES3 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x0000000c);
-    NextDesp = dma->ListBaseAddr + 0x00000010 * (BlockIndex + 1);
+  desc.des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH | SDMMC_DES0_LD;
+  desc.des1 = dma->BlockSize;
+  desc.des2 = dma->SrcAddr;
+  desc.des3 = 0x0;
 
-    write_reg32(DES0, SDMMC_DES0_OWN | \
-                SDMMC_DES0_FS | \
-                SDMMC_DES0_CH | \
-                SDMMC_DES0_LD);
-    write_reg32(DES1, 0x00000200);
-    write_reg32(DES2, SrcAddr);   //the buffer address
-    write_reg32(DES3, 0x00000000);
-
-    dlog_info("SrcAddr = 0x%x\n", SrcAddr);
-    dlog_info("DstAddr = 0x%d\n", dma->DstAddr);
-    dlog_info("DES0 Addr = 0x%x", DES0);
-
-    /* send CMD24 */
-    sdmmc_cmdinitstructure.Argument         = dma->DstAddr;
-    sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_WRITE_SINGLE_BLOCK;
-    sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
-    sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
-                                              SDMMC_CMD_USE_HOLD_REG | \
-                                              SDMMC_CMD_PRV_DAT_WAIT | \
-                                              SDMMC_CMD_DAT_READ_WRITE | \
-                                              SDMMC_CMD_DAT_EXP      | \
-                                              SDMMC_CMD_RESP_CRC     | \
-                                              SDMMC_CMD_RESP_EXP;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
-    Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-     /* Check for error conditions */
-    Core_SDMMC_WaiteCmdDone(hsd->Instance);
-    Core_SDMMC_WaiteDataOver(hsd->Instance);
-    Core_SDMMC_WaiteCardBusy(hsd->Instance); 
-    write_reg32(&(hsd->Instance->DBADDR), NextDesp);
-  }
+  /* send CMD24 */
+  sdmmc_cmdinitstructure.Argument         = dma->DstAddr;
+  sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_WRITE_SINGLE_BLOCK;
+  sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
+  sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
+                                            SDMMC_CMD_USE_HOLD_REG | \
+                                            SDMMC_CMD_PRV_DAT_WAIT | \
+                                            SDMMC_CMD_DAT_READ_WRITE | \
+                                            SDMMC_CMD_DAT_EXP      | \
+                                            SDMMC_CMD_RESP_CRC     | \
+                                            SDMMC_CMD_RESP_EXP;
+  Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+  Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
+   /* Check for error conditions */
+  Core_SDMMC_WaiteCmdDone(hsd->Instance);
+  Core_SDMMC_WaiteDataOver(hsd->Instance);
+  Core_SDMMC_WaiteCardBusy(hsd->Instance); 
   
   /* Update the SD transfer error in SD handle */
   hsd->SdTransferErr = errorstate;
@@ -424,10 +381,21 @@ SD_ErrorTypedef Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATra
 {
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
   SD_ErrorTypedef errorstate = SD_OK;
-  typedef uint32_t *uint32p;
-  uint32_t BlockIndex, NextDesp, SrcAddr;
-  uint32p DES0, DES1, DES2, DES3;
-  uint32_t get_val, cmd_done, data_over, card_busy;
+  uint32_t BlockIndex, TmpAddr = dma->SrcAddr, SrcAddr = dma->SrcAddr;
+  uint32_t BuffSize = BUFFSIZE8;
+  uint32_t SectorDivid = dma->SectorNum / BuffSize;
+  uint32_t SectorRmd = dma->SectorNum % BuffSize;
+
+#ifdef USE_MALLOC_DESC
+  // dlog_info("Ues malloc\n");
+  /* malloc the space for descriptor */
+  IDMAC_DescTypeDef *desc = (IDMAC_DescTypeDef *)malloc(sizeof(IDMAC_DescTypeDef) * (SectorDivid + SectorRmd));
+  if (!desc){
+    dlog_info("malloc failed! Exit writing\n");
+    errorstate = SD_ERROR;
+    return errorstate;
+  }
+#endif
 
   /* Initialize handle flags */
   hsd->SdTransferCplt  = 0;
@@ -441,80 +409,176 @@ SD_ErrorTypedef Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATra
   }
   /* Configure the SD DPSM (Data Path State Machine) */
   errorstate = SD_DMAConfig(hsd, dma);
+  Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc[0]));
   if (errorstate != SD_OK) {
     dlog_info("SD_DMAConfig Fail\n");
     return errorstate;
   }
 
-  for (BlockIndex = 0; BlockIndex < dma->SectorNum; BlockIndex++)
-  {
-    SrcAddr = dma->SrcAddr + dma->BlockSize * BlockIndex;
-    DES0 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x00000000);
-    DES1 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x00000004);
-    DES2 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x00000008);
-    DES3 = (uint32_t *)(dma->ListBaseAddr + 0x00000010 * BlockIndex + 0x0000000c);
-    NextDesp = dma->ListBaseAddr + 0x00000010 * (BlockIndex + 1);
+  if (SectorDivid)
+  { 
+    Core_SDMMC_SetBYCTNT(hsd->Instance, SectorDivid * BuffSize * dma->BlockSize);
+    for (BlockIndex = 0; BlockIndex < SectorDivid; BlockIndex++)
+    {
+      SrcAddr = dma->SrcAddr + dma->BlockSize * BuffSize * BlockIndex;
+      if ((BlockIndex == 0) && (SectorDivid == 1))
+      {
+        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS | SDMMC_DES0_LD | SDMMC_DES0_CH;
+        desc[BlockIndex].des1 = dma->BlockSize * BuffSize;
+        desc[BlockIndex].des2 = SrcAddr;
+        desc[BlockIndex].des3 = 0x0;
+        TmpAddr = SrcAddr + dma->BlockSize * BuffSize;
+      }
+      else if ((BlockIndex == 0) && (SectorDivid != 1))
+      {
+        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS | SDMMC_DES0_CH;
+        desc[BlockIndex].des1 = dma->BlockSize * BuffSize;
+        desc[BlockIndex].des2 = SrcAddr;
+        desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);
 
-    if (BlockIndex == 0)
-    {
-      write_reg32(DES0, SDMMC_DES0_OWN | \
-                SDMMC_DES0_FS | \
-                SDMMC_DES0_CH);
-      write_reg32(DES1, 0x00000200);
-      write_reg32(DES2, SrcAddr);   //the buffer address
-      write_reg32(DES3, NextDesp);
+      }
+      else if (BlockIndex == SectorDivid - 1)
+      {
+        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_LD | SDMMC_DES0_CH;
+        desc[BlockIndex].des1 = dma->BlockSize * BuffSize;
+        desc[BlockIndex].des2 = SrcAddr;
+        desc[BlockIndex].des3 = 0x0;
+        TmpAddr = SrcAddr + dma->BlockSize * BuffSize;
+      }
+      else
+      {
+        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH;
+        desc[BlockIndex].des1 = dma->BlockSize * BuffSize;
+        desc[BlockIndex].des2 = SrcAddr;
+        desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);
+      }
     }
-    else if (BlockIndex == dma->SectorNum - 1)
-    {
-      write_reg32(DES0, SDMMC_DES0_OWN | \
-                SDMMC_DES0_CH | \
-                SDMMC_DES0_LD);
-      write_reg32(DES1, 0x00000200);
-      write_reg32(DES2, SrcAddr);   //the buffer address
-      write_reg32(DES3, 0x00000000); 
-    }
-    else
-    {
-      write_reg32(DES0, SDMMC_DES0_OWN | \
-                SDMMC_DES0_CH);
-      write_reg32(DES1, 0x00000200);
-      write_reg32(DES2, SrcAddr);   //the buffer address
-      write_reg32(DES3, NextDesp);
-    }
+      /* Send CMD55 */
+    sdmmc_cmdinitstructure.Argument         = 0;
+    sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_APP_CMD;
+    sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
+        SDMMC_CMD_USE_HOLD_REG | \
+        SDMMC_CMD_PRV_DAT_WAIT | \
+        SDMMC_CMD_RESP_CRC | \
+        SDMMC_CMD_RESP_EXP;
+    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
+    /* Send ACMD23 */
+    sdmmc_cmdinitstructure.Argument         = BuffSize * SectorDivid;
+    sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_APP_SET_WR_BLK_ERASE_COUNT;
+    sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
+    sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
+        SDMMC_CMD_USE_HOLD_REG | \
+        SDMMC_CMD_PRV_DAT_WAIT | \
+        SDMMC_CMD_RESP_EXP;
+    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
+    
+    dlog_info("\n");
+    /* send CMD25 */
+    sdmmc_cmdinitstructure.Argument         = dma->DstAddr;
+    sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_WRITE_MULTIPLE_BLOCK;
+    sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
+    sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
+        SDMMC_CMD_USE_HOLD_REG | \
+        SDMMC_CMD_PRV_DAT_WAIT | \
+        SDMMC_CMD_SEND_STOP    | \
+        SDMMC_CMD_DAT_READ_WRITE | \
+        SDMMC_CMD_DAT_EXP      | \
+        SDMMC_CMD_RESP_CRC     | \
+        SDMMC_CMD_RESP_EXP;
+    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
+    /* Check for error conditions */
+    Core_SDMMC_WaiteCmdDone(hsd->Instance);
+    Core_SDMMC_WaiteDataOver(hsd->Instance);
+    Core_SDMMC_WaiteCardBusy(hsd->Instance);
+
+    // #ifdef ECHO
+    //     dlog_info("Stop: send CMD12\n");
+    // #endif
+    sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_STOP_TRANSMISSION;
+    sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
+    sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
+        SDMMC_CMD_USE_HOLD_REG | \
+        SDMMC_CMD_PRV_DAT_WAIT | \
+        SDMMC_CMD_RESP_CRC | \
+        SDMMC_CMD_RESP_EXP;
+    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
+    Core_SDMMC_WaiteCmdDone(hsd->Instance);
   }
 
-  /* send CMD25 */
-  sdmmc_cmdinitstructure.Argument         = dma->DstAddr;
-  sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_WRITE_MULTIPLE_BLOCK;
-  sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
-  sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
-      SDMMC_CMD_USE_HOLD_REG | \
-      SDMMC_CMD_PRV_DAT_WAIT | \
-      SDMMC_CMD_SEND_STOP    | \
-      SDMMC_CMD_DAT_READ_WRITE | \
-      SDMMC_CMD_DAT_EXP      | \
-      SDMMC_CMD_RESP_CRC     | \
-      SDMMC_CMD_RESP_EXP;
-  Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
-  Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-  /* Check for error conditions */
-  Core_SDMMC_WaiteCmdDone(hsd->Instance);
-  Core_SDMMC_WaiteDataOver(hsd->Instance);
-  Core_SDMMC_WaiteCardBusy(hsd->Instance);
 
-  #ifdef ECHO
-      dlog_info("Stop: send CMD12\n");
-  #endif
-  sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_STOP_TRANSMISSION;
-  sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
-  sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
-      SDMMC_CMD_USE_HOLD_REG | \
-      SDMMC_CMD_PRV_DAT_WAIT | \
-      SDMMC_CMD_RESP_CRC | \
-      SDMMC_CMD_RESP_EXP;
-  Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
-  Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-  Core_SDMMC_WaiteCmdDone(hsd->Instance);
+  if (SectorRmd)
+  {
+    Core_SDMMC_SetBYCTNT(hsd->Instance, SectorRmd * dma->BlockSize);
+    // dlog_info("------------write rmd-----------------\n");
+    for (BlockIndex = 0; BlockIndex < SectorRmd; ++BlockIndex)
+    {
+      SrcAddr = TmpAddr + dma->BlockSize * BlockIndex;
+      // dlog_info("BlockIndex = %d\n",BlockIndex);
+      // dlog_info("SrcAddr = %x\n",SrcAddr);
+      if ((BlockIndex ==  SectorRmd - 1) && (SectorRmd == 1))
+      {
+        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_LD | SDMMC_DES0_FS | SDMMC_DES0_CH;
+        desc[BlockIndex].des1 = dma->BlockSize;
+        desc[BlockIndex].des2 = SrcAddr;
+        desc[BlockIndex].des3 = 0x0;
+      }
+      else if (BlockIndex ==  SectorRmd - 1)
+      {
+        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_LD | SDMMC_DES0_CH;
+        desc[BlockIndex].des1 = dma->BlockSize;
+        desc[BlockIndex].des2 = SrcAddr;
+        desc[BlockIndex].des3 = 0x0;
+      }
+      else
+      {
+        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH;
+        desc[BlockIndex].des1 = dma->BlockSize;
+        desc[BlockIndex].des2 = SrcAddr;
+        desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);
+      }
+    }
+
+    /* send CMD25 */
+    sdmmc_cmdinitstructure.Argument         = dma->DstAddr + SectorDivid * BuffSize;
+    sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_WRITE_MULTIPLE_BLOCK;
+    sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
+    sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
+        SDMMC_CMD_USE_HOLD_REG | \
+        SDMMC_CMD_PRV_DAT_WAIT | \
+        SDMMC_CMD_SEND_STOP    | \
+        SDMMC_CMD_DAT_READ_WRITE | \
+        SDMMC_CMD_DAT_EXP      | \
+        SDMMC_CMD_RESP_CRC     | \
+        SDMMC_CMD_RESP_EXP;
+    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
+    /* Check for error conditions */
+    Core_SDMMC_WaiteCmdDone(hsd->Instance);
+    Core_SDMMC_WaiteDataOver(hsd->Instance);
+    Core_SDMMC_WaiteCardBusy(hsd->Instance);
+
+    // #ifdef ECHO
+    //     dlog_info("Stop: send CMD12\n");
+    // #endif
+    sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_STOP_TRANSMISSION;
+    sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
+    sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
+        SDMMC_CMD_USE_HOLD_REG | \
+        SDMMC_CMD_PRV_DAT_WAIT | \
+        SDMMC_CMD_RESP_CRC | \
+        SDMMC_CMD_RESP_EXP;
+    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
+    Core_SDMMC_WaiteCmdDone(hsd->Instance);
+  }
+  /* free the space applied from heap */
+#ifdef USE_MALLOC_DESC
+  free(desc);
+#endif
   /* Update the SD transfer error in SD handle */
   hsd->SdTransferErr = errorstate;
   return errorstate;
@@ -701,7 +765,7 @@ SD_ErrorTypedef Card_SD_Get_CardInfo(SD_HandleTypeDef *hsd, SD_CardInfoTypedef *
     tmp = (uint8_t)((hsd->CSD[1] & 0x0000FF00) >> 8);
 
     pCardInfo->CardCapacity  = ((pCardInfo->SD_csd.C_SIZE + 1)) * 1024;
-    dlog_info("CardCapacity = %d BLKs\n", pCardInfo->CardCapacity);
+    dlog_info("CardCapacity = %d Sectors\n", pCardInfo->CardCapacity);
     pCardInfo->CardBlockSize = 512;
   }
   else
@@ -1064,13 +1128,13 @@ static SD_ErrorTypedef PowerOnCard(SD_HandleTypeDef *hsd)
   Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
   Core_SDMMC_SetCTRL(hsd->Instance, SDMMC_CTRL_INT_ENABLE );
   //SD clock = 50MHz
-  // Core_SDMMC_SetCLKDIV(hsd->Instance, SDMMC_CLKDIV_BIT1);
+  Core_SDMMC_SetCLKDIV(hsd->Instance, SDMMC_CLKDIV_BIT1);
   //SD clock = 1MHz
-  //Core_SDMMC_SetCLKDIV(hsd->Instance, SDMMC_CLKDIV_BIT2 | \
+  // Core_SDMMC_SetCLKDIV(hsd->Instance, SDMMC_CLKDIV_BIT2 | \
                        SDMMC_CLKDIV_BIT5 | \
                        SDMMC_CLKDIV_BIT6 );
   //SD clock = 25MHz
-  Core_SDMMC_SetCLKDIV(hsd->Instance, SDMMC_CLKDIV_BIT2);
+  // Core_SDMMC_SetCLKDIV(hsd->Instance, SDMMC_CLKDIV_BIT2);
   Core_SDMMC_SetCLKSRC(hsd->Instance, SDMMC_CLKSRC_CLKDIV0);
   Core_SDMMC_SetCLKENA(hsd->Instance, 0x0000FFFF);
 
@@ -1133,7 +1197,7 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
   /* CMD0: GO_IDLE_STATE -----------------------------------------------------*/
   /* No CMD get_val required */
 #ifdef ECHO
-  dlog_info("send CMD0\n");
+  dlog_info("Send CMD0\n");
 #endif
   sdmmc_cmdinitstructure.Argument         = 0;
   sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_GO_IDLE_STATE;
@@ -1159,7 +1223,7 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
 
 
 #ifdef ECHO
-  dlog_info("send CMD8\n");
+  dlog_info("Send CMD8\n");
 #endif
 
   sdmmc_cmdinitstructure.Argument         = SD_CHECK_PATTERN;
@@ -1829,7 +1893,6 @@ static SD_ErrorTypedef SD_DMAConfig(SD_HandleTypeDef * hsd, SDMMC_DMATransTypeDe
 {
   SD_ErrorTypedef errorstate = SD_OK;
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
-  uint32_t get_val, cmd_done;
 
   Core_SDMMC_SetUHSREG(hsd->Instance, 0x0000FFFF);
   Core_SDMMC_SetCTYPE(hsd->Instance, SDMMC_CTYPE_4BIT);
@@ -1837,8 +1900,7 @@ static SD_ErrorTypedef SD_DMAConfig(SD_HandleTypeDef * hsd, SDMMC_DMATransTypeDe
                      SDMMC_CTRL_INT_ENABLE | \
                      SDMMC_CTRL_FIFO_RESET);
   Core_SDMMC_SetBLKSIZ(hsd->Instance, dma->BlockSize);
-  Core_SDMMC_SetBYCTNT(hsd->Instance, dma->SectorNum * dma->BlockSize);
-
+  // Core_SDMMC_SetBYCTNT(hsd->Instance, dma->SectorNum * dma->BlockSize);
   /* Set Block Size for Card */
   sdmmc_cmdinitstructure.Argument         = dma->BlockSize;
   sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_SET_BLOCKLEN;
@@ -1852,16 +1914,14 @@ static SD_ErrorTypedef SD_DMAConfig(SD_HandleTypeDef * hsd, SDMMC_DMATransTypeDe
   Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
   /* Check for error conditions */
   Core_SDMMC_WaiteCmdDone(hsd->Instance);
-
-#ifdef ECHO
-  get_val = Core_SDMMC_GetRESP0(hsd->Instance);
-  dlog_info("CMD16 RESP0 = 0x%x\n", get_val);
-#endif
+// #ifdef ECHO
+//   get_val = Core_SDMMC_GetRESP0(hsd->Instance);
+//   dlog_info("CMD16 RESP0 = 0x%x\n", get_val);
+// #endif
 
   /* set up idma descriptor */
   Core_SDMMC_SetBMOD(hsd->Instance, SDMMC_BMOD_ENABLE | SDMMC_BMOD_FB);
   Core_SDMMC_SetIDINTEN(hsd->Instance, 0x0);
-  Core_SDMMC_SetDBADDR(hsd->Instance, dma->ListBaseAddr);
-
+  // Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc[0]));
   return errorstate;
 }

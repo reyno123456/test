@@ -24,6 +24,17 @@ extern "C" {
  */
 #define  DTCMBUSADDR(x)             ((x)+0x24080000)
 #define  ITCMBUSADDR(x)             ((x)+0x44000000)
+
+/*
+ * IDMAC data buff size class
+ */
+#define  BUFFSIZE32       32
+#define  BUFFSIZE16       16
+#define  BUFFSIZE8        8
+#define  BUFFSIZE4        4
+#define  BUFFSIZE2        2
+#define  BUFFSIZE1        1
+
 /*
  * DMA data Structure definition
  */
@@ -33,7 +44,6 @@ typedef struct
 	uint32_t SrcAddr;         /* SrcAddr: Address from where data is to be read */
 	uint32_t BlockSize;       /* BlockSize: SD card Data block size */
 	uint32_t SectorNum;       /* SectorNum: How many sectors to be read/writen. */
-	uint32_t ListBaseAddr;    /* The address of IDMAC descripter */
 } SDMMC_DMATransTypeDef;
 
 typedef struct
