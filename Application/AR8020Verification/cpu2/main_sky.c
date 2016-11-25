@@ -1,6 +1,7 @@
 #include "serial.h"
 #include "debuglog.h"
 #include "systicks.h"
+#include "fpu.h"
 #include "adv_7611.h"
 #include "h264_encoder.h"
 #include "test_BB.h"
@@ -26,8 +27,9 @@ int main(void)
     console_init(2, 115200);   
     dlog_info("cpu2 start!!! \n");
 
+    FPU_AccessEnable();
     SysTicks_Init(166000);
-
+    SysTicks_DelayMS(10); //delay to wait cpu0 bootup and set the PLL register
     InterCore_Init();
     
     ADV_7611_Initial(0);

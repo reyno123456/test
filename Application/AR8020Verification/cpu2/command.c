@@ -313,6 +313,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_test_BB_uart();
     }
+    else if (memcmp(cmdArray[0], "test_float_calculate_pi", strlen("test_float_calculate_pi")) == 0)
+    {
+        test_float_calculate_pi();
+    }
     else 
     {
         dlog_error("Command not found! Please use commands like:\n");
@@ -339,6 +343,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("command_Grd_set_it_skip_mode_ch");
         dlog_error("command_Grd_set_it_ch");
         dlog_error("command_test_BB_uart");
+        dlog_error("test_float_calculate_pi");
     }
 
     /* must reset to receive new data from serial */

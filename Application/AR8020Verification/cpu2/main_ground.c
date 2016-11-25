@@ -1,7 +1,6 @@
 #include "serial.h"
 #include "debuglog.h"
-#include "test_i2c_adv7611.h"
-#include "test_h264_encoder.h"
+#include "fpu.h"
 #include "test_BB.h"
 #include "command.h"
 
@@ -25,6 +24,7 @@ int main(void)
     console_init(2, 115200);
     dlog_info("main ground function start \n");
     
+    FPU_AccessEnable();
     SysTicks_Init(166000);
     SysTicks_DelayMS(10); //delay to wait cpu0 bootup and set the PLL register
        
@@ -33,12 +33,14 @@ int main(void)
     /* We should never get here as control is now taken by the scheduler */
     for( ;; )
     {
+        SYS_EVENT_Process();
+        
         if (command_getEnterStatus() == 1)
         {
             command_fulfill();
         }
 
-        dlog_output(1);
+        dlog_output(100);
     }
 } 
 

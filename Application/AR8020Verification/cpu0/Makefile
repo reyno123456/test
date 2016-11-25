@@ -19,10 +19,12 @@ include $(BUILD_DIR)/config.mk
 
 ###############################################################################
 
+CFLAGS += -O1
+
 CPU_NUMBER = cpu0
 
 # libs
-LD_LIBS := -lfreertos -lusb -lboard -lAR8020drv -lcommon  
+LD_LIBS := -lfreertos -lusb -lboard -lAR8020drv -lcommon
 
 LDFLAGS += -Bstatic
 LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) $(LD_LIBS)
@@ -33,13 +35,13 @@ SRC_S   := $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/start.s
 ifeq ($(APPLICATION_SCENARIO), sky)
 SRC_C   := main_sky.c command.c test_freertos.c test_usbd.c ../share/test_i2c_adv7611.c \
            test_usbh.c test_cpu0_application.c raw_video_data.c test_sram.c test_sd.c \
-           ../share/test_timer.c ../share/test_spi.c test_quadspi.c  ../share/test_gpio.c
+           ../share/test_timer.c ../share/test_spi.c test_quadspi.c ../share/test_float.c ../share/test_gpio.c
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
 SRC_C   := main_ground.c command.c test_freertos.c test_usbd.c ../share/test_i2c_adv7611.c \
            test_usbh.c test_cpu0_application.c raw_video_data.c test_sram.c test_sd.c \
-           ../share/test_timer.c ../share/test_spi.c test_quadspi.c ../share/test_gpio.c
+           ../share/test_timer.c ../share/test_spi.c test_quadspi.c ../share/test_float.c ../share/test_gpio.c
 endif
 
 CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share

@@ -14,6 +14,7 @@
 #include "test_quadspi.h"
 #include "test_gpio.h"
 #include "test_usbh.h"
+#include "test_float.h"
 
 static unsigned char g_commandPos;
 static char g_commandLine[50];
@@ -360,7 +361,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_TestGpioInterrupt(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
-
+    else if (memcmp(cmdArray[0], "test_float_calculate_pi", strlen("test_float_calculate_pi")) == 0)
+    {
+        test_float_calculate_pi();
+    }
     /* error command */
     else
     {
@@ -401,6 +405,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_output(1000);
         dlog_error("startbypassvideo");
         dlog_error("stopbypassvideo");
+        dlog_error("test_float_calculate_pi");
         dlog_error("upgrade");
     }
 

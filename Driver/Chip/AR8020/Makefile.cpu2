@@ -31,6 +31,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
          SysCtl/Src/timer.c \
          SysCtl/Src/gpio.c \
          SysCtl/Src/inter_core.c \
+         SysCtl/Src/fpu.c \
          UART/Src/serial.c \
          I2C/Src/i2c_ll.c \
          I2C/Src/i2c.c \
@@ -85,7 +86,9 @@ install:
 	@cp -f BB/Inc/sky_controller.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/BB_uart_com.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f SysCtl/Inc/fpu.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/timer.h $(OUTPUT_HEADER_STAGING_DIR)
+
 
 clean:
 	@echo "Cleaning..."

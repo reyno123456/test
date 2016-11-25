@@ -30,6 +30,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
          SysCtl/Src/gpio.c \
          UART/Src/serial.c \
          SysCtl/Src/systicks.c \
+         SysCtl/Src/fpu.c \
          I2C/Src/i2c_ll.c \
          I2C/Src/i2c.c \
          SPI/Src/spi.c
@@ -60,6 +61,7 @@ install:
 	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@cp -f UART/Inc/serial.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f SysCtl/Inc/fpu.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."
