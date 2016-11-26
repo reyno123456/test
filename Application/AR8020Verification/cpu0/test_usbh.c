@@ -1,29 +1,21 @@
 #include "test_usbh.h"
 #include "debuglog.h"
-#include "ff.h"
-#include "usbh_conf.h"
-#include "usbh_def.h"
-#include "usbh_core.h"
-#include "usbh_msc.h"
-#include "ff_gen_drv.h"
-#include "usbh_diskio.h"
 #include "interrupt.h"
 #include "cmsis_os.h"
-#include "test_usbh.h"
 
 
-#define USB_VIDEO_BYPASS_SIZE_ONCE      (16384)
+#define USB_VIDEO_BYPASS_SIZE_ONCE      (8192)
 #define USB_VIDEO_BYPASS_DEST_ADDR      (0xB1000000)
 
 
 /* USB Host Global Variables */
-USBH_HandleTypeDef      hUSBHost;
-FATFS                   USBH_fatfs;
-FIL                     MyUSBFile;
-osMessageQId            USBH_AppEvent;
-USBH_BypassVideoCtrl    g_usbhBypassVideoCtrl = {0};
+USBH_HandleTypeDef              hUSBHost;
+USBH_BypassVideoCtrl            g_usbhBypassVideoCtrl;
+USBH_AppCtrl                    g_usbhAppCtrl;
 
 #define RDWR_SECTOR_SIZE (1024*4)
+
+
 void BOOTLOAD_Upgrade(void)
 {
 
@@ -36,7 +28,7 @@ void BOOTLOAD_Upgrade(void)
     dlog_info("Nor flash init start ...");
     NOR_FLASH_Init();
     dlog_info("Nor flash init end   ...");
-    if (APPLICATION_READY == Appli_state)
+    if (APPLICATION_READY == g_usbhAppCtrl.usbhAppState)
     {
         fileResult = f_open(&MyFile, "ar8020.bin", FA_READ);
         if (FR_OK != fileResult)
@@ -91,14 +83,14 @@ void USBH_BypassVideo(void)
         {
             while (1)
             {
-                if ((APPLICATION_READY == Appli_state)
+                if ((APPLICATION_READY == g_usbhAppCtrl.usbhAppState)
                   &&(1 == g_usbhBypassVideoCtrl.taskActivate))
                 {
                     if (g_usbhBypassVideoCtrl.fileOpened == 0)
                     {
                         g_usbhBypassVideoCtrl.fileOpened = 1;
 
-                        fileResult = f_open(&MyUSBFile, "0:usbtest.264", FA_READ);
+                        fileResult = f_open(&(g_usbhAppCtrl.usbhAppFile), "0:usbtest.264", FA_READ);
 
                         if(fileResult != FR_OK)
                         {
@@ -108,14 +100,14 @@ void USBH_BypassVideo(void)
                         }
                     }
 
-                    fileResult = f_read(&MyUSBFile, destAddr, USB_VIDEO_BYPASS_SIZE_ONCE, (void *)&bytesread);
+                    fileResult = f_read(&(g_usbhAppCtrl.usbhAppFile), destAddr, USB_VIDEO_BYPASS_SIZE_ONCE, (void *)&bytesread);
 
                     osDelay(200);
 
                     if(fileResult != FR_OK)
                     {
                         g_usbhBypassVideoCtrl.fileOpened    = 0;
-                        f_close(&MyUSBFile);
+                        f_close(&(g_usbhAppCtrl.usbhAppFile));
 
                         dlog_error("Cannot Read from the file \n");
 
@@ -126,7 +118,7 @@ void USBH_BypassVideo(void)
                     {
                         dlog_info("a new round!\n");
                         g_usbhBypassVideoCtrl.fileOpened    = 0;
-                        f_close(&MyUSBFile);
+                        f_close(&(g_usbhAppCtrl.usbhAppFile));
                     }
                 }
                 else
@@ -134,7 +126,7 @@ void USBH_BypassVideo(void)
                     if (1 == g_usbhBypassVideoCtrl.fileOpened)
                     {
                         g_usbhBypassVideoCtrl.fileOpened    = 0;
-                        f_close(&MyUSBFile);
+                        f_close(&(g_usbhAppCtrl.usbhAppFile));
                     }
 
                     continue;
@@ -156,11 +148,11 @@ void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
         break;
 
     case HOST_USER_DISCONNECTION:
-        Appli_state = APPLICATION_DISCONNECT;
+        g_usbhAppCtrl.usbhAppState  = APPLICATION_DISCONNECT;
         break;
 
     case HOST_USER_CLASS_ACTIVE:
-        Appli_state = APPLICATION_READY;
+        g_usbhAppCtrl.usbhAppState  = APPLICATION_READY;
         break;
 
     case HOST_USER_CONNECTION:
@@ -190,7 +182,7 @@ void USBH_MountUSBDisk(void)
 
     FATFS_LinkDriver(&USBH_Driver, "0:/");
 
-    fileResult = f_mount(&USBH_fatfs, "0:/", 0);
+    fileResult = f_mount(&(g_usbhAppCtrl.usbhAppFatFs), "0:/", 0);
 
     if (fileResult != FR_OK)
     {
@@ -213,7 +205,7 @@ void USBH_MainTask(void)
 
     while (1)
     {
-        event = osMessageGet(USBH_AppEvent, osWaitForever);
+        event = osMessageGet(g_usbhAppCtrl.usbhAppEvent, osWaitForever);
 
         if (event.status == osEventMessage)
         {
@@ -224,30 +216,36 @@ void USBH_MainTask(void)
                     /* Need to start a new task */
                     if (0 == g_usbhBypassVideoCtrl.taskExist)
                     {
-                        SRAM_SKY_BypassVideoConfig(0);
-
-                        g_usbhBypassVideoCtrl.taskExist = 1;
-
                         osThreadDef(BypassTask, USBH_BypassVideo, osPriorityIdle, 0, 4 * 128);
                         g_usbhBypassVideoCtrl.threadID  = osThreadCreate(osThread(BypassTask), NULL);
 
-                        if (g_usbhBypassVideoCtrl.threadID == NULL)
+                        if (NULL == g_usbhBypassVideoCtrl.threadID)
                         {
-                            g_usbhBypassVideoCtrl.taskExist     = 0;
-
                             dlog_error("create Video Bypass Task error!\n");
+
+                            break;
                         }
+
+                        g_usbhBypassVideoCtrl.taskExist = 1;
 
                         osSemaphoreDef(bypassVideoSem);
                         g_usbhBypassVideoCtrl.semID     = osSemaphoreCreate(osSemaphore(bypassVideoSem), 1);
+
+                        if (NULL == g_usbhBypassVideoCtrl.semID)
+                        {
+                            osThreadTerminate(g_usbhBypassVideoCtrl.threadID);
+                            g_usbhBypassVideoCtrl.taskExist = 0;
+
+                            dlog_error("create Video Bypass Semaphore error!\n");
+
+                            break;
+                        }
                     }
 
                     /* activate the task */
-                    if (0 == g_usbhBypassVideoCtrl.taskActivate)
-                    {
-                        g_usbhBypassVideoCtrl.taskActivate  = 1;
-                        osSemaphoreRelease(g_usbhBypassVideoCtrl.semID);
-                    }
+                    SRAM_SKY_EnableBypassVideoConfig(0);
+
+                    osSemaphoreRelease(g_usbhBypassVideoCtrl.semID);
 
                     break;
                 }
@@ -255,7 +253,8 @@ void USBH_MainTask(void)
             case USBH_APP_STOP_BYPASS_VIDEO:
                 {
                     dlog_info("stop bypassvideo task!\n");
-                    g_usbhBypassVideoCtrl.taskActivate   = 0;
+
+                    SRAM_SKY_DisableBypassVideoConfig(0);
                 }
                 break;
             case USBH_UPGRADE:

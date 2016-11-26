@@ -3,6 +3,8 @@
 #include "fpu.h"
 #include "test_BB.h"
 #include "command.h"
+#include "sys_event.h"
+#include "inter_core.h"
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
@@ -27,14 +29,16 @@ int main(void)
     FPU_AccessEnable();
     SysTicks_Init(166000);
     SysTicks_DelayMS(10); //delay to wait cpu0 bootup and set the PLL register
-       
+
+    InterCore_Init();
+
     test_BB_grd();
 
     /* We should never get here as control is now taken by the scheduler */
     for( ;; )
     {
         SYS_EVENT_Process();
-        
+
         if (command_getEnterStatus() == 1)
         {
             command_fulfill();

@@ -12,6 +12,8 @@
 #include "BB_ctrl.h"
 #include "grd_controller.h"
 #include "grd_sweep.h"
+#include "wireless_interface.h"
+#include "sys_event.h"
 
 typedef enum
 {
@@ -36,7 +38,7 @@ const SYS_PARAM default_sys_param =
     .it_mode    = 0x03,
     .qam_mode   = MOD_4QAM,
     .ldpc       = LDPC_1_2,
-    .id_num      = 0x02,
+    .id_num     = 0x02,
     .test_enable = 0xff,
     .it_skip_freq_mode  = AUTO,
     .rc_skip_freq_mode  = AUTO,
@@ -74,19 +76,24 @@ void Grd_Parm_Initial(void)
 {
     Grd_Timer0_Init();
     Grd_Timer1_Init();
-    
+
     context.it_manual_ch  = 0xff;
     context.qam_skip_mode = AUTO;
     context.it_skip_freq_mode = AUTO;
     context.rc_skip_freq_mode = AUTO;
-    context.bw = BW_10M;
-    
+    context.CH_bandwidth      = BW_10M;
+    context.RF_band = RF_2G;
+
+    grd_sweep_freq_init();
+
     //For QAM mode change
     memcpy(context.qam_change_threshold, default_sys_param.qam_change_threshold, sizeof(default_sys_param.qam_change_threshold));
     gen_qam_threshold_range();
 
     reg_IrqHandle(BB_TX_ENABLE_VECTOR_NUM, wimax_vsoc_tx_isr);
-    INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);    
+    INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);
+
+    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USER_CFG_CHANGE_LOCAL, grd_handle_events_callback);
 }
 
 
@@ -108,11 +115,16 @@ volatile DEVICE_STATE dev_state = INIT_DATA;
 
 void grd_noise_sweep(void)
 {
-    grd_add_sweep_result();
-    grd_set_next_sweep_freq();
-    if(is_init_sne_average_and_fluct())
+    int8_t result = grd_add_sweep_result(context.CH_bandwidth);
+    
+    //get right sweep result, go to next ch.
+    if(result == 1)
     {
-        calu_sne_average_and_fluct(get_sweep_freq());
+        grd_set_next_sweep_freq();
+        if(is_init_sne_average_and_fluct())
+        {
+            calu_sne_average_and_fluct(get_sweep_freq());
+        }
     }
 }
 
@@ -150,18 +162,21 @@ void grd_fec_judge(void)
                     context.cur_ch = get_next_best_freq(context.cur_ch);
                     dev_state = FEC_UNLOCK;
                 }
-                
-                context.qam_mode = MOD_BPSK;
-                context.ldpc = LDPC_1_2;
-                context.bw   = BW_10M;
-                context.qam_ldpc = merge_qam_ldpc_to_index(context.qam_mode,context.ldpc);
-                grd_set_txmsg_qam_change(context.qam_mode, context.bw, context.ldpc);
+
+                if(context.qam_skip_mode == AUTO)
+                {
+                    context.qam_mode= MOD_BPSK;
+                    context.ldpc    = LDPC_1_2;
+                    context.CH_bandwidth      = BW_10M;
+                    
+                    context.qam_ldpc = merge_qam_ldpc_to_index(context.qam_mode,context.ldpc);
+                    grd_set_txmsg_qam_change(context.qam_mode, context.CH_bandwidth, context.ldpc);
+                }
             }
         }
     }
     else if(dev_state == FEC_UNLOCK )
     {
-
         if(context.it_skip_freq_mode == AUTO)
         {
             grd_set_it_skip_freq(context.cur_ch);
@@ -175,7 +190,7 @@ void grd_fec_judge(void)
         {
             bb_set_freq_offset(calu_it_skip_freq_delta(context.first_freq_value,context.cur_ch));
         }*/
-        if(context.it_skip_freq_mode == MANUAL)
+        if(context.it_manual_ch != 0xff)
         {
             grd_set_it_work_freq(context.it_manual_ch);
             context.it_manual_ch = 0xff;
@@ -188,11 +203,11 @@ void grd_fec_judge(void)
         dev_state = CHECK_FEC_LOCK;
     }
     
-    if(context.it_skip_freq_mode == MANUAL && context.it_manual_ch != 0xff)
+    if(context.it_manual_ch != 0xff)
     {
         grd_set_it_skip_freq(context.it_manual_ch);
         dev_state = DELAY_14MS;
-        printf("CHSM=>%d\n", context.it_manual_ch);   //CHSM: channel switch Manual
+        dlog_info("channel switch Manual=>%d\n", context.it_manual_ch);
     }
 }
 
@@ -287,7 +302,7 @@ uint8_t is_it_need_skip_freq(uint8_t qam_ldpc)
 void grd_set_it_skip_freq(uint8_t ch)
 {
     BB_WriteReg(PAGE2, IT_FREQ_TX_0, 0xE0 + ch);
-    BB_WriteReg(PAGE2, IT_FREQ_TX_1, 0xE0 + ch);
+    BB_WriteReg(PAGE2, IT_FREQ_TX_1, 0xE0 + ch + 1);
 }
 
 void grd_set_it_work_freq(uint8_t ch)
@@ -310,22 +325,22 @@ uint8_t grd_is_bb_fec_lock(void)
 
 //--------------------------------------------------------
 //---------------QAM change--------------------------------
-EN_BB_QAM Grd_get_QAM(void)
+ENUM_BB_QAM Grd_get_QAM(void)
 {
     static uint8_t iqam = 0xff;
 
-    EN_BB_QAM qam = (EN_BB_QAM)(BB_ReadReg(PAGE2, GRD_FEC_QAM_CR_TLV) & 0x03);
+    ENUM_BB_QAM qam = (ENUM_BB_QAM)(BB_ReadReg(PAGE2, GRD_FEC_QAM_CR_TLV) & 0x03);
     if(iqam != qam)
     {
         iqam = qam;
         printf("-QAM:%d ",qam);
     }
-    
+
     return qam;
 }
 
 
-void grd_set_txmsg_qam_change(EN_BB_QAM qam, EN_BB_BW bw, EN_BB_LDPC ldpc)
+void grd_set_txmsg_qam_change(ENUM_BB_QAM qam, ENUM_CH_BW bw, ENUM_BB_LDPC ldpc)
 {
     uint8_t data = (qam << 6) | (bw << 3) | ldpc;
     printf("GMS =>0x%.2x \r\n", data);
@@ -335,7 +350,7 @@ void grd_set_txmsg_qam_change(EN_BB_QAM qam, EN_BB_BW bw, EN_BB_LDPC ldpc)
 }
 
 
-uint8_t merge_qam_ldpc_to_index(EN_BB_QAM qam, EN_BB_LDPC ldpc)
+uint8_t merge_qam_ldpc_to_index(ENUM_BB_QAM qam, ENUM_BB_LDPC ldpc)
 {
     if(qam == MOD_BPSK && ldpc == LDPC_1_2)
     {
@@ -369,10 +384,9 @@ uint8_t merge_qam_ldpc_to_index(EN_BB_QAM qam, EN_BB_LDPC ldpc)
     }
 
     return 0xff;
-
 }
 
-void split_index_to_qam_ldpc(uint8_t index, EN_BB_QAM *qam, EN_BB_LDPC *ldpc)
+void split_index_to_qam_ldpc(uint8_t index, ENUM_BB_QAM *qam, ENUM_BB_LDPC *ldpc)
 {
     if(index == 0)
     {
@@ -420,7 +434,7 @@ void up_down_qamldpc(QAMUPDONW up_down)
 
     if(QAMUP == up_down)
     {
-        if(context.qam_ldpc == QAM_CHANGE_THRESHOLD_COUNT - 1)  //highest QAM EN_BB_LDPC mode
+        if(context.qam_ldpc == QAM_CHANGE_THRESHOLD_COUNT - 1)  //highest QAM ENUM_BB_LDPC mode
         {
             return;
         }
@@ -436,7 +450,7 @@ void up_down_qamldpc(QAMUPDONW up_down)
     }
 
     split_index_to_qam_ldpc(context.qam_ldpc,&(context.qam_mode),&(context.ldpc));
-    grd_set_txmsg_qam_change(context.qam_mode, context.bw ,context.ldpc);
+    grd_set_txmsg_qam_change(context.qam_mode, context.CH_bandwidth ,context.ldpc);
 }
 
 
@@ -522,18 +536,18 @@ void Grd_TIM0_IRQHandler(void)
 
 void Grd_TIM1_IRQHandler(void)
 {
-    Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_1); //disable the intr.      
-
+    Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_1); //disable the intr.
     grd_add_snr_daq();
     switch (Timer1_Delay1_Cnt)
     {
         case 0:
+            grd_handle_all_cmds();
             grd_noise_sweep();
-            grd_fec_judge();
             Timer1_Delay1_Cnt++;
             break;
 
         case 1:
+            grd_fec_judge();
             Timer1_Delay1_Cnt++;
             break;
 
@@ -611,7 +625,6 @@ uint8_t grd_rc_channel = 0;
 void grd_rc_hopfreq(void)
 {
     grd_rc_channel++;
-
     if(grd_rc_channel >= MAX_RC_FRQ_SIZE)
     {
         grd_rc_channel = 0;
@@ -619,16 +632,353 @@ void grd_rc_hopfreq(void)
     BB_set_Rcfrq(grd_rc_channel);    
 }
 
-//=====================================Grd Test interface=====
-void grd_set_it_ch(uint8_t ch)
+
+///////////////////////////////////////////////////////////////////////////////////
+
+void grd_handle_IT_mode_cmd(RUN_MODE mode)
+{
+    context.it_skip_freq_mode = mode;
+    dlog_info("mode= %d\r\n", mode);
+}
+
+
+/*
+  *   only set value to context, the request will be handle in 14ms interrupt.
+ */
+void grd_handle_IT_CH_cmd(uint8_t ch)
 {
     context.it_manual_ch = ch;
+    dlog_info("ch= %d\r\n", ch);    
 }
 
-void grd_set_it_skip_mode_ch(RUN_MODE mode, uint8_t ch)
+
+/*
+  * mode: set RC to auto or Manual
+  * ch: the requested channel from  
+  * 
+ */
+static void grd_handle_RC_mode_cmd(RUN_MODE mode)
 {
-    context.it_skip_freq_mode = MANUAL;
-    grd_set_it_ch(ch);
+    context.rc_skip_freq_mode = mode;
+
+    BB_WriteReg(PAGE2, RC_CH_MODE_0, 0x80+mode);
+    BB_WriteReg(PAGE2, RC_CH_MODE_1, 0x80+mode+1); //manual command will send together with the RC channel
+    
+    if(mode == MANUAL)
+    {
+        BB_WriteReg(PAGE2, RC_CH_CHANGE_0, 0xFE);
+        BB_WriteReg(PAGE2, RC_CH_CHANGE_1, 0xFF);
+        dlog_info("RC manual, wait ch \r\n");
+    }
+    dlog_info("mode =%d\r\n", mode);    
 }
 
 
+static void grd_handle_RC_CH_cmd(uint8_t ch)
+{
+	BB_set_Rcfrq(ch);
+
+    BB_WriteReg(PAGE2, RC_CH_CHANGE_0, 0x80+ch);
+    BB_WriteReg(PAGE2, RC_CH_CHANGE_1, 0x80+ch + 1);
+
+    dlog_info("ch =%d\r\n", ch);     
+}
+
+/*
+ * switch between 2.5G and 5G.
+ */
+static void grd_handle_RF_band_cmd(ENUM_RF_BAND rf_band)
+{    
+    if(context.RF_band != rf_band)
+    {
+        //notify sky
+        BB_WriteReg(PAGE2, RF_BAND_CHANGE_0, 0xc0 + (uint8_t)rf_band);
+        BB_WriteReg(PAGE2, RF_BAND_CHANGE_1, 0xc0 + (uint8_t)rf_band + 1);
+    
+        //set ground rf band
+	    BB_set_RF_Band(BB_GRD_MODE, rf_band);
+    }
+    
+    dlog_info("rf_band =%d\r\n", rf_band);
+}
+
+
+/*
+ *  handle command for 10M, 20M
+*/
+static void grd_handle_CH_bandwitdh_cmd(ENUM_CH_BW bw)
+{
+    //set and soft-rest
+    if(context.CH_bandwidth != bw)
+    {
+        BB_set_RF_bandwitdh(BB_GRD_MODE, bw);
+
+        BB_WriteReg(PAGE2, RF_CH_BW_CHANGE_0, 0xc0 | (uint8_t)bw);
+        BB_WriteReg(PAGE2, RF_CH_BW_CHANGE_1, 0xc0 | (uint8_t)bw + 1);        
+    }
+
+    dlog_info("CH_bandwidth =%d\r\n", context.CH_bandwidth);    
+}
+
+
+static void grd_handle_MCS_mode_cmd(RUN_MODE mode)
+{
+	context.qam_skip_mode = mode;
+    dlog_info("qam_skip_mode = %d \r\n", context.qam_skip_mode);
+}
+
+
+/*
+  * handle set MCS mode: QAM, LDPC, encoder rate
+*/
+static void grd_handle_MCS_cmd(ENUM_BB_QAM qam, ENUM_BB_LDPC ldpc)
+{
+    grd_set_txmsg_qam_change(qam, context.CH_bandwidth, ldpc);
+    dlog_info("qam, ldpc =%d %d\r\n", qam, ldpc);
+}
+
+
+/*
+ * handle H264 encoder brc 
+*/
+static void grd_handle_brc_mode_cmd(RUN_MODE mode)
+{
+    context.brc_mode = mode;
+
+    BB_WriteReg(PAGE2, ENCODER_BRC_MODE_0, 0xe0+mode);
+    BB_WriteReg(PAGE2, ENCODER_BRC_MODE_1, 0xe0+mode+1);
+
+    dlog_info("mode %d \r\n", mode);
+}
+
+
+/*
+  * handle H264 encoder brc 
+*/
+static void grd_handle_brc_bitrate_cmd(uint8_t coderate)
+{
+    BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_0, (0xc0 | coderate));
+    BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_1, (0xc0 | coderate)+1);
+
+    dlog_info("coderate %d \r\n", coderate);
+}
+
+
+typedef struct _STRU_grd_cmds
+{
+    uint8_t avail; /*command is using*/
+    STRU_WIRELESS_CONFIG_CHANGE config;
+}STRU_grd_cmds;
+
+
+static void grd_handle_one_cmd(STRU_grd_cmds* p)
+{
+    STRU_WIRELESS_CONFIG_CHANGE cmd = p->config;
+
+    uint8_t class = cmd.configClass;
+    uint8_t item  = cmd.configItem;
+    uint8_t value = cmd.configValue;
+
+    dlog_info("class item value %d %d %d \r\n", class, item, value);
+    if(class == WIRELESS_FREQ_CHANGE)
+    {
+        switch(item)
+        {
+            case FREQ_BAND_MODE:
+                //band mode: AUTO MANUAL, only suppor the Manual mode
+                break;
+
+            case FREQ_BAND_SELECT:    
+                grd_handle_RF_band_cmd((ENUM_RF_BAND)value);
+                break;
+
+            case FREQ_CHANNEL_MODE: //auto manual
+                grd_handle_IT_mode_cmd((RUN_MODE)value);
+                break;
+
+            case FREQ_CHANNEL_SELECT:
+                grd_handle_IT_CH_cmd((uint8_t)value);
+                break;
+
+            default:
+                dlog_error("%s\r\n", "unknown WIRELESS_FREQ_CHANGE command");
+                break;
+        }
+    }
+
+    if(class == WIRELESS_MCS_CHANGE)
+    {
+        switch(item)
+        {
+            case MCS_MODE_SELECT:
+                grd_handle_MCS_mode_cmd((RUN_MODE)value);
+                break;
+
+            case MCS_MODULATION_SELECT:
+                {
+                    ENUM_BB_LDPC ldpc = BB_get_LDPC();
+                    grd_handle_MCS_cmd((ENUM_BB_QAM)value, ldpc);
+                }
+                break;
+
+            case MCS_CODE_RATE_SELECT:
+                {
+                    ENUM_BB_QAM qam = BB_get_QAM();
+                    grd_handle_MCS_cmd(qam, (ENUM_BB_LDPC)value);
+                }
+                break;
+                
+            default:
+                dlog_error("%s\r\n", "unknown WIRELESS_MCS_CHANGE command");
+                break;
+        }        
+    }
+
+    if(class == WIRELESS_ENCODER_CHANGE)
+    {
+        switch(item)
+        {
+            case ENCODER_DYNAMIC_BIT_RATE_MODE:
+                grd_handle_brc_mode_cmd( (RUN_MODE)value);
+                break;
+
+            case ENCODER_DYNAMIC_BIT_RATE_SELECT:
+                grd_handle_brc_bitrate_cmd( (uint8_t)value);
+                break;
+
+            default:
+                dlog_error("%s\r\n", "unknown WIRELESS_ENCODER_CHANGE command");
+                break;                
+        }
+    }    
+}
+
+static STRU_grd_cmds grd_cmds_buf[10];
+
+void grd_handle_all_cmds(void)
+{
+    uint8_t i;
+    for(i = 0; i < sizeof(grd_cmds_buf)/sizeof(grd_cmds_buf[0]); i++)
+    {
+        if(grd_cmds_buf[i].avail == 1)
+        {
+            grd_handle_one_cmd( grd_cmds_buf + i);
+            grd_cmds_buf[i].avail = 0;
+        }
+    }
+}
+
+
+void grd_handle_events_callback(void *p)
+{
+    uint8_t i;
+    uint8_t found;
+    STRU_WIRELESS_CONFIG_CHANGE *pcmd = (STRU_WIRELESS_CONFIG_CHANGE *)p;
+
+    dlog_info("Get Message: %d %d %d\r\n", pcmd->configClass, pcmd->configItem, pcmd->configValue);
+
+    found = 0;
+    for(i = 0; i < sizeof(grd_cmds_buf)/sizeof(grd_cmds_buf[0]); i++)
+    {
+        if(grd_cmds_buf[i].avail == 0)
+        {
+            memcpy((void *)(&grd_cmds_buf[i].config), p, sizeof(grd_cmds_buf[0]));
+            grd_cmds_buf[i].avail = 1;
+            found = 1;
+            break;
+        }
+    }
+
+    if(!found)
+    {
+        dlog_error("ERROR: %s\r\n", "insert events to grd");
+    }
+}
+
+void grd_add_spi_cmds(uint32_t type, uint32_t value)
+{
+    uint8_t i;
+
+    STRU_WIRELESS_CONFIG_CHANGE cmd;
+    if(type == 0)
+    {
+        cmd.configClass = WIRELESS_FREQ_CHANGE;
+        cmd.configItem  = FREQ_BAND_WIDTH_SELECT;
+        cmd.configValue = value; //BW_10M; BW_20M
+    }
+ 
+    if(type == 2)
+    {
+        cmd.configClass = WIRELESS_FREQ_CHANGE;
+        cmd.configItem  = FREQ_BAND_MODE;
+        cmd.configValue = value; //AUTO, Manual
+    }
+
+    if(type == 3)
+    {    
+        cmd.configClass = WIRELESS_FREQ_CHANGE;
+        cmd.configItem  = FREQ_BAND_MODE; 
+        cmd.configValue = value;    //AUTO,  Manual
+    }
+
+    if(type == 4)
+    {    
+        cmd.configClass = WIRELESS_FREQ_CHANGE;
+        cmd.configItem  = FREQ_CHANNEL_MODE;
+        cmd.configValue = value;   //AUTO,  Manual
+    }
+
+    if(type == 5)
+    {    
+        cmd.configClass = WIRELESS_FREQ_CHANGE;
+        cmd.configItem  = FREQ_CHANNEL_SELECT;
+        cmd.configValue = value;
+    }
+
+    if(type == 6)
+    {
+        cmd.configClass  = WIRELESS_MCS_CHANGE;
+        cmd.configItem   = MCS_MODE_SELECT;
+        cmd.configValue  = value; //AUTO, Manual
+    }
+
+    if(type == 7)
+    {
+        cmd.configClass  = WIRELESS_MCS_CHANGE;
+        cmd.configItem   = MCS_MODULATION_SELECT;
+        cmd.configValue  = value; //
+    }
+
+    if(type == 8)
+    {
+        cmd.configClass  = WIRELESS_ENCODER_CHANGE;
+        cmd.configItem   = ENCODER_DYNAMIC_BIT_RATE_MODE;
+        cmd.configValue  = value; //auto, manual
+    }
+
+    if(type == 9)
+    {
+        cmd.configClass  = WIRELESS_ENCODER_CHANGE;
+        cmd.configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
+        cmd.configValue  = value; //brc
+    }
+
+    dlog_info("%d %d  %d\r\n", cmd.configClass, cmd.configItem, cmd.configValue);
+
+    uint8_t found = 0;    
+    for(i = 0; i < sizeof(grd_cmds_buf)/sizeof(grd_cmds_buf[0]); i++)
+    {
+        if(grd_cmds_buf[i].avail == 0)
+        {
+            memcpy((void *)(&grd_cmds_buf[i].config), (void *)&cmd, sizeof(grd_cmds_buf[0]));
+            grd_cmds_buf[i].avail = 1;
+            found = 1;
+            break;
+        }
+    }
+
+    if(!found)
+    {
+        dlog_error("%s \r\n", "insert events to grd");
+    }   
+}

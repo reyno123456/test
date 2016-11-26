@@ -15,6 +15,7 @@
 #include "test_gpio.h"
 #include "test_usbh.h"
 #include "test_float.h"
+#include "test_usbd.h"
 
 static unsigned char g_commandPos;
 static char g_commandLine[50];
@@ -365,6 +366,14 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         test_float_calculate_pi();
     }
+    else if (memcmp(cmdArray[0], "sendctrl", strlen("sendctrl")) == 0)
+    {
+        command_sendCtrl();
+    }
+    else if (memcmp(cmdArray[0], "sendvideo", strlen("sendvideo")) == 0)
+    {
+        command_sendVideo();
+    }
     /* error command */
     else
     {
@@ -619,7 +628,7 @@ void command_startBypassVideo(void)
     if (0 == g_usbhBypassVideoCtrl.taskActivate)
     {
         g_usbhBypassVideoCtrl.taskActivate  = 1;
-        osMessagePut(USBH_AppEvent, usbhAppType, 0);
+        osMessagePut(g_usbhAppCtrl.usbhAppEvent, usbhAppType, 0);
     }
     else
     {
@@ -635,7 +644,8 @@ void command_stopBypassVideo(void)
 
     if (1 == g_usbhBypassVideoCtrl.taskActivate)
     {
-        osMessagePut(USBH_AppEvent, usbhAppType, 0);
+        g_usbhBypassVideoCtrl.taskActivate  = 0;
+        osMessagePut(g_usbhAppCtrl.usbhAppEvent, usbhAppType, 0);
     }
     else
     {
@@ -648,7 +658,27 @@ void command_upgrade(void)
 
     usbhAppType = USBH_UPGRADE;
 
-    osMessagePut(USBH_AppEvent, usbhAppType, 0);
+    osMessagePut(g_usbhAppCtrl.usbhAppEvent, usbhAppType, 0);
 
+}
+
+
+void command_sendCtrl(void)
+{
+    USBD_APP_EVENT_DEF  usbdAppType;
+
+    usbdAppType = USBD_APP_SEND_CTRL;
+
+    osMessagePut(USBD_AppEvent, usbdAppType, 0);
+}
+
+
+void command_sendVideo(void)
+{
+    USBD_APP_EVENT_DEF  usbdAppType;
+
+    usbdAppType = USBD_APP_SEND_VIDEO;
+
+    osMessagePut(USBD_AppEvent, usbdAppType, 0);
 }
 

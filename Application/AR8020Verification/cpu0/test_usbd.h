@@ -7,10 +7,9 @@
 
 typedef enum
 {
-    USBD_TASK_SRAM_0_READY = 0,
-    USBD_TASK_SRAM_1_READY,
-    USBD_TASK_DEV_DISCONN
-}USBD_TASK_EVENT_DEF;
+    USBD_APP_SEND_CTRL      = 0,
+    USBD_APP_SEND_VIDEO
+}USBD_APP_EVENT_DEF;
 
 
 void USBD_ApplicationInit(void);

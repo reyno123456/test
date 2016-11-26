@@ -15,7 +15,7 @@
 #include "debuglog.h"
 #include "sys_event.h"
 
-#define MAX_SEARCH_ID_NUM  (10)
+#define MAX_SEARCH_ID_NUM  (5)
 #define SEARCH_ID_TIMEOUT  (2000) //ms
 
 typedef struct
@@ -97,25 +97,35 @@ uint8_t mod_br_map[][2] =
 };
 
 
+void sky_notify_encoder_brc(uint8_t br)
+{
+	STRU_SysEvent_BB_ModulationChange event;
+	event.BB_MAX_support_br = br;
+	SYS_EVENT_Notify(SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE, (void*)&event);	
+}
+
 void sky_set_ITQAM_and_notify(uint8_t mod)
 {
     uint8_t i = 0;
-    uint8_t br = mod_br_map[0][1];
-    for(i = 0; i < sizeof(mod_br_map) / sizeof(mod_br_map[0]); i++)
-    {
-        if(mod_br_map[i][0] == mod)
-        {
-            br = mod_br_map[i][1];
-            break;
-        }
-    }
     
-    printf("!!Q=>0x%.2x %d\r\n", mod, br);
+    dlog_info("QAM=>0x%.2x\r\n", mod);
     BB_WriteReg(PAGE2, TX_2, mod);
-    
-    STRU_SysEvent_BB_ModulationChange event;
-    event.BB_MAX_support_br = br;
-    SYS_EVENT_Notify(SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE, (void*)&event);
+
+	if(context.brc_mode == AUTO)
+	{
+        uint8_t br = mod_br_map[0][1];
+        for(i = 0; i < sizeof(mod_br_map) / sizeof(mod_br_map[0]); i++)
+        {
+            if(mod_br_map[i][0] == mod)
+            {
+                br = mod_br_map[i][1];
+                break;
+            }
+        }
+
+        dlog_info("br=%d\r\n", br);
+        sky_notify_encoder_brc(br);
+	}
 }
 
 
@@ -258,28 +268,7 @@ void sky_physical_link_process(void)
         {
             uint8_t data0, data1;
             context.rc_unlock_cnt = 0;
-            if(context.it_skip_freq_mode == AUTO)
-            {
-                data0 = BB_ReadReg(PAGE2, IT_FREQ_TX_0);
-                data1 = BB_ReadReg(PAGE2, IT_FREQ_TX_1);
-                if((data0 == data1) && (0x0e==(data1 >> 4)))
-                {
-                    sky_set_it_freq(data0 & 0x0f);
-                    context.cur_ch = (data0 & 0x0f);
-                }
-            }
-
-            if(context.qam_skip_mode == AUTO)
-            {
-                data0 = BB_ReadReg(PAGE2, QAM_CHANGE_0);
-                data1 = BB_ReadReg(PAGE2, QAM_CHANGE_1);
-
-                if(data0+1==data1 && cur_mod_regvalue != data0)
-                {
-                    sky_set_ITQAM_and_notify(data0);
-                    cur_mod_regvalue = data0;
-                }
-            }
+            sky_handle_all_spi_cmds();
         }
         else
         {
@@ -461,4 +450,148 @@ void sky_Timer0_Init(void)
     TIM_RegisterTimer(sky_timer0_0, 6800);
 
     reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, Sky_TIM0_IRQHandler);
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+/*
+ * read spi and handle it. interanal call in the intr.
+*/
+static void sky_handle_IT_CH_cmd(void)
+{
+    uint8_t data0, data1;
+
+    data0 = BB_ReadReg(PAGE2, IT_FREQ_TX_0);
+    data1 = BB_ReadReg(PAGE2, IT_FREQ_TX_1);
+    uint8_t req_ch = data0 & 0x1f;
+
+    if((data0+1 == data1) && ((data0&0xE0) == 0xE0) && (context.cur_ch != req_ch))
+    {
+        sky_set_it_freq(req_ch);
+        context.cur_ch = req_ch;
+    }
+}
+
+
+static void sky_handle_RC_cmd(void)
+{
+    uint8_t data0, data1, data2, data3;
+
+	data0 = BB_ReadReg(PAGE2, RC_CH_MODE_0);      //(AUTO, MANUAL)
+    data1 = BB_ReadReg(PAGE2, RC_CH_MODE_1);      //(AUTO, MANUAL)
+
+    data2 = BB_ReadReg(PAGE2, RC_CH_CHANGE_0);
+    data3 = BB_ReadReg(PAGE2, RC_CH_CHANGE_1);
+
+    if(data0+1 == data1 && data2+1==data3)
+    {
+        context.rc_skip_freq_mode = (RUN_MODE)(data0 & 0x7F);
+        if((RUN_MODE)data0 == MANUAL && data0!= 0xFE)
+        {
+            sky_rc_channel = (data0 & 0x7f);
+            BB_set_Rcfrq(sky_rc_channel);
+            dlog_info("rc_channel: %d \r\n", sky_rc_channel);
+        }
+    }
+}
+
+
+/*
+ * handle 2G/5G switch 
+*/
+static void sky_handle_RF_band_cmd(void)
+{
+    uint8_t data0, data1;
+
+    data0 = BB_ReadReg(PAGE2, RF_BAND_CHANGE_0);
+    data1 = BB_ReadReg(PAGE2, RF_BAND_CHANGE_1);
+
+    if( (data0+1==data1) && ((data0&0xc0)==0xc0) && context.RF_band != (data0&0x3F) ) //check right
+    {
+        ENUM_RF_BAND band = (ENUM_RF_BAND)(data0&0x3F);
+        BB_set_RF_Band(BB_SKY_MODE, band);
+    }   
+}
+
+
+/*
+ *  handle command for 10M, 20M
+*/
+static void sky_handle_CH_bandwitdh_cmd(void)
+{   
+    uint8_t data0, data1;
+    
+    data0 = BB_ReadReg(PAGE2, RF_CH_BW_CHANGE_0);
+    data1 = BB_ReadReg(PAGE2, RF_CH_BW_CHANGE_1);
+
+    if( data1==data0+1 && (data0&0xc0)==0xc0)
+    {
+        ENUM_CH_BW bw = (ENUM_CH_BW)(data0&0x3F);
+
+        if(context.CH_bandwidth != bw)
+        {
+            //set and soft-rest
+            BB_set_RF_bandwitdh(BB_SKY_MODE, bw);
+            context.CH_bandwidth = bw;
+        }
+    }
+}
+
+
+static void sky_handle_brc_mode_cmd(void)
+{
+    uint8_t data0 = BB_ReadReg(PAGE2, ENCODER_BRC_MODE_0);
+	uint8_t data1 = BB_ReadReg(PAGE2, ENCODER_BRC_MODE_1);
+    RUN_MODE mode = (RUN_MODE)(data0 & 0x1f);
+
+    if( (data1==data0+1) && ((data0&0xe0)==0xe0) && (context.brc_mode != mode))
+    {
+        dlog_info("brc_mode = %d \r\n", mode);
+    	context.brc_mode = mode;
+    }
+}
+
+
+/*
+ * handle H264 encoder brc 
+*/
+static void sky_handle_brc_bitrate_cmd(void)
+{
+	uint8_t data0 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_0);
+    uint8_t data1 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_1);
+    uint8_t bps = data0&0x3F;
+
+    if(data1==data0+1 && ( (data0&0xc0)==0xc0) && context.brc_bps != bps)
+    {
+        context.brc_bps = bps;
+        sky_notify_encoder_brc(bps*10);
+        dlog_info("brc_bps = %d \r\n", bps);
+    }
+}
+
+static void sky_handle_QAM_cmd(void)
+{
+    uint8_t data0 = BB_ReadReg(PAGE2, QAM_CHANGE_0);
+    uint8_t data1 = BB_ReadReg(PAGE2, QAM_CHANGE_1);
+
+    if(data0+1==data1 && cur_mod_regvalue != data0)
+    {
+        sky_set_ITQAM_and_notify(data0);
+        cur_mod_regvalue = data0;
+    }
+}
+
+void sky_handle_all_spi_cmds(void)
+{
+    sky_handle_RC_cmd();
+
+    sky_handle_IT_CH_cmd();
+
+    sky_handle_QAM_cmd();
+
+    sky_handle_brc_mode_cmd();
+
+    sky_handle_brc_bitrate_cmd();
 }

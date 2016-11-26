@@ -61,6 +61,7 @@ INCDIRS := -IUART/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/BB/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SPI/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SRAM/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/WirelessInfo/Inc \
            -I$(TOP_DIR)/Configure/Include
 
 # object file(s)

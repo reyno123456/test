@@ -88,7 +88,7 @@ int main(void)
     osThreadCreate(osThread(IOTask), NULL);
 
     osMessageQDef(osqueue, 1, uint16_t);
-    USBH_AppEvent = osMessageCreate(osMessageQ(osqueue),NULL);
+    g_usbhAppCtrl.usbhAppEvent  = osMessageCreate(osMessageQ(osqueue),NULL);
 
     osKernelStart();
 

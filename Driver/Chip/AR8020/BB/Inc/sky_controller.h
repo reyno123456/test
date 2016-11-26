@@ -39,5 +39,6 @@ int sky_search_id_timeout_irq_disable();
 
 int sky_search_id_timeout_irq_enable();
 
+void sky_handle_all_spi_cmds(void);
 
 #endif

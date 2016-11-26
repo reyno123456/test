@@ -60,13 +60,13 @@ static void Application_USBVideoTask(void const * argument)
 
             if (80 == index)
             {
-                USBD_HID_SendReport(&USBD_Device, g_rawDataBuffer2, 488);
+                USBD_HID_SendReport(&USBD_Device, g_rawDataBuffer2, 488, HID_VIDEO);
                 index = 0;
 
                 continue;
             }
 
-            USBD_HID_SendReport(&USBD_Device, g_rawDataBuffer[index], 512);
+            USBD_HID_SendReport(&USBD_Device, g_rawDataBuffer[index], 512, HID_VIDEO);
             index++;
         }
     }

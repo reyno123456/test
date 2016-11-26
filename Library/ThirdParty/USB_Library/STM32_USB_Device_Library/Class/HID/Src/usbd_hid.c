@@ -53,6 +53,8 @@
 #include "usbd_core.h"
 #include "debuglog.h"
 #include "sram.h"
+#include "wireless_interface.h"
+
 
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
   * @{
@@ -159,7 +161,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ]  __ALIGN_
   USB_DESC_TYPE_INTERFACE,/*bDescriptorType: Interface descriptor type*/
   0x00,         /*bInterfaceNumber: Number of Interface*/
   0x00,         /*bAlternateSetting: Alternate setting*/
-  0x02,         /*bNumEndpoints*/
+  0x03,         /*bNumEndpoints*/
   0x03,         /*bInterfaceClass: HID*/
   0x00,         /*bInterfaceSubClass : 1=BOOT, 0=no boot*/
   0x00,         /*nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse*/
@@ -179,19 +181,26 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ]  __ALIGN_
   /* 27 */
   0x07,          /*bLength: Endpoint Descriptor size*/
   USB_DESC_TYPE_ENDPOINT, /*bDescriptorType:*/
-  
-  HID_EPIN_ADDR,     /*bEndpointAddress: Endpoint Address (IN)*/
-  0x02,          /*bmAttributes: Interrupt endpoint*/
-  LOBYTE(HID_EPIN_SIZE), /*wMaxPacketSize: 4 Byte max */
-  HIBYTE(HID_EPIN_SIZE),
+  HID_EPIN_VIDEO_ADDR,     /*bEndpointAddress: Endpoint Address (IN)*/
+  USBD_EP_TYPE_BULK,          /*bmAttributes: BULK endpoint*/
+  LOBYTE(HID_EPIN_VIDEO_SIZE), /*wMaxPacketSize: 4 Byte max */
+  HIBYTE(HID_EPIN_VIDEO_SIZE),
   HID_HS_BINTERVAL,          /*bInterval: Polling Interval (10 ms)*/
   /* 34 */
   0x07,
   USB_DESC_TYPE_ENDPOINT,
+  HID_EPIN_CTRL_ADDR,
+  USBD_EP_TYPE_BULK,
+  LOBYTE(HID_EPIN_CTRL_SIZE),
+  HIBYTE(HID_EPIN_CTRL_SIZE),
+  HID_HS_BINTERVAL,
+  /* 41 */
+  0x07,
+  USB_DESC_TYPE_ENDPOINT,
   HID_EPOUT_ADDR,
-  0x02,
+  USBD_EP_TYPE_INTR,
   LOBYTE(HID_EPOUT_SIZE),
-  LOBYTE(HID_EPOUT_SIZE),
+  HIBYTE(HID_EPOUT_SIZE),
   HID_HS_BINTERVAL,
 } ;
 
@@ -253,7 +262,8 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE]  _
   0x00,   0xC0,
 }; 
 
-USBD_HID_HandleTypeDef g_usbdHidData;
+USBD_HID_HandleTypeDef                      g_usbdHidData;
+extern STRU_WIRELESS_PARAM_CONFIG_MESSAGE   g_stWirelessParamConfig;
 
 
 /*
@@ -278,16 +288,20 @@ static uint8_t  USBD_HID_Init (USBD_HandleTypeDef *pdev,
  
   /* Open EP IN */
   USBD_LL_OpenEP(pdev,
-                 HID_EPIN_ADDR,
+                 HID_EPIN_VIDEO_ADDR,
                  USBD_EP_TYPE_INTR,
-                 HID_EPIN_SIZE);  
+                 HID_EPIN_VIDEO_SIZE);
+
+  USBD_LL_OpenEP(pdev,
+                 HID_EPIN_CTRL_ADDR,
+                 USBD_EP_TYPE_INTR,
+                 HID_EPIN_CTRL_SIZE);
 
   USBD_LL_OpenEP(pdev,
                  HID_EPOUT_ADDR,
                  USBD_EP_TYPE_INTR,
                  HID_EPOUT_SIZE);
 
-//  pdev->pClassData = malloc(sizeof (USBD_HID_HandleTypeDef));
   pdev->pClassData = &g_usbdHidData;
 
   if(pdev->pClassData == NULL)
@@ -297,7 +311,10 @@ static uint8_t  USBD_HID_Init (USBD_HandleTypeDef *pdev,
   else
   {
     ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state = HID_IDLE;
+
+    USBD_LL_PrepareReceive(pdev, HID_EPOUT_ADDR, &g_stWirelessParamConfig, HID_EPOUT_SIZE);
   }
+
   return ret;
 }
 
@@ -313,20 +330,15 @@ static uint8_t  USBD_HID_DeInit (USBD_HandleTypeDef *pdev,
 {
   /* Close HID EPs */
   USBD_LL_CloseEP(pdev,
-                  HID_EPIN_ADDR);
-  
+                  HID_EPIN_VIDEO_ADDR);
+
+  USBD_LL_CloseEP(pdev,
+                  HID_EPIN_CTRL_ADDR);
+
   USBD_LL_CloseEP(pdev,
                   HID_EPOUT_ADDR);
 
   /* FRee allocated memory */
-#if 0
-  if(pdev->pClassData != NULL)
-  {
-    //free(pdev->pClassData);
-    pdev->pClassData = NULL;
-  } 
-#endif
-
   ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state = HID_IDLE;
 
   return USBD_OK;
@@ -421,35 +433,38 @@ static uint8_t  USBD_HID_Setup (USBD_HandleTypeDef *pdev,
   */
 uint8_t USBD_HID_SendReport     (USBD_HandleTypeDef  *pdev, 
                                  uint8_t *report,
-                                 uint16_t len)
+                                 uint16_t len,
+                                 HID_DataTypeDef enDataType)
 {
-  USBD_HID_HandleTypeDef     *hhid = (USBD_HID_HandleTypeDef*)pdev->pClassData;
-  uint8_t                     ret  = USBD_OK;
+    USBD_HID_HandleTypeDef     *hhid = (USBD_HID_HandleTypeDef*)pdev->pClassData;
+    uint8_t                     ret  = USBD_OK;
 
-  if (pdev->dev_state == USBD_STATE_CONFIGURED )
-  {
-    if(hhid->state == HID_IDLE)
+    if (pdev->dev_state == USBD_STATE_CONFIGURED )
     {
-      hhid->state   = HID_BUSY;
-      if (USBD_OK != USBD_LL_Transmit (pdev,
-                                       HID_EPIN_ADDR,
-                                       report,
-                                       len))
-      {
-        ret = USBD_BUSY;
-      }
+        if(hhid->state == HID_IDLE)
+        {
+            hhid->state   = HID_BUSY;
+  
+            if (HID_VIDEO == enDataType)
+            {
+                ret = USBD_LL_Transmit (pdev, HID_EPIN_VIDEO_ADDR, report, len);
+            }
+            else
+            {
+                ret = USBD_LL_Transmit (pdev, HID_EPIN_CTRL_ADDR, report, len);
+            }
+        }
+        else
+        {
+            ret = USBD_BUSY;
+        }
     }
     else
     {
-      ret = USBD_BUSY;
+        ret = USBD_FAIL;
     }
-  }
-  else
-  {
-      ret = USBD_FAIL;
-  }
 
-  return ret;
+    return ret;
 }
 
 /**
@@ -504,31 +519,42 @@ static uint8_t  *USBD_HID_GetCfgDesc (uint16_t *length)
 static uint8_t  USBD_HID_DataIn (USBD_HandleTypeDef *pdev, 
                               uint8_t epnum)
 {
-  
-  /* Ensure that the FIFO is empty before a new transfer, this condition could 
-  be caused by  a new transfer before the end of the previous transfer */
-  ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state = HID_IDLE;
+    /* Ensure that the FIFO is empty before a new transfer, this condition could 
+          be caused by  a new transfer before the end of the previous transfer */
+    ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state = HID_IDLE;
 
-  /* temp add for finish */
-  USB_OTG_SET_LITTLE_ENDIAN();
+    /* change endian after send finish */
+    USB_OTG_SET_LITTLE_ENDIAN();
 
-  if (1 == sramReady0)
-  {
-    SRAM_Ready0Confirm();
-  }
-  else if(1 == sramReady1)
-  {
-    SRAM_Ready1Confirm();
-  }
+    if (1 == sramReady0)
+    {
+        SRAM_Ready0Confirm();
+    }
+    else if(1 == sramReady1)
+    {
+        SRAM_Ready1Confirm();
+    }
 
-  return USBD_OK;
+    return USBD_OK;
 }
 
 
 static uint8_t USBD_HID_DataOut (USBD_HandleTypeDef *pdev,
                               uint8_t epnum)
 {
-  return USBD_OK;
+    if (HID_EPOUT_ADDR == epnum)
+    {
+        /* inform CPU2 to configure the wireless param */
+        USBD_LL_PrepareReceive(pdev, HID_EPOUT_ADDR, &g_stWirelessParamConfig, HID_EPOUT_SIZE);
+
+        dlog_info("recv:0x%02x, 0x%02x, 0x%02x\n", g_stWirelessParamConfig.messageId,
+                                                   g_stWirelessParamConfig.paramLen,
+                                                   g_stWirelessParamConfig.paramData[0]);
+
+        WIRELESS_ParseParamConfig((void *)&g_stWirelessParamConfig);
+    }
+
+    return USBD_OK;
 }
 
 

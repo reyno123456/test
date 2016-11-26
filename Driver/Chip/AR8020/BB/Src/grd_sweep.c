@@ -1,77 +1,67 @@
+#include <stdio.h>
 #include <stdint.h>
-#include "grd_sweep.h"
-#include "BB_ctrl.h"
-#include "config_baseband_register.h"
-#include "debuglog.h"
 
-#define SWEEP_FREQ_BLOCK_ROWS    (4)
+#include "debuglog.h"
+#include "BB_ctrl.h"
+#include "grd_sweep.h"
+#include "config_baseband_register.h"
+
+#define SWEEP_FREQ_BLOCK_ROWS       (4)
+
+#define MAX_1_5M_CH                 (19)
+#define BW_10M_VALID_1_5M_CH_START  (12)
+#define BW_20M_VALID_1_5M_CH_START  (8)
+
+#define BW_10M_VALID_CH_CNT (MAX_1_5M_CH - BW_10M_VALID_1_5M_CH_START + 1)
+#define BW_20M_VALID_CH_CNT (MAX_1_5M_CH - BW_20M_VALID_1_5M_CH_START + 1)
+
 
 typedef struct
 {
-    uint32_t noise_energy[SWEEP_FREQ_BLOCK_ROWS][MAX_RC_FRQ_SIZE];
-    uint32_t noise_energy_average[MAX_RC_FRQ_SIZE];
-    uint32_t noise_energy_flucate[MAX_RC_FRQ_SIZE];
+    int16_t noise_energy_1_5M[SWEEP_FREQ_BLOCK_ROWS][MAX_RC_FRQ_SIZE*8];      //1.5M bandwidth noise in channels.
+    int16_t noise_energy[SWEEP_FREQ_BLOCK_ROWS][MAX_RC_FRQ_SIZE];
+
+    int16_t noise_energy_average[MAX_RC_FRQ_SIZE];
+    int16_t noise_energy_flucate[MAX_RC_FRQ_SIZE];
+
     uint8_t row_index;
     uint8_t isFull;
     uint8_t isInited;
+    uint8_t sweep_ch;
 }SWEEP_CH_NOISE_ENERGY;
 
-SWEEP_CH_NOISE_ENERGY sweep_ch_noise_energy;
 
-volatile uint8_t sweep_freq = 0;
-
-uint32_t get_sweep_value(void)
-{
-    if(sweep_freq == 0)
-    {
-        return sweep_ch_noise_energy.noise_energy_average[MAX_RC_FRQ_SIZE - 1];
-    }
-    else
-    {
-        return sweep_ch_noise_energy.noise_energy_average[sweep_freq - 1];
-    }
-}
-
-uint8_t get_sweep_channel(void)
-{
-    if(sweep_freq == 0)
-    {
-        return (MAX_RC_FRQ_SIZE-1);
-    }
-    else
-    {
-        return (sweep_freq - 1);
-    }
-}
-
-void grd_set_next_sweep_freq(void)
-{
-    sweep_freq++;
-    if(sweep_freq >= MAX_RC_FRQ_SIZE)
-    {
-        sweep_freq = 0;
-    }
-
-    BB_set_sweepfrq(sweep_freq);
-}
+SWEEP_CH_NOISE_ENERGY sweep_ch_noise_energy = {
+    .sweep_ch  = 0,
+    .isFull    = 0,
+    .row_index = 0,
+    .isInited  = 0,
+};
 
 void grd_sweep_freq_init(void)
 {
-    sweep_freq = 0;
-    sweep_ch_noise_energy.isFull = 0;
-    sweep_ch_noise_energy.isInited = 0;
-    sweep_ch_noise_energy.row_index = 0;
+    BB_set_sweepfrq(sweep_ch_noise_energy.sweep_ch);
+}
 
-    BB_set_sweepfrq(sweep_freq);
+
+void grd_set_next_sweep_freq(void)
+{
+    sweep_ch_noise_energy.sweep_ch++;
+    if(sweep_ch_noise_energy.sweep_ch >= MAX_RC_FRQ_SIZE)
+    {
+        sweep_ch_noise_energy.sweep_ch = 0;
+    }
+
+    BB_set_sweepfrq(sweep_ch_noise_energy.sweep_ch);
 }
 
 void clear_sweep_results(void)
 {
-    sweep_freq = 0;
+    sweep_ch_noise_energy.sweep_ch = 0;
     sweep_ch_noise_energy.row_index = 0;
 }
 
-uint32_t grd_get_it_sweep_noise_energy()
+static uint32_t grd_get_it_sweep_td_noise_energy()
 {
     uint32_t Energy_Low = BB_ReadReg(PAGE2, SWEEP_ENERGY_LOW);
     uint32_t Energy_Mid = BB_ReadReg(PAGE2, SWEEP_ENERGY_MID);
@@ -80,32 +70,95 @@ uint32_t grd_get_it_sweep_noise_energy()
     return (Energy_Hgh<<16 | Energy_Mid<<8 | Energy_Low);
 }
 
-void grd_add_sweep_result(void)
+
+/*
+ * adapt to AR8020 new sweep function
+ * return 0: sweep fail. Do not switch to next sweep channel
+ * return 1: sweep OK.
+*/
+int8_t grd_get_it_sweep_noise_energy(uint8_t bw, uint8_t row, uint8_t ch)
 {
-    sweep_ch_noise_energy.noise_energy[sweep_ch_noise_energy.row_index][sweep_freq] = grd_get_it_sweep_noise_energy();
+    uint8_t  num = 0;
+    uint8_t  i   = 0;
+    uint32_t total_noise = 0;
+    uint16_t ch_fd_power[16];
 
-    if(sweep_freq >= MAX_RC_FRQ_SIZE - 1)
+    uint32_t power_td = grd_get_it_sweep_td_noise_energy();
+    uint8_t  power_fd_addr = 0x60;
+
+    if(power_td == 0)
     {
-        sweep_ch_noise_energy.row_index++;
-        if(sweep_ch_noise_energy.row_index >= SWEEP_FREQ_BLOCK_ROWS)
-        {
-            sweep_ch_noise_energy.isFull = 1;
-        }
+        //dlog_info("power_td ==0 \r\n");
+        return 0;
+    }
 
-        if(sweep_ch_noise_energy.row_index >= SWEEP_FREQ_BLOCK_ROWS)
+    if(bw == BW_10M)
+    {
+        num = BW_10M_VALID_CH_CNT;
+        power_fd_addr += (BW_10M_VALID_1_5M_CH_START * 2);
+    }
+    else
+    {
+        num = BW_20M_VALID_CH_CNT;
+        power_fd_addr += (BW_20M_VALID_1_5M_CH_START * 2);
+    }
+
+    //Get the frequency domain power
+    for(i = 0; i < num; i++)
+    {
+        ch_fd_power[i] = (((uint16_t)BB_ReadReg(PAGE3, power_fd_addr) << 8) | BB_ReadReg(PAGE3, power_fd_addr+1));
+        power_fd_addr += 2;
+
+        if(ch_fd_power[i] == 0)
         {
-            sweep_ch_noise_energy.row_index = 0;
+            //dlog_info("ch_fd_power ==0 \r\n");
+            return 0;
+        }
+    }
+
+    //dlog_info("%.4x %.4x %.4x %.4x %.4x %.4x %.4x %.4x %.4x\r\n", ch_fd_power[0], ch_fd_power[1], ch_fd_power[2],
+    //                                                          ch_fd_power[3], ch_fd_power[4], ch_fd_power[5],
+    //                                                          ch_fd_power[6], ch_fd_power[7], power_td);
+    //get the dbm noise power
+    uint16_t start_idx = (uint16_t)ch*8;
+    return calc_power_db(bw, power_td, ch_fd_power, 
+                         &(sweep_ch_noise_energy.noise_energy_1_5M[row][start_idx]),
+                         &(sweep_ch_noise_energy.noise_energy[row][ch])
+                         );
+}
+
+/*
+ * retval :  1:  sweep OK
+ *           0:  sweep fail
+*/
+int8_t grd_add_sweep_result(int8_t bw)
+{
+    uint8_t row = sweep_ch_noise_energy.row_index;
+    uint8_t ch = sweep_ch_noise_energy.sweep_ch;
+    uint8_t result;
+
+    result = grd_get_it_sweep_noise_energy(bw, row, ch);
+    if(result == 1)
+    {
+        if(ch >= MAX_RC_FRQ_SIZE - 1)
+        {
+            sweep_ch_noise_energy.row_index++;
+            if(sweep_ch_noise_energy.row_index >= SWEEP_FREQ_BLOCK_ROWS)
+            {
+                sweep_ch_noise_energy.row_index = 0;
+                sweep_ch_noise_energy.isFull = 1;
+            }
         }
     }
 }
+
 
 //sne short for "sweep_noise_energy"
 void calu_sne_average_and_fluct(uint8_t ch)
 {
     uint8_t i;
-    uint32_t tmp,max_tmp;
-    tmp = sweep_ch_noise_energy.noise_energy[0][ch];
-    max_tmp = tmp;
+    int8_t tmp = sweep_ch_noise_energy.noise_energy[0][ch];
+    int8_t max_tmp = tmp;
 
     for(i=1;i<SWEEP_FREQ_BLOCK_ROWS;i++)
     {
@@ -128,22 +181,22 @@ void init_sne_average_and_fluct(void)
     sweep_ch_noise_energy.isInited = 1;
 }
 
-uint8_t is_it_sweep_finish(void)
-{
-    return sweep_ch_noise_energy.isFull;
-}
-
 uint8_t is_init_sne_average_and_fluct(void)
 {
     return sweep_ch_noise_energy.isInited;
 }
 
+uint8_t is_it_sweep_finish(void)
+{
+    return sweep_ch_noise_energy.isFull;
+}
+
 uint8_t get_best_freq(void)
 {
     uint32_t sne_average;
-    uint8_t i;
-    uint8_t ch;
-    ch = 0;
+    uint8_t i  = 0;
+    uint8_t ch = 0;
+
     sne_average = sweep_ch_noise_energy.noise_energy_average[0];
     for(i=1;i<MAX_RC_FRQ_SIZE;i++)
     {
@@ -180,7 +233,7 @@ uint8_t get_next_best_freq(uint8_t cur_best_ch)
 
 uint8_t get_sweep_freq(void)
 {
-    return sweep_freq;
+    return sweep_ch_noise_energy.sweep_ch;
 }
 
 uint8_t ch_to_index(uint8_t cur_ch)
@@ -197,7 +250,7 @@ uint8_t ch_to_index(uint8_t cur_ch)
     return 0xff;
 }
 
-uint8_t is_next_best_freq_pass(uint8_t cur_best_ch,uint8_t next_best_ch)
+uint8_t is_next_best_freq_pass(uint8_t cur_best_ch, uint8_t next_best_ch)
 {
     uint8_t ret,i,cnt;
     uint8_t cur_ch_index,next_ch_index;
@@ -210,9 +263,9 @@ uint8_t is_next_best_freq_pass(uint8_t cur_best_ch,uint8_t next_best_ch)
     {
         return 0;
     }
-    
+
     if(sweep_ch_noise_energy.noise_energy_average[cur_ch_index] >= \
-      2*sweep_ch_noise_energy.noise_energy_average[next_ch_index])
+		sweep_ch_noise_energy.noise_energy_average[next_ch_index] + 3)
     {
         cnt = 0;
         for(i=0;i<MAX_RC_FRQ_SIZE;i++)
@@ -234,4 +287,162 @@ uint8_t is_next_best_freq_pass(uint8_t cur_best_ch,uint8_t next_best_ch)
     }
 
     return ret;
+}
+
+static int8_t log10_lookup_table[]= {
+0,
+3,
+4,
+6,
+6,
+7,
+8,
+9,
+9,
+10,
+10,
+10,
+11,
+11,
+11,
+12,
+12,
+12,
+12,
+13,
+13,
+13,
+13,
+13,
+13,
+14,
+14,
+14,
+14,
+14,
+14,
+15,
+15,
+15,
+15,
+15,
+15,
+15,
+15,
+16,
+16,
+16,
+16,
+16,
+16,
+16,
+16,
+16,
+16,
+16,
+17,
+17,
+17,
+17,
+17,
+17,
+17,
+17,
+17,
+17,
+17,
+17,
+17,
+18,
+18,
+18,
+18,
+18,
+18,
+18,
+18,
+18,
+18,
+18,
+18,
+18,
+18,
+18,
+18,
+19,
+19,
+19,
+19,
+19,
+19,
+19,
+19,
+19,
+19,
+19,
+19,
+19,
+19,
+19,
+19,
+19,
+19,
+19,
+19,
+};
+
+int16_t get_10log10(uint16_t data)
+{
+    uint8_t result = 0;
+    while(data >= 100)
+    {
+        result += 10;
+        data = data / 10;
+    }
+    return (result + log10_lookup_table[data]);
+}
+
+/*
+ * power_td: total power in time domain
+ * power_fd: each 1.56M bandwidth noise 
+ * power_db: the power in dbm in each 1.56M
+*/
+int16_t calc_power_db(int8_t bw, uint32_t power_td, 
+                      int16_t *power_fd, int16_t *power_db, 
+                      int16_t *total_power)
+{
+    uint8_t  i = 0;
+    uint64_t sum_fd = 0;
+    uint8_t  cnt = ((bw == BW_10M) ? BW_10M_VALID_CH_CNT : BW_20M_VALID_CH_CNT);
+    int16_t  sum_power = 0;
+    int16_t  power[8];
+    
+    for(i = 0 ; i < cnt; i++)
+    {
+        sum_fd += ((uint64_t)power_fd[i] * power_fd[i]);
+    }
+    if(sum_fd == 0)
+    {
+        //dlog_info("%s\r\n", "sum_fd == 0");
+        return 0;
+    }
+    for(i = 0 ; i < cnt; i++)
+    {
+        int16_t tmp = (uint64_t)power_fd[i] * power_fd[i] * power_td / sum_fd;
+		tmp = get_10log10(tmp);
+        if( tmp > 30)
+        {
+            tmp -= 123;
+        }
+        else
+        {
+            tmp -= 125;
+        }
+        
+        power_db[i] = tmp;
+        sum_power += tmp;
+    }
+
+    *total_power = sum_power;
+    return 1;
 }

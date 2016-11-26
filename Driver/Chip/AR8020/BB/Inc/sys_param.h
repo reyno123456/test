@@ -39,13 +39,18 @@ typedef struct
     uint8_t it_manual_ch;
     uint8_t fec_unlock_cnt;
     uint8_t rc_unlock_cnt;
+    
     RUN_MODE it_skip_freq_mode;
     RUN_MODE rc_skip_freq_mode;
     RUN_MODE qam_skip_mode;
-    uint8_t cur_IT_freq;
-    EN_BB_QAM qam_mode;
-    EN_BB_LDPC ldpc;
-    EN_BB_BW bw;
+	RUN_MODE brc_mode;
+	RUN_MODE brc_bps; //unit: 100khz
+
+    ENUM_RF_BAND RF_band;       //2.5G, 5.8G
+    ENUM_CH_BW CH_bandwidth;      //10M, 20M
+    
+    ENUM_BB_QAM qam_mode;
+    ENUM_BB_LDPC ldpc;
     uint8_t qam_ldpc;
     uint8_t enable_plot;
     //DEVICE_TYPE dev_type;
@@ -81,7 +86,7 @@ typedef struct
      uint8_t usb_cofig;
      uint8_t freq_band_sel;
      uint8_t it_mode;
-     EN_BB_QAM qam_mode;
+     ENUM_BB_QAM qam_mode;
      uint8_t power;
      uint8_t id_num;
      //MIMO_MODE mimo_mode;
@@ -92,7 +97,7 @@ typedef struct
      uint8_t freq_band;
      uint8_t gp20dbm[4];
      uint8_t sp20dbm[4];		 
-     EN_BB_LDPC ldpc;
+     ENUM_BB_LDPC ldpc;
      RUN_MODE qam_skip_mode;
      uint8_t rc_mask[32];
      uint8_t it_mask[8];

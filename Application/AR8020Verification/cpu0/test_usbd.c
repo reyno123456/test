@@ -29,7 +29,8 @@ void USBD_ApplicationInit(void)
 
 void USBD_MainTask(void)
 {
-    osEvent event;
+    osEvent     event;
+    uint8_t     buffer[30] = "test video or ctrl!";
 
     USBD_ApplicationInit();
 
@@ -43,16 +44,26 @@ void USBD_MainTask(void)
         {
             switch (event.value.v)
             {
-            case USBD_TASK_SRAM_0_READY:
+            case USBD_APP_SEND_CTRL:
+                {
+                    dlog_info("send ctrl info\n");
 
+                    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buffer, sizeof(buffer), HID_CTRL))
+                    {
+                        dlog_error("send fail!\n");
+                    }
+                }
                 break;
 
-            case USBD_TASK_SRAM_1_READY:
+            case USBD_APP_SEND_VIDEO:
+                {
+                    dlog_info("send video info\n");
 
-                break;
-
-            case USBD_TASK_DEV_DISCONN:
-
+                    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buffer, sizeof(buffer), HID_VIDEO))
+                    {
+                        dlog_error("send fail!\n");
+                    }
+                }
                 break;
 
             default:

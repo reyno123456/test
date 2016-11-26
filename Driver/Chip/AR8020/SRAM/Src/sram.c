@@ -2,6 +2,7 @@
 #include "sram.h"
 #include "debuglog.h"
 #include "usbd_def.h"
+#include "usbd_hid.h"
 
 volatile uint32_t               sramReady0;
 volatile uint32_t               sramReady1;
@@ -18,7 +19,7 @@ void SRAM_Ready0IRQHandler(void)
     dataLen         = SRAM_DATA_VALID_LEN_0;
     dataLen         = (dataLen << 2);
 
-    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buff, dataLen))
+    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buff, dataLen, HID_VIDEO))
     {
         dlog_error("HID0 Send Error!\n");
 
@@ -39,7 +40,7 @@ void SRAM_Ready1IRQHandler(void)
     dataLen         = SRAM_DATA_VALID_LEN_1;
     dataLen         = (dataLen << 2);
 
-    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buff, dataLen))
+    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buff, dataLen, HID_VIDEO))
     {
         dlog_error("HID1 Send Error!\n");
 
@@ -97,19 +98,41 @@ void SRAM_GROUND_BypassVideoConfig(void)
 }
 
 
-void SRAM_SKY_BypassVideoConfig(uint32_t channel)
+void SRAM_SKY_EnableBypassVideoConfig(uint32_t channel)
 {
     if (0 == channel)
     {
-        Reg_Write32(SRAM_VIEW0_ENABLE_ADDR, 1);
+        Reg_Write32(SRAM_VIEW0_ENABLE_ADDR, SRAM_VIEW0_ENABLE);
     }
     else
     {
-        Reg_Write32(SRAM_VIEW1_ENABLE_ADDR, 4);
+        Reg_Write32(SRAM_VIEW1_ENABLE_ADDR, SRAM_VIEW1_ENABLE);
     }
 
     Reg_Write32(SRAM_SKY_MASTER_ID_ADDR, SRAM_SKY_MASTER_ID_VALUE);
 
     Reg_Write32(SRAM_SKY_MASTER_ID_MASK_ADDR, SRAM_SKY_MASTER_ID_MASK_VALUE);
 }
+
+
+void SRAM_SKY_DisableBypassVideoConfig(uint32_t channel)
+{
+    uint32_t        regValue;
+
+    if (0 == channel)
+    {
+        regValue    = Reg_Read32(SRAM_VIEW0_ENABLE_ADDR);
+        regValue   &= ~SRAM_VIEW0_ENABLE;
+
+        Reg_Write32(SRAM_VIEW0_ENABLE_ADDR, regValue);
+    }
+    else
+    {
+        regValue    = Reg_Read32(SRAM_VIEW1_ENABLE_ADDR);
+        regValue   &= ~SRAM_VIEW1_ENABLE;
+
+        Reg_Write32(SRAM_VIEW1_ENABLE_ADDR, regValue);
+    }
+}
+
 

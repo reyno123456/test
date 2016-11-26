@@ -10,6 +10,7 @@
 #include "BB_ctrl.h"
 #include "BB_spi.h"
 #include "BB_uart_com.h"
+#define STATIC_TEST (0)
 
 static int test_bbctrl_sky(void);
 static int test_bbctrl_grd(void);
@@ -26,10 +27,10 @@ void test_BB_sky(void)
     BB_uart10_spi_sel(0x00000003);
     BB_init(&initType);
     
-    #if 1
-    test_bbctrl_sky();
+    #if (STATIC_TEST==0) //normal mode.
+        test_bbctrl_sky();
     #else
-    BB_debug_print_init_sky();
+        BB_debug_print_init_sky();
     #endif
     printf("%s", log);
 }
@@ -42,14 +43,14 @@ void test_BB_grd(void)
     STRU_BB_initType initType = {
         .en_mode = cur_mode,
     };
- 
+
     BB_uart10_spi_sel(0x00000003);
     BB_init(&initType);
     
-    #if 1
-    test_bbctrl_grd();
+    #if (STATIC_TEST==0) //normal mode.
+        test_bbctrl_grd();
     #else
-    BB_debug_print_init_grd();
+        BB_debug_print_init_grd();
     #endif
 }
 
@@ -165,19 +166,7 @@ void BB_debug_print_init_sky(void)
     reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, TIM0_BB_Sky_handler);    
 }
 
-void command_Grd_set_it_skip_mode_ch(char* runmodeStr, char* itchStr)
-{
-    uint8_t runmode = strtoul(runmodeStr, NULL, 0);
-    uint8_t itch = strtoul(itchStr, NULL, 0);
-    
-    grd_set_it_skip_mode_ch(runmode, itch);
-}
 
-void command_Grd_set_it_ch(char* itchStr)
-{
-    uint8_t itch = strtoul(itchStr, NULL, 0);
-    grd_set_it_ch(itch);
-}
 
 static void BBUARTComTest(uint8_t* data_buf, uint8_t length)
 {

@@ -49,6 +49,8 @@ extern volatile uint32_t  sramReady1;
 
 #define SRAM_VIEW0_ENABLE_ADDR          0xA003008C
 #define SRAM_VIEW1_ENABLE_ADDR          0xA003004C
+#define SRAM_VIEW0_ENABLE               0x00000001
+#define SRAM_VIEW1_ENABLE               0x00000004
 
 
 #define SRAM_SKY_MASTER_ID_ADDR         0xA0030090
@@ -59,7 +61,8 @@ extern volatile uint32_t  sramReady1;
 #define SRAM_SKY_MASTER_ID_MASK_VALUE   0xE00
 
 
-void SRAM_SKY_BypassVideoConfig(uint32_t channel);
+void SRAM_SKY_EnableBypassVideoConfig(uint32_t channel);
+void SRAM_SKY_DisableBypassVideoConfig(uint32_t channel);
 
 
 #endif

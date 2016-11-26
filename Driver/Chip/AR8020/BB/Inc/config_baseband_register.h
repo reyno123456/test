@@ -29,11 +29,15 @@
 
 // ************                    Page1                ***************
 
-#define TX_2       ((uint8_t)0x04 )/* page 2
+#define TX_2        ((uint8_t)0x04 )/* page 2
                                       QAM_mode        RW  [7:6] 2 0x2
                                       BandWidth       RW  [5:3] 3 0x2
                                       code_rate_enum  RW  [2:0] 3 0x0
                                    */
+
+#define RX_MODULATION        ((uint8_t)0x08 )/* page 2 
+                                                                                   BandWidth       RW  [5:3] 3 0x2
+                                                                                */
 
 #define TX_3       ((uint8_t)(0x5b))  //RC_id_bits[39:32]
 #define TX_4       ((uint8_t)(0x5c))  //RC_id_bits[31:24]
@@ -48,10 +52,27 @@
 #define RC_FREQ_TX_0    ((uint8_t)0x62 )
 #define RC_FREQ_TX_1    ((uint8_t)0x63 )
 
+#define QAM_ATUO_MANUAL ((uint8_t)0x6b )
 #define QAM_CHANGE_0    ((uint8_t)0x64 )
 #define QAM_CHANGE_1    ((uint8_t)0x65 )
 
-#define RC_FH_PATTERN   ((uint8_t)0x66 )
+#define RC_CH_CHANGE_0	((uint8_t)0x66 )
+#define RC_CH_CHANGE_1	((uint8_t)0x67 )
+
+#define RC_CH_MODE_0		((uint8_t)0x68 )
+#define RC_CH_MODE_1		((uint8_t)0x69 )
+
+#define RF_BAND_CHANGE_0	((uint8_t)0x6A )
+#define RF_BAND_CHANGE_1	((uint8_t)0x6B )
+
+#define RF_CH_BW_CHANGE_0	((uint8_t)0x6C )
+#define RF_CH_BW_CHANGE_1	((uint8_t)0x6D )
+
+#define ENCODER_BRC_MODE_0    ((uint8_t)0x6E)
+#define ENCODER_BRC_MODE_1    ((uint8_t)0x6F)
+
+#define ENCODER_BRC_CHAGE_0	((uint8_t)0x70)
+#define ENCODER_BRC_CHAGE_1	((uint8_t)0x71)
 
 
 #define CALI_0_1     ((uint8_t)(0xD0+0x00))/* page 0 0xD0+0x00
@@ -316,6 +337,8 @@
 
 #define     LDPC_ERR_HIGH_REG   (0xde)
 #define     LDPC_ERR_LOW_REG    (0xdf)
+
+#define     TX_CALI_ENABLE      (0x61)
 
 #endif
 

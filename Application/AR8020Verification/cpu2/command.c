@@ -11,7 +11,6 @@
 #include "test_timer.h"
 #include "test_h264_encoder.h"
 #include "test_i2c_adv7611.h"
-#include "gpio.h"
 #include "test_sysevent.h"
 
 static unsigned char g_commandPos;
@@ -224,37 +223,6 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_TestSysEventInterCore(cmdArray[1]);
     }
-    else if (memcmp(cmdArray[0], "BB_SPI_ReadByte", strlen("BB_SPI_ReadByte")) == 0)
-    {
-        uint8_t cmdPage = strtoul(cmdArray[1], NULL, 0);
-        ENUM_REG_PAGES page = (cmdPage==0)? PAGE0: \
-                              ((cmdPage==1)?PAGE1: \
-                              ((cmdPage==2)?PAGE2:PAGE3));
-        uint8_t addr = strtoul(cmdArray[1], NULL, 0);
-        uint8_t regvalue = BB_SPI_ReadByte(page, addr);
-        
-        dlog_info("Regvalue %0.2x Page %d  Addr%0.2x", regvalue, cmdPage, addr);
-    } 
-    else if (memcmp(cmdArray[0], "BB_SPI_WriteByte", strlen("BB_SPI_WriteByte")) == 0)
-    {
-        uint8_t cmdPage = strtoul(cmdArray[1], NULL, 0);
-        ENUM_REG_PAGES page = (cmdPage==0)? PAGE0: \
-                              ((cmdPage==1)?PAGE1: \
-                              ((cmdPage==2)?PAGE2:PAGE3));
-        uint8_t addr = strtoul(cmdArray[1], NULL, 0);
-        uint8_t value = strtoul(cmdArray[2], NULL, 0);
-        BB_SPI_WriteByte(page, addr, value);
-        
-        dlog_info("RegWrite Page %d  Addr%0.2x %0.2x", cmdPage, addr, value);
-    }       
-    else if (memcmp(cmdArray[0], "BB_debug_print_init_grd", strlen("BB_debug_print_init_grd")) == 0)
-    {
-        BB_debug_print_init_grd();
-    }
-    else if (memcmp(cmdArray[0], "BB_debug_print_init_sky", strlen("BB_debug_print_init_sky")) == 0)
-    {
-        BB_debug_print_init_sky();
-    }
     else if (memcmp(cmdArray[0], "BB_uart10_spi_sel", strlen("BB_uart10_spi_sel")) == 0)
     {
         BB_uart10_spi_sel( strtoul(cmdArray[1], NULL, 0) );
@@ -281,34 +249,11 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_writeADV7611(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
-    else if (memcmp(cmdArray[0], "test_TestGpioNormalRange", strlen("test_TestGpioNormalRange")) == 0)
-    {
-        command_TestGpioNormalRange(cmdArray[1], cmdArray[2], cmdArray[3]);
-    }
-    else if (memcmp(cmdArray[0], "test_TestGpioNormal", strlen("test_TestGpioNormal")) == 0)
-    {
-        command_TestGpioNormal(cmdArray[1], cmdArray[2]);
-    }
-    else if (memcmp(cmdArray[0], "test_TestGpioInterrupt", strlen("test_TestGpioInterrupt")) == 0)
-    {
-        command_TestGpioInterrupt(cmdArray[1], cmdArray[2], cmdArray[3]);
-    }
     else if (memcmp(cmdArray[0], "test_SysEventIdle", strlen("test_SysEventIdle")) == 0)
     {
         command_TestSysEventIdle();
     }
-    else if(memcmp(cmdArray[0], "sky_set_ITQAM_and_notify", strlen("sky_set_ITQAM_and_notify")) == 0)
-    {
-        sky_set_ITQAM_and_notify(strtoul(cmdArray[1], NULL, 0));
-    }    
-    else if(memcmp(cmdArray[0], "command_Grd_set_it_skip_mode_ch", strlen("command_Grd_set_it_skip_mode_ch")) == 0)
-    {
-        command_Grd_set_it_skip_mode_ch(cmdArray[1], cmdArray[2]);
-    }
-    else if(memcmp(cmdArray[0], "command_Grd_set_it_ch", strlen("command_Grd_set_it_ch")) == 0)
-    {
-        command_Grd_set_it_ch(cmdArray[1]);
-    }
+
     else if(memcmp(cmdArray[0], "command_test_BB_uart", strlen("command_test_BB_uart")) == 0)
     {
         command_test_BB_uart();
@@ -317,6 +262,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         test_float_calculate_pi();
     }
+    else if(memcmp(cmdArray[0], "grd_add_spi_cmds", strlen("grd_add_spi_cmds")) == 0)
+    {
+        grd_add_spi_cmds(strtoul(cmdArray[1], NULL, 0), strtoul(cmdArray[2], NULL, 0));
+    }	
     else 
     {
         dlog_error("Command not found! Please use commands like:\n");
@@ -335,15 +284,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("hdmiwrite <slv address> <reg address> <reg value>");
         dlog_error("BB_uart10_spi_sel <value>");
         dlog_error("test_nor_flash_all <flash start address> <size> <value>");
-        dlog_error("test_TestGpioNormal <gpionum> <highorlow>");
-        dlog_error("test_TestGpioNormalRange <gpionum1> <gpionum2> <highorlow>");
-        dlog_error("test_TestGpioInterrupt <gpionum> <inttype> <polarity>");
         dlog_error("test_SysEventIdle");
-        dlog_error("sky_set_ITQAM_and_notify");
-        dlog_error("command_Grd_set_it_skip_mode_ch");
-        dlog_error("command_Grd_set_it_ch");
         dlog_error("command_test_BB_uart");
         dlog_error("test_float_calculate_pi");
+        dlog_error("grd_add_spi_cmds <type> <value>");		
     }
 
     /* must reset to receive new data from serial */

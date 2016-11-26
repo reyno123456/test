@@ -119,6 +119,10 @@ static void H264_Encoder_BBModulationChangeCallback(void* p)
     {
         br = 8;
     }
+    else if(br < 10)
+    {
+        dlog_error("br: not supported \r\n", br);
+    }
     else if(br == 80)   //8Mbps
     {
         br = 0;
@@ -128,6 +132,7 @@ static void H264_Encoder_BBModulationChangeCallback(void* p)
         br = br / 10;
     }
 
+    dlog_info("H264 bitrate: %d \r\n", br);
     H264_Encoder_UpdateBitrate(0, br);
     H264_Encoder_UpdateBitrate(1, br);
 }

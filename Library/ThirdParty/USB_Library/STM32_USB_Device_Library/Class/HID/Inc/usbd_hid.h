@@ -49,13 +49,16 @@
 /** @defgroup USBD_HID_Exported_Defines
   * @{
   */ 
-#define HID_EPIN_ADDR                 0x86
-#define HID_EPIN_SIZE                 512
+#define HID_EPIN_VIDEO_ADDR           0x86
+#define HID_EPIN_VIDEO_SIZE           512
+
+#define HID_EPIN_CTRL_ADDR            0x84
+#define HID_EPIN_CTRL_SIZE            512
 
 #define HID_EPOUT_ADDR                0x01
-#define HID_EPOUT_SIZE                512
+#define HID_EPOUT_SIZE                64
 
-#define USB_HID_CONFIG_DESC_SIZ       41
+#define USB_HID_CONFIG_DESC_SIZ       48
 #define USB_HID_DESC_SIZ              9
 #define HID_MOUSE_REPORT_DESC_SIZE    40
 
@@ -88,6 +91,14 @@ typedef enum
   HID_BUSY,
 }
 HID_StateTypeDef; 
+
+
+typedef enum
+{
+  HID_VIDEO = 0,
+  HID_CTRL,
+}
+HID_DataTypeDef; 
 
 
 typedef struct
@@ -126,7 +137,8 @@ extern USBD_ClassTypeDef  USBD_HID;
   */ 
 uint8_t USBD_HID_SendReport (USBD_HandleTypeDef *pdev, 
                                  uint8_t *report,
-                                 uint16_t len);
+                                 uint16_t len,
+                                 HID_DataTypeDef enDataType);
 
 uint32_t USBD_HID_GetPollingInterval (USBD_HandleTypeDef *pdev);
 

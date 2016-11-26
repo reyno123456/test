@@ -48,35 +48,37 @@ typedef enum
 
 typedef struct
 {
-    ENUM_BB_MODE en_mode;
-    ENUM_VID_PATH en_vidPath;
+    ENUM_BB_MODE    en_mode;
+    ENUM_VID_PATH   en_vidPath;
     ENUM_RCV_enable en_rcvEnable;
 }STRU_BB_initType;
 
 
-typedef enum _EN_BB_QAM
+typedef enum _ENUM_BB_QAM
 {
     MOD_BPSK    = 0x00,
     MOD_4QAM    = 0x01,
     MOD_16QAM   = 0x02,
     MOD_64QAM   = 0x03,
     MOD_MAX     = 0xff,
-}EN_BB_QAM;
+}ENUM_BB_QAM;
 
 
-typedef enum _EN_BB_LDPC
+typedef enum ENUM_BB_LDPC
 {
     LDPC_1_2    = 0x00,
     LDPC_2_3    = 0x01,
-}EN_BB_LDPC;
+}ENUM_BB_LDPC;
 
 
-typedef enum _EN_BB_BW
+typedef enum _ENUM_CH_BW
 {
     BW_10M  = 0x02,
     BW_20M  = 0x0,
-}EN_BB_BW;
+}ENUM_CH_BW;
 
+#define FALSE   (0)
+#define TRUE    (1)
 
 typedef enum
 {
@@ -85,7 +87,7 @@ typedef enum
 } FunctionalState;
 
 
-struct RC_FRQ_CHANNEL           //  Remote Controller Freq Channnel
+typedef struct _STRU_RC_FRQ_CHANNEL           //  Remote Controller Freq Channnel
 {
     uint8_t num;
     uint8_t frq1;
@@ -93,9 +95,9 @@ struct RC_FRQ_CHANNEL           //  Remote Controller Freq Channnel
     uint8_t frq3;
     uint8_t frq4;
     uint8_t frq5;
-};
+}STRU_RC_FRQ_CHANNEL;
 
-struct IT_FRQ_CHANNEL           //  Image Transmissions Freq Channnel
+typedef struct _STRU_IT_FRQ_CHANNEL           //  Image Transmissions Freq Channnel
 {
    uint8_t num;
    uint8_t frq1;
@@ -103,11 +105,14 @@ struct IT_FRQ_CHANNEL           //  Image Transmissions Freq Channnel
    uint8_t frq3;
    uint8_t frq4;
    uint8_t frq5;
-};
+}STRU_IT_FRQ_CHANNEL;
 
+typedef enum _ENUM_RF_BAND
+{
+    RF_2G = 0,
+    RF_5G,
+}ENUM_RF_BAND;
 
-#define FALSE   (0)
-#define TRUE    (1)
 
 #define MAX_RC_FRQ_SIZE (12)
 
@@ -130,5 +135,8 @@ uint8_t BB_ReadReg(ENUM_REG_PAGES page, uint8_t addr);
 
 uint8_t BB_WriteReg(ENUM_REG_PAGES page, uint8_t addr, uint8_t data);
 
+int BB_RF_cali(ENUM_RF_BAND rf_band);
+
+void BB_RF_2G_5G_switch(ENUM_RF_BAND rf_band);
 
 #endif

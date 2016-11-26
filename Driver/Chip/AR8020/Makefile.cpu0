@@ -40,7 +40,8 @@ SRC_C := SysCtl/Src/reg_rw.c \
          BB/Src/BB_ctrl.c \
          SPI/Src/spi.c \
          SPI/Src/BB_spi.c \
-         QuadSPI/Src/quad_spi_ctrl.c
+         QuadSPI/Src/quad_spi_ctrl.c \
+         WirelessInfo/Src/wireless_interface.c
 
 INCDIRS := -ISysCtl/Inc \
            -ISD/Inc \
@@ -52,6 +53,7 @@ INCDIRS := -ISysCtl/Inc \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \
            -I$(TOP_DIR)/Library/Artosyn/Common/Inc \
            -I$(TOP_DIR)/Library/ThirdParty/USB_Library/STM32_USB_Device_Library/Core/Inc \
+           -I$(TOP_DIR)/Library/ThirdParty/USB_Library/STM32_USB_Device_Library/Class/HID/Inc \
            -I$(TOP_DIR)/Library/ThirdParty/USB_Library/STM32F7xx_HAL_Driver/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SD/Inc \
@@ -59,6 +61,7 @@ INCDIRS := -ISysCtl/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/BB/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SPI/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/QuadSPI/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/WirelessInfo/Inc \
            -I$(TOP_DIR)/Configure/Include
 
 # object file(s)
