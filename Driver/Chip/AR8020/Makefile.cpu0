@@ -41,7 +41,8 @@ SRC_C := SysCtl/Src/reg_rw.c \
          SPI/Src/spi.c \
          SPI/Src/BB_spi.c \
          QuadSPI/Src/quad_spi_ctrl.c \
-         WirelessInfo/Src/wireless_interface.c
+         WirelessInfo/Src/wireless_interface.c \
+         DMA/Src/dma.c
 
 INCDIRS := -ISysCtl/Inc \
            -ISD/Inc \
@@ -62,6 +63,7 @@ INCDIRS := -ISysCtl/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SPI/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/QuadSPI/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/WirelessInfo/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/DMA/Inc \
            -I$(TOP_DIR)/Configure/Include
 
 # object file(s)
@@ -92,6 +94,9 @@ install:
 	@cp -f SysCtl/Inc/fpu.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/gpio.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f QuadSPI/Inc/quad_spi_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f DMA/Inc/dma.h $(OUTPUT_HEADER_STAGING_DIR)
+
+
 
 clean:
 	@echo "Cleaning..."

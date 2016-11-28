@@ -2,6 +2,8 @@
 #include "debuglog.h"
 #include "interrupt.h"
 #include "cmsis_os.h"
+#include "dma.h"
+#include "sram.h"
 
 
 #define USB_VIDEO_BYPASS_SIZE_ONCE      (8192)
@@ -69,11 +71,11 @@ void USBH_BypassVideo(void)
 {
     FRESULT             fileResult;
     uint32_t            bytesread;
-    uint8_t            *destAddr;
+    uint8_t            *videoBuff;
 
     fileResult          = FR_OK;
     bytesread           = 0;
-    destAddr            = USB_VIDEO_BYPASS_DEST_ADDR;
+    videoBuff           = SRAM_BUFF_0_ADDRESS;
 
     dlog_info("enter USBH_BypassVideo Task!\n");
 
@@ -100,9 +102,7 @@ void USBH_BypassVideo(void)
                         }
                     }
 
-                    fileResult = f_read(&(g_usbhAppCtrl.usbhAppFile), destAddr, USB_VIDEO_BYPASS_SIZE_ONCE, (void *)&bytesread);
-
-                    osDelay(200);
+                    fileResult = f_read(&(g_usbhAppCtrl.usbhAppFile), videoBuff, USB_VIDEO_BYPASS_SIZE_ONCE, (void *)&bytesread);
 
                     if(fileResult != FR_OK)
                     {
@@ -111,8 +111,12 @@ void USBH_BypassVideo(void)
 
                         dlog_error("Cannot Read from the file \n");
 
-                        break;
+                        continue;
                     }
+
+                    dma_transfer((uint32_t *)videoBuff, (uint32_t *)SRAM_SKY_BYPASS_ENCODER_BUFF, 8192);
+
+                    osDelay(100);
 
                     if (bytesread < USB_VIDEO_BYPASS_SIZE_ONCE)
                     {

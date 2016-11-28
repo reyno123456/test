@@ -60,6 +60,8 @@ extern volatile uint32_t  sramReady1;
 #define SRAM_SKY_MASTER_ID_VALUE        0x600
 #define SRAM_SKY_MASTER_ID_MASK_VALUE   0xE00
 
+#define SRAM_SKY_BYPASS_ENCODER_BUFF    0xB1000000
+
 
 void SRAM_SKY_EnableBypassVideoConfig(uint32_t channel);
 void SRAM_SKY_DisableBypassVideoConfig(uint32_t channel);
