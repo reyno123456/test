@@ -32,8 +32,8 @@ static uint8_t snr_static_count = SNR_STATIC_START_VALUE;
 
 const SYS_PARAM default_sys_param =
 {
-    .usb_sel    = 0x00,
-    .usb_cofig  = 0x00,
+    .usb_sel      = 0x00,
+    .usb_cofig    = 0x00,
     .freq_band_sel=0x00,
     .it_mode    = 0x03,
     .qam_mode   = MOD_4QAM,
@@ -116,8 +116,6 @@ volatile DEVICE_STATE dev_state = INIT_DATA;
 void grd_noise_sweep(void)
 {
     int8_t result = grd_add_sweep_result(context.CH_bandwidth);
-    
-    //get right sweep result, go to next ch.
     if(result == 1)
     {
         grd_set_next_sweep_freq();
@@ -135,7 +133,7 @@ void grd_fec_judge(void)
         if(is_it_sweep_finish())
         {
             init_sne_average_and_fluct();
-            context.cur_ch = get_best_freq();
+            context.cur_IT_ch = get_best_freq();
             dev_state = FEC_UNLOCK;
         }
     }
@@ -147,7 +145,7 @@ void grd_fec_judge(void)
             dev_state = FEC_LOCK;
             /*if(context.first_freq_value == 0xff)
             {
-                context.first_freq_value = context.cur_ch;
+                context.first_freq_value = context.cur_IT_ch;
             } */               
             context.fec_unlock_cnt = 0;
         }
@@ -159,7 +157,7 @@ void grd_fec_judge(void)
                 context.fec_unlock_cnt = 0;
                 if(context.it_skip_freq_mode == AUTO)
                 {
-                    context.cur_ch = get_next_best_freq(context.cur_ch);
+                    context.cur_IT_ch = get_next_best_freq(context.cur_IT_ch);
                     dev_state = FEC_UNLOCK;
                 }
 
@@ -179,8 +177,8 @@ void grd_fec_judge(void)
     {
         if(context.it_skip_freq_mode == AUTO)
         {
-            grd_set_it_skip_freq(context.cur_ch);
-            printf("CHSA=>%d\n", context.cur_ch);
+            grd_set_it_skip_freq(context.cur_IT_ch);
+            printf("CHSA=>%d\n", context.cur_IT_ch);
         }
         dev_state = DELAY_14MS;
     }
@@ -188,7 +186,7 @@ void grd_fec_judge(void)
     {
         /*if(context.enable_freq_offset == ENABLE_FLAG)
         {
-            bb_set_freq_offset(calu_it_skip_freq_delta(context.first_freq_value,context.cur_ch));
+            bb_set_freq_offset(calu_it_skip_freq_delta(context.first_freq_value,context.cur_IT_ch));
         }*/
         if(context.it_manual_ch != 0xff)
         {
@@ -197,7 +195,7 @@ void grd_fec_judge(void)
         }
         else
         {
-            grd_set_it_work_freq(context.cur_ch);
+            grd_set_it_work_freq(context.cur_IT_ch);
         }
         reset_it_span_cnt();
         dev_state = CHECK_FEC_LOCK;
@@ -221,10 +219,10 @@ void grd_freq_skip_judge(void)
     if(!is_it_need_skip_freq(context.qam_ldpc))
         return;
 
-    context.next_ch = get_next_best_freq(context.cur_ch);
-    if(is_next_best_freq_pass(context.cur_ch,context.next_ch))
+    context.next_IT_ch = get_next_best_freq(context.cur_IT_ch);
+    if(is_next_best_freq_pass(context.cur_IT_ch,context.next_IT_ch))
     {
-       context.cur_ch = context.next_ch;
+       context.cur_IT_ch = context.next_IT_ch;
        dev_state = FEC_UNLOCK;
     }
 
@@ -238,41 +236,18 @@ void reset_it_span_cnt(void)
 
 uint8_t is_retrans_cnt_pass(void)
 {
-    uint8_t Harqcnt;
-    Harqcnt = BB_ReadReg(PAGE2, FEC_5_RD);
-
-    if(((Harqcnt & 0xF0) >> 4) >=2 )
+    uint8_t Harqcnt = BB_ReadReg(PAGE2, FEC_5_RD);
+    if(((Harqcnt & 0xF0) >> 4) >=2)
     {
         return 0;
     }
 
     return 1;
 }
+
 uint8_t span,retrans,snr_if;
 uint16_t iMCS;
-/*
-  2.3G
 
-0x7641a41a,//2306 + 0x05000000 (2.4g) 2406
-0x76c4ec4e,//2316
-0x775be5be,//2327.5
-0x77df2df2,//2337.5
-0x78762762,//2349
-0x78f96f96,//2359
-0x79906906,//2370.5
-0x7a276276 //2382
-
-2.4G
-
-0x7b41a41a,//2403.5
-0x7bc4ec4e,//2413.5
-0x7c5be5be,//2425
-0x7cdf2df2,//2435
-0x7d762762,//2446.5
-0x7df96f96,//2456.5
-0x7e906906,//2468
-0x7f276276 //2479.5
-*/
 const uint16_t snr_skip_threshold[6] = { 0x004e,0x0090,0x00be,0x01fd,0x055e,0x07ec};
 uint8_t is_it_need_skip_freq(uint8_t qam_ldpc)
 {
@@ -282,8 +257,8 @@ uint8_t is_it_need_skip_freq(uint8_t qam_ldpc)
     {
         return 0;
     }
-    retrans = is_retrans_cnt_pass();
 
+    retrans = is_retrans_cnt_pass();
     if(retrans)
     {
         return 0;
@@ -323,7 +298,6 @@ uint8_t grd_is_bb_fec_lock(void)
     return data;
 }
 
-//--------------------------------------------------------
 //---------------QAM change--------------------------------
 ENUM_BB_QAM Grd_get_QAM(void)
 {
@@ -748,19 +722,20 @@ static void grd_handle_brc_mode_cmd(RUN_MODE mode)
     BB_WriteReg(PAGE2, ENCODER_BRC_MODE_0, 0xe0+mode);
     BB_WriteReg(PAGE2, ENCODER_BRC_MODE_1, 0xe0+mode+1);
 
-    dlog_info("mode %d \r\n", mode);
+    dlog_info("brc mode =%d\r\n", mode);
 }
 
 
 /*
   * handle H264 encoder brc 
-*/
-static void grd_handle_brc_bitrate_cmd(uint8_t coderate)
+ */
+static void grd_handle_brc_bitrate_cmd(uint8_t brc_coderate)
 {
-    BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_0, (0xc0 | coderate));
-    BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_1, (0xc0 | coderate)+1);
+    BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_0, (0xc0 | brc_coderate));
+    BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_1, (0xc0 | brc_coderate)+1);
+    context.brc_bps = brc_coderate;
 
-    dlog_info("coderate %d \r\n", coderate);
+    dlog_info("brc_coderate = %d \r\n", brc_coderate);
 }
 
 
@@ -981,4 +956,46 @@ void grd_add_spi_cmds(uint32_t type, uint32_t value)
     {
         dlog_error("%s \r\n", "insert events to grd");
     }   
+}
+
+void grd_get_osd_info(STRU_WIRELESS_INFO_DISPLAY *dispptr)
+{
+    uint8_t tmp;
+    dispptr->head = 0xff; //starting writing
+    dispptr->tail = 0x00;
+
+    dispptr->IT_channel = context.cur_IT_ch;
+
+    dispptr->agc_value[0] = BB_ReadReg(PAGE2, AAGC_2_RD);
+    dispptr->agc_value[1] = BB_ReadReg(PAGE2, AAGC_3_RD);
+
+    dispptr->agc_value[2] = BB_ReadReg(PAGE2, RX3_GAIN_ALL_R);
+    dispptr->agc_value[3] = BB_ReadReg(PAGE2, RX4_GAIN_ALL_R);
+
+    dispptr->snr_vlaue[0] = get_snr_average(0);
+    dispptr->snr_vlaue[1] = get_snr_average(1);
+    dispptr->snr_vlaue[2] = get_snr_average(2);
+    dispptr->snr_vlaue[3] = get_snr_average(3);
+
+    dispptr->ldpc_error = (((uint16_t)BB_ReadReg(PAGE2, LDPC_ERR_HIGH_8)) << 8) | BB_ReadReg(PAGE2, LDPC_ERR_LOW_8);
+    dispptr->harq_count = (BB_ReadReg(PAGE2, FEC_5_RD) >> 4);
+
+    tmp = BB_ReadReg(PAGE2, TX_2);    
+    dispptr->modulation_mode = ((tmp >> 6) & 0xff);
+    dispptr->code_rate       = (tmp & 0x07);
+    dispptr->ch_bandwidth    = ((tmp >> 6) & 0x07); 
+
+    grd_get_sweep_noise(0, dispptr->sweep_energy);
+    
+    if(context.brc_mode == AUTO)
+    {
+        dispptr->encoder_bitrate = BB_map_modulation_to_br(tmp);
+    }
+    else
+    {
+        dispptr->encoder_bitrate = context.brc_bps;
+    }
+
+    dispptr->head = 0x00;
+    dispptr->tail = 0xff;    //end of the writing
 }

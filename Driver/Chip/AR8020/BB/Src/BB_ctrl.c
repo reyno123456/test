@@ -69,7 +69,7 @@ static void BB_regs_init(ENUM_BB_MODE en_mode)
                               ((page_cnt==2)?PAGE2:PAGE3));
         /*
          * PAGE setting included in the regs array.
-        */
+         */
         BB_ctx.en_curPage = page;
 
         for(addr_cnt = 0; addr_cnt < 256; addr_cnt++)
@@ -339,7 +339,8 @@ uint8_t BB_set_Rcfrq(uint8_t ch)
         BB_WriteReg(PAGE2, AGC3_d, Rc_frq[ch].frq4); 
         return 0;
     }
-    return 1;    
+
+    return 1;
 }
 
 
@@ -349,17 +350,18 @@ void BB_set_QAM(ENUM_BB_QAM mod)
     BB_WriteReg(PAGE2, TX_2, (data & 0x3f) | ((uint8_t)mod << 6));
 }
 
-ENUM_BB_QAM BB_get_QAM(void)
-{
-    return (ENUM_BB_QAM)(BB_ReadReg(PAGE2, TX_2) >> 6);
-}
-
-
 void BB_set_LDPC(ENUM_BB_LDPC ldpc)
 {
     uint8_t data = BB_ReadReg(PAGE2, TX_2);
     BB_WriteReg(PAGE2, TX_2, (data & 0x07) | (uint8_t)ldpc);
 }
+
+
+ENUM_BB_QAM BB_get_QAM(void)
+{
+    return (ENUM_BB_QAM)(BB_ReadReg(PAGE2, TX_2) >> 6);
+}
+
 
 ENUM_BB_LDPC BB_get_LDPC(void)
 {
@@ -367,7 +369,65 @@ ENUM_BB_LDPC BB_get_LDPC(void)
 }
 
 
-/***************
+ENUM_BB_LDPC BB_get_CH_BW(void)
+{
+    return (ENUM_CH_BW)((BB_ReadReg(PAGE2, TX_2) >> 3) & 0x07);
+}
+
+
+static uint8_t mod_br_map[][2] = 
+{
+    ((MOD_BPSK<<6)  |  (BW_10M <<3)  | LDPC_1_2),  10, //encoder br:1M
+    ((MOD_4QAM<<6)  |  (BW_10M <<3)  | LDPC_1_2),  30, //encoder br:3M
+    ((MOD_4QAM<<6)  |  (BW_10M <<3)  | LDPC_2_3),  40, //encoder br:4M
+    ((MOD_16QAM<<6) |  (BW_10M <<3)  | LDPC_1_2),  50, //encoder br:5M
+    ((MOD_64QAM<<6) |  (BW_10M <<3)  | LDPC_1_2),  60, //encoder br:6M
+    ((MOD_64QAM<<6) |  (BW_10M <<3)  | LDPC_2_3),  70, //encoder br:7M
+};
+
+
+uint8_t BB_map_modulation_to_br(uint8_t mod)
+{
+    uint8_t br = mod_br_map[0][1];
+
+    uint8_t i  = 0;
+    for(i = 0; i < sizeof(mod_br_map) / sizeof(mod_br_map[0]); i++)
+    {
+        if(mod_br_map[i][0] == mod)
+        {
+            br = mod_br_map[i][1];
+            break;
+        }
+    }
+
+    return br;
+}
+
+
+/*
+ *
+ */
+void BB_get_modulation(ENUM_BB_QAM *qam, ENUM_BB_LDPC *ldpc, ENUM_CH_BW *ch_bw)
+{
+    uint8_t value = BB_ReadReg(PAGE2, TX_2);
+    if(qam)
+    {
+        *qam   =  (ENUM_BB_QAM)((value >> 6) & 0xff);
+    }
+
+    if(ldpc)
+    {
+        *ldpc  =  (ENUM_BB_LDPC)(value & 0x07);
+    }
+
+    if(ch_bw)
+    {
+        *ch_bw =  (ENUM_CH_BW)((value>> 3) & 0x07);
+    }
+}
+
+
+/************************************************************
 PAGE2	0x20[2]	rf_freq_sel_rx_sweep	RW		sweep frequency selection for the 2G frequency band o or 5G frequency band,
 		0'b0: 2G frequency band
 		1'b1: 5G frequency band

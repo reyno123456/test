@@ -97,16 +97,21 @@ typedef enum
 
 
 /* To PC or PAD, display wireless info */
+/*if head == 0x00 && tail == 0xff, the sram data is valid*/
 typedef struct
 {
-    uint32_t        messageId;
+    uint8_t         head;
+    uint8_t         IT_channel;
     uint8_t         agc_value[4];
-    int16_t         snr_vlaue[8];
+    int16_t         snr_vlaue[4];
+    int16_t         sweep_energy[17*8];     //Max channel: 17
     uint16_t        ldpc_error;
     uint8_t         harq_count;
     uint8_t         modulation_mode;
+    uint8_t         ch_bandwidth;
     uint8_t         code_rate;
     uint8_t         encoder_bitrate;
+    uint8_t         tail;
 } STRU_WIRELESS_INFO_DISPLAY;
 
 

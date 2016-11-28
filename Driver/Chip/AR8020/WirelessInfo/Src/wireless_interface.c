@@ -77,7 +77,7 @@ void WIRELESS_SendDisplayInfo(void)
     uint8_t            *sendBuffer;
     uint8_t             sendLength;
 
-    g_stWirelessInfoDisplay.messageId   = PAD_WIRELESS_INFO_DISPLAY;
+    //g_stWirelessInfoDisplay.messageId   = PAD_WIRELESS_INFO_DISPLAY;
 
     sendBuffer          = &g_stWirelessInfoDisplay;
     sendLength          = sizeof(g_stWirelessInfoDisplay);

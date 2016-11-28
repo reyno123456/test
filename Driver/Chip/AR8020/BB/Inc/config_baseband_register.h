@@ -263,9 +263,11 @@
 #define AAGC_1_RD  ((uint8_t)0x04 )     //Highest byte of channel power                                              
 
 //page2
-#define AAGC_2_RD  ((uint8_t)0xA0 )     //0x00  rx1_gain_all_r  RW  [7:0]
-#define AAGC_3_RD  ((uint8_t)0xA1 )     //0x01  rx2_gain_all_r  RW  [7:0]
+#define AAGC_2_RD  ((uint8_t)0xA0 )     //rx1_gain_all_r  RW  [7:0]
+#define AAGC_3_RD  ((uint8_t)0xA1 )     // rx2_gain_all_r  RW  [7:0]
 
+#define RX3_GAIN_ALL_R  ((uint8_t)0xA0 )     //rx3_gain_all_r  RW  [7:0]
+#define RX4_GAIN_ALL_R  ((uint8_t)0xA1 )     //rx4_gain_all_r  RW  [7:0]
 
 
 #define FEC_0_RD   ((uint8_t)0xE0 )   /*
@@ -290,20 +292,19 @@
 #define FEC_2_RD_4  ((uint8_t)0xD6 )  //[7:0]Dec_rc_id[7:0]
 
 
-#define FEC_3_RD_1  ((uint8_t)0xE7 )  //Ldpc_err_num_rd[15:8]
-
-#define FEC_3_RD_2  ((uint8_t)0xE8 )  //Ldpc_err_num_rd[7:0]
+#define LDPC_ERR_HIGH_8  ((uint8_t)0xE7 )  //Ldpc_err_num_rd[15:8]
+#define LDPC_ERR_LOW_8  ((uint8_t)0xE8 )  //Ldpc_err_num_rd[7:0]
 
 #define FEC_4_RD    ((uint8_t)0xD9 )      /*PAGE2   0xc8  0x11  0xD9                                       
-                                          rc_err_flg  RO  [7:7]
-                                          nr_check_ok_hold  RO  [2:2]
-                                          crc_check_ok  RO  [1:1]
-                                          id_match  RO  [0:0]
-                                          */
+                                            rc_err_flg  RO  [7:7]   
+                                            nr_check_ok_hold  RO  [2:2]
+                                            crc_check_ok  RO  [1:1]
+                                            id_match  RO  [0:0]
+                                           */
 
-#define FEC_5_RD    ((uint8_t)0xDA )/*[7:4]Harq_times_out
-                                      [3:0]Debug_fec_sel:rdout_sclr_cnt:{1'b0, Scale_reg_out }
-                                     */                                     
+#define FEC_5_RD    ((uint8_t)0xDA )        /*[7:4]Harq_times_out
+                                              [3:0]Debug_fec_sel:rdout_sclr_cnt:{1'b0, Scale_reg_out }
+                                            */
 
 #define FEC_6_RD    ((uint8_t)0xEB )/*[7]  1'b0
                                       [6]  Fch_err_flg

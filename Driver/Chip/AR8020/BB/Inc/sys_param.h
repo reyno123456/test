@@ -34,8 +34,8 @@ typedef enum
 
 typedef struct
 {
-    uint8_t cur_ch;
-    uint8_t next_ch;
+    uint8_t cur_IT_ch;
+    uint8_t next_IT_ch;
     uint8_t it_manual_ch;
     uint8_t fec_unlock_cnt;
     uint8_t rc_unlock_cnt;
@@ -43,13 +43,12 @@ typedef struct
     RUN_MODE it_skip_freq_mode;
     RUN_MODE rc_skip_freq_mode;
     RUN_MODE qam_skip_mode;
-	RUN_MODE brc_mode;
-	RUN_MODE brc_bps; //unit: 100khz
+    RUN_MODE brc_mode;
+    uint8_t  brc_bps;           //unit: 100khz
 
     ENUM_RF_BAND RF_band;       //2.5G, 5.8G
-    ENUM_CH_BW CH_bandwidth;      //10M, 20M
-    
-    ENUM_BB_QAM qam_mode;
+    ENUM_CH_BW   CH_bandwidth;    //10M, 20M
+    ENUM_BB_QAM  qam_mode;
     ENUM_BB_LDPC ldpc;
     uint8_t qam_ldpc;
     uint8_t enable_plot;
@@ -63,21 +62,13 @@ typedef struct
     uint16_t qam_threshold_range[QAM_CHANGE_THRESHOLD_COUNT][2];
     uint8_t locked;
     uint16_t mosaic;
-    uint16_t ldpc_err_num;
     uint8_t c5;
     uint8_t c6;
     uint8_t retrans_num;
     uint8_t freq_band;
-    uint8_t first_freq_value;
-    int cur_freq_offset;
-    uint8_t enable_freq_offset;
     uint8_t default_fac_setting;
     uint8_t search_id_enable;
     uint8_t bb_power;
-    uint8_t gp20dbm[4];
-    uint8_t sp20dbm[4]; 
-    uint8_t gp20dbmb[4];
-    uint8_t sp20dbmb[4];
 }CONTEXT;
 
 typedef struct
@@ -94,17 +85,13 @@ typedef struct
      RUN_MODE it_skip_freq_mode;
      RUN_MODE rc_skip_freq_mode;
      uint8_t search_id_enable;
-     uint8_t freq_band;
-     uint8_t gp20dbm[4];
-     uint8_t sp20dbm[4];		 
+     uint8_t freq_band;     
      ENUM_BB_LDPC ldpc;
      RUN_MODE qam_skip_mode;
      uint8_t rc_mask[32];
      uint8_t it_mask[8];
      uint16_t qam_change_threshold[QAM_CHANGE_THRESHOLD_COUNT];
      uint8_t enable_freq_offset;
-     uint8_t gp20dbmb[4];
-     uint8_t sp20dbmb[4];
 }SYS_PARAM;
 
 typedef struct

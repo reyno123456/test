@@ -52,7 +52,7 @@ void Sky_Parm_Initial(void)
     context.it_skip_freq_mode = AUTO;
     context.rc_skip_freq_mode = AUTO;
     context.qam_skip_mode == AUTO;
-    context.cur_ch = 0xff;
+    context.cur_IT_ch = 0xff;
 
     sky_id_search_init();
 
@@ -86,17 +86,6 @@ uint8_t sky_id_match(void)
 }
 
 
-uint8_t mod_br_map[][2] = 
-{
-    ((MOD_BPSK<<6)  |  (BW_10M <<3)  | LDPC_1_2),  10, //encoder br:1M
-    ((MOD_4QAM<<6)  |  (BW_10M <<3)  | LDPC_1_2),  30, //encoder br:3M
-    ((MOD_4QAM<<6)  |  (BW_10M <<3)  | LDPC_2_3),  40, //encoder br:4M
-    ((MOD_16QAM<<6) |  (BW_10M <<3)  | LDPC_1_2),  50, //encoder br:5M
-    ((MOD_64QAM<<6) |  (BW_10M <<3)  | LDPC_1_2),  60, //encoder br:6M
-    ((MOD_64QAM<<6) |  (BW_10M <<3)  | LDPC_2_3),  70, //encoder br:7M
-};
-
-
 void sky_notify_encoder_brc(uint8_t br)
 {
 	STRU_SysEvent_BB_ModulationChange event;
@@ -113,16 +102,7 @@ void sky_set_ITQAM_and_notify(uint8_t mod)
 
 	if(context.brc_mode == AUTO)
 	{
-        uint8_t br = mod_br_map[0][1];
-        for(i = 0; i < sizeof(mod_br_map) / sizeof(mod_br_map[0]); i++)
-        {
-            if(mod_br_map[i][0] == mod)
-            {
-                br = mod_br_map[i][1];
-                break;
-            }
-        }
-
+	    uint8_t br = BB_map_modulation_to_br(mod);
         dlog_info("br=%d\r\n", br);
         sky_notify_encoder_brc(br);
 	}
@@ -142,6 +122,7 @@ void sky_agc_gain_toggle(void)
         en_agcmode = FAR_AGC;
     }
 }
+
 
 void sky_auto_adjust_agc_gain(void)
 {
@@ -165,6 +146,7 @@ void sky_auto_adjust_agc_gain(void)
     }
 }
 
+
 //*********************TX RX initial(14ms irq)**************
 void wimax_vsoc_rx_isr()
 {
@@ -172,6 +154,7 @@ void wimax_vsoc_rx_isr()
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
     TIM_StartTimer(sky_timer0_0);
 }
+
 
 void Sky_TIM0_IRQHandler(void)
 {
@@ -208,7 +191,7 @@ void sky_rc_hopfreq(void)
 
 void sky_set_it_freq(uint8_t ch)
 {
-    if(context.cur_ch != ch)
+    if(context.cur_IT_ch != ch)
     {
         BB_set_ITfrq(ch);
         printf("S=>%d\r\n", ch);
@@ -467,10 +450,10 @@ static void sky_handle_IT_CH_cmd(void)
     data1 = BB_ReadReg(PAGE2, IT_FREQ_TX_1);
     uint8_t req_ch = data0 & 0x1f;
 
-    if((data0+1 == data1) && ((data0&0xE0) == 0xE0) && (context.cur_ch != req_ch))
+    if((data0+1 == data1) && ((data0&0xE0) == 0xE0) && (context.cur_IT_ch != req_ch))
     {
         sky_set_it_freq(req_ch);
-        context.cur_ch = req_ch;
+        context.cur_IT_ch = req_ch;
     }
 }
 
@@ -555,15 +538,15 @@ static void sky_handle_brc_mode_cmd(void)
 
 
 /*
- * handle H264 encoder brc 
-*/
+  * handle H264 encoder brc 
+ */
 static void sky_handle_brc_bitrate_cmd(void)
 {
 	uint8_t data0 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_0);
     uint8_t data1 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_1);
     uint8_t bps = data0&0x3F;
 
-    if(data1==data0+1 && ( (data0&0xc0)==0xc0) && context.brc_bps != bps)
+    if( (data0+1==data1) && ( (data0&0xc0)==0xc0) && (context.brc_bps != bps))
     {
         context.brc_bps = bps;
         sky_notify_encoder_brc(bps*10);

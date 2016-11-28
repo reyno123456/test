@@ -44,6 +44,12 @@ void grd_sweep_freq_init(void)
 }
 
 
+void grd_get_sweep_noise(uint8_t row, int16_t *ptr_noise_power)
+{
+    int size = sizeof(sweep_ch_noise_energy.noise_energy_1_5M[row]);
+    memcpy(ptr_noise_power, sweep_ch_noise_energy.noise_energy_1_5M[row], sizeof(sweep_ch_noise_energy.noise_energy_1_5M[row]));
+}
+
 void grd_set_next_sweep_freq(void)
 {
     sweep_ch_noise_energy.sweep_ch++;
@@ -61,6 +67,9 @@ void clear_sweep_results(void)
     sweep_ch_noise_energy.row_index = 0;
 }
 
+/*
+  *  get the time domain noise energy
+ */
 static uint32_t grd_get_it_sweep_td_noise_energy()
 {
     uint32_t Energy_Low = BB_ReadReg(PAGE2, SWEEP_ENERGY_LOW);
@@ -111,7 +120,6 @@ int8_t grd_get_it_sweep_noise_energy(uint8_t bw, uint8_t row, uint8_t ch)
 
         if(ch_fd_power[i] == 0)
         {
-            //dlog_info("ch_fd_power ==0 \r\n");
             return 0;
         }
     }
@@ -134,10 +142,9 @@ int8_t grd_get_it_sweep_noise_energy(uint8_t bw, uint8_t row, uint8_t ch)
 int8_t grd_add_sweep_result(int8_t bw)
 {
     uint8_t row = sweep_ch_noise_energy.row_index;
-    uint8_t ch = sweep_ch_noise_energy.sweep_ch;
-    uint8_t result;
+    uint8_t ch  = sweep_ch_noise_energy.sweep_ch;
+    uint8_t result = grd_get_it_sweep_noise_energy(bw, row, ch);
 
-    result = grd_get_it_sweep_noise_energy(bw, row, ch);
     if(result == 1)
     {
         if(ch >= MAX_RC_FRQ_SIZE - 1)
@@ -150,6 +157,8 @@ int8_t grd_add_sweep_result(int8_t bw)
             }
         }
     }
+    
+    return result;
 }
 
 
@@ -236,12 +245,12 @@ uint8_t get_sweep_freq(void)
     return sweep_ch_noise_energy.sweep_ch;
 }
 
-uint8_t ch_to_index(uint8_t cur_ch)
+uint8_t ch_to_index(uint8_t cur_IT_ch)
 {
     uint8_t i;
     for(i=0;i<MAX_RC_FRQ_SIZE;i++)
     {
-        if(i == cur_ch)
+        if(i == cur_IT_ch)
         {
             return i;
         }
@@ -253,7 +262,7 @@ uint8_t ch_to_index(uint8_t cur_ch)
 uint8_t is_next_best_freq_pass(uint8_t cur_best_ch, uint8_t next_best_ch)
 {
     uint8_t ret,i,cnt;
-    uint8_t cur_ch_index,next_ch_index;
+    uint8_t cur_ch_index, next_ch_index;
 
     ret = 0;
     cur_ch_index = ch_to_index(cur_best_ch);
@@ -423,7 +432,6 @@ int16_t calc_power_db(int8_t bw, uint32_t power_td,
     }
     if(sum_fd == 0)
     {
-        //dlog_info("%s\r\n", "sum_fd == 0");
         return 0;
     }
     for(i = 0 ; i < cnt; i++)
@@ -437,12 +445,19 @@ int16_t calc_power_db(int8_t bw, uint32_t power_td,
         else
         {
             tmp -= 125;
-        }
-        
+        }   
         power_db[i] = tmp;
         sum_power += tmp;
     }
 
+    static int loop = 0;
+    if(loop++ > 5000)
+    {
+        loop = 0;
+        dlog_info("%d %d %d %d %d %d %d %d \r\n", 
+                    power_db[0], power_db[1], power_db[2], power_db[3], 
+                    power_db[4], power_db[5], power_db[6], power_db[7]); 
+    }
     *total_power = sum_power;
     return 1;
 }
