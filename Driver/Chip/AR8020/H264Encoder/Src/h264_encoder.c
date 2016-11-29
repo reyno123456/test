@@ -5,13 +5,50 @@
 #include "enc_internal.h"
 #include "brc.h"
 #include "vsoc_enc.h"
+#include "h264_encoder.h"
 #include "interrupt.h"
 #include "reg_map.h"
 #include "sys_event.h"
 
 static STRU_EncoderStatus g_stEncoderStatus[2] = { 0 };
 
-static int H264_Encoder_RestartView(unsigned char view, unsigned int resW, unsigned int resH, unsigned int gop, unsigned int framerate, unsigned int bitrate, unsigned char brc_enable)
+static int H264_Encoder_StartView(unsigned char view, unsigned int resW, unsigned int resH, unsigned int gop, unsigned int framerate, unsigned int bitrate)
+{
+    if (view >= 2)
+    {
+        return 0;
+    }
+
+    INTR_NVIC_DisableIRQ(VIDEO_ARMCM7_IRQ_VECTOR_NUM);
+
+    if (view == 0)
+    {
+        init_view0(resW, resH, gop, framerate, bitrate);
+        my_v0_initial_all( );
+        open_view0(g_stEncoderStatus[view].brc_enable);
+    }
+    else if (view == 1)
+    {
+        init_view1(resW, resH, gop, framerate, bitrate);
+        my_v1_initial_all( );
+        open_view1(g_stEncoderStatus[view].brc_enable);
+    }
+
+    g_stEncoderStatus[view].resW = resW;
+    g_stEncoderStatus[view].resH = resH;
+    g_stEncoderStatus[view].framerate = framerate;
+    g_stEncoderStatus[view].running = 1;
+
+    if ((g_stEncoderStatus[0].brc_enable && g_stEncoderStatus[0].running) || 
+        (g_stEncoderStatus[1].brc_enable && g_stEncoderStatus[1].running)) // view0 and view1 share the same BRC interrupt
+    {
+        INTR_NVIC_EnableIRQ(VIDEO_ARMCM7_IRQ_VECTOR_NUM);
+    }
+
+    return 1;
+}
+
+static int H264_Encoder_RestartView(unsigned char view, unsigned int resW, unsigned int resH, unsigned int gop, unsigned int framerate, unsigned int bitrate)
 {
     if (view >= 2)
     {
@@ -23,22 +60,47 @@ static int H264_Encoder_RestartView(unsigned char view, unsigned int resW, unsig
     if (view == 0)
     {
         close_view0();
-        init_view0(resW, resH, gop, framerate, bitrate);
-        my_v0_initial_all( );
-        open_view0(brc_enable);
+        H264_Encoder_StartView(view, resW, resH, gop, framerate, bitrate);
     }
     else if (view == 1)
     {
         close_view1();
-        init_view1(resW, resH, gop, framerate, bitrate);
-        my_v1_initial_all( );
-        open_view1(brc_enable);
+        H264_Encoder_StartView(view, resW, resH, gop, framerate, bitrate);
     }
 
-    if (brc_enable)
+    return 1;
+}
+
+static int H264_Encoder_CloseView(unsigned char view)
+{
+    if (view >= 2)
+    {
+        return 0;
+    }
+
+    INTR_NVIC_DisableIRQ(VIDEO_ARMCM7_IRQ_VECTOR_NUM);
+    
+    if (view == 0)
+    {
+        close_view0();
+    }
+    else if (view == 1)
+    {
+        close_view1();
+    }
+
+    g_stEncoderStatus[view].resW = 0;
+    g_stEncoderStatus[view].resH = 0;
+    g_stEncoderStatus[view].framerate = 0;
+    g_stEncoderStatus[view].running = 0;
+
+    if ((g_stEncoderStatus[0].brc_enable && g_stEncoderStatus[0].running) || 
+        (g_stEncoderStatus[1].brc_enable && g_stEncoderStatus[1].running)) // view0 and view1 share the same BRC interrupt
     {
         INTR_NVIC_EnableIRQ(VIDEO_ARMCM7_IRQ_VECTOR_NUM);
     }
+
+    return 1;
 }
 
 static int H264_Encoder_UpdateVideoInfo(unsigned char view, unsigned int resW, unsigned int resH, unsigned int framerate)
@@ -52,16 +114,16 @@ static int H264_Encoder_UpdateVideoInfo(unsigned char view, unsigned int resW, u
        g_stEncoderStatus[view].resH != resH ||
        g_stEncoderStatus[view].framerate != framerate)
     {
-        H264_Encoder_RestartView(view, resW, resH, g_stEncoderStatus[view].gop, 
-                                 framerate, g_stEncoderStatus[view].bitrate, 
-                                 g_stEncoderStatus[view].brc_enable);
+        if ((resW == 0) || (resH == 0) || (framerate == 0))
+        {
+            H264_Encoder_CloseView(view);
+        }
+        else
+        {
+            H264_Encoder_RestartView(view, resW, resH, g_stEncoderStatus[view].gop, 
+                                     framerate, g_stEncoderStatus[view].bitrate);
+        }
         
-        g_stEncoderStatus[view].resW = resW;
-        g_stEncoderStatus[view].resH = resH;
-        g_stEncoderStatus[view].framerate = framerate;
-
-        g_stEncoderStatus[view].running = 1;
-
         dlog_info("Video format change: %d, %d, %d, %d\n", view, resW, resH, framerate);
     }
 
@@ -149,7 +211,7 @@ static void VEBRC_IRQ_Wrap_Handler(void)
         {
             H264_Encoder_RestartView(0, g_stEncoderStatus[0].resW, g_stEncoderStatus[0].resH, 
                                      g_stEncoderStatus[0].gop, g_stEncoderStatus[0].framerate, 
-                                     g_stEncoderStatus[0].bitrate, g_stEncoderStatus[0].brc_enable);
+                                     g_stEncoderStatus[0].bitrate);
             dlog_info("Reset view0");
         }
 
@@ -157,7 +219,7 @@ static void VEBRC_IRQ_Wrap_Handler(void)
         {
             H264_Encoder_RestartView(1, g_stEncoderStatus[1].resW, g_stEncoderStatus[1].resH, 
                                      g_stEncoderStatus[1].gop, g_stEncoderStatus[1].framerate, 
-                                     g_stEncoderStatus[1].bitrate, g_stEncoderStatus[1].brc_enable);
+                                     g_stEncoderStatus[1].bitrate);
             dlog_info("Reset view1");
         }
     }
@@ -195,7 +257,7 @@ static void VEBRC_IRQ_Wrap_Handler(void)
     }
 }
 
-int H264_Encoder_Init(void)
+int H264_Encoder_Init(uint8_t gop0, uint8_t br0, uint8_t brc0_e, uint8_t gop1, uint8_t br1, uint8_t brc1_e)
 {
     //variable Declaraton 
     char spi_rd_dat, i2c_rd_dat;
@@ -208,14 +270,14 @@ int H264_Encoder_Init(void)
     reg_IrqHandle(VIDEO_ARMCM7_IRQ_VECTOR_NUM, VEBRC_IRQ_Wrap_Handler);
     INTR_NVIC_DisableIRQ(VIDEO_ARMCM7_IRQ_VECTOR_NUM);
 
-    g_stEncoderStatus[0].gop = 10;
-    g_stEncoderStatus[0].brc_enable = 1;
-    g_stEncoderStatus[0].bitrate = 1;
+    g_stEncoderStatus[0].gop = gop0;
+    g_stEncoderStatus[0].bitrate = br0;
+    g_stEncoderStatus[0].brc_enable = brc0_e;
     v0_poweron_rc_params_set = 1;
 
-    g_stEncoderStatus[1].gop = 10;
-    g_stEncoderStatus[1].brc_enable = 1;
-    g_stEncoderStatus[1].bitrate = 1;
+    g_stEncoderStatus[1].gop = gop1;
+    g_stEncoderStatus[1].bitrate = br1;
+    g_stEncoderStatus[1].brc_enable = brc1_e;
     v1_poweron_rc_params_set = 1;
 
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_ADV7611_FORMAT_CHANGE, H264_Encoder_InputVideoFormatChangeCallback);

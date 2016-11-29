@@ -464,10 +464,12 @@ static uint8_t ADV_7611_CheckVideoFormatChangeOrNot(uint8_t index, uint32_t widt
 
 static void ADV_7611_CheckFormatStatus(uint8_t index, uint8_t no_diff_check)
 {
+    static uint8_t format_not_support_count = 0;
     uint32_t width, hight, framerate;
     ADV_7611_GetVideoFormat(index, &width, &hight, &framerate);
     if (ADV_7611_CheckVideoFormatSupportOrNot(width, hight, framerate) == TRUE)
     {
+        format_not_support_count = 0;
         if ((no_diff_check == TRUE) || (ADV_7611_CheckVideoFormatChangeOrNot(index, width, hight, framerate) == TRUE))
         {
             STRU_SysEvent_ADV7611FormatChangeParameter p;
@@ -480,6 +482,28 @@ static void ADV_7611_CheckFormatStatus(uint8_t index, uint8_t no_diff_check)
             g_ADV7611Status.video_format[index].width = width;
             g_ADV7611Status.video_format[index].hight = hight;
             g_ADV7611Status.video_format[index].framerate = framerate;
+        }
+    }
+    else
+    {
+        // Format not supported
+        if (format_not_support_count <= FORMAT_NOT_SUPPORT_COUNT_MAX)
+        {
+            format_not_support_count++;
+        }
+
+        if (format_not_support_count == FORMAT_NOT_SUPPORT_COUNT_MAX)
+        {
+            STRU_SysEvent_ADV7611FormatChangeParameter p;
+            p.index = index;
+            p.width = 0;
+            p.hight = 0;
+            p.framerate = 0;
+            SYS_EVENT_Notify(SYS_EVENT_ID_ADV7611_FORMAT_CHANGE, (void*)&p);
+
+            g_ADV7611Status.video_format[index].width = 0;
+            g_ADV7611Status.video_format[index].hight = 0;
+            g_ADV7611Status.video_format[index].framerate = 0;
         }
     }
 }

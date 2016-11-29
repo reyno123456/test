@@ -3,9 +3,9 @@
 
 #define abs(num) (num > 0 ? num : -num)
 
-#define IN_CLK                  25000000
-#define VSOC_GLOBAL2_BASE               0xA0030000
-#define SDRAM_INIT_DONE     0x24    //sdram init done
+#define IN_CLK                  166000000
+#define VSOC_GLOBAL2_BASE       0xA0030000
+#define SDRAM_INIT_DONE         0x24    //sdram init done
 
 //Write or Read Byte_Word
 #define REG8(add)  *((volatile unsigned char *)  (add))
@@ -40,11 +40,11 @@ void sdram_init_check(void);
 typedef struct
 {
     unsigned char running;
-    unsigned int resW;
-    unsigned int resH;
-    unsigned int gop;
-    unsigned int framerate;
-    unsigned int bitrate;
+    unsigned int  resW;
+    unsigned int  resH;
+    unsigned char gop;
+    unsigned char framerate;
+    unsigned char bitrate;
     unsigned char brc_enable;
 } STRU_EncoderStatus;
 

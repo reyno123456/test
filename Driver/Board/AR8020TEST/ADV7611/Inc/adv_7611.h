@@ -4,6 +4,8 @@
 #define ADV7611_0_DEVICE_ENABLE_MASK (1<<0)
 #define ADV7611_1_DEVICE_ENABLE_MASK (1<<1)
 
+#define FORMAT_NOT_SUPPORT_COUNT_MAX 50
+
 typedef struct _ADV7611Format
 {
     uint16_t width;
@@ -25,3 +27,4 @@ void ADV_7611_DumpOutDefaultSettings(uint8_t index);
 void ADV_7611_GetVideoFormat(uint8_t index, uint32_t* widthPtr, uint32_t* hightPtr, uint32_t* framteratePtr);
 
 #endif
+

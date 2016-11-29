@@ -195,12 +195,14 @@ int VEBRC_IRQ_Handler( )
     switch(run_case) {
         case 0:
             if((rca.v0_fd_reset==1) && (rca.v0_fd_last_p==1) && (rca.v0_fd_last_row==1) && (v0_last_p_gop_change==FALSE) && (v0_poweron_rc_params_set==0)) {//restart!!!
+                update_aof (); //lyu
                 my_v0_initial_all( );
             }
             else if(rca.v0_rc_enable==1)
             {
                 if ((rca.v0_fd_iframe==1) && (rca.v0_fd_row_cnt==0) && (v0_last_p_gop_change==TRUE)) {
                 	// release last_p_gop_change to FALSE and execute initial_all operation until the first bu of iframe reached!!!
+                    update_aof (); //lyu
                     my_v0_initial_all( );
                     v0_last_p_gop_change=FALSE;
                 }
@@ -241,12 +243,14 @@ int VEBRC_IRQ_Handler( )
 
         case 1:
             if ((rca.v1_fd_reset==1) && (rca.v1_fd_last_p==1) && (rca.v1_fd_last_row==1) && (v1_last_p_gop_change==FALSE) && (v1_poweron_rc_params_set==0)) {//restart
+                update_aof (); //lyu
                 my_v1_initial_all( );
             }
             else if(rca.v1_rc_enable==1)
             {
                 if ((rca.v1_fd_iframe==1) && (rca.v1_fd_row_cnt==0) && (v1_last_p_gop_change==TRUE)) {
                     // release last_p_gop_change to FALSE and execute initial_all operation until the first bu of iframe reached!!!
+                    update_aof (); //lyu
                     my_v1_initial_all( );
                     v1_last_p_gop_change=FALSE;
                 }
@@ -287,12 +291,14 @@ int VEBRC_IRQ_Handler( )
 
         case 2: // 1080p used view0
             if ((rca.v1_fd_reset==1) && (rca.v1_fd_last_p==1) && (rca.v1_fd_last_row==1) && (v1_last_p_gop_change==FALSE) && (v1_poweron_rc_params_set==0)) {//restart
+                update_aof (); //lyu
                 my_v1_initial_all( );
             }
             else if(rca.v1_rc_enable==1)
             {
                 if ((rca.v1_fd_iframe==1) && (rca.v1_fd_row_cnt==0) && (v1_last_p_gop_change==TRUE)) {
                     // release last_p_gop_change to FALSE and execute initial_all operation until the first bu of iframe reached!!!
+                    update_aof (); //lyu
                     my_v1_initial_all( );
                     v1_last_p_gop_change=FALSE;
                 }

@@ -34,7 +34,7 @@ int main(void)
     
     ADV_7611_Initial(0);
     ADV_7611_Initial(1);
-    H264_Encoder_Init();
+    H264_Encoder_Init(10, 1, 1, 10, 1, 1);
     
     test_BB_sky();
 
