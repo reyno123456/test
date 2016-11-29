@@ -204,7 +204,6 @@ int H264_Encoder_Init(void)
 
     //==== Video_Soc Wait SDRAM INIT_DONE ===//
     sdram_init_check(); 
-    dlog_info("sdram init OK\n");
 
     reg_IrqHandle(VIDEO_ARMCM7_IRQ_VECTOR_NUM, VEBRC_IRQ_Wrap_Handler);
     INTR_NVIC_DisableIRQ(VIDEO_ARMCM7_IRQ_VECTOR_NUM);
@@ -221,6 +220,8 @@ int H264_Encoder_Init(void)
 
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_ADV7611_FORMAT_CHANGE, H264_Encoder_InputVideoFormatChangeCallback);
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE, H264_Encoder_BBModulationChangeCallback);
+
+    dlog_info("h264 encoder init OK\n");
 
     return 1;
 }
@@ -248,3 +249,4 @@ void H264_Encoder_DumpFrameCount(void)
     }
     // update_aof();
 }
+

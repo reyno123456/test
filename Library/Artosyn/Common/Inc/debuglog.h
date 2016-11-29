@@ -18,7 +18,7 @@ enum
 #define _print_log(fmt, arg...)  \
     do \
     { \
-        printf("%s:%s:%d\t"fmt"\n", __FILE__, __FUNCTION__, __LINE__, ##arg);   \
+        printf("%s\t"fmt"\n", __FUNCTION__, ##arg);   \
     }while(0)
 
 #if(LOG_LEVEL_CRITICAL <= LOG_LEVEL)

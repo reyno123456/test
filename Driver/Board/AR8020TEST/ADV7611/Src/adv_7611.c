@@ -549,7 +549,6 @@ void ADV_7611_GetVideoFormat(uint8_t index, uint32_t* widthPtr, uint32_t* hightP
 
 void ADV_7611_DumpOutEdidData(uint8_t index)
 {
-    dlog_info("\n\n\n-----------------------------------------\n\n");
     dlog_info("Edid Data:");
 
     unsigned char slv_addr_offset = (index == 0) ? 0 : 2; 
@@ -579,19 +578,15 @@ void ADV_7611_DumpOutEdidData(uint8_t index)
             dlog_info("0x%x, 0x%x, 0x%x, Error: right value 0x%x!", hdmi_edid_table[i][0] + slv_addr_offset, hdmi_edid_table[i][1], val, hdmi_edid_table[i][2]);
         }
     }
-    
-    dlog_info("\n\n-----------------------------------------\n\n\n");
 }
 
 void ADV_7611_DumpOutDefaultSettings(uint8_t index)
 {
-    dlog_info("\n\n\n-----------------------------------------\n\n");
-    dlog_info("I2C Address Table:");
     unsigned int i;
     unsigned char val = 0;
-
     unsigned char slv_addr_offset = (index == 0) ? 0 : 2; 
 
+    dlog_info("I2C Address Table:");
     for (i = 1; ; i++)
     {
         if ((adv_i2c_addr_table[i][0] == 0xFF) && (adv_i2c_addr_table[i][1] == 0xFF) && (adv_i2c_addr_table[i][2] == 0xFF))
@@ -640,7 +635,5 @@ void ADV_7611_DumpOutDefaultSettings(uint8_t index)
             dlog_info("0x%x, 0x%x, 0x%x, Error: right value 0x%x!", hdmi_default_settings[i][0] + slv_addr_offset, hdmi_default_settings[i][1], val, hdmi_default_settings[i][2]);
         }
     }
-    
-    dlog_info("\n\n-----------------------------------------\n\n\n");
 }
 

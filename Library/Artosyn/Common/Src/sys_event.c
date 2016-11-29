@@ -638,7 +638,7 @@ void SYS_EVENT_DumpAllListNodes(void)
         STRU_RegisteredSysEventHandler_Node* hNode = rEventNode->handler_list;
         while(hNode != NULL)
         {
-            printf("                      handler %p\n", hNode->handler);
+            dlog_info("                      handler %p\n", hNode->handler);
             hNode = hNode->next;
         }
         rEventNode = rEventNode->next;
