@@ -7,6 +7,7 @@
 #include "reg_rw.h"
 #include "sys_param.h"
 #include "config_baseband_register.h"
+#include "systicks.h"
 
 #define     BB_SPI_TEST         (0)
 #define     RF_SPI_TEST         (0)

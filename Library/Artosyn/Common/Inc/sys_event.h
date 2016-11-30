@@ -71,6 +71,7 @@ typedef struct _SysEvent_TestParameter
 uint8_t SYS_EVENT_RegisterHandler(uint32_t event_id, SYS_Event_Handler event_handler);
 uint8_t SYS_EVENT_UnRegisterHandler(uint32_t event_id, SYS_Event_Handler event_handler);
 uint8_t SYS_EVENT_Notify(uint32_t event_id, void* parameter);
+uint8_t SYS_EVENT_Notify_From_ISR(uint32_t event_id, void* parameter);
 uint8_t SYS_EVENT_Process(void);
 void SYS_EVENT_DumpAllListNodes(void);
 

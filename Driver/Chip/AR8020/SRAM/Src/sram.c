@@ -3,6 +3,7 @@
 #include "debuglog.h"
 #include "usbd_def.h"
 #include "usbd_hid.h"
+#include "reg_rw.h"
 
 volatile uint32_t               sramReady0;
 volatile uint32_t               sramReady1;
@@ -14,7 +15,7 @@ void SRAM_Ready0IRQHandler(void)
     uint8_t         *buff;
     uint32_t         dataLen;
 
-    buff            = SRAM_BUFF_0_ADDRESS;
+    buff            = (uint8_t *)SRAM_BUFF_0_ADDRESS;
 
     dataLen         = SRAM_DATA_VALID_LEN_0;
     dataLen         = (dataLen << 2);
@@ -35,7 +36,7 @@ void SRAM_Ready1IRQHandler(void)
     uint8_t         *buff;
     uint32_t         dataLen;
 
-    buff            = SRAM_BUFF_1_ADDRESS;
+    buff            = (uint8_t *)SRAM_BUFF_1_ADDRESS;
 
     dataLen         = SRAM_DATA_VALID_LEN_1;
     dataLen         = (dataLen << 2);

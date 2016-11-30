@@ -1,6 +1,6 @@
 #include "dma.h"
 #include "debuglog.h"
-
+#include "reg_rw.h"
 
 uint32_t g_dmaSettingConfig[16];
 
@@ -14,7 +14,7 @@ void dma_transfer(uint32_t *src, uint32_t *dst, uint32_t byte_num)
 
     while(dma_finish==0)
     {
-        dma_finish = read_reg32(BASE_ADDR_DMA + ADDR_StatusTfr); 
+        dma_finish = Reg_Read32(BASE_ADDR_DMA + ADDR_StatusTfr); 
     }
 
     dma_clear_irq();
@@ -45,23 +45,23 @@ void dma_llp_driver (uint32_t *src_addr,uint32_t *dst_addr, uint32_t byte_num, u
     dest_msize = msize & 0x7;
     src_msize  = msize & 0x7;
 
-    write_reg32(BASE_ADDR_DMA + ADDR_ChEnReg     , 0x00000000       ); //0x3a0 ChEnReg : not busy
-    write_reg32(BASE_ADDR_DMA + ADDR_CFG0_HIGH32 , DATA_CFG0_HIGH32 ); //0x044
-    write_reg32(BASE_ADDR_DMA + ADDR_CFG0_LOW32  , DATA_CFG0_LOW32  ); //0x040
+    Reg_Write32(BASE_ADDR_DMA + ADDR_ChEnReg     , 0x00000000       ); //0x3a0 ChEnReg : not busy
+    Reg_Write32(BASE_ADDR_DMA + ADDR_CFG0_HIGH32 , DATA_CFG0_HIGH32 ); //0x044
+    Reg_Write32(BASE_ADDR_DMA + ADDR_CFG0_LOW32  , DATA_CFG0_LOW32  ); //0x040
 
     //Clear Interrupt
-    write_reg32(BASE_ADDR_DMA + ADDR_ClearBlock  , DATA_ClearBlock  ); //0x340 ClearBlock  
-    write_reg32(BASE_ADDR_DMA + ADDR_ClearSrcTran, DATA_ClearSrcTran); //0x348 ClearSrcTran
-    write_reg32(BASE_ADDR_DMA + ADDR_ClearDstTran, DATA_ClearDstTran); //0x350 ClearDstTran
-    write_reg32(BASE_ADDR_DMA + ADDR_ClearErr    , DATA_ClearErr    ); //0x358 ClearErr    
-    write_reg32(BASE_ADDR_DMA + ADDR_ClearTfr    , DATA_ClearTfr    ); //0x338 ClearTfr  
+    Reg_Write32(BASE_ADDR_DMA + ADDR_ClearBlock  , DATA_ClearBlock  ); //0x340 ClearBlock  
+    Reg_Write32(BASE_ADDR_DMA + ADDR_ClearSrcTran, DATA_ClearSrcTran); //0x348 ClearSrcTran
+    Reg_Write32(BASE_ADDR_DMA + ADDR_ClearDstTran, DATA_ClearDstTran); //0x350 ClearDstTran
+    Reg_Write32(BASE_ADDR_DMA + ADDR_ClearErr    , DATA_ClearErr    ); //0x358 ClearErr    
+    Reg_Write32(BASE_ADDR_DMA + ADDR_ClearTfr    , DATA_ClearTfr    ); //0x338 ClearTfr  
     //Interrupt Mask
-    write_reg32(BASE_ADDR_DMA + ADDR_MaskTfr     , DATA_MaskTfr     ); //0x310
-    //write_reg32(BASE_ADDR_DMA + ADDR_MaskBlock   , DATA_MaskBlock   ); //0x318
-    write_reg32(BASE_ADDR_DMA + ADDR_MaskBlock   , 0x00000000       ); //0x318
-    write_reg32(BASE_ADDR_DMA + ADDR_MaskSrcTran , DATA_MaskSrcTran ); //0x320
-    write_reg32(BASE_ADDR_DMA + ADDR_MaskDstTran , DATA_MaskDstTran ); //0x328
-    write_reg32(BASE_ADDR_DMA + ADDR_MaskErr     , DATA_MaskErr     ); //0x330
+    Reg_Write32(BASE_ADDR_DMA + ADDR_MaskTfr     , DATA_MaskTfr     ); //0x310
+    //Reg_Write32(BASE_ADDR_DMA + ADDR_MaskBlock   , DATA_MaskBlock   ); //0x318
+    Reg_Write32(BASE_ADDR_DMA + ADDR_MaskBlock   , 0x00000000       ); //0x318
+    Reg_Write32(BASE_ADDR_DMA + ADDR_MaskSrcTran , DATA_MaskSrcTran ); //0x320
+    Reg_Write32(BASE_ADDR_DMA + ADDR_MaskDstTran , DATA_MaskDstTran ); //0x328
+    Reg_Write32(BASE_ADDR_DMA + ADDR_MaskErr     , DATA_MaskErr     ); //0x330
 
     //LLP set up: multi-block 
     blk_byte_max = block_size * 4;
@@ -152,8 +152,8 @@ void dma_llp_driver (uint32_t *src_addr,uint32_t *dst_addr, uint32_t byte_num, u
     llp_loc = llp_base;
     llp0 = (llp_loc<<2) + llp_lms;
 
-    data_sar = src_addr;
-    data_dar = dst_addr;
+    data_sar = (uint32_t)src_addr;
+    data_dar = (uint32_t)dst_addr;
 
     for(i=1;i<=block_num;i++)	
     {
@@ -180,10 +180,10 @@ void dma_llp_driver (uint32_t *src_addr,uint32_t *dst_addr, uint32_t byte_num, u
         addr_cth = (llp_loc + 4) << 2;
 
         //store the llp entry in memory
-        write_reg32(addr_sar, data_sar         ); //SAR0
-        write_reg32(addr_dar, data_dar         ); //DAR0
-        write_reg32(addr_ctl, data_ctl0_low32  ); //CTLL
-        write_reg32(addr_cth, data_ctl0_high32 ); //CTLH
+        Reg_Write32(addr_sar, data_sar         ); //SAR0
+        Reg_Write32(addr_dar, data_dar         ); //DAR0
+        Reg_Write32(addr_ctl, data_ctl0_low32  ); //CTLL
+        Reg_Write32(addr_cth, data_ctl0_high32 ); //CTLH
 
         if(i < (block_num -1)) // belong to block 1st
         {
@@ -205,18 +205,18 @@ void dma_llp_driver (uint32_t *src_addr,uint32_t *dst_addr, uint32_t byte_num, u
         }
 
         data_llp = (llp_loc << 2) + llp_lms;
-        write_reg32(addr_llp, data_llp ); //LLP0 
+        Reg_Write32(addr_llp, data_llp ); //LLP0 
     }
 
     data_ctl0_lint= (DATA_CTL0_LOW32 & 0xe7fe07ff) + (dest_msize << 11) + (src_msize << 14) + (DMA_LLP_ENABLE << 27);
     data_ctl0_hint= (block_size & 0xfff) + (DATA_CTL0_HIGH32 & 0xfffff000);
 
     //LLP0 set up 
-    write_reg32(BASE_ADDR_DMA + ADDR_CTL0_LOW32  , data_ctl0_lint   ); //0x018
-    write_reg32(BASE_ADDR_DMA + ADDR_CTL0_HIGH32 , data_ctl0_hint   ); //0x01c
-    write_reg32(BASE_ADDR_DMA + ADDR_LLP0        , llp0             ); //0x010
-    write_reg32(BASE_ADDR_DMA + ADDR_DmaCfgReg   , DATA_DmaCfgReg   ); //0x398
-    write_reg32(BASE_ADDR_DMA + ADDR_ChEnReg     , DATA_ChEnReg     ); //0x3a0
+    Reg_Write32(BASE_ADDR_DMA + ADDR_CTL0_LOW32  , data_ctl0_lint   ); //0x018
+    Reg_Write32(BASE_ADDR_DMA + ADDR_CTL0_HIGH32 , data_ctl0_hint   ); //0x01c
+    Reg_Write32(BASE_ADDR_DMA + ADDR_LLP0        , llp0             ); //0x010
+    Reg_Write32(BASE_ADDR_DMA + ADDR_DmaCfgReg   , DATA_DmaCfgReg   ); //0x398
+    Reg_Write32(BASE_ADDR_DMA + ADDR_ChEnReg     , DATA_ChEnReg     ); //0x3a0
 
     return;
 }
@@ -224,11 +224,11 @@ void dma_llp_driver (uint32_t *src_addr,uint32_t *dst_addr, uint32_t byte_num, u
 
 void dma_clear_irq(void)
 {
-    write_reg32(BASE_ADDR_DMA + ADDR_ClearBlock  , DATA_ClearBlock  ); //0x340 ClearBlock  
-    write_reg32(BASE_ADDR_DMA + ADDR_ClearSrcTran, DATA_ClearSrcTran); //0x348 ClearSrcTran
-    write_reg32(BASE_ADDR_DMA + ADDR_ClearDstTran, DATA_ClearDstTran); //0x350 ClearDstTran
-    write_reg32(BASE_ADDR_DMA + ADDR_ClearErr    , DATA_ClearErr    ); //0x358 ClearErr    
-    write_reg32(BASE_ADDR_DMA + ADDR_ClearTfr    , DATA_ClearTfr    ); //0x338 ClearTfr    
+    Reg_Write32(BASE_ADDR_DMA + ADDR_ClearBlock  , DATA_ClearBlock  ); //0x340 ClearBlock  
+    Reg_Write32(BASE_ADDR_DMA + ADDR_ClearSrcTran, DATA_ClearSrcTran); //0x348 ClearSrcTran
+    Reg_Write32(BASE_ADDR_DMA + ADDR_ClearDstTran, DATA_ClearDstTran); //0x350 ClearDstTran
+    Reg_Write32(BASE_ADDR_DMA + ADDR_ClearErr    , DATA_ClearErr    ); //0x358 ClearErr    
+    Reg_Write32(BASE_ADDR_DMA + ADDR_ClearTfr    , DATA_ClearTfr    ); //0x338 ClearTfr    
 
     return;
 }

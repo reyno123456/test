@@ -8,7 +8,7 @@ static volatile uint32_t g_u32SysTickCount = 0;
   * @note ticks should be the CPU frequency, then the count interval should be 1ms.
   * @retval None
   */
-void SysTicks_Init(uint32_t ticks)
+uint8_t SysTicks_Init(uint32_t ticks)
 {
     if ((ticks - 1UL) > SysTick_LOAD_RELOAD_Msk) { return (1UL); }    /* Reload value impossible */
 
@@ -26,7 +26,7 @@ void SysTicks_Init(uint32_t ticks)
   * @note None
   * @retval None
   */
-void SysTicks_UnInit(void)
+uint8_t SysTicks_UnInit(void)
 {
     SysTick->CTRL  &= ~(SysTick_CTRL_CLKSOURCE_Msk |
                         SysTick_CTRL_TICKINT_Msk   |

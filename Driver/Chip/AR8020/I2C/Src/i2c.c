@@ -2,6 +2,7 @@
 #include "i2c.h"
 #include "i2c_ll.h"
 #include "debuglog.h"
+#include "reg_rw.h"
 
 static uint8_t I2C_Master_Write_Byte(EN_I2C_COMPONENT en_component, uint16_t i2cAddr, uint8_t value)
 {

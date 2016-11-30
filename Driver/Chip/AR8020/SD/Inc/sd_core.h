@@ -355,7 +355,7 @@ SDMMC_Status Core_SDMMC_WaiteCmdDone(SDMMC_REG *SDMMCx);
 SDMMC_Status Core_SDMMC_WaiteDataOver(SDMMC_REG *SDMMCx);
 SDMMC_Status Core_SDMMC_WaiteCardBusy(SDMMC_REG *SDMMCx);
 SDMMC_Status Core_SDMMC_WaiteCmdStart(SDMMC_REG *SDMMCx);
-
+SDMMC_Status Core_SDMMC_WaiteVoltSwitchInt(SDMMC_REG *SDMMCx);
 
 
 /* Power on/off switch for up to 16 cards */

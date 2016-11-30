@@ -99,7 +99,7 @@ void InterCore_Init(void)
     // Init the SRAM data share buffer
     InterCore_SRAMDCacheDisable(0);
     volatile INTER_CORE_MSG_TYPE* msgPtr = (INTER_CORE_MSG_TYPE*)INTER_CORE_MSG_SHARE_MEMORY_BASE_ADDR;
-    memset(msgPtr, 0, sizeof(INTER_CORE_MSG_TYPE)*INTER_CORE_MSG_SHARE_MEMORY_NUMBER);
+    memset((void*)msgPtr, 0, sizeof(INTER_CORE_MSG_TYPE)*INTER_CORE_MSG_SHARE_MEMORY_NUMBER);
 
     // Interrupt enable
     reg_IrqHandle(VIDEO_GLOBAL2_INTR_RES_VSOC0_VECTOR_NUM, InterCore_IRQ0Handler);
@@ -145,7 +145,7 @@ uint8_t InterCore_SendMsg(INTER_CORE_CPU_ID dst, INTER_CORE_MSG_ID msg, uint8_t*
     msgPtr[i].enDstCpuID = (dst & (~(msgPtr[i].enSrcCpuID)));    // Unmask the local CPU ID
     msgPtr[i].dataAccessed = 0;
     msgPtr[i].enMsgID = msg;
-    memcpy(msgPtr[i].data, buf, (length <= sizeof(msgPtr[i].data)) ? length : sizeof(msgPtr[i].data));
+    memcpy((void*)(msgPtr[i].data), (void*)buf, (length <= sizeof(msgPtr[i].data)) ? length : sizeof(msgPtr[i].data));
 
     // Trigger the interrupt
     InterCore_TriggerIRQ0();
@@ -188,10 +188,10 @@ uint8_t InterCore_GetMsg(INTER_CORE_MSG_ID* msg_p, uint8_t* buf, uint32_t max_le
         {
             // Set the data accessed flag of the current CPU
             // Add lock to avoid multi CPU conflict
-            Lock(&msgPtr[i].lock);
+            Lock((uint32_t*)(&(msgPtr[i].lock)));
             msgPtr[i].dataAccessed |= dst_filter;
             __asm volatile ("dsb"); // Sync to SRAM and make sure other CPUs can access the latest data in SRAM
-            UnLock(&msgPtr[i].lock);
+            UnLock((uint32_t*)(&(msgPtr[i].lock)));
             break;
         }
     }
@@ -211,7 +211,7 @@ uint8_t InterCore_GetMsg(INTER_CORE_MSG_ID* msg_p, uint8_t* buf, uint32_t max_le
 
     // Retrieve the message data
     *msg_p = msgPtr[i].enMsgID;
-    memcpy(buf, msgPtr[i].data, (max_length <= sizeof(msgPtr[i].data)) ?  max_length : sizeof(msgPtr[i].data));
+    memcpy((void*)buf, (void*)(msgPtr[i].data), (max_length <= sizeof(msgPtr[i].data)) ?  max_length : sizeof(msgPtr[i].data));
 
     return 1;
 }

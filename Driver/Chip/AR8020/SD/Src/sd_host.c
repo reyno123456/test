@@ -3,6 +3,7 @@
 #include "sd_card.h"
 #include "sd_core.h"
 #include "debuglog.h"
+#include "reg_rw.h"
 
 SDMMC_Status sd_init()
 {
@@ -140,9 +141,9 @@ void sd_IRQHandler(void)
 
     uint32_t status, pending, cdetect;
    
-	status  = read_reg32(SDMMC_BASE + 0x44);  /* RINTSTS */
-	pending = read_reg32(SDMMC_BASE + 0x40);  /* MINTSTS */
-    cdetect = read_reg32(SDMMC_BASE + 0x50);  /* CDETECT*/
+	status  = read_reg32((uint32_t *)(SDMMC_BASE + 0x44));  /* RINTSTS */
+	pending = read_reg32((uint32_t *)(SDMMC_BASE + 0x40));  /* MINTSTS */
+    cdetect = read_reg32((uint32_t *)(SDMMC_BASE + 0x50));  /* CDETECT*/
 
 	// dlog_info("RINTSTS = 0x%08x\n", status);
 	// dlog_info("MINTSTS = 0x%08x\n", pending);
@@ -156,16 +157,16 @@ void sd_IRQHandler(void)
 	  		if (!cdetect)
 	  		{
 		        dlog_info("Initializing the SD Card...\n");
-		        write_reg32((SDMMC_BASE + 0x44), status);
+		        write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
 		        sd_init();
-		        write_reg32((SDMMC_BASE + 0x44), 0xFFFFFFFF);
+		        write_reg32((uint32_t *)(SDMMC_BASE + 0x44), 0xFFFFFFFF);
 	  		}
 	  		else
 	  		{
 	  			dlog_info("Removing the SD Card...\n");
-		        write_reg32((SDMMC_BASE + 0x44), status);
+		        write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
 		        sd_deinit();
-		        write_reg32((SDMMC_BASE + 0x44), 0xFFFFFFFF);
+		        write_reg32((uint32_t *)(SDMMC_BASE + 0x44), 0xFFFFFFFF);
 	  		}
 	  	}
 	  }
@@ -175,8 +176,8 @@ void sd_IRQHandler(void)
 	  	{
 	        dlog_info("SDMMC_RINTSTS_RESP_ERR\n");
 	        status &= ~SDMMC_RINTSTS_RESP_ERR;
-	        write_reg32((SDMMC_BASE + 0x44), status);
-	        return 0;
+	        write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
+	        return;
 	      
 	  	}
 	  }
@@ -186,8 +187,8 @@ void sd_IRQHandler(void)
 	  	{
 	        dlog_info("SDMMC_RINTSTS_CMD_DONE\n");
 	        status &= ~SDMMC_RINTSTS_CMD_DONE;
-	        write_reg32((SDMMC_BASE + 0x44), status);
-	        return 0;
+	        write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
+	        return;
 	      
 	  	}
 	  }
@@ -197,8 +198,8 @@ void sd_IRQHandler(void)
 	  	{
 	        dlog_info("SDMMC_RINTSTS_DATA_OVER\n");
 	        status &= ~SDMMC_RINTSTS_DATA_OVER;
-	        write_reg32((SDMMC_BASE + 0x44), status);
-	        return 0;
+	        write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
+	        return;
 	      
 	  	}
 	  }
@@ -208,8 +209,8 @@ void sd_IRQHandler(void)
 	  	{
 	        dlog_info("SDMMC_RINTSTS_TXDR\n");
 	        status &= ~SDMMC_RINTSTS_TXDR;
-	        write_reg32((SDMMC_BASE + 0x44), status);
-	        return 0;
+	        write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
+	        return;
 	      
 	  	}
 	  }
@@ -219,8 +220,8 @@ void sd_IRQHandler(void)
 	  	{
 	        dlog_info("SDMMC_RINTSTS_RXDR\n");
 	        status &= ~SDMMC_RINTSTS_RXDR;
-	        write_reg32((SDMMC_BASE + 0x44), status);
-	        return 0;
+	        write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
+	        return;
 	      
 	  	}
 	  }
@@ -230,8 +231,8 @@ void sd_IRQHandler(void)
 	  	{
 	        dlog_info("SDMMC_RINTSTS_RCRC\n");
 	        status &= ~SDMMC_RINTSTS_RCRC;
-	        write_reg32((SDMMC_BASE + 0x44), status);
-	        return 0;
+	        write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
+	        return;
 	      
 	  	}
 	  }
@@ -241,8 +242,8 @@ void sd_IRQHandler(void)
 	  	{
 	        dlog_info("SDMMC_RINTSTS_RTO\n");
 	        status &= ~SDMMC_RINTSTS_RTO;
-	        write_reg32((SDMMC_BASE + 0x44), status);
-	        return 0;
+	        write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
+	        return;
 	      
 	  	}
 	  }
@@ -252,8 +253,8 @@ void sd_IRQHandler(void)
 	  	{
 	        dlog_info("SDMMC_RINTSTS_DRTO\n");
 	        status &= ~SDMMC_RINTSTS_DRTO;
-	        write_reg32((SDMMC_BASE + 0x44), status);
-	        return 0;
+	        write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
+	        return;
 	      
 	  	}
 	  }
@@ -263,8 +264,8 @@ void sd_IRQHandler(void)
 	  	{
 	        dlog_info("SDMMC_RINTSTS_HTO\n");
 	        status &= ~SDMMC_RINTSTS_HTO;
-	        write_reg32((SDMMC_BASE + 0x44), status);
-	        return 0;
+	        write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
+	        return;
 	      
 	  	}
 	  }
@@ -275,8 +276,8 @@ void sd_IRQHandler(void)
 	  	{
 	        dlog_info("SDMMC_INTMASK_FRUN\n");
 	        status &= ~SDMMC_INTMASK_FRUN;
-	        write_reg32((SDMMC_BASE + 0x44), status);
-	        return 0;
+	        write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
+	        return;
 	      
 	  	}
 	  }
@@ -286,8 +287,8 @@ void sd_IRQHandler(void)
 	  	{
 	        dlog_info("SDMMC_INTMASK_HLE\n");
 	        status &= ~SDMMC_INTMASK_HLE;
-	        write_reg32((SDMMC_BASE + 0x44), status);
-	        return 0;
+	        write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
+	        return;
 	      
 	  	}
 	  }
@@ -297,8 +298,8 @@ void sd_IRQHandler(void)
 	  	{
 	        dlog_info("SDMMC_INTMASK_SBE\n");
 	        status &= ~SDMMC_INTMASK_SBE;
-	        write_reg32((SDMMC_BASE + 0x44), status);
-	        return 0;
+	        write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
+	        return;
 	      
 	  	}
 	  }
@@ -308,8 +309,8 @@ void sd_IRQHandler(void)
 	  	{
 	        dlog_info("SDMMC_INTMASK_ACD\n");
 	        status &= ~SDMMC_INTMASK_ACD;
-	        write_reg32((SDMMC_BASE + 0x44), status);
-	        return 0;
+	        write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
+	        return;
 	      
 	  	}
 	  }

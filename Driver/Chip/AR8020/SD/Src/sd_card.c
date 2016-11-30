@@ -13,6 +13,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "reg_rw.h"
 #include "sd_core.h"
 #include "sd_card.h"
@@ -45,7 +46,11 @@ static SD_ErrorTypedef SD_DMAConfig(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef
 static SD_ErrorTypedef SD_ENUM(SD_HandleTypeDef *hsd);
 static SD_ErrorTypedef SD_IsCardProgramming(SD_HandleTypeDef *hsd, uint8_t *status);
 
-
+static void delay_ms(uint32_t num)
+{
+    volatile int i;
+    for (i = 0; i < num * 100; i++);
+}
 
 SD_ErrorTypedef Card_SD_Init(SD_HandleTypeDef *hsd, SD_CardInfoTypedef *SDCardInfo)
 {

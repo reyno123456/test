@@ -79,8 +79,8 @@ void WIRELESS_SendDisplayInfo(void)
 
     //g_stWirelessInfoDisplay.messageId   = PAD_WIRELESS_INFO_DISPLAY;
 
-    sendBuffer          = &g_stWirelessInfoDisplay;
-    sendLength          = sizeof(g_stWirelessInfoDisplay);
+    sendBuffer          = (uint8_t *)&g_stWirelessInfoDisplay;
+    sendLength          = (uint8_t)sizeof(g_stWirelessInfoDisplay);
 
     if (USBD_OK != USBD_HID_SendReport(&USBD_Device, sendBuffer, sendLength, HID_CTRL))
     {
