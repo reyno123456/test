@@ -100,7 +100,7 @@ DSTATUS SD_status(BYTE lun)
 {
   Stat = STA_NOINIT;
 
-  if (sd_getcardstatus() == MSD_OK)
+  if (sd_getcardstatus() == SD_CARD_IDLE)
   {
     Stat &= ~STA_NOINIT;
   }

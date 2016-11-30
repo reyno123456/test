@@ -4682,7 +4682,7 @@ int f_printf (
 	for (;;) {
 		c = *fmt++;
 		if (c == 0) break;			/* End of string */
-		if (c != ' % ') {				/* Non escape character */
+		if (c != '%') {				/* Non escape character */
 			putc_bfd(&pb, c);
 			continue;
 		}
@@ -4691,7 +4691,7 @@ int f_printf (
 		if (c == '0') {				/* Flag: '0' padding */
 			f = 1; c = *fmt++;
 		} else {
-			if (c == ' - ') {			/* Flag: left justified */
+			if (c == '-') {			/* Flag: left justified */
 				f = 2; c = *fmt++;
 			}
 		}
@@ -4742,7 +4742,7 @@ int f_printf (
 			if (d > 9) d += (c == 'x') ? 0x27 : 0x07;
 			s[i++] = d + '0';
 		} while (v && i < sizeof s / sizeof s[0]);
-		if (f & 8) s[i++] = ' - ';
+		if (f & 8) s[i++] = '-';
 		j = i; d = (f & 1) ? '0' : ' ';
 		while (!(f & 2) && j++ < w) putc_bfd(&pb, d);
 		do putc_bfd(&pb, s[--i]); while (i);

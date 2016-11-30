@@ -23,6 +23,7 @@ static SD_CardInfoTypedef cardinfo;
 
 SDMMC_Status sd_init();
 SDMMC_Status sd_getstatus();
+SD_CardStateTypedef sd_getcardstatus();
 SDMMC_Status sd_write(uint32_t DstStartAddr, uint32_t SrcStartAddr, uint32_t SectorNum);
 SDMMC_Status sd_read(uint32_t DstStartAddr, uint32_t SrcStartAddr, uint32_t SectorNum);
 SDMMC_Status sd_erase(uint32_t StartBlock, uint32_t SectorNum);
