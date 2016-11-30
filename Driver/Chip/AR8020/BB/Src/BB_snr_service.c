@@ -2,6 +2,7 @@
 #include "BB_snr_service.h"
 #include "BB_ctrl.h"
 #include "config_baseband_register.h"
+#include "debuglog.h"
 
 #define WORK_FREQ_SNR_BLOCK_ROWS    (4) 
 #define WORK_FREQ_SNR_DAQ_CNT       (8)
@@ -58,7 +59,7 @@ uint16_t grd_get_it_snr()
     if(cnt++ > 50000)
     {
         cnt = 0;
-        printf("SNR: %0.4x \r\n", snr);
+        dlog_info("SNR: %0.4x \r\n", snr);
     }
 
     return snr;

@@ -135,6 +135,16 @@ uint8_t BB_ReadReg(ENUM_REG_PAGES page, uint8_t addr);
 
 uint8_t BB_WriteReg(ENUM_REG_PAGES page, uint8_t addr, uint8_t data);
 
+uint8_t BB_map_modulation_to_br(uint8_t mod);
+
+ENUM_BB_LDPC BB_get_LDPC(void);
+
+ENUM_BB_QAM BB_get_QAM(void);
+
+void BB_set_RF_Band(ENUM_BB_MODE sky_ground, ENUM_RF_BAND rf_band);
+
+void BB_set_RF_bandwitdh(ENUM_BB_MODE sky_ground, ENUM_CH_BW rf_bw);
+
 int BB_RF_cali(ENUM_RF_BAND rf_band);
 
 void BB_RF_2G_5G_switch(ENUM_RF_BAND rf_band);

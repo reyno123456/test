@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
-
+#include <string.h>
 #include "debuglog.h"
 #include "BB_ctrl.h"
 #include "grd_sweep.h"
@@ -47,7 +47,7 @@ void grd_sweep_freq_init(void)
 void grd_get_sweep_noise(uint8_t row, int16_t *ptr_noise_power)
 {
     int size = sizeof(sweep_ch_noise_energy.noise_energy_1_5M[row]);
-    memcpy(ptr_noise_power, sweep_ch_noise_energy.noise_energy_1_5M[row], sizeof(sweep_ch_noise_energy.noise_energy_1_5M[row]));
+    memcpy((void*)ptr_noise_power, (void*)(sweep_ch_noise_energy.noise_energy_1_5M[row]), sizeof(sweep_ch_noise_energy.noise_energy_1_5M[row]));
 }
 
 void grd_set_next_sweep_freq(void)

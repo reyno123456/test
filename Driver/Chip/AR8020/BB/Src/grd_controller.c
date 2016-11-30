@@ -14,6 +14,7 @@
 #include "grd_sweep.h"
 #include "wireless_interface.h"
 #include "sys_event.h"
+#include "BB_snr_service.h"
 
 typedef enum
 {

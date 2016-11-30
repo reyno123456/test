@@ -9,6 +9,7 @@
 #include "interrupt.h"
 #include "reg_map.h"
 #include "sys_event.h"
+#include "reg_rw.h"
 
 static STRU_EncoderStatus g_stEncoderStatus[2] = { 0 };
 

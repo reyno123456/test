@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <string.h>
 #include "BB_uart_com.h"
 #include "debuglog.h"
 #include "serial.h"
@@ -31,7 +32,7 @@ static void BB_UARTComPacketDataAnalyze(uint8_t chData)
         {
             header_buf[header_buf_index++] = chData;
 
-            if ((header_buf_index == sizeof(header)) && (memcmp(header, header_buf, sizeof(header)) == 0))
+            if ((header_buf_index == sizeof(header)) && (memcmp((void *)header, (void *)header_buf, sizeof(header)) == 0))
             {
                 header_buf_index = 0;
                 rx_state = BB_UART_COM_RX_DATALENGTH;
@@ -95,7 +96,7 @@ static void BB_UARTComUART10IRQHandler(void)
     char                 c;
     unsigned int         status;
     unsigned int         isrType;
-    volatile uart_type   *uart_regs = UART10_BASE;
+    volatile uart_type   *uart_regs = (uart_type *)UART10_BASE;
     status     = uart_regs->LSR;
     isrType    = uart_regs->IIR_FCR;
 

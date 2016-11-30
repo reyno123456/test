@@ -964,7 +964,7 @@ void my_v0_rc_init_seq( )
   rca.v0_MADPictureC2_12p = 0;
 
   // Initialize values
-  for(i=0;i<21;i++)
+  for(i=0;i<20;i++)
   {
     rca.v0_m_rgQp_8p[i] = 0;
     rca.v0_m_rgRp_8p[i] = 0;
@@ -2754,7 +2754,7 @@ void my_v1_rc_init_seq( )
   rca.v1_MADPictureC2_12p = 0;
 
   // Initialize values
-  for(i=0;i<21;i++)
+  for(i=0;i<20;i++)
   {
     rca.v1_m_rgQp_8p[i] = 0;
     rca.v1_m_rgRp_8p[i] = 0;
