@@ -4,6 +4,7 @@
 #include "stm32f746xx.h"
 #include "serial.h"
 #include "inter_core.h"
+#include "systicks.h"
 
 /**
  * @brief  CPU L1-Cache enable.
@@ -41,8 +42,8 @@ int main(void)
 
     CPU_CACHE_Enable();
 
-    HAL_Init();
-    dlog_info("HAL_Init done \n");
+    SysTicks_Init(200000);
+    dlog_info("SysTicks_Init done \n");
 
     /* We should never get here as control is now taken by the scheduler */
     for( ;; )
