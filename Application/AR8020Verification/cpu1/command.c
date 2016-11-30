@@ -11,8 +11,7 @@
 #include "cmsis_os.h"
 #include "test_spi.h"
 #include "test_timer.h"
-#include "test_freertos.h"
-#include "gpio.h"
+#include "test_gpio.h"
 #include "test_i2c_adv7611.h"
 
 static unsigned char g_commandPos;
@@ -20,6 +19,18 @@ static char g_commandLine[50];
 static unsigned char g_commandEnter = 0;
 
 uint32_t UartNum = 0;
+
+void command_readMemory(char *addr);
+void command_writeMemory(char *addr, char *value);
+void command_initSdcard();
+void command_readSdcard(char *Dstaddr, char *BlockNum);
+void command_writeSdcard(char *Dstaddr, char *BlockNum, char *SrcAddr);
+void command_eraseSdcard(char *startBlock, char *blockNum);
+void command_startBypassVideo(void);
+void command_stopBypassVideo(void);
+void command_upgrade(void);
+void command_sendCtrl(void);
+void command_sendVideo(void);
 
 /* added by xiongjiangjiang */
 void Drv_UART_IRQHandler(void)
@@ -152,57 +163,6 @@ unsigned char command_getEnterStatus(void)
     return g_commandEnter;
 }
 
-void command_fulfill(void)
-{
-    command_parse(g_commandLine);
-    g_commandEnter = 0;
-}
-
-void command_parse(char *cmd)
-{
-    unsigned char cmdIndex;
-    char *tempCommand[5];
-
-    cmdIndex = 0;
-    memset(tempCommand, 0, 5);
-
-    while (cmdIndex < 5)
-    {
-        /* skip the sapce */
-        while ((*cmd == ' ') || (*cmd == '\t'))
-        {
-            ++cmd;
-        }
-
-        /* end of the cmdline */
-        if (*cmd == '\0')
-        {
-            tempCommand[cmdIndex] = 0;
-            break;
-        }
-
-        tempCommand[cmdIndex++] = cmd;
-
-        /* find the end of string */
-        while (*cmd && (*cmd != ' ') && (*cmd != '\t'))
-        {
-            ++cmd;
-        }
-
-        /* no more command */
-        if (*cmd == '\0')
-        {
-            tempCommand[cmdIndex] = 0;
-            break;
-        }
-
-        /* current cmd is end */
-        *cmd++ = '\0';
-    }
-
-    command_run(tempCommand, cmdIndex);
-}
-
 void command_run(char *cmdArray[], unsigned int cmdNum)
 {
     /* read memory: "read $(address)" */
@@ -228,14 +188,6 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     else if (memcmp(cmdArray[0], "erasesd", 7) == 0)
     {
         command_eraseSdcard(cmdArray[1], cmdArray[2]);
-    }
-    else if (memcmp(cmdArray[0], "freertos_task", strlen("freertos_task")) == 0)
-    {
-        command_TestTask();
-    }
-    else if (memcmp(cmdArray[0], "freertos_taskquit", strlen("freertos_taskquit")) == 0)
-    {
-        command_TestTaskQuit();
     }
     else if (memcmp(cmdArray[0], "test_timerall", strlen("test_timerall")) == 0)
     {
@@ -322,6 +274,57 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
 
     /* must init to receive new data from serial */
     command_init();
+}
+
+void command_parse(char *cmd)
+{
+    unsigned char cmdIndex;
+    char *tempCommand[5];
+
+    cmdIndex = 0;
+    memset(tempCommand, 0, 5);
+
+    while (cmdIndex < 5)
+    {
+        /* skip the sapce */
+        while ((*cmd == ' ') || (*cmd == '\t'))
+        {
+            ++cmd;
+        }
+
+        /* end of the cmdline */
+        if (*cmd == '\0')
+        {
+            tempCommand[cmdIndex] = 0;
+            break;
+        }
+
+        tempCommand[cmdIndex++] = cmd;
+
+        /* find the end of string */
+        while (*cmd && (*cmd != ' ') && (*cmd != '\t'))
+        {
+            ++cmd;
+        }
+
+        /* no more command */
+        if (*cmd == '\0')
+        {
+            tempCommand[cmdIndex] = 0;
+            break;
+        }
+
+        /* current cmd is end */
+        *cmd++ = '\0';
+    }
+
+    command_run(tempCommand, cmdIndex);
+}
+
+void command_fulfill(void)
+{
+    command_parse(g_commandLine);
+    g_commandEnter = 0;
 }
 
 unsigned int command_str2uint(char *str)

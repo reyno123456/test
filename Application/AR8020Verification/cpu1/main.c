@@ -1,7 +1,9 @@
 #include "debuglog.h"
-#include "test_freertos.h"
 #include "command.h"
+#include "serial.h"
 #include "sys_event.h"
+#include "inter_core.h"
+
 /**
  * @brief  CPU L1-Cache enable.
  * @param  None

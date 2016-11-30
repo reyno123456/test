@@ -29,7 +29,7 @@ LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 
 # source file(s), including *.s *.c file(s)
 SRC_S   := $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/start.s
-SRC_C   := main.c test_freertos.c command.c ../share/test_timer.c ../share/test_spi.c ../share/test_i2c_adv7611.c ../share/test_gpio.c
+SRC_C   := main.c command.c ../share/test_timer.c ../share/test_spi.c ../share/test_i2c_adv7611.c ../share/test_gpio.c
 
 CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
 
