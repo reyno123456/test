@@ -404,6 +404,8 @@ typedef struct
 #define USB_OTG_SET_BIG_ENDIAN()       (USB_OTG_ENDIAN = (USB_OTG_ENDIAN | 0x00000002))
 #define USB_OTG_SET_LITTLE_ENDIAN()    (USB_OTG_ENDIAN = (USB_OTG_ENDIAN & 0xFFFFFFFD))
 
+#define USB_OTG_IS_BIG_ENDIAN()     ( (USB_OTG_ENDIAN & 0x2) == 0x02 ? 1 : 0)
+
 
 /* Exported functions --------------------------------------------------------*/
 HAL_StatusTypeDef USB_CoreInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef Init);

@@ -77,6 +77,7 @@
 #include "usbd_def.h"
 #include "debuglog.h"
 #include "sram.h"
+#include "usbd_core.h"
 
 /** @addtogroup STM32F7xx_HAL_Driver
   * @{
@@ -489,7 +490,6 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
     {
       if((USBx_DEVICE->DSTS & USB_OTG_DSTS_SUSPSTS) == USB_OTG_DSTS_SUSPSTS)
       {
-        
         HAL_PCD_SuspendCallback(hpcd);
       }
       __HAL_PCD_CLEAR_FLAG(hpcd, USB_OTG_GINTSTS_USBSUSP);
@@ -497,7 +497,19 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
       USB_OTG_SET_LITTLE_ENDIAN();
       
       /* to resolve the problem of unplug during the transmit */
+      #if 0
       if ((1 == sramReady0) || (1 == sramReady1))
+      {
+          dlog_info("restart usb\n");
+          USBD_LL_Init(&USBD_Device);
+          HAL_PCD_Start(USBD_Device.pData);
+      }
+      #endif
+
+      dlog_info("old_state: %d, state: %d", USBD_Device.dev_old_state, USBD_Device.dev_state);
+
+      if ((USBD_STATE_CONFIGURED == USBD_Device.dev_old_state)
+        ||(USBD_STATE_CONFIGURED == USBD_Device.dev_state))
       {
           dlog_info("restart usb\n");
           USBD_LL_Init(&USBD_Device);
@@ -1033,7 +1045,7 @@ HAL_StatusTypeDef HAL_PCD_EP_Transmit(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, 
     ep->dma_addr = (uint32_t)pBuf;  
   }
   
-  __HAL_LOCK(hpcd); 
+  //__HAL_LOCK(hpcd); 
   
   if ((ep_addr & 0x7F) == 0 )
   {
@@ -1044,7 +1056,7 @@ HAL_StatusTypeDef HAL_PCD_EP_Transmit(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, 
     USB_EPStartXfer(hpcd->Instance , ep, hpcd->Init.dma_enable);
   }
   
-  __HAL_UNLOCK(hpcd);
+  //__HAL_UNLOCK(hpcd);
      
   return HAL_OK;
 }

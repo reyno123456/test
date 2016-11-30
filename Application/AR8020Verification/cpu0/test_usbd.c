@@ -48,7 +48,7 @@ void USBD_MainTask(void)
                 {
                     dlog_info("send ctrl info\n");
 
-                    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buffer, sizeof(buffer), HID_CTRL))
+                    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buffer, sizeof(buffer), HID_EPIN_CTRL_ADDR))
                     {
                         dlog_error("send fail!\n");
                     }
@@ -59,7 +59,7 @@ void USBD_MainTask(void)
                 {
                     dlog_info("send video info\n");
 
-                    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buffer, sizeof(buffer), HID_VIDEO))
+                    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buffer, sizeof(buffer), HID_EPIN_VIDEO_ADDR))
                     {
                         dlog_error("send fail!\n");
                     }

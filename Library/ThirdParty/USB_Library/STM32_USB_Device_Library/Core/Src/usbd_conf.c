@@ -287,14 +287,5 @@ uint32_t USBD_LL_GetRxDataSize(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
   return HAL_PCD_EP_GetRxCount(pdev->pData, ep_addr);
 }
 
-/**
-  * @brief  Delays routine for the USB Device Library.
-  * @param  Delay: Delay in ms
-  * @retval None
-  */
-void USBD_LL_Delay(uint32_t Delay)
-{
-  HAL_Delay(Delay);
-}
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
 

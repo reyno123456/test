@@ -460,11 +460,15 @@ USBD_StatusTypeDef USBD_LL_SetSpeed(USBD_HandleTypeDef  *pdev, USBD_SpeedTypeDef
 
 USBD_StatusTypeDef USBD_LL_Suspend(USBD_HandleTypeDef  *pdev)
 {
+  uint8_t   i;
+ 
   pdev->dev_old_state =  pdev->dev_state;
   pdev->dev_state  = USBD_STATE_SUSPENDED;
 
-  ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state = HID_IDLE;
-
+  for (i = 1; i <= 6; i++)
+  {
+    ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state[i] = HID_IDLE;
+  }
   return USBD_OK;
 }
 

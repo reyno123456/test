@@ -603,7 +603,10 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeDe
       tmp = (uint32_t)(ep->dma_addr);
 
       /* temp add for test */
-      USB_OTG_SET_BIG_ENDIAN();
+      if (ep->num == 0x6)
+      {
+        USB_OTG_SET_BIG_ENDIAN();
+      }
 
       if ((tmp >= DTCM_START_ADDR) && (tmp <= DTCM_END_ADDR))
       {

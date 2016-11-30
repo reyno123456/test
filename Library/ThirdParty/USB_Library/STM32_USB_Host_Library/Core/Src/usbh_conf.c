@@ -28,6 +28,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usbh_core.h"
 #include "debuglog.h"
+#include "stm32f7xx_hal.h"
 
 HCD_HandleTypeDef hhcd[2];
 

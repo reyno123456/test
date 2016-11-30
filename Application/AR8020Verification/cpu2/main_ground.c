@@ -45,6 +45,8 @@ int main(void)
         }
 
         dlog_output(100);
+
+        SysTicks_DelayMS(20);
     }
 } 
 

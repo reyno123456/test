@@ -20,7 +20,7 @@ void SRAM_Ready0IRQHandler(void)
     dataLen         = SRAM_DATA_VALID_LEN_0;
     dataLen         = (dataLen << 2);
 
-    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buff, dataLen, HID_VIDEO))
+    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buff, dataLen, HID_EPIN_VIDEO_ADDR))
     {
         dlog_error("HID0 Send Error!\n");
 
@@ -41,7 +41,7 @@ void SRAM_Ready1IRQHandler(void)
     dataLen         = SRAM_DATA_VALID_LEN_1;
     dataLen         = (dataLen << 2);
 
-    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buff, dataLen, HID_VIDEO))
+    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buff, dataLen, HID_EPIN_VIDEO_ADDR))
     {
         dlog_error("HID1 Send Error!\n");
 

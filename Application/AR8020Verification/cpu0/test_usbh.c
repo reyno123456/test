@@ -133,7 +133,7 @@ void USBH_BypassVideo(void)
                         f_close(&(g_usbhAppCtrl.usbhAppFile));
                     }
 
-                    continue;
+                    break;
                 }
 
             }

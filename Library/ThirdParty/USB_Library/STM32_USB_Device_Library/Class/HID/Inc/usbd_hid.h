@@ -106,7 +106,7 @@ typedef struct
   uint32_t             Protocol;   
   uint32_t             IdleState;  
   uint32_t             AltSetting;
-  HID_StateTypeDef     state;  
+  HID_StateTypeDef     state[7];  
 }
 USBD_HID_HandleTypeDef; 
 /**
@@ -138,7 +138,7 @@ extern USBD_ClassTypeDef  USBD_HID;
 uint8_t USBD_HID_SendReport (USBD_HandleTypeDef *pdev, 
                                  uint8_t *report,
                                  uint16_t len,
-                                 HID_DataTypeDef enDataType);
+                                 uint8_t  ep_addr);
 
 uint32_t USBD_HID_GetPollingInterval (USBD_HandleTypeDef *pdev);
 

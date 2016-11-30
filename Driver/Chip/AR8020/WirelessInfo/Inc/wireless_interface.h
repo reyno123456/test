@@ -100,6 +100,7 @@ typedef enum
 /*if head == 0x00 && tail == 0xff, the sram data is valid*/
 typedef struct
 {
+    uint32_t        messageId;
     uint8_t         head;
     uint8_t         IT_channel;
     uint8_t         agc_value[4];
@@ -221,6 +222,7 @@ void PAD_ENCODER_DYNAMIC_BITRATE_MODE_Handler(void *param);
 void PAD_ENCODER_DYNAMIC_BITRATE_SELECT_Handler(void *param);
 void PAD_WIRELESS_INFO_DISPLAY_Handler(void *param);
 void WIRELESS_ParseParamConfig(void *param);
+void convert_endian(void *data, uint8_t dataLen);
 
 
 #endif
