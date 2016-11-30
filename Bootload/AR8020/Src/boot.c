@@ -33,7 +33,7 @@ void (* redirect_block_erase)(uint32_t)=(void *)(RUN_BLOCK_ERASE_ADDR);
 /****************************************
 boot App
 *****************************************/
-void BOOTLOAD_bootApp(void)
+void BOOTLOAD_BootApp(void)
 {
     command_uninit();
     SysTicks_UnInit();
@@ -53,7 +53,7 @@ void BOOTLOAD_bootApp(void)
 /****************************************
 copy from nor to TICM
 *****************************************/
-void BOOTLOAD_copyFromNorToITCM(void)
+void BOOTLOAD_CopyFromNorToITCM(void)
 {
     uint32_t iCount = 0;
 

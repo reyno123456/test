@@ -36,8 +36,8 @@ int main(void)
 
     if (g_bootloadmode == 0)
     {
-        BOOTLOAD_copyFromNorToITCM();
-        BOOTLOAD_bootApp();
+        BOOTLOAD_CopyFromNorToITCM();
+        BOOTLOAD_BootApp();
     }
 
     dlog_info("Running in bootload mode");

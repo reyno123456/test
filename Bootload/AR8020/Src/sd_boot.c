@@ -94,7 +94,7 @@ void BOOTLOAD_BootFromSD(void)
     f_close(&MyFile);
     fileResult = FATFS_UnLinkDriver(SDPath);
     
-    BOOTLOAD_bootApp();  
+    BOOTLOAD_BootApp();  
 
     return;
 }

@@ -214,8 +214,8 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
 
     if (memcmp(cmdArray[0], "run_app", strlen("run_app")) == 0)
     {
-        BOOTLOAD_copyFromNorToITCM();
-        BOOTLOAD_bootApp();
+        BOOTLOAD_CopyFromNorToITCM();
+        BOOTLOAD_BootApp();
     }
     else if (memcmp(cmdArray[0], "sd_upgradeapp", strlen("sd_upgradeapp")) == 0)
     {
