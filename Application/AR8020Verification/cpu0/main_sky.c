@@ -11,6 +11,7 @@
 #include "sys_event.h"
 #include "inter_core.h"
 #include "BB_spi.h"
+#include "systicks.h"
 
 void *malloc(size_t size)
 {
@@ -80,7 +81,7 @@ int main(void)
     /* Enable the CPU Cache */
     CPU_CACHE_Enable();
 
-    HAL_Init();
+    SysTicks_Init(200000);
 
     /* Create Main Task */
     osThreadDef(USBHMAIN_Task, USBH_MainTask, osPriorityNormal, 0, 4 * 128);

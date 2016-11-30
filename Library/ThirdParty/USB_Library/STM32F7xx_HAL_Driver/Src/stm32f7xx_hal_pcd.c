@@ -506,8 +506,6 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
       }
       #endif
 
-      dlog_info("old_state: %d, state: %d", USBD_Device.dev_old_state, USBD_Device.dev_state);
-
       if ((USBD_STATE_CONFIGURED == USBD_Device.dev_old_state)
         ||(USBD_STATE_CONFIGURED == USBD_Device.dev_state))
       {

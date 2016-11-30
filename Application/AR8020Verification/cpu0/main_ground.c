@@ -9,7 +9,7 @@
 #include "cmsis_os.h"
 #include "sys_event.h"
 #include "inter_core.h"
-
+#include "systicks.h"
 
 void *malloc(size_t size)
 {
@@ -80,7 +80,7 @@ int main(void)
     /* Enable the CPU Cache */
     CPU_CACHE_Enable();
 
-    HAL_Init();
+    SysTicks_Init(200000);
 
     osThreadDef(USBDMAIN_Task, USBD_MainTask, osPriorityNormal, 0, 8 * 128);
     osThreadCreate(osThread(USBDMAIN_Task), NULL);

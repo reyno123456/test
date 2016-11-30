@@ -106,9 +106,7 @@ SRC_C += STM32F7xx_HAL_Driver/Src/stm32f7xx_hal.c \
          STM32F7xx_HAL_Driver/Src/stm32f7xx_ll_usb.c \
          STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pcd.c \
          STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pcd_ex.c \
-         STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_hcd.c \
-         STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc.c \
-         STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_rcc_ex.c
+         STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_hcd.c
 
 INCDIRS += -ISTM32F7xx_HAL_Driver/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SRAM/Inc \
@@ -139,8 +137,6 @@ install:
 	@cp -f STM32_USB_Device_Library/Class/HID/Inc/usbd_hid.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f STM32_USB_Device_Library/Class/HID/Inc/usbd_hid_desc.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_def.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_rcc.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_rcc_ex.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_cortex.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pcd.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pcd_ex.h $(OUTPUT_HEADER_STAGING_DIR)
