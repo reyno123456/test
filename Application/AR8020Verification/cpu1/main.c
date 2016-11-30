@@ -1,7 +1,8 @@
 #include "debuglog.h"
 #include "command.h"
-#include "serial.h"
 #include "sys_event.h"
+#include "stm32f746xx.h"
+#include "serial.h"
 #include "inter_core.h"
 
 /**
