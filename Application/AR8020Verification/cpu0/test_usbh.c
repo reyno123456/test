@@ -4,7 +4,8 @@
 #include "cmsis_os.h"
 #include "dma.h"
 #include "sram.h"
-
+#include "quad_spi_ctrl.h"
+#include "nor_flash.h"
 
 #define USB_VIDEO_BYPASS_SIZE_ONCE      (8192)
 #define USB_VIDEO_BYPASS_DEST_ADDR      (0xB1000000)
@@ -18,7 +19,7 @@ USBH_AppCtrl                    g_usbhAppCtrl;
 #define RDWR_SECTOR_SIZE (1024*4)
 
 
-void BOOTLOAD_Upgrade(void)
+void BOOTLOAD_Upgrade(void const *argument)
 {
 
     FRESULT    fileResult;
@@ -45,7 +46,7 @@ void BOOTLOAD_Upgrade(void)
             NOR_FLASH_EraseSector(u32_norAddr);
             QUAD_SPI_WriteEnable();
             QUAD_SPI_CheckBusy();
-            fileResult = f_read(&MyFile, u32_norAddr, RDWR_SECTOR_SIZE, (void *)&u32_bytesRead);
+            fileResult = f_read(&MyFile, (void *)u32_norAddr, RDWR_SECTOR_SIZE, (void *)&u32_bytesRead);
             if((fileResult != FR_OK))
             {
                 dlog_info("Cannot Read from the file \n");
@@ -67,7 +68,7 @@ void BOOTLOAD_Upgrade(void)
     dlog_output(100);
 }
 
-void USBH_BypassVideo(void)
+void USBH_BypassVideo(void const *argument)
 {
     FRESULT             fileResult;
     uint32_t            bytesread;
@@ -75,7 +76,7 @@ void USBH_BypassVideo(void)
 
     fileResult          = FR_OK;
     bytesread           = 0;
-    videoBuff           = SRAM_BUFF_0_ADDRESS;
+    videoBuff           = (uint8_t *)SRAM_BUFF_0_ADDRESS;
 
     dlog_info("enter USBH_BypassVideo Task!\n");
 
@@ -197,7 +198,7 @@ void USBH_MountUSBDisk(void)
 }
 
 
-void USBH_MainTask(void)
+void USBH_MainTask(void const *argument)
 {
     osEvent event;
 

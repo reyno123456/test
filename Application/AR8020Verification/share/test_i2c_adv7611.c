@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include "debuglog.h"
 #include "i2c.h"
 #include "adv_7611.h"
@@ -137,7 +138,7 @@ void test_24c256_read(unsigned char i2c_num)
     int i;
     unsigned char data_chk[64];
 
-    memset(data_chk, 0, sizeof(data_chk));
+    memset((void *)data_chk, 0, sizeof(data_chk));
     I2C_Master_Read_Data(i2c_comp_num, TAR_24C256_ADDR, (uint8_t*)&rd_start_addr, 2, data_chk, size);
     for(i = 0; i < size; i++)
     {

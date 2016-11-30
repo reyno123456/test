@@ -36,7 +36,7 @@ void vSendTask(void const *argument)
 {
 	char cValueToSend;
 	portBASE_TYPE xStatus;
-	cValueToSend = (char)argument;
+	cValueToSend = *((char*)argument);
 	for (;; )
 	{
 		xStatus = xQueueSendToBack(xQueue, &cValueToSend, 0);
@@ -65,7 +65,6 @@ void vReceiveTask(void const *argument)
 		if (xStatus == pdPASS)
 		{
 			dlog_info("receive value is: %d\n", cReceiveValue);
-			serial_putc('\n');
 		}
 		else
 		{
@@ -82,7 +81,6 @@ void PrintfMutex(void *argument)
 		if (xSemaphoreTake(xMutex, portMAX_DELAY) == pdPASS)
 		{
 			dlog_info("Mutex argument %p", argument);
-			serial_putc('\n');
 		}
 
 		if (xSemaphoreGive(xMutex) == pdTRUE)
@@ -96,21 +94,23 @@ void TestQueue(void)
 {
 	xQueue = xQueueCreate(5, sizeof(char));
 	if (xQueue != NULL)
-	{
-		osThreadDef(Send1_Thread, vSendTask, osPriorityNormal, 0, 8 * configMINIMAL_STACK_SIZE);
-		osThreadCreate(osThread(Send1_Thread), (void *)100);
+    {
+        char arg1 = 100; 
+        osThreadDef(Send1_Thread, vSendTask, osPriorityNormal, 0, 8 * configMINIMAL_STACK_SIZE);
+        osThreadCreate(osThread(Send1_Thread), (void *)&arg1);
 
-		osThreadDef(Send2_Thread, vSendTask, osPriorityNormal, 0, 8 * configMINIMAL_STACK_SIZE);
-		osThreadCreate(osThread(Send2_Thread), (void *)150);
+        char arg2 = 150;
+        osThreadDef(Send2_Thread, vSendTask, osPriorityNormal, 0, 8 * configMINIMAL_STACK_SIZE);
+        osThreadCreate(osThread(Send2_Thread), (void *)&arg2);
 
-		osThreadDef(Receive_Thread, vReceiveTask, osPriorityHigh, 0, 8 * configMINIMAL_STACK_SIZE);
-		osThreadCreate(osThread(Receive_Thread), NULL);
-		//xTaskCreate(vSendTask, "sender 1", 1000, (void *)'a', 1, NULL);
-		//xTaskCreate(vSendTask, "sender 2", 1000, (void *)'b', 1, NULL);
-		//xTaskCreate(vReceiveTask, "receive", 1000, NULL, 2, NULL);
-		dlog_info("Create task succ!\n");
-		osKernelStart();
-	}
+        osThreadDef(Receive_Thread, vReceiveTask, osPriorityHigh, 0, 8 * configMINIMAL_STACK_SIZE);
+        osThreadCreate(osThread(Receive_Thread), NULL);
+        //xTaskCreate(vSendTask, "sender 1", 1000, (void *)'a', 1, NULL);
+        //xTaskCreate(vSendTask, "sender 2", 1000, (void *)'b', 1, NULL);
+        //xTaskCreate(vReceiveTask, "receive", 1000, NULL, 2, NULL);
+        dlog_info("Create task succ!\n");
+        osKernelStart();
+    }
 	else
 	{
 		dlog_info("Create Queue failed\n");
@@ -153,7 +153,6 @@ void TestMem(void)
 	{
 		dynaAddr[i] = m7_malloc(100);
 		dlog_info("malloc addr is 0x%x\n", (unsigned int)dynaAddr[i]);
-		serial_putc('\n');
 	}
 
 	for (i = 0; i < 5; i++)

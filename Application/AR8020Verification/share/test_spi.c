@@ -1,5 +1,5 @@
 #include <stdint.h> 
-
+#include <stdlib.h>
 #include "spi.h"
 #include "test_spi.h" 
 #include "debuglog.h" 

@@ -18,7 +18,7 @@ void TestWR()
 	int res;
 	if ((res = sd_init()) != 0)
 	{
-		return 0;
+		return;
 	}
 
 	// int i = 0;
@@ -155,6 +155,6 @@ void command_initSdcard()
 	int res;
 	if ((res = sd_init()) != 0)
 	{
-		return 0;
+		return;
 	}
 }

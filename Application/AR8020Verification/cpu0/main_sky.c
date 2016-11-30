@@ -1,4 +1,5 @@
 #include "debuglog.h"
+#include "serial.h"
 #include "test_freertos.h"
 #include "test_i2c_adv7611.h"
 #include "pll_ctrl.h"
@@ -9,6 +10,7 @@
 #include "cmsis_os.h"
 #include "sys_event.h"
 #include "inter_core.h"
+#include "BB_spi.h"
 
 void *malloc(size_t size)
 {
@@ -43,7 +45,7 @@ void console_init(uint32_t uart_num, uint32_t baut_rate)
 }
 
 
-static void IO_Task(void)
+static void IO_Task(void const *argument)
 {
     while (1)
     {

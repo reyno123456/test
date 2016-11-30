@@ -1,6 +1,7 @@
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdio.h>
-
+#include <string.h>
 #include "debuglog.h"
 #include "timer.h"
 #include "test_timer.h"
@@ -20,7 +21,7 @@ void TIM_IRQHandler(void)
 void Test_TimerInit(uint32_t timer_group, uint32_t timer_num, uint32_t timer_count)
 {
     dlog_info("Timer init \n");
-    memset(&g_stTimer, 0, sizeof(init_timer_st));
+    memset((void *)&g_stTimer, 0, sizeof(init_timer_st));
     
     g_stTimer.base_time_group = timer_group;
     g_stTimer.time_num = timer_num;
@@ -117,7 +118,7 @@ void Test_PwmInit(uint32_t timer_group, uint32_t timer_num, uint32_t low, uint32
 {
     dlog_info("Timer init \n");
     
-    memset(&g_stPwm, 0, sizeof(init_timer_st));
+    memset((void *)&g_stPwm, 0, sizeof(init_timer_st));
     
     g_stPwm.base_time_group = timer_group;
     g_stPwm.time_num = timer_num;

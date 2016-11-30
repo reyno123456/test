@@ -86,7 +86,7 @@ void GPIO_SetPinListList(uint32_t *pList, uint32_t size, uint32_t *mode);
 void GPIO_SetPinListVal(uint32_t *pList, uint32_t size, uint32_t mode);
 void GPIO_SetPinRange(uint32_t gpioNum1, uint32_t gpioNum2, uint32_t mode);
 
-void GPIO_SetModeRange(uint32_t gpioNum1, uint32_t gpioNum2,uint32_t mode);
+void GPIO_ModeRange(uint32_t gpioNum1, uint32_t gpioNum2,uint32_t mode);
 void GPIO_ModeListVal(uint32_t *pList, uint32_t size, uint32_t mode);
 void GPIO_ModeListList(uint32_t *gpioList, uint32_t size, uint32_t *modeList);
 #endif

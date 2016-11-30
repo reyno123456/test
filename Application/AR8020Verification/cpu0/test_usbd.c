@@ -5,7 +5,7 @@
 #include "interrupt.h"
 #include "command.h"
 #include "cmsis_os.h"
-
+#include "test_sram.h"
 
 USBD_HandleTypeDef          USBD_Device;
 osMessageQId                USBD_AppEvent;
