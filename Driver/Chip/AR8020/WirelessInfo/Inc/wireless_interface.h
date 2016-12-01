@@ -3,6 +3,11 @@
 
 #include <stdint.h>
 
+
+// CPU0 and CPU2 share memory for osd status info, offset in SRAM: 16K + 512Byte
+#define OSD_STATUS_SHM_ADDR              (0x21000000 + (0x4000 + 0x200))
+
+
 typedef enum
 {
     WIRELESS_INTERFACE_UPGRADE                      = 0x01,

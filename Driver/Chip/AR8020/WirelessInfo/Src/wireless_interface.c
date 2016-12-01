@@ -5,7 +5,7 @@
 #include "sys_event.h"
 
 
-STRU_WIRELESS_INFO_DISPLAY              g_stWirelessInfoDisplay;        //send to PAD or PC
+STRU_WIRELESS_INFO_DISPLAY             *g_pstWirelessInfoDisplay;        //send to PAD or PC
 
 STRU_WIRELESS_PARAM_CONFIG_MESSAGE      g_stWirelessParamConfig;        //receive from PAD or PC
 
@@ -69,17 +69,18 @@ WIRELESS_CONFIG_HANDLER g_stWirelessMsgHandler[PAD_WIRELESS_INTERFACE_PID_NUM] =
 };
 
 
-
-
 /* Send to PAD or PC */
 void WIRELESS_SendDisplayInfo(void)
 {
-    uint8_t            *sendBuffer;
-    uint8_t             sendLength;
+    uint8_t                  *sendBuffer;
+    uint8_t                   sendLength;
 
-    g_stWirelessInfoDisplay.messageId   = PAD_WIRELESS_INFO_DISPLAY;
+    g_pstWirelessInfoDisplay  = (STRU_WIRELESS_INFO_DISPLAY *)OSD_STATUS_SHM_ADDR;
 
-    sendBuffer          = (uint8_t *)&g_stWirelessInfoDisplay;
+    g_pstWirelessInfoDisplay->messageId
+                              = PAD_WIRELESS_INFO_DISPLAY;
+
+    sendBuffer          = (uint8_t *)g_pstWirelessInfoDisplay;
     sendLength          = (uint8_t)sizeof(STRU_WIRELESS_INFO_DISPLAY);
 
     if (USB_OTG_IS_BIG_ENDIAN())
