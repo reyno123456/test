@@ -104,8 +104,8 @@ typedef struct
     uint8_t         head;
     uint8_t         IT_channel;
     uint8_t         agc_value[4];
-    int16_t         snr_vlaue[4];
-    int16_t         sweep_energy[17*8];     //Max channel: 17
+    uint16_t        snr_vlaue[4];
+    int16_t         sweep_energy[21*8];     //Max channel: 21
     uint16_t        ldpc_error;
     uint8_t         harq_count;
     uint8_t         modulation_mode;

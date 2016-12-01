@@ -75,6 +75,7 @@
 #include "usbh_conf.h"
 #include "usbh_core.h"
 #include "debuglog.h"
+#include "interrupt.h"
 
 /** @addtogroup STM32F7xx_HAL_Driver
   * @{
@@ -270,18 +271,20 @@ void  HAL_HCD_MspInit(HCD_HandleTypeDef *hhcd)
   if(hhcd->Instance == USB_OTG0_HS)
   {
     /* Set USBHS Interrupt priority */
-    HAL_NVIC_SetPriority(OTG0_HS_IRQn, 0, 0);
-
+    //HAL_NVIC_SetPriority(OTG0_HS_IRQn, 0, 0);
     /* Enable USBHS Interrupt */
-    HAL_NVIC_EnableIRQ(OTG0_HS_IRQn);
+    //HAL_NVIC_EnableIRQ(OTG0_HS_IRQn);
+    INTR_NVIC_SetIRQPriority(OTG_INTR0_VECTOR_NUM, 0);
+    INTR_NVIC_EnableIRQ(OTG_INTR0_VECTOR_NUM);
   }
   else if(hhcd->Instance == USB_OTG1_HS)
   {
     /* Set USBFS Interrupt priority */
-    HAL_NVIC_SetPriority(OTG1_HS_IRQn, 0, 0);
-
+    //HAL_NVIC_SetPriority(OTG1_HS_IRQn, 0, 0);
     /* Enable USBFS Interrupt */
-    HAL_NVIC_EnableIRQ(OTG1_HS_IRQn);
+    //HAL_NVIC_EnableIRQ(OTG1_HS_IRQn);
+    INTR_NVIC_SetIRQPriority(OTG_INTR1_VECTOR_NUM, 0);
+    INTR_NVIC_EnableIRQ(OTG_INTR1_VECTOR_NUM);
   }
 }
 

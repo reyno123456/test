@@ -78,6 +78,7 @@
 #include "debuglog.h"
 #include "sram.h"
 #include "usbd_core.h"
+#include "interrupt.h"
 
 /** @addtogroup STM32F7xx_HAL_Driver
   * @{
@@ -242,22 +243,23 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef *hpcd)
   /* NOTE : This function Should not be modified, when the callback is needed,
             the HAL_PCD_MspInit could be implemented in the user file
    */
-  
-  if(hpcd->Instance == USB_OTG1_HS)
-  {
-    /* Set USBFS Interrupt priority */
-    HAL_NVIC_SetPriority(OTG1_HS_IRQn, 5, 0);
-    
-    /* Enable USBFS Interrupt */
-    HAL_NVIC_EnableIRQ(OTG1_HS_IRQn);
-  }
-  else if(hpcd->Instance == USB_OTG0_HS)
+  if(hpcd->Instance == USB_OTG0_HS)
   {
     /* Set USBHS Interrupt to the lowest priority */
-    HAL_NVIC_SetPriority(OTG0_HS_IRQn, 5, 0);
-
+    //HAL_NVIC_SetPriority(OTG0_HS_IRQn, 5, 0);
     /* Enable USBHS Interrupt */
-    HAL_NVIC_EnableIRQ(OTG0_HS_IRQn);
+    //HAL_NVIC_EnableIRQ(OTG0_HS_IRQn);
+    INTR_NVIC_SetIRQPriority(OTG_INTR0_VECTOR_NUM, 0);
+    INTR_NVIC_EnableIRQ(OTG_INTR0_VECTOR_NUM);
+  }
+  else if(hpcd->Instance == USB_OTG1_HS)
+  {
+    /* Set USBFS Interrupt priority */
+    //HAL_NVIC_SetPriority(OTG1_HS_IRQn, 5, 0);
+    /* Enable USBFS Interrupt */
+    //HAL_NVIC_EnableIRQ(OTG1_HS_IRQn);
+    INTR_NVIC_SetIRQPriority(OTG_INTR1_VECTOR_NUM, 0);
+    INTR_NVIC_EnableIRQ(OTG_INTR1_VECTOR_NUM);
   }
 
 }

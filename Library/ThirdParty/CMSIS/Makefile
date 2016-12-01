@@ -22,7 +22,6 @@ install:
 	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Device/ST/STM32F7xx/Include/stm32f746xx.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Include/core_cm7.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f Device/ST/STM32F7xx/Include/system_stm32f7xx.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Include/core_cmInstr.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Include/core_cmFunc.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Include/core_cmSimd.h $(OUTPUT_HEADER_STAGING_DIR)
@@ -32,7 +31,6 @@ clean:
 	@echo "Cleaning..."
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/stm32f746xx.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/core_cm7.h
-	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/system_stm32f7xx.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/core_cmInstr.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/core_cmFunc.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/core_cmSimd.h
