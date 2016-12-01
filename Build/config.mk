@@ -25,7 +25,7 @@ CFLAGS += -O2 -s
 DEBREL = Release
 endif
 
-DEFS = -mthumb -mcpu=cortex-m7 -mlittle-endian -mfpu=fpv5-sp-d16 -mfloat-abi=softfp -std=c99 -c -Wa,-mimplicit-it=thumb -DSTM32F746xx -DUSE_USB_HS -DUSE_HAL_DRIVER -DUSE_WINBOND_SPI_NOR_FLASH
+DEFS = -mthumb -mcpu=cortex-m7 -mlittle-endian -mfpu=fpv5-sp-d16 -mfloat-abi=softfp -std=c99 -c -Wa,-mimplicit-it=thumb -Werror -DSTM32F746xx -DUSE_USB_HS -DUSE_HAL_DRIVER -DUSE_WINBOND_SPI_NOR_FLASH
 
 CFLAGS += $(DEFS)
 
