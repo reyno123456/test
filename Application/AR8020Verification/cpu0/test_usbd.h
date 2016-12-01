@@ -13,7 +13,7 @@ typedef enum
 
 
 void USBD_ApplicationInit(void);
-void USBD_MainTask(void);
+void USBD_MainTask(void const *argument);
 
 
 extern osMessageQId     USBD_AppEvent;

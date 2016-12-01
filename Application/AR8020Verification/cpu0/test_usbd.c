@@ -5,7 +5,7 @@
 #include "interrupt.h"
 #include "command.h"
 #include "cmsis_os.h"
-#include "test_sram.h"
+
 
 USBD_HandleTypeDef          USBD_Device;
 osMessageQId                USBD_AppEvent;
@@ -27,7 +27,7 @@ void USBD_ApplicationInit(void)
 }
 
 
-void USBD_MainTask(void)
+void USBD_MainTask(void const *argument)
 {
     osEvent     event;
     uint8_t     buffer[30] = "test video or ctrl!";

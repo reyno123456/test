@@ -3,6 +3,7 @@
 #include "fpu.h"
 #include "test_BB.h"
 #include "command.h"
+#include "systicks.h"
 #include "sys_event.h"
 #include "inter_core.h"
 
