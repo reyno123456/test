@@ -3,11 +3,11 @@ OUTPUT_ARCH(arm)
 ENTRY(vectors)
 
 /* Highest address of the user mode stack */
-_estack = 0x2007FFFF;
+_estack = 0x20080000;
 
 MEMORY 
 {
-    FLASH : ORIGIN = 0x10000000, LENGTH = 0x10000
+    FLASH : ORIGIN = 0x00000000, LENGTH = 0x10000
     DTCM0 : ORIGIN = 0x20000000, LENGTH = 0x80000
 }
 

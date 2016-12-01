@@ -22,7 +22,9 @@ LIBS := $(TOP_DIR)/Driver/Chip \
         $(TOP_DIR)/Library/Artosyn/Common \
         $(TOP_DIR)/Library/ThirdParty/CMSIS \
         $(TOP_DIR)/Library/ThirdParty/USB_Library \
-        $(TOP_DIR)/Bootload/AR8020
+        $(TOP_DIR)/Bootload/ 
+#        $(TOP_DIR)/Bootload/AR8020/Upgrade \
+        $(TOP_DIR)/Bootload/AR8020/Origin
 
 all: MKARGS := all
 all: $(LIBS)

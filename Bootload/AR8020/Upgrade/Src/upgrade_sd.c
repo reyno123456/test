@@ -4,10 +4,8 @@
 
 #include "debuglog.h"
 #include "systicks.h"
-#include "boot.h"
-#include "sd_boot.h"
-
-//#define UPGRADE_SD_DEBUGE
+#include "upgrade_core.h"
+#include "upgrade_sd.h"
 
 #ifdef  UPGRADE_SD_DEBUGE
 #define UPDATA_SD
@@ -17,13 +15,13 @@
 #endif
 
 
-void BOOTLOAD_UpdataFromSDToNor(void)
+void UPGRADE_UpdataFromSDToNor(void)
 {    
     FRESULT fileResult;
     FIL     MyFile;
     FATFS   SDFatFs; 
     uint8_t SDPath[4];    
-    SD_DLOG_INFO("BOOTLOAD_UpdataFromSDToNor\n");
+    SD_DLOG_INFO("UPGRADE_UpdataFromSDToNor\n");
     if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)
     {
         SD_DLOG_INFO("FATFS_LinkDriver error \n");
@@ -43,7 +41,7 @@ void BOOTLOAD_UpdataFromSDToNor(void)
         SD_DLOG_INFO("open or create file error: %d\n", fileResult);
         return ;
     }
-    if(BOOTLOAD_CopyDataToNor(MyFile,APP_ADDR_OFFSET) != 0)
+    if(UPGRADE_CopyDataToNor(&MyFile,APP_ADDR_OFFSET) != 0)
     {
         return;     
     }   
@@ -53,13 +51,14 @@ void BOOTLOAD_UpdataFromSDToNor(void)
     return;
 
 }
-void BOOTLOAD_BootFromSD(void)
+#if 0
+void UPGRADE_BootFromSD(void)
 {
     FRESULT fileResult;
     FIL     MyFile;
     FATFS   SDFatFs;  
     uint8_t SDPath[4];  
-    SD_DLOG_INFO("BOOTLOAD_SDBoot\n");    
+    SD_DLOG_INFO("UPGRADE_SDBoot\n");    
     if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)
     {
         SD_DLOG_INFO("FATFS_LinkDriver error \n");
@@ -79,32 +78,29 @@ void BOOTLOAD_BootFromSD(void)
         SD_DLOG_INFO("open or create file error: %d\n", fileResult);
         return ;
     }   
-    if(BOOTLOAD_CopyDataToITCM(MyFile,ITCM0_START) != 0)
+    if(UPGRADE_CopyDataToITCM(&MyFile,ITCM0_START) != 0)
     {
         return;     
     }    
-   /* if(BOOTLOAD_CopyDataToTCM(ITCM1_START) != 0)
+   /* if(UPGRADE_CopyDataToTCM(ITCM1_START) != 0)
     {
         return;     
     }
-    if(BOOTLOAD_CopyDataToTCM(ITCM2_START) != 0)
+    if(UPGRADE_CopyDataToTCM(ITCM2_START) != 0)
     {
         return;     
     }*/
     f_close(&MyFile);
-    fileResult = FATFS_UnLinkDriver(SDPath);
-    
-    BOOTLOAD_BootApp();  
-
     return;
 }
-void BOOTLOAD_UpdataBootloaderFromSD(void)
+#endif
+void UPGRADE_UpdataBootloaderFromSD(void)
 {
     FRESULT fileResult;
     FIL     MyFile;
     FATFS   SDFatFs;
     uint8_t SDPath[4];    
-    SD_DLOG_INFO("BOOTLOAD_UpdataBootloaderFromSD\n");
+    SD_DLOG_INFO("UPGRADE_UpdataBootloaderFromSD\n");
     if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)
     {
         SD_DLOG_INFO("FATFS_LinkDriver error \n");
@@ -124,7 +120,7 @@ void BOOTLOAD_UpdataBootloaderFromSD(void)
         SD_DLOG_INFO("open or create file error: %d\n", fileResult);
         return ;
     }
-    if(BOOTLOAD_CopyDataToNor(MyFile,0) != 0)
+    if(UPGRADE_CopyDataToNor(&MyFile,0) != 0)
     {
         return;     
     }   

@@ -192,6 +192,24 @@ uint8_t QUAD_SPI_ReadWord(uint32_t flash_addr, uint32_t* value_ptr)
     return ret;
 }
 
+void QUAD_SPI_ReadBlockByByte(uint32_t flash_blk_st_addr, uint8_t* blk_val_table, uint32_t byte_size)
+{
+    uint32_t i;
+    volatile uint8_t* write_addr = (uint8_t*)(FLASH_APB_BASE_ADDR + flash_blk_st_addr);
+
+    if (blk_val_table == NULL)
+    {
+        dlog_error("blk_val_table pointer is NULL\n");
+        return FALSE;
+    }
+
+    for (i = 0; i < byte_size; i++)
+    {
+        blk_val_table[i] = *write_addr;
+        write_addr++;
+    }
+    
+}
 uint8_t QUAD_SPI_SetSpeed(ENUM_QUAD_SPI_SPEED speed)
 {
     uint8_t ret = TRUE;

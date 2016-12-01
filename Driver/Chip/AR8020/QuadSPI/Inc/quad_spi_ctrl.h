@@ -205,6 +205,7 @@ uint8_t QUAD_SPI_ReadHalfWord(uint32_t flash_addr, uint16_t* value_ptr);
 uint8_t QUAD_SPI_ReadWord(uint32_t flash_addr, uint32_t* value_ptr);
 uint8_t QUAD_SPI_SetSpeed(ENUM_QUAD_SPI_SPEED speed);
 uint8_t QUAD_SPI_UpdateInstruct(ENUM_QUAD_SPI_INSTR_ID instr_id, uint32_t cmd_h, uint32_t cmd_l);
+void QUAD_SPI_ReadBlockByByte(uint32_t flash_blk_st_addr, uint8_t* blk_val_table, uint32_t byte_size);
 
 #endif
 

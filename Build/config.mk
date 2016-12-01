@@ -50,9 +50,11 @@ export RM
 export AS
 
 CHIP = AR8020
+BOOT = AR8020
 BOARD = AR8020TEST
 
 export CHIP
+export BOOT
 export BOARD
 
 export USB_DEV_CLASS_HID_ENABLE = 1

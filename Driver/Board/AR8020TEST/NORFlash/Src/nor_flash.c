@@ -103,4 +103,8 @@ void NOR_FLASH_WriteWordBuffer(uint32_t start_addr, uint32_t* data_buf, uint32_t
     QUAD_SPI_CheckBusy();
 }
 
+void NOR_FLASH_ReadByteBuffer(uint32_t start_addr, uint8_t* data_buf, uint32_t size)
+{
 
+    QUAD_SPI_ReadBlockByByte(start_addr, data_buf, size);
+}

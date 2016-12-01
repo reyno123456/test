@@ -25,6 +25,8 @@ TARGET_CPU0 = ar8020_cpu0
 TARGET_CPU1 = ar8020_cpu1
 TARGET_CPU2 = ar8020_cpu2
 TARGET_FLASH = ar8020.bin
+TARGET_FLASH_BOOT = ar8020_boot.bin
+TARGET_FLASH_APP = ar8020_app.bin
 
 APPLICATION_SCENARIO ?= sky
 
@@ -55,7 +57,7 @@ install:
 	@cp ./cpu0/$(TARGET_CPU0).txt  .
 	@cp ./cpu1/$(TARGET_CPU1).txt  .
 	@cp ./cpu2/$(TARGET_CPU2).txt  .
-	../../Utility/joint2flash.sh -i $(OUTPUT_LIB_STAGING_DIR)/ar8020_boot.txt $(TARGET_CPU0).txt $(TARGET_CPU1).txt $(TARGET_CPU2).txt -o $(TARGET_FLASH) ar8020_boot.bin
+	../../Utility/joint2flash.sh -i $(OUTPUT_LIB_STAGING_DIR)/ar8020_boot.txt $(OUTPUT_LIB_STAGING_DIR)/ar8020_upgrade.txt $(TARGET_CPU0).txt $(TARGET_CPU1).txt $(TARGET_CPU2).txt -o $(TARGET_FLASH_BOOT) $(TARGET_FLASH_APP) $(TARGET_FLASH) 
 	@echo "Creat the flash image done."
 clean:
 	@$(MAKE) -C cpu0 clean APPLICATION_SCENARIO=`cat .APPLICATION_SCENARIO`
@@ -63,6 +65,10 @@ clean:
 	@$(MAKE) -C cpu2 clean APPLICATION_SCENARIO=`cat .APPLICATION_SCENARIO`
 	@rm -f $(TARGET_CPU0).txt $(TARGET_CPU1).txt $(TARGET_CPU2).txt 
 	@rm -f $(TARGET_FLASH)
+	@rm -f $(TARGET_FLASH_BOOT)
+	@rm -f $(TARGET_FLASH_APP)
+	@rm -f ../../Output/$(TARGET_FLASH_BOOT)
+	@rm -f ../../Output/$(TARGET_FLASH_APP)
 	@rm -f ../../Output/$(TARGET_FLASH)
 
 
