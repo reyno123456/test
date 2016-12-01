@@ -40,7 +40,7 @@
   */ 
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f7xx_hal.h"
+#include "stm32f7xx_hal_conf.h"
 
 /** @addtogroup STM32F7xx_HAL_Driver
   * @{
@@ -50,7 +50,6 @@
   * @brief PCD Extended HAL module driver
   * @{
   */
-#ifdef HAL_PCD_MODULE_ENABLED
 
 /* Private types -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -185,7 +184,6 @@ __weak void HAL_PCDEx_LPM_Callback(PCD_HandleTypeDef *hpcd, PCD_LPM_MsgTypeDef m
   * @}
   */
 
-#endif /* HAL_PCD_MODULE_ENABLED */
 /**
   * @}
   */

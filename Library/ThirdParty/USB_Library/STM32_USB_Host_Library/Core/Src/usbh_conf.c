@@ -28,7 +28,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usbh_core.h"
 #include "debuglog.h"
-#include "stm32f7xx_hal.h"
+#include "stm32f7xx_hal_conf.h"
+#include "systicks.h"
 
 HCD_HandleTypeDef hhcd[2];
 
@@ -297,35 +298,6 @@ USBH_URBStateTypeDef  USBH_LL_GetURBState (USBH_HandleTypeDef *phost, uint8_t pi
 }
 
 /**
-  * @brief  USBH_LL_DriverVBUS 
-  *         Drive VBUS.
-  * @param  phost: Host handle
-  * @param  state : VBUS state
-  *          This parameter can be one of the these values:
-  *           0 : VBUS Active 
-  *           1 : VBUS Inactive
-  * @retval Status
-  */
-
-USBH_StatusTypeDef  USBH_LL_DriverVBUS (USBH_HandleTypeDef *phost, uint8_t state)
-{
-#ifdef USE_USB_FS
-  if(state == 0)
-  {
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, GPIO_PIN_SET);
-  }
-  else
-  {
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, GPIO_PIN_RESET);
-  }
-  
-  HAL_Delay(200);
-#endif /* USE_USB_FS */
-
-  return USBH_OK;  
-}
-
-/**
   * @brief  USBH_LL_SetToggle 
   *         Set toggle for a pipe.
   * @param  phost: Host handle
@@ -390,7 +362,7 @@ uint8_t  USBH_LL_GetToggle   (USBH_HandleTypeDef *phost, uint8_t pipe)
   */
 void  USBH_Delay (uint32_t Delay)
 {
-  HAL_Delay(Delay);
+  SysTicks_DelayMS(Delay);
 }
 
 

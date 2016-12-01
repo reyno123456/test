@@ -73,7 +73,7 @@
   */ 
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f7xx_hal.h"
+#include "stm32f7xx_hal_conf.h"
 #include "usbd_def.h"
 #include "debuglog.h"
 #include "sram.h"
@@ -89,7 +89,6 @@
   * @{
   */
 
-#ifdef HAL_PCD_MODULE_ENABLED
 
 /* Private types -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -1280,7 +1279,6 @@ static HAL_StatusTypeDef PCD_WriteEmptyTxFifo(PCD_HandleTypeDef *hpcd, uint32_t 
   * @}
   */
 
-#endif /* HAL_PCD_MODULE_ENABLED */
 /**
   * @}
   */

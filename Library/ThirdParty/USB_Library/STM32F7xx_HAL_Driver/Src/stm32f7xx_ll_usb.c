@@ -56,8 +56,8 @@
   */ 
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f7xx_hal.h"
-#include "uart.h"
+#include "stm32f7xx_hal_conf.h"
+#include "systicks.h"
 #include "usbd_conf.h"
 #include "usbh_conf.h"
 
@@ -65,7 +65,6 @@
   * @{
   */
 
-#if defined (HAL_PCD_MODULE_ENABLED) || defined (HAL_HCD_MODULE_ENABLED)
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -194,7 +193,7 @@ HAL_StatusTypeDef USB_SetCurrentMode(USB_OTG_GlobalTypeDef *USBx , USB_OTG_ModeT
     USBx->GUSBCFG |= USB_OTG_GUSBCFG_FDMOD; 
   }
 
-  HAL_Delay(50);
+  SysTicks_DelayMS(50);
 
   return HAL_OK;
 }
@@ -968,7 +967,7 @@ HAL_StatusTypeDef  USB_SetDevAddress (USB_OTG_GlobalTypeDef *USBx, uint8_t addre
 HAL_StatusTypeDef  USB_DevConnect (USB_OTG_GlobalTypeDef *USBx)
 {
   USBx_DEVICE->DCTL &= ~USB_OTG_DCTL_SDIS ;
-  HAL_Delay(3);
+  SysTicks_DelayMS(3);
   
   return HAL_OK;  
 }
@@ -981,7 +980,7 @@ HAL_StatusTypeDef  USB_DevConnect (USB_OTG_GlobalTypeDef *USBx)
 HAL_StatusTypeDef  USB_DevDisconnect (USB_OTG_GlobalTypeDef *USBx)
 {
   USBx_DEVICE->DCTL |= USB_OTG_DCTL_SDIS ;
-  HAL_Delay(3);
+  SysTicks_DelayMS(3);
   
   return HAL_OK;  
 }
@@ -1215,7 +1214,7 @@ HAL_StatusTypeDef USB_HostInit (USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef 
   /* Enable VBUS driving */
   USB_DriveVbus(USBx, 1);
   
-  HAL_Delay(200);
+  SysTicks_DelayMS(200);
   
   /* Disable all interrupts. */
   USBx->GINTMSK = 0;
@@ -1285,7 +1284,7 @@ HAL_StatusTypeDef USB_ResetPort(USB_OTG_GlobalTypeDef *USBx)
     USB_OTG_HPRT_PENCHNG | USB_OTG_HPRT_POCCHNG );
   
   USBx_HPRT0 = (USB_OTG_HPRT_PRST | hprt0);  
-  HAL_Delay (50);                                /* See Note #1 */
+  SysTicks_DelayMS(50);                                /* See Note #1 */
   USBx_HPRT0 = ((~USB_OTG_HPRT_PRST) & hprt0); 
   return HAL_OK;
 }
@@ -1767,7 +1766,6 @@ void USB_LL_OTG1_IRQHandler(void)
   * @}
   */
 
-#endif /* defined (HAL_PCD_MODULE_ENABLED) || defined (HAL_HCD_MODULE_ENABLED) */
 
 /**
   * @}

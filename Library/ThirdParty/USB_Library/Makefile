@@ -101,15 +101,15 @@ INCDIRS +=  -ISTM32_USB_Device_Library/Core/Inc \
             -ISTM32_USB_Device_Library/Class/Template/Inc \
             -ISTM32F7xx_HAL_Driver/Inc
 
-SRC_C += STM32F7xx_HAL_Driver/Src/stm32f7xx_hal.c \
-         STM32F7xx_HAL_Driver/Src/stm32f7xx_ll_usb.c \
+SRC_C += STM32F7xx_HAL_Driver/Src/stm32f7xx_ll_usb.c \
          STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pcd.c \
          STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_pcd_ex.c \
          STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_hcd.c
 
 INCDIRS += -ISTM32F7xx_HAL_Driver/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SRAM/Inc \
-           -I$(TOP_DIR)/Driver/Chip/AR8020/WirelessInfo/Inc
+           -I$(TOP_DIR)/Driver/Chip/AR8020/WirelessInfo/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc
 
 
 

@@ -71,7 +71,7 @@
   */ 
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f7xx_hal.h"
+#include "stm32f7xx_hal_conf.h"
 #include "usbh_conf.h"
 #include "usbh_core.h"
 #include "debuglog.h"
@@ -84,8 +84,6 @@
 /** @addtogroup HCD
   * @{
   */
-
-#ifdef HAL_HCD_MODULE_ENABLED
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -1219,7 +1217,6 @@ static void HCD_Port_IRQHandler  (HCD_HandleTypeDef *hhcd)
   * @}
   */
 
-#endif /* HAL_HCD_MODULE_ENABLED */
 /**
   * @}
   */
