@@ -3,13 +3,15 @@
 #include <math.h>
 #include <string.h>
 #include "debuglog.h"
-
-//#include "config_functions_sel.h"
 #include "timer.h"
 #include "interrupt.h"
 #include "BB_ctrl.h"
+#include "sys_param.h"
+#include "sky_controller.h"
+#include "grd_controller.h"
 #include "BB_spi.h"
 #include "BB_uart_com.h"
+
 #define STATIC_TEST (0)
 
 static int test_bbctrl_sky(void);
@@ -68,7 +70,7 @@ static int test_bbctrl_grd(void)
     //Sys_Parm_Init();
 }
 
-
+#if 0
 /*
  * this Function for demo only...
 */
@@ -166,7 +168,7 @@ void BB_debug_print_init_sky(void)
     reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, TIM0_BB_Sky_handler);    
 }
 
-
+#endif
 
 static void BBUARTComTest(uint8_t* data_buf, uint8_t length)
 {

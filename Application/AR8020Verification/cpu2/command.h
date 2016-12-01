@@ -4,7 +4,7 @@
 
 extern uint32_t UartNum;
 void command_init();
-
+unsigned char command_getEnterStatus(void);
 void command_fulfill(void);
 
 #endif

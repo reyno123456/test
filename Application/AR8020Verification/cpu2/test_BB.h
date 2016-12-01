@@ -1,7 +1,7 @@
 #ifndef __TEST_BB_
 #define __TEST_BB_
 
-void test_BB_SKY(void);
+void test_BB_sky(void);
 
 void test_BB_grd(void);
 

@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 #include "test_h264_encoder.h"
 #include "h264_encoder.h"
 

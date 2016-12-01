@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdlib.h>
 #include "sys_event.h"
 #include "test_sysevent.h"
 #include "debuglog.h"

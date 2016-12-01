@@ -12,7 +12,7 @@
 #ifndef __GRD_CONTROLLER_H
 #define __GRD_CONTROLLER_H
 
-#include "config_functions_sel.h"
+//#include "config_functions_sel.h"
 #include <stdint.h>
 #include "debuglog.h"
 
@@ -21,6 +21,8 @@
 void grd_add_snr_daq(void);
 
 void Grd_Parm_Initial(void);
+
+void BB_Grd_Id_Initial(void);
 
 void wimax_vsoc_tx_isr(void);
 
@@ -67,5 +69,7 @@ static void grd_handle_brc_cmd(uint8_t coderate);
 void grd_handle_all_cmds(void);
 
 void grd_handle_events_callback(void *p);
+
+void grd_add_spi_cmds(uint32_t type, uint32_t value);
 
 #endif

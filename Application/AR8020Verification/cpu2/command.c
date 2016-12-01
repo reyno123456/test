@@ -6,12 +6,16 @@
 #include "serial.h"
 #include "cmsis_os.h"
 #include "BB_spi.h"
+#include "BB_ctrl.h"
+#include "sys_param.h"
+#include "grd_controller.h"
 #include "test_BB.h"
 #include "test_spi.h"
 #include "test_timer.h"
 #include "test_h264_encoder.h"
 #include "test_i2c_adv7611.h"
 #include "test_sysevent.h"
+#include "test_float.h"
 
 static unsigned char g_commandPos;
 static char g_commandLine[50];
@@ -154,57 +158,6 @@ unsigned char command_getEnterStatus(void)
     return g_commandEnter;
 }
 
-void command_fulfill(void)
-{
-    command_parse(g_commandLine);
-    g_commandEnter = 0;
-}
-
-void command_parse(char *cmd)
-{
-    unsigned char cmdIndex;
-    char *tempCommand[5];
-
-    cmdIndex = 0;
-    memset(tempCommand, 0, 5);
-
-    while (cmdIndex < 5)
-    {
-        /* skip the sapce */
-        while ((*cmd == ' ') || (*cmd == '\t'))
-        {
-            ++cmd;
-        }
-
-        /* end of the cmdline */
-        if (*cmd == '\0')
-        {
-            tempCommand[cmdIndex] = 0;
-            break;
-        }
-
-        tempCommand[cmdIndex++] = cmd;
-
-        /* find the end of string */
-        while (*cmd && (*cmd != ' ') && (*cmd != '\t'))
-        {
-            ++cmd;
-        }
-
-        /* no more command */
-        if (*cmd == '\0')
-        {
-            tempCommand[cmdIndex] = 0;
-            break;
-        }
-
-        /* current cmd is end */
-        *cmd++ = '\0';
-    }
-
-    command_run(tempCommand, cmdIndex);
-}
-
 void command_run(char *cmdArray[], unsigned int cmdNum)
 {
     if (memcmp(cmdArray[0], "encoder_dump_brc", strlen("encoder_dump_brc")) == 0)
@@ -293,3 +246,55 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     /* must reset to receive new data from serial */
     command_reset();
 }
+
+void command_parse(char *cmd)
+{
+    unsigned char cmdIndex;
+    char *tempCommand[5];
+
+    cmdIndex = 0;
+    memset(tempCommand, 0, 5);
+
+    while (cmdIndex < 5)
+    {
+        /* skip the sapce */
+        while ((*cmd == ' ') || (*cmd == '\t'))
+        {
+            ++cmd;
+        }
+
+        /* end of the cmdline */
+        if (*cmd == '\0')
+        {
+            tempCommand[cmdIndex] = 0;
+            break;
+        }
+
+        tempCommand[cmdIndex++] = cmd;
+
+        /* find the end of string */
+        while (*cmd && (*cmd != ' ') && (*cmd != '\t'))
+        {
+            ++cmd;
+        }
+
+        /* no more command */
+        if (*cmd == '\0')
+        {
+            tempCommand[cmdIndex] = 0;
+            break;
+        }
+
+        /* current cmd is end */
+        *cmd++ = '\0';
+    }
+
+    command_run(tempCommand, cmdIndex);
+}
+
+void command_fulfill(void)
+{
+    command_parse(g_commandLine);
+    g_commandEnter = 0;
+}
+

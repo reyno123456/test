@@ -11,6 +11,8 @@ enum EN_AGC_MODE
     UNKOWN_AGC  = 0xff,
 };
 
+void Sky_Parm_Initial(void);
+
 void sky_Timer1_Init(void);
 
 void sky_Timer0_Init(void);
