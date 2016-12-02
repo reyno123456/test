@@ -200,7 +200,7 @@ void QUAD_SPI_ReadBlockByByte(uint32_t flash_blk_st_addr, uint8_t* blk_val_table
     if (blk_val_table == NULL)
     {
         dlog_error("blk_val_table pointer is NULL\n");
-        return FALSE;
+        return ;
     }
 
     for (i = 0; i < byte_size; i++)

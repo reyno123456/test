@@ -32,4 +32,5 @@ typedef struct
 
 void BOOT_BootApp(void);
 void BOOT_CopyFromNorToITCM(void);
+void BOOT_StartBoot(uint8_t index);
 #endif

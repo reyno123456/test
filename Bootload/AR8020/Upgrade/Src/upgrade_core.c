@@ -42,7 +42,7 @@ int8_t UPGRADE_CopyDataToNor(FIL *MyFile,uint32_t u32_addrOffset)
         if((fileResult != FR_OK))
         {
             DLOG_ERROR("Cannot Read from the file \n");
-            f_close(&MyFile);
+            f_close(MyFile);
             return UPGRADE_READFILE;
         }
         else
