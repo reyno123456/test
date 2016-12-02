@@ -88,8 +88,6 @@ void WIRELESS_SendDisplayInfo(void)
         convert_endian(sendBuffer, (uint32_t)sizeof(STRU_WIRELESS_INFO_DISPLAY));
     }
 
-    dlog_info("size: %d", sendLength);
-
     if (USBD_OK != USBD_HID_SendReport(&USBD_Device, sendBuffer, sendLength, HID_EPIN_CTRL_ADDR))
     {
         dlog_error("send wireless info fail\n");
