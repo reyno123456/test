@@ -79,7 +79,7 @@ void WIRELESS_SendDisplayInfo(void)
     g_pstWirelessInfoDisplay  = (STRU_WIRELESS_INFO_DISPLAY *)OSD_STATUS_SHM_ADDR;
 
     sendBuffer                = (uint8_t *)g_pstWirelessInfoDisplay;
-    sendLength                = (uint32_t)(sizeof(STRU_WIRELESS_INFO_DISPLAY) - 2);
+    sendLength                = (uint32_t)(sizeof(STRU_WIRELESS_INFO_DISPLAY) - 4);
 
     g_pstWirelessInfoDisplay->messageId = PAD_WIRELESS_INFO_DISPLAY;
 
