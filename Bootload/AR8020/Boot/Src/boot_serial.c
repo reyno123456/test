@@ -37,13 +37,17 @@ void uart_puts(unsigned char index, const char *s)
 
 char uart_getc(unsigned char index)
 {
-    char tmp = 0;
-    volatile uart_type *uart_regs = (uart_type *)UART0_BASE;
-  
-    while ((uart_regs->LSR & UART_LSR_DATAREADY) != UART_LSR_DATAREADY); 
-    tmp = uart_regs->RBR_THR_DLL;
 
-    return tmp;
+    volatile uart_type *uart_regs = (uart_type *)UART0_BASE;
+    if((uart_regs->LSR & UART_LSR_DATAREADY) != UART_LSR_DATAREADY)
+    {
+        return -1;
+    }
+    else
+    {
+        return uart_regs->RBR_THR_DLL;
+    }
+
 }
 
 

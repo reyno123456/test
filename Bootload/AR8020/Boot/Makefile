@@ -33,7 +33,6 @@ SRC_C   :=  Src/boot_main.c \
 			Src/boot_norflash.c \
 			Src/boot_string.c \
 			Src/boot_core.c \
-			Src/boot_command.c \
 			Src/boot_systicks.c \
 			Src/boot_interrupt.c
 
