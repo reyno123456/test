@@ -5,9 +5,10 @@
 #include "sys_event.h"
 
 
-STRU_WIRELESS_INFO_DISPLAY             *g_pstWirelessInfoDisplay;        //send to PAD or PC
+STRU_WIRELESS_INFO_DISPLAY             *g_pstWirelessInfoDisplay;        //OSD Info in SRAM
+STRU_WIRELESS_INFO_DISPLAY              g_stWirelessInfoSend;            //send to PAD or PC
 
-STRU_WIRELESS_PARAM_CONFIG_MESSAGE      g_stWirelessParamConfig;        //receive from PAD or PC
+STRU_WIRELESS_PARAM_CONFIG_MESSAGE      g_stWirelessParamConfig;         //receive from PAD or PC
 
 extern USBD_HandleTypeDef               USBD_Device;
 
@@ -77,20 +78,25 @@ void WIRELESS_SendDisplayInfo(void)
 
     g_pstWirelessInfoDisplay  = (STRU_WIRELESS_INFO_DISPLAY *)OSD_STATUS_SHM_ADDR;
 
-    g_pstWirelessInfoDisplay->messageId
-                              = PAD_WIRELESS_INFO_DISPLAY;
 
     sendBuffer          = (uint8_t *)g_pstWirelessInfoDisplay;
-    sendLength          = (uint32_t)sizeof(STRU_WIRELESS_INFO_DISPLAY);
+    sendLength          = (uint32_t)(sizeof(STRU_WIRELESS_INFO_DISPLAY) - 2);
 
     if (USB_OTG_IS_BIG_ENDIAN())
     {
-        convert_endian(sendBuffer, (uint32_t)sizeof(STRU_WIRELESS_INFO_DISPLAY));
+        convert_endian(sendBuffer, (void *)&g_stWirelessInfoSend,(uint32_t)(sizeof(STRU_WIRELESS_INFO_DISPLAY) - 2));
     }
 
-    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, sendBuffer, sendLength, HID_EPIN_CTRL_ADDR))
+    /* if cpu2 update info, and the info is valid */
+    if ((0x0 == g_pstWirelessInfoDisplay->head)
+      &&(0xFF == g_pstWirelessInfoDisplay->tail))
     {
-        dlog_error("send wireless info fail\n");
+        g_stWirelessInfoSend.messageId = PAD_WIRELESS_INFO_DISPLAY;
+
+        if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)&g_stWirelessInfoSend, sendLength, HID_EPIN_CTRL_ADDR))
+        {
+            dlog_error("send wireless info fail\n");
+        }
     }
 
     return;
@@ -506,7 +512,7 @@ void WIRELESS_ParseParamConfig(void *param)
 
     if (USB_OTG_IS_BIG_ENDIAN())
     {
-        convert_endian(param, (uint32_t)sizeof(STRU_WIRELESS_PARAM_CONFIG_MESSAGE));
+        convert_endian(param, param, (uint32_t)sizeof(STRU_WIRELESS_PARAM_CONFIG_MESSAGE));
     }
 
 	pstWirelessParamConfig          = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
@@ -527,23 +533,38 @@ void WIRELESS_ParseParamConfig(void *param)
 }
 
 
-void convert_endian(void *data, uint32_t dataLen)
+void convert_endian(void *src_data, void *dst_data, uint32_t dataLen)
 {
-    uint8_t     temp;
-    uint32_t    i;
-    uint8_t    *converter;
+    uint8_t                 temp;
+    uint32_t                i;
+    uint8_t                *source;
+    uint8_t                *dest;
 
-    converter   = data;
+    source                  = (uint8_t *)src_data;
+    dest                    = (uint8_t *)dst_data;
 
-    for (i = 0; i < (dataLen - 3); i += 4)
+    if (source == dest)
     {
-        temp            = converter[i];
-        converter[i]    = converter[i+3];
-        converter[i+3]  = temp;
+        for (i = 0; i < (dataLen - 3); i += 4)
+        {
+            temp            = source[i];
+            source[i]       = source[i+3];
+            source[i+3]     = temp;
 
-        temp            = converter[i+1];
-        converter[i+1]  = converter[i+2];
-        converter[i+2]  = temp;
+            temp            = source[i+1];
+            source[i+1]     = source[i+2];
+            source[i+2]     = temp;
+        }
+    }
+    else
+    {
+        for (i = 0; i < (dataLen - 3); i += 4)
+        {
+            dest[i]         = source[i+3];
+            dest[i+1]       = source[i+2];
+            dest[i+2]       = source[i+1];
+            dest[i+3]       = source[i];
+        }
     }
 
     return;

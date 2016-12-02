@@ -106,7 +106,6 @@ typedef enum
 typedef struct
 {
     uint32_t        messageId;
-    uint8_t         head;
     uint8_t         IT_channel;
     uint8_t         agc_value[4];
     uint16_t        snr_vlaue[4];
@@ -117,6 +116,7 @@ typedef struct
     uint8_t         ch_bandwidth;
     uint8_t         code_rate;
     uint8_t         encoder_bitrate;
+    uint8_t         head;
     uint8_t         tail;
 } STRU_WIRELESS_INFO_DISPLAY;
 
@@ -227,7 +227,7 @@ void PAD_ENCODER_DYNAMIC_BITRATE_MODE_Handler(void *param);
 void PAD_ENCODER_DYNAMIC_BITRATE_SELECT_Handler(void *param);
 void PAD_WIRELESS_INFO_DISPLAY_Handler(void *param);
 void WIRELESS_ParseParamConfig(void *param);
-void convert_endian(void *data, uint32_t dataLen);
+void convert_endian(void *src_data, void *dst_data, uint32_t dataLen);
 
 
 #endif
