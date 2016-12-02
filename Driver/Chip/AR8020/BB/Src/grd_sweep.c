@@ -448,14 +448,7 @@ int16_t calc_power_db(int8_t bw, uint32_t power_td,
         sum_power += tmp;
     }
 
-    static int loop = 0;
-    if(loop++ > 5000)
-    {
-        loop = 0;
-        dlog_info("%d %d %d %d %d %d %d %d \r\n", 
-                    power_db[0], power_db[1], power_db[2], power_db[3], 
-                    power_db[4], power_db[5], power_db[6], power_db[7]); 
-    }
+    
     *total_power = sum_power;
     return 1;
 }

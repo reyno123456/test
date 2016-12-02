@@ -448,15 +448,15 @@ void BB_set_RF_Band(ENUM_BB_MODE sky_ground, ENUM_RF_BAND rf_band)
         }
         BB_WriteReg(PAGE2, 0x02, 0x06);
         BB_set_ITfrq(RF_5G, 0);   
+        //softreset
+        BB_softReset(sky_ground);
+        
         #endif
     }
 
     //calibration and reset
-    BB_RF_start_cali();
+    //BB_RF_start_cali();
     BB_RF_2G_5G_switch(rf_band);
-    //softreset
-    BB_softReset(sky_ground);
-
     dlog_info("Set Band %d %d\r\n", sky_ground, rf_band);
 }
 
