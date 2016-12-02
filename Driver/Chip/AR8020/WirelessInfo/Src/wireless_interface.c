@@ -85,12 +85,14 @@ void WIRELESS_SendDisplayInfo(void)
 
     if (USB_OTG_IS_BIG_ENDIAN())
     {
-        convert_endian(sendBuffer, (void *)&g_stWirelessInfoSend,(uint32_t)(sizeof(STRU_WIRELESS_INFO_DISPLAY) - 2));
+        convert_endian((void *)sendBuffer, (void *)&g_stWirelessInfoSend, (uint32_t)(sizeof(STRU_WIRELESS_INFO_DISPLAY)));
     }
     else
     {
         memcpy((void *)&g_stWirelessInfoSend, (void *)g_pstWirelessInfoDisplay, sizeof(STRU_WIRELESS_INFO_DISPLAY));
     }
+
+    dlog_info("sendLength: %d", sendLength);
 
     /* if cpu2 update info, and the info is valid */
     if ((0x0 == g_pstWirelessInfoDisplay->head)

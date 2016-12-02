@@ -106,7 +106,6 @@ typedef enum
 typedef struct
 {
     uint32_t        messageId;
-    uint8_t         IT_channel;
     uint8_t         agc_value[4];
     uint16_t        snr_vlaue[4];
     int16_t         sweep_energy[21*8];     //Max channel: 21
@@ -116,8 +115,10 @@ typedef struct
     uint8_t         ch_bandwidth;
     uint8_t         code_rate;
     uint8_t         encoder_bitrate;
+    uint8_t         IT_channel;
     uint8_t         head;
     uint8_t         tail;
+    uint8_t         reserved[2];
 } STRU_WIRELESS_INFO_DISPLAY;
 
 
