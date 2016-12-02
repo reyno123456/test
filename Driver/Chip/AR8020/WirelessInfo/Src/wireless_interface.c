@@ -73,7 +73,7 @@ WIRELESS_CONFIG_HANDLER g_stWirelessMsgHandler[PAD_WIRELESS_INTERFACE_PID_NUM] =
 void WIRELESS_SendDisplayInfo(void)
 {
     uint8_t                  *sendBuffer;
-    uint8_t                   sendLength;
+    uint32_t                  sendLength;
 
     g_pstWirelessInfoDisplay  = (STRU_WIRELESS_INFO_DISPLAY *)OSD_STATUS_SHM_ADDR;
 
@@ -81,12 +81,14 @@ void WIRELESS_SendDisplayInfo(void)
                               = PAD_WIRELESS_INFO_DISPLAY;
 
     sendBuffer          = (uint8_t *)g_pstWirelessInfoDisplay;
-    sendLength          = (uint8_t)sizeof(STRU_WIRELESS_INFO_DISPLAY);
+    sendLength          = (uint32_t)sizeof(STRU_WIRELESS_INFO_DISPLAY);
 
     if (USB_OTG_IS_BIG_ENDIAN())
     {
-        convert_endian(sendBuffer, (uint8_t)sizeof(STRU_WIRELESS_INFO_DISPLAY));
+        convert_endian(sendBuffer, (uint32_t)sizeof(STRU_WIRELESS_INFO_DISPLAY));
     }
+
+    dlog_info("size: %d", sendLength);
 
     if (USBD_OK != USBD_HID_SendReport(&USBD_Device, sendBuffer, sendLength, HID_EPIN_CTRL_ADDR))
     {
@@ -506,7 +508,7 @@ void WIRELESS_ParseParamConfig(void *param)
 
     if (USB_OTG_IS_BIG_ENDIAN())
     {
-        convert_endian(param, (uint8_t)sizeof(STRU_WIRELESS_PARAM_CONFIG_MESSAGE));
+        convert_endian(param, (uint32_t)sizeof(STRU_WIRELESS_PARAM_CONFIG_MESSAGE));
     }
 
 	pstWirelessParamConfig          = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
@@ -527,10 +529,10 @@ void WIRELESS_ParseParamConfig(void *param)
 }
 
 
-void convert_endian(void *data, uint8_t dataLen)
+void convert_endian(void *data, uint32_t dataLen)
 {
     uint8_t     temp;
-    uint8_t     i;
+    uint32_t    i;
     uint8_t    *converter;
 
     converter   = data;
