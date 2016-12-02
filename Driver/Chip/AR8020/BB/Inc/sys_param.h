@@ -37,6 +37,7 @@ typedef struct
     uint8_t cur_IT_ch;
     uint8_t next_IT_ch;
     uint8_t it_manual_ch;
+    uint8_t it_manual_rf_band;
     uint8_t fec_unlock_cnt;
     uint8_t rc_unlock_cnt;
     
@@ -44,6 +45,7 @@ typedef struct
     RUN_MODE rc_skip_freq_mode;
     RUN_MODE qam_skip_mode;
     RUN_MODE brc_mode;
+    ENUM_TRX_CTRL trx_ctrl;
     uint8_t  brc_bps;           //unit: 100khz
 
     ENUM_RF_BAND RF_band;       //2.5G, 5.8G
@@ -115,8 +117,8 @@ typedef struct param
 {
     uint8_t is_init;
     uint8_t update;
-    RC_ID rc_id;
-    IT_ID it_id;
+    RC_ID   rc_id;
+    IT_ID   it_id;
     SYS_PARAM user_param;
 }PARAM;
 

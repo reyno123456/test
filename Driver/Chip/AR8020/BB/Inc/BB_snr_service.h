@@ -26,8 +26,3 @@ uint16_t get_snr_average(uint8_t row_index);
 #endif /* __CONFIG_H__ */
 
 /************************ (C) COPYRIGHT Artosyn *****END OF FILE****/
-
-
-
-
-

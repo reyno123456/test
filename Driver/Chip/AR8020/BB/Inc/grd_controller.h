@@ -32,7 +32,7 @@ void Grd_Timer0_Init(void);
 
 void grd_rc_hopfreq(void);
 
-void grd_set_it_work_freq(uint8_t ch);
+void grd_set_it_work_freq(ENUM_RF_BAND rf_band, uint8_t ch);
 
 void reset_it_span_cnt(void);
 
@@ -69,6 +69,8 @@ static void grd_handle_brc_cmd(uint8_t coderate);
 void grd_handle_all_cmds(void);
 
 void grd_handle_events_callback(void *p);
+
+void grd_get_osd_info(void);
 
 void grd_add_spi_cmds(uint32_t type, uint32_t value);
 

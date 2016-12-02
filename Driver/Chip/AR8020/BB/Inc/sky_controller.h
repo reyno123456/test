@@ -19,9 +19,9 @@ void sky_Timer0_Init(void);
 
 void sky_id_search_init(void);
 
-void sky_get_id(uint8_t* idptr);
+void sky_get_RC_id(uint8_t* idptr);
 
-void sky_set_id(uint8_t *idptr);
+void sky_set_RC_id(uint8_t *idptr);
 
 void sky_physical_link_process(void);
 
@@ -42,5 +42,9 @@ int sky_search_id_timeout_irq_disable();
 int sky_search_id_timeout_irq_enable();
 
 void sky_handle_all_spi_cmds(void);
+
+void sky_soft_reset(void);
+
+void sky_search_id_timeout(void);
 
 #endif

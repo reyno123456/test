@@ -1,28 +1,34 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+
 #include "debuglog.h"
+#include "sys_param.h"
 #include "BB_ctrl.h"
 #include "grd_sweep.h"
 #include "config_baseband_register.h"
 
-#define SWEEP_FREQ_BLOCK_ROWS       (4)
+#define SWEEP_FREQ_BLOCK_ROWS           (4)
 
-#define MAX_1_5M_CH                 (19)
-#define BW_10M_VALID_1_5M_CH_START  (12)
-#define BW_20M_VALID_1_5M_CH_START  (8)
+#define MAX_1_5M_CH                     (19)
+#define BW_10M_VALID_1_5M_CH_START      (12)
+#define BW_20M_VALID_1_5M_CH_START      (8)
 
-#define BW_10M_VALID_CH_CNT (MAX_1_5M_CH - BW_10M_VALID_1_5M_CH_START + 1)
-#define BW_20M_VALID_CH_CNT (MAX_1_5M_CH - BW_20M_VALID_1_5M_CH_START + 1)
 
+#define BW_10M_VALID_CH_CNT     (MAX_1_5M_CH - BW_10M_VALID_1_5M_CH_START + 1)
+#define BW_20M_VALID_CH_CNT     (MAX_1_5M_CH - BW_20M_VALID_1_5M_CH_START + 1)
+
+
+#define TOTAL_SWEEP_CH (MAX_2G_IT_FRQ_SIZE + MAX_5G_IT_FRQ_SIZE)
+#define BAND_MAX_SWEEP_CH(band) ((band == RF_2G)? MAX_2G_IT_FRQ_SIZE:MAX_5G_IT_FRQ_SIZE)
 
 typedef struct
 {
-    int16_t noise_energy_1_5M[SWEEP_FREQ_BLOCK_ROWS][MAX_RC_FRQ_SIZE*8];      //1.5M bandwidth noise in channels.
-    int16_t noise_energy[SWEEP_FREQ_BLOCK_ROWS][MAX_RC_FRQ_SIZE];
+    int16_t noise_energy_1_5M[SWEEP_FREQ_BLOCK_ROWS][TOTAL_SWEEP_CH*8];      //1.5M bandwidth noise in channels.
+    int16_t noise_energy[SWEEP_FREQ_BLOCK_ROWS][TOTAL_SWEEP_CH];
 
-    int16_t noise_energy_average[MAX_RC_FRQ_SIZE];
-    int16_t noise_energy_flucate[MAX_RC_FRQ_SIZE];
+    int16_t noise_energy_average[TOTAL_SWEEP_CH];
+    int16_t noise_energy_flucate[TOTAL_SWEEP_CH];
 
     uint8_t row_index;
     uint8_t isFull;
@@ -31,52 +37,54 @@ typedef struct
 }SWEEP_CH_NOISE_ENERGY;
 
 
-SWEEP_CH_NOISE_ENERGY sweep_ch_noise_energy = {
-    .sweep_ch  = 0,
-    .isFull    = 0,
-    .row_index = 0,
-    .isInited  = 0,
-};
+SWEEP_CH_NOISE_ENERGY sweep_ch_noise_energy = {0};
 
 void grd_sweep_freq_init(void)
 {
-    BB_set_sweepfrq(sweep_ch_noise_energy.sweep_ch);
+    sweep_ch_noise_energy.sweep_ch  = 0;
+    sweep_ch_noise_energy.isFull    = 0;
+    sweep_ch_noise_energy.row_index = 0;
+    sweep_ch_noise_energy.isInited  = 0;
+
+    BB_set_sweepfrq(context.RF_band, sweep_ch_noise_energy.sweep_ch);
 }
 
 
 void grd_get_sweep_noise(uint8_t row, int16_t *ptr_noise_power)
 {
-    int size = sizeof(sweep_ch_noise_energy.noise_energy_1_5M[row]);
-    memcpy((void*)ptr_noise_power, (void*)(sweep_ch_noise_energy.noise_energy_1_5M[row]), sizeof(sweep_ch_noise_energy.noise_energy_1_5M[row]));
+    memcpy( (void *)ptr_noise_power, (void *)sweep_ch_noise_energy.noise_energy_1_5M[row], sizeof(sweep_ch_noise_energy.noise_energy_1_5M[row]) );
 }
 
 void grd_set_next_sweep_freq(void)
 {
+    uint8_t max_ch = BAND_MAX_SWEEP_CH(context.RF_band);
+
     sweep_ch_noise_energy.sweep_ch++;
-    if(sweep_ch_noise_energy.sweep_ch >= MAX_RC_FRQ_SIZE)
+    if(sweep_ch_noise_energy.sweep_ch >= max_ch)
     {
         sweep_ch_noise_energy.sweep_ch = 0;
     }
 
-    BB_set_sweepfrq(sweep_ch_noise_energy.sweep_ch);
+    BB_set_sweepfrq(context.RF_band, sweep_ch_noise_energy.sweep_ch);
 }
 
 void clear_sweep_results(void)
 {
-    sweep_ch_noise_energy.sweep_ch = 0;
+    sweep_ch_noise_energy.sweep_ch  = 0;
     sweep_ch_noise_energy.row_index = 0;
 }
+
 
 /*
   *  get the time domain noise energy
  */
-static uint32_t grd_get_it_sweep_td_noise_energy()
+static uint32_t grd_get_it_sweep_td_noise_energy(void)
 {
     uint32_t Energy_Low = BB_ReadReg(PAGE2, SWEEP_ENERGY_LOW);
     uint32_t Energy_Mid = BB_ReadReg(PAGE2, SWEEP_ENERGY_MID);
     uint32_t Energy_Hgh = BB_ReadReg(PAGE2, SWEEP_ENERGY_HIGH);
-    
-    return (Energy_Hgh<<16 | Energy_Mid<<8 | Energy_Low);
+
+    return ( (Energy_Hgh<<16) | (Energy_Mid<<8) | Energy_Low);
 }
 
 
@@ -97,7 +105,6 @@ int8_t grd_get_it_sweep_noise_energy(uint8_t bw, uint8_t row, uint8_t ch)
 
     if(power_td == 0)
     {
-        //dlog_info("power_td ==0 \r\n");
         return 0;
     }
 
@@ -135,29 +142,28 @@ int8_t grd_get_it_sweep_noise_energy(uint8_t bw, uint8_t row, uint8_t ch)
                          );
 }
 
+
 /*
  * retval :  1:  sweep OK
- *           0:  sweep fail
-*/
+ *             0:  sweep fail
+ */
 int8_t grd_add_sweep_result(int8_t bw)
 {
     uint8_t row = sweep_ch_noise_energy.row_index;
     uint8_t ch  = sweep_ch_noise_energy.sweep_ch;
     uint8_t result = grd_get_it_sweep_noise_energy(bw, row, ch);
+    uint8_t max_ch = BAND_MAX_SWEEP_CH(context.RF_band);
 
-    if(result == 1)
+    if(result == 1 && ch >= max_ch - 1)
     {
-        if(ch >= MAX_RC_FRQ_SIZE - 1)
+        sweep_ch_noise_energy.row_index++;
+        if(sweep_ch_noise_energy.row_index >= SWEEP_FREQ_BLOCK_ROWS)
         {
-            sweep_ch_noise_energy.row_index++;
-            if(sweep_ch_noise_energy.row_index >= SWEEP_FREQ_BLOCK_ROWS)
-            {
-                sweep_ch_noise_energy.row_index = 0;
-                sweep_ch_noise_energy.isFull = 1;
-            }
+            sweep_ch_noise_energy.row_index = 0;
+            sweep_ch_noise_energy.isFull = 1;
         }
     }
-    
+
     return result;
 }
 
@@ -182,8 +188,7 @@ void calu_sne_average_and_fluct(uint8_t ch)
 void init_sne_average_and_fluct(void)
 {
     uint8_t i;
-
-    for(i=0;i<MAX_RC_FRQ_SIZE;i++)
+    for(i=0; i< TOTAL_SWEEP_CH; i++)
     {
         calu_sne_average_and_fluct(i);
     }
@@ -205,9 +210,10 @@ uint8_t get_best_freq(void)
     uint32_t sne_average;
     uint8_t i  = 0;
     uint8_t ch = 0;
+    uint8_t max_ch = BAND_MAX_SWEEP_CH(context.RF_band);
 
     sne_average = sweep_ch_noise_energy.noise_energy_average[0];
-    for(i=1;i<MAX_RC_FRQ_SIZE;i++)
+    for(i=1; i< max_ch; i++)
     {
         if(sne_average > sweep_ch_noise_energy.noise_energy_average[i])
         {
@@ -218,14 +224,15 @@ uint8_t get_best_freq(void)
     return ch;
 }
 
+
 uint8_t get_next_best_freq(uint8_t cur_best_ch)
 {
     uint32_t sne_average;
     uint8_t i;
-    uint8_t ch;
-    ch = 0;
+    uint8_t ch = 0;
+
     sne_average = 0xffffffff;
-    for(i=0;i<MAX_RC_FRQ_SIZE;i++)
+    for(i=0; i< BAND_MAX_SWEEP_CH(context.RF_band); i++)
     {
         if(i == cur_best_ch)
         {
@@ -247,16 +254,7 @@ uint8_t get_sweep_freq(void)
 
 uint8_t ch_to_index(uint8_t cur_IT_ch)
 {
-    uint8_t i;
-    for(i=0;i<MAX_RC_FRQ_SIZE;i++)
-    {
-        if(i == cur_IT_ch)
-        {
-            return i;
-        }
-    }
-    
-    return 0xff;
+    return cur_IT_ch;
 }
 
 uint8_t is_next_best_freq_pass(uint8_t cur_best_ch, uint8_t next_best_ch)
@@ -265,7 +263,7 @@ uint8_t is_next_best_freq_pass(uint8_t cur_best_ch, uint8_t next_best_ch)
     uint8_t cur_ch_index, next_ch_index;
 
     ret = 0;
-    cur_ch_index = ch_to_index(cur_best_ch);
+    cur_ch_index  = ch_to_index(cur_best_ch);
     next_ch_index = ch_to_index(next_best_ch);
 
     if(next_ch_index == 0xff || cur_ch_index == 0xff)
@@ -277,7 +275,7 @@ uint8_t is_next_best_freq_pass(uint8_t cur_best_ch, uint8_t next_best_ch)
 		sweep_ch_noise_energy.noise_energy_average[next_ch_index] + 3)
     {
         cnt = 0;
-        for(i=0;i<MAX_RC_FRQ_SIZE;i++)
+        for(i=0; i< BAND_MAX_SWEEP_CH(context.RF_band); i++)
         {
             if(sweep_ch_noise_energy.noise_energy_flucate[next_ch_index] <= sweep_ch_noise_energy.noise_energy_flucate[i])
             {
@@ -289,7 +287,7 @@ uint8_t is_next_best_freq_pass(uint8_t cur_best_ch, uint8_t next_best_ch)
             }
         }
 
-        if(cnt == MAX_RC_FRQ_SIZE)
+        if(cnt == BAND_MAX_SWEEP_CH(context.RF_band))
         {
             ret = 1;
         }

@@ -278,45 +278,41 @@
                                             [1:0]Qam_mode_in
                                        */
                                        
-#define GRD_FEC_QAM_CR_TLV  ((uint8_t)0xD0 )    /*
+#define     GRD_FEC_QAM_CR_TLV  ((uint8_t)0xD0 )    /*
                                                [6:5] TLV mode
                                                [2:4] coderate
                                                [0:1] QAM
                                             */
 
 
-#define FEC_1_RD    ((uint8_t)0xD2 )  //[7:0]Dec_rc_id[39:32]
-#define FEC_2_RD_1  ((uint8_t)0xD3 )  //[7:0]Dec_rc_id[31:24]
-#define FEC_2_RD_2  ((uint8_t)0xD4 )  //[7:0]Dec_rc_id[23:16]
-#define FEC_2_RD_3  ((uint8_t)0xD5 )  //[7:0]Dec_rc_id[15:8]
-#define FEC_2_RD_4  ((uint8_t)0xD6 )  //[7:0]Dec_rc_id[7:0]
+#define     FEC_1_RD        ((uint8_t)0xD2 )  //[7:0]Dec_rc_id[39:32]
+#define     FEC_2_RD_1      ((uint8_t)0xD3 )  //[7:0]Dec_rc_id[31:24]
+#define     FEC_2_RD_2      ((uint8_t)0xD4 )  //[7:0]Dec_rc_id[23:16]
+#define     FEC_2_RD_3      ((uint8_t)0xD5 )  //[7:0]Dec_rc_id[15:8]
+#define     FEC_2_RD_4      ((uint8_t)0xD6 )  //[7:0]Dec_rc_id[7:0]
 
 
-#define LDPC_ERR_HIGH_8  ((uint8_t)0xE7 )  //Ldpc_err_num_rd[15:8]
-#define LDPC_ERR_LOW_8  ((uint8_t)0xE8 )  //Ldpc_err_num_rd[7:0]
+#define     LDPC_ERR_HIGH_8     ((uint8_t)0xD7 )  //Ldpc_err_num_rd[15:8]
+#define     LDPC_ERR_LOW_8      ((uint8_t)0xD8 )  //Ldpc_err_num_rd[7:0]
 
-#define FEC_4_RD    ((uint8_t)0xD9 )      /*PAGE2   0xc8  0x11  0xD9                                       
-                                            rc_err_flg  RO  [7:7]   
-                                            nr_check_ok_hold  RO  [2:2]
-                                            crc_check_ok  RO  [1:1]
-                                            id_match  RO  [0:0]
-                                           */
+#define     FEC_4_RD            ((uint8_t)0xD9 )      /*PAGE2   0xc8  0x11  0xD9                                       
+                                                rc_err_flg  RO  [7:7]   
+                                                nr_check_ok_hold  RO  [2:2]
+                                                crc_check_ok  RO  [1:1]
+                                                id_match  RO  [0:0]
+                                              */
 
-#define FEC_5_RD    ((uint8_t)0xDA )        /*[7:4]Harq_times_out
-                                              [3:0]Debug_fec_sel:rdout_sclr_cnt:{1'b0, Scale_reg_out }
-                                            */
+#define     FEC_5_RD                ((uint8_t)0xDA )        /*[7:4]Harq_times_out
+                                                          [3:0]Debug_fec_sel:rdout_sclr_cnt:{1'b0, Scale_reg_out }
+                                                        */
 
-#define FEC_6_RD    ((uint8_t)0xEB )/*[7]  1'b0
+#define     FEC_6_RD                ((uint8_t)0xEB )/*[7]  1'b0
                                       [6]  Fch_err_flg
                                       [5]  Dat_err_flg_frame
                                       [4]  1'b0
                                       [3:1]pkg_index_fch
                                       [0]  Fec_lock
                                      */
-
-#define FEC_9_RD    ((uint8_t)0xEE )   //Harq_ldpc_err_num_rd [15:8]
-#define FEC_10_RD   ((uint8_t)0xEF )   //Fec_debug_sel?Harq_ldpc_err_pkg: Harq_ldpc_err_num_rd[7:0]
-
 //
 #define     CE_01                   (0x31)
 #define     CE_9_RD                 (0xD9)      //SNR_DOUT [15:8]

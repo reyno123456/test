@@ -46,11 +46,18 @@ typedef enum
 } ENUM_RCV_enable;
 
 
+typedef enum _ENUM_RF_BAND
+{
+    RF_2G = 0,
+    RF_5G,
+}ENUM_RF_BAND;
+
 typedef struct
 {
-    ENUM_BB_MODE    en_mode;
+    ENUM_BB_MODE    en_mode;        //sky or ground
     ENUM_VID_PATH   en_vidPath;
     ENUM_RCV_enable en_rcvEnable;
+    ENUM_RF_BAND    en_rf_band;     // 2g or 5G band
 }STRU_BB_initType;
 
 
@@ -107,14 +114,12 @@ typedef struct _STRU_IT_FRQ_CHANNEL           //  Image Transmissions Freq Chann
    uint8_t frq5;
 }STRU_IT_FRQ_CHANNEL;
 
-typedef enum _ENUM_RF_BAND
-{
-    RF_2G = 0,
-    RF_5G,
-}ENUM_RF_BAND;
 
+#define MAX_2G_RC_FRQ_SIZE (6)
+#define MAX_2G_IT_FRQ_SIZE (6)
 
-#define MAX_RC_FRQ_SIZE (12)
+#define MAX_5G_RC_FRQ_SIZE (4)
+#define MAX_5G_IT_FRQ_SIZE (4)
 
 #define MAX(a,b) (((a) > (b)) ?  (a) :  (b) )
 
@@ -125,11 +130,11 @@ void BB_uart10_spi_sel(uint32_t sel_dat);
 
 int BB_softReset(ENUM_RST_MODE en_mode);
 
-uint8_t BB_set_Rcfrq(uint8_t ch);
+uint8_t BB_set_Rcfrq(ENUM_RF_BAND band, uint8_t ch);
 
-uint8_t BB_set_ITfrq(uint8_t ch);
+uint8_t BB_set_ITfrq(ENUM_RF_BAND band, uint8_t ch);
 
-uint8_t BB_set_sweepfrq(uint8_t ch);
+uint8_t BB_set_sweepfrq(ENUM_RF_BAND band, uint8_t ch);
 
 uint8_t BB_ReadReg(ENUM_REG_PAGES page, uint8_t addr);
 
