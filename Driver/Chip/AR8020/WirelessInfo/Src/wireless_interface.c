@@ -78,21 +78,24 @@ void WIRELESS_SendDisplayInfo(void)
 
     g_pstWirelessInfoDisplay  = (STRU_WIRELESS_INFO_DISPLAY *)OSD_STATUS_SHM_ADDR;
 
+    sendBuffer                = (uint8_t *)g_pstWirelessInfoDisplay;
+    sendLength                = (uint32_t)(sizeof(STRU_WIRELESS_INFO_DISPLAY) - 2);
 
-    sendBuffer          = (uint8_t *)g_pstWirelessInfoDisplay;
-    sendLength          = (uint32_t)(sizeof(STRU_WIRELESS_INFO_DISPLAY) - 2);
+    g_pstWirelessInfoDisplay->messageId = PAD_WIRELESS_INFO_DISPLAY;
 
     if (USB_OTG_IS_BIG_ENDIAN())
     {
         convert_endian(sendBuffer, (void *)&g_stWirelessInfoSend,(uint32_t)(sizeof(STRU_WIRELESS_INFO_DISPLAY) - 2));
+    }
+    else
+    {
+        memcpy((void *)&g_stWirelessInfoSend, (void *)g_pstWirelessInfoDisplay, sizeof(STRU_WIRELESS_INFO_DISPLAY));
     }
 
     /* if cpu2 update info, and the info is valid */
     if ((0x0 == g_pstWirelessInfoDisplay->head)
       &&(0xFF == g_pstWirelessInfoDisplay->tail))
     {
-        g_stWirelessInfoSend.messageId = PAD_WIRELESS_INFO_DISPLAY;
-
         if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)&g_stWirelessInfoSend, sendLength, HID_EPIN_CTRL_ADDR))
         {
             dlog_error("send wireless info fail\n");
