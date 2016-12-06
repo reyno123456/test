@@ -17,7 +17,7 @@
 #include "test_usbh.h"
 #include "test_float.h"
 #include "test_usbd.h"
-
+#include "upgrade.h"
 static unsigned char g_commandPos;
 static char g_commandLine[50];
 static unsigned char g_commandEnter = 0;
@@ -212,7 +212,8 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     }
     else if (memcmp(cmdArray[0], "upgrade", strlen("upgrade")) == 0)
     {
-        command_upgrade();        
+        osThreadDef(UsbUpgrade, BOOTLOAD_Upgrade, osPriorityIdle, 0, 10 * 128);
+        osThreadCreate(osThread(UsbUpgrade), NULL);       
     }
     else if (memcmp(cmdArray[0], "hdmiinit", strlen("hdmiinit")) == 0)
     {
@@ -675,16 +676,6 @@ void command_stopBypassVideo(void)
         dlog_error("Bypass Video Task is not running\n");
     }
 }
-void command_upgrade(void)
-{
-    USBH_APP_EVENT_DEF  usbhAppType;
-
-    usbhAppType = USBH_UPGRADE;
-
-    osMessagePut(g_usbhAppCtrl.usbhAppEvent, usbhAppType, 0);
-
-}
-
 
 void command_sendCtrl(void)
 {
