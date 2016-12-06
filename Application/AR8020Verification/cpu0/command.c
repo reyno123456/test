@@ -10,6 +10,7 @@
 #include "test_i2c_adv7611.h"
 #include "test_freertos.h"
 #include "test_timer.h"
+#include "test_can.h"
 #include "test_spi.h"
 #include "test_quadspi.h"
 #include "test_gpio.h"
@@ -335,6 +336,14 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_sendVideo();
     }
+	else if (memcmp(cmdArray[0], "test_can_init", strlen("test_can_init")) == 0)
+    {
+      command_TestCanInit(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5], cmdArray[6]);
+    } 
+	else if (memcmp(cmdArray[0], "test_can_tx", strlen("test_can_tx")) == 0)
+    {
+        command_TestCanTx(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5], cmdArray[6]);
+    }
     /* error command */
     else
     {
@@ -377,6 +386,8 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("stopbypassvideo");
         dlog_error("test_float_calculate_pi");
         dlog_error("upgrade");
+	dlog_error("test_can_init <ch> <br> <acode> <amsk> <rtie> <format>");
+        dlog_error("test_can_tx <ch> <id> <len> <data(hex)> <format> <type>");
     }
 
     /* must init to receive new data from serial */
@@ -386,12 +397,12 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
 void command_parse(char *cmd)
 {
     unsigned char cmdIndex;
-    char *tempCommand[5];
+    char *tempCommand[7];
 
     cmdIndex = 0;
     memset(tempCommand, 0, 5);
 
-    while (cmdIndex < 5)
+    while (cmdIndex < 7)
     {
         /* skip the sapce */
         while ((*cmd == ' ') || (*cmd == '\t'))

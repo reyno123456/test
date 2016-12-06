@@ -31,6 +31,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
          SysCtl/Src/gpio.c \
          SysCtl/Src/fpu.c \
          UART/Src/serial.c \
+         CAN/Src/can.c \
          SD/Src/sd_core.c \
          SD/Src/sd_card.c \
          SD/Src/sd_host.c \
@@ -47,6 +48,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
 INCDIRS := -ISysCtl/Inc \
            -ISD/Inc \
            -IUART/Inc \
+           -ICAN/Inc \
            -II2C/Inc \
            -ISRAM/Inc \
            -I$(TOP_DIR)/Configure \
@@ -83,6 +85,7 @@ install:
 	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@cp -f UART/Inc/serial.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f CAN/Inc/can.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f I2C/Inc/i2c.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SPI/Inc/spi.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SPI/Inc/BB_spi.h $(OUTPUT_HEADER_STAGING_DIR)    
