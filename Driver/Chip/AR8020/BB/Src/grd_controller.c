@@ -1005,8 +1005,7 @@ void grd_get_osd_info(void)
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(OSD_STATUS_SHM_ADDR);
 
     static int osd_cnt = 0;
-    static int ch = 0;
-    if(osd_cnt++ > 2000)
+    if(osd_cnt++ > 20)
     {
         osd_cnt = 0;
         osdptr->messageId = 0x33;
@@ -1047,23 +1046,5 @@ void grd_get_osd_info(void)
 
         osdptr->head = 0x00;
         osdptr->tail = 0xff;    //end of the writing
-
-        dlog_info("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\r\n",
-                    osdptr->IT_channel, 
-                    osdptr->agc_value[0], osdptr->agc_value[1], osdptr->agc_value[2], osdptr->agc_value[3],
-                    osdptr->snr_vlaue[0], osdptr->snr_vlaue[1], osdptr->snr_vlaue[2], osdptr->snr_vlaue[3],
-                    osdptr->ldpc_error, osdptr->harq_count, osdptr->encoder_bitrate, context.brc_mode,
-                    osdptr->modulation_mode, osdptr->code_rate);
-
-        dlog_info("ch: %d %d %d %d %d %d %d %d %d \r\n", 
-                   ch, 
-                   osdptr->sweep_energy[ch*8],   osdptr->sweep_energy[ch*8+1], osdptr->sweep_energy[ch*8+2], osdptr->sweep_energy[ch*8+3],
-                   osdptr->sweep_energy[ch*8+4], osdptr->sweep_energy[ch*8+5], osdptr->sweep_energy[ch*8+6], osdptr->sweep_energy[ch*8+7]
-                 );
-        ch++;
-        if(ch >= 21)
-        {
-            ch = 0;
-        }
     }
 }

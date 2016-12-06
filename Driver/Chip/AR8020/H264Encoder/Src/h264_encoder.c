@@ -178,21 +178,13 @@ static void H264_Encoder_BBModulationChangeCallback(void* p)
 {
     uint8_t br = ((STRU_SysEvent_BB_ModulationChange *)p)->BB_MAX_support_br; //100Kbps
 
-    if(br == 5)         //500Kbps
+    if(br < 1)         //500Kbps
     {
         br = 8;
     }
-    else if(br < 10)
-    {
-        dlog_error("br: not supported \r\n", br);
-    }
-    else if(br == 80)   //8Mbps
+    else if(br == 8)
     {
         br = 0;
-    }
-    else
-    {
-        br = br / 10;
     }
 
     dlog_info("H264 bitrate: %d \r\n", br);

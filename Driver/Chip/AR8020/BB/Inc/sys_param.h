@@ -46,7 +46,7 @@ typedef struct
     RUN_MODE qam_skip_mode;
     RUN_MODE brc_mode;
     ENUM_TRX_CTRL trx_ctrl;
-    uint8_t  brc_bps;           //unit: 100khz
+    uint8_t  brc_bps;           //unit: Mbps
 
     ENUM_RF_BAND RF_band;       //2.5G, 5.8G
     ENUM_CH_BW   CH_bandwidth;    //10M, 20M

@@ -263,11 +263,11 @@
 #define AAGC_1_RD  ((uint8_t)0x04 )     //Highest byte of channel power                                              
 
 //page2
-#define AAGC_2_RD  ((uint8_t)0xA0 )     //rx1_gain_all_r  RW  [7:0]
-#define AAGC_3_RD  ((uint8_t)0xA1 )     // rx2_gain_all_r  RW  [7:0]
+#define AAGC_2_RD  ((uint8_t)0xA0 )         //rx1_gain_all_r  RW  [7:0]
+#define AAGC_3_RD  ((uint8_t)0xA1 )         // rx2_gain_all_r  RW  [7:0]
 
-#define RX3_GAIN_ALL_R  ((uint8_t)0xA0 )     //rx3_gain_all_r  RW  [7:0]
-#define RX4_GAIN_ALL_R  ((uint8_t)0xA1 )     //rx4_gain_all_r  RW  [7:0]
+#define RX3_GAIN_ALL_R  ((uint8_t)0xA5)     //rx3_gain_all_r  RW  [7:0]
+#define RX4_GAIN_ALL_R  ((uint8_t)0xA6)     //rx4_gain_all_r  RW  [7:0]
 
 
 #define FEC_0_RD   ((uint8_t)0xE0 )   /*

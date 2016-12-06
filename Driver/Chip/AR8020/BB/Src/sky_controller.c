@@ -571,7 +571,7 @@ static void sky_handle_brc_bitrate_cmd(void)
     if( (data0+1==data1) && ( (data0&0xc0)==0xc0) && (context.brc_bps != bps))
     {
         context.brc_bps = bps;
-        sky_notify_encoder_brc(bps*10);
+        sky_notify_encoder_brc(bps);
         dlog_info("brc_bps = %d \r\n", bps);
     }
 }

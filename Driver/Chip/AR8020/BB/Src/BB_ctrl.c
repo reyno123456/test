@@ -3,8 +3,10 @@
 #include "BB_spi.h"
 #include "BB_ctrl.h"
 #include "BB_init_regs.h"
+#include "grd_sweep.h"
 #include "BB_uart_com.h"
 #include "reg_rw.h"
+#include "systicks.h"
 #include "sys_param.h"
 #include "config_baseband_register.h"
 
@@ -255,9 +257,7 @@ void BB_init(STRU_BB_initType *ptr_initType)
     BB_softReset(ptr_initType->en_mode);
 
     //RF calibration in both sky& Ground.
-    //BB_RF_cali(RF_2G);
-    //BB_RF_2G_5G_switch(RF_2G);
-    
+    BB_RF_start_cali();
     BB_set_RF_Band(ptr_initType->en_mode, ptr_initType->en_rf_band);
 
     BB_set_sweepfrq(ptr_initType->en_rf_band, 0);
@@ -366,12 +366,12 @@ void BB_set_LDPC(ENUM_BB_LDPC ldpc)
 
 static uint8_t mod_br_map[][2] = 
 {
-    ((MOD_BPSK<<6)  | (BW_10M <<3)  | LDPC_1_2),  10, //encoder br:1M
-    ((MOD_4QAM<<6)  | (BW_10M <<3)  | LDPC_1_2),  30, //encoder br:3M
-    ((MOD_4QAM<<6)  | (BW_10M <<3)  | LDPC_2_3),  40, //encoder br:4M
-    ((MOD_16QAM<<6) | (BW_10M <<3)  | LDPC_1_2),  50, //encoder br:5M 
-    ((MOD_64QAM<<6) | (BW_10M <<3)  | LDPC_1_2),  60, //encoder br:6M
-    ((MOD_64QAM<<6) | (BW_10M <<3)  | LDPC_2_3),  70, //encoder br:7M
+    ((MOD_BPSK<<6)  | (BW_10M <<3)  | LDPC_1_2),  1, //encoder br:1M
+    ((MOD_4QAM<<6)  | (BW_10M <<3)  | LDPC_1_2),  3, //encoder br:3M
+    ((MOD_4QAM<<6)  | (BW_10M <<3)  | LDPC_2_3),  4, //encoder br:4M
+    ((MOD_16QAM<<6) | (BW_10M <<3)  | LDPC_1_2),  5, //encoder br:5M 
+    ((MOD_64QAM<<6) | (BW_10M <<3)  | LDPC_1_2),  6, //encoder br:6M
+    ((MOD_64QAM<<6) | (BW_10M <<3)  | LDPC_2_3),  7, //encoder br:7M
 };
 
 uint8_t BB_map_modulation_to_br(uint8_t mod)
@@ -450,13 +450,12 @@ void BB_set_RF_Band(ENUM_BB_MODE sky_ground, ENUM_RF_BAND rf_band)
         BB_set_ITfrq(RF_5G, 0);   
         //softreset
         BB_softReset(sky_ground);
-        
         #endif
     }
 
     //calibration and reset
-    //BB_RF_start_cali();
     BB_RF_2G_5G_switch(rf_band);
+    grd_sweep_freq_init(); //re-start sweep.
     dlog_info("Set Band %d %d\r\n", sky_ground, rf_band);
 }
 
@@ -510,9 +509,7 @@ void read_cali_register(uint8_t *buf)
 
 static int BB_RF_start_cali()
 {
-#if 0
     uint8_t data;
-    uint8_t *regbuf;
 
     //step 1
     //1.1 Enable RF calibration 0x61= 0x0F
@@ -544,14 +541,12 @@ static int BB_RF_start_cali()
 
     //select the 5G,  Read RF calibration register values
     BB_WriteReg(PAGE0, 0x64, (data | 0x80));
-    read_cali_register(cali_reg[1]);        
-#endif
+    read_cali_register(cali_reg[1]);
 }
 
 
 void BB_RF_2G_5G_switch(ENUM_RF_BAND rf_band)
 {
-#if 0
     uint8_t data, data1;
     char *regbuf = ((rf_band==RF_2G) ? cali_reg[0]:cali_reg[1]); 
 
@@ -595,114 +590,36 @@ void BB_RF_2G_5G_switch(ENUM_RF_BAND rf_band)
         tmp = (~tmp) + 1;
         tmp &= 0x0fff;
     }
-    if(tmp <= 0x41)
+
+    typedef struct _STRU_thresh_regvalue
     {
-        BB_WriteReg(PAGE0, 0x69, 0XFF);
+        uint16_t thresh;
+        uint8_t value;
+    }STRU_thresh_regvalue;
+
+    STRU_thresh_regvalue thresh_regvalue[] = 
+    {
+        {0x41, 0XFF}, {0x60, 0XFE}, {0x70, 0XFD}, {0x80, 0XFC}, 
+        {0x8F, 0XFB}, {0x9F, 0XFA}, {0xAF, 0XF8}, {0xBE, 0XF7}, 
+        {0xCE, 0XF6}, {0xDD, 0XF4}, {0xED, 0XF2}, {0xFD, 0XF0}, 
+        {0x10C, 0XEE}, {0x11C, 0XEC}, {0x12B, 0XEA}, {0x13B, 0XE7}, 
+        {0x14A, 0XE5}, {0x15A, 0XE2}, {0x169, 0XE0}, {0x179, 0XDD}, 
+        {0x188, 0XDA}, {0x198, 0XD7}, {0x1A7, 0XD4}, {0x1B6, 0XD0},
+        {0x1C6, 0XCD}, {0x1D5, 0XC9},
+    };
+
+    uint8_t regvalue = 0xc6;
+    uint8_t idx = 0;
+    for(idx = 0; idx < sizeof(thresh_regvalue)/sizeof(thresh_regvalue[0]); idx++)
+    {
+        if(tmp <= thresh_regvalue[idx].thresh)
+        {
+            regvalue = thresh_regvalue[idx].value;
+            break;
+        }
     }
-    else if(tmp <= 0x60)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XFE);
-    }
-    else if(tmp <= 0x70)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XFD);
-    }
-    else if(tmp <= 0x80)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XFC);
-    }
-    else if(tmp <= 0x8F)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XFB);
-    }
-    else if(tmp <= 0x9F)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XFA);
-    }
-    else if(tmp <= 0xAF)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XF8);
-    }
-    else if(tmp <= 0xBE)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XF7);
-    }
-    else if(tmp <= 0xCE)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XF6);
-    }
-    else if(tmp <= 0xDD)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XF4);
-    }
-    else if(tmp <= 0xED)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XF2);
-    }
-    else if(tmp <= 0xFD)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XF0);
-    }
-    else if(tmp <= 0x10C)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XEE);
-    }
-    else if(tmp <= 0x11C)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XEC);
-    }
-    else if(tmp <= 0x12B)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XEA);
-    }
-    else if(tmp <= 0x13B)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XE7);
-    } 
-    else if(tmp <= 0x14A)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XE5);
-    }
-    else if(tmp <= 0x15A)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XE2);
-    } 
-    else if(tmp <= 0x169)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XE0);
-    }
-    else if(tmp <= 0x179)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XDD);
-    }
-    else if(tmp <= 0x188)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XDA);
-    }
-    else if(tmp <= 0x198)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XD7);
-    }
-    else if(tmp <= 0x1A7)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XD4);
-    }
-    else if(tmp <= 0x1B6)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XD0);
-    }
-    else if(tmp <= 0x1C6)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XCD);
-    }
-    else if(tmp <= 0x1D5)
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XC9);
-    }
-    else
-    {
-        BB_WriteReg(PAGE0, 0x69, 0XC6);
-    }
+
+    BB_WriteReg(PAGE0, 0x69, regvalue);
 
     //write 0xd5[7] -> 0x67[3]
     data1 = (regbuf[5] & 0x80) >> 4;
@@ -747,115 +664,19 @@ void BB_RF_2G_5G_switch(ENUM_RF_BAND rf_band)
     {
         tmp = (~tmp) + 1;
         tmp &= 0x0fff;
-    }    
-    if(tmp <= 0x41)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XFF);
     }
-    else if(tmp <= 0x60)
+
+    regvalue = 0xc6;
+    for(idx = 0; idx < sizeof(thresh_regvalue)/sizeof(thresh_regvalue[0]); idx++)
     {
-        BB_WriteReg(PAGE0, 0x6D, 0XFE);
+        if(tmp <= thresh_regvalue[idx].thresh)
+        {
+            regvalue = thresh_regvalue[idx].value;
+            break;
+        }
     }
-    else if(tmp <= 0x70)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XFD);
-    }
-    else if(tmp <= 0x80)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XFC);
-    }
-    else if(tmp <= 0x8F)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XFB);
-    }
-    else if(tmp <= 0x9F)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XFA);
-    }
-    else if(tmp <= 0xAF)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XF8);
-    }
-    else if(tmp <= 0xBE)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XF7);
-    }
-    else if(tmp <= 0xCE)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XF6);
-    }
-    else if(tmp <= 0xDD)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XF4);
-    }
-    else if(tmp <= 0xED)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XF2);
-    }
-    else if(tmp <= 0xFD)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XF0);
-    }
-    else if(tmp <= 0x10C)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XEE);
-    }
-    else if(tmp <= 0x11C)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XEC);
-    }
-    else if(tmp <= 0x12B)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XEA);
-    }
-    else if(tmp <= 0x13B)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XE7);
-    } 
-    else if(tmp <= 0x14A)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XE5);
-    }
-    else if(tmp <= 0x15A)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XE2);
-    } 
-    else if(tmp <= 0x169)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XE0);
-    }
-    else if(tmp <= 0x179)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XDD);
-    }
-    else if(tmp <= 0x188)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XDA);
-    }
-    else if(tmp <= 0x198)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XD7);
-    }
-    else if(tmp <= 0x1A7)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XD4);
-    }
-    else if(tmp <= 0x1B6)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XD0);
-    }
-    else if(tmp <= 0x1C6)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XCD);
-    }
-    else if(tmp <= 0x1D5)
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XC9);
-    }
-    else
-    {
-        BB_WriteReg(PAGE0, 0x6D, 0XC6);
-    }
+
+    BB_WriteReg(PAGE0, 0x6d, regvalue);
 
     BB_WriteReg(PAGE0, TX_CALI_ENABLE, 0X00);
     BB_WriteReg(PAGE0, TX_CALI_ENABLE, 0X02);
@@ -865,9 +686,9 @@ void BB_RF_2G_5G_switch(ENUM_RF_BAND rf_band)
     BB_WriteReg(PAGE0, 0x00, data);
     
     data &= 0xfe;
-    BB_WriteReg(PAGE0, 0x00, data);  
+    BB_WriteReg(PAGE0, 0x00, data);
 
-    char test[15];
+    uint8_t test[10];
     test[0] = BB_ReadReg(PAGE0, 0x64);
     test[1] = BB_ReadReg(PAGE0, 0x67);
     test[2] = BB_ReadReg(PAGE0, 0x68);
@@ -879,8 +700,7 @@ void BB_RF_2G_5G_switch(ENUM_RF_BAND rf_band)
     test[8] = BB_ReadReg(PAGE0, 0x6e);
     test[9] = BB_ReadReg(PAGE0, 0x6f);
     
-    dlog_info("after cali: %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\r\n", 
+    dlog_info("Before cali: %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\r\n", 
                test[0], test[1], test[2], test[3], test[4],
                test[5], test[6], test[7], test[8], test[9]);        
-#endif            
 }

@@ -150,8 +150,6 @@ void BB_set_RF_Band(ENUM_BB_MODE sky_ground, ENUM_RF_BAND rf_band);
 
 void BB_set_RF_bandwitdh(ENUM_BB_MODE sky_ground, ENUM_CH_BW rf_bw);
 
-int BB_RF_cali(ENUM_RF_BAND rf_band);
-
 void BB_RF_2G_5G_switch(ENUM_RF_BAND rf_band);
 
 #endif
