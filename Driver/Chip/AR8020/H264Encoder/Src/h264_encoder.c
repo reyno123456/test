@@ -178,13 +178,21 @@ static void H264_Encoder_BBModulationChangeCallback(void* p)
 {
     uint8_t br = ((STRU_SysEvent_BB_ModulationChange *)p)->BB_MAX_support_br; //100Kbps
 
-    if(br < 1)         //500Kbps
+    if(br == 5)         //500Kbps
     {
         br = 8;
     }
-    else if(br == 8)
+    else if(br < 10)
+    {
+        dlog_error("br: not supported \r\n", br);
+    }
+    else if(br == 80)   //8Mbps
     {
         br = 0;
+    }
+    else
+    {
+        br = br / 10;
     }
 
     dlog_info("H264 bitrate: %d \r\n", br);
@@ -194,7 +202,10 @@ static void H264_Encoder_BBModulationChangeCallback(void* p)
 
 static void VEBRC_IRQ_Wrap_Handler(void)
 {
-    if (Reg_Read32(ENC_REG_ADDR+(0x09<<2)) & BIT(6))
+    uint32_t view0_feedback = Reg_Read32(ENC_REG_ADDR+(0x09<<2));
+    uint32_t view1_feedback = Reg_Read32(ENC_REG_ADDR+(0x22<<2));
+
+    if( (g_stEncoderStatus[0].running == 1 && (view0_feedback & BIT(6))) || (g_stEncoderStatus[1].running == 1 && (view1_feedback & BIT(6))) )
     {
         // Encoder hang happens, then do reset.
         Reg_Write32(VSOC_SOFT_RESET, (~(BIT(3))));
@@ -241,11 +252,10 @@ static void VEBRC_IRQ_Wrap_Handler(void)
             chReset = 1;
             dlog_info("Reset channel 1");
         }
-
         if (chReset == 0)
         {
             // Normal status, then do bitrate control.
-            VEBRC_IRQ_Handler();
+            VEBRC_IRQ_Handler(view0_feedback, view1_feedback);
         }
     }
 }

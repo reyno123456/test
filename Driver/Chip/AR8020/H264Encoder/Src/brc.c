@@ -152,11 +152,11 @@ int my_iClip3(int low, int high, int x) {
 //==============================================================================
 #ifdef ARMCM7_RC //###########
 extern int v0_poweron_rc_params_set,v1_poweron_rc_params_set;
-int VEBRC_IRQ_Handler( )
+int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
 {
     int i,run_case=0;
 
-    my_v0_feedback( ); //// view0 irq
+    my_v0_feedback( view0_feedback); //// view0 irq
     if((rca.v0_fd_irq_en==1) && (rca.v0_rc_enable==1) && (rca.v0_enable==1)) {
         run_case=0;
         // only for gop change at last_p_frame. At this circumstance, Hardware use the updated gop for frame_cnt increment immediately,
@@ -169,7 +169,7 @@ int VEBRC_IRQ_Handler( )
         }
     }
     else {
-        my_v1_feedback( ); //// view1 irq
+        my_v1_feedback(view1_feedback ); //// view1 irq
         if((rca.v1_fd_irq_en==1) && (rca.v1_rc_enable==1) && (rca.v1_enable==1)) {
             READ_WORD(V1_FRAME_XY_ADDR,i); //check x/y first
             if( ((i&0xffff)>720) || (((i>>16)&0xffff)>1280) )
@@ -422,47 +422,43 @@ void my_v1_initial_all( )
 }
 
 //// read feedback data for restart rc and etc
-void my_v0_feedback( )
+void my_v0_feedback(unsigned int feedback)
 {
-    int i;
-
-    READ_WORD(V0_FEEDBACK_ADDR,i); //read feedback-data
-    rca.v0_aof_inc_qp = (i>>16)&0xffff;
-    rca.v0_fd_row_cnt = (i>>9)&0x7f;
-    rca.v0_fd_last_row = (i>>8)&0x1;
-    //rca.fd_cpu_test = (i>>7)&0x1;
-    rca.v0_fd_irq_en = (i>>4)&0x1;
+    //READ_WORD(V0_FEEDBACK_ADDR,i); //read feedback-data
+    rca.v0_aof_inc_qp = (feedback>>16)&0xffff;
+    rca.v0_fd_row_cnt = (feedback>>9)&0x7f;
+    rca.v0_fd_last_row = (feedback>>8)&0x1;
+    //rca.fd_cpu_test = (feedback>>7)&0x1;
+    rca.v0_fd_irq_en = (feedback>>4)&0x1;
     //if(rca.v0_re_bitrate==0)
-    rca.v0_re_bitrate = (i>>3)&0x1;
+    rca.v0_re_bitrate = (feedback>>3)&0x1;
     //if(rca.v0_fd_reset==0)
-    rca.v0_fd_reset = (i>>2)&0x1;
-    rca.v0_fd_iframe = (i>>1)&0x1;
-    rca.v0_fd_last_p = i&0x1;
-    READ_WORD(V0_RCEN_BU_ADDR,i); //read rc_en, rc_mode & bu
-        rca.v0_rc_enable = (i>>24)&0x1;
-    READ_WORD(V0_ENABLE_ADDR,i); //read view enable
-        rca.v0_enable = (i>>24)&0x1;
+    rca.v0_fd_reset = (feedback>>2)&0x1;
+    rca.v0_fd_iframe = (feedback>>1)&0x1;
+    rca.v0_fd_last_p = feedback&0x1;
+    READ_WORD(V0_RCEN_BU_ADDR,feedback); //read rc_en, rc_mode & bu
+        rca.v0_rc_enable = (feedback>>24)&0x1;
+    READ_WORD(V0_ENABLE_ADDR,feedback); //read view enable
+        rca.v0_enable = (feedback>>24)&0x1;
 }
 
-void my_v1_feedback( )
+void my_v1_feedback(unsigned int feedback)
 {
-    int i;
-
-    READ_WORD(V1_FEEDBACK_ADDR,i); //read feedback-data
-    rca.v1_aof_inc_qp = (i>>16)&0xffff;
-    rca.v1_fd_row_cnt = (i>>9)&0x7f;
-    rca.v1_fd_last_row = (i>>8)&0x1;
-    rca.v1_fd_irq_en = (i>>4)&0x1;
+    //READ_WORD(V1_FEEDBACK_ADDR,i); //read feedback-data
+    rca.v1_aof_inc_qp = (feedback>>16)&0xffff;
+    rca.v1_fd_row_cnt = (feedback>>9)&0x7f;
+    rca.v1_fd_last_row = (feedback>>8)&0x1;
+    rca.v1_fd_irq_en = (feedback>>4)&0x1;
     //if(rca.v1_re_bitrate==0)
-    rca.v1_re_bitrate = (i>>3)&0x1;
+    rca.v1_re_bitrate = (feedback>>3)&0x1;
     //if(rca.v1_fd_reset==0)
-    rca.v1_fd_reset = (i>>2)&0x1;
-    rca.v1_fd_iframe = (i>>1)&0x1;
-    rca.v1_fd_last_p = i&0x1;
-    READ_WORD(V1_RCEN_BU_ADDR,i); //read rc_en, rc_mode & bu
-        rca.v1_rc_enable = (i>>24)&0x1;
-    READ_WORD(V1_ENABLE_ADDR,i); //read view enable
-        rca.v1_enable = (i>>24)&0x1;
+    rca.v1_fd_reset = (feedback>>2)&0x1;
+    rca.v1_fd_iframe = (feedback>>1)&0x1;
+    rca.v1_fd_last_p = feedback&0x1;
+    READ_WORD(V1_RCEN_BU_ADDR,feedback); //read rc_en, rc_mode & bu
+        rca.v1_rc_enable = (feedback>>24)&0x1;
+    READ_WORD(V1_ENABLE_ADDR,feedback); //read view enable
+        rca.v1_enable = (feedback>>24)&0x1;
 }
 #endif   //###########
 

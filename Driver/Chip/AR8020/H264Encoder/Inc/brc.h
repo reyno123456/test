@@ -435,7 +435,7 @@ void update_aof();
 
 
 #ifdef ARMCM7_RC //###########
-int VEBRC_IRQ_Handler( );
+int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback);
 #endif
 
 
