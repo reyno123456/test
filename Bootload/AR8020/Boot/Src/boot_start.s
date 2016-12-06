@@ -118,88 +118,88 @@ Infinite_Loop:
   .word     SYSTICK_IRQHandler
   .word     IRQHandler_16
   
-  # .word     IRQHandler_17
-  # .word     IRQHandler_18
-  # .word     IRQHandler_19
-  # .word     IRQHandler_20
-  # .word     IRQHandler_21
-  # .word     IRQHandler_22
-  # .word     IRQHandler_23
-  # .word     IRQHandler_24
-  # .word     IRQHandler_25
-  # .word     IRQHandler_26
-  # .word     IRQHandler_27
-  # .word     IRQHandler_28
-  # .word     IRQHandler_29
-  # .word     IRQHandler_30
-  # .word     IRQHandler_31
-  # .word     IRQHandler_32
-  # .word     IRQHandler_33
-  # .word     IRQHandler_34
-  # .word     IRQHandler_35
-  # .word     IRQHandler_36
-  # .word     IRQHandler_37
-  # .word     IRQHandler_38
-  # .word     IRQHandler_39
-  # .word     IRQHandler_40
-  # .word     IRQHandler_41
-  # .word     IRQHandler_42
-  # .word     IRQHandler_43
-  # .word     IRQHandler_44
-  # .word     IRQHandler_45
-  # .word     IRQHandler_46
-  # .word     IRQHandler_47
-  # .word     IRQHandler_48
-  # .word     IRQHandler_49
-  # .word     IRQHandler_50
-  # .word     IRQHandler_51
-  # .word     IRQHandler_52
-  # .word     IRQHandler_53
-  # .word     IRQHandler_54
-  # .word     IRQHandler_55
-  # .word     IRQHandler_56
-  # .word     IRQHandler_57
-  # .word     IRQHandler_58
-  # .word     IRQHandler_59
-  # .word     IRQHandler_60
-  # .word     IRQHandler_61
-  # .word     IRQHandler_62
-  # .word     IRQHandler_63
-  # .word     IRQHandler_64
-  # .word     IRQHandler_65
-  # .word     IRQHandler_66
-  # .word     IRQHandler_67
-  # .word     IRQHandler_68
-  # .word     IRQHandler_69
-  # .word     IRQHandler_70
-  # .word     IRQHandler_71
-  # .word     IRQHandler_72
-  # .word     IRQHandler_73
-  # .word     IRQHandler_74
-  # .word     IRQHandler_75
-  # .word     IRQHandler_76
-  # .word     IRQHandler_77
-  # .word     IRQHandler_78
-  # .word     IRQHandler_79
-  # .word     IRQHandler_80
-  # .word     IRQHandler_81
-  # .word     IRQHandler_82
-  # .word     IRQHandler_83
-  # .word     IRQHandler_84
-  # .word     IRQHandler_85
-  # .word     IRQHandler_86
-  # .word     IRQHandler_87
-  # .word     IRQHandler_88
-  # .word     IRQHandler_89
-  # .word     IRQHandler_90
-  # .word     IRQHandler_91
-  # .word     IRQHandler_92
-  # .word     IRQHandler_93
-  # .word     IRQHandler_94
-  # .word     IRQHandler_95
-  # .word     IRQHandler_96
-  # .word     IRQHandler_97
-  # .word     IRQHandler_98
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
   
 /*******************************************************************************
 *
