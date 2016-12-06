@@ -26,7 +26,7 @@ void BOOTLOAD_Upgrade(void const *argument)
         if (FR_OK != fileResult)
         {
             dlog_info("open or create file error: %d\n", fileResult);
-            return;
+            while(1);
         }                    
         while(RDWR_SECTOR_SIZE == u32_bytesRead)
         {
@@ -46,11 +46,13 @@ void BOOTLOAD_Upgrade(void const *argument)
             dlog_output(100);               
         }
         f_close(&MyFile);
+        dlog_info("upgrade ok\n");
     }
     else
     {
-        dlog_info("Appli_state\n");
+        dlog_info("don't find usb\n");
     }
-    dlog_info("upgrade ok\n");
+    
     dlog_output(100);
+    while(1);
 }
