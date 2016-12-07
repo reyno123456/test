@@ -50,8 +50,7 @@ OBJ_C   := $(patsubst %.s,%.o,$(SRC_S)) $(patsubst %.c,%.o,$(SRC_C))
 #$(patsubst %.s,%.o,$(SRC_C))
 
 # executable file
-TARGET = ar8020_upgrade
-TARGET_FLASH = ar8020_upgrade.txt
+TARGET = ar8020_upgrade.bin
 
 ###############################################################################
 
@@ -62,16 +61,15 @@ $(TARGET): $(OBJ_C)
 	$(OBJCOPY) -O binary $(TARGET).elf $@
 	$(OBJDUMP) -D -S $(TARGET).elf > $(TARGET).dis
 	$(NM) $(TARGET).elf > $(TARGET).map
-	../../../Utility/bin2flash.exe -f $(TARGET) -o $(TARGET_FLASH)
 
 install:
-	@cp $(TARGET_FLASH) $(OUTPUT_LIB_STAGING_DIR)/ 
+	@cp $(TARGET) $(OUTPUT_LIB_STAGING_DIR)/ 
 	
 
 clean:
 	rm -f $(OBJ_C) .depend 
 	rm -f $(TARGET) $(TARGET).elf  $(TARGET).bin  $(TARGET).dis  $(TARGET).mif  $(TARGET).map $(OUTPUT_DIR)/$(TARGET).mif $(TARGET_FLASH)
-	rm -f $(OUTPUT_LIB_STAGING_DIR)/$(TARGET_FLASH)
+	rm -f $(OUTPUT_LIB_STAGING_DIR)/$(TARGET)
 	
 
 .PHONY: all clean $(TARGET)

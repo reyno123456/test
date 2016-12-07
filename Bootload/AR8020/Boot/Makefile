@@ -45,8 +45,7 @@ OBJ_C   := $(patsubst %.s,%.o,$(SRC_S)) $(patsubst %.c,%.o,$(SRC_C))
 
 
 # executable file
-TARGET = ar8020_boot
-TARGET_FLASH = ar8020_boot.txt
+TARGET = ar8020_boot.bin
 
 ###############################################################################
 
@@ -57,10 +56,9 @@ $(TARGET): $(OBJ_C)
 	$(OBJCOPY) -O binary $(TARGET).elf $@
 	$(OBJDUMP) -D -S $(TARGET).elf > $(TARGET).dis
 	$(NM) $(TARGET).elf > $(TARGET).map
-	$(UTILITY_DIR)/bin2flash.exe -f $(TARGET) -o $(TARGET_FLASH)
 
 install:
-	@cp $(TARGET_FLASH) $(OUTPUT_LIB_STAGING_DIR)/ 
+	@cp $(TARGET) $(OUTPUT_LIB_STAGING_DIR)/ 
 	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)/cpu0 
 	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)/cpu1 
 	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)/cpu2
@@ -73,7 +71,7 @@ install:
 clean:
 	rm -f $(OBJ_C) .depend 
 	rm -f $(TARGET) $(TARGET).elf  $(TARGET).bin  $(TARGET).dis  $(TARGET).mif  $(TARGET).map $(OUTPUT_DIR)/$(TARGET).mif $(TARGET_FLASH)
-	rm -f $(OUTPUT_LIB_STAGING_DIR)/$(TARGET_FLASH)
+	rm -f $(OUTPUT_LIB_STAGING_DIR)/$(TARGET)
 	rm -f $(OUTPUT_LIB_STAGING_DIR)/cpu0/ar8020.lds $(OUTPUT_LIB_STAGING_DIR)/cpu0/start.s
 	rm -f $(OUTPUT_LIB_STAGING_DIR)/cpu1/ar8020.lds $(OUTPUT_LIB_STAGING_DIR)/cpu1/start.s
 	rm -f $(OUTPUT_LIB_STAGING_DIR)/cpu2/ar8020.lds $(OUTPUT_LIB_STAGING_DIR)/cpu2/start.s

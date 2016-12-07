@@ -52,8 +52,7 @@ CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../sha
 OBJ_C   := $(patsubst %.s,%.o,$(SRC_S)) $(patsubst %.c,%.o,$(SRC_C))
 
 # executable file
-TARGET = ar8020_cpu0
-TARGET_FLASH = ar8020_cpu0.txt
+TARGET = ar8020_cpu0.bin
 
 ###############################################################################
 
@@ -64,13 +63,12 @@ $(TARGET): $(OBJ_C)
 	$(OBJCOPY) -O binary $(TARGET).elf $@
 	$(OBJDUMP) -D $(TARGET).elf > $(TARGET).dis
 	$(NM) $(TARGET).elf > $(TARGET).map
-	../../../Utility/bin2flash.exe -f $(TARGET) -o $(TARGET_FLASH)
+	@cp $(TARGET) $(OUTPUT_LIB_STAGING_DIR)
 
 
 clean:
 	rm -f $(OBJ_C) .depend 
 	rm -f $(TARGET) $(TARGET).elf  $(TARGET).bin  $(TARGET).dis  $(TARGET).mif  $(TARGET).map $(OUTPUT_DIR)/$(TARGET).mif
-	rm -f $(TARGET_FLASH)
 
 
 .PHONY: all clean $(TARGET)

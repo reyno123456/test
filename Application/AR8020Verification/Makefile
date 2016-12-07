@@ -54,16 +54,17 @@ $(TARGET_CPU2):
 
 install:
 	@echo "Creating the flash image..."
-	@cp ./cpu0/$(TARGET_CPU0).txt  .
-	@cp ./cpu1/$(TARGET_CPU1).txt  .
-	@cp ./cpu2/$(TARGET_CPU2).txt  .
-	../../Utility/joint2flash.sh -i $(OUTPUT_LIB_STAGING_DIR)/ar8020_boot.txt $(OUTPUT_LIB_STAGING_DIR)/ar8020_upgrade.txt $(TARGET_CPU0).txt $(TARGET_CPU1).txt $(TARGET_CPU2).txt -o $(TARGET_FLASH_BOOT) $(TARGET_FLASH_APP) $(TARGET_FLASH) 
+	@cp ./cpu0/$(TARGET_CPU0).bin  .
+	@cp ./cpu1/$(TARGET_CPU1).bin  .
+	@cp ./cpu2/$(TARGET_CPU2).bin  .
+#	../../Utility/joint2flash.sh -i $(OUTPUT_LIB_STAGING_DIR)/ar8020_boot.txt $(OUTPUT_LIB_STAGING_DIR)/ar8020_upgrade.txt $(TARGET_CPU0).txt $(TARGET_CPU1).txt $(TARGET_CPU2).txt -o $(TARGET_FLASH_BOOT) $(TARGET_FLASH_APP) $(TARGET_FLASH) 
+	../../Utility/conjuction.sh -i $(OUTPUT_LIB_STAGING_DIR)/ar8020_boot.bin $(OUTPUT_LIB_STAGING_DIR)/ar8020_upgrade.bin $(TARGET_CPU0).bin $(TARGET_CPU1).bin $(TARGET_CPU2).bin -o $(TARGET_FLASH_BOOT) $(TARGET_FLASH_APP) $(TARGET_FLASH) 
 	@echo "Creat the flash image done."
 clean:
 	@$(MAKE) -C cpu0 clean APPLICATION_SCENARIO=`cat .APPLICATION_SCENARIO`
 	@$(MAKE) -C cpu1 clean
 	@$(MAKE) -C cpu2 clean APPLICATION_SCENARIO=`cat .APPLICATION_SCENARIO`
-	@rm -f $(TARGET_CPU0).txt $(TARGET_CPU1).txt $(TARGET_CPU2).txt 
+	@rm -f $(TARGET_CPU0).bin $(TARGET_CPU1).bin $(TARGET_CPU2).bin 
 	@rm -f $(TARGET_FLASH)
 	@rm -f $(TARGET_FLASH_BOOT)
 	@rm -f $(TARGET_FLASH_APP)
