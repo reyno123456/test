@@ -212,7 +212,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     }
     else if (memcmp(cmdArray[0], "upgrade", strlen("upgrade")) == 0)
     {
-        osThreadDef(UsbUpgrade, BOOTLOAD_Upgrade, osPriorityIdle, 0, 10 * 128);
+        osThreadDef(UsbUpgrade, BOOTLOAD_Upgrade, osPriorityIdle, 0, 12 * 128);
         osThreadCreate(osThread(UsbUpgrade), NULL);       
     }
     else if (memcmp(cmdArray[0], "hdmiinit", strlen("hdmiinit")) == 0)
