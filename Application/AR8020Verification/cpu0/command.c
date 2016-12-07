@@ -23,6 +23,7 @@ static char g_commandLine[50];
 static unsigned char g_commandEnter = 0;
 uint32_t UartNum;
 
+
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
 void command_initSdcard();
@@ -212,8 +213,12 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     }
     else if (memcmp(cmdArray[0], "upgrade", strlen("upgrade")) == 0)
     {
+        char path[128];
+        memset(path,'\0',128);
+        memcpy(path,cmdArray[1],strlen(cmdArray[1]));
+        path[strlen(cmdArray[1])]='\0';
         osThreadDef(UsbUpgrade, BOOTLOAD_Upgrade, osPriorityIdle, 0, 12 * 128);
-        osThreadCreate(osThread(UsbUpgrade), NULL);       
+        osThreadCreate(osThread(UsbUpgrade), path);       
     }
     else if (memcmp(cmdArray[0], "hdmiinit", strlen("hdmiinit")) == 0)
     {
@@ -386,7 +391,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("startbypassvideo");
         dlog_error("stopbypassvideo");
         dlog_error("test_float_calculate_pi");
-        dlog_error("upgrade");
+        dlog_error("upgrade <filename>");
 	dlog_error("test_can_init <ch> <br> <acode> <amsk> <rtie> <format>");
         dlog_error("test_can_tx <ch> <id> <len> <data(hex)> <format> <type>");
     }
@@ -403,7 +408,7 @@ void command_parse(char *cmd)
     cmdIndex = 0;
     memset(tempCommand, 0, 5);
 
-    while (cmdIndex < 7)
+    while (cmdIndex < 10)
     {
         /* skip the sapce */
         while ((*cmd == ' ') || (*cmd == '\t'))

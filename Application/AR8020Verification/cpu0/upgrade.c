@@ -7,6 +7,7 @@
 #include "nor_flash.h"
 #include "upgrade.h"
 
+
 void BOOTLOAD_Upgrade(void const *argument)
 {
 
@@ -20,12 +21,14 @@ void BOOTLOAD_Upgrade(void const *argument)
     NOR_FLASH_Init();
     dlog_info("Nor flash init end   ...");
     dlog_output(100);
+    dlog_info("receive file name %p %s\n", argument,argument);
     if (APPLICATION_READY == g_usbhAppCtrl.usbhAppState)
     {
-        fileResult = f_open(&MyFile, "app.bin", FA_READ);
+        fileResult = f_open(&MyFile,argument , FA_READ);
         if (FR_OK != fileResult)
         {
             dlog_info("open or create file error: %d\n", fileResult);
+            
             while(1);
         }                    
         while(RDWR_SECTOR_SIZE == u32_bytesRead)
