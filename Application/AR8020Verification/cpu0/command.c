@@ -17,6 +17,7 @@
 #include "test_usbh.h"
 #include "test_float.h"
 #include "test_usbd.h"
+#include "test_ov5640.h"
 #include "upgrade.h"
 static unsigned char g_commandPos;
 static char g_commandLine[50];
@@ -350,6 +351,18 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_TestCanTx(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5], cmdArray[6]);
     }
+	else if(memcmp(cmdArray[0], "test_ov5640", strlen("test_ov5640")) == 0)
+	{
+		command_TestOv5640();
+	}
+	else if(memcmp(cmdArray[0], "test_write_ov5640", strlen("test_write_ov5640")) == 0)
+	{
+		command_TestOv5640Write(cmdArray[1], cmdArray[2]);
+	}
+	else if(memcmp(cmdArray[0], "test_read_ov5640", strlen("test_ov5640_read")) == 0)
+	{
+		command_TestOv5640Read(cmdArray[1]);
+	}
     /* error command */
     else
     {
@@ -394,6 +407,9 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("upgrade <filename>");
 	dlog_error("test_can_init <ch> <br> <acode> <amsk> <rtie> <format>");
         dlog_error("test_can_tx <ch> <id> <len> <data(hex)> <format> <type>");
+        dlog_error("test_ov5640");
+        dlog_error("test_write_ov5640 <subAddr(hex)> <value>(hex)");
+        dlog_error("test_read_ov5640 <subAddr(hex)>");
     }
 
     /* must init to receive new data from serial */
