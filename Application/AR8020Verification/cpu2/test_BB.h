@@ -7,6 +7,6 @@ void test_BB_grd(void);
 
 void BB_debug_print_init(void);
 
-void command_test_BB_uart(void);
+void command_test_BB_uart(char *index_str);
 
 #endif

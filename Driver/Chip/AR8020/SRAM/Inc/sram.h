@@ -1,7 +1,7 @@
 #ifndef __SRAM_H
 #define __SRAM_H
 
-
+#include "memory_config.h"
 
 /*
   *******************************************************
@@ -23,12 +23,10 @@
 #define SRAM_DATA_VALID_LEN_1           (*((volatile unsigned int *)0x40B00044))
 
 
-#define SRAM_BASE_ADDRESS               0x21000000     /* start address of SRAM */
-#define SRAM_BB_BYPASS_OFFSET_0         0x00000000     /* BB bypass channel 0 to the address in SRAM */
-#define SRAM_BB_BYPASS_OFFSET_1         0x00000800     /* BB bypass channel 1 to the address in SRAM */
-#define SRAM_BUFF_0_ADDRESS             (SRAM_BASE_ADDRESS + (SRAM_BB_BYPASS_OFFSET_0 << 2))
-#define SRAM_BUFF_1_ADDRESS             (SRAM_BASE_ADDRESS + (SRAM_BB_BYPASS_OFFSET_1 << 2))
-
+#define SRAM_BB_BYPASS_OFFSET_0         ((SRAM_BB_VIDEO_BUFFER_0_ST_ADDRESS - SRAM_BASE_ADDRESS) >> 2)     /* BB bypass channel 0 to the address in SRAM */
+#define SRAM_BB_BYPASS_OFFSET_1         ((SRAM_BB_VIDEO_BUFFER_1_ST_ADDRESS - SRAM_BASE_ADDRESS) >> 2)     /* BB bypass channel 1 to the address in SRAM */
+#define SRAM_BUFF_0_ADDRESS             SRAM_BB_VIDEO_BUFFER_0_ST_ADDRESS
+#define SRAM_BUFF_1_ADDRESS             SRAM_BB_VIDEO_BUFFER_1_ST_ADDRESS
 
 void SRAM_Ready0IRQHandler(void);
 void SRAM_Ready1IRQHandler(void);

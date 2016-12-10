@@ -2,10 +2,10 @@
 #define __WIRELESS_INTERFACE_H
 
 #include <stdint.h>
-
+#include "memory_config.h"
 
 // CPU0 and CPU2 share memory for osd status info, offset in SRAM: 16K + 512Byte
-#define OSD_STATUS_SHM_ADDR              (0x21000000 + (0x4000 + 0x200))
+#define OSD_STATUS_SHM_ADDR              SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR
 
 
 typedef enum

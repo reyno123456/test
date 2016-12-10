@@ -40,6 +40,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
          I2C/Src/i2c.c \
          SRAM/Src/sram.c \
          BB/Src/BB_ctrl.c \
+         BB/Src/BB_uart_com.c \
          SPI/Src/spi.c \
          SPI/Src/BB_spi.c \
          QuadSPI/Src/quad_spi_ctrl.c \
@@ -93,7 +94,8 @@ install:
 	@cp -f Capture/Inc/ov5640_mipi.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f I2C/Inc/i2c.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SPI/Inc/spi.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f SPI/Inc/BB_spi.h $(OUTPUT_HEADER_STAGING_DIR)    
+	@cp -f SPI/Inc/BB_spi.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f BB/Inc/BB_uart_com.h $(OUTPUT_HEADER_STAGING_DIR) 
 	@cp -f SD/Inc/* $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SRAM/Inc/sram.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)

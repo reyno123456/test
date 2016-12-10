@@ -3,11 +3,12 @@
 
 #include <stdint.h>
 #include "sys_event.h"
+#include "memory_config.h"
 
 //#define INTER_CORE_DEBUG_LOG_ENABLE
 
 /* need to modify after debug ok */
-#define INTER_CORE_MSG_SHARE_MEMORY_BASE_ADDR     0x21004000
+#define INTER_CORE_MSG_SHARE_MEMORY_BASE_ADDR     SRAM_INTER_CORE_MSG_SHARE_MEMORY_ST_ADDRESS
 #define INTER_CORE_MSG_SHARE_MEMORY_NUMBER        5
 #define INTER_CORE_MSG_SHARE_MEMORY_DATA_LENGTH   16
 

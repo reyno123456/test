@@ -3,9 +3,12 @@
 
 #include <stdint.h>
 
-typedef uint32_t lock_type;
+typedef volatile uint32_t lock_type;
 
-static inline void Lock(uint32_t* lock)
+#define UNLOCK_STATE    ((lock_type)0)
+#define LOCK_STATE      ((lock_type)1)
+
+static inline void Lock(lock_type* lock)
 {
     uint32_t tmp;
     
@@ -20,7 +23,7 @@ static inline void Lock(uint32_t* lock)
         :"cc");
 }
 
-static inline void UnLock(uint32_t* lock)
+static inline void UnLock(lock_type* lock)
 {
     __asm volatile (
         "str %1, [%0] \n"
@@ -29,7 +32,7 @@ static inline void UnLock(uint32_t* lock)
         :"cc");
 }
 
-static inline void Lock_IRQ(uint32_t* lock)
+static inline void Lock_IRQ(lock_type* lock)
 {
     uint32_t tmp;
     
@@ -45,7 +48,7 @@ static inline void Lock_IRQ(uint32_t* lock)
         :"cc");
 }
 
-static inline void UnLock_IRQ(uint32_t* lock)
+static inline void UnLock_IRQ(lock_type* lock)
 {
     __asm volatile (
         "str %1, [%0] \n"

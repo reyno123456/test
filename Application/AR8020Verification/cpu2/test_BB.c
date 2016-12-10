@@ -28,6 +28,7 @@ void test_BB_sky(void)
  
     BB_uart10_spi_sel(0x00000003);
     BB_init(&initType);
+    BB_UARTComInit();
     
     #if (STATIC_TEST==0) //normal mode.
         test_bbctrl_sky();
@@ -48,6 +49,7 @@ void test_BB_grd(void)
 
     BB_uart10_spi_sel(0x00000003);
     BB_init(&initType);
+    BB_UARTComInit();
     
     #if (STATIC_TEST==0) //normal mode.
         test_bbctrl_grd();
@@ -170,26 +172,30 @@ void BB_debug_print_init_sky(void)
 
 #endif
 
-static void BBUARTComTest(uint8_t* data_buf, uint8_t length)
+void command_test_BB_uart(char *index_str)
 {
-    if (data_buf != NULL)
-    {
-        uint8_t i = 0;
+    static uint8_t data_buf_proc[128];
 
-        dlog_info("Receive BB UART data:");
-        for (i = 0; i < length; i ++)
+    unsigned char opt = strtoul(index_str, NULL, 0);
+
+    if (opt == 0)
+    {
+        BB_UARTComRegisterSession(BB_UART_COM_SESSION_0);
+    }
+    else if (opt == 1)
+    {
+        uint8_t data_buf_tmp[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22};
+        BB_UARTComSendMsg(BB_UART_COM_SESSION_0, data_buf_tmp, sizeof(data_buf_tmp));
+    }
+    else if (opt == 2)
+    {
+        uint32_t cnt = BB_UARTComReceiveMsg(BB_UART_COM_SESSION_0, data_buf_proc, sizeof(data_buf_proc));
+        uint32_t i = 0;
+        for(i = 0; i < cnt; i++)
         {
-            dlog_info("0x%x", data_buf[i]);
+            dlog_info("%d,", data_buf_proc[i]);
         }
     }
-}
-
-void command_test_BB_uart(void)
-{
-    BB_UARTComRegisterRXCallback(BBUARTComTest);
-
-    uint8_t data_buf[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
-    BB_UARTComSendMsg(data_buf, sizeof(data_buf));
 }
 
 

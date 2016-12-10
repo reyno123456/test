@@ -19,6 +19,9 @@
 #include "test_usbd.h"
 #include "test_ov5640.h"
 #include "upgrade.h"
+#include "test_bbuartcom.h"
+
+
 static unsigned char g_commandPos;
 static char g_commandLine[50];
 static unsigned char g_commandEnter = 0;
@@ -168,6 +171,7 @@ void command_reset(void)
     g_commandPos = 0;
     memset(g_commandLine, '\0', 50);
 }
+
 unsigned char command_getEnterStatus(void)
 {
     return g_commandEnter;
@@ -363,6 +367,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
 	{
 		command_TestOv5640Read(cmdArray[1]);
 	}
+	else if(memcmp(cmdArray[0], "command_test_BB_uart", strlen("command_test_BB_uart")) == 0)
+    {
+        command_test_BB_uart(cmdArray[1]);
+    }
     /* error command */
     else
     {
@@ -404,8 +412,9 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("startbypassvideo");
         dlog_error("stopbypassvideo");
         dlog_error("test_float_calculate_pi");
+		dlog_error("command_test_BB_uart <option>");
         dlog_error("upgrade <filename>");
-	dlog_error("test_can_init <ch> <br> <acode> <amsk> <rtie> <format>");
+        dlog_error("test_can_init <ch> <br> <acode> <amsk> <rtie> <format>");
         dlog_error("test_can_tx <ch> <id> <len> <data(hex)> <format> <type>");
         dlog_error("test_ov5640");
         dlog_error("test_write_ov5640 <subAddr(hex)> <value>(hex)");
@@ -424,7 +433,7 @@ void command_parse(char *cmd)
     cmdIndex = 0;
     memset(tempCommand, 0, 5);
 
-    while (cmdIndex < 10)
+    while (cmdIndex < 7)
     {
         /* skip the sapce */
         while ((*cmd == ' ') || (*cmd == '\t'))
