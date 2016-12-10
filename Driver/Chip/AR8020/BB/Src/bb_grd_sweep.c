@@ -3,10 +3,10 @@
 #include <string.h>
 
 #include "debuglog.h"
-#include "sys_param.h"
-#include "BB_ctrl.h"
-#include "grd_sweep.h"
-#include "config_baseband_register.h"
+#include "bb_sys_param.h"
+#include "bb_ctrl_internal.h"
+#include "bb_grd_sweep.h"
+#include "bb_regs.h"
 
 #define SWEEP_FREQ_BLOCK_ROWS           (4)
 
@@ -46,7 +46,7 @@ void grd_sweep_freq_init(void)
     sweep_ch_noise_energy.row_index = 0;
     sweep_ch_noise_energy.isInited  = 0;
 
-    BB_set_sweepfrq(context.RF_band, sweep_ch_noise_energy.sweep_ch);
+    BB_set_sweepfrq(context.freq_band, sweep_ch_noise_energy.sweep_ch);
 }
 
 
@@ -57,7 +57,7 @@ void grd_get_sweep_noise(uint8_t row, int16_t *ptr_noise_power)
 
 void grd_set_next_sweep_freq(void)
 {
-    uint8_t max_ch = BAND_MAX_SWEEP_CH(context.RF_band);
+    uint8_t max_ch = BAND_MAX_SWEEP_CH(context.freq_band);
 
     sweep_ch_noise_energy.sweep_ch++;
     if(sweep_ch_noise_energy.sweep_ch >= max_ch)
@@ -65,7 +65,7 @@ void grd_set_next_sweep_freq(void)
         sweep_ch_noise_energy.sweep_ch = 0;
     }
 
-    BB_set_sweepfrq(context.RF_band, sweep_ch_noise_energy.sweep_ch);
+    BB_set_sweepfrq(context.freq_band, sweep_ch_noise_energy.sweep_ch);
 }
 
 void clear_sweep_results(void)
@@ -152,7 +152,7 @@ int8_t grd_add_sweep_result(int8_t bw)
     uint8_t row = sweep_ch_noise_energy.row_index;
     uint8_t ch  = sweep_ch_noise_energy.sweep_ch;
     uint8_t result = grd_get_it_sweep_noise_energy(bw, row, ch);
-    uint8_t max_ch = BAND_MAX_SWEEP_CH(context.RF_band);
+    uint8_t max_ch = BAND_MAX_SWEEP_CH(context.freq_band);
 
     if(result == 1 && ch >= max_ch - 1)
     {
@@ -210,7 +210,7 @@ uint8_t get_best_freq(void)
     uint32_t sne_average;
     uint8_t i  = 0;
     uint8_t ch = 0;
-    uint8_t max_ch = BAND_MAX_SWEEP_CH(context.RF_band);
+    uint8_t max_ch = BAND_MAX_SWEEP_CH(context.freq_band);
 
     sne_average = sweep_ch_noise_energy.noise_energy_average[0];
     for(i=1; i< max_ch; i++)
@@ -232,7 +232,7 @@ uint8_t get_next_best_freq(uint8_t cur_best_ch)
     uint8_t ch = 0;
 
     sne_average = 0xffffffff;
-    for(i=0; i< BAND_MAX_SWEEP_CH(context.RF_band); i++)
+    for(i=0; i< BAND_MAX_SWEEP_CH(context.freq_band); i++)
     {
         if(i == cur_best_ch)
         {
@@ -275,7 +275,7 @@ uint8_t is_next_best_freq_pass(uint8_t cur_best_ch, uint8_t next_best_ch)
 		sweep_ch_noise_energy.noise_energy_average[next_ch_index] + 3)
     {
         cnt = 0;
-        for(i=0; i< BAND_MAX_SWEEP_CH(context.RF_band); i++)
+        for(i=0; i< BAND_MAX_SWEEP_CH(context.freq_band); i++)
         {
             if(sweep_ch_noise_energy.noise_energy_flucate[next_ch_index] <= sweep_ch_noise_energy.noise_energy_flucate[i])
             {
@@ -287,7 +287,7 @@ uint8_t is_next_best_freq_pass(uint8_t cur_best_ch, uint8_t next_best_ch)
             }
         }
 
-        if(cnt == BAND_MAX_SWEEP_CH(context.RF_band))
+        if(cnt == BAND_MAX_SWEEP_CH(context.freq_band))
         {
             ret = 1;
         }

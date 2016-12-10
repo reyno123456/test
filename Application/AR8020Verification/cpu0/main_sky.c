@@ -10,7 +10,7 @@
 #include "cmsis_os.h"
 #include "sys_event.h"
 #include "inter_core.h"
-#include "BB_spi.h"
+#include "bb_spi.h"
 #include "systicks.h"
 
 void *malloc(size_t size)

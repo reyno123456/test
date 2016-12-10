@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include "BB_uart_com.h"
+#include "bb_uart_com.h"
 #include "memory_config.h"
 #include "debuglog.h"
 #include "test_bbuartcom.h"

@@ -2,7 +2,7 @@
 #define __SKY_CONTROLLER_H
 
 #include <stdint.h>
-#include "BB_ctrl.h"
+#include "bb_ctrl_internal.h"
 
 enum EN_AGC_MODE
 {
@@ -11,7 +11,8 @@ enum EN_AGC_MODE
     UNKOWN_AGC  = 0xff,
 };
 
-void Sky_Parm_Initial(void);
+
+void BB_SKY_start(void);
 
 void sky_Timer1_Init(void);
 

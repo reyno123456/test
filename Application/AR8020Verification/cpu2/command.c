@@ -5,10 +5,7 @@
 #include "interrupt.h"
 #include "serial.h"
 #include "cmsis_os.h"
-#include "BB_spi.h"
-#include "BB_ctrl.h"
-#include "sys_param.h"
-#include "grd_controller.h"
+#include "bb_ctrl.h"
 #include "test_BB.h"
 #include "test_spi.h"
 #include "test_timer.h"
@@ -21,6 +18,8 @@ static unsigned char g_commandPos;
 static char g_commandLine[50];
 static unsigned char g_commandEnter = 0;
 uint32_t UartNum;
+
+extern void BB_uart10_spi_sel(uint32_t sel_dat);
 
 void Drv_UART_IRQHandler(void)
 {
@@ -206,6 +205,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_TestSysEventIdle();
     }
+
     else if(memcmp(cmdArray[0], "command_test_BB_uart", strlen("command_test_BB_uart")) == 0)
     {
         command_test_BB_uart(cmdArray[1]);
@@ -214,10 +214,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         test_float_calculate_pi();
     }
-    else if(memcmp(cmdArray[0], "grd_add_spi_cmds", strlen("grd_add_spi_cmds")) == 0)
-    {
-        grd_add_spi_cmds(strtoul(cmdArray[1], NULL, 0), strtoul(cmdArray[2], NULL, 0));
-    }	
+    //else if(memcmp(cmdArray[0], "grd_add_cmds", strlen("grd_add_cmds")) == 0)
+    //{
+    //    grd_add_spi_cmds(strtoul(cmdArray[1], NULL, 0), strtoul(cmdArray[2], NULL, 0));
+    //}	
     else 
     {
         dlog_error("Command not found! Please use commands like:\n");

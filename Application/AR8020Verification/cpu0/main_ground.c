@@ -11,7 +11,7 @@
 #include "sys_event.h"
 #include "inter_core.h"
 #include "systicks.h"
-#include "BB_spi.h"
+#include "bb_spi.h"
 
 void *malloc(size_t size)
 {

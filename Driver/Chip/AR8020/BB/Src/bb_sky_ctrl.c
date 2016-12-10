@@ -8,10 +8,10 @@
 #include "timer.h"
 #include "interrupt.h"
 #include "systicks.h"
-#include "config_functions_sel.h"
-#include "sky_controller.h"
-#include "config_baseband_register.h"
-#include "sys_param.h"
+#include "wireless_interface.h"
+#include "bb_sky_ctrl.h"
+#include "bb_regs.h"
+#include "bb_sys_param.h"
 #include "debuglog.h"
 #include "sys_event.h"
 
@@ -45,20 +45,20 @@ static int sky_timer0_0_running = 0;
 static int sky_timer0_1_running = 0;
 static int switch_5G_count = 0;
 
-void Sky_Parm_Initial(void)
-{
-    dev_state = SEARCH_ID;
 
-    context.it_skip_freq_mode = AUTO;
+void BB_SKY_start(void)
+{   
     context.rc_skip_freq_mode = AUTO;
-    context.qam_skip_mode     = AUTO;
+
     context.cur_IT_ch         = 0xff;
     context.it_manual_rf_band = 0xff;
-    context.trx_ctrl          = IT_RC_MODE;
+    context.rc_unlock_cnt = 0;
+    context.dev_state = SEARCH_ID;
+    //context.dev_state = (context.search_id_enable == 0xff)? SEARCH_ID : CHECK_ID_MATCH;
+
     sky_id_search_init();
 
     sky_Timer0_Init();
-    
     sky_Timer1_Init();    
     sky_search_id_timeout_irq_enable(); //enabole TIM1 timeout
 
@@ -78,7 +78,7 @@ uint8_t sky_id_match(void)
         
     if(total_count > 500)
     {
-        printf("-L:%d-\n", lock_count);    
+        dlog_info("-L:%d-\n", lock_count);    
         total_count = 0;
         lock_count = 0;
     }
@@ -112,6 +112,7 @@ void sky_set_ITQAM_and_notify(uint8_t mod)
 
 void sky_agc_gain_toggle(void)
 {
+    printf("AGCToggle\r\n");
     if(FAR_AGC == en_agcmode)
     {
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_NEAR);
@@ -134,7 +135,7 @@ void sky_auto_adjust_agc_gain(void)
     {
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_FAR);
         en_agcmode = FAR_AGC;
-        printf("=>F", rx1_gain, rx2_gain);
+        dlog_info("=>F", rx1_gain, rx2_gain);
     }
      
     if( ((rx1_gain < POWER_GATE)&&(rx2_gain < POWER_GATE)) \
@@ -143,7 +144,7 @@ void sky_auto_adjust_agc_gain(void)
     {
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_NEAR);
         en_agcmode = NEAR_AGC;
-        printf("=>N", rx1_gain, rx2_gain);
+        dlog_info("=>N", rx1_gain, rx2_gain);
     }
 }
 
@@ -175,7 +176,7 @@ void Sky_TIM0_IRQHandler(void)
     }
 
     //patch for 5G switch: For demo test only.
-    if(context.RF_band == RF_5G && switch_5G_count < 5)
+    if(context.freq_band == RF_5G && switch_5G_count < 5)
     {
         switch_5G_count++;
         sky_soft_reset();
@@ -187,14 +188,14 @@ void Sky_TIM0_IRQHandler(void)
 
 void sky_rc_hopfreq(void)
 {
-	uint8_t max_ch_size = (context.RF_band == RF_2G) ? (MAX_2G_RC_FRQ_SIZE):(MAX_5G_RC_FRQ_SIZE);
+	uint8_t max_ch_size = (context.freq_band == RF_2G) ? (MAX_2G_RC_FRQ_SIZE):(MAX_5G_RC_FRQ_SIZE);
 	
     sky_rc_channel++;
     if(sky_rc_channel >=  max_ch_size)
     {
         sky_rc_channel = 0;
     }
-	BB_set_Rcfrq(context.RF_band, sky_rc_channel);
+	BB_set_Rcfrq(context.freq_band, sky_rc_channel);
 }
 
 
@@ -203,7 +204,7 @@ void sky_set_it_freq(ENUM_RF_BAND band, uint8_t ch)
     BB_set_ITfrq(band, ch);
 	context.cur_IT_ch = ch;
 
-    printf("S=>%d\r\n", ch);
+    dlog_info("S=>%d\r\n", ch);
 }
 
 void sky_get_RC_id(uint8_t* idptr)
@@ -220,7 +221,7 @@ void sky_set_RC_id(uint8_t *idptr)
     uint8_t i;
     uint8_t addr[] = {FEC_7, FEC_8, FEC_9, FEC_10, FEC_11};
 
-    printf("RCid:%02x%02x%02x%02x%02x\r\n", idptr[0], idptr[1], idptr[2], idptr[3], idptr[4]);                
+    dlog_info("RCid:%02x%02x%02x%02x%02x\r\n", idptr[0], idptr[1], idptr[2], idptr[3], idptr[4]);                
     for(i=0; i < sizeof(addr); i++)
     {
         BB_WriteReg(PAGE2, addr[i], idptr[i]);
@@ -235,18 +236,22 @@ void sky_soft_reset(void)
 
 void sky_physical_link_process(void)
 {
-    if(dev_state == SEARCH_ID)
+    if(context.dev_state == SEARCH_ID)
     {
         if(sky_id_search_run())
         {
             uint8_t *p_id = sky_id_search_get_best_id();
             sky_set_RC_id(p_id);
 
-            dev_state = CHECK_ID_MATCH;
+            context.dev_state = CHECK_ID_MATCH;
             sky_soft_reset();
         }
+        else
+        {
+            context.rc_unlock_cnt ++;
+        }
     }
-    else if(dev_state == ID_MATCH_LOCK)
+    else if(context.dev_state == ID_MATCH_LOCK)
     {
         if(context.rc_skip_freq_mode == AUTO)
         {
@@ -268,15 +273,15 @@ void sky_physical_link_process(void)
 
         if(5 <= context.rc_unlock_cnt)
         {
-            dev_state = CHECK_ID_MATCH;
+            context.dev_state = CHECK_ID_MATCH;
             context.rc_unlock_cnt = 0;
         }
 
         sky_auto_adjust_agc_gain(); //
     }
-    else if(dev_state == CHECK_ID_MATCH)
+    else if(context.dev_state == CHECK_ID_MATCH)
     {
-        if( context.RF_band == RF_5G)
+        if( context.freq_band == RF_5G)
         {
             //For test, do nothing when 5G
         }
@@ -291,20 +296,21 @@ void sky_physical_link_process(void)
                 }
 
                 context.rc_unlock_cnt = 0;
-                dev_state = ID_MATCH_LOCK;
+                context.dev_state = ID_MATCH_LOCK;
             }
             else
             {
                 sky_soft_reset();
             }
         }
- 
-        if(context.rc_unlock_cnt++ > 560)  //560ms unlock
-        {
-            context.rc_unlock_cnt = 0;
-            sky_search_id_timeout();
-        }
     }
+    
+    if(context.rc_unlock_cnt > 560 //560ms unlock
+       && (context.dev_state == SEARCH_ID || context.dev_state == CHECK_ID_MATCH))  
+    {
+        context.rc_unlock_cnt = 0;
+        sky_search_id_timeout();
+    }    
 }
 
 void sky_id_search_init(void)
@@ -399,16 +405,13 @@ int sky_search_id_timeout_irq_disable()
 
 void sky_search_id_timeout(void)
 {
-    if(dev_state == SEARCH_ID )
+    if(context.rc_skip_freq_mode == AUTO)
     {
-        if(context.rc_skip_freq_mode == AUTO)
-        {
-            sky_rc_hopfreq();
-        }
-
-        sky_agc_gain_toggle();
-        sky_soft_reset();
+        sky_rc_hopfreq();
     }
+
+    sky_agc_gain_toggle();
+    sky_soft_reset();
 }
 
 void Sky_TIM1_IRQHandler(void)
@@ -474,7 +477,7 @@ static void sky_handle_IT_CH_cmd(void)
 
     if((data0+1 == data1) && ((data0&0xE0) == 0xE0) && (context.cur_IT_ch != req_ch))
     {
-        sky_set_it_freq(context.RF_band, req_ch);
+        sky_set_it_freq(context.freq_band, req_ch);
         context.cur_IT_ch = req_ch;
     }
 }
@@ -496,7 +499,7 @@ static void sky_handle_RC_cmd(void)
         if((RUN_MODE)data0 == MANUAL && data0!= 0xFE)
         {
             sky_rc_channel = (data0 & 0x7f);
-            BB_set_Rcfrq(context.RF_band, sky_rc_channel);
+            BB_set_Rcfrq(context.freq_band, sky_rc_channel);
             dlog_info("rc_channel: %d \r\n", sky_rc_channel);
         }
     }
@@ -515,7 +518,7 @@ static void sky_handle_RF_band_cmd(void)
     {
         ENUM_RF_BAND band = (ENUM_RF_BAND)(data0 & 0x01);
         BB_set_RF_Band(BB_SKY_MODE, band);
-        context.RF_band = band;
+        context.freq_band = band;
         dlog_info("sky set band %d \r\n", band);
     }
 }
@@ -587,6 +590,15 @@ static void sky_handle_QAM_cmd(void)
         cur_mod_regvalue = data0;
     }
 }
+
+static void sky_handle_test_mode_cmd(uint8_t flag)
+{
+    //test mode:
+    //do nothing in INTR.
+    
+    //do INTR. tasks.
+}
+
 
 void sky_handle_all_spi_cmds(void)
 {

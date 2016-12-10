@@ -2,19 +2,17 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "config_functions_sel.h"
-#include "sys_param.h"
+#include "bb_sys_param.h"
 #include "debuglog.h"
 #include "interrupt.h"
 #include "timer.h"
 #include "reg_rw.h"
-#include "config_baseband_register.h"
-#include "BB_ctrl.h"
-#include "BB_snr_service.h"
-#include "grd_controller.h"
-#include "grd_sweep.h"
+#include "bb_regs.h"
 #include "wireless_interface.h"
-#include "sys_event.h"
+#include "bb_ctrl_internal.h"
+#include "bb_snr_service.h"
+#include "bb_grd_ctrl.h"
+#include "bb_grd_sweep.h"
 
 
 typedef enum
@@ -32,83 +30,32 @@ static init_timer_st init_timer0_1;
 static uint8_t Timer1_Delay1_Cnt = 0;
 static uint8_t snr_static_count = SNR_STATIC_START_VALUE;
 
-const SYS_PARAM default_sys_param =
+void BB_GRD_start(void)
 {
-    .usb_sel        = 0x00,
-    .usb_cofig      = 0x00,
-    .freq_band_sel  = 0x00,
-    .it_mode    =  0x03,
-    .qam_mode   =  MOD_4QAM,
-    .ldpc       =  LDPC_1_2,
-    .id_num     =  0x02,
-    .test_enable = 0xff,
-    .it_skip_freq_mode  = AUTO,
-    .rc_skip_freq_mode  = AUTO,
-    .search_id_enable   = 0xff,
-    .power  = 20,
+    context.dev_state = INIT_DATA;
 
-    .qam_skip_mode = AUTO,
-
-    //bpsk_ldpc12 ,qam4_ldpc12, qam4_ldpc23,    qam16_ldpc12,   qam64_ldpc12,   qam64_ldpc23
-    //3.8db,       6.5db,       7.7db,          11.2db,         16.2db,         18db
-    .qam_change_threshold = {0x009B, 0x011E, 0x0179, 0x03F6, 0x0AAA, 0x0FC6},
-    .enable_freq_offset = DISABLE_FLAG,
-};
-
-void gen_qam_threshold_range(void)
-{
-    uint8_t i;
-    for(i=0;i<QAM_CHANGE_THRESHOLD_COUNT;i++)
-    {
-        if(i < QAM_CHANGE_THRESHOLD_COUNT - 1)
-        {
-            context.qam_threshold_range[i][0] = context.qam_change_threshold[i];
-            context.qam_threshold_range[i][1] = context.qam_change_threshold[i+1]- 1 ;
-        }
-        else
-        {
-            context.qam_threshold_range[i][0] = context.qam_change_threshold[i];
-            context.qam_threshold_range[i][1] = 0xffff;
-        }
-    }
-}
-
-void Grd_Parm_Initial(void)
-{
+    //BB_Grd_SetRCId();
     Grd_Timer0_Init();
     Grd_Timer1_Init();
 
-    context.it_manual_ch  = 0xff;
-    context.qam_skip_mode = AUTO;
-    context.it_skip_freq_mode = AUTO;
-    context.rc_skip_freq_mode = AUTO;
-    context.CH_bandwidth      = BW_10M;
-    context.it_manual_rf_band = 0xff;
-    context.trx_ctrl          = IT_RC_MODE;
-    
+    BB_set_Rcfrq(context.freq_band, 0);
+    grd_set_it_skip_freq(context.cur_IT_ch);
+    grd_set_it_work_freq(context.freq_band, context.cur_IT_ch);
+
     grd_sweep_freq_init();
 
-    //For QAM mode change
-    memcpy(context.qam_change_threshold, default_sys_param.qam_change_threshold, sizeof(default_sys_param.qam_change_threshold));
-    gen_qam_threshold_range();
-
-    grd_set_it_skip_freq(context.cur_IT_ch);
-    grd_set_it_work_freq(context.RF_band, context.cur_IT_ch);
-    
     reg_IrqHandle(BB_TX_ENABLE_VECTOR_NUM, wimax_vsoc_tx_isr);
     INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);
-
-    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USER_CFG_CHANGE_LOCAL, grd_handle_events_callback);
 }
 
 
-void BB_Grd_Id_Initial(void)
+void BB_Grd_SetRCId(void)
 {
-    BB_WriteReg(PAGE2, GRD_RC_ID_BIT39_32_REG, RC_ID_BIT39_32);
-    BB_WriteReg(PAGE2, GRD_RC_ID_BIT31_24_REG, RC_ID_BIT31_24);
-    BB_WriteReg(PAGE2, GRD_RC_ID_BIT23_16_REG, RC_ID_BIT23_16);
-    BB_WriteReg(PAGE2, GRD_RC_ID_BIT15_08_REG, RC_ID_BIT15_08);
-    BB_WriteReg(PAGE2, GRD_RC_ID_BIT07_00_REG, RC_ID_BIT07_00);
+    BB_WriteReg(PAGE2, GRD_RC_ID_BIT39_32_REG, context.id[0]);
+    BB_WriteReg(PAGE2, GRD_RC_ID_BIT31_24_REG, context.id[1]);
+    BB_WriteReg(PAGE2, GRD_RC_ID_BIT23_16_REG, context.id[2]);
+    BB_WriteReg(PAGE2, GRD_RC_ID_BIT15_08_REG, context.id[3]);
+    BB_WriteReg(PAGE2, GRD_RC_ID_BIT07_00_REG, context.id[4]);
 }
 
 //---------------IT grd hop change--------------------------------
@@ -116,7 +63,6 @@ void BB_Grd_Id_Initial(void)
 #define SNR_STATIC_UP_THRESHOD      (5)
 #define SNR_STATIC_DOWN_THRESHOD    (2)
 
-volatile DEVICE_STATE dev_state = INIT_DATA;
 
 void grd_noise_sweep(void)
 {
@@ -133,21 +79,21 @@ void grd_noise_sweep(void)
 
 void grd_fec_judge(void)
 {
-    if(dev_state == INIT_DATA)
+    if(context.dev_state == INIT_DATA)
     {
         if(is_it_sweep_finish())
         {
             init_sne_average_and_fluct();
             context.cur_IT_ch = get_best_freq();
-            dev_state = FEC_UNLOCK;
+            context.dev_state = FEC_UNLOCK;
         }
     }
-    else if(dev_state == CHECK_FEC_LOCK || dev_state == FEC_LOCK)
+    else if(context.dev_state == CHECK_FEC_LOCK || context.dev_state == FEC_LOCK)
     {
         context.locked = grd_is_bb_fec_lock();
         if(context.locked)
         {
-            dev_state = FEC_LOCK;
+            context.dev_state = FEC_LOCK;
 
             #if 0
             if(context.first_freq_value == 0xff)
@@ -167,7 +113,7 @@ void grd_fec_judge(void)
                 if(context.it_skip_freq_mode == AUTO)
                 {
                     context.cur_IT_ch = get_next_best_freq(context.cur_IT_ch);
-                    dev_state = FEC_UNLOCK;
+                    context.dev_state = FEC_UNLOCK;
                 }
 
                 if(context.qam_skip_mode == AUTO)
@@ -182,16 +128,16 @@ void grd_fec_judge(void)
             }
         }
     }
-    else if(dev_state == FEC_UNLOCK )
+    else if(context.dev_state == FEC_UNLOCK )
     {
-        if(context.it_skip_freq_mode == AUTO && context.RF_band == RF_2G) //for test 5G only
+        if(context.it_skip_freq_mode == AUTO && context.freq_band == RF_2G) //for test 5G only
         {
             grd_set_it_skip_freq(context.cur_IT_ch);
-            printf("CHSA=>%d\n", context.cur_IT_ch);
+            dlog_info("Ch=>%d\n", context.cur_IT_ch);
         }
-        dev_state = DELAY_14MS;
+        context.dev_state = DELAY_14MS;
     }
-    else if(dev_state == DELAY_14MS)
+    else if(context.dev_state == DELAY_14MS)
     {
         #if 0
         if(context.enable_freq_offset == ENABLE_FLAG)
@@ -201,41 +147,41 @@ void grd_fec_judge(void)
         #endif
         if(context.it_manual_ch != 0xff)
         {
-            grd_set_it_work_freq(context.RF_band, context.it_manual_ch);
+            grd_set_it_work_freq(context.freq_band, context.it_manual_ch);
             context.it_manual_ch = 0xff;
         }
         else
         {
-            grd_set_it_work_freq(context.RF_band, context.cur_IT_ch);
+            grd_set_it_work_freq(context.freq_band, context.cur_IT_ch);
         }
 
-        if(context.it_manual_rf_band != 0xff && context.RF_band!= context.it_manual_rf_band)
+        if(context.it_manual_rf_band != 0xff && context.freq_band!= context.it_manual_rf_band)
         {
             BB_set_RF_Band(BB_GRD_MODE, context.it_manual_rf_band);
             context.it_manual_rf_band = 0xff;
-            context.RF_band = context.it_manual_rf_band;
+            context.freq_band = context.it_manual_rf_band;
         }
         reset_it_span_cnt();
-        dev_state = CHECK_FEC_LOCK;
+        context.dev_state = CHECK_FEC_LOCK;
     }
     
     if(context.it_manual_ch != 0xff)
     {
         grd_set_it_skip_freq(context.it_manual_ch);
-        dev_state = DELAY_14MS;
-        dlog_info("channel switch Manual=>%d\n", context.it_manual_ch);
+        context.dev_state = DELAY_14MS;
+        dlog_info("ch switch Manual=>%d\n", context.it_manual_ch);
     }
     
-    if(context.RF_band != context.it_manual_rf_band && context.it_manual_rf_band != 0xff)
+    if(context.freq_band != context.it_manual_rf_band && context.it_manual_rf_band != 0xff)
     {
-        dlog_info("To switch band: %d %d\r\n", context.RF_band, context.it_manual_rf_band);
-        dev_state = DELAY_14MS;
+        dlog_info("To switch band: %d %d\r\n", context.freq_band, context.it_manual_rf_band);
+        context.dev_state = DELAY_14MS;
     }
 }
 
 void grd_freq_skip_judge(void)
 {    
-    if(dev_state != FEC_LOCK)
+    if(context.dev_state != FEC_LOCK)
     {
         return;
     }
@@ -249,7 +195,7 @@ void grd_freq_skip_judge(void)
     if(is_next_best_freq_pass(context.cur_IT_ch,context.next_IT_ch))
     {
        context.cur_IT_ch = context.next_IT_ch;
-       dev_state = FEC_UNLOCK;
+       context.dev_state = FEC_UNLOCK;
     }
 
 }
@@ -317,7 +263,7 @@ uint8_t grd_is_bb_fec_lock(void)
     uint8_t data = BB_ReadReg(PAGE2, FEC_5_RD) & 0x01;
     if(status != data)
     {
-        printf("ML:%d\r\n", data);
+        dlog_info("ML:%d\r\n", data);
         status = data;
     }
     
@@ -333,7 +279,7 @@ ENUM_BB_QAM Grd_get_QAM(void)
     if(iqam != qam)
     {
         iqam = qam;
-        printf("-QAM:%d ",qam);
+        dlog_info("-QAM:%d ",qam);
     }
 
     return qam;
@@ -343,7 +289,7 @@ ENUM_BB_QAM Grd_get_QAM(void)
 void grd_set_txmsg_qam_change(ENUM_BB_QAM qam, ENUM_CH_BW bw, ENUM_BB_LDPC ldpc)
 {
     uint8_t data = (qam << 6) | (bw << 3) | ldpc;
-    printf("GMS =>0x%.2x \r\n", data);
+    dlog_info("GMS =>0x%.2x\r\n", data);
 
     BB_WriteReg(PAGE2, QAM_CHANGE_0, data);
     BB_WriteReg(PAGE2, QAM_CHANGE_1, data+1);
@@ -461,7 +407,8 @@ void grd_qam_change_judge(void)
     if(!context.locked)
         return;
 
-    snr_statice_value = snr_static_for_qam_change(context.qam_threshold_range[context.qam_ldpc][0],context.qam_threshold_range[context.qam_ldpc][1]);
+    snr_statice_value = snr_static_for_qam_change(context.qam_threshold_range[context.qam_ldpc][0],
+                                                  context.qam_threshold_range[context.qam_ldpc][1]);
     if(snr_statice_value == 0xff)
     {
         return;
@@ -503,7 +450,6 @@ void grd_qam_change_judge(void)
     }
 
     snr_static_count = SNR_STATIC_START_VALUE;
-    //qam_change_threshold[context.qam_ldpc] = (qam_change_threshold[context.qam_ldpc] + get_snr_qam_threshold()) / 2;
 
     return;
 }
@@ -573,12 +519,12 @@ void Grd_TIM1_IRQHandler(void)
 
         case 6:
             Timer1_Delay1_Cnt++;
-            grd_get_osd_info();
+            BB_grd_GatherOSDInfo();
             break;
 
         case 7:
             Timer1_Delay1_Cnt++;
-            if(context.it_skip_freq_mode == AUTO && context.RF_band == RF_2G)
+            if(context.it_skip_freq_mode == AUTO && context.freq_band == RF_2G)
             {
                 grd_freq_skip_judge();
             }
@@ -625,14 +571,14 @@ void Grd_Timer0_Init(void)
 uint8_t grd_rc_channel = 0;
 void grd_rc_hopfreq(void)
 {
-	uint8_t max_ch_size = (context.RF_band == RF_2G) ? (MAX_2G_RC_FRQ_SIZE):(MAX_5G_RC_FRQ_SIZE);
+	uint8_t max_ch_size = (context.freq_band == RF_2G) ? (MAX_2G_RC_FRQ_SIZE):(MAX_5G_RC_FRQ_SIZE);
 
     grd_rc_channel++;
     if(grd_rc_channel >= max_ch_size)
     {
         grd_rc_channel = 0;
     }
-	BB_set_Rcfrq(context.RF_band, grd_rc_channel);
+	BB_set_Rcfrq(context.freq_band, grd_rc_channel);
 }
 
 
@@ -696,7 +642,7 @@ static void grd_handle_RC_mode_cmd(RUN_MODE mode)
 
 static void grd_handle_RC_CH_cmd(uint8_t ch)
 {
-	BB_set_Rcfrq(context.RF_band, ch);
+	BB_set_Rcfrq(context.freq_band, ch);
 
     BB_WriteReg(PAGE2, RC_CH_CHANGE_0, 0x80+ch);
     BB_WriteReg(PAGE2, RC_CH_CHANGE_1, 0x80+ch + 1);
@@ -710,13 +656,13 @@ static void grd_handle_RC_CH_cmd(uint8_t ch)
 static void grd_handle_RF_band_cmd(ENUM_RF_BAND rf_band)
 {
     //notify sky
-    if(context.RF_band != rf_band)
+    if(context.freq_band != rf_band)
     {
         BB_WriteReg(PAGE2, RF_BAND_CHANGE_0, 0xc0 + (uint8_t)rf_band);
         BB_WriteReg(PAGE2, RF_BAND_CHANGE_1, 0xc0 + (uint8_t)rf_band + 1);
 
         context.it_manual_rf_band = rf_band;
-        dlog_info("To rf_band %d %d\r\n", context.RF_band, rf_band);
+        dlog_info("To rf_band %d %d\r\n", context.freq_band, rf_band);
     }    
 }
 
@@ -783,20 +729,11 @@ static void grd_handle_brc_bitrate_cmd(uint8_t brc_coderate)
 }
 
 
-typedef struct _STRU_grd_cmds
+void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 {
-    uint8_t avail; /*command is using*/
-    STRU_WIRELESS_CONFIG_CHANGE config;
-}STRU_grd_cmds;
-
-
-static void grd_handle_one_cmd(STRU_grd_cmds* p)
-{
-    STRU_WIRELESS_CONFIG_CHANGE cmd = p->config;
-
-    uint8_t class = cmd.configClass;
-    uint8_t item  = cmd.configItem;
-    uint8_t value = cmd.configValue;
+    uint8_t class = pcmd->configClass;
+    uint8_t item  = pcmd->configItem;
+    uint8_t value = pcmd->configValue;
 
     dlog_info("class item value %d %d %d \r\n", class, item, value);
     if(class == WIRELESS_FREQ_CHANGE)
@@ -867,140 +804,22 @@ static void grd_handle_one_cmd(STRU_grd_cmds* p)
     }    
 }
 
-static STRU_grd_cmds grd_cmds_buf[10];
 
-void grd_handle_all_cmds(void)
-{
-    uint8_t i;
-    for(i = 0; i < sizeof(grd_cmds_buf)/sizeof(grd_cmds_buf[0]); i++)
+static void grd_handle_all_cmds(void)
+{   
+    int ret = 0;
+    int cnt = 0;
+    STRU_WIRELESS_CONFIG_CHANGE cfg;
+    while( (cnt++ < 5) && (1 == BB_GetCmd(&cfg)))
     {
-        if(grd_cmds_buf[i].avail == 1)
-        {
-            grd_handle_one_cmd( grd_cmds_buf + i);
-            grd_cmds_buf[i].avail = 0;
-        }
+        grd_handle_one_cmd( &cfg );
     }
 }
 
-
-void grd_handle_events_callback(void *p)
-{
-    uint8_t i;
-    uint8_t found;
-    STRU_WIRELESS_CONFIG_CHANGE *pcmd = (STRU_WIRELESS_CONFIG_CHANGE *)p;
-
-    dlog_info("Get Message: %d %d %d\r\n", pcmd->configClass, pcmd->configItem, pcmd->configValue);
-
-    found = 0;
-    for(i = 0; i < sizeof(grd_cmds_buf)/sizeof(grd_cmds_buf[0]); i++)
-    {
-        if(grd_cmds_buf[i].avail == 0)
-        {
-            memcpy((void *)(&grd_cmds_buf[i].config), p, sizeof(grd_cmds_buf[0]));
-            grd_cmds_buf[i].avail = 1;
-            found = 1;
-            break;
-        }
-    }
-
-    if(!found)
-    {
-        dlog_error("ERROR: %s\r\n", "insert events to grd");
-    }
-}
-
-void grd_add_spi_cmds(uint32_t type, uint32_t value)
-{
-    uint8_t i;
-
-    dlog_info("%d %d \r\n", type, value);
-    
-    STRU_WIRELESS_CONFIG_CHANGE cmd;
-    if(type == 0)
-    {
-        cmd.configClass = WIRELESS_FREQ_CHANGE;
-        cmd.configItem  = FREQ_BAND_WIDTH_SELECT;
-        cmd.configValue = value; //BW_10M; BW_20M
-    }
- 
-    if(type == 2)
-    {
-        cmd.configClass = WIRELESS_FREQ_CHANGE;
-        cmd.configItem  = FREQ_BAND_MODE;
-        cmd.configValue = value; //AUTO, Manual
-    }
-
-    if(type == 3)
-    {    
-        cmd.configClass = WIRELESS_FREQ_CHANGE;
-        cmd.configItem  = FREQ_BAND_SELECT; 
-        cmd.configValue = value;    //0: 2G   1: 5G
-    }
-
-    if(type == 4)
-    {    
-        cmd.configClass = WIRELESS_FREQ_CHANGE;
-        cmd.configItem  = FREQ_CHANNEL_MODE;
-        cmd.configValue = value;   //AUTO,  Manual
-    }
-
-    if(type == 5)
-    {    
-        cmd.configClass = WIRELESS_FREQ_CHANGE;
-        cmd.configItem  = FREQ_CHANNEL_SELECT;
-        cmd.configValue = value;
-    }
-
-    if(type == 6)
-    {
-        cmd.configClass  = WIRELESS_MCS_CHANGE;
-        cmd.configItem   = MCS_MODE_SELECT;
-        cmd.configValue  = value; //AUTO, Manual
-    }
-
-    if(type == 7)
-    {
-        cmd.configClass  = WIRELESS_MCS_CHANGE;
-        cmd.configItem   = MCS_MODULATION_SELECT;
-        cmd.configValue  = value; //
-    }
-
-    if(type == 8)
-    {
-        cmd.configClass  = WIRELESS_ENCODER_CHANGE;
-        cmd.configItem   = ENCODER_DYNAMIC_BIT_RATE_MODE;
-        cmd.configValue  = value; //auto, manual
-    }
-
-    if(type == 9)
-    {
-        cmd.configClass  = WIRELESS_ENCODER_CHANGE;
-        cmd.configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
-        cmd.configValue  = value; //brc
-    }
-
-    dlog_info("%d %d  %d\r\n", cmd.configClass, cmd.configItem, cmd.configValue);
-
-    uint8_t found = 0;    
-    for(i = 0; i < sizeof(grd_cmds_buf)/sizeof(grd_cmds_buf[0]); i++)
-    {
-        if(grd_cmds_buf[i].avail == 0)
-        {
-            memcpy((void *)(&grd_cmds_buf[i].config), (void *)&cmd, sizeof(grd_cmds_buf[0]));
-            grd_cmds_buf[i].avail = 1;
-            found = 1;
-            break;
-        }
-    }
-
-    if(!found)
-    {
-        dlog_error("%s \r\n", "insert events to grd");
-    }   
-}
-
-
-void grd_get_osd_info(void)
+/*
+ *
+*/
+static void BB_grd_GatherOSDInfo(void)
 {
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(OSD_STATUS_SHM_ADDR);
 
@@ -1048,3 +867,4 @@ void grd_get_osd_info(void)
         osdptr->tail = 0xff;    //end of the writing
     }
 }
+

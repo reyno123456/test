@@ -75,6 +75,7 @@
 #define ENCODER_BRC_CHAGE_1	((uint8_t)0x71)
 
 
+
 #define CALI_0_1     ((uint8_t)(0xD0+0x00))/* page 0 0xD0+0x00
                                             txa_i_ofs RD  7 0 8
                                            */
@@ -337,5 +338,9 @@
 
 #define     TX_CALI_ENABLE      (0x61)
 
-#endif
 
+#define  POWER_GATE         (0x45)        //Reg[c5/c6] power #define  POWER_Thresholds.
+#define  AAGC_GAIN_FAR      (0x12)
+#define  AAGC_GAIN_NEAR     (0x3F)
+
+#endif

@@ -12,7 +12,6 @@
 #ifndef __GRD_CONTROLLER_H
 #define __GRD_CONTROLLER_H
 
-//#include "config_functions_sel.h"
 #include <stdint.h>
 #include "debuglog.h"
 
@@ -20,15 +19,12 @@
 
 void grd_add_snr_daq(void);
 
-void Grd_Parm_Initial(void);
+void BB_GRD_start(void);
 
-void BB_Grd_Id_Initial(void);
+void BB_Grd_SetRCId(void);
 
 void wimax_vsoc_tx_isr(void);
 
-void Grd_Timer1_Init(void);
-
-void Grd_Timer0_Init(void);
 
 void grd_rc_hopfreq(void);
 
@@ -52,7 +48,9 @@ void grd_handle_IT_mode_cmd(RUN_MODE mode);
 
 void grd_handle_IT_CH_cmd(uint8_t ch);
 
-static void grd_handle_RC_cmd(RUN_MODE mode, uint8_t ch);
+static void Grd_Timer1_Init(void);
+
+static void Grd_Timer0_Init(void);
 
 static void grd_handle_RF_band_cmd(ENUM_RF_BAND rf_band);
 
@@ -66,12 +64,8 @@ static void grd_handle_brc_mode_cmd(RUN_MODE mode);
 
 static void grd_handle_brc_cmd(uint8_t coderate);
 
-void grd_handle_all_cmds(void);
+static void grd_handle_all_cmds(void);
 
-void grd_handle_events_callback(void *p);
-
-void grd_get_osd_info(void);
-
-void grd_add_spi_cmds(uint32_t type, uint32_t value);
+static void BB_grd_GatherOSDInfo(void);
 
 #endif

@@ -1,5 +1,5 @@
 #include "pll_ctrl.h"
-#include "BB_spi.h"
+#include "bb_spi.h"
 #include "debuglog.h"
 
 

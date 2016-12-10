@@ -64,43 +64,6 @@ typedef enum
 } WIRELESS_INTRTFACE_PID_DEF;
 
 
-typedef enum
-{
-    FREQUENCY_BAND_WIDTH_10M     = 0x0,
-    FREQUENCY_BAND_WIDTH_20M     = 0x1
-} ENUM_FREQUENCY_BAND_WIDTH;
-
-
-typedef enum
-{
-    FREQUENCY_BAND_2_4_G        = 0x0,      /* 2.4G */
-    FREQUENCY_BAND_5_G          = 0x1       /* 5G */
-} ENUM_FREQUENCY_BAND;
-
-
-typedef enum
-{
-    MCS_MODULATION_BPSK         = 0x0,
-    MCS_MODULATION_QPSK         = 0x1,
-    MCS_MODULATION_QAM16        = 0x2,
-    MCS_MODULATION_QAM64        = 0x3
-} ENUM_MCS_MODULATION_MODE;
-
-
-typedef enum
-{
-    MCS_CODE_RATE_1_OF_2        = 0x0,
-    MCS_OCDE_RATE_2_OF_3        = 0x1
-} ENUM_MCS_CODERATE_MODE;
-
-
-typedef enum
-{
-    WIRELESS_AUTO_MODE          = 0,
-    WIRELESS_MANUAL_MODE        = 1
-} ENUM_WIRELESS_MODE;
-
-
 /* To PC or PAD, display wireless info */
 /*if head == 0x00 && tail == 0xff, the sram data is valid*/
 typedef struct
@@ -118,50 +81,9 @@ typedef struct
     uint8_t         IT_channel;
     uint8_t         head;
     uint8_t         tail;
-    uint8_t         reserved[2];
+    uint8_t         in_debug;
+    uint8_t         reserved;
 } STRU_WIRELESS_INFO_DISPLAY;
-
-
-typedef enum
-{
-    WIRELESS_FREQ_CHANGE,
-    WIRELESS_MCS_CHANGE,
-    WIRELESS_ENCODER_CHANGE
-} ENUM_WIRELESS_CONFIG_CHANGE;
-
-
-typedef enum
-{
-    FREQ_BAND_WIDTH_SELECT,
-    FREQ_BAND_SELECT,
-    FREQ_BAND_MODE,
-    FREQ_CHANNEL_MODE,
-    FREQ_CHANNEL_SELECT
-} ENUM_WIRELESS_FREQ_CHANGE_ITEM;
-
-
-typedef enum
-{
-    MCS_MODE_SELECT,
-    MCS_MODULATION_SELECT,
-    MCS_CODE_RATE_SELECT
-} ENUM_WIRELESS_MCS_CHANGE_ITEM;
-
-
-typedef enum
-{
-    ENCODER_DYNAMIC_BIT_RATE_MODE,
-    ENCODER_DYNAMIC_BIT_RATE_SELECT
-} ENUM_WIRELESS_ENCODER_CHANGE_ITEM;
-
-
-typedef struct
-{
-    uint8_t                 configClass;
-    uint8_t                 configItem;
-    uint32_t                configValue;
-} STRU_WIRELESS_CONFIG_CHANGE;
-
 
 
 typedef struct

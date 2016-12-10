@@ -8,7 +8,7 @@
 #include "quad_spi_ctrl.h"
 #include "upgrade_core.h"
 #include "pll_ctrl.h"
-#include "BB_spi.h"
+#include "bb_spi.h"
 
 static void console_init(uint32_t uart_num, uint32_t baut_rate)
 {

@@ -1,14 +1,20 @@
 #include <stdint.h>
+#include <string.h>
+
 #include "debuglog.h"
-#include "BB_spi.h"
-#include "BB_ctrl.h"
-#include "BB_init_regs.h"
-#include "grd_sweep.h"
-#include "BB_uart_com.h"
+#include "bb_spi.h"
+#include "wireless_interface.h"
+#include "bb_ctrl_internal.h"
+#include "bb_grd_sweep.h"
+#include "bb_grd_ctrl.h"
+#include "bb_sky_ctrl.h"
+#include "bb_uart_com.h"
 #include "reg_rw.h"
 #include "systicks.h"
-#include "sys_param.h"
-#include "config_baseband_register.h"
+#include "bb_sys_param.h"
+#include "bb_regs.h"
+#include "sys_event.h"
+
 
 #define     BB_SPI_TEST         (0)
 #define     RF_SPI_TEST         (0)
@@ -16,48 +22,65 @@
 #define     VSOC_GLOBAL2_BASE   (0xA0030000)
 #define     BB_SPI_UART_SEL     (0x9c)
 
-
 CONTEXT context;
+static ENUM_REG_PAGES en_curPage;
 
-typedef struct
+const STRU_FRQ_CHANNEL Rc_frq[MAX_2G_RC_FRQ_SIZE] =     // 2.4G
 {
-    ENUM_BB_MODE   en_curMode;
-    ENUM_REG_PAGES en_curPage;
-    ENUM_TRX_CTRL  en_TRXctrl;
-    ENUM_VID_PATH  en_VIDPath;
-}STRU_BB_ctrl_ctx;
-
-
-static STRU_BB_ctrl_ctx BB_ctx = {
-    .en_curPage = PAGE_UNKNOW,
-    .en_curMode = BB_MODE_UNKNOWN,
-    .en_TRXctrl = BB_RESET_UNKNOWN,
+    {0x55, 0x55, 0x55, 0x50},
+    {0x66, 0x66, 0x66, 0x50},
+    {0x77, 0x77, 0x77, 0x50},
+    {0x88, 0x88, 0x88, 0x50},
+    {0x99, 0x99, 0x99, 0x50},
+    {0xAA, 0xAA, 0xAA, 0x50},
+    {0xBB, 0xBB, 0xBB, 0x50},
+    {0xCC, 0xCC, 0xCC, 0x50},
+    {0xDD, 0xDD, 0xDD, 0x50},
+    {0xEE, 0xEE, 0xEE, 0x50},
+    {0x00, 0x00, 0x00, 0x51},
+    {0x11, 0x11, 0x11, 0x51},
+    {0x22, 0x22, 0x22, 0x51},
+    {0x33, 0x33, 0x33, 0x51},
+    {0x44, 0x44, 0x44, 0x51},
+    {0x55, 0x55, 0x55, 0x51},
+    {0x66, 0x66, 0x66, 0x51},
+    {0x77, 0x77, 0x77, 0x51},
+    {0x88, 0x88, 0x88, 0x51},
+    {0x99, 0x99, 0x99, 0x51},
+    {0xAA, 0xAA, 0xAA, 0x51},
+    {0xBB, 0xBB, 0xBB, 0x51},
+    {0xCC, 0xCC, 0xCC, 0x51},
+    {0xDD, 0xDD, 0xDD, 0x51},
+    {0xEE, 0xEE, 0xEE, 0x51},
+    {0x00, 0x00, 0x00, 0x52},
+    {0x11, 0x11, 0x11, 0x52},
+    {0x22, 0x22, 0x22, 0x52},
+    {0x33, 0x33, 0x33, 0x52},
+    {0x44, 0x44, 0x44, 0x52},
+    {0x55, 0x55, 0x55, 0x52},
+    {0x66, 0x66, 0x66, 0x52},
+    {0x77, 0x77, 0x77, 0x52},
+    {0x88, 0x88, 0x88, 0x52}
 };
 
 
-const STRU_RC_FRQ_CHANNEL Rc_frq[MAX_2G_RC_FRQ_SIZE] = {     // 2.4G
-    { 0,0x00,0x00,0x00,0x4b }, { 1,0x00,0x00,0x00,0x4c },
-    { 2,0x00,0x00,0x00,0x4d }, { 3,0x00,0x00,0x00,0x4e },
-    { 4,0x00,0x00,0x00,0x4f }, { 5,0x00,0x00,0x00,0x50 },
+
+const STRU_FRQ_CHANNEL It_frq[MAX_2G_RC_FRQ_SIZE] = {     //2.4G
+    {0x00,0x00,0x00,0x4b }, {0x00,0x00,0x00,0x4c },
+    {0x00,0x00,0x00,0x4d }, {0x00,0x00,0x00,0x4e },
+    {0x00,0x00,0x00,0x4f }, {0x00,0x00,0x00,0x50 },
 };
 
 
-const STRU_IT_FRQ_CHANNEL It_frq[MAX_2G_RC_FRQ_SIZE] = {     //2.4G
-    { 0,0x00,0x00,0x00,0x4b }, { 1,0x00,0x00,0x00,0x4c },
-    { 2,0x00,0x00,0x00,0x4d }, { 3,0x00,0x00,0x00,0x4e },
-    { 4,0x00,0x00,0x00,0x4f }, { 5,0x00,0x00,0x00,0x50 },
+const STRU_FRQ_CHANNEL Rc_5G_frq[MAX_5G_RC_FRQ_SIZE] = {     // 5G
+    {0x00,0x00,0x00,0x5F }, {0x00,0x00,0x00,0x60 },
+    {0x00,0x00,0x00,0x61 }, {0x00,0x00,0x00,0x62 },
 };
 
 
-const STRU_RC_FRQ_CHANNEL Rc_5G_frq[MAX_5G_RC_FRQ_SIZE] = {     // 5G
-    { 0,0x00,0x00,0x00,0x5F }, { 1,0x00,0x00,0x00,0x60 },
-    { 2,0x00,0x00,0x00,0x61 }, { 3,0x00,0x00,0x00,0x62 },
-};
-
-
-const STRU_IT_FRQ_CHANNEL It_5G_frq[MAX_5G_RC_FRQ_SIZE] = {     //5G
-    { 0,0x00,0x00,0x00,0x5F }, { 1,0x00,0x00,0x00,0x60 },
-    { 2,0x00,0x00,0x00,0x61 }, { 3,0x00,0x00,0x00,0x62 },
+const STRU_FRQ_CHANNEL It_5G_frq[MAX_5G_RC_FRQ_SIZE] = {     //5G
+    {0x00,0x00,0x00,0x5F }, {0x00,0x00,0x00,0x60 },
+    {0x00,0x00,0x00,0x61 }, {0x00,0x00,0x00,0x62 },
 };
 
 static int BB_RF_start_cali();
@@ -68,8 +91,10 @@ static uint8_t cali_reg[2][10] = {{0}, {0}};
 
 static void BB_regs_init(ENUM_BB_MODE en_mode)
 {
+    extern const uint8_t BB_sky_regs[][256];
+    extern const uint8_t BB_grd_regs[][256];
+    
     uint32_t page_cnt=0;
-    BB_ctx.en_curMode = en_mode;
     const uint8_t *regs = (en_mode == BB_SKY_MODE) ? (const uint8_t *)BB_sky_regs : (const uint8_t *)BB_grd_regs;
     
     for(page_cnt = 0 ; page_cnt < 4; page_cnt ++)
@@ -82,7 +107,7 @@ static void BB_regs_init(ENUM_BB_MODE en_mode)
         /*
          * PAGE setting included in the regs array.
          */
-        BB_ctx.en_curPage = page;
+        en_curPage = page;
 
         for(addr_cnt = 0; addr_cnt < 256; addr_cnt++)
         {
@@ -99,7 +124,7 @@ static void BB_regs_init(ENUM_BB_MODE en_mode)
 }
 
 
-int BB_softReset(ENUM_RST_MODE en_mode)
+int BB_softReset(ENUM_BB_MODE en_mode)
 {
     uint8_t reg_after_reset;
     if(en_mode == BB_GRD_MODE)
@@ -131,54 +156,7 @@ int BB_softReset(ENUM_RST_MODE en_mode)
         }
     }
 
-    BB_ctx.en_curPage = PAGE2;
-    return 0;
-}
-
-
-
-int BB_selectVideoPath(ENUM_VID_PATH path)
-{
-    if (BB_ctx.en_VIDPath != path)
-    {
-        uint8_t dat = BB_SPI_ReadByte(PAGE1, 0x8d) | 0xC0;
-        BB_SPI_WriteByte(PAGE1, 0x8d, dat); 
-
-        BB_ctx.en_VIDPath = path;
-    }
-    return 0;
-}
-
-int BB_TRX_ctrl(ENUM_TRX_CTRL en_trx)
-{
-    if(BB_ctx.en_TRXctrl != en_trx)
-    {
-        if( BB_ctx.en_TRXctrl == IT_ONLY_MODE)
-        {
-            BB_SPI_WriteByte(PAGE2, 0x02, 0x06);
-            if(BB_ctx.en_curMode == BB_GRD_MODE)
-            {
-                uint8_t dat = BB_SPI_ReadByte(PAGE2, 0x20) & 0xF7;
-                BB_SPI_WriteByte(PAGE2, 0x20, dat);       
-            }
-        }
-    }    
-
-    return 0;
-}
-
-/**
-  * @brief  start / stop Ground recevie.
-  * @param  en_rcv ref@ENUM_RCV_enable
-  * @retval None
-  */
-int BB_GrdReceive(ENUM_RCV_enable en_rcv)
-{
-    uint8_t dat = BB_SPI_ReadByte(PAGE2, 0x20);
-
-    dat = (en_rcv == GRD_RCV_ENABLE) ? (dat&0xF7) : (dat|0x08);
-    BB_SPI_WriteByte(PAGE2, 0x20, dat);
-    
+    en_curPage = PAGE2;
     return 0;
 }
 
@@ -203,15 +181,14 @@ static int SPI_Read8003(uint8_t addr)
 }
 
 
-void RF_8003x_spi_init(ENUM_BB_MODE mode)
+void RF_8003x_init(ENUM_BB_MODE mode)
 {
-    uint8_t *rf_setting = (mode==BB_SKY_MODE) ? RF_8003s_SKY_regs : RF_8003s_GRD_regs;
-    uint8_t size = (mode==BB_SKY_MODE) ? sizeof(RF_8003s_SKY_regs) : sizeof(RF_8003s_GRD_regs);
-    
+    extern const uint8_t RF_8003s_regs[128];
+
     uint8_t idx;
-    for(idx=0; idx < size; idx++)
+    for(idx=0; idx < sizeof(RF_8003s_regs); idx++)
     {
-        SPI_Write8003(idx *2, rf_setting[idx]);
+        SPI_Write8003(idx *2, RF_8003s_regs[idx]);
 
         #if (RF_SPI_TEST ==1)
         uint8_t data = SPI_Read8003(idx*2);
@@ -226,8 +203,70 @@ void RF_8003x_spi_init(ENUM_BB_MODE mode)
     }
 }
 
-void BB_init(STRU_BB_initType *ptr_initType)
+
+void gen_qam_threshold_range(void)
 {
+    uint8_t i;
+    for(i=0;i<QAM_CHANGE_THRESHOLD_COUNT;i++)
+    {
+        if(i < QAM_CHANGE_THRESHOLD_COUNT - 1)
+        {
+            context.qam_threshold_range[i][0] = context.qam_change_threshold[i];
+            context.qam_threshold_range[i][1] = context.qam_change_threshold[i+1]- 1 ;
+        }
+        else
+        {
+            context.qam_threshold_range[i][0] = context.qam_change_threshold[i];
+            context.qam_threshold_range[i][1] = 0xffff;
+        }
+    }
+}
+
+
+void BB_use_param_setting(PARAM *user_setting)
+{
+    memcpy(context.id, user_setting->rc_id.id1, 5);
+    memcpy(context.rc_mask, user_setting->user_param.rc_mask, sizeof(context.rc_mask));
+    memcpy(context.it_mask, user_setting->user_param.it_mask, sizeof(context.it_mask));
+    
+    memcpy( (uint8_t *)((void *)(context.qam_change_threshold)),
+            (uint8_t *)((void *)(user_setting->user_param.qam_change_threshold)),
+            sizeof(context.qam_change_threshold));
+
+    #if 0
+    memcpy(context.sp20dbm,  user_setting->user_param.sp20dbm,  4);
+    memcpy(context.sp20dbmb, user_setting->user_param.sp20dbmb, 4);
+    memcpy(context.gp20dbm,  user_setting->user_param.gp20dbm,  4);
+    memcpy(context.gp20dbmb, user_setting->user_param.gp20dbmb, 4);
+    context.cur_ch   = 0xff;
+    #endif
+    
+    context.ldpc     = user_setting->user_param.ldpc;
+    context.qam_mode = user_setting->user_param.qam_mode;
+    
+    context.qam_ldpc = merge_qam_ldpc_to_index(context.qam_mode,context.ldpc);
+
+    context.it_skip_freq_mode = user_setting->user_param.it_skip_freq_mode;
+    context.rc_skip_freq_mode = user_setting->user_param.rc_skip_freq_mode;
+    context.pwr = user_setting->user_param.power;
+    context.enable_freq_offset = user_setting->user_param.enable_freq_offset;
+    context.freq_band = user_setting->user_param.freq_band;
+    context.search_id_enable = user_setting->user_param.search_id_enable;
+    context.rf_power_mode = user_setting->user_param.rf_power_mode;
+
+    context.it_manual_ch  = 0xff;
+    context.qam_skip_mode = AUTO;
+    context.CH_bandwidth      = BW_10M;
+    context.it_manual_rf_band = 0xff;
+    context.trx_ctrl          = IT_RC_MODE;
+    
+    gen_qam_threshold_range();    
+}
+
+
+void BB_init(ENUM_BB_MODE en_mode)
+{    
+    BB_uart10_spi_sel(0x00000003);
     BB_SPI_init();
     
     #if (BB_SPI_TEST==1)
@@ -245,28 +284,37 @@ void BB_init(STRU_BB_initType *ptr_initType)
         }
     }
     #endif
-    
-    BB_regs_init(ptr_initType->en_mode);
+
+    PARAM *user_setting = BB_get_sys_param();
+    BB_use_param_setting(user_setting);
+    BB_regs_init(en_mode);
 
     // RF 8003 init
     {
         BB_SPI_curPageWriteByte(0x01,0x01);     //SPI change into 8003
-        RF_8003x_spi_init(ptr_initType->en_mode);
+        RF_8003x_init(en_mode);
         BB_SPI_curPageWriteByte(0x01,0x02);     //SPI change into 8020
     }
-    BB_softReset(ptr_initType->en_mode);
+
+    BB_softReset(en_mode);
 
     //RF calibration in both sky& Ground.
     BB_RF_start_cali();
-    BB_set_RF_Band(ptr_initType->en_mode, ptr_initType->en_rf_band);
+    BB_set_RF_Band(en_mode, context.freq_band);
+    BB_softReset(en_mode);
 
-    BB_set_sweepfrq(ptr_initType->en_rf_band, 0);
-    BB_set_ITfrq(ptr_initType->en_rf_band, 0);
-    BB_set_Rcfrq(ptr_initType->en_rf_band, 0);
-    BB_softReset(ptr_initType->en_mode);
-    context.RF_band = ptr_initType->en_rf_band;
+    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USER_CFG_CHANGE_LOCAL, BB_HandleEventsCallback);
 
-    dlog_info("BB mode Band %d %d %s \r\n", ptr_initType->en_mode, ptr_initType->en_rf_band, "BB_init Done");
+    if(en_mode == BB_SKY_MODE)
+    {
+        BB_SKY_start();
+    }
+    else
+    {
+        BB_GRD_start();
+    }
+    
+    dlog_info("BB mode Band %d %d %s \r\n", en_mode, context.freq_band, "BB_init Done");
 }
 
 
@@ -278,10 +326,10 @@ void BB_uart10_spi_sel(uint32_t sel_dat)
 
 uint8_t BB_WriteReg(ENUM_REG_PAGES page, uint8_t addr, uint8_t data)
 {
-    if(BB_ctx.en_curPage != page)
+    if(en_curPage != page)
     {
         BB_SPI_WriteByte(page, addr, data);
-        BB_ctx.en_curPage = page;
+        en_curPage = page;
     }
     else
     {
@@ -292,10 +340,10 @@ uint8_t BB_WriteReg(ENUM_REG_PAGES page, uint8_t addr, uint8_t data)
 uint8_t BB_ReadReg(ENUM_REG_PAGES page, uint8_t addr)
 {
     uint8_t reg;
-    if(BB_ctx.en_curPage != page)
+    if(en_curPage != page)
     {
         reg = BB_SPI_ReadByte(page, addr);
-        BB_ctx.en_curPage = page;
+        en_curPage = page;
     }
     else
     {
@@ -320,7 +368,7 @@ int BB_ReadRegMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t mask)
 
 uint8_t BB_set_sweepfrq(ENUM_RF_BAND band, uint8_t ch)
 {
-	STRU_RC_FRQ_CHANNEL *ch_ptr = (STRU_RC_FRQ_CHANNEL *)((band == RF_2G)?It_frq:It_5G_frq);
+	STRU_FRQ_CHANNEL *ch_ptr = (STRU_FRQ_CHANNEL *)((band == RF_2G)?It_frq:It_5G_frq);
 
 	BB_WriteReg(PAGE2, SWEEP_FREQ_0, ch_ptr[ch].frq1);
 	BB_WriteReg(PAGE2, SWEEP_FREQ_1, ch_ptr[ch].frq2);
@@ -331,7 +379,7 @@ uint8_t BB_set_sweepfrq(ENUM_RF_BAND band, uint8_t ch)
 
 uint8_t BB_set_ITfrq(ENUM_RF_BAND band, uint8_t ch)
 {
-	STRU_RC_FRQ_CHANNEL *it_ch_ptr = (STRU_RC_FRQ_CHANNEL *)((band == RF_2G)?It_frq:It_5G_frq);
+	STRU_FRQ_CHANNEL *it_ch_ptr = (STRU_FRQ_CHANNEL *)((band == RF_2G)?It_frq:It_5G_frq);
 
 	BB_WriteReg(PAGE2, AGC3_0, it_ch_ptr[ch].frq1);
 	BB_WriteReg(PAGE2, AGC3_1, it_ch_ptr[ch].frq2);
@@ -342,7 +390,7 @@ uint8_t BB_set_ITfrq(ENUM_RF_BAND band, uint8_t ch)
 
 uint8_t BB_set_Rcfrq(ENUM_RF_BAND band, uint8_t ch)
 {
-	STRU_RC_FRQ_CHANNEL *rc_ch_ptr = (STRU_RC_FRQ_CHANNEL *)((band == RF_2G)?Rc_frq:Rc_5G_frq);
+	STRU_FRQ_CHANNEL *rc_ch_ptr = (STRU_FRQ_CHANNEL *)((band == RF_2G)?Rc_frq:Rc_5G_frq);
 
     BB_WriteReg(PAGE2, AGC3_a, rc_ch_ptr[ch].frq1);
     BB_WriteReg(PAGE2, AGC3_b, rc_ch_ptr[ch].frq2);
@@ -485,9 +533,9 @@ void read_cali_register(uint8_t *buf)
     buf[8] = BB_ReadReg(PAGE0, 0xd8);
     buf[9] = BB_ReadReg(PAGE0, 0xd9);
 
-    dlog_info("cali Registers1: %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\r\n", 
-               buf[0], buf[1], buf[2], buf[3], buf[4],
-               buf[5], buf[6], buf[7], buf[8], buf[9]);
+    //dlog_info("cali Registers1: %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\r\n", 
+    //           buf[0], buf[1], buf[2], buf[3], buf[4],
+    //           buf[5], buf[6], buf[7], buf[8], buf[9]);
 
     char test[15];
     test[0] = BB_ReadReg(PAGE0, 0x64);
@@ -501,9 +549,9 @@ void read_cali_register(uint8_t *buf)
     test[8] = BB_ReadReg(PAGE0, 0x6e);
     test[9] = BB_ReadReg(PAGE0, 0x6f);
     
-    dlog_info("Before cali: %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\r\n", 
-               test[0], test[1], test[2], test[3], test[4],
-               test[5], test[6], test[7], test[8], test[9]);    
+    //dlog_info("Before cali: %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\r\n", 
+    //           test[0], test[1], test[2], test[3], test[4],
+    //           test[5], test[6], test[7], test[8], test[9]);    
 }
 
 
@@ -703,4 +751,257 @@ void BB_RF_2G_5G_switch(ENUM_RF_BAND rf_band)
     dlog_info("Before cali: %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\r\n", 
                test[0], test[1], test[2], test[3], test[4],
                test[5], test[6], test[7], test[8], test[9]);        
+}
+
+
+typedef struct _STRU_grd_cmds
+{
+    uint8_t avail;                      /*command is using*/
+    STRU_WIRELESS_CONFIG_CHANGE config;
+}STRU_grd_cmds;
+
+
+static STRU_grd_cmds grd_cmds_poll[16];
+
+/*
+ * BB_Getcmd: get command from command buffer pool and free the buffer
+*/
+int BB_GetCmd(STRU_WIRELESS_CONFIG_CHANGE *pconfig)
+{
+    uint8_t found = 0;
+    uint8_t i;
+    for(i = 0; i < sizeof(grd_cmds_poll)/sizeof(grd_cmds_poll[0]); i++)
+    {
+        if(grd_cmds_poll[i].avail == 1)
+        {
+            memcpy(pconfig, &(grd_cmds_poll[i].config), sizeof(*pconfig));
+            grd_cmds_poll[i].avail = 0;
+            found = 1;
+            break;
+        }
+    }
+
+    return (found) ? TRUE:FALSE;
+}
+
+int BB_InsertCmd(STRU_WIRELESS_CONFIG_CHANGE *p)
+{
+    uint8_t i;
+    uint8_t found = 0;
+    STRU_WIRELESS_CONFIG_CHANGE *pcmd = (STRU_WIRELESS_CONFIG_CHANGE *)p;
+
+    //dlog_info("Insert Message: %d %d %d\r\n", pcmd->configClass, pcmd->configItem, pcmd->configValue);
+    for(i = 0; i < sizeof(grd_cmds_poll)/sizeof(grd_cmds_poll[0]); i++)
+    {
+        if(grd_cmds_poll[i].avail == 0)
+        {
+            memcpy((void *)(&grd_cmds_poll[i].config), p, sizeof(grd_cmds_poll[0]));
+            grd_cmds_poll[i].avail = 1;
+            found = 1;
+            break;
+        }
+    }
+
+    if(!found)
+    {
+        dlog_error("ERROR:Insert Event");
+    }
+
+    return (found? TRUE:FALSE);
+}
+
+
+void BB_HandleEventsCallback(void *p)
+{
+    int ret = BB_InsertCmd( (STRU_WIRELESS_CONFIG_CHANGE * )p);
+}
+
+
+////////////////// handlers for WIRELESS_FREQ_CHANGE //////////////////
+
+/** 
+ * @brief       API for set channel Bandwidth 10M/20M, the function can only be called by cpu2
+ * @param[in]   en_bw: channel bandwidth setting 10M/20M
+ * @retval      TURE:  success to add command
+ * @retval      FALSE, Fail to add command
+ */
+int BB_SetFreqBandwidthSelection(ENUM_CH_BW en_bw)
+{
+    STRU_WIRELESS_CONFIG_CHANGE cmd;
+    
+    cmd.configClass  = WIRELESS_FREQ_CHANGE;
+    cmd.configItem   = FREQ_BAND_WIDTH_SELECT;
+    cmd.configValue  = (uint32_t)en_bw;
+
+    return BB_InsertCmd(&cmd);
+}
+
+
+
+/** 
+ * @brief       API for set frequency band (2G/5G) selection mode (ATUO / Manual), the function can only be called by cpu2
+ * @param[in]   mode: selection mode (ATUO / Manual)
+ * @retval      TURE:  success to add command
+ * @retval      FALSE, Fail to add command
+ */
+int BB_SetFreqBandSelectionMode(RUN_MODE en_mode)
+{
+    STRU_WIRELESS_CONFIG_CHANGE cmd;
+    
+    cmd.configClass  = WIRELESS_FREQ_CHANGE;
+    cmd.configItem   = FREQ_BAND_MODE;
+    cmd.configValue  = (uint32_t)en_mode;
+
+    return BB_InsertCmd(&cmd);
+}
+
+
+
+/** 
+ * @brief       API for set frequency band (2G/5G), the function can only be called by cpu2
+ * @param[in]   mode: selection mode (ATUO / Manual)
+ * @retval      TURE:  success to add command
+ * @retval      FALSE, Fail to add command
+ */
+int BB_SetFreqBand(ENUM_RF_BAND band)
+{
+    STRU_WIRELESS_CONFIG_CHANGE cmd;
+    
+    cmd.configClass  = WIRELESS_FREQ_CHANGE;
+    cmd.configItem   = FREQ_BAND_SELECT;
+    cmd.configValue  = (uint32_t)band;
+
+    return BB_InsertCmd(&cmd);
+}
+
+
+
+/** 
+ * @brief       API for set IT(image transmit) channel selection RUN mode(AUTO/Manual). the function can only be called by cpu2
+ * @param[in]   qam: the modulation QAM mode for image transmit.
+ * @retval      TURE:  success to add command
+ * @retval      FALSE, Fail to add command
+ */
+int BB_SetITChannelSelectionMode(RUN_MODE en_mode)
+{
+    STRU_WIRELESS_CONFIG_CHANGE cmd;
+    
+    cmd.configClass  = WIRELESS_FREQ_CHANGE;
+    cmd.configItem   = FREQ_CHANNEL_MODE;
+    cmd.configValue  = (uint32_t)en_mode;
+
+    return BB_InsertCmd(&cmd);
+}
+
+
+/** 
+ * @brief       API for set IT(image transmit) channel Number. the function can only be called by cpu2
+ * @param[in]   channelNum: the current channel number int current Frequency band(2G/5G)
+ * @retval      TURE:  success to add command
+ * @retval      FALSE, Fail to add command
+ */
+int BB_SetITChannel(uint8_t channelNum)
+{
+    STRU_WIRELESS_CONFIG_CHANGE cmd;
+    
+    cmd.configClass  = WIRELESS_FREQ_CHANGE;
+    cmd.configItem   = FREQ_CHANNEL_SELECT;
+    cmd.configValue  = channelNum;
+
+    return BB_InsertCmd(&cmd);
+}
+
+
+
+////////////////// handlers for WIRELESS_MCS_CHANGE //////////////////
+
+/** 
+ * @brief       API for set MCS(modulation, coderate scheme) mode, the function can only be called by cpu2
+ * @param[in]   mode: auto or manual selection.
+ * @retval      TURE:  success to add command
+ * @retval      FALSE, Fail to add command
+ */
+int BB_SetMCSmode(RUN_MODE en_mode)
+{
+    STRU_WIRELESS_CONFIG_CHANGE cmd;
+    
+    cmd.configClass  = WIRELESS_MCS_CHANGE;
+    cmd.configItem   = MCS_MODE_SELECT;
+    cmd.configValue  = (uint32_t)en_mode;
+
+    return BB_InsertCmd(&cmd);
+}
+
+
+/** 
+ * @brief       API for set the image transmit QAM mode, the function can only be called by cpu2
+ * @param[in]   qam: modulation qam mode
+ * @retval      TURE:  success to add command
+ * @retval      FALSE, Fail to add command
+ */
+int BB_SetITQAM(ENUM_BB_QAM qam)
+{
+    STRU_WIRELESS_CONFIG_CHANGE cmd;
+    
+    cmd.configClass  = WIRELESS_MCS_CHANGE;
+    cmd.configItem   = MCS_MODULATION_SELECT;
+    cmd.configValue  = (uint32_t)qam;
+
+    return BB_InsertCmd(&cmd);
+}
+
+
+/** 
+ * @brief       API for set the image transmit LDPC coderate, the function can only be called by cpu2
+ * @param[in]   ldpc:  ldpc coderate 
+ * @retval      TURE:  success to add command
+ * @retval      FALSE, Fail to add command
+ */
+int BB_SetITLDPC(ENUM_BB_LDPC ldpc)
+{
+    STRU_WIRELESS_CONFIG_CHANGE cmd;
+
+    cmd.configClass  = WIRELESS_MCS_CHANGE;
+    cmd.configItem   = MCS_CODE_RATE_SELECT;
+    cmd.configValue  = (uint32_t)ldpc;
+
+    return BB_InsertCmd(&cmd);
+}
+
+
+////////////////// handlers for WIRELESS_ENCODER_CHANGE //////////////////
+
+/** 
+ * @brief       API for set the encoder bitrate control mode, the function can only be called by cpu2
+ * @param[in]   mode: auto or manual selection.
+ * @retval      TURE:  success to add command
+ * @retval      FALSE, Fail to add command
+ */
+int BB_SetEncoderBrcMode(RUN_MODE en_mode)
+{
+    STRU_WIRELESS_CONFIG_CHANGE cmd;
+
+    cmd.configClass  = WIRELESS_ENCODER_CHANGE;
+    cmd.configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
+    cmd.configValue  = (uint32_t)en_mode;
+
+    return BB_InsertCmd(&cmd);
+}
+
+
+/** 
+ * @brief       API for set the encoder bitrate Unit:Mbps, the function can only be called by cpu2
+ * @param[in]   bitrate_Mbps: select the bitrate unit: Mbps
+ * @retval      TURE:  success to add command
+ * @retval      FALSE, Fail to add command
+ */
+int BB_SetEncoderBitrate(uint8_t bitrate_Mbps)
+{
+    STRU_WIRELESS_CONFIG_CHANGE cmd;
+
+    cmd.configClass  = WIRELESS_ENCODER_CHANGE;
+    cmd.configItem   = ENCODER_DYNAMIC_BIT_RATE_MODE;
+    cmd.configValue  = (uint32_t)bitrate_Mbps;
+
+    return BB_InsertCmd(&cmd);
 }

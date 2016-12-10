@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <string.h>
-#include "BB_uart_com.h"
+#include "bb_uart_com.h"
 #include "debuglog.h"
 #include "serial.h"
 #include "interrupt.h"

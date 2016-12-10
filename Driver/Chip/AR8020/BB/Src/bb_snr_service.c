@@ -1,7 +1,8 @@
 #include <stdint.h>
-#include "BB_snr_service.h"
-#include "BB_ctrl.h"
-#include "config_baseband_register.h"
+
+#include "bb_snr_service.h"
+#include "bb_ctrl_internal.h"
+#include "bb_regs.h"
 #include "debuglog.h"
 
 #define WORK_FREQ_SNR_BLOCK_ROWS    (4) 

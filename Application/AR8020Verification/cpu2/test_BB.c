@@ -1,41 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 #include <string.h>
+
 #include "debuglog.h"
-#include "timer.h"
 #include "interrupt.h"
-#include "BB_ctrl.h"
-#include "sys_param.h"
-#include "sky_controller.h"
-#include "grd_controller.h"
-#include "BB_spi.h"
-#include "BB_uart_com.h"
+#include "bb_ctrl.h"
+#include "bb_uart_com.h"
 
 #define STATIC_TEST (0)
-
-static int test_bbctrl_sky(void);
-static int test_bbctrl_grd(void);
 
 void test_BB_sky(void)
 {
     ENUM_BB_MODE cur_mode = BB_SKY_MODE;
     char *log = "IN BB sky mode \n";
-
-    STRU_BB_initType initType = {
-        .en_mode = cur_mode,
-    };
  
-    BB_uart10_spi_sel(0x00000003);
-    BB_init(&initType);
+    BB_init(cur_mode );
     BB_UARTComInit();
     
     #if (STATIC_TEST==0) //normal mode.
-        test_bbctrl_sky();
     #else
         BB_debug_print_init_sky();
     #endif
-    printf("%s", log);
+    dlog_info("%s", log);
 }
 
 void test_BB_grd(void)
@@ -43,36 +29,72 @@ void test_BB_grd(void)
     ENUM_BB_MODE cur_mode = BB_GRD_MODE;
     char *log = "IN BB  Ground mode \r\n";
 
-    STRU_BB_initType initType = {
-        .en_mode = cur_mode,
-    };
-
-    BB_uart10_spi_sel(0x00000003);
-    BB_init(&initType);
-    BB_UARTComInit();
+    BB_init(cur_mode);
     
     #if (STATIC_TEST==0) //normal mode.
-        test_bbctrl_grd();
     #else
         BB_debug_print_init_grd();
     #endif
+    
+    dlog_info("%s", log);
 }
 
-static int test_bbctrl_sky(void)
+
+static void BBUARTComTest(uint8_t* data_buf, uint8_t length)
 {
-    Sky_Parm_Initial();
-    //Sky_Id_Initial();
-    //Sys_Parm_Init();
+    if (data_buf != NULL)
+    {
+        uint8_t i = 0;
+
+        dlog_info("Receive BB UART data:");
+        for (i = 0; i < length; i ++)
+        {
+            dlog_info("0x%x", data_buf[i]);
+        }
+    }
 }
 
-static int test_bbctrl_grd(void)
+
+void command_test_BB_uart(char *index_str)
 {
-    Grd_Parm_Initial();
-    BB_Grd_Id_Initial();
-    //Sys_Parm_Init();
+    static uint8_t data_buf_proc[128];
+
+    unsigned char opt = strtoul(index_str, NULL, 0);
+
+    if (opt == 0)
+    {
+        BB_UARTComRegisterSession(BB_UART_COM_SESSION_0);
+    }
+    else if (opt == 1)
+    {
+        uint8_t data_buf_tmp[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22};
+        BB_UARTComSendMsg(BB_UART_COM_SESSION_0, data_buf_tmp, sizeof(data_buf_tmp));
+    }
+    else if (opt == 2)
+    {
+        uint32_t cnt = BB_UARTComReceiveMsg(BB_UART_COM_SESSION_0, data_buf_proc, sizeof(data_buf_proc));
+        uint32_t i = 0;
+        for(i = 0; i < cnt; i++)
+        {
+            dlog_info("%d,", data_buf_proc[i]);
+        }
+    }
 }
+
+
+
+
 
 #if 0
+#include "bb_spi.h"
+#include "timer.h"
+#include "bb_sys_param.h"
+#include <math.h>
+#include "bb_sky_ctrl.h"
+#include "bb_grd_ctrl.h"
+
+
+
 /*
  * this Function for demo only...
 */
@@ -171,31 +193,4 @@ void BB_debug_print_init_sky(void)
 }
 
 #endif
-
-void command_test_BB_uart(char *index_str)
-{
-    static uint8_t data_buf_proc[128];
-
-    unsigned char opt = strtoul(index_str, NULL, 0);
-
-    if (opt == 0)
-    {
-        BB_UARTComRegisterSession(BB_UART_COM_SESSION_0);
-    }
-    else if (opt == 1)
-    {
-        uint8_t data_buf_tmp[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22};
-        BB_UARTComSendMsg(BB_UART_COM_SESSION_0, data_buf_tmp, sizeof(data_buf_tmp));
-    }
-    else if (opt == 2)
-    {
-        uint32_t cnt = BB_UARTComReceiveMsg(BB_UART_COM_SESSION_0, data_buf_proc, sizeof(data_buf_proc));
-        uint32_t i = 0;
-        for(i = 0; i < cnt; i++)
-        {
-            dlog_info("%d,", data_buf_proc[i]);
-        }
-    }
-}
-
 

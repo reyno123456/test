@@ -2,6 +2,7 @@
 #include "usbd_def.h"
 #include "usbd_hid.h"
 #include "debuglog.h"
+#include "bb_ctrl_proxy.h"
 #include "sys_event.h"
 
 
@@ -349,162 +350,62 @@ void WIRELESS_INTERFACE_SAVE_CONFIGURE_Handler(void *param)
 
 
 void PAD_FREQUENCY_BAND_WIDTH_SELECT_Handler(void *param)
-{
-    STRU_WIRELESS_CONFIG_CHANGE             stWirelessConfigChange;
-    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *pstConfigMessage;
-
-    dlog_info("PAD_FREQUENCY_BAND_WIDTH_SELECT_Handler\n");
-
-    pstConfigMessage                    = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
-
-    stWirelessConfigChange.configClass  = WIRELESS_FREQ_CHANGE;
-    stWirelessConfigChange.configItem   = FREQ_BAND_WIDTH_SELECT;
-    stWirelessConfigChange.configValue  = pstConfigMessage->paramData[0];
-
-    SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&stWirelessConfigChange);
+{	
+	BB_SetFreqBandwidthSelection_proxy( (ENUM_CH_BW)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 }
 
 
 void PAD_FREQUENCY_BAND_OPERATION_MODE_Handler(void *param)
 {
-    STRU_WIRELESS_CONFIG_CHANGE             stWirelessConfigChange;
-    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *pstConfigMessage;
-
-    dlog_info("PAD_FREQUENCY_BAND_OPERATION_MODE_Handler\n");
-
-    pstConfigMessage                    = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
-
-    stWirelessConfigChange.configClass  = WIRELESS_FREQ_CHANGE;
-    stWirelessConfigChange.configItem   = FREQ_BAND_MODE;
-    stWirelessConfigChange.configValue  = pstConfigMessage->paramData[0];
-
-    SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&stWirelessConfigChange);
+	BB_SetFreqBandSelectionMode_proxy( (RUN_MODE)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 }
 
 
 void PAD_FREQUENCY_BAND_SELECT_Handler(void *param)
 {
-    STRU_WIRELESS_CONFIG_CHANGE             stWirelessConfigChange;
-    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *pstConfigMessage;
-
-    dlog_info("PAD_FREQUENCY_BAND_SELECT_Handler\n");
-
-    pstConfigMessage                    = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
-
-    stWirelessConfigChange.configClass  = WIRELESS_FREQ_CHANGE;
-    stWirelessConfigChange.configItem   = FREQ_BAND_SELECT;
-    stWirelessConfigChange.configValue  = pstConfigMessage->paramData[0];
-
-    SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&stWirelessConfigChange);
+	BB_SetFreqBand_proxy( (ENUM_RF_BAND)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 }
 
 
 void PAD_FREQUENCY_CHANNEL_OPERATION_MODE_Handler(void *param)
 {
-    STRU_WIRELESS_CONFIG_CHANGE             stWirelessConfigChange;
-    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *pstConfigMessage;
-
-    pstConfigMessage                    = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
-
-    dlog_info("PAD_FREQUENCY_CHANNEL_OPERATION_MODE_Handler\n");
-
-    stWirelessConfigChange.configClass  = WIRELESS_FREQ_CHANGE;
-    stWirelessConfigChange.configItem   = FREQ_CHANNEL_MODE;
-    stWirelessConfigChange.configValue  = pstConfigMessage->paramData[0];
-
-    SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&stWirelessConfigChange);
+	BB_SetITChannelSelectionMode_proxy( (RUN_MODE)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 }
 
 
 void PAD_FREQUENCY_CHANNEL_SELECT_Handler(void *param)
-{
-    STRU_WIRELESS_CONFIG_CHANGE             stWirelessConfigChange;
-    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *pstConfigMessage;
-
-    pstConfigMessage                    = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
-
-    dlog_info("PAD_FREQUENCY_CHANNEL_SELECT_Handler\n");
-
-    stWirelessConfigChange.configClass  = WIRELESS_FREQ_CHANGE;
-    stWirelessConfigChange.configItem   = FREQ_CHANNEL_SELECT;
-    stWirelessConfigChange.configValue  = pstConfigMessage->paramData[0];
-
-    SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&stWirelessConfigChange);
+{	
+	BB_SetITChannel_proxy( (uint8_t)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 }
 
 
 void PAD_MCS_OPERATION_MODE_Handler(void *param)
 {
-    STRU_WIRELESS_CONFIG_CHANGE             stWirelessConfigChange;
-    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *pstConfigMessage;
-
-    pstConfigMessage                    = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
-
-    dlog_info("PAD_MCS_OPERATION_MODE_Handler\n");
-
-    stWirelessConfigChange.configClass  = WIRELESS_MCS_CHANGE;
-    stWirelessConfigChange.configItem   = MCS_MODE_SELECT;
-    stWirelessConfigChange.configValue  = pstConfigMessage->paramData[0];
-
-    SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&stWirelessConfigChange);
+	BB_SetMCSmode_proxy( (RUN_MODE)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 }
 
 
 void PAD_MCS_MODULATION_MODE_Handler(void *param)
 {
-    STRU_WIRELESS_CONFIG_CHANGE             stWirelessConfigChange;
-    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *pstConfigMessage;
-
-    pstConfigMessage                    = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
-
-    dlog_info("PAD_MCS_MODULATION_MODE_Handler\n");
-
-    stWirelessConfigChange.configClass  = WIRELESS_MCS_CHANGE;
-    stWirelessConfigChange.configItem   = MCS_MODULATION_SELECT;
-    stWirelessConfigChange.configValue  = pstConfigMessage->paramData[0];
-
-    SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&stWirelessConfigChange);
+	BB_SetITQAM_proxy( (ENUM_BB_QAM)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 }
 
 
 void PAD_ENCODER_DYNAMIC_BITRATE_MODE_Handler(void *param)
 {
-    STRU_WIRELESS_CONFIG_CHANGE             stWirelessConfigChange;
-    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *pstConfigMessage;
-
-    dlog_info("PAD_ENCODER_DYNAMIC_BITRATE_MODE_Handler\n");
-
-    pstConfigMessage                    = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
-
-    stWirelessConfigChange.configClass  = WIRELESS_ENCODER_CHANGE;
-    stWirelessConfigChange.configItem   = ENCODER_DYNAMIC_BIT_RATE_MODE;
-    stWirelessConfigChange.configValue  = pstConfigMessage->paramData[0];
-
-    SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&stWirelessConfigChange);
+    BB_SetEncoderBrcMode_proxy( (RUN_MODE)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 }
 
 
 void PAD_ENCODER_DYNAMIC_BITRATE_SELECT_Handler(void *param)
 {
-    STRU_WIRELESS_CONFIG_CHANGE             stWirelessConfigChange;
-    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *pstConfigMessage;
-
-    dlog_info("PAD_ENCODER_DYNAMIC_BITRATE_SELECT_Handler\n");
-
-    pstConfigMessage                    = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
-
-    stWirelessConfigChange.configClass  = WIRELESS_ENCODER_CHANGE;
-    stWirelessConfigChange.configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
-    stWirelessConfigChange.configValue  = pstConfigMessage->paramData[0];
-
-    SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&stWirelessConfigChange);
+    BB_SetEncoderBitrate_proxy( (uint8_t)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 }
 
 
 void PAD_WIRELESS_INFO_DISPLAY_Handler(void *param)
 {
     dlog_info("PAD_WIRELESS_INFO_DISPLAY_Handler\n");
-
     WIRELESS_SendDisplayInfo();
 }
 
