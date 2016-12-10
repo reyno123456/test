@@ -206,10 +206,9 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_TestSysEventIdle();
     }
-
     else if(memcmp(cmdArray[0], "command_test_BB_uart", strlen("command_test_BB_uart")) == 0)
     {
-        command_test_BB_uart();
+        command_test_BB_uart(cmdArray[1]);
     }
     else if (memcmp(cmdArray[0], "test_float_calculate_pi", strlen("test_float_calculate_pi")) == 0)
     {
