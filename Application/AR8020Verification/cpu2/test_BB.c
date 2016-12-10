@@ -30,6 +30,7 @@ void test_BB_grd(void)
     char *log = "IN BB  Ground mode \r\n";
 
     BB_init(cur_mode);
+	BB_UARTComInit();
     
     #if (STATIC_TEST==0) //normal mode.
     #else
@@ -40,19 +41,7 @@ void test_BB_grd(void)
 }
 
 
-static void BBUARTComTest(uint8_t* data_buf, uint8_t length)
-{
-    if (data_buf != NULL)
-    {
-        uint8_t i = 0;
 
-        dlog_info("Receive BB UART data:");
-        for (i = 0; i < length; i ++)
-        {
-            dlog_info("0x%x", data_buf[i]);
-        }
-    }
-}
 
 
 void command_test_BB_uart(char *index_str)
