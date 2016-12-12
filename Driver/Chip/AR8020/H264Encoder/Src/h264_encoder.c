@@ -275,7 +275,7 @@ int H264_Encoder_Init(uint8_t gop0, uint8_t br0, uint8_t brc0_e, uint8_t gop1, u
     g_stEncoderStatus[1].brc_enable = brc1_e;
     v1_poweron_rc_params_set = 1;
 
-    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_ADV7611_FORMAT_CHANGE, H264_Encoder_InputVideoFormatChangeCallback);
+    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_ADV7611_FORMAT_CHANGE_LOCAL, H264_Encoder_InputVideoFormatChangeCallback);
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE, H264_Encoder_BBModulationChangeCallback);
 
     dlog_info("h264 encoder init OK\n");

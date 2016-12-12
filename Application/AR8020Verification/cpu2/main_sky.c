@@ -32,8 +32,6 @@ int main(void)
     SysTicks_DelayMS(10); //delay to wait cpu0 bootup and set the PLL register
     InterCore_Init();
     
-    ADV_7611_Initial(0);
-    ADV_7611_Initial(1);
     H264_Encoder_Init(10, 1, 1, 10, 1, 1);
     
     test_BB_sky();

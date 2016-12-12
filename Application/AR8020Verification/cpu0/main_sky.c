@@ -12,8 +12,9 @@
 #include "inter_core.h"
 #include "bb_spi.h"
 #include "systicks.h"
-#include "upgrade.h"
 #include "bb_ctrl_proxy.h"
+#include "adv_7611.h"
+>>>>>>> 7da1558ed1a6e47014b6431dd764c229f82d0cdf
 
 void *malloc(size_t size)
 {
@@ -86,6 +87,9 @@ int main(void)
     CPU_CACHE_Enable();
 
     SysTicks_Init(200000);
+
+    ADV_7611_Initial(0);
+    ADV_7611_Initial(1);
 
     /* Create Main Task */
     osThreadDef(USBHMAIN_Task, USBH_MainTask, osPriorityNormal, 0, 4 * 128);
