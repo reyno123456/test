@@ -14,7 +14,6 @@
 #include "systicks.h"
 #include "bb_ctrl_proxy.h"
 #include "adv_7611.h"
->>>>>>> 7da1558ed1a6e47014b6431dd764c229f82d0cdf
 
 void *malloc(size_t size)
 {
