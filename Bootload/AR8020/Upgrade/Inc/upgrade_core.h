@@ -6,6 +6,7 @@
 #define RDWR_SECTOR_SIZE           (1024*4) //or (1024*32)
 
 #define SDRAM_INIT_DONE (*(volatile uint32_t *)0xA0030024)
+#define SFR_TRX_MODE_SEL (*(volatile uint32_t *)0x40B00068)
 #define RECEIVE_ADDR (0x81000000)
 
 #define APPLICATION_IMAGE_START    0x10020008

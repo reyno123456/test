@@ -220,10 +220,16 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         char path[128];
         memset(path,'\0',128);
+        if(strlen(cmdArray[1])>127)
+        {
+            command_reset();
+            return;
+        }
         memcpy(path,cmdArray[1],strlen(cmdArray[1]));
         path[strlen(cmdArray[1])]='\0';
-        osThreadDef(UsbUpgrade, BOOTLOAD_Upgrade, osPriorityIdle, 0, 12 * 128);
-        osThreadCreate(osThread(UsbUpgrade), path);       
+        osThreadDef(UsbUpgrade, UPGRADE_Upgrade, osPriorityNormal, 0, 15 * 128);
+        osThreadCreate(osThread(UsbUpgrade), path);
+        vTaskDelay(100);       
     }
     else if (memcmp(cmdArray[0], "hdmiinit", strlen("hdmiinit")) == 0)
     {

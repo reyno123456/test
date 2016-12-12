@@ -6,56 +6,114 @@
 #include "quad_spi_ctrl.h"
 #include "nor_flash.h"
 #include "upgrade.h"
+#include "serial.h"
+#include "test_usbh.h"
+#include "systicks.h"
+#include "bb_ctrl_proxy.h"
+static uint8_t g_u8arrayRecData[RDWR_SECTOR_SIZE]={0};
+USBH_HandleTypeDef              hUSBHost;
+USBH_BypassVideoCtrl            g_usbhBypassVideoCtrl;
+USBH_AppCtrl                    g_usbhAppCtrl;
 
 
-void BOOTLOAD_Upgrade(void const *argument)
+static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
+{
+    switch(id)
+    {
+    case HOST_USER_SELECT_CONFIGURATION:
+        break;
+
+    case HOST_USER_DISCONNECTION:
+        g_usbhAppCtrl.usbhAppState  = APPLICATION_DISCONNECT;
+        break;
+
+    case HOST_USER_CLASS_ACTIVE:
+        g_usbhAppCtrl.usbhAppState  = APPLICATION_READY;
+        break;
+
+    case HOST_USER_CONNECTION:
+        break;
+
+    default:
+        break;
+    }
+}
+
+static void UPGRADE_HApplicationInit(void)
+{
+    reg_IrqHandle(OTG_INTR0_VECTOR_NUM, USB_LL_OTG0_IRQHandler);
+
+    USBH_Init(&hUSBHost, USBH_UserProcess, 0);
+
+    USBH_RegisterClass(&hUSBHost, USBH_MSC_CLASS);
+
+    USBH_Start(&hUSBHost);
+    printf("usb host init done!\n");
+    return;
+}
+
+void UPGRADE_Upgrade(void const *argument)
 {
 
     FRESULT    fileResult;
     FIL        MyFile;
     uint32_t   u32_bytesRead= RDWR_SECTOR_SIZE;
-    uint8_t    *u8_arrayRecData = (uint8_t *)0x21004000;
     uint32_t   u32_recDataSum = 0;
-    uint32_t   u32_norAddr = (0x20000);
-    dlog_info("Nor flash init start ...");
+    uint32_t   u32_norAddr = 0x20000;
+
+    if(SFR_TRX_MODE_GROUND == BB_GetBoardMODE())
+    {
+        UPGRADE_HApplicationInit();
+        USBH_MountUSBDisk();
+    }
+    
+
+    printf("Nor flash init start ... \n");
     NOR_FLASH_Init();
-    dlog_info("Nor flash init end   ...");
+    printf("Nor flash init end   ...\n");
     dlog_output(100);
-    dlog_info("receive file name %p %s\n", argument,argument);
+    SysTicks_DelayMS(500);
+    while(APPLICATION_READY != g_usbhAppCtrl.usbhAppState)
+    {
+        printf("find mass storage\n");    
+    }
+    dlog_output(100);
     if (APPLICATION_READY == g_usbhAppCtrl.usbhAppState)
     {
         fileResult = f_open(&MyFile,argument , FA_READ);
         if (FR_OK != fileResult)
         {
-            dlog_info("open or create file error: %d\n", fileResult);
+            printf("open or create file error: %d\n", fileResult);
             
             while(1);
-        }                    
+        }          
         while(RDWR_SECTOR_SIZE == u32_bytesRead)
-        {
-            
-            memset(u8_arrayRecData,0,RDWR_SECTOR_SIZE);
-            fileResult = f_read(&MyFile, (void *)u8_arrayRecData, RDWR_SECTOR_SIZE, (void *)&u32_bytesRead);
+        {            
+            memset(g_u8arrayRecData,0,RDWR_SECTOR_SIZE);
+            fileResult = f_read(&MyFile, (void *)g_u8arrayRecData, RDWR_SECTOR_SIZE, (void *)&u32_bytesRead);
             if((fileResult != FR_OK))
             {
-                dlog_info("Cannot Read from the file \n");
+                printf("Cannot Read from the file \n");
                 f_close(&MyFile);
             }
             NOR_FLASH_EraseSector(u32_norAddr);
-            NOR_FLASH_WriteByteBuffer(u32_norAddr,u8_arrayRecData,RDWR_SECTOR_SIZE);
+            NOR_FLASH_WriteByteBuffer(u32_norAddr,g_u8arrayRecData,RDWR_SECTOR_SIZE); 
+            printf("f_read success %d %x \n",u32_bytesRead,u32_norAddr);           
+            dlog_output(100);
             u32_recDataSum+=u32_bytesRead;
-            u32_norAddr += RDWR_SECTOR_SIZE; 
-            dlog_info("f_read success %d!",u32_bytesRead);
-            dlog_output(100);               
+            u32_norAddr += RDWR_SECTOR_SIZE;             
+            //u8_upgradeFlage++;               
         }
+         
         f_close(&MyFile);
-        dlog_info("upgrade ok\n");
+        printf("upgrade ok %x\n",u32_recDataSum);
     }
     else
     {
-        dlog_info("don't find usb\n");
+        printf("don't find usb\n");
     }
     
     dlog_output(100);
-    while(1);
+    vTaskDelete(NULL);
 }
+

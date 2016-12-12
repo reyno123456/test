@@ -191,3 +191,22 @@ int BB_SetEncoderBitrate_proxy(uint8_t bitrate_Mbps)
 
 	return SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&cmd);
 }
+
+
+/** 
+ * @brief       API for set board SKY mode or GROUND mode
+ * @param[in]   SFR_TRX_MODE_SKY or SFR_TRX_MODE_GROUND
+ */
+void BB_SetBoardMODE(uint8_t mode)
+{
+    SFR_TRX_MODE_SEL = mode;
+}
+
+/** 
+ * @brief       API for return board status
+ * @retval      SKY or GROUND
+ */
+int BB_GetBoardMODE(void)
+{
+    return SFR_TRX_MODE_SEL;
+}

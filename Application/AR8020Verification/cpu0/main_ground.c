@@ -12,6 +12,8 @@
 #include "inter_core.h"
 #include "systicks.h"
 #include "bb_spi.h"
+#include "upgrade.h"
+#include "bb_ctrl_proxy.h"
 
 void *malloc(size_t size)
 {
@@ -68,6 +70,8 @@ static void IO_Task(void const *argument)
   */
 int main(void)
 {
+
+    BB_SetBoardMODE(SFR_TRX_MODE_GROUND);
     BB_SPI_init();
 
     PLLCTRL_SetCoreClk(CPU0_CPU1_CORE_PLL_CLK, CPU0_ID);

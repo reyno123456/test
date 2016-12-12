@@ -23,14 +23,17 @@ static void console_init(uint32_t uart_num, uint32_t baut_rate)
   */
 int main(void)
 {
+    uint8_t tmp=0;
     BB_SPI_init();
 
     PLLCTRL_SetCoreClk(CPU0_CPU1_CORE_PLL_CLK, CPU0_ID);
+    SFR_TRX_MODE_SEL = 0x01;
+    tmp = SFR_TRX_MODE_SEL;
     /* initialize the uart */
     console_init(0, 115200); //115200 in 200M CPU clock
-    dlog_info("bootload0 start!!! \n");
+    dlog_info("upgrade0 start!!! %d !!!\n",tmp);
     dlog_output(100);
-
+    
     SysTicks_Init(200000);
     QUAD_SPI_SetSpeed(QUAD_SPI_SPEED_50M);
     dlog_output(100);

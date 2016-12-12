@@ -5,6 +5,10 @@
 
 
 
+#define SFR_TRX_MODE_SEL (*(volatile uint32_t *)0x40B00068)
+#define SFR_TRX_MODE_GROUND             0x03
+#define SFR_TRX_MODE_SKY                0x01
+
 /** 
  * @brief       API for set channel Bandwidth 10M/20M, the function can only be called by cpu0,1
  * @param[in]   en_bw: channel bandwidth setting 10M/20M
@@ -108,6 +112,21 @@ int BB_SetEncoderBrcMode_proxy(RUN_MODE en_mode);
  * @retval      FALSE, Fail to add command
  */
 int BB_SetEncoderBitrate_proxy(uint8_t bitrate_Mbps);
+
+
+/** 
+ * @brief       API for set board SKY mode or GROUND mode
+ * @param[in]   SFR_TRX_MODE_SKY or SFR_TRX_MODE_GROUND
+ */
+void BB_SetBoardMODE(uint8_t mode);
+
+
+
+/** 
+ * @brief       API for return board status
+ * @retval      SKY or GROUND
+ */
+int BB_GetBoardMODE(void);
 
 
 #endif
