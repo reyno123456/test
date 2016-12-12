@@ -148,4 +148,4 @@ echo -n -e \\x45 >> $outputboottxt
 echo -n -e \\x67 >> $outputboottxt
 
 
-rm ../../Application/AR8020Verification/zero.image
+rm zero.image
