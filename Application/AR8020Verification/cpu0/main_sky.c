@@ -12,6 +12,7 @@
 #include "inter_core.h"
 #include "bb_spi.h"
 #include "systicks.h"
+#include "adv_7611.h"
 
 void *malloc(size_t size)
 {
@@ -82,6 +83,9 @@ int main(void)
     CPU_CACHE_Enable();
 
     SysTicks_Init(200000);
+
+    ADV_7611_Initial(0);
+    ADV_7611_Initial(1);
 
     /* Create Main Task */
     osThreadDef(USBHMAIN_Task, USBH_MainTask, osPriorityNormal, 0, 4 * 128);
