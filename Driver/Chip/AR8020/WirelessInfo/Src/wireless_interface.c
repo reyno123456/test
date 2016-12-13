@@ -4,15 +4,16 @@
 #include "debuglog.h"
 #include "bb_ctrl_proxy.h"
 #include "sys_event.h"
-
+#include "BB_spi.h"
 
 STRU_WIRELESS_INFO_DISPLAY             *g_pstWirelessInfoDisplay;        //OSD Info in SRAM
-STRU_WIRELESS_INFO_DISPLAY              g_stWirelessInfoSend;            //send to PAD or PC
+STRU_WIRELESS_INFO_DISPLAY              g_stWirelessInfoSend;            //send OSD to PAD or PC
 
 STRU_WIRELESS_PARAM_CONFIG_MESSAGE      g_stWirelessParamConfig;         //receive from PAD or PC
 
-extern USBD_HandleTypeDef               USBD_Device;
+uint8_t eventFlag = 0;
 
+extern USBD_HandleTypeDef               USBD_Device;
 
 WIRELESS_CONFIG_HANDLER g_stWirelessMsgHandler[PAD_WIRELESS_INTERFACE_PID_NUM] = 
 {
@@ -33,7 +34,7 @@ WIRELESS_CONFIG_HANDLER g_stWirelessMsgHandler[PAD_WIRELESS_INTERFACE_PID_NUM] =
     WIRELESS_INTERFACE_WRITE_BB_REG_Handler,
     WIRELESS_INTERFACE_READ_BB_REG_Handler,
     WIRELESS_INTERFACE_MIMO_2T2R_Handler,
-    WIRELESS_INTERFACE_ENABLE_OSD_DISPLAY_Handler,
+    WIRELESS_INTERFACE_OSD_DISPLAY_Handler,
     NULL,
     WIRELESS_INTERFACE_GET_ID_Handler,
     WIRELESS_INTERFACE_GET_GROUND_TX_PWR_Handler,
@@ -58,6 +59,28 @@ WIRELESS_CONFIG_HANDLER g_stWirelessMsgHandler[PAD_WIRELESS_INTERFACE_PID_NUM] =
     WIRELESS_INTERFACE_RECOVER_TO_FACTORY_Handler,
     WIRELESS_INTERFACE_RC_HOPPING_Handler,
     WIRELESS_INTERFACE_SAVE_CONFIGURE_Handler,
+    WIRELESS_INTERFACE_READ_MCU_ID_Handler,       
+    WIRELESS_INTERFACE_LOAD_SKY_REG_TABLE_Handler,
+    WIRELESS_INTERFACE_LOAD_GRD_REG_TABLE_Handler,
+    WIRELESS_INTERFACE_SWITCH_BB_POWER_Handler,   
+    WIRELESS_INTERFACE_SKY_ONLY_RX_Handler,       
+    WIRELESS_INTERFACE_SWITCH_RF_PWR_0_Handler,   
+    WIRELESS_INTERFACE_SWITCH_RF_PWR_1_Handler,   
+    WIRELESS_INTERFACE_EXT_ONEKEY_IT_Handler,     
+    WIRELESS_INTERFACE_SWITCH_IT_CHAN_Handler,    
+    WIRELESS_INTERFACE_SWITCH_RMT_CHAN_Handler,   
+    WIRELESS_INTERFACE_SET_PWR_CAL_0_Handler,     
+    WIRELESS_INTERFACE_SET_PWR_CAL_1_Handler,     
+    WIRELESS_INTERFACE_RST_MCU_Handler,           
+    WIRELESS_INTERFACE_RF_PWR_AUTO_Handler,       
+    WIRELESS_INTERFACE_SWITCH_DEBUG_MODE_Handler, 
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
     PAD_FREQUENCY_BAND_WIDTH_SELECT_Handler,
     PAD_FREQUENCY_BAND_OPERATION_MODE_Handler,
     PAD_FREQUENCY_BAND_SELECT_Handler,
@@ -67,22 +90,15 @@ WIRELESS_CONFIG_HANDLER g_stWirelessMsgHandler[PAD_WIRELESS_INTERFACE_PID_NUM] =
     PAD_MCS_MODULATION_MODE_Handler,
     PAD_ENCODER_DYNAMIC_BITRATE_MODE_Handler,
     PAD_ENCODER_DYNAMIC_BITRATE_SELECT_Handler,
-    PAD_WIRELESS_INFO_DISPLAY_Handler
+    PAD_WIRELESS_OSD_DISPLAY_Handler
 };
 
-
-/* Send to PAD or PC */
-void WIRELESS_SendDisplayInfo(void)
+/* get osd info from shared memory */
+void WITELESS_GetOSDInfo(void)
 {
     uint8_t                  *sendBuffer;
-    uint32_t                  sendLength;
-
     g_pstWirelessInfoDisplay  = (STRU_WIRELESS_INFO_DISPLAY *)OSD_STATUS_SHM_ADDR;
-
     sendBuffer                = (uint8_t *)g_pstWirelessInfoDisplay;
-    sendLength                = (uint32_t)(sizeof(STRU_WIRELESS_INFO_DISPLAY) - 4);
-
-    g_pstWirelessInfoDisplay->messageId = PAD_WIRELESS_INFO_DISPLAY;
 
     if (USB_OTG_IS_BIG_ENDIAN())
     {
@@ -93,7 +109,24 @@ void WIRELESS_SendDisplayInfo(void)
         memcpy((void *)&g_stWirelessInfoSend, (void *)g_pstWirelessInfoDisplay, sizeof(STRU_WIRELESS_INFO_DISPLAY));
     }
 
-    dlog_info("sendLength: %d", sendLength);
+}
+
+/* Send to PAD or PC */
+void WIRELESS_SendOSDInfo(ENUM_WIRELESS_TOOL host)
+{
+    uint32_t                  sendLength;
+    sendLength                = (uint32_t)(sizeof(STRU_WIRELESS_INFO_DISPLAY));
+
+    if (host == MCU_TO_PAD)
+    {
+        g_stWirelessInfoSend.messageId = PAD_WIRELESS_INTERFACE_OSD_DISPLAY;
+        g_stWirelessInfoSend.paramLen = sendLength;
+    }
+    else
+    {
+        g_stWirelessInfoSend.messageId = WIRELESS_INTERFACE_OSD_DISPLAY;
+        g_stWirelessInfoSend.paramLen = sendLength;
+    }
 
     /* if cpu2 update info, and the info is valid */
     if ((0x0 == g_pstWirelessInfoDisplay->head)
@@ -189,13 +222,30 @@ void WIRELESS_INTERFACE_MIMO_1T2R_Handler(void *param)
 
 void WIRELESS_INTERFACE_WRITE_BB_REG_Handler(void *param)
 {
-    dlog_info("WIRELESS_INTERFACE_WRITE_BB_REG_Handler\n");
+    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *pstWirelessParamConfig;
+    pstWirelessParamConfig = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
+    if (BB_SPI_curPageWriteByte(pstWirelessParamConfig->paramData[0], pstWirelessParamConfig->paramData[1]))
+    {
+        dlog_error("write fail!\n");
+    }
+
 }
 
 
 void WIRELESS_INTERFACE_READ_BB_REG_Handler(void *param)
 {
-    dlog_info("WIRELESS_INTERFACE_READ_BB_REG_Handler\n");
+    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
+
+    recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
+    recvMessage->messageId = 0x0f;
+    recvMessage->paramLen = 2;
+    recvMessage->paramData[0] = recvMessage->paramData[0];
+    recvMessage->paramData[1] = BB_SPI_curPageReadByte(recvMessage->paramData[0]);
+    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)recvMessage, sizeof(recvMessage), HID_EPIN_CTRL_ADDR))
+    {
+        dlog_error("send fail!\n");
+    }
+
 }
 
 
@@ -205,9 +255,13 @@ void WIRELESS_INTERFACE_MIMO_2T2R_Handler(void *param)
 }
 
 
-void WIRELESS_INTERFACE_ENABLE_OSD_DISPLAY_Handler(void *param)
+void WIRELESS_INTERFACE_OSD_DISPLAY_Handler(void *param)
 {
-    dlog_info("WIRELESS_INTERFACE_ENABLE_OSD_DISPLAY_Handler\n");
+    ENUM_WIRELESS_TOOL toolToHost = MCU_TO_PC;
+    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
+    recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
+    WITELESS_GetOSDInfo();
+    WIRELESS_SendOSDInfo(toolToHost);
 }
 
 
@@ -348,6 +402,112 @@ void WIRELESS_INTERFACE_SAVE_CONFIGURE_Handler(void *param)
     dlog_info("WIRELESS_INTERFACE_SAVE_CONFIGURE_Handler\n");
 }
 
+void WIRELESS_INTERFACE_READ_MCU_ID_Handler(void *param)
+{
+    dlog_info("WIRELESS_INTERFACE_READ_MCU_ID_Handler\n");   
+}
+
+void WIRELESS_INTERFACE_SWITCH_DEBUG_MODE_Handler(void *param)
+{
+    uint8_t inDebugFlag = 0;
+
+    STRU_WIRELESS_CONFIG_CHANGE           stWirelessConfigChange;
+    STRU_WIRELESS_PARAM_CONFIG_MESSAGE    *sendMessage,*recvMessage;
+    recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
+
+    if (recvMessage->paramData[0] == 0 && recvMessage->paramData[1] == 0)
+    {
+        /*enter debug mode */
+        if (!eventFlag)
+        {
+            stWirelessConfigChange.configClass  = WIRELESS_DEBUG_CHANGE;
+            stWirelessConfigChange.configItem   = 0;
+            stWirelessConfigChange.configValue  = 0;  /*0:enter debug mode 1: exit debug mode*/
+            SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&stWirelessConfigChange);
+            eventFlag = 1;
+        }
+        WITELESS_GetOSDInfo();
+        inDebugFlag = g_stWirelessInfoSend.in_debug;
+
+    }
+    else if (recvMessage->paramData[0] != 0 && recvMessage->paramData[1] == 0)
+    {
+        /*exit debug mode */
+        if (eventFlag)
+        {
+            stWirelessConfigChange.configClass  = WIRELESS_DEBUG_CHANGE;
+            stWirelessConfigChange.configItem   = 0;
+            stWirelessConfigChange.configValue  = 1;  /*0:enter debug mode 1: exit debug mode*/
+            SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&stWirelessConfigChange);
+            eventFlag = 0;
+        }
+
+        WITELESS_GetOSDInfo();
+        inDebugFlag = g_stWirelessInfoSend.in_debug;
+    }
+    
+    /*send to PC*/
+
+    recvMessage->paramData[1] = inDebugFlag;
+    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)recvMessage, sizeof(recvMessage), HID_EPIN_CTRL_ADDR))
+    {
+        dlog_error("send fail!\n");
+    }
+    
+}
+
+void WIRELESS_INTERFACE_LOAD_SKY_REG_TABLE_Handler(void *param)
+{
+    dlog_info("WIRELESS_INTERFACE_LOAD_SKY_REG_TABLE_Handler\n");
+}
+void WIRELESS_INTERFACE_LOAD_GRD_REG_TABLE_Handler(void *param)
+{
+    dlog_info("WIRELESS_INTERFACE_LOAD_GRD_REG_TABLE_Handler\n");
+}
+void WIRELESS_INTERFACE_SWITCH_BB_POWER_Handler(void *param)
+{
+    dlog_info("WIRELESS_INTERFACE_SWITCH_BB_POWER_Handler\n");
+}
+void WIRELESS_INTERFACE_SKY_ONLY_RX_Handler(void *param)
+{
+    dlog_info("WIRELESS_INTERFACE_SKY_ONLY_RX_Handler\n");
+}
+void WIRELESS_INTERFACE_SWITCH_RF_PWR_0_Handler(void *param)
+{
+    dlog_info("WIRELESS_INTERFACE_SWITCH_RF_PWR_0_Handler\n");
+}
+void WIRELESS_INTERFACE_SWITCH_RF_PWR_1_Handler(void *param)
+{
+    dlog_info("WIRELESS_INTERFACE_SWITCH_RF_PWR_1_Handler\n");
+}
+void WIRELESS_INTERFACE_EXT_ONEKEY_IT_Handler(void *param)
+{
+    dlog_info("WIRELESS_INTERFACE_EXT_ONEKEY_IT_Handler\n");
+}
+void WIRELESS_INTERFACE_SWITCH_IT_CHAN_Handler(void *param)
+{
+    dlog_info("WIRELESS_INTERFACE_SWITCH_IT_CHAN_Handler\n");
+}
+void WIRELESS_INTERFACE_SWITCH_RMT_CHAN_Handler(void *param)
+{
+    dlog_info("WIRELESS_INTERFACE_SWITCH_RMT_CHAN_Handler\n");
+}
+void WIRELESS_INTERFACE_SET_PWR_CAL_0_Handler(void *param)
+{
+    dlog_info("WIRELESS_INTERFACE_SET_PWR_CAL_0_Handler\n");
+}
+void WIRELESS_INTERFACE_SET_PWR_CAL_1_Handler(void *param)
+{
+    dlog_info("WIRELESS_INTERFACE_SET_PWR_CAL_1_Handler\n");
+}
+void WIRELESS_INTERFACE_RST_MCU_Handler(void *param)
+{
+    dlog_info("WIRELESS_INTERFACE_RST_MCU_Handler\n");
+}
+void WIRELESS_INTERFACE_RF_PWR_AUTO_Handler(void *param)
+{
+    dlog_info("WIRELESS_INTERFACE_RF_PWR_AUTO_Handler\n");
+}
 
 void PAD_FREQUENCY_BAND_WIDTH_SELECT_Handler(void *param)
 {	
@@ -403,10 +563,12 @@ void PAD_ENCODER_DYNAMIC_BITRATE_SELECT_Handler(void *param)
 }
 
 
-void PAD_WIRELESS_INFO_DISPLAY_Handler(void *param)
+void PAD_WIRELESS_OSD_DISPLAY_Handler(void *param)
 {
-    dlog_info("PAD_WIRELESS_INFO_DISPLAY_Handler\n");
-    WIRELESS_SendDisplayInfo();
+    ENUM_WIRELESS_TOOL toolToHost = MCU_TO_PAD;
+    dlog_info("PAD_WIRELESS_OSD_DISPLAY_Handler\n");
+    WITELESS_GetOSDInfo();
+    WIRELESS_SendOSDInfo(toolToHost);
 }
 
 
@@ -422,7 +584,6 @@ void WIRELESS_ParseParamConfig(void *param)
     }
 
 	pstWirelessParamConfig          = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
-
     messageId                       = pstWirelessParamConfig->messageId;
 
     if (messageId >= PAD_WIRELESS_INTERFACE_PID_NUM)
@@ -430,8 +591,6 @@ void WIRELESS_ParseParamConfig(void *param)
         dlog_error("no this message\n");
         return;
     }
-
-    dlog_info("WIRELESS_ParseParamConfig, handler: 0x%08x\n", g_stWirelessMsgHandler[messageId]);
 
     (g_stWirelessMsgHandler[messageId])(param);
 
