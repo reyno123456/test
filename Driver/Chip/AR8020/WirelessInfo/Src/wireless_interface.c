@@ -3,8 +3,9 @@
 #include "usbd_hid.h"
 #include "debuglog.h"
 #include "bb_ctrl_proxy.h"
+#include "bb_spi.h"
 #include "sys_event.h"
-#include "BB_spi.h"
+
 
 STRU_WIRELESS_INFO_DISPLAY             *g_pstWirelessInfoDisplay;        //OSD Info in SRAM
 STRU_WIRELESS_INFO_DISPLAY              g_stWirelessInfoSend;            //send OSD to PAD or PC
@@ -260,6 +261,7 @@ void WIRELESS_INTERFACE_OSD_DISPLAY_Handler(void *param)
     ENUM_WIRELESS_TOOL toolToHost = MCU_TO_PC;
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
     recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
+
     WITELESS_GetOSDInfo();
     WIRELESS_SendOSDInfo(toolToHost);
 }

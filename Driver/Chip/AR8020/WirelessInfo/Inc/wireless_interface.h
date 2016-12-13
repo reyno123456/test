@@ -138,52 +138,12 @@ typedef struct
     uint8_t         reserved;
 } STRU_WIRELESS_INFO_DISPLAY;
 
-typedef enum
-{
-    WIRELESS_FREQ_CHANGE,
-    WIRELESS_MCS_CHANGE,
-    WIRELESS_ENCODER_CHANGE,
-    WIRELESS_DEBUG_CHANGE
-} ENUM_WIRELESS_CONFIG_CHANGE;
-
-
-typedef enum
-{
-    FREQ_BAND_WIDTH_SELECT,
-    FREQ_BAND_SELECT,
-    FREQ_BAND_MODE,
-    FREQ_CHANNEL_MODE,
-    FREQ_CHANNEL_SELECT
-} ENUM_WIRELESS_FREQ_CHANGE_ITEM;
-
-
-typedef enum
-{
-    MCS_MODE_SELECT,
-    MCS_MODULATION_SELECT,
-    MCS_CODE_RATE_SELECT
-} ENUM_WIRELESS_MCS_CHANGE_ITEM;
-
-
-typedef enum
-{
-    ENCODER_DYNAMIC_BIT_RATE_MODE,
-    ENCODER_DYNAMIC_BIT_RATE_SELECT
-} ENUM_WIRELESS_ENCODER_CHANGE_ITEM;
-
-
 typedef enum 
 {
     MCU_TO_PC,
     MCU_TO_PAD
 } ENUM_WIRELESS_TOOL;
 
-typedef struct
-{
-    uint8_t                 configClass;
-    uint8_t                 configItem;
-    uint32_t                configValue;
-} STRU_WIRELESS_CONFIG_CHANGE;
 
 typedef struct
 {
