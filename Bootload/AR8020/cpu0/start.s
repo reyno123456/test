@@ -11,6 +11,7 @@
 
 .equ  ITCM0,   0x00000000
 .equ  DTCM0,   0x20000000
+.equ  Local_CPUID, 0x0
 
 .syntax unified
 .cpu cortex-m7
@@ -196,6 +197,7 @@ vectors:
   .word     IRQHandler_96
   .word     IRQHandler_97
   .word     IRQHandler_98
+  .word     Local_CPUID
   
 /*******************************************************************************
 *
