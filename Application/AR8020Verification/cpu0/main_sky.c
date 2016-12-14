@@ -91,7 +91,7 @@ int main(void)
     ADV_7611_Initial(1);
 
     /* Create Main Task */
-    osThreadDef(USBHMAIN_Task, USBH_MainTask, osPriorityNormal, 0, 4 * 128);
+    osThreadDef(USBHMAIN_Task, USBH_MainTask, osPriorityBelowNormal, 0, 4 * 128);
     osThreadCreate(osThread(USBHMAIN_Task), NULL);
 
     osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 4 * 128);

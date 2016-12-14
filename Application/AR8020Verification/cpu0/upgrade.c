@@ -164,7 +164,7 @@ void UPGRADE_Upgrade(void const *argument)
     #if 1
     MD5Init(&md5);
     u32_bytesRead = RDWR_SECTOR_SIZE;
-    fileResult = f_open(&MyFile,"appg.bin" , FA_READ);
+    fileResult = f_open(&MyFile,argument , FA_READ);
     if (FR_OK != fileResult)
     {
         printf("open or create file error: %d\n", fileResult);

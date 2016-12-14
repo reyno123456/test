@@ -88,7 +88,7 @@ int main(void)
 
     SysTicks_Init(200000);
 
-    osThreadDef(USBDMAIN_Task, USBD_MainTask, osPriorityNormal, 0, 8 * 128);
+    osThreadDef(USBDMAIN_Task, USBD_MainTask, osPriorityBelowNormal, 0, 8 * 128);
     osThreadCreate(osThread(USBDMAIN_Task), NULL);
 
     osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 8 * 128);
