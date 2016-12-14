@@ -7,6 +7,8 @@
 #include "cmsis_os.h"
 #include "test_sram.h"
 #include "test_usbh.h"
+#include "sys_event.h"
+#include "sram.h"
 
 USBD_HandleTypeDef          USBD_Device;
 osMessageQId                USBD_AppEvent;
@@ -16,6 +18,8 @@ osMessageQId                USBD_AppEvent;
 void USBD_ApplicationInit(void)
 {
     reg_IrqHandle(OTG_INTR0_VECTOR_NUM, USB_LL_OTG0_IRQHandler);
+
+    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USB_PLUG_OUT, USBD_RestartUSBDevice);
 
     USBD_Init(&USBD_Device, &HID_Desc, 0);
 
@@ -74,5 +78,25 @@ void USBD_MainTask(void const *argument)
         }
     }
 }
+
+
+void USBD_RestartUSBDevice(void * p)
+{
+    dlog_info("restart USB Device");
+
+    USBD_LL_Init(&USBD_Device);
+    HAL_PCD_Start(USBD_Device.pData);
+
+    if (1 == sramReady0)
+    {
+        SRAM_Ready0Confirm();
+    }
+    
+    if (1 == sramReady1)
+    {
+        SRAM_Ready1Confirm();
+    }
+}
+
 
 

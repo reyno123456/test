@@ -76,9 +76,9 @@
 #include "stm32f7xx_hal_conf.h"
 #include "usbd_def.h"
 #include "debuglog.h"
-#include "sram.h"
 #include "usbd_core.h"
 #include "interrupt.h"
+#include "sys_event.h"
 
 /** @addtogroup STM32F7xx_HAL_Driver
   * @{
@@ -511,21 +511,11 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
         ||(USBD_STATE_CONFIGURED == USBD_Device.dev_state))
       {
           dlog_info("restart usb\n");
-          USBD_LL_Init(&USBD_Device);
-          HAL_PCD_Start(USBD_Device.pData);
-      }
 
-      if (1 == sramReady0)
-      {
-          SRAM_Ready0Confirm();
-      }
-
-      if (1 == sramReady1)
-      {
-          SRAM_Ready1Confirm();
+          SYS_EVENT_Notify_From_ISR(SYS_EVENT_ID_USB_PLUG_OUT, NULL);
       }
     }
-    
+
     /* Handle LPM Interrupt */ 
     if(__HAL_PCD_GET_FLAG(hpcd, USB_OTG_GINTSTS_LPMINT))
     {

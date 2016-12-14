@@ -14,6 +14,7 @@ typedef enum
 
 void USBD_ApplicationInit(void);
 void USBD_MainTask(void const *argument);
+void USBD_RestartUSBDevice(void * p);
 
 
 extern osMessageQId     USBD_AppEvent;
