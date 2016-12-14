@@ -74,6 +74,8 @@
 #define ENCODER_BRC_CHAGE_0	((uint8_t)0x70)
 #define ENCODER_BRC_CHAGE_1	((uint8_t)0x71)
 
+#define NTF_TEST_MODE_0		((uint8_t)0x72)
+#define NTF_TEST_MODE_1		((uint8_t)0x73)
 
 
 #define CALI_0_1     ((uint8_t)(0xD0+0x00))/* page 0 0xD0+0x00

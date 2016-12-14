@@ -29,7 +29,15 @@ static init_timer_st init_timer0_0;
 static init_timer_st init_timer0_1;
 static uint8_t Timer1_Delay1_Cnt = 0;
 static uint8_t snr_static_count = SNR_STATIC_START_VALUE;
+static DebugMode g_stGrdDebugMode = 
+{
+	.u8_enterDebugModeCnt 	= 0,
+	.bl_enterDebugModeFlag 	= 0,
+	.bl_isDebugMode 		= 0,
+};
 
+static void grd_enter_debug_mode(void);
+static void grd_handle_debug_mode_cmd(uint8_t flag);
 void BB_GRD_start(void)
 {
     context.dev_state = INIT_DATA;
@@ -459,8 +467,25 @@ void grd_qam_change_judge(void)
 void wimax_vsoc_tx_isr(void)
 {
     INTR_NVIC_DisableIRQ(BB_TX_ENABLE_VECTOR_NUM);
-    TIM_StartTimer(init_timer0_0);
-    INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
+    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(OSD_STATUS_SHM_ADDR);
+    grd_enter_debug_mode();
+    
+    if(1 == (g_stGrdDebugMode.bl_isDebugMode))
+    {   
+        //grd_get_osd_info();
+		osdptr->in_debug = (uint8_t)(g_stGrdDebugMode.bl_isDebugMode);
+		//Disable TIM0 intr
+    	INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
+    	TIM_StopTimer(init_timer0_0);
+		dlog_info("enter debug mode");
+	}
+	else
+    {
+        TIM_StartTimer(init_timer0_0);
+        INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
+       // osdptr->in_debug = (uint8_t)0;
+    }
+	//command_TestGpioNormal2(64,(wimax_cnt++)%2);	
 }
 
 void Grd_TIM0_IRQHandler(void)
@@ -801,7 +826,22 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 dlog_error("%s\r\n", "unknown WIRELESS_ENCODER_CHANGE command");
                 break;                
         }
-    }    
+    } 
+	
+	//dlog_info("class:%d item:%d value:%d\n",class,item,value);
+	if(class == WIRELESS_DEBUG_CHANGE)
+    {
+        switch(item)
+        {
+            case 0:
+                grd_handle_debug_mode_cmd( (uint8_t)value);
+                break;
+
+            default:
+                dlog_error("%s\r\n", "unknown WIRELESS_DEBUG_CHANGE command");
+                break;                
+        }
+    }   
 }
 
 
@@ -868,3 +908,60 @@ static void BB_grd_GatherOSDInfo(void)
     }
 }
 
+/*
+  * flag:enter/out debug mode flag
+ */
+static void grd_handle_debug_mode_cmd(uint8_t flag)
+{
+	if(!flag)//enter debug mode
+	{
+		//notification sky enter/out debug mode
+		BB_WriteReg(PAGE2, NTF_TEST_MODE_0, flag);
+		BB_WriteReg(PAGE2, NTF_TEST_MODE_1, flag+1);
+		//command_TestGpioNormal2(64,1);	
+		if(0 == (g_stGrdDebugMode.bl_isDebugMode))
+		{
+			g_stGrdDebugMode.u8_enterDebugModeCnt = 0;
+			//start cnt
+			g_stGrdDebugMode.bl_enterDebugModeFlag = 1;
+			dlog_info("g_stGrdDebugMode.bl_enterDebugModeFlag = 1");
+		}
+		else
+		{
+			//already debug mode,do nothing.	
+		}
+	}
+	else	//out debug mode
+	{
+		g_stGrdDebugMode.u8_enterDebugModeCnt = 0;
+		g_stGrdDebugMode.bl_enterDebugModeFlag = 0;
+		g_stGrdDebugMode.bl_isDebugMode	= 0;
+	}
+	
+   
+   	dlog_info("flag =%d\r\n", flag);    
+}
+
+static void grd_enter_debug_mode(void)
+{
+	if(1 == (g_stGrdDebugMode.bl_enterDebugModeFlag))
+	{
+		if((g_stGrdDebugMode.u8_enterDebugModeCnt) < 30)	
+		{
+			(g_stGrdDebugMode.u8_enterDebugModeCnt) += 1;
+			//dlog_info("Cnt:%d",g_stGrdDebugMode.u8_enterDebugModeCnt);	
+		}
+		else
+		{
+			g_stGrdDebugMode.u8_enterDebugModeCnt = 0;
+			g_stGrdDebugMode.bl_enterDebugModeFlag = 0;
+			//now grd really enter test mode
+			g_stGrdDebugMode.bl_isDebugMode	= 1;
+			dlog_info("g_stGrdDebugMode.bl_isDebugMode	= 1");	
+		}
+	}
+	else
+	{
+		//do nothing
+	}	
+}

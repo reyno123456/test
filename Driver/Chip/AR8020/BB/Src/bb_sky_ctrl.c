@@ -31,6 +31,13 @@ typedef struct
     uint8_t count;
 }SEARCH_IDS_LIST;
 
+static DebugMode g_stSkyDebugMode = 
+{
+	.u8_enterDebugModeCnt 	= 0,
+	.bl_enterDebugModeFlag 	= 0,
+	.bl_isDebugMode 		= 0,
+};
+
 static SEARCH_IDS_LIST search_id_list;
 static uint32_t start_time_cnt = 0;
 static uint8_t  sky_rc_channel = 0;
@@ -45,6 +52,10 @@ static int sky_timer0_0_running = 0;
 static int sky_timer0_1_running = 0;
 static int switch_5G_count = 0;
 
+static void sky_handle_debug_mode_cmd_spi(void);
+static void sky_handle_debug_mode_cmd_event(uint8_t value);
+static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd);
+static void sky_handle_all_cmds(void);
 
 void BB_SKY_start(void)
 {   
@@ -153,8 +164,20 @@ void sky_auto_adjust_agc_gain(void)
 void wimax_vsoc_rx_isr()
 {
     INTR_NVIC_DisableIRQ(BB_RX_ENABLE_VECTOR_NUM);   
-    INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
-    TIM_StartTimer(sky_timer0_0);
+	
+	if(1 == (g_stSkyDebugMode.bl_isDebugMode))
+	{
+		dlog_info("enter debug mode");	
+    	INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
+    	TIM_StopTimer(sky_timer0_0);
+	}
+	else
+	{
+    	INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
+    	TIM_StartTimer(sky_timer0_0);
+	}
+	sky_handle_all_cmds();
+	//command_TestGpioNormal2(64,(wimax_cnt++)%2);	
 }
 
 
@@ -417,7 +440,13 @@ void sky_search_id_timeout(void)
 void Sky_TIM1_IRQHandler(void)
 {
     static int Timer1_Delay2_Cnt = 0;    
-    sky_timer0_1_running = 1; 
+
+	if(1 == (g_stSkyDebugMode.bl_isDebugMode)) 
+	{
+		return;
+	}  
+ 
+	sky_timer0_1_running = 1; 
 
     dlog_info("sky_search_id_timeout_irq_enable \r\n");
     INTR_NVIC_ClearPendingIRQ(TIMER_INTR01_VECTOR_NUM);
@@ -599,6 +628,56 @@ static void sky_handle_test_mode_cmd(uint8_t flag)
     //do INTR. tasks.
 }
 
+static void sky_handle_debug_mode_cmd_spi(void)
+{
+    uint8_t data0 = BB_ReadReg(PAGE2, NTF_TEST_MODE_0);
+    uint8_t data1 = BB_ReadReg(PAGE2, NTF_TEST_MODE_1);
+
+	//dlog_info("data0:%d data1:%d",data0,data1);
+    
+	if((data0+1 == data1) && (0 == data0))//enter test mode
+    {
+		if(1 != (g_stSkyDebugMode.bl_isDebugMode))
+		{
+			g_stSkyDebugMode.bl_isDebugMode = 1;
+			dlog_info("g_stSkyDebugMode.bl_isDebugMode = 1");
+			//command_TestGpioNormal2(64,1);	
+		}
+    }
+    else if((data0+1 == data1) && (0 != data0))//out test mode
+    {
+		if(0 != (g_stSkyDebugMode.bl_isDebugMode))
+		{
+			g_stSkyDebugMode.bl_isDebugMode = 0;
+			dlog_info("g_stSkyDebugMode.bl_isDebugMode = 0");
+		}
+    }
+	else
+	{
+		;
+	}
+}
+
+static void sky_handle_debug_mode_cmd_event(uint8_t value)
+{
+	if(0 != value)//enter test mode
+    {
+		if(1 != (g_stSkyDebugMode.bl_isDebugMode))
+		{
+			g_stSkyDebugMode.bl_isDebugMode = 1;
+			dlog_info("g_stSkyDebugMode.bl_isDebugMode = 1");
+			//command_TestGpioNormal2(64,1);	
+		}
+    }
+    else//out test mode
+    {
+		if(0 != (g_stSkyDebugMode.bl_isDebugMode))
+		{
+			g_stSkyDebugMode.bl_isDebugMode = 0;
+			dlog_info("g_stSkyDebugMode.bl_isDebugMode = 0");
+		}
+    }
+}
 
 void sky_handle_all_spi_cmds(void)
 {
@@ -613,4 +692,39 @@ void sky_handle_all_spi_cmds(void)
     sky_handle_brc_bitrate_cmd();
     
     sky_handle_RF_band_cmd();
+	sky_handle_debug_mode_cmd_spi();
+}
+
+static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
+{
+    uint8_t class = pcmd->configClass;
+    uint8_t item  = pcmd->configItem;
+    uint8_t value = pcmd->configValue;
+
+    dlog_info("class item value %d %d %d \r\n", class, item, value);
+    	if(class == WIRELESS_DEBUG_CHANGE)
+    {
+        switch(item)
+        {
+            case 0:
+                sky_handle_debug_mode_cmd_event(value);
+                break;
+
+            default:
+                dlog_error("%s\r\n", "unknown WIRELESS_DEBUG_CHANGE command");
+                break;                
+        }
+    }   
+}
+
+
+static void sky_handle_all_cmds(void)
+{   
+    int ret = 0;
+    int cnt = 0;
+    STRU_WIRELESS_CONFIG_CHANGE cfg;
+    while( (cnt++ < 5) && (1 == BB_GetCmd(&cfg)))
+    {
+        sky_handle_one_cmd( &cfg );
+    }
 }

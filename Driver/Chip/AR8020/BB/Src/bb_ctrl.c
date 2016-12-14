@@ -83,6 +83,8 @@ const STRU_FRQ_CHANNEL It_5G_frq[MAX_5G_RC_FRQ_SIZE] = {     //5G
     {0x00,0x00,0x00,0x61 }, {0x00,0x00,0x00,0x62 },
 };
 
+
+
 static int BB_RF_start_cali();
 /*
   * cali_reg: Store the calibration registers value
