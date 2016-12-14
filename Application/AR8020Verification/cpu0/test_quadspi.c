@@ -7,8 +7,13 @@
 #include "test_quadspi.h"
 #include "debuglog.h"
 #include "stm32f746xx.h"
-
+#include "memory_config.h"
 #define TEST_FLASH_START_ADDR 0x10000000
+void Reg_Write323(uint32_t regAddr, uint32_t regData)
+{
+    volatile uint32_t* ptr_regAddr = (uint32_t*)regAddr;
+    *ptr_regAddr = regData;
+}
 
 void command_setQuadSPISpeed(char* speed_str)
 {
@@ -154,6 +159,7 @@ void command_writeWinbondNorFlash(char* start_addr_str, char* size_str, char* va
     for (i = 0; i < size; i++)
     {
         QUAD_SPI_WriteByte(start_addr++, val++);
+        dlog_info("%x, %x", val, start_addr);
     }
 
     QUAD_SPI_CheckBusy();
@@ -188,9 +194,8 @@ void command_testAllNorFlashOperations(char* start_addr_str, char* size_str, cha
     unsigned char val = strtoul(val_str, NULL, 0);
     uint32_t start_addr = strtoul(start_addr_str, NULL, 0);
     uint32_t size = strtoul(size_str, NULL, 0);
-
-    uint8_t* buf = malloc(size);
-    if (buf)
+    uint8_t buf[10]={0};
+    /*uint8_t* buf = malloc(size);*/
     {
         uint32_t i = 0;
         for(i = 0; i < size; i++)
@@ -198,11 +203,6 @@ void command_testAllNorFlashOperations(char* start_addr_str, char* size_str, cha
             buf[i] = val + i;
         }
     }
-    else
-    {
-        dlog_error("malloc error!");
-    }
-
     dlog_info("Nor flash init start ...");
     NOR_FLASH_Init();
     dlog_info("Nor flash init end");
@@ -216,10 +216,9 @@ void command_testAllNorFlashOperations(char* start_addr_str, char* size_str, cha
     dlog_info("Nor flash read end");
 
     dlog_info("Nor flash write start ...");
-    if (buf)
-    {
-        NOR_FLASH_WriteByteBuffer(start_addr, buf, size);
-    }
+
+    NOR_FLASH_WriteByteBuffer(start_addr, buf, size);
+
     dlog_info("Nor flash write end");
 
     dlog_info("Nor flash read start ...");
@@ -230,40 +229,32 @@ void command_testAllNorFlashOperations(char* start_addr_str, char* size_str, cha
     NOR_FLASH_EraseSector(start_addr);
     dlog_info("Nor flash sector erase end");
 
+    #if 1
+    dlog_info("nor falsh quad !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    Reg_Write323(HP_SPI_BASE_ADDR + CMD17,   0x0);
+    Reg_Write323(HP_SPI_BASE_ADDR + CMD4,   0x00700600);
+    //Reg_Write323(HP_SPI_BASE_ADDR + INSTRUCT_50_ADDR, 0x0);
+    //Reg_Write323(HP_SPI_BASE_ADDR + INSTRUCT_01_ADDR, 0x00700600);
+    
+    //update the quad read instr
+    Reg_Write323(HP_SPI_BASE_ADDR + HP_SPI_RD_HW_REG, 0x00011dac);//value=0x091fac
+    Reg_Write323(HP_SPI_BASE_ADDR + HP_SPI_RD_LW_REG, 0x003c1f17);//value=0x71c1f17
+    //update enable
+    Reg_Write323(HP_SPI_BASE_ADDR + HP_SPI_UPDATE_RD_REG , 0x0);
+    #endif
     dlog_info("Nor flash read start ...");
     command_readWinbondNorFlash(start_addr_str, size_str);
     dlog_info("Nor flash read end");
 
     dlog_info("Nor flash write start ...");
-    if (buf)
-    {
+
         NOR_FLASH_WriteByteBuffer(start_addr, buf, size);
-    }
+
     dlog_info("Nor flash write end");
 
     dlog_info("Nor flash read start ...");
     command_readWinbondNorFlash(start_addr_str, size_str);
     dlog_info("Nor flash read end");
-
-    dlog_info("Nor flash block erase start ...");
-    NOR_FLASH_EraseBlock(start_addr);
-    dlog_info("Nor flash block erase end");    
-
-    dlog_info("Nor flash read start ...");
-    command_readWinbondNorFlash(start_addr_str, size_str);
-    dlog_info("Nor flash read end");
-
-    dlog_info("Nor flash write start ...");
-    if (buf)
-    {
-        NOR_FLASH_WriteByteBuffer(start_addr, buf, size);
-    }
-    dlog_info("Nor flash write end");
-
-    dlog_info("Nor flash read start ...");
-    command_readWinbondNorFlash(start_addr_str, size_str);
-    dlog_info("Nor flash read end");
-
 #if 0
     dlog_info("Nor flash chip erase start ...");
     NOR_FLASH_EraseChip();
@@ -274,11 +265,6 @@ void command_testAllNorFlashOperations(char* start_addr_str, char* size_str, cha
     dlog_info("Nor flash read end");
 #endif
 
-    if (buf)
-    {
-        free(buf);
-        buf = 0;
-    }
 
     dlog_info("test finished!");
 }

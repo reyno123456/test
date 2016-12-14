@@ -8,12 +8,76 @@
 #include "upgrade.h"
 #include "serial.h"
 #include "test_usbh.h"
+#include "md5.h"
 #include "systicks.h"
 #include "bb_ctrl_proxy.h"
+
 static uint8_t g_u8arrayRecData[RDWR_SECTOR_SIZE]={0};
+
 USBH_HandleTypeDef              hUSBHost;
 USBH_BypassVideoCtrl            g_usbhBypassVideoCtrl;
 USBH_AppCtrl                    g_usbhAppCtrl;
+
+static uint8_t  g_u8upgradeFlage;
+static uint8_t  g_u8Amd5Sum[16];
+static uint32_t g_u32address=0;
+static uint32_t   g_u32recDataSum = 0;
+
+#define READ_DATA_SIZE  1024*4  
+#define MD5_SIZE        16  
+
+static uint8_t UPGRADE_MD5SUM(void)
+{
+    uint32_t i=0;
+    uint32_t u32_RecCountTmp = g_u32recDataSum-34;
+    uint32_t u32_AddressTmp  = g_u32address+34;
+    uint32_t u32_Count=0;
+    uint8_t  md5_value[MD5_SIZE];
+//    uint8_t    *p8_data = (uint8_t *)(g_u32address+34);
+    MD5_CTX md5;
+    MD5Init(&md5);
+
+    for(i=0;i<((u32_RecCountTmp)/RDWR_SECTOR_SIZE);i++)
+    {
+        NOR_FLASH_ReadByteBuffer((u32_AddressTmp+RDWR_SECTOR_SIZE*i),g_u8arrayRecData,RDWR_SECTOR_SIZE);
+        MD5Update(&md5, g_u8arrayRecData, RDWR_SECTOR_SIZE);        
+        u32_Count+=RDWR_SECTOR_SIZE;
+    }
+    if(0 != ((u32_RecCountTmp)%RDWR_SECTOR_SIZE))
+    {
+        NOR_FLASH_ReadByteBuffer((u32_AddressTmp+RDWR_SECTOR_SIZE*i),g_u8arrayRecData,(u32_RecCountTmp%RDWR_SECTOR_SIZE));
+        MD5Update(&md5, g_u8arrayRecData, (u32_RecCountTmp%RDWR_SECTOR_SIZE));
+        u32_Count+=(u32_RecCountTmp%RDWR_SECTOR_SIZE);
+    }
+    MD5Final(&md5, md5_value);
+    for(i=0;i<16;i++)
+    {
+        if(md5_value[i] != g_u8Amd5Sum[i])
+        {
+            printf("nor flash checksum .........fail\n");
+            return -1;
+            vTaskDelete(NULL);
+        }
+    }
+    printf("nor flash checksum .........ok\n"); 
+    return 0;
+}
+
+static void BOOT_PrintInfo(uint32_t u32_addr)
+{
+    uint8_t* p8_infoAddr = (uint8_t*)(u32_addr);
+    uint8_t i=0;
+    printf("Created:%02x%02x %02x %02x %02x:%02x:%02x\n",*(p8_infoAddr+1),*(p8_infoAddr+2),*(p8_infoAddr+3),*(p8_infoAddr+4)\
+                                                        ,*(p8_infoAddr+5),*(p8_infoAddr+6),*(p8_infoAddr+7));
+    printf("load address:0x%02x%02x%02x%02x\n",*(p8_infoAddr+8),*(p8_infoAddr+9),*(p8_infoAddr+10),*(p8_infoAddr+11));
+    printf("Version:%02x.%02x\n",*(p8_infoAddr+12),*(p8_infoAddr+13));
+    printf("Data size:%x\n",GET_WORD_FROM_ANY_ADDR(p8_infoAddr+14));
+    for(i=0;i<16;i++)
+    {
+        g_u8Amd5Sum[i]=*(p8_infoAddr+18+i);
+    }
+}
+
 
 
 static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
@@ -52,68 +116,138 @@ static void UPGRADE_HApplicationInit(void)
     return;
 }
 
+static void UPGRADE_ModifyBootInfo()
+{
+    uint8_t i=0;
+    Boot_Info st_bootInfo;
+    memset(&st_bootInfo,0xff,sizeof(st_bootInfo)); 
+    NOR_FLASH_ReadByteBuffer(0x1000,(uint8_t *)(&st_bootInfo),sizeof(st_bootInfo));
+    NOR_FLASH_EraseSector(0x1000);
+    
+   
+    st_bootInfo.apploadaddress=g_u32address + 0x10000000;
+    
+    NOR_FLASH_WriteByteBuffer(0x1000,(uint8_t *)(&st_bootInfo),sizeof(st_bootInfo)); 
+}
+
 void UPGRADE_Upgrade(void const *argument)
 {
 
     FRESULT    fileResult;
     FIL        MyFile;
     uint32_t   u32_bytesRead= RDWR_SECTOR_SIZE;
-    uint32_t   u32_recDataSum = 0;
+    uint32_t   u32_recDataSumTmp =0;
     uint32_t   u32_norAddr = 0x20000;
+    uint32_t   i;  
+    uint8_t    md5_value[MD5_SIZE];  
+    MD5_CTX md5;
+    g_u8upgradeFlage =0;
 
+    
     if(SFR_TRX_MODE_GROUND == BB_GetBoardMODE())
     {
         UPGRADE_HApplicationInit();
         USBH_MountUSBDisk();
     }
-    
 
-    printf("Nor flash init start ... \n");
+    printf("Nor flash init start ... \r\n");
     NOR_FLASH_Init();
-    printf("Nor flash init end   ...\n");
+    printf("Nor flash init end   ...\r\n");
     dlog_output(100);
     SysTicks_DelayMS(500);
     while(APPLICATION_READY != g_usbhAppCtrl.usbhAppState)
     {
-        printf("find mass storage\n");    
-    }
-    dlog_output(100);
-    if (APPLICATION_READY == g_usbhAppCtrl.usbhAppState)
-    {
-        fileResult = f_open(&MyFile,argument , FA_READ);
-        if (FR_OK != fileResult)
-        {
-            printf("open or create file error: %d\n", fileResult);
-            
-            while(1);
-        }          
-        while(RDWR_SECTOR_SIZE == u32_bytesRead)
-        {            
-            memset(g_u8arrayRecData,0,RDWR_SECTOR_SIZE);
-            fileResult = f_read(&MyFile, (void *)g_u8arrayRecData, RDWR_SECTOR_SIZE, (void *)&u32_bytesRead);
-            if((fileResult != FR_OK))
-            {
-                printf("Cannot Read from the file \n");
-                f_close(&MyFile);
-            }
-            NOR_FLASH_EraseSector(u32_norAddr);
-            NOR_FLASH_WriteByteBuffer(u32_norAddr,g_u8arrayRecData,RDWR_SECTOR_SIZE); 
-            printf("f_read success %d %x \n",u32_bytesRead,u32_norAddr);           
-            dlog_output(100);
-            u32_recDataSum+=u32_bytesRead;
-            u32_norAddr += RDWR_SECTOR_SIZE;             
-            //u8_upgradeFlage++;               
-        }
-         
-        f_close(&MyFile);
-        printf("upgrade ok %x\n",u32_recDataSum);
-    }
-    else
-    {
-        printf("don't find usb\n");
+        printf("finding mass storage\r\n");
+        SysTicks_DelayMS(500);    
     }
     
-    dlog_output(100);
-    vTaskDelete(NULL);
-}
+    #if 1
+    MD5Init(&md5);
+    u32_bytesRead = RDWR_SECTOR_SIZE;
+    fileResult = f_open(&MyFile,"appg.bin" , FA_READ);
+    if (FR_OK != fileResult)
+    {
+        printf("open or create file error: %d\n", fileResult);
+        
+        vTaskDelete(NULL);
+    }          
+    while(RDWR_SECTOR_SIZE == u32_bytesRead)
+    {            
+        memset(g_u8arrayRecData,0,RDWR_SECTOR_SIZE);
+        fileResult = f_read(&MyFile, (void *)g_u8arrayRecData, RDWR_SECTOR_SIZE, (void *)&u32_bytesRead);
+        if((fileResult != FR_OK))
+        {
+            printf("Cannot Read from the file \n");
+            f_close(&MyFile);
+            vTaskDelete(NULL);
+        }
+        if(g_u8upgradeFlage!=0)
+        {               
+           MD5Update(&md5, g_u8arrayRecData, u32_bytesRead);
+        }
+        else
+        {                
+            memset(g_u8Amd5Sum,0,16);
+            BOOT_PrintInfo((uint32_t)(&g_u8arrayRecData));
+            u32_norAddr = GET_WORD_BOOT_INOF(&(g_u8arrayRecData[8]));
+            u32_norAddr-=0x10000000;
+            g_u32address = u32_norAddr;
+            MD5Update(&md5, &(g_u8arrayRecData[34]), (u32_bytesRead-34));
+            printf("address %x\n",u32_norAddr);  
+        }
+        printf("checkings file\n");
+        SysTicks_DelayMS(1);
+        g_u32recDataSum+=u32_bytesRead;   
+        g_u8upgradeFlage++;           
+    }
+    MD5Final(&md5, md5_value); 
+    f_close(&MyFile);    
+    for(i=0;i<16;i++)
+    {
+        
+        if(md5_value[i] != g_u8Amd5Sum[i])
+        {
+            printf("checksum .........fail\n");
+            vTaskDelete(NULL);
+        }
+    }
+    printf("file checksum .........ok\n");
+    #endif
+ 
+    u32_bytesRead = RDWR_SECTOR_SIZE;
+    fileResult = f_open(&MyFile,argument , FA_READ);
+    if (FR_OK != fileResult)
+    {
+        printf("open or create file error: %d\n", fileResult);
+        vTaskDelete(NULL);
+    }          
+    while(RDWR_SECTOR_SIZE == u32_bytesRead)
+    {            
+        memset(g_u8arrayRecData,0,RDWR_SECTOR_SIZE);
+        fileResult = f_read(&MyFile, (void *)g_u8arrayRecData, RDWR_SECTOR_SIZE, (void *)&u32_bytesRead);
+        if((fileResult != FR_OK))
+        {
+            printf("Cannot Read from the file \n");
+            f_close(&MyFile);
+        }
+        printf("fread %d\n",u32_bytesRead);
+        NOR_FLASH_EraseSector(u32_norAddr);
+        NOR_FLASH_WriteByteBuffer(u32_norAddr,g_u8arrayRecData,RDWR_SECTOR_SIZE); 
+        printf("write flash %d%%\n",(u32_recDataSumTmp*100/g_u32recDataSum));          
+        u32_recDataSumTmp+=u32_bytesRead; 
+        
+        u32_norAddr += RDWR_SECTOR_SIZE;                      
+    }    
+         
+    f_close(&MyFile);
+    printf("upgrade ok %x\n",g_u32recDataSum);
+    printf("start checksum nor_flash .......\n");
 
+    if(-1 != UPGRADE_MD5SUM())
+    {
+        UPGRADE_ModifyBootInfo();
+    }
+    
+    vTaskDelete(NULL);
+
+}

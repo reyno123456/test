@@ -27,21 +27,17 @@ if [ $# -lt 3 ]; then
 	exit
 fi
 
-while getopts ":i:o:h" OPTION
+while getopts ":i:h" OPTION
 do
 	case $OPTION in
-	i) #"this is the input information"
-		bootload=$2
-		upgrade=$3
-		cpu0=$4
-		cpu1=$5
-		cpu2=$6
-	;;
-	o) #"this is the output information"
-		outputboot=$8
-        outputapp=$9		
-        output=$10
-	;;
+	i) #"this is the input information"		
+        bootimageaddr=$2
+        bootimagemajorversion=$3
+        bootimageminorversion=$4
+        appimageaddr=$5
+        appimagemajorversion=$6
+        appimageminorversion=$7        
+    ;;
 	h) #"this is the help information"
                 helptext
 		exit
@@ -52,11 +48,18 @@ done
 outputtxt=ar8020.bin
 outputboottxt=boot.bin
 outputapptxt=app.bin
-outputboot=$8
-outputapp=$9
-output=$10
+outputtmp=apptmp.bin
+
+
+bootload=../../Output/Staging/Lib/ar8020_boot.bin
+upgrade=../../Output/Staging/Lib/ar8020_upgrade.bin
+cpu0=../../Output/Staging/Lib/ar8020_cpu0.bin
+cpu1=../../Output/Staging/Lib/ar8020_cpu1.bin
+cpu2=../../Output/Staging/Lib/ar8020_cpu2.bin
 
 echo "Making the image package, please wait ..."
+
+imagedate=`date "+%Y%m%d%H%M%S"`
 
 #get the length of bootload/cpu0cpu1/cpu2.txt
 bootloadlength=`stat --format=%s $bootload`
@@ -65,38 +68,104 @@ cpu0length=`stat --format=%s $cpu0`
 cpu1length=`stat --format=%s $cpu1`
 cpu2length=`stat --format=%s $cpu2`
 
-
-
-#add boot.bin
 cat $bootload > $outputtxt
 #add "0" to the 8K offset
 zerolengthboot=$((8192 - $bootloadlength))
 dd if=/dev/zero of=zero.image bs=$zerolengthboot count=1
 cat zero.image >> $outputtxt
+
 #add upgrade.bin
+#add YMD
+echo -n -e \\x0 > $outputboottxt
+echo -n -e \\x0 >> $outputtxt
+for i in {0..6}
+do
+        shiftlen=$[ i * 2 + 1]
+        tmp=`expr substr "$imagedate" $shiftlen 2`
+        echo -n -e \\x$tmp >> $outputtxt
+        echo -n -e \\x$tmp >> $outputboottxt
+done
+#locad addr
+for i in {0..3}
+do
+        shiftlen=$[ i * 2 + 1]
+        tmp=`expr substr "$bootimageaddr" $shiftlen 2`
+        echo -n -e \\x$tmp >> $outputtxt
+        echo -n -e \\x$tmp >> $outputboottxt
+done
+#bootimageversion
+echo -n -e \\x$bootimagemajorversion >> $outputboottxt
+echo -n -e \\x$bootimageminorversion >> $outputboottxt
+echo -n -e \\x$bootimagemajorversion >> $outputtxt
+echo -n -e \\x$bootimageminorversion >> $outputtxt
+
+upgradelengthhead=$((34+$upgradelength))
+#echo $upgradelengthhead
+#image length
+for i in {0..3}
+do
+        shiftlen=$[ i * 8 ]
+        tmp=`echo $upgradelengthhead $shiftlen | awk '{print rshift($1,$2)}'`
+        tmp=`echo $tmp | awk '{print and($1,255)}'`
+        tmphex=$(dec2hex $tmp)
+        echo -n -e \\x$tmphex >> $outputtxt
+        echo -n -e \\x$tmphex >> $outputboottxt
+        #echo -n -e \\x$tmp >> $outtst
+done
+
+md5=`md5sum $upgrade | cut -d ' ' -f 1`
+#echo `md5sum $upgrade | cut -d ' ' -f 1`
+for i in {0..15}
+do
+        shiftlen=$[ i * 2 + 1]
+        tmp=`expr substr "$md5" $shiftlen 2`
+        echo -n -e \\x$tmp >> $outputboottxt
+        echo -n -e \\x$tmp >> $outputtxt
+done
 cat $upgrade >> $outputtxt
+cat $upgrade >> $outputboottxt
 #add "0" to the 128K offset 
-zerolength=$((122880 - $upgradelength))
+zerolength=$((122880 - $upgradelengthhead))
 dd if=/dev/zero of=zero.image bs=$zerolength count=1
 cat zero.image >> $outputtxt
 
-echo -n -e \\x65 >> $outputtxt
-echo -n -e \\x82 >> $outputtxt
-echo -n -e \\x84 >> $outputtxt
-echo -n -e \\x79 >> $outputtxt
-echo -n -e \\x83 >> $outputtxt
-echo -n -e \\x89 >> $outputtxt
-echo -n -e \\x78 >> $outputtxt
-echo -n -e \\x83 >> $outputtxt
+#add app.bin
+echo -n -e \\x0 > $outputapptxt
+echo -n -e \\x0 >> $outputtxt
+for i in {0..6}
+do
+        shiftlen=$[ i * 2 + 1]
+        tmp=`expr substr "$imagedate" $shiftlen 2`
+        echo -n -e \\x$tmp >> $outputtxt
+        echo -n -e \\x$tmp >> $outputapptxt
+done
+#locad addr
+for i in {0..3}
+do
+        shiftlen=$[ i * 2 + 1]
+        tmp=`expr substr "$appimageaddr" $shiftlen 2`
+        echo -n -e \\x$tmp >> $outputtxt
+        echo -n -e \\x$tmp >> $outputapptxt
+done
+#bootimageversion
+echo -n -e \\x$appimagemajorversion >> $outputapptxt
+echo -n -e \\x$appimageminorversion >> $outputapptxt
+echo -n -e \\x$bootimagemajorversion >> $outputtxt
+echo -n -e \\x$bootimageminorversion >> $outputtxt
 
-echo -n -e \\x65 > $outputapptxt
-echo -n -e \\x82 >> $outputapptxt
-echo -n -e \\x84 >> $outputapptxt
-echo -n -e \\x79 >> $outputapptxt
-echo -n -e \\x83 >> $outputapptxt
-echo -n -e \\x89 >> $outputapptxt
-echo -n -e \\x78 >> $outputapptxt
-echo -n -e \\x83 >> $outputapptxt
+applengthhead=$((46+$cpu0length+$cpu1length+$cpu2length))
+#echo $applengthhead
+#image length
+for i in {0..3}
+do
+        shiftlen=$[ i * 8 ]
+        tmp=`echo $applengthhead $shiftlen | awk '{print rshift($1,$2)}'`
+        tmp=`echo $tmp | awk '{print and($1,255)}'`
+        tmphex=$(dec2hex $tmp)
+        echo -n -e \\x$tmphex >> $outputtxt
+        echo -n -e \\x$tmphex >> $outputapptxt
+done
+
 #add size of cpu0 to ar8020.bin
 for i in {0..3}
 do
@@ -104,12 +173,10 @@ do
         tmp=`echo $cpu0length $shiftlen | awk '{print rshift($1,$2)}'`
         tmp=`echo $tmp | awk '{print and($1,255)}'`
         tmphex=$(dec2hex $tmp)
-        echo -n -e \\x$tmphex >> $outputtxt
-        echo -n -e \\x$tmphex >> $outputapptxt
+        echo -n -e \\x$tmphex >> $outputtmp
 done
 #add cpu0.bin to ar8020.bin
-cat $cpu0 >> $outputtxt
-cat $cpu0 >> $outputapptxt
+cat $cpu0 >> $outputtmp
 #add size of cpu1 to ar8020.bin
 for i in {0..3}
 do
@@ -117,12 +184,10 @@ do
         tmp=`echo $cpu1length $shiftlen | awk '{print rshift($1,$2)}'`
         tmp=`echo $tmp | awk '{print and($1,255)}'`
         tmphex=$(dec2hex $tmp)
-        echo -n -e \\x$tmphex >> $outputtxt
-        echo -n -e \\x$tmphex >> $outputapptxt
+        echo -n -e \\x$tmphex >> $outputtmp
 done
 #add cpu1.bin to ar8020.bin
-cat $cpu1 >> $outputtxt
-cat $cpu1 >> $outputapptxt
+cat $cpu1 >> $outputtmp
 #add size of cpu2 to ar8020.bin
 for i in {0..3}
 do
@@ -130,22 +195,22 @@ do
         tmp=`echo $cpu2length $shiftlen | awk '{print rshift($1,$2)}'`
         tmp=`echo $tmp | awk '{print and($1,255)}'`
         tmphex=$(dec2hex $tmp)
-        echo -n -e \\x$tmphex >> $outputtxt
-        echo -n -e \\x$tmphex >> $outputapptxt
+        echo -n -e \\x$tmphex >> $outputtmp
 done
 #add cpu2.bin to ar8020.bin
-cat $cpu2 >> $outputtxt
-cat $cpu2 >> $outputapptxt
+cat $cpu2 >> $outputtmp
 
-
-echo -n -e \\x34 >> $outputapptxt
-echo -n -e \\x45 >> $outputapptxt
-echo -n -e \\x67 >> $outputapptxt
-
-cat $upgrade >> $outputboottxt
-echo -n -e \\x34 >> $outputboottxt
-echo -n -e \\x45 >> $outputboottxt
-echo -n -e \\x67 >> $outputboottxt
-
+md5=`md5sum $outputtmp | cut -d ' ' -f 1`
+#echo `md5sum $outputtmp | cut -d ' ' -f 1`
+for i in {0..15}
+do
+        shiftlen=$[ i * 2 + 1]
+        tmp=`expr substr "$md5" $shiftlen 2`
+        echo -n -e \\x$tmp >> $outputapptxt
+        echo -n -e \\x$tmp >> $outputtxt
+done
+cat $outputtmp >> $outputapptxt
+cat $outputtmp >> $outputtxt
 
 rm zero.image
+rm $outputtmp

@@ -63,6 +63,7 @@ $(TARGET): $(OBJ_C)
 clean:
 	rm -f $(OBJ_C) .depend 
 	rm -f $(TARGET) $(TARGET).elf  $(TARGET).bin  $(TARGET).dis  $(TARGET).mif  $(TARGET).map $(OUTPUT_DIR)/$(TARGET).mif 
+	rm -f $(OUTPUT_LIB_STAGING_DIR)/$(TARGET)
 
 
 .PHONY: all clean $(TARGET)

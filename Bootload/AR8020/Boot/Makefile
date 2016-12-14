@@ -21,7 +21,7 @@ include $(BUILD_DIR)/config.mk
 ###############################################################################
 # libs
 CPU_NUMBER := cpu0
-DEFS +=  -Wall 
+DEFS += -O1  -Wall 
 LDFLAGS += -Bstatic 
 LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) $(LD_LIBS)
              # source file(s), including c file(s)

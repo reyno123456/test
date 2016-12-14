@@ -34,6 +34,7 @@ SRC_C   :=  Src/upgrade_main.c \
 			Src/upgrade_sd.c \
 			Src/upgrade_uart.c \
 			Src/upgrade_core.c \
+			Src/upgrade_md5.c \
 			$(SRC_C_DIR)/SD/Src/sd_core.c \
          	$(SRC_C_DIR)/SD/Src/sd_card.c \
          	$(SRC_C_DIR)/SD/Src/sd_host.c 

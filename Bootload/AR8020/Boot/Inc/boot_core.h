@@ -3,7 +3,7 @@
 
 #define RDWR_SECTOR_SIZE           (1024*4)
 
-#define APPLICATION_IMAGE_START    0x10020008
+#define APPLICATION_IMAGE_START    0x10020000
 #define APP_ADDR_OFFSET            (0x20000)
 
 #define ITCM0_START                0x00000000
@@ -24,13 +24,33 @@
 #define BOOT_ADDR1                 0x10011000
 #define BOOT_SIZE                  (1024*60)
 
+#define IMAGE_HAER_OFSET           0x22
+
+#define DATEY_OFFSET               0x21
+#define DATEm_OFFSET               0x1F
+#define DATEd_OFFSET               0x1E
+#define DATEH_OFFSET               0x1D
+#define DATEM_OFFSET               0x1C
+#define DATES_OFFSET               0x1B
+#define LOCALADDR_OFFSET           0x1A
+#define VERSION_MAJOR_OFFSET       0x16
+#define VERSION_MINOR_OFFSET       0x15
+#define SIZE4_OFFSET               0x14
+#define SIZE3_OFFSET               0x13
+#define SIZE2_OFFSET               0x12
+#define SIZE1_OFFSET               0x11
+
+
 typedef struct
 {
     unsigned char present_boot;
     unsigned char success_boot;
+    unsigned int  bootloadaddress;
+    unsigned int  apploadaddress;
 }Boot_Info;
 
 void BOOT_BootApp(void);
-void BOOT_CopyFromNorToITCM(void);
-void BOOT_StartBoot(uint8_t index);
+void BOOT_CopyFromNorToITCM(unsigned int address);
+void BOOT_StartBoot(uint8_t index,unsigned int address);
+void BOOT_PrintInfo(uint32_t u32_addr);
 #endif
