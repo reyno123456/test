@@ -13,6 +13,7 @@
 #include "test_timer.h"
 #include "test_gpio.h"
 #include "test_i2c_adv7611.h"
+#include "test_simulatepwm.h"
 
 static unsigned char g_commandPos;
 static char g_commandLine[50];

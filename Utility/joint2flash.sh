@@ -9,41 +9,41 @@
 #       vi joint2flash.sh
 #       :set ff=unix and :wq 
 
-function helptext()
-{
-   echo "[Usage:] "$0" -i cpu0.txt cpu1.txt cpu2.txt -o flash.image"
-   exit
-}
+# function helptext()
+# {
+#    echo "[Usage:] "$0" -i cpu0.txt cpu1.txt cpu2.txt -o flash.image"
+#    exit
+# }
 
 function dec2hex()
 {
-	printf "%x" $1
+    printf "%x" $1
 }
 
 
-if [ $# -lt 3 ]; then
-	echo "***Too few parameters***"
-	helptext
-	exit
-fi
+# if [ $# -lt 3 ]; then
+#   echo "***Too few parameters***"
+#   helptext
+#   exit
+# fi
 
-while getopts ":i:h" OPTION
-do
-	case $OPTION in
-	i) #"this is the input information"		
-        bootimageaddr=$2
-        bootimagemajorversion=$3
-        bootimageminorversion=$4
-        appimageaddr=$5
-        appimagemajorversion=$6
-        appimageminorversion=$7        
-    ;;
-	h) #"this is the help information"
-                helptext
-		exit
-	;;
-	esac
-done
+# while getopts ":i:h" OPTION
+# do
+#   case $OPTION in
+#   i) #"this is the input information"     
+#         bootimageaddr=$2
+#         bootimagemajorversion=$3
+#         bootimageminorversion=$4
+#         appimageaddr=$5
+#         appimagemajorversion=$6
+#         appimageminorversion=$7        
+#     ;;
+#   h) #"this is the help information"
+#                 helptext
+#       exit
+#   ;;
+#   esac
+# done
 
 outputtxt=ar8020.bin
 outputboottxt=boot.bin
@@ -56,6 +56,7 @@ upgrade=../../Output/Staging/Lib/ar8020_upgrade.bin
 cpu0=../../Output/Staging/Lib/ar8020_cpu0.bin
 cpu1=../../Output/Staging/Lib/ar8020_cpu1.bin
 cpu2=../../Output/Staging/Lib/ar8020_cpu2.bin
+ve=../../Utility/imageinfo
 
 echo "Making the image package, please wait ..."
 
@@ -85,19 +86,25 @@ do
         echo -n -e \\x$tmp >> $outputtxt
         echo -n -e \\x$tmp >> $outputboottxt
 done
+tmpinfo=`sed -n 1p $ve`
+tmpinfo=${tmpinfo##*:}
+
 #locad addr
 for i in {0..3}
 do
         shiftlen=$[ i * 2 + 1]
-        tmp=`expr substr "$bootimageaddr" $shiftlen 2`
+        tmp=`expr substr "$tmpinfo" $shiftlen 2`
         echo -n -e \\x$tmp >> $outputtxt
         echo -n -e \\x$tmp >> $outputboottxt
 done
+tmpinfo=`sed -n 2p $ve`
+tmpinfo=${tmpinfo##*:}
+
 #bootimageversion
-echo -n -e \\x$bootimagemajorversion >> $outputboottxt
-echo -n -e \\x$bootimageminorversion >> $outputboottxt
-echo -n -e \\x$bootimagemajorversion >> $outputtxt
-echo -n -e \\x$bootimageminorversion >> $outputtxt
+echo -n -e \\x${tmpinfo:0:2} >> $outputboottxt
+echo -n -e \\x${tmpinfo:3:2} >> $outputboottxt
+echo -n -e \\x${tmpinfo:0:2} >> $outputtxt
+echo -n -e \\x${tmpinfo:3:2} >> $outputtxt
 
 upgradelengthhead=$((34+$upgradelength))
 #echo $upgradelengthhead
@@ -140,18 +147,24 @@ do
         echo -n -e \\x$tmp >> $outputapptxt
 done
 #locad addr
+tmpinfo=`sed -n 3p $ve`
+tmpinfo=${tmpinfo##*:}
+
 for i in {0..3}
 do
         shiftlen=$[ i * 2 + 1]
-        tmp=`expr substr "$appimageaddr" $shiftlen 2`
+        tmp=`expr substr "$tmpinfo" $shiftlen 2`
         echo -n -e \\x$tmp >> $outputtxt
         echo -n -e \\x$tmp >> $outputapptxt
 done
+tmpinfo=`sed -n 4p $ve`
+tmpinfo=${tmpinfo##*:}
+
 #bootimageversion
-echo -n -e \\x$appimagemajorversion >> $outputapptxt
-echo -n -e \\x$appimageminorversion >> $outputapptxt
-echo -n -e \\x$bootimagemajorversion >> $outputtxt
-echo -n -e \\x$bootimageminorversion >> $outputtxt
+echo -n -e \\x${tmpinfo:0:2}  >> $outputapptxt
+echo -n -e \\x${tmpinfo:3:2}  >> $outputapptxt
+echo -n -e \\x${tmpinfo:0:2}  >> $outputtxt
+echo -n -e \\x${tmpinfo:3:2}  >> $outputtxt
 
 applengthhead=$((46+$cpu0length+$cpu1length+$cpu2length))
 #echo $applengthhead

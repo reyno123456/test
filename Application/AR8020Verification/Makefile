@@ -39,6 +39,7 @@ ground: APPLICATION_SCENARIO := ground
 ground: all
 
 all: .depend $(TARGET) install
+#all:  install
 
 $(TARGET): $(TARGET_CPU0) $(TARGET_CPU1) $(TARGET_CPU2)
 	@echo $(APPLICATION_SCENARIO) > .APPLICATION_SCENARIO 
@@ -54,8 +55,7 @@ $(TARGET_CPU2):
 
 install:
 	@echo "Creating the flash image..."
-	../../Utility/joint2flash.sh -i 10002000 01 01 10020000 01 01 
-	@#../../Utility/joint2flash.sh -i 10011000 01 01 10030000 01 01 
+	../../Utility/joint2flash.sh  
 	@cp *.bin ../../Output/
 clean:
 	@$(MAKE) -C cpu0 clean APPLICATION_SCENARIO=`cat .APPLICATION_SCENARIO`
