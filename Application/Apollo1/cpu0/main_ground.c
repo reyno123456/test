@@ -11,6 +11,7 @@
 #include "stm32f746xx.h"
 #include "test_usbd.h"
 #include "test_sram.h"
+#include "bb_ctrl_proxy.h"
 
 void *malloc(size_t size)
 {
@@ -67,6 +68,7 @@ static void IO_Task(void const *argument)
   */
 int main(void)
 {
+    BB_SetBoardMODE(SFR_TRX_MODE_GROUND);
     BB_SPI_init();
 
     PLLCTRL_SetCoreClk(CPU0_CPU1_CORE_PLL_CLK, CPU0_ID);
@@ -83,7 +85,7 @@ int main(void)
 
     SysTicks_Init(200000);
 
-    osThreadDef(USBDMAIN_Task, USBD_MainTask, osPriorityNormal, 0, 8 * 128);
+    osThreadDef(USBDMAIN_Task, USBD_MainTask, osPriorityBelowNormal, 0, 8 * 128);
     osThreadCreate(osThread(USBDMAIN_Task), NULL);
 
     osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 8 * 128);

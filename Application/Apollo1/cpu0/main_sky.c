@@ -10,6 +10,7 @@
 #include "adv_7611.h"
 #include "test_usbh.h"
 #include "stm32f746xx.h"
+#include "bb_ctrl_proxy.h"
 
 void *malloc(size_t size)
 {
@@ -65,6 +66,8 @@ static void IO_Task(void const *argument)
   */
 int main(void)
 {
+    
+    BB_SetBoardMODE(SFR_TRX_MODE_SKY);
     BB_SPI_init();
 
     PLLCTRL_SetCoreClk(CPU0_CPU1_CORE_PLL_CLK, CPU0_ID);
@@ -85,7 +88,7 @@ int main(void)
     ADV_7611_Initial(1);
 
     /* Create Main Task */
-    osThreadDef(USBHMAIN_Task, USBH_MainTask, osPriorityNormal, 0, 4 * 128);
+    osThreadDef(USBHMAIN_Task, USBH_MainTask, osPriorityBelowNormal, 0, 4 * 128);
     osThreadCreate(osThread(USBHMAIN_Task), NULL);
 
     osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 4 * 128);

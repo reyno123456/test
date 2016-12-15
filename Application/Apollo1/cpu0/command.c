@@ -4,6 +4,8 @@
 #include "debuglog.h"
 #include "serial.h"
 #include "interrupt.h"
+#include "upgrade.h"
+#include "cmsis_os.h"
 
 static unsigned char g_commandPos;
 static char g_commandLine[50];
@@ -162,13 +164,29 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_writeMemory(cmdArray[1], cmdArray[2]);
     }
+	else if (memcmp(cmdArray[0], "upgrade", strlen("upgrade")) == 0)
+    {
+        char path[128];
+        memset(path,'\0',128);
+        if(strlen(cmdArray[1])>127)
+        {
+            command_reset();
+            return;
+        }
+        memcpy(path,cmdArray[1],strlen(cmdArray[1]));
+        path[strlen(cmdArray[1])]='\0';
+        osThreadDef(UsbUpgrade, UPGRADE_Upgrade, osPriorityNormal, 0, 15 * 128);
+        osThreadCreate(osThread(UsbUpgrade), path);
+        vTaskDelay(100);       
+    }
     /* error command */
     else
     {
         dlog_error("Command not found. Please use the commands like:");
         dlog_error("read <address>");
         dlog_error("write <address> <data>");
-        dlog_output(1000);
+        dlog_error("upgrade <filename>");
+		dlog_output(1000);
     }
 
     /* must init to receive new data from serial */

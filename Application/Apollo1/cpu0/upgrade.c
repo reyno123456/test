@@ -159,9 +159,8 @@ void UPGRADE_Upgrade(void const *argument)
     {
         dlog_info("finding mass storage\n");
         SysTicks_DelayMS(500);
-        dlog_output(100);    
-    }
-     
+        dlog_output(100);     
+    }    
     #if 1
     MD5Init(&md5);
     u32_bytesRead = RDWR_SECTOR_SIZE;
