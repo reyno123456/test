@@ -30,6 +30,14 @@ void command_TestGpioNormal(uint8_t *gpionum, uint8_t *highorlow)
     GPIO_SetPin(u8_GpioNum,u8_GpioValue);	
 }
 
+void command_TestGpioNormal2(uint8_t u8_GpioNum, uint8_t u8_GpioValue)
+{
+    GPIO_SetMode(u8_GpioNum, GPIO_MODE_1);
+    GPIO_SetPinDirect(u8_GpioNum, GPIO_DATA_DIRECT_OUTPUT);
+	GPIO_SetPinCtrl(u8_GpioNum, GPIO_CTRL_SOFTWARE);
+    GPIO_SetPin(u8_GpioNum,u8_GpioValue);	
+}
+
 void command_TestGpioNormalRange(uint8_t *gpionum1, uint8_t *gpionum2, uint8_t *highorlow)
 {
 	uint8_t u8_GpioNum1 = strtoul(gpionum1, NULL, 0);

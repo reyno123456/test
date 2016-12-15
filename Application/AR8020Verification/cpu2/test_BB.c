@@ -6,8 +6,25 @@
 #include "interrupt.h"
 #include "bb_ctrl.h"
 #include "bb_uart_com.h"
+#include "bb_spi_operate.h"
 
 #define STATIC_TEST (0)
+
+uint8_t g_BbSpiWriteFlag = 0;
+uint8_t g_BbSpiReadFlag = 0;
+
+static BB_SPI_Opr g_stTestBbSpiWrite = {
+	
+	.u8_arCnt = {0,~0}, 
+	.u8_checkSum = 0,
+	};
+
+static BB_SPI_Opr g_stTestBbSpiRead = {
+	
+	.u8_arCnt = {0,~0}, 
+	.u8_checkSum = 0,
+	};
+
 
 void test_BB_sky(void)
 {
@@ -70,7 +87,40 @@ void command_test_BB_uart(char *index_str)
     }
 }
 
+void command_TestBbSpiWrite(void)
+{
+	static uint8_t u8_num = 1;
 
+	uint32_t u32_len = sizeof(BB_SPI_Opr);
+	uint8_t * p_addr = (uint8_t *)(&g_stTestBbSpiWrite);
+
+	memset(p_addr+3, u8_num++,u32_len-3);
+
+	BB_SPI_Write(&g_stTestBbSpiWrite);
+	dlog_info("have writed");
+
+}
+
+
+
+void command_TestBbSpiRead(void)
+{
+	uint8_t * p_addr;
+	
+	if(0 == BB_SPI_Read(&g_stTestBbSpiRead))
+	{
+		p_addr = (uint8_t *)(&g_stTestBbSpiRead);
+		
+		dlog_info("cnt:%d checksum:%d data:%d",
+						g_stTestBbSpiRead.u8_arCnt[0],
+						g_stTestBbSpiRead.u8_checkSum,
+						p_addr[4]);
+	}
+	else
+	{
+		dlog_info("no new data or check error");	
+	}	
+}
 
 
 

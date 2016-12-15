@@ -128,5 +128,11 @@ void BB_SetBoardMODE(uint8_t mode);
  */
 int BB_GetBoardMODE(void);
 
+/** 
+ *  * @brief       API for set board enter or out debug mode
+ *   * @param   mode	0:enter debug mode, 1:out debug mode.
+ *    */
+int BB_SetBoardDebugMODE(uint8_t mode);
+
 
 #endif

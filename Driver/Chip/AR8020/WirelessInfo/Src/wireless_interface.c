@@ -422,11 +422,8 @@ void WIRELESS_INTERFACE_SWITCH_DEBUG_MODE_Handler(void *param)
         /*enter debug mode */
         if (!eventFlag)
         {
-            stWirelessConfigChange.configClass  = WIRELESS_DEBUG_CHANGE;
-            stWirelessConfigChange.configItem   = 0;
-            stWirelessConfigChange.configValue  = 0;  /*0:enter debug mode 1: exit debug mode*/
-            SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&stWirelessConfigChange);
-            eventFlag = 1;
+           BB_SetBoardDebugMODE(0);
+           eventFlag = 1;
         }
         WITELESS_GetOSDInfo();
         inDebugFlag = g_stWirelessInfoSend.in_debug;
@@ -437,11 +434,8 @@ void WIRELESS_INTERFACE_SWITCH_DEBUG_MODE_Handler(void *param)
         /*exit debug mode */
         if (eventFlag)
         {
-            stWirelessConfigChange.configClass  = WIRELESS_DEBUG_CHANGE;
-            stWirelessConfigChange.configItem   = 0;
-            stWirelessConfigChange.configValue  = 1;  /*0:enter debug mode 1: exit debug mode*/
-            SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&stWirelessConfigChange);
-            eventFlag = 0;
+          BB_SetBoardDebugMODE(1);  
+	  eventFlag = 0;
         }
 
         WITELESS_GetOSDInfo();

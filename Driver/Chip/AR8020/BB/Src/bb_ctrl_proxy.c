@@ -210,3 +210,18 @@ int BB_GetBoardMODE(void)
 {
     return SFR_TRX_MODE_SEL;
 }
+
+/** 
+ *  * @brief       API for set board enter or out debug mode
+ *   * @param   mode	0:enter debug mode, 1:out debug mode.
+ *    */
+int BB_SetBoardDebugMODE(uint8_t mode)
+{
+    STRU_WIRELESS_CONFIG_CHANGE cmd;
+
+    cmd.configClass  = WIRELESS_DEBUG_CHANGE;
+    cmd.configItem   = 0;
+    cmd.configValue  = mode & 1;
+
+	return SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&cmd);
+}
