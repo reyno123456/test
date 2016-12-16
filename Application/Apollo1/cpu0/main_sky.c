@@ -10,6 +10,7 @@
 #include "adv_7611.h"
 #include "test_usbh.h"
 #include "stm32f746xx.h"
+#include "com_task.h"
 #include "bb_ctrl_proxy.h"
 
 void *malloc(size_t size)
@@ -96,6 +97,8 @@ int main(void)
 
     osMessageQDef(osqueue, 1, uint16_t);
     g_usbhAppCtrl.usbhAppEvent  = osMessageCreate(osMessageQ(osqueue),NULL);
+
+    COMTASK_Init();
 
     osKernelStart();
 

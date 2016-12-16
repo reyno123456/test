@@ -11,6 +11,7 @@
 #include "stm32f746xx.h"
 #include "test_usbd.h"
 #include "test_sram.h"
+#include "com_task.h"
 #include "bb_ctrl_proxy.h"
 
 void *malloc(size_t size)
@@ -93,6 +94,8 @@ int main(void)
 
     osMessageQDef(osqueue, 1, uint16_t);
     USBD_AppEvent = osMessageCreate(osMessageQ(osqueue),NULL);
+
+    COMTASK_Init();
 
     osKernelStart();
 

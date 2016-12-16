@@ -38,7 +38,7 @@ static void BB_UARTComWriteSessionRxBuffer(ENUM_BBUartComSessionID session_id, u
             wr_pos++;
             cnt++;
 
-            if (wr_pos == tail_pos)
+            if (wr_pos >= tail_pos)
             {
                 wr_pos = 0;
             }
@@ -164,7 +164,8 @@ static void BB_UARTComUART10IRQHandler(void)
 
 void BB_UARTComInit(void)
 {
-    *((lock_type*)(SRAM_MODULE_LOCK_BB_UART_MUTEX_FLAG)) = UNLOCK_STATE;    
+    *((lock_type*)(SRAM_MODULE_LOCK_BB_UART_MUTEX_FLAG)) = UNLOCK_STATE;
+    *((uint32_t*)(SRAM_MODULE_LOCK_BB_UART_INIT_FLAG)) = 0;
 
     uart_init(BBCOM_UART_INDEX, ((BBCOM_UART_BAUDRATE * 100) / 166));
     reg_IrqHandle(VIDEO_UART10_INTR_VECTOR_NUM, BB_UARTComUART10IRQHandler);
@@ -202,16 +203,25 @@ void BB_UARTComInit(void)
     g_BBUARTComSessionArray[4].rx_buf->header.rx_buf_wr_pos = 0;
     g_BBUARTComSessionArray[4].rx_buf->header.rx_buf_rd_pos = 0;
     g_BBUARTComSessionArray[4].data_max_size = SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_SIZE - sizeof(STRU_BBUartComSessionRxBufferHeader);
+
+    *((uint32_t*)(SRAM_MODULE_LOCK_BB_UART_INIT_FLAG)) = 0x10A5A501;
 }
 
 void BB_UARTComRemoteSessionInit(void)
 {
+    // Wait for the init finish
+    while (*((uint32_t*)(SRAM_MODULE_LOCK_BB_UART_INIT_FLAG)) != 0x10A5A501) {}
+    
     g_BBUARTComSessionArray[0].rx_buf = (STRU_BBUartComSessionRxBuffer*)g_BBUARTComSession0RxBuffer;
     g_BBUARTComSessionArray[0].rx_buf->header.in_use = 1;
     g_BBUARTComSessionArray[1].rx_buf = (STRU_BBUartComSessionRxBuffer*)SRAM_BB_UART_COM_SESSION_1_SHARE_MEMORY_ST_ADDR;
+    g_BBUARTComSessionArray[1].data_max_size = SRAM_BB_UART_COM_SESSION_1_SHARE_MEMORY_SIZE - sizeof(STRU_BBUartComSessionRxBufferHeader);
     g_BBUARTComSessionArray[2].rx_buf = (STRU_BBUartComSessionRxBuffer*)SRAM_BB_UART_COM_SESSION_2_SHARE_MEMORY_ST_ADDR;
+    g_BBUARTComSessionArray[2].data_max_size = SRAM_BB_UART_COM_SESSION_2_SHARE_MEMORY_SIZE - sizeof(STRU_BBUartComSessionRxBufferHeader);
     g_BBUARTComSessionArray[3].rx_buf = (STRU_BBUartComSessionRxBuffer*)SRAM_BB_UART_COM_SESSION_3_SHARE_MEMORY_ST_ADDR;
+    g_BBUARTComSessionArray[3].data_max_size = SRAM_BB_UART_COM_SESSION_3_SHARE_MEMORY_SIZE - sizeof(STRU_BBUartComSessionRxBufferHeader);
     g_BBUARTComSessionArray[4].rx_buf = (STRU_BBUartComSessionRxBuffer*)SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_ST_ADDR;
+    g_BBUARTComSessionArray[4].data_max_size = SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_SIZE - sizeof(STRU_BBUartComSessionRxBufferHeader);
 }
 
 uint8_t BB_UARTComRegisterSession(ENUM_BBUartComSessionID session_id)
@@ -339,7 +349,7 @@ uint32_t BB_UARTComReceiveMsg(ENUM_BBUartComSessionID session_id, uint8_t* data_
             rd_pos++;
             cnt++;
 
-            if (rd_pos == tail_pos)
+            if (rd_pos >= tail_pos)
             {
                 rd_pos = 0;
             }
