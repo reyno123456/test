@@ -55,7 +55,7 @@ $(TARGET_CPU2):
 
 install:
 	@echo "Creating the flash image..."
-	../../Utility/joint2flash.sh  
+	$(UTILITY_DIR)/joint2flash.sh  
 	@cp *.bin ../../Output/
 clean:
 	@$(MAKE) -C cpu0 clean APPLICATION_SCENARIO=`cat .APPLICATION_SCENARIO`
