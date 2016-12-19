@@ -1,6 +1,9 @@
 #ifndef __HAL_I2C_H__
 #define __HAL_I2C_H__
 
+#include <stdint.h>
+#include "hal_ret_type.h"
+
 typedef enum
 {
     HAL_I2C_COMPONENT_0 = 0,
