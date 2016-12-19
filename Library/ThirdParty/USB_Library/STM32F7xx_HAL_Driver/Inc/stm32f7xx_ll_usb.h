@@ -398,7 +398,8 @@ typedef struct
 /* add for dma address and dtcm address convert */
 #define DTCM_START_ADDR            0x20000000
 #define DTCM_END_ADDR              0x20080000
-#define DTCM_DMA_ADDR_OFFSET       0x24080000
+#define DTCM_CPU0_DMA_ADDR_OFFSET       0x24080000
+#define DTCM_CPU1_DMA_ADDR_OFFSET       0x24180000
 
 
 #define USB_OTG_ENDIAN                 (*((volatile uint32_t *)0x40B00074))

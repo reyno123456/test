@@ -10,7 +10,7 @@
 #include "sys_event.h"
 #include "sram.h"
 
-USBD_HandleTypeDef          USBD_Device;
+extern USBD_HandleTypeDef   USBD_Device;
 osMessageQId                USBD_AppEvent;
 
 

@@ -27,7 +27,7 @@ void USBH_BypassVideo(void const *argument)
 
     fileResult          = FR_OK;
     bytesread           = 0;
-    videoBuff           = (uint8_t *)SRAM_BUFF_0_ADDRESS;
+    videoBuff           = (uint8_t *)USB_VIDEO_BYPASS_DEST_ADDR;
 
     dlog_info("enter USBH_BypassVideo Task!\n");
 
@@ -65,8 +65,6 @@ void USBH_BypassVideo(void const *argument)
 
                         continue;
                     }
-
-                    dma_transfer((uint32_t *)videoBuff, (uint32_t *)SRAM_SKY_BYPASS_ENCODER_BUFF, 8192);
 
                     osDelay(100);
 
@@ -147,6 +145,20 @@ void USBH_MountUSBDisk(void)
         return;
     }
 }
+
+
+void USBH_USBHostStatus(void const *argument)
+{
+    dlog_info("USBH_USBHostStatus TASK");
+
+    while (1)
+    {
+        USBH_Process(&hUSBHost);
+
+        osDelay(20);
+    }
+}
+
 
 
 void USBH_MainTask(void const *argument)

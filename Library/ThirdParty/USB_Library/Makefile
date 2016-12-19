@@ -26,7 +26,8 @@ SRC_C   := STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_bot.c \
            STM32_USB_Host_Library/Core/Src/usbh_core.c \
            STM32_USB_Host_Library/Core/Src/usbh_ctlreq.c \
            STM32_USB_Host_Library/Core/Src/usbh_ioreq.c \
-           STM32_USB_Host_Library/Core/Src/usbh_pipes.c
+           STM32_USB_Host_Library/Core/Src/usbh_pipes.c \
+           STM32_USB_Host_Library/Class/UVC/Src/usbh_uvc.c
 
 #SRC_C   := STM32_USB_Host_Library/Class/AUDIO/Src/usbh_audio.c \
            STM32_USB_Host_Library/Class/CDC/Src/usbh_cdc.c \
@@ -51,6 +52,7 @@ INCDIRS :=  -ISTM32_USB_Host_Library/Core/Inc \
             -ISTM32_USB_Host_Library/Class/HID/Inc \
             -ISTM32_USB_Host_Library/Class/MSC/Inc \
             -ISTM32_USB_Host_Library/Class/MTP/Inc \
+            -ISTM32_USB_Host_Library/Class/UVC/Inc \
             -I../CMSIS/Include \
             -I../CMSIS/Device/ST/STM32F7xx/Include \
             -I$(TOP_DIR)/Kernel/FreeRTOS/CMSIS_RTOS \
@@ -149,6 +151,7 @@ install:
 	@cp -f STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc.h  $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc_bot.h  $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f STM32_USB_Host_Library/Class/MSC/Inc/usbh_msc_scsi.h  $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f STM32_USB_Host_Library/Class/UVC/Inc/usbh_uvc.h  $(OUTPUT_HEADER_STAGING_DIR)
 
 
 
