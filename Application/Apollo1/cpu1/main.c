@@ -5,6 +5,7 @@
 #include "stm32f746xx.h"
 #include "inter_core.h"
 #include "systicks.h"
+#include "test_usbh.h"
 
 /**
  * @brief  CPU L1-Cache enable.
@@ -13,19 +14,19 @@
  */
 static void CPU_CACHE_Enable(void)
 {
-  /* Enable I-Cache */
-  SCB_EnableICache();
+    /* Enable I-Cache */
+    SCB_EnableICache();
 
-  /* Enable D-Cache */
-  SCB_EnableDCache();
+    /* Enable D-Cache */
+    SCB_EnableDCache();
 }
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
-  serial_init(uart_num, baut_rate);
-  dlog_init(uart_num);
-  UartNum = uart_num;
-  command_init();
+    serial_init(uart_num, baut_rate);
+    dlog_init(uart_num);
+    UartNum = uart_num;
+    command_init();
 }
 /**
   * @brief  Main program
@@ -45,17 +46,25 @@ int main(void)
     SysTicks_Init(200000);
     dlog_info("SysTicks_Init done \n");
 
+    USBH_ApplicationInit();
+
+    USBH_MountUSBDisk();
+
     /* We should never get here as control is now taken by the scheduler */
     for( ;; )
     {
-      SYS_EVENT_Process();
+        SYS_EVENT_Process();
 
-      if (command_getEnterStatus() == 1)
-      {
-        command_fulfill();
-      }
-      
-      dlog_output(100);
+        USBH_USBHostStatus();
+
+        USBH_ProcUVC();
+
+        if (command_getEnterStatus() == 1)
+        {
+            command_fulfill();
+        }
+
+        dlog_output(100);
     }
 } 
 

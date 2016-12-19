@@ -88,7 +88,7 @@
   * @brief PCD HAL module driver
   * @{
   */
-
+USBD_HandleTypeDef USBD_Device;
 
 /* Private types -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -325,7 +325,6 @@ HAL_StatusTypeDef HAL_PCD_Stop(PCD_HandleTypeDef *hpcd)
   __HAL_UNLOCK(hpcd); 
   return HAL_OK;
 }
-extern USBD_HandleTypeDef USBD_Device;
 
 /**
   * @brief  This function handles PCD interrupt request.

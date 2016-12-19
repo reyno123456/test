@@ -48,6 +48,7 @@ void USBH_MainTask(void const *argument);
 void USBH_ApplicationInit(void);
 void USBH_MountUSBDisk(void);
 void USBH_BypassVideo(void const *argument);
+void USBH_USBHostStatus(void const *argument);
 
 extern USBH_AppCtrl             g_usbhAppCtrl;
 extern USBH_BypassVideoCtrl     g_usbhBypassVideoCtrl;

@@ -94,6 +94,9 @@ int main(void)
     osThreadDef(USBHMAIN_Task, USBH_MainTask, osPriorityBelowNormal, 0, 4 * 128);
     osThreadCreate(osThread(USBHMAIN_Task), NULL);
 
+    osThreadDef(USBHStatus_Task, USBH_USBHostStatus, osPriorityNormal, 0, 4 * 128);
+    osThreadCreate(osThread(USBHStatus_Task), NULL);
+
     osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 4 * 128);
     osThreadCreate(osThread(IOTask), NULL);
 

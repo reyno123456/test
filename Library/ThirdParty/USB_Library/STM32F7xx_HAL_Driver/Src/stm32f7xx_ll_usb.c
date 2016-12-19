@@ -60,6 +60,8 @@
 #include "systicks.h"
 #include "usbd_conf.h"
 #include "usbh_conf.h"
+#include "cpu_info.h"
+#include "debuglog.h"
 
 /** @addtogroup STM32F7xx_LL_USB_DRIVER
   * @{
@@ -609,7 +611,14 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeDe
 
       if ((tmp >= DTCM_START_ADDR) && (tmp <= DTCM_END_ADDR))
       {
-        USBx_INEP(ep->num)->DIEPDMA = tmp + DTCM_DMA_ADDR_OFFSET;
+        if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId())
+        {
+          USBx_INEP(ep->num)->DIEPDMA = tmp + DTCM_CPU0_DMA_ADDR_OFFSET;
+        }
+        else if (ENUM_CPU1_ID == CPUINFO_GetLocalCpuId())
+        {
+          USBx_INEP(ep->num)->DIEPDMA = tmp + DTCM_CPU1_DMA_ADDR_OFFSET;
+        }
       }
       else
       {
@@ -675,7 +684,14 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeDe
 
       if ((tmp >= DTCM_START_ADDR) && (tmp <= DTCM_END_ADDR))
       {
-        USBx_OUTEP(ep->num)->DOEPDMA = tmp + DTCM_DMA_ADDR_OFFSET;
+        if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId())
+        {
+          USBx_OUTEP(ep->num)->DOEPDMA = tmp + DTCM_CPU0_DMA_ADDR_OFFSET;
+        }
+        else if (ENUM_CPU1_ID == CPUINFO_GetLocalCpuId())
+        {
+          USBx_OUTEP(ep->num)->DOEPDMA = tmp + DTCM_CPU1_DMA_ADDR_OFFSET;
+        }
       }
       else
       {
@@ -749,7 +765,14 @@ HAL_StatusTypeDef USB_EP0StartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeD
 
       if ((tmp >= DTCM_START_ADDR) && (tmp <= DTCM_END_ADDR))
       {
-        USBx_INEP(ep->num)->DIEPDMA = tmp + DTCM_DMA_ADDR_OFFSET;
+        if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId())
+        {
+          USBx_INEP(ep->num)->DIEPDMA = tmp + DTCM_CPU0_DMA_ADDR_OFFSET;
+        }
+        else if (ENUM_CPU1_ID == CPUINFO_GetLocalCpuId())
+        {
+          USBx_INEP(ep->num)->DIEPDMA = tmp + DTCM_CPU1_DMA_ADDR_OFFSET;
+        }
       }
       else
       {
@@ -791,8 +814,15 @@ HAL_StatusTypeDef USB_EP0StartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeD
       tmp = (uint32_t)(ep->xfer_buff);
 
       if ((tmp >= DTCM_START_ADDR) && (tmp <= DTCM_END_ADDR))
-      { 
-        USBx_OUTEP(ep->num)->DOEPDMA = tmp + DTCM_DMA_ADDR_OFFSET;
+      {
+        if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId())
+        {
+          USBx_OUTEP(ep->num)->DOEPDMA = tmp + DTCM_CPU0_DMA_ADDR_OFFSET;
+        }
+        else if (ENUM_CPU1_ID == CPUINFO_GetLocalCpuId())
+        {
+          USBx_OUTEP(ep->num)->DOEPDMA = tmp + DTCM_CPU1_DMA_ADDR_OFFSET;
+        }
       }
       else
       {
@@ -1128,7 +1158,14 @@ HAL_StatusTypeDef USB_EP0_OutStart(USB_OTG_GlobalTypeDef *USBx, uint8_t dma, uin
 
     if ((tmp >= DTCM_START_ADDR) && (tmp <= DTCM_END_ADDR))
     {
-      USBx_OUTEP(0)->DOEPDMA = tmp + DTCM_DMA_ADDR_OFFSET;
+      if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId())
+      {
+        USBx_OUTEP(0)->DOEPDMA = tmp + DTCM_CPU0_DMA_ADDR_OFFSET;
+      }
+      else if (ENUM_CPU1_ID == CPUINFO_GetLocalCpuId())
+      {
+        USBx_OUTEP(0)->DOEPDMA = tmp + DTCM_CPU1_DMA_ADDR_OFFSET;
+      }
     }
     else
     {
@@ -1523,7 +1560,14 @@ HAL_StatusTypeDef USB_HC_StartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_HCTypeDe
     tmp = (uint32_t)hc->xfer_buff;
     if ((tmp >= DTCM_START_ADDR) && (tmp <= DTCM_END_ADDR))
     {
-      USBx_HC(hc->ch_num)->HCDMA = tmp + DTCM_DMA_ADDR_OFFSET;
+      if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId())
+      {
+        USBx_HC(hc->ch_num)->HCDMA = tmp + DTCM_CPU0_DMA_ADDR_OFFSET;
+      }
+      else if (ENUM_CPU1_ID == CPUINFO_GetLocalCpuId())
+      {
+        USBx_HC(hc->ch_num)->HCDMA = tmp + DTCM_CPU1_DMA_ADDR_OFFSET;
+      }
     }
     else
     {
