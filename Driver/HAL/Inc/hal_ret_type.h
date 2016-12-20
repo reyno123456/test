@@ -17,6 +17,10 @@ typedef uint32_t HAL_RET_T;
 #define HAL_SYS_CTL_ERR_FPU_ENABLE   (HAL_SYS_CTL_ERR_MASK | 0x3)
 #define HAL_SYS_CTL_ERR_INIT         (HAL_SYS_CTL_ERR_MASK | 0x4)
 
+#define HAL_HDMI_RX_ERR_MASK                (0x70000)
+#define HAL_HDMI_RX_ERR_UNKNOWN             (HAL_HDMI_RX_ERR_MASK | 0x1)
+#define HAL_HDMI_RX_ERR_INIT                (HAL_HDMI_RX_ERR_MASK | 0x2)
+#define HAL_HDMI_RX_ERR_GET_VIDEO_FORMAT    (HAL_HDMI_RX_ERR_MASK | 0x3)
 
 #endif
 
