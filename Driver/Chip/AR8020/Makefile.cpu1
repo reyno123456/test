@@ -32,6 +32,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
          SysCtl/Src/systicks.c \
          SysCtl/Src/fpu.c \
          SysCtl/Src/cpu_info.c \
+         SysCtl/Src/interrupt.c \
          I2C/Src/i2c_ll.c \
          I2C/Src/i2c.c \
          SPI/Src/spi.c

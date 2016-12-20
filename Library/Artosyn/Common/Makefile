@@ -20,7 +20,6 @@ LIB = libcommon.a
 
 # source file(s), including c file(s)
 SRC_C   := Src/sys_event.c \
-           Src/interrupt.c \
            Src/memory.c \
            Src/debuglog.c \
            Src/printf.c \
@@ -49,7 +48,6 @@ $(LIB):  $(OBJ_C)
 install:
 	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/debuglog.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f Inc/interrupt.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/sys_event.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/memory.h $(OUTPUT_HEADER_STAGING_DIR)
 	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)

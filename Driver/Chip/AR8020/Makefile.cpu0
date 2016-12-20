@@ -31,6 +31,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
          SysCtl/Src/gpio.c \
          SysCtl/Src/fpu.c \
          SysCtl/Src/cpu_info.c \
+         SysCtl/Src/interrupt.c \
          UART/Src/serial.c \
          CAN/Src/can.c \
          Capture/Src/ov5640_mipi.c \
@@ -105,6 +106,7 @@ install:
 	@cp -f SysCtl/Inc/fpu.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/gpio.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/cpu_info.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f SysCtl/Inc/interrupt.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f QuadSPI/Inc/quad_spi_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f DMA/Inc/dma.h $(OUTPUT_HEADER_STAGING_DIR)
 

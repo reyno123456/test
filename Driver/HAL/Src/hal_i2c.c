@@ -6,7 +6,7 @@ Author: Artosy Software Team
 Version: 0.0.1
 Date: 2016/12/20
 History: 
-        0.0.1    2016/12/20    The initial version of hal_i2c.h
+        0.0.1    2016/12/20    The initial version of hal_i2c.c
 *****************************************************************************/
 
 #include <stdint.h>
