@@ -14,6 +14,7 @@
 #include "bb_sys_param.h"
 #include "bb_regs.h"
 #include "sys_event.h"
+#include "rf8003s.h"
 
 
 #define     BB_SPI_TEST         (0)
@@ -162,48 +163,6 @@ int BB_softReset(ENUM_BB_MODE en_mode)
     return 0;
 }
 
-/**
-  * @brief : Write 8003 RF register by SPI 
-  * @param : addr: 8003 SPI address
-  * @param : data: data for 8003
-  * @retval None
-  */
-static int SPI_Write8003(uint8_t addr, uint8_t data)
-{
-    uint8_t wdata[] = {0x80, addr, data};   //RF_8003S_SPI: wr: 0x80 ; 
-    return SPI_write_read(BB_SPI_BASE_IDX, wdata, sizeof(wdata), 0, 0);  
-}
-
-static int SPI_Read8003(uint8_t addr)
-{
-    uint8_t wdata[3] = {0x0, addr, addr}; //RF_8003S_SPI:  rd: 0x00
-    uint8_t rdata[3] = {0};
-    SPI_write_read(BB_SPI_BASE_IDX, wdata, sizeof(wdata), rdata, 3); 
-    return rdata[2];
-}
-
-
-void RF_8003x_init(ENUM_BB_MODE mode)
-{
-    extern const uint8_t RF_8003s_regs[128];
-
-    uint8_t idx;
-    for(idx=0; idx < sizeof(RF_8003s_regs); idx++)
-    {
-        SPI_Write8003(idx *2, RF_8003s_regs[idx]);
-
-        #if (RF_SPI_TEST ==1)
-        uint8_t data = SPI_Read8003(idx*2);
-        dlog_info("%d %d \n", idx, data);
-        #endif
-    }
-    
-    {
-        //add patch, reset 8003
-        SPI_Write8003(0x15 *2, 0x51);
-        SPI_Write8003(0x15 *2, 0x50);
-    }
-}
 
 
 void gen_qam_threshold_range(void)
@@ -268,34 +227,16 @@ void BB_use_param_setting(PARAM *user_setting)
 
 void BB_init(ENUM_BB_MODE en_mode)
 {    
-    BB_uart10_spi_sel(0x00000003);
     BB_SPI_init();
+    BB_uart10_spi_sel(0x00000003);
     
-    #if (BB_SPI_TEST==1)
-    uint8_t i = 0, j =0;
-    uint8_t test_addr[] = {0x20, 0x40, 0x80};
-    uint8_t err_flag = 0;
-    
-    for(j = 0; j < sizeof(test_addr); j++)
-    {
-        for(i = 0 ; i < 254; i++)
-        {
-            BB_SPI_WriteByte(PAGE0, test_addr[j], i);
-            char data = BB_SPI_ReadByte(PAGE0, test_addr[j]);
-            dlog_info("%d %d \n", i, data);
-        }
-    }
-    #endif
-
     PARAM *user_setting = BB_get_sys_param();
     BB_use_param_setting(user_setting);
     BB_regs_init(en_mode);
 
-    // RF 8003 init
     {
-        BB_SPI_curPageWriteByte(0x01,0x01);     //SPI change into 8003
-        RF_8003x_init(en_mode);
-        BB_SPI_curPageWriteByte(0x01,0x02);     //SPI change into 8020
+        extern const uint8_t RF_8003s_regs[128]; 
+        RF8003s_init( (uint8_t *)RF_8003s_regs);
     }
 
     BB_softReset(en_mode);
@@ -792,7 +733,7 @@ int BB_InsertCmd(STRU_WIRELESS_CONFIG_CHANGE *p)
     uint8_t found = 0;
     STRU_WIRELESS_CONFIG_CHANGE *pcmd = (STRU_WIRELESS_CONFIG_CHANGE *)p;
 
-    //dlog_info("Insert Message: %d %d %d\r\n", pcmd->configClass, pcmd->configItem, pcmd->configValue);
+    dlog_info("Insert Message: %d %d %d\r\n", pcmd->configClass, pcmd->configItem, pcmd->configValue);
     for(i = 0; i < sizeof(grd_cmds_poll)/sizeof(grd_cmds_poll[0]); i++)
     {
         if(grd_cmds_poll[i].avail == 0)
@@ -813,11 +754,204 @@ int BB_InsertCmd(STRU_WIRELESS_CONFIG_CHANGE *p)
 }
 
 
+int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
+{
+    STRU_WIRELESS_CONFIG_CHANGE cmd;
+    int ret = 1;
+    switch(type)
+    {
+        case 0:
+        {        
+            cmd.configClass  = WIRELESS_FREQ_CHANGE;
+            cmd.configItem   = FREQ_BAND_WIDTH_SELECT;
+            cmd.configValue  = param0;
+            break;
+        }
+
+        case 1:
+        {
+            cmd.configClass  = WIRELESS_FREQ_CHANGE;
+            cmd.configItem   = FREQ_BAND_MODE;
+            cmd.configValue  = param0;
+            break;            
+        }
+        
+        case 2:
+        {
+            cmd.configClass  = WIRELESS_FREQ_CHANGE;
+            cmd.configItem   = FREQ_BAND_SELECT;
+            cmd.configValue  = param0;
+            break;
+        }
+
+        case 3:
+        {
+            cmd.configClass  = WIRELESS_FREQ_CHANGE;
+            cmd.configItem   = FREQ_CHANNEL_MODE;
+            cmd.configValue  = param0;
+            break;
+        }
+    
+        case 4:
+        {
+            cmd.configClass  = WIRELESS_FREQ_CHANGE;
+            cmd.configItem   = FREQ_CHANNEL_SELECT;
+            cmd.configValue  = param0;
+            break;
+        }
+
+        case 5:        
+        {
+            cmd.configClass  = WIRELESS_MCS_CHANGE;
+            cmd.configItem   = MCS_MODE_SELECT;
+            cmd.configValue  = param0;
+            break;
+        }
+
+        case 6:
+        {
+            cmd.configClass  = WIRELESS_MCS_CHANGE;
+            cmd.configItem   = MCS_MODULATION_SELECT;
+            cmd.configValue  = param0;
+            break;            
+        }
+
+        case 7:
+        {
+            cmd.configClass  = WIRELESS_MCS_CHANGE;
+            cmd.configItem   = MCS_CODE_RATE_SELECT;
+            cmd.configValue  = param0;
+            break;
+        }
+
+        case 8:
+        {
+            cmd.configClass  = WIRELESS_ENCODER_CHANGE;
+            cmd.configItem   = ENCODER_DYNAMIC_BIT_RATE_MODE;
+            cmd.configValue  = param0;
+            break;
+        }
+
+        case 9:
+        {
+            cmd.configClass  = WIRELESS_ENCODER_CHANGE;
+            cmd.configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
+            cmd.configValue  = param0;
+            break;
+        }
+
+        case 10:
+        {
+            cmd.configClass  = WIRELESS_ENCODER_CHANGE;
+            cmd.configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
+            cmd.configValue  = param0;
+            break;
+        }
+
+        case 11:
+        {
+            cmd.configClass  = WIRELESS_MISC;
+            cmd.configItem   = MISC_READ_RF_REG;
+            cmd.configValue  = param0;
+            
+            dlog_info("1:%d 2:%d 3:%d 4:%d", type, param0, param1, param2);
+            break;
+        }
+
+        case 12:
+        {
+            cmd.configClass  = WIRELESS_MISC;
+            cmd.configItem   = MISC_WRITE_RF_REG;
+                               //addr, value
+            cmd.configValue  = (param0) | (param1 << 8);
+            break;
+        }
+
+        case 13:
+        {
+            cmd.configClass  = WIRELESS_MISC;
+            cmd.configItem   = MISC_READ_BB_REG;
+                               //page, addr
+            cmd.configValue  = param0 | (param1 << 8);
+            break;
+        }
+        
+        case 14:
+        {
+            cmd.configClass  = WIRELESS_MISC;
+            cmd.configItem   = MISC_WRITE_BB_REG;
+                               //page, addr, value
+            cmd.configValue  = (param0) | (param1<<8) | (param2<<16);
+            break;
+        }
+
+        default:
+        {
+            ret = 0;
+            break;
+        }
+    }
+
+    if(ret)
+    {
+       ret = BB_InsertCmd( &cmd);
+    }
+
+    return ret;
+}
+
+
 void BB_HandleEventsCallback(void *p)
 {
     int ret = BB_InsertCmd( (STRU_WIRELESS_CONFIG_CHANGE * )p);
 }
 
+
+void BB_handle_misc_cmds(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
+{
+    uint8_t class = pcmd->configClass;
+    uint8_t item  = pcmd->configItem;
+    
+    uint8_t value  = (uint8_t)(pcmd->configValue);
+    uint8_t value1 = (uint8_t)(pcmd->configValue >> 8);
+    uint8_t value2 = (uint8_t)(pcmd->configValue >> 16);
+    uint8_t value3 = (uint8_t)(pcmd->configValue >> 24);
+
+    if(class == WIRELESS_MISC)
+    {
+        switch(item)
+        {
+            case MISC_READ_RF_REG:
+            {
+                uint8_t v;
+                RF8003s_SPI_ReadReg(value * 2, &v);
+                dlog_info("RF read addr=0x%0.2x value=0x%0.2x", value, v);
+                break;
+            }
+
+            case MISC_WRITE_RF_REG:
+            {
+                RF8003s_SPI_WriteReg(value* 2, value1);
+                dlog_info("RF write addr=0x%0.2x value=0x%0.2x", value, value1);
+                break;
+            }
+
+            case MISC_READ_BB_REG:
+            {
+                uint8_t v = BB_ReadReg( (ENUM_REG_PAGES)value, (uint8_t)value1);
+                dlog_info("BB read PAGE=0x%0.2x addr=0x%0.2x value=0x%0.2x", value, value1, v);
+                break;
+            }
+
+            case MISC_WRITE_BB_REG:
+            {
+                BB_WriteReg((ENUM_REG_PAGES)value, (uint8_t)value1, (uint8_t)value2);
+                dlog_info("BB write PAGE=0x%0.2x addr=0x%0.2x value=0x%0.2x", value, value1, value2);
+                break;
+            }
+        }
+    }
+}
 
 ////////////////// handlers for WIRELESS_FREQ_CHANGE //////////////////
 
@@ -984,7 +1118,7 @@ int BB_SetEncoderBrcMode(RUN_MODE en_mode)
     STRU_WIRELESS_CONFIG_CHANGE cmd;
 
     cmd.configClass  = WIRELESS_ENCODER_CHANGE;
-    cmd.configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
+    cmd.configItem   = ENCODER_DYNAMIC_BIT_RATE_MODE;
     cmd.configValue  = (uint32_t)en_mode;
 
     return BB_InsertCmd(&cmd);
@@ -1002,7 +1136,7 @@ int BB_SetEncoderBitrate(uint8_t bitrate_Mbps)
     STRU_WIRELESS_CONFIG_CHANGE cmd;
 
     cmd.configClass  = WIRELESS_ENCODER_CHANGE;
-    cmd.configItem   = ENCODER_DYNAMIC_BIT_RATE_MODE;
+    cmd.configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
     cmd.configValue  = (uint32_t)bitrate_Mbps;
 
     return BB_InsertCmd(&cmd);

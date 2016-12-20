@@ -159,6 +159,8 @@ unsigned char command_getEnterStatus(void)
 
 void command_run(char *cmdArray[], unsigned int cmdNum)
 {
+    extern int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2);
+    
     if (memcmp(cmdArray[0], "encoder_dump_brc", strlen("encoder_dump_brc")) == 0)
     {
         command_encoder_dump_brc();
@@ -192,10 +194,14 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         test_float_calculate_pi();
     }
-    //else if(memcmp(cmdArray[0], "grd_add_cmds", strlen("grd_add_cmds")) == 0)
-    //{
-    //    grd_add_spi_cmds(strtoul(cmdArray[1], NULL, 0), strtoul(cmdArray[2], NULL, 0));
-    //}	
+    else if(memcmp(cmdArray[0], "BB_add_cmds", strlen("BB_add_cmds")) == 0)
+    {
+        BB_add_cmds(strtoul(cmdArray[1], NULL, 0),  //type
+                    strtoul(cmdArray[2], NULL, 0),  //param0
+                    strtoul(cmdArray[3], NULL, 0),  //param1
+                    strtoul(cmdArray[4], NULL, 0)   //param2
+                    );
+    }	
     else 
     {
         dlog_error("Command not found! Please use commands like:\n");
@@ -212,7 +218,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("test_SysEventIdle");
         dlog_error("command_test_BB_uart");
         dlog_error("test_float_calculate_pi");
-        dlog_error("grd_add_spi_cmds <type> <value>");		
+        dlog_error("BB_add_cmds <type> <param0> <param1> <param2>");		
     }
 
     /* must reset to receive new data from serial */

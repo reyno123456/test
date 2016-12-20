@@ -11,6 +11,7 @@ enum EN_AGC_MODE
     UNKOWN_AGC  = 0xff,
 };
 
+uint8_t get_rc_status(void);
 
 void BB_SKY_start(void);
 
@@ -30,7 +31,7 @@ void Sky_Adjust_AGCGain(void);
 
 void wimax_vsoc_rx_isr(void);
 
-uint8_t sky_id_search_run(void);
+uint8_t sky_id_search_run(uint8_t status);
 
 void sky_agc_gain_toggle(void);
 

@@ -472,8 +472,6 @@ void wimax_vsoc_tx_isr(void)
     
     if(1 == (g_stGrdDebugMode.bl_isDebugMode))
     {   
-        //grd_get_osd_info();
-		osdptr->in_debug = (uint8_t)(g_stGrdDebugMode.bl_isDebugMode);
 		//Disable TIM0 intr
     	INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
     	TIM_StopTimer(init_timer0_0);
@@ -483,9 +481,7 @@ void wimax_vsoc_tx_isr(void)
     {
         TIM_StartTimer(init_timer0_0);
         INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
-       // osdptr->in_debug = (uint8_t)0;
     }
-	//command_TestGpioNormal2(64,(wimax_cnt++)%2);	
 }
 
 void Grd_TIM0_IRQHandler(void)
@@ -756,34 +752,57 @@ static void grd_handle_brc_bitrate_cmd(uint8_t brc_coderate)
 
 void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 {
-    uint8_t class = pcmd->configClass;
-    uint8_t item  = pcmd->configItem;
-    uint8_t value = pcmd->configValue;
+    uint8_t class  = pcmd->configClass;
+    uint8_t item   = pcmd->configItem;
+    uint32_t value = pcmd->configValue;
 
-    dlog_info("class item value %d %d %d \r\n", class, item, value);
+    dlog_info("class item value %d %d 0x%0.8x \r\n", class, item, value);
     if(class == WIRELESS_FREQ_CHANGE)
     {
         switch(item)
         {
             case FREQ_BAND_MODE:
+            {
                 //band mode: AUTO MANUAL, only suppor the Manual mode
                 break;
+            }
 
-            case FREQ_BAND_SELECT:    
+            case FREQ_BAND_SELECT:
+            {
                 grd_handle_RF_band_cmd((ENUM_RF_BAND)value);
                 break;
+            }
 
             case FREQ_CHANNEL_MODE: //auto manual
+            {
                 grd_handle_IT_mode_cmd((RUN_MODE)value);
                 break;
-
+            }
+            
             case FREQ_CHANNEL_SELECT:
+            {
                 grd_handle_IT_CH_cmd((uint8_t)value);
                 break;
+            }
 
+            case RC_CHANNEL_MODE:
+            {
+                grd_handle_RC_mode_cmd( (RUN_MODE)value);
+                break;
+            }
+
+            case RC_CHANNEL_SELECT:
+            {
+                grd_handle_RC_mode_cmd( (RUN_MODE)MANUAL);
+                grd_handle_RC_CH_cmd((uint8_t)value);
+                break;
+            }
+            
             default:
+            {
                 dlog_error("%s\r\n", "unknown WIRELESS_FREQ_CHANGE command");
                 break;
+            }
         }
     }
 
@@ -841,7 +860,12 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 dlog_error("%s\r\n", "unknown WIRELESS_DEBUG_CHANGE command");
                 break;                
         }
-    }   
+    }
+
+    if(class == WIRELESS_MISC)
+    {
+        BB_handle_misc_cmds(pcmd);
+    }
 }
 
 
@@ -889,8 +913,9 @@ static void BB_grd_GatherOSDInfo(void)
 
         osdptr->modulation_mode = grd_get_IT_QAM();
         osdptr->code_rate       = grd_get_IT_LDPC();
-        osdptr->ch_bandwidth    = context.CH_bandwidth; 
-        
+        osdptr->ch_bandwidth    = context.CH_bandwidth;         
+		osdptr->in_debug        = (uint8_t)(g_stGrdDebugMode.bl_isDebugMode);
+
         memset(osdptr->sweep_energy, 0, sizeof(osdptr->sweep_energy));
         grd_get_sweep_noise(0, osdptr->sweep_energy);
         
