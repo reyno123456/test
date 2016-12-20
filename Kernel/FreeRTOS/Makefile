@@ -38,9 +38,9 @@ INCDIRS := -Iinclude \
            -Iportable/GCC/ARM_CM7/r0p1 \
            -ICMSIS_RTOS \
            -I$(TOP_DIR)/Configure/Include \
-           -I$(TOP_DIR)/Library/ThirdParty/USB_Library/STM32F7xx_HAL_Driver/Inc \
-           -I$(TOP_DIR)/Library/ThirdParty/USB_Library/STM32_USB_Host_Library/Class/MSC/Inc \
-           -I$(TOP_DIR)/Library/ThirdParty/USB_Library/STM32_USB_Host_Library/Core/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_LL_Driver/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Class/MSC/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Core/Inc \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include
 
 

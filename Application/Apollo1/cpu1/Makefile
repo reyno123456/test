@@ -22,7 +22,7 @@ include $(BUILD_DIR)/config.mk
 CPU_NUMBER = cpu1
 
 # libs
-LD_LIBS := -lfreertos -lusb -lboard -lAR8020drv -lcommon -lgcc
+LD_LIBS := -lfreertos -lboard -lAR8020drv -lcommon -lgcc
 
 LDFLAGS += -Bstatic
 LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) -L$(CROSS_COMPILE_LIB_PATH) $(LD_LIBS)

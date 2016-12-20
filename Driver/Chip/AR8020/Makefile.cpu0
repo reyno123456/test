@@ -47,7 +47,25 @@ SRC_C := SysCtl/Src/reg_rw.c \
          SPI/Src/bb_spi.c \
          QuadSPI/Src/quad_spi_ctrl.c \
          WirelessInfo/Src/wireless_interface.c \
-         DMA/Src/dma.c
+         DMA/Src/dma.c \
+         USB/USB_Host/Class/MSC/Src/usbh_msc_bot.c \
+         USB/USB_Host/Class/MSC/Src/usbh_msc.c \
+         USB/USB_Host/Class/MSC/Src/usbh_msc_scsi.c \
+         USB/USB_Host/Core/Src/usbh_conf.c \
+         USB/USB_Host/Core/Src/usbh_core.c \
+         USB/USB_Host/Core/Src/usbh_ctlreq.c \
+         USB/USB_Host/Core/Src/usbh_ioreq.c \
+         USB/USB_Host/Core/Src/usbh_pipes.c \
+         USB/USB_Device/Class/HID/Src/usbd_hid.c \
+         USB/USB_Device/Class/HID/Src/usbd_hid_desc.c \
+         USB/USB_Device/Core/Src/usbd_conf.c \
+         USB/USB_Device/Core/Src/usbd_core.c \
+         USB/USB_Device/Core/Src/usbd_ctlreq.c \
+         USB/USB_Device/Core/Src/usbd_ioreq.c \
+         USB/USB_LL_Driver/Src/stm32f7xx_ll_usb.c \
+         USB/USB_LL_Driver/Src/stm32f7xx_hal_pcd.c \
+         USB/USB_LL_Driver/Src/stm32f7xx_hal_pcd_ex.c \
+         USB/USB_LL_Driver/Src/stm32f7xx_hal_hcd.c
 
 INCDIRS := -ISysCtl/Inc \
            -ISD/Inc \
@@ -60,9 +78,11 @@ INCDIRS := -ISysCtl/Inc \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Device/ST/STM32F7xx/Include \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \
            -I$(TOP_DIR)/Library/Artosyn/Common/Inc \
-           -I$(TOP_DIR)/Library/ThirdParty/USB_Library/STM32_USB_Device_Library/Core/Inc \
-           -I$(TOP_DIR)/Library/ThirdParty/USB_Library/STM32_USB_Device_Library/Class/HID/Inc \
-           -I$(TOP_DIR)/Library/ThirdParty/USB_Library/STM32F7xx_HAL_Driver/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Device/Core/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Device/Class/HID/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_LL_Driver/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Core/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Class/MSC/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SD/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SRAM/Inc \
@@ -109,7 +129,28 @@ install:
 	@cp -f SysCtl/Inc/interrupt.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f QuadSPI/Inc/quad_spi_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f DMA/Inc/dma.h $(OUTPUT_HEADER_STAGING_DIR)
-
+	@cp -f USB/USB_Host/Core/Inc/usbh_def.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_Host/Core/Inc/usbh_conf.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_Host/Core/Inc/usbh_core.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_Host/Core/Inc/usbh_ioreq.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_Host/Core/Inc/usbh_pipes.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_Host/Core/Inc/usbh_ctlreq.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_Host/Class/MSC/Inc/usbh_msc.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_Host/Class/MSC/Inc/usbh_msc_bot.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_Host/Class/MSC/Inc/usbh_msc_scsi.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_Host/Class/UVC/Inc/usbh_uvc.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_Device/Core/Inc/usbd_core.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_Device/Core/Inc/usbd_conf.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_Device/Core/Inc/usbd_def.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_Device/Core/Inc/usbd_ioreq.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_Device/Core/Inc/usbd_ctlreq.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_Device/Class/HID/Inc/usbd_hid.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_Device/Class/HID/Inc/usbd_hid_desc.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_LL_Driver/Inc/stm32f7xx_hal_pcd.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_LL_Driver/Inc/stm32f7xx_hal_pcd_ex.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_LL_Driver/Inc/stm32f7xx_hal_hcd.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_LL_Driver/Inc/stm32f7xx_hal_def.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f USB/USB_LL_Driver/Inc/stm32f7xx_ll_usb.h $(OUTPUT_HEADER_STAGING_DIR)
 
 
 clean:

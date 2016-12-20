@@ -35,10 +35,31 @@ SRC_C := SysCtl/Src/reg_rw.c \
          SysCtl/Src/interrupt.c \
          I2C/Src/i2c_ll.c \
          I2C/Src/i2c.c \
-         SPI/Src/spi.c
+         SPI/Src/spi.c \
+         SRAM/Src/sram.c \
+         USB/USB_Host/Class/UVC/Src/usbh_uvc.c \
+         USB/USB_Host/Class/MSC/Src/usbh_msc_bot.c \
+         USB/USB_Host/Class/MSC/Src/usbh_msc.c \
+         USB/USB_Host/Class/MSC/Src/usbh_msc_scsi.c \
+         USB/USB_Host/Core/Src/usbh_conf.c \
+         USB/USB_Host/Core/Src/usbh_core.c \
+         USB/USB_Host/Core/Src/usbh_ctlreq.c \
+         USB/USB_Host/Core/Src/usbh_ioreq.c \
+         USB/USB_Host/Core/Src/usbh_pipes.c \
+         USB/USB_Device/Class/HID/Src/usbd_hid.c \
+         USB/USB_Device/Class/HID/Src/usbd_hid_desc.c \
+         USB/USB_Device/Core/Src/usbd_conf.c \
+         USB/USB_Device/Core/Src/usbd_core.c \
+         USB/USB_Device/Core/Src/usbd_ctlreq.c \
+         USB/USB_Device/Core/Src/usbd_ioreq.c \
+         USB/USB_LL_Driver/Src/stm32f7xx_ll_usb.c \
+         USB/USB_LL_Driver/Src/stm32f7xx_hal_pcd.c \
+         USB/USB_LL_Driver/Src/stm32f7xx_hal_pcd_ex.c \
+         USB/USB_LL_Driver/Src/stm32f7xx_hal_hcd.c
 
 INCDIRS := -ISysCtl/Inc \
            -II2C/Inc \
+           -ISRAM/Inc \
            -I$(TOP_DIR)/Configure \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Device/ST/STM32F7xx/Include \
            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \
@@ -46,7 +67,14 @@ INCDIRS := -ISysCtl/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SPI/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/WirelessInfo/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_LL_Driver/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Core/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Class/UVC/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Class/MSC/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Device/Core/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Device/Class/HID/Inc \
            -I$(TOP_DIR)/Configure/Include
+
 # object file(s)
 OBJ_C     := $(patsubst %.c,%.o,$(SRC_C))
 
