@@ -122,11 +122,19 @@ void WIRELESS_SendOSDInfo(ENUM_WIRELESS_TOOL host)
     {
         g_stWirelessInfoSend.messageId = PAD_WIRELESS_INTERFACE_OSD_DISPLAY;
         g_stWirelessInfoSend.paramLen = sendLength;
+        if (USB_OTG_IS_BIG_ENDIAN())
+        {
+            convert_endian((void *)&g_stWirelessInfoSend, (void *)&g_stWirelessInfoSend, 4);
+        }
     }
     else
     {
         g_stWirelessInfoSend.messageId = WIRELESS_INTERFACE_OSD_DISPLAY;
         g_stWirelessInfoSend.paramLen = sendLength;
+        if (USB_OTG_IS_BIG_ENDIAN())
+        {
+            convert_endian((void *)&g_stWirelessInfoSend, (void *)&g_stWirelessInfoSend, 4);
+        }
     }
 
     /* if cpu2 update info, and the info is valid */
@@ -224,10 +232,34 @@ void WIRELESS_INTERFACE_MIMO_1T2R_Handler(void *param)
 void WIRELESS_INTERFACE_WRITE_BB_REG_Handler(void *param)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *pstWirelessParamConfig;
+    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
+    uint8_t  inDebugFlag = 0;
+    WITELESS_GetOSDInfo();
+    inDebugFlag = g_stWirelessInfoSend.in_debug;
     pstWirelessParamConfig = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
-    if (BB_SPI_curPageWriteByte(pstWirelessParamConfig->paramData[0], pstWirelessParamConfig->paramData[1]))
+    recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
+    if (inDebugFlag == 1)
     {
-        dlog_error("write fail!\n");
+        if (BB_SPI_curPageWriteByte(pstWirelessParamConfig->paramData[0], pstWirelessParamConfig->paramData[1]))
+        {
+            dlog_error("write fail!\n");
+        }
+    }
+    else
+    {   
+        // dlog_info("inDebugFlag1 = %x\n",inDebugFlag);
+        recvMessage->messageId = 0x0e;
+        recvMessage->paramLen = 0;
+
+        if (USB_OTG_IS_BIG_ENDIAN())
+        {
+            convert_endian((void *)recvMessage, (void *)recvMessage, (uint32_t)(sizeof(recvMessage->messageId) + sizeof(recvMessage->paramLen)));
+        }
+
+        if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)recvMessage, (uint32_t)(sizeof(recvMessage->messageId) + sizeof(recvMessage->paramLen)), HID_EPIN_CTRL_ADDR))
+        {
+            dlog_error("send fail!\n");
+        }
     }
 
 }
@@ -236,17 +268,44 @@ void WIRELESS_INTERFACE_WRITE_BB_REG_Handler(void *param)
 void WIRELESS_INTERFACE_READ_BB_REG_Handler(void *param)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
+    uint8_t  inDebugFlag = 0;
 
+    WITELESS_GetOSDInfo();
+    inDebugFlag = g_stWirelessInfoSend.in_debug;
     recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
-    recvMessage->messageId = 0x0f;
-    recvMessage->paramLen = 2;
-    recvMessage->paramData[0] = recvMessage->paramData[0];
-    recvMessage->paramData[1] = BB_SPI_curPageReadByte(recvMessage->paramData[0]);
-    if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)recvMessage, sizeof(recvMessage), HID_EPIN_CTRL_ADDR))
+    if (inDebugFlag == 1)
     {
-        dlog_error("send fail!\n");
-    }
+        recvMessage->messageId = 0x0f;
+        recvMessage->paramLen = 2;
+        recvMessage->paramData[0] = recvMessage->paramData[0];
+        recvMessage->paramData[1] = BB_SPI_curPageReadByte(recvMessage->paramData[0]);
 
+        if (USB_OTG_IS_BIG_ENDIAN())
+        {
+            convert_endian((void *)recvMessage, (void *)recvMessage, (uint32_t)(sizeof(recvMessage)));
+        }
+
+        if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)recvMessage, sizeof(recvMessage), HID_EPIN_CTRL_ADDR))
+        {
+            dlog_error("send fail!\n");
+        }
+    }
+    else
+    {   
+        dlog_info("inDebugFlag1 = %x\n",inDebugFlag);
+        recvMessage->messageId = 0x0f;
+        recvMessage->paramLen = 0;
+
+        if (USB_OTG_IS_BIG_ENDIAN())
+        {
+            convert_endian((void *)recvMessage, (void *)recvMessage, (uint32_t)(sizeof(recvMessage->messageId) + sizeof(recvMessage->paramLen)));
+        }
+
+        if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)recvMessage, (uint32_t)(sizeof(recvMessage->messageId) + sizeof(recvMessage->paramLen)), HID_EPIN_CTRL_ADDR))
+        {
+            dlog_error("send fail!\n");
+        }
+    }
 }
 
 
@@ -435,7 +494,7 @@ void WIRELESS_INTERFACE_SWITCH_DEBUG_MODE_Handler(void *param)
         if (eventFlag)
         {
           BB_SetBoardDebugMODE(1);  
-	  eventFlag = 0;
+	      eventFlag = 0;
         }
 
         WITELESS_GetOSDInfo();
@@ -443,7 +502,6 @@ void WIRELESS_INTERFACE_SWITCH_DEBUG_MODE_Handler(void *param)
     }
     
     /*send to PC*/
-
     recvMessage->paramData[1] = inDebugFlag;
     if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)recvMessage, sizeof(recvMessage), HID_EPIN_CTRL_ADDR))
     {
