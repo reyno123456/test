@@ -20,11 +20,13 @@ LIB = libhal.a
 
 # source file(s), including c file(s)
 SRC_C := Src/hal_i2c.c \
-         Src/hal_sys_ctl.c
+         Src/hal_sys_ctl.c \
+		 Src/hal_hdmi_rx.c
 
 INCDIRS := -IInc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/I2C/Inc \
-		   -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc
+		   -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc \
+		   -I$(TOP_DIR)/Driver/Board/AR8020TEST/ADV7611/Inc
 
 # object file(s)
 OBJ_C     := $(patsubst %.c,%.o,$(SRC_C))
