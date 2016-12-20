@@ -61,8 +61,8 @@ sdk:
 	@cp -r $(CONFIGURE_DIR) $(SDK_DIR)/Inc
 	@cp -r $(OUTPUT_HEADER_STAGING_DIR) $(OUTPUT_LIB_STAGING_DIR) $(SDK_DIR)
 	@cp -r $(APPLICATION_DIR)/* $(SDK_DIR)/Application
+	@cp -r $(UTILITY_DIR)/joint2flash.sh $(UTILITY_DIR)/txt2bin.exe $(UTILITY_DIR)/imageinfo $(SDK_DIR)/Utility
 	$(UTILITY_DIR)/modifyMKpath.sh
-	@cp -r $(UTILITY_DIR)/joint2flash.sh $(UTILITY_DIR)/txt2bin.exe $(SDK_DIR)/Utility
 	@cp -r ../../*.mk $(SDK_DIR)/Build
 	@tar -cvf  $(SDK_DIR_VERSION).tar.gz $(SDK_DIR)
 	@rm -rf $(SDK_DIR)
