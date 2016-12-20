@@ -19,10 +19,12 @@ include $(BUILD_DIR)/config.mk
 LIB = libhal.a
 
 # source file(s), including c file(s)
-SRC_C := Src/hal_i2c.c
+SRC_C := Src/hal_i2c.c \
+         Src/hal_sys_ctl.c
 
 INCDIRS := -IInc \
-           -I$(TOP_DIR)/Driver/Chip/AR8020/I2C/Inc
+           -I$(TOP_DIR)/Driver/Chip/AR8020/I2C/Inc \
+		   -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc
 
 # object file(s)
 OBJ_C     := $(patsubst %.c,%.o,$(SRC_C))

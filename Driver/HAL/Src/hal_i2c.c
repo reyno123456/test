@@ -2,7 +2,7 @@
 Copyright: 2016-2020, Artosyn. Co., Ltd.
 File name: hal_i2c.c
 Description: The external HAL APIs to use the I2C controller.
-Author: Artosy Software Team
+Author: Artosyn Software Team
 Version: 0.0.1
 Date: 2016/12/20
 History: 
