@@ -475,6 +475,7 @@ void wimax_vsoc_tx_isr(void)
 		//Disable TIM0 intr
     	INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
     	TIM_StopTimer(init_timer0_0);
+		osdptr->in_debug = (uint8_t)(g_stGrdDebugMode.bl_isDebugMode);
 		dlog_info("enter debug mode");
 	}
 	else
