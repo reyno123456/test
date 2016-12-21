@@ -23,13 +23,15 @@ SRC_C := Src/hal_i2c.c \
          Src/hal_sys_ctl.c \
          Src/hal_hdmi_rx.c \
          Src/hal_gpio.c \
-         Src/hal_sram.c
+         Src/hal_sram.c \
+         Src/hal_h264.c
 
 INCDIRS := -IInc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/I2C/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SRAM/Inc \
            -I$(TOP_DIR)/Driver/Board/AR8020TEST/ADV7611/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/H264Encoder/Inc \
            -I$(TOP_DIR)/Configure/Include
 
 # object file(s)
@@ -51,6 +53,7 @@ install:
 	@cp -f Inc/hal_hdmi_rx.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_sram.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_gpio.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/hal_h264.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_ret_type.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
