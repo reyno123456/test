@@ -35,6 +35,15 @@ typedef struct _STRU_FRQ_CHANNEL           //  Remote Controller Freq Channnel
 }STRU_FRQ_CHANNEL;
 
 
+typedef enum
+{
+    MISC_READ_RF_REG,
+    MISC_WRITE_RF_REG,
+    MISC_READ_BB_REG,
+    MISC_WRITE_BB_REG,
+} ENUM_WIRELESS_MISC_ITEM;
+
+
 
 #define MAX_2G_RC_FRQ_SIZE (34)
 #define MAX_2G_IT_FRQ_SIZE (6)
@@ -76,5 +85,7 @@ void BB_RF_2G_5G_switch(ENUM_RF_BAND rf_band);
 int BB_GetCmd(STRU_WIRELESS_CONFIG_CHANGE *pconfig);
 
 void BB_HandleEventsCallback(void *p);
+
+void BB_handle_misc_cmds(STRU_WIRELESS_CONFIG_CHANGE* pcmd);
 
 #endif
