@@ -13,7 +13,7 @@ History:
 #include "bb_spi.h"
 #include "rf8003s.h"
 
-#define  RF8003S_RF_CLOCKRATE    (5)    //5MHz clockrate
+#define  RF8003S_RF_CLOCKRATE    (2)    //2MHz clockrate
 
 static int RF8003s_SPI_WriteReg_internal(uint8_t u8_addr, uint8_t u8_data, uint8_t u8_flag)
 {
@@ -21,6 +21,7 @@ static int RF8003s_SPI_WriteReg_internal(uint8_t u8_addr, uint8_t u8_data, uint8
     uint8_t wdata[] = {0x80, u8_addr, u8_data};   //RF_8003S_SPI: wr: 0x80 ; 
     
     //use low speed for the RF8003 read, from test, read fail if use the same clockrate as baseband
+    /*
     STRU_SPI_InitTypes init = {
         .ctrl0   = 0x47,
         .clk_Mhz = RF8003S_RF_CLOCKRATE,    
@@ -28,13 +29,14 @@ static int RF8003s_SPI_WriteReg_internal(uint8_t u8_addr, uint8_t u8_data, uint8
         .Rx_Ftlr = 0x6,
         .SER     = 0x01
     };
+    */
 
     if(u8_flag)
     {
         BB_SPI_curPageWriteByte(0x01,0x01);     //SPI change into 8003
     }
 
-    SPI_master_init(BB_SPI_BASE_IDX, &init);
+    //SPI_master_init(BB_SPI_BASE_IDX, &init);
     ret = SPI_write_read(BB_SPI_BASE_IDX, wdata, sizeof(wdata), 0, 0); 
 
     if(u8_flag)
