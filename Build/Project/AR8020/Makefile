@@ -20,12 +20,12 @@ CURDIR ?= $(shell pwd)
 
 LIBS := $(TOP_DIR)/Driver/Chip \
         $(TOP_DIR)/Driver/Board \
+        $(TOP_DIR)/Driver/HAL \
         $(TOP_DIR)/Kernel/FreeRTOS \
         $(TOP_DIR)/Library/Artosyn/Common \
         $(TOP_DIR)/Library/ThirdParty/CMSIS \
-        $(TOP_DIR)/Bootload/
-        # $(TOP_DIR)/Bootload/AR8020/Upgrade \
-        $(TOP_DIR)/Bootload/AR8020/Origin
+        $(TOP_DIR)/Bootload/ \
+
 
 all: MKARGS := all
 all: $(LIBS)

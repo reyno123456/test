@@ -24,7 +24,7 @@ CFLAGS += -O1
 CPU_NUMBER = cpu0
 
 # libs
-LD_LIBS := -lfreertos -lboard -lAR8020drv -lcommon
+LD_LIBS := -lhal -lfreertos -lboard -lAR8020drv -lcommon
 
 LDFLAGS += -Bstatic
 LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) $(LD_LIBS)
