@@ -31,7 +31,7 @@ void Sky_Adjust_AGCGain(void);
 
 void wimax_vsoc_rx_isr(void);
 
-uint8_t sky_id_search_run(uint8_t status);
+uint8_t sky_id_search_run(void);
 
 void sky_agc_gain_toggle(void);
 

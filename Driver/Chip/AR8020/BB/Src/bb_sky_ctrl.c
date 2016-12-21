@@ -18,10 +18,6 @@
 #define MAX_SEARCH_ID_NUM  (5)
 #define SEARCH_ID_TIMEOUT  (2000) //ms
 
-
-#define SKY_RC_ERR(status)  (0x80 == status)
-#define SKY_CRC_OK(status)  ((status & 0x02) ? 1 : 0)
-
 typedef struct
 {
     uint8_t id[5];
@@ -47,7 +43,7 @@ static uint32_t start_time_cnt = 0;
 static uint8_t  sky_rc_channel = 0;
 
 static enum EN_AGC_MODE en_agcmode = UNKOWN_AGC;
-static uint8_t cur_mod_regvalue    = 0xff; 
+static uint8_t cur_mod_regvalue = 0xff; 
 
 static init_timer_st sky_timer0_0;
 static init_timer_st sky_timer0_1;
@@ -82,7 +78,7 @@ void BB_SKY_start(void)
 }
 
 
-uint8_t sky_id_match(uint8_t status)
+uint8_t sky_id_match(void)
 {
     static int total_count = 0;
     static int lock_count = 0;
@@ -127,18 +123,17 @@ void sky_set_ITQAM_and_notify(uint8_t mod)
 
 void sky_agc_gain_toggle(void)
 {
+    printf("AGCToggle\r\n");
     if(FAR_AGC == en_agcmode)
     {
-        en_agcmode = NEAR_AGC;
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_NEAR);
+        en_agcmode = NEAR_AGC;
     }
     else
     {
-        en_agcmode = FAR_AGC;
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_FAR);
+        en_agcmode = FAR_AGC;
     }
-
-    dlog_info("AGCToggle %d\r\n", en_agcmode);    
 }
 
 
@@ -264,24 +259,15 @@ void sky_soft_reset(void)
 
 void sky_physical_link_process(void)
 {
-    uint8_t rc_status = get_rc_status();
-    context.locked = sky_id_match(rc_status);
-    
     if(context.dev_state == SEARCH_ID)
     {
-        if(sky_id_search_run(rc_status))
+        if(sky_id_search_run())
         {
             uint8_t *p_id = sky_id_search_get_best_id();
             sky_set_RC_id(p_id);
 
             context.dev_state = CHECK_ID_MATCH;
-            dlog_info("STM: SEARCH_ID=>CHECK_ID_MATCH \r\n");            
             sky_soft_reset();
-        }
-        
-        if(SKY_CRC_OK(rc_status))
-        {
-            context.rc_unlock_cnt = 0;
         }
         else
         {
@@ -295,8 +281,10 @@ void sky_physical_link_process(void)
             sky_rc_hopfreq();
         }
 
+        context.locked = sky_id_match();
         if(context.locked)
         {
+            uint8_t data0, data1;
             context.rc_unlock_cnt = 0;
             sky_handle_all_spi_cmds();
         }
@@ -310,10 +298,9 @@ void sky_physical_link_process(void)
         {
             context.dev_state = CHECK_ID_MATCH;
             context.rc_unlock_cnt = 0;
-            dlog_info("STM: ID_MATCH_LOCK=>CHECK_ID_MATCH \r\n");
         }
 
-        sky_auto_adjust_agc_gain();
+        sky_auto_adjust_agc_gain(); //
     }
     else if(context.dev_state == CHECK_ID_MATCH)
     {
@@ -323,12 +310,16 @@ void sky_physical_link_process(void)
         }
         else
         {
-            if(context.locked && context.rc_skip_freq_mode == AUTO)
+            context.locked = sky_id_match();
+            if(context.locked)
             {
-                sky_rc_hopfreq();
+                if(context.rc_skip_freq_mode == AUTO)
+                {
+                    sky_rc_hopfreq();
+                }
+
                 context.rc_unlock_cnt = 0;
                 context.dev_state = ID_MATCH_LOCK;
-                dlog_info("STM: CHECK_ID_MATCH=>ID_MATCH_LOCK \r\n");
             }
             else
             {
@@ -338,7 +329,7 @@ void sky_physical_link_process(void)
         }
     }
     
-    if(context.rc_unlock_cnt > 40   //14ms * 40= 560ms unlock
+    if(context.rc_unlock_cnt > 40 //560ms unlock
        && (context.dev_state == SEARCH_ID || context.dev_state == CHECK_ID_MATCH))  
     {
         context.rc_unlock_cnt = 0;
@@ -357,15 +348,20 @@ uint8_t get_rc_status(void)
 }
 
 
-uint8_t sky_id_search_run(uint8_t status)
-{        
-    if(SKY_RC_ERR(status))
+uint8_t sky_id_search_run(void)
+{    
+    uint8_t rc_status = get_rc_status();
+    
+    #define SKY_RC_ERR(status)  (0x80 == rc_status)
+    #define SKY_CRC_OK(status)  ((status & 0x02) ? 1 : 0)
+    
+    if(SKY_RC_ERR(rc_status))
     {
         sky_soft_reset();
         return FALSE;
     }
 
-    if(SKY_CRC_OK(status))
+    if(SKY_CRC_OK(rc_status))
     {
         sky_get_RC_id(search_id_list.search_ids[search_id_list.count].id);
 
@@ -618,7 +614,7 @@ static void sky_handle_QAM_cmd(void)
     uint8_t data0 = BB_ReadReg(PAGE2, QAM_CHANGE_0);
     uint8_t data1 = BB_ReadReg(PAGE2, QAM_CHANGE_1);
 
-    if (data0+1==data1 && cur_mod_regvalue != data0)
+    if(data0+1==data1 && cur_mod_regvalue != data0)
     {
         sky_set_ITQAM_and_notify(data0);
         cur_mod_regvalue = data0;
@@ -629,6 +625,8 @@ static void sky_handle_debug_mode_cmd_spi(void)
 {
     uint8_t data0 = BB_ReadReg(PAGE2, NTF_TEST_MODE_0);
     uint8_t data1 = BB_ReadReg(PAGE2, NTF_TEST_MODE_1);
+
+	//dlog_info("data0:%d data1:%d",data0,data1);
     
 	if((data0+1 == data1) && (0 == data0))//enter test mode
     {
@@ -636,6 +634,7 @@ static void sky_handle_debug_mode_cmd_spi(void)
 		{
 			g_stSkyDebugMode.bl_isDebugMode = 1;
 			dlog_info("g_stSkyDebugMode.bl_isDebugMode = 1");
+			//command_TestGpioNormal2(64,1);	
 		}
     }
     else if((data0+1 == data1) && (0 != data0))//out test mode
@@ -660,6 +659,7 @@ static void sky_handle_debug_mode_cmd_event(uint8_t value)
 		{
 			g_stSkyDebugMode.bl_isDebugMode = 1;
 			dlog_info("g_stSkyDebugMode.bl_isDebugMode = 1");
+			//command_TestGpioNormal2(64,1);	
 		}
     }
     else//out test mode
@@ -675,42 +675,39 @@ static void sky_handle_debug_mode_cmd_event(uint8_t value)
 void sky_handle_all_spi_cmds(void)
 {
     sky_handle_RC_cmd();
+
     sky_handle_IT_CH_cmd();
+
     sky_handle_QAM_cmd();
+
     sky_handle_brc_mode_cmd();
+
     sky_handle_brc_bitrate_cmd();
+    
     sky_handle_RF_band_cmd();
 	sky_handle_debug_mode_cmd_spi();
 }
 
 static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 {
-    uint8_t class  = pcmd->configClass;
-    uint8_t item   = pcmd->configItem;
-    uint32_t value = pcmd->configValue;
+    uint8_t class = pcmd->configClass;
+    uint8_t item  = pcmd->configItem;
+    uint8_t value = pcmd->configValue;
 
-    dlog_info("class item value %d %d 0x%0.8d \r\n", class, item, value);
-    if(class == WIRELESS_DEBUG_CHANGE)
+    dlog_info("class item value %d %d %d \r\n", class, item, value);
+    	if(class == WIRELESS_DEBUG_CHANGE)
     {
         switch(item)
         {
             case 0:
-            {
                 sky_handle_debug_mode_cmd_event(value);
                 break;
-            }
-            
+
             default:
-            {
                 dlog_error("%s\r\n", "unknown WIRELESS_DEBUG_CHANGE command");
                 break;                
-            }
         }
-    }
-    else if(class == WIRELESS_MISC)
-    {
-        BB_handle_misc_cmds(pcmd);
-    }
+    }   
 }
 
 
