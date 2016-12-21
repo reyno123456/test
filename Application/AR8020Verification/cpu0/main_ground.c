@@ -4,8 +4,7 @@
 #include "pll_ctrl.h"
 #include "command.h"
 #include "serial.h"
-#include "test_usbd.h"
-#include "sram.h"
+#include "hal_sram.h"
 #include "cmsis_os.h"
 #include "sys_event.h"
 #include "inter_core.h"
@@ -13,6 +12,8 @@
 #include "bb_spi.h"
 #include "upgrade.h"
 #include "bb_ctrl_proxy.h"
+#include "test_usbh.h"
+
 
 void *malloc(size_t size)
 {
@@ -87,14 +88,15 @@ int main(void)
 
     SysTicks_Init(200000);
 
-    osThreadDef(USBDMAIN_Task, USBD_MainTask, osPriorityBelowNormal, 0, 8 * 128);
-    osThreadCreate(osThread(USBDMAIN_Task), NULL);
+    USBD_ApplicationInit();
 
-    osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 8 * 128);
+    HAL_SRAM_ReceiveVideoConfig();
+
+    osThreadDef(USBHStatus_Task, USBH_USBHostStatus, osPriorityNormal, 0, 4 * 128);
+    osThreadCreate(osThread(USBHStatus_Task), NULL);
+
+    osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 4 * 128);
     osThreadCreate(osThread(IOTask), NULL);
-
-    osMessageQDef(osqueue, 1, uint16_t);
-    USBD_AppEvent = osMessageCreate(osMessageQ(osqueue),NULL);
 
     osKernelStart();
 

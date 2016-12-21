@@ -143,7 +143,7 @@ HAL_StatusTypeDef HAL_PCD_Init(PCD_HandleTypeDef *hpcd)
   /* Check the PCD handle allocation */
   if(hpcd == NULL)
   {
-    return HAL_ERROR;
+    return HAL_USB_ERROR;
   }
   
   /* Check the parameters */
@@ -203,7 +203,7 @@ HAL_StatusTypeDef HAL_PCD_Init(PCD_HandleTypeDef *hpcd)
  }
 
  USB_DevDisconnect (hpcd->Instance);  
- return HAL_OK;
+ return HAL_USB_OK;
 }
 
 /**
@@ -216,7 +216,7 @@ HAL_StatusTypeDef HAL_PCD_DeInit(PCD_HandleTypeDef *hpcd)
   /* Check the PCD handle allocation */
   if(hpcd == NULL)
   {
-    return HAL_ERROR;
+    return HAL_USB_ERROR;
   }
 
   hpcd->State = HAL_PCD_STATE_BUSY;
@@ -229,7 +229,7 @@ HAL_StatusTypeDef HAL_PCD_DeInit(PCD_HandleTypeDef *hpcd)
   
   hpcd->State = HAL_PCD_STATE_RESET; 
   
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -308,7 +308,7 @@ HAL_StatusTypeDef HAL_PCD_Start(PCD_HandleTypeDef *hpcd)
   USB_DevConnect (hpcd->Instance);  
   __HAL_PCD_ENABLE(hpcd);
   __HAL_UNLOCK(hpcd); 
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -323,7 +323,7 @@ HAL_StatusTypeDef HAL_PCD_Stop(PCD_HandleTypeDef *hpcd)
   USB_StopDevice(hpcd->Instance);
   USB_DevDisconnect (hpcd->Instance);
   __HAL_UNLOCK(hpcd); 
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -854,7 +854,7 @@ HAL_StatusTypeDef HAL_PCD_DevConnect(PCD_HandleTypeDef *hpcd)
   __HAL_LOCK(hpcd); 
   USB_DevConnect(hpcd->Instance);
   __HAL_UNLOCK(hpcd); 
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -867,7 +867,7 @@ HAL_StatusTypeDef HAL_PCD_DevDisconnect(PCD_HandleTypeDef *hpcd)
   __HAL_LOCK(hpcd); 
   USB_DevDisconnect(hpcd->Instance);
   __HAL_UNLOCK(hpcd); 
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -881,7 +881,7 @@ HAL_StatusTypeDef HAL_PCD_SetAddress(PCD_HandleTypeDef *hpcd, uint8_t address)
   __HAL_LOCK(hpcd); 
   USB_SetDevAddress(hpcd->Instance, address);
   __HAL_UNLOCK(hpcd);   
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 /**
   * @brief  Open and configure an endpoint
@@ -893,7 +893,7 @@ HAL_StatusTypeDef HAL_PCD_SetAddress(PCD_HandleTypeDef *hpcd, uint8_t address)
   */
 HAL_StatusTypeDef HAL_PCD_EP_Open(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, uint16_t ep_mps, uint8_t ep_type)
 {
-  HAL_StatusTypeDef  ret = HAL_OK;
+  HAL_StatusTypeDef  ret = HAL_USB_OK;
   USB_OTG_EPTypeDef *ep;
   
   if ((ep_addr & 0x80) == 0x80)
@@ -952,7 +952,7 @@ HAL_StatusTypeDef HAL_PCD_EP_Close(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
   __HAL_LOCK(hpcd); 
   USB_DeactivateEndpoint(hpcd->Instance , ep);
   __HAL_UNLOCK(hpcd);   
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 
@@ -994,7 +994,7 @@ HAL_StatusTypeDef HAL_PCD_EP_Receive(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, u
   }
   __HAL_UNLOCK(hpcd); 
   
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -1046,7 +1046,7 @@ HAL_StatusTypeDef HAL_PCD_EP_Transmit(PCD_HandleTypeDef *hpcd, uint8_t ep_addr, 
   
   //__HAL_UNLOCK(hpcd);
      
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -1081,7 +1081,7 @@ HAL_StatusTypeDef HAL_PCD_EP_SetStall(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
   }
   __HAL_UNLOCK(hpcd); 
   
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -1111,7 +1111,7 @@ HAL_StatusTypeDef HAL_PCD_EP_ClrStall(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
   USB_EPClearStall(hpcd->Instance , ep);
   __HAL_UNLOCK(hpcd); 
     
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -1135,7 +1135,7 @@ HAL_StatusTypeDef HAL_PCD_EP_Flush(PCD_HandleTypeDef *hpcd, uint8_t ep_addr)
   
   __HAL_UNLOCK(hpcd); 
     
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -1152,7 +1152,7 @@ HAL_StatusTypeDef HAL_PCD_ActivateRemoteWakeup(PCD_HandleTypeDef *hpcd)
     /* Activate Remote wake-up signaling */
     USBx_DEVICE->DCTL |= USB_OTG_DCTL_RWUSIG;
   }
-  return HAL_OK;  
+  return HAL_USB_OK;  
 }
 
 /**
@@ -1166,7 +1166,7 @@ HAL_StatusTypeDef HAL_PCD_DeActivateRemoteWakeup(PCD_HandleTypeDef *hpcd)
   
   /* De-activate Remote wake-up signaling */
    USBx_DEVICE->DCTL &= ~(USB_OTG_DCTL_RWUSIG);
-  return HAL_OK;  
+  return HAL_USB_OK;  
 }
 /**
   * @}
@@ -1261,7 +1261,7 @@ static HAL_StatusTypeDef PCD_WriteEmptyTxFifo(PCD_HandleTypeDef *hpcd, uint32_t 
     
   }
   
-  return HAL_OK;  
+  return HAL_USB_OK;  
 }
 
 /**

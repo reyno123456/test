@@ -44,11 +44,13 @@ typedef struct
 
 
 void USBH_UserPorcess(USBH_HandleTypeDef *phost, uint8_t id);
-void USBH_MainTask(void const *argument);
 void USBH_ApplicationInit(void);
 void USBH_MountUSBDisk(void);
 void USBH_BypassVideo(void const *argument);
 void USBH_USBHostStatus(void const *argument);
+void USB_MainTask(void const *argument);
+void USBD_ApplicationInit(void);
+void USBD_RestartUSBDevice(void * p);
 
 extern USBH_AppCtrl             g_usbhAppCtrl;
 extern USBH_BypassVideoCtrl     g_usbhBypassVideoCtrl;

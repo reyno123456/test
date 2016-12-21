@@ -44,7 +44,6 @@
 /* Exported functions ------------------------------------------------------- */
 extern USBD_DescriptorsTypeDef HID_Desc;
 
-extern void USBD_HID_InitDescGlobal(void);
 
 #endif /* __USBD_DESC_H */
  

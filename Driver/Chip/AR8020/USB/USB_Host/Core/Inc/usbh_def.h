@@ -53,15 +53,6 @@
 #define NULL  0
 #endif
 
-#ifndef FALSE
-#define FALSE 0
-#endif
-
-#ifndef TRUE
-#define TRUE  1
-#endif
-
-
 #define ValBit(VAR,POS)                               (VAR & (1 << POS))
 #define SetBit(VAR,POS)                               (VAR |= (1 << POS))
 #define ClrBit(VAR,POS)                               (VAR &= ((1 << POS)^255))

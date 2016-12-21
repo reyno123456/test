@@ -117,7 +117,7 @@ HAL_StatusTypeDef HAL_PCDEx_SetTxFiFo(PCD_HandleTypeDef *hpcd, uint8_t fifo, uin
     
   }
   
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -130,7 +130,7 @@ HAL_StatusTypeDef HAL_PCDEx_SetRxFiFo(PCD_HandleTypeDef *hpcd, uint16_t size)
 {
   hpcd->Instance->GRXFSIZ = size;
   
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -147,7 +147,7 @@ HAL_StatusTypeDef HAL_PCDEx_ActivateLPM(PCD_HandleTypeDef *hpcd)
   USBx->GINTMSK |= USB_OTG_GINTMSK_LPMINTM;
   USBx->GLPMCFG |= (USB_OTG_GLPMCFG_LPMEN | USB_OTG_GLPMCFG_LPMACK | USB_OTG_GLPMCFG_ENBESL);
   
-  return HAL_OK;  
+  return HAL_USB_OK;  
 }
 
 /**
@@ -163,7 +163,7 @@ HAL_StatusTypeDef HAL_PCDEx_DeActivateLPM(PCD_HandleTypeDef *hpcd)
   USBx->GINTMSK &= ~USB_OTG_GINTMSK_LPMINTM;
   USBx->GLPMCFG &= ~(USB_OTG_GLPMCFG_LPMEN | USB_OTG_GLPMCFG_LPMACK | USB_OTG_GLPMCFG_ENBESL);
   
-  return HAL_OK;  
+  return HAL_USB_OK;  
 }
 
 /**

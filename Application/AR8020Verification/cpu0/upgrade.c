@@ -1,22 +1,16 @@
 #include "test_usbh.h"
 #include "debuglog.h"
-#include "interrupt.h"
 #include "cmsis_os.h"
-#include "sram.h"
 #include "quad_spi_ctrl.h"
 #include "nor_flash.h"
 #include "upgrade.h"
 #include "serial.h"
-#include "test_usbh.h"
 #include "md5.h"
 #include "systicks.h"
 #include "bb_ctrl_proxy.h"
 
 static uint8_t g_u8arrayRecData[RDWR_SECTOR_SIZE]={0};
 
-USBH_HandleTypeDef              hUSBHost;
-USBH_BypassVideoCtrl            g_usbhBypassVideoCtrl;
-USBH_AppCtrl                    g_usbhAppCtrl;
 
 static uint8_t  g_u8upgradeFlage;
 static uint8_t  g_u8Amd5Sum[16];
@@ -103,18 +97,6 @@ static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
     }
 }
 
-static void UPGRADE_HApplicationInit(void)
-{
-    reg_IrqHandle(OTG_INTR0_VECTOR_NUM, USB_LL_OTG0_IRQHandler);
-
-    USBH_Init(&hUSBHost, USBH_UserProcess, 0);
-
-    USBH_RegisterClass(&hUSBHost, USBH_MSC_CLASS);
-
-    USBH_Start(&hUSBHost);
-    dlog_info("usb host init done!\n");
-    return;
-}
 
 static void UPGRADE_ModifyBootInfo()
 {
@@ -123,8 +105,7 @@ static void UPGRADE_ModifyBootInfo()
     memset(&st_bootInfo,0xff,sizeof(st_bootInfo)); 
     NOR_FLASH_ReadByteBuffer(0x1000,(uint8_t *)(&st_bootInfo),sizeof(st_bootInfo));
     NOR_FLASH_EraseSector(0x1000);
-    
-   
+
     st_bootInfo.apploadaddress=g_u32address + 0x10000000;
     
     NOR_FLASH_WriteByteBuffer(0x1000,(uint8_t *)(&st_bootInfo),sizeof(st_bootInfo)); 
@@ -143,12 +124,8 @@ void UPGRADE_Upgrade(void const *argument)
     MD5_CTX md5;
     g_u8upgradeFlage =0;
 
-    
-    if(SFR_TRX_MODE_GROUND == BB_GetBoardMODE())
-    {
-        UPGRADE_HApplicationInit();
-        USBH_MountUSBDisk();
-    }
+    USBH_ApplicationInit();
+    USBH_MountUSBDisk();
 
     dlog_info("Nor flash init start ... \n");
     NOR_FLASH_Init();
@@ -161,7 +138,7 @@ void UPGRADE_Upgrade(void const *argument)
         SysTicks_DelayMS(500);
         dlog_output(100);    
     }
-     
+
     #if 1
     MD5Init(&md5);
     u32_bytesRead = RDWR_SECTOR_SIZE;

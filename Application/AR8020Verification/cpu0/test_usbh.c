@@ -1,11 +1,15 @@
 #include "test_usbh.h"
 #include "debuglog.h"
 #include "interrupt.h"
-#include "cmsis_os.h"
+#include "sys_event.h"
 #include "dma.h"
-#include "sram.h"
+#include "hal_sram.h"
 #include "quad_spi_ctrl.h"
-#include "nor_flash.h"
+#include "usbd_def.h"
+#include "usbd_core.h"
+#include "usbd_hid_desc.h"
+#include "usbd_hid.h"
+
 
 #define USB_VIDEO_BYPASS_SIZE_ONCE      (8192)
 #define USB_VIDEO_BYPASS_DEST_ADDR      (0xB1000000)
@@ -15,6 +19,7 @@
 USBH_HandleTypeDef              hUSBHost;
 USBH_BypassVideoCtrl            g_usbhBypassVideoCtrl;
 USBH_AppCtrl                    g_usbhAppCtrl;
+extern USBD_HandleTypeDef       USBD_Device;
 
 
 void USBH_USBHostStatus(void const *argument)
@@ -28,7 +33,6 @@ void USBH_USBHostStatus(void const *argument)
         osDelay(20);
     }
 }
-
 
 
 void USBH_BypassVideo(void const *argument)
@@ -159,15 +163,40 @@ void USBH_MountUSBDisk(void)
 }
 
 
-void USBH_MainTask(void const *argument)
+void USBD_ApplicationInit(void)
+{
+    reg_IrqHandle(OTG_INTR0_VECTOR_NUM, USB_LL_OTG0_IRQHandler);
+
+    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USB_PLUG_OUT, USBD_RestartUSBDevice);
+
+    USBD_Init(&USBD_Device, &HID_Desc, 0);
+
+    USBD_RegisterClass(&USBD_Device, USBD_HID_CLASS);
+
+    USBD_Start(&USBD_Device);
+
+    return;
+}
+
+
+void USBD_RestartUSBDevice(void * p)
+{
+    USBD_LL_Init(&USBD_Device);
+    HAL_PCD_Start(USBD_Device.pData);
+
+    HAL_SRAM_ResetBuffer(HAL_SRAM_VIDEO_CHANNEL_0);
+
+    HAL_SRAM_ResetBuffer(HAL_SRAM_VIDEO_CHANNEL_1);
+
+    return;
+}
+
+
+void USB_MainTask(void const *argument)
 {
     osEvent event;
 
-    USBH_ApplicationInit();
-
-    USBH_MountUSBDisk();
-
-    dlog_info("usb host main task\n");
+    dlog_info("main task");
 
     while (1)
     {
@@ -177,11 +206,16 @@ void USBH_MainTask(void const *argument)
         {
             switch (event.value.v)
             {
-            case USBH_APP_START_BYPASS_VIDEO:
+                case USBH_APP_START_BYPASS_VIDEO:
                 {
                     /* Need to start a new task */
                     if (0 == g_usbhBypassVideoCtrl.taskExist)
                     {
+                        /* set USB as host */
+                        USBH_ApplicationInit();
+
+                        USBH_MountUSBDisk();
+                    
                         osThreadDef(BypassTask, USBH_BypassVideo, osPriorityIdle, 0, 4 * 128);
                         g_usbhBypassVideoCtrl.threadID  = osThreadCreate(osThread(BypassTask), NULL);
 
@@ -209,34 +243,26 @@ void USBH_MainTask(void const *argument)
                     }
 
                     /* activate the task */
-                    SRAM_SKY_EnableBypassVideoConfig(0);
+                    HAL_SRAM_EnableSkyBypassVideo(HAL_SRAM_VIDEO_CHANNEL_0);
 
                     osSemaphoreRelease(g_usbhBypassVideoCtrl.semID);
 
                     break;
                 }
 
-            case USBH_APP_STOP_BYPASS_VIDEO:
+                case USBH_APP_STOP_BYPASS_VIDEO:
                 {
                     dlog_info("stop bypassvideo task!\n");
 
-                    SRAM_SKY_DisableBypassVideoConfig(0);
+                    HAL_SRAM_DisableSkyBypassVideo(HAL_SRAM_VIDEO_CHANNEL_0);
+
+                    USBD_ApplicationInit();
+
+                    break;
                 }
-                break;
-            case USBH_APP_CREATE_FILE:
-                break;
 
-            case USBH_APP_READ_FILE:
-                break;
-
-            case USBH_APP_CREATE_FOLDER:
-                break;
-
-            case USBH_APP_SHOW_DIR:
-                break;
-
-            default:
-                break;
+                default:
+                    break;
             }
         }
     }

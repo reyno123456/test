@@ -278,44 +278,5 @@ static void IntToUnicode (uint32_t value , uint8_t *pbuf , uint8_t len)
   }
 }
 
-extern void USBD_HID_InitDescGlobal(void)
-{
-  HID_Desc.GetDeviceDescriptor                      = USBD_HID_DeviceDescriptor;
-  HID_Desc.GetLangIDStrDescriptor                   = USBD_HID_LangIDStrDescriptor;
-  HID_Desc.GetManufacturerStrDescriptor             = USBD_HID_ManufacturerStrDescriptor;
-  HID_Desc.GetProductStrDescriptor                  = USBD_HID_ProductStrDescriptor;
-  HID_Desc.GetSerialStrDescriptor                   = USBD_HID_SerialStrDescriptor;
-  HID_Desc.GetConfigurationStrDescriptor            = USBD_HID_ConfigStrDescriptor;
-  HID_Desc.GetInterfaceStrDescriptor                = USBD_HID_InterfaceStrDescriptor;
-
-  USBD_DeviceDesc[0]     = 0x12;
-  USBD_DeviceDesc[1]     = USB_DESC_TYPE_DEVICE;
-  USBD_DeviceDesc[2]     = 0x00;
-  USBD_DeviceDesc[3]     = 0x02;
-  USBD_DeviceDesc[4]     = 0x00;
-  USBD_DeviceDesc[5]     = 0x00;
-  USBD_DeviceDesc[6]     = 0x00;
-  USBD_DeviceDesc[7]     = USB_MAX_EP0_SIZE;
-  USBD_DeviceDesc[8]     = LOBYTE(USBD_VID);
-  USBD_DeviceDesc[9]     = HIBYTE(USBD_VID);
-  USBD_DeviceDesc[10]    = LOBYTE(USBD_PID);
-  USBD_DeviceDesc[11]    = HIBYTE(USBD_PID);
-  USBD_DeviceDesc[12]    = 0x01;
-  USBD_DeviceDesc[13]    = 0x00;
-  USBD_DeviceDesc[14]    = USBD_IDX_MFC_STR;
-  USBD_DeviceDesc[15]    = USBD_IDX_PRODUCT_STR;
-  USBD_DeviceDesc[16]    = USBD_IDX_SERIAL_STR;
-  USBD_DeviceDesc[17]    = USBD_MAX_NUM_CONFIGURATION;
-
-  USBD_LangIDDesc[0]     = USB_LEN_LANGID_STR_DESC;
-  USBD_LangIDDesc[1]     = USB_DESC_TYPE_STRING;
-  USBD_LangIDDesc[2]     = LOBYTE(USBD_LANGID_STRING);
-  USBD_LangIDDesc[3]     = HIBYTE(USBD_LANGID_STRING);
-
-  USBD_StringSerial[0]   = USB_SIZ_STRING_SERIAL;
-  USBD_StringSerial[1]   = USB_DESC_TYPE_STRING;
-}
-
-
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

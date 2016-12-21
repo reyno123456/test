@@ -67,8 +67,8 @@ static void IO_Task(void const *argument)
   */
 int main(void)
 {
-    
     BB_SetBoardMODE(SFR_TRX_MODE_SKY);
+
     BB_SPI_init();
 
     PLLCTRL_SetCoreClk(CPU0_CPU1_CORE_PLL_CLK, CPU0_ID);
@@ -88,9 +88,11 @@ int main(void)
     ADV_7611_Initial(0);
     ADV_7611_Initial(1);
 
+    USBD_ApplicationInit();
+
     /* Create Main Task */
-    osThreadDef(USBHMAIN_Task, USBH_MainTask, osPriorityBelowNormal, 0, 4 * 128);
-    osThreadCreate(osThread(USBHMAIN_Task), NULL);
+    osThreadDef(USBMAIN_Task, USB_MainTask, osPriorityBelowNormal, 0, 4 * 128);
+    osThreadCreate(osThread(USBMAIN_Task), NULL);
 
     osThreadDef(USBHStatus_Task, USBH_USBHostStatus, osPriorityNormal, 0, 4 * 128);
     osThreadCreate(osThread(USBHStatus_Task), NULL);

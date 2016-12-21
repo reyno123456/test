@@ -129,7 +129,7 @@ HAL_StatusTypeDef HAL_HCD_Init(HCD_HandleTypeDef *hhcd)
   /* Check the HCD handle allocation */
   if(hhcd == NULL)
   {
-    return HAL_ERROR;
+    return HAL_USB_ERROR;
   }
   
   /* Check the parameters */
@@ -154,7 +154,7 @@ HAL_StatusTypeDef HAL_HCD_Init(HCD_HandleTypeDef *hhcd)
  
  hhcd->State= HAL_HCD_STATE_READY;
  
- return HAL_OK;
+ return HAL_USB_OK;
 }
 
 /**
@@ -189,7 +189,7 @@ HAL_StatusTypeDef HAL_HCD_HC_Init(HCD_HandleTypeDef *hhcd,
                                   uint8_t ep_type,
                                   uint16_t mps)
 {
-  HAL_StatusTypeDef status = HAL_OK;
+  HAL_StatusTypeDef status = HAL_USB_OK;
   
   __HAL_LOCK(hhcd); 
   
@@ -222,7 +222,7 @@ HAL_StatusTypeDef HAL_HCD_HC_Init(HCD_HandleTypeDef *hhcd,
   */
 HAL_StatusTypeDef HAL_HCD_HC_Halt(HCD_HandleTypeDef *hhcd, uint8_t ch_num)
 {
-  HAL_StatusTypeDef status = HAL_OK;
+  HAL_StatusTypeDef status = HAL_USB_OK;
   
   __HAL_LOCK(hhcd);   
   USB_HC_Halt(hhcd->Instance, ch_num);   
@@ -241,7 +241,7 @@ HAL_StatusTypeDef HAL_HCD_DeInit(HCD_HandleTypeDef *hhcd)
   /* Check the HCD handle allocation */
   if(hhcd == NULL)
   {
-    return HAL_ERROR;
+    return HAL_USB_ERROR;
   }
   
   hhcd->State = HAL_HCD_STATE_BUSY;
@@ -253,7 +253,7 @@ HAL_StatusTypeDef HAL_HCD_DeInit(HCD_HandleTypeDef *hhcd)
   
   hhcd->State = HAL_HCD_STATE_RESET; 
   
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -661,7 +661,7 @@ HAL_StatusTypeDef HAL_HCD_Start(HCD_HandleTypeDef *hhcd)
   __HAL_HCD_ENABLE(hhcd);
   USB_DriveVbus(hhcd->Instance, 1);  
   __HAL_UNLOCK(hhcd); 
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -675,7 +675,7 @@ HAL_StatusTypeDef HAL_HCD_Stop(HCD_HandleTypeDef *hhcd)
   __HAL_LOCK(hhcd); 
   USB_StopHost(hhcd->Instance);
   __HAL_UNLOCK(hhcd); 
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**

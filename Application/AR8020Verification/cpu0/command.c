@@ -16,7 +16,6 @@
 #include "test_gpio.h"
 #include "test_usbh.h"
 #include "test_float.h"
-#include "test_usbd.h"
 #include "test_ov5640.h"
 #include "upgrade.h"
 #include "test_bbuartcom.h"
@@ -345,14 +344,6 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     else if (memcmp(cmdArray[0], "test_float_calculate_pi", strlen("test_float_calculate_pi")) == 0)
     {
         test_float_calculate_pi();
-    }
-    else if (memcmp(cmdArray[0], "sendctrl", strlen("sendctrl")) == 0)
-    {
-        command_sendCtrl();
-    }
-    else if (memcmp(cmdArray[0], "sendvideo", strlen("sendvideo")) == 0)
-    {
-        command_sendVideo();
     }
 	else if (memcmp(cmdArray[0], "test_can_init", strlen("test_can_init")) == 0)
     {
@@ -724,22 +715,4 @@ void command_stopBypassVideo(void)
     }
 }
 
-void command_sendCtrl(void)
-{
-    USBD_APP_EVENT_DEF  usbdAppType;
-
-    usbdAppType = USBD_APP_SEND_CTRL;
-
-    osMessagePut(USBD_AppEvent, usbdAppType, 0);
-}
-
-
-void command_sendVideo(void)
-{
-    USBD_APP_EVENT_DEF  usbdAppType;
-
-    usbdAppType = USBD_APP_SEND_VIDEO;
-
-    osMessagePut(USBD_AppEvent, usbdAppType, 0);
-}
 

@@ -4,7 +4,6 @@
 #include "test_i2c_adv7611.h"
 #include "pll_ctrl.h"
 #include "command.h"
-#include "test_usbd.h"
 #include "test_usbh.h"
 #include "cmsis_os.h"
 #include "sys_event.h"
@@ -89,9 +88,11 @@ int main(void)
     ADV_7611_Initial(0);
     ADV_7611_Initial(1);
 
+    USBD_ApplicationInit();
+
     /* Create Main Task */
-    osThreadDef(USBHMAIN_Task, USBH_MainTask, osPriorityBelowNormal, 0, 4 * 128);
-    osThreadCreate(osThread(USBHMAIN_Task), NULL);
+    osThreadDef(USBMAIN_Task, USB_MainTask, osPriorityBelowNormal, 0, 4 * 128);
+    osThreadCreate(osThread(USBMAIN_Task), NULL);
 
     osThreadDef(USBHStatus_Task, USBH_USBHostStatus, osPriorityNormal, 0, 4 * 128);
     osThreadCreate(osThread(USBHStatus_Task), NULL);

@@ -54,10 +54,10 @@
   */  
 typedef enum 
 {
-  HAL_OK       = 0x00,
-  HAL_ERROR    = 0x01,
-  HAL_BUSY     = 0x02,
-  HAL_TIMEOUT  = 0x03
+  HAL_USB_OK        = 0x00,
+  HAL_USB_ERROR     = 0x01,
+  HAL_USB_BUSY      = 0x02,
+  HAL_USB_TIMEOUT   = 0x03
 } HAL_StatusTypeDef;
 
 /** 
@@ -79,7 +79,7 @@ typedef enum
                                 do{                                        \
                                     if((__HANDLE__)->Lock == HAL_LOCKED)   \
                                     {                                      \
-                                       return HAL_BUSY;                    \
+                                       return HAL_USB_BUSY;                    \
                                     }                                      \
                                     else                                   \
                                     {                                      \

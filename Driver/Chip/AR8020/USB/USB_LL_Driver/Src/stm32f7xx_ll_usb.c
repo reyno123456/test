@@ -143,7 +143,7 @@ HAL_StatusTypeDef USB_CoreInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef c
   USBx->GUSBCFG &= ~(USB_OTG_GUSBCFG_TRDT | USB_OTG_GUSBCFG_TOCAL);
   USBx->GUSBCFG |= (USB_OTG_GUSBCFG_TRDT_0 | USB_OTG_GUSBCFG_TRDT_3 | USB_OTG_GUSBCFG_TOCAL_0);
   
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -156,7 +156,7 @@ HAL_StatusTypeDef USB_EnableGlobalInt(USB_OTG_GlobalTypeDef *USBx)
 {
   USBx->GAHBCFG |= USB_OTG_GAHBCFG_GINT;
 
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 
@@ -169,7 +169,7 @@ HAL_StatusTypeDef USB_EnableGlobalInt(USB_OTG_GlobalTypeDef *USBx)
 HAL_StatusTypeDef USB_DisableGlobalInt(USB_OTG_GlobalTypeDef *USBx)
 {
   USBx->GAHBCFG &= ~USB_OTG_GAHBCFG_GINT;
-  return HAL_OK;
+  return HAL_USB_OK;
 }
    
 /**
@@ -197,7 +197,7 @@ HAL_StatusTypeDef USB_SetCurrentMode(USB_OTG_GlobalTypeDef *USBx , USB_OTG_ModeT
 
   SysTicks_DelayMS(50);
 
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -330,7 +330,7 @@ HAL_StatusTypeDef USB_DevInit (USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef c
     USBx->GINTMSK |= (USB_OTG_GINTMSK_SRQIM | USB_OTG_GINTMSK_OTGINT); 
   }
   
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 
@@ -352,12 +352,12 @@ HAL_StatusTypeDef USB_FlushTxFifo (USB_OTG_GlobalTypeDef *USBx, uint32_t num )
   {
     if (++count > 200000)
     {
-      return HAL_TIMEOUT;
+      return HAL_USB_TIMEOUT;
     }
   }
   while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_TXFFLSH) == USB_OTG_GRSTCTL_TXFFLSH);
   
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 
@@ -376,12 +376,12 @@ HAL_StatusTypeDef USB_FlushRxFifo(USB_OTG_GlobalTypeDef *USBx)
   {
     if (++count > 200000)
     {
-      return HAL_TIMEOUT;
+      return HAL_USB_TIMEOUT;
     }
   }
   while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_RXFFLSH) == USB_OTG_GRSTCTL_RXFFLSH);
   
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -399,7 +399,7 @@ HAL_StatusTypeDef USB_FlushRxFifo(USB_OTG_GlobalTypeDef *USBx)
 HAL_StatusTypeDef USB_SetDevSpeed(USB_OTG_GlobalTypeDef *USBx , uint8_t speed)
 {
   USBx_DEVICE->DCFG |= speed;
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -463,7 +463,7 @@ HAL_StatusTypeDef USB_ActivateEndpoint(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTy
        (USB_OTG_DIEPCTL_SD0PID_SEVNFRM)| (USB_OTG_DOEPCTL_USBAEP));
     } 
   }
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 /**
   * @brief  Activate and configure a dedicated endpoint
@@ -506,7 +506,7 @@ HAL_StatusTypeDef USB_ActivateDedicatedEndpoint(USB_OTG_GlobalTypeDef *USBx, USB
      USBx_DEVICE->DEACHMSK |= USB_OTG_DAINTMSK_OEPM & ((1 << (ep->num)) << 16);
   }
 
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 /**
   * @brief  De-activate and de-initialize an endpoint
@@ -530,7 +530,7 @@ HAL_StatusTypeDef USB_DeactivateEndpoint(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EP
      USBx_DEVICE->DAINTMSK &= ~(USB_OTG_DAINTMSK_OEPM & ((1 << (ep->num)) << 16));     
      USBx_OUTEP(ep->num)->DOEPCTL &= ~USB_OTG_DOEPCTL_USBAEP;      
   }
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -552,7 +552,7 @@ HAL_StatusTypeDef USB_DeactivateDedicatedEndpoint(USB_OTG_GlobalTypeDef *USBx, U
      USBx_OUTEP(ep->num)->DOEPCTL &= ~USB_OTG_DOEPCTL_USBAEP; 
      USBx_DEVICE->DAINTMSK &= ~(USB_OTG_DAINTMSK_OEPM & ((1 << (ep->num)) << 16));
   }
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -713,7 +713,7 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeDe
     /* EP enable */
     USBx_OUTEP(ep->num)->DOEPCTL |= (USB_OTG_DOEPCTL_CNAK | USB_OTG_DOEPCTL_EPENA);
   }
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -833,7 +833,7 @@ HAL_StatusTypeDef USB_EP0StartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeD
     /* EP enable */
     USBx_OUTEP(ep->num)->DOEPCTL |= (USB_OTG_DOEPCTL_CNAK | USB_OTG_DOEPCTL_EPENA);    
   }
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -861,7 +861,7 @@ HAL_StatusTypeDef USB_WritePacket(USB_OTG_GlobalTypeDef *USBx, uint8_t *src, uin
       USBx_DFIFO(ch_ep_num) = *((__packed uint32_t *)src);
     }
   }
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -914,7 +914,7 @@ HAL_StatusTypeDef USB_EPSetStall(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeDef
     } 
     USBx_OUTEP(ep->num)->DOEPCTL |= USB_OTG_DOEPCTL_STALL;
   }
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 
@@ -942,7 +942,7 @@ HAL_StatusTypeDef USB_EPClearStall(USB_OTG_GlobalTypeDef *USBx, USB_OTG_EPTypeDe
       USBx_OUTEP(ep->num)->DOEPCTL |= USB_OTG_DOEPCTL_SD0PID_SEVNFRM; /* DATA0 */
     }    
   }
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -971,7 +971,7 @@ HAL_StatusTypeDef USB_StopDevice(USB_OTG_GlobalTypeDef *USBx)
   USB_FlushRxFifo(USBx);
   USB_FlushTxFifo(USBx ,  0x10 );  
   
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -986,7 +986,7 @@ HAL_StatusTypeDef  USB_SetDevAddress (USB_OTG_GlobalTypeDef *USBx, uint8_t addre
   USBx_DEVICE->DCFG &= ~ (USB_OTG_DCFG_DAD);
   USBx_DEVICE->DCFG |= (address << 4) & USB_OTG_DCFG_DAD ;
   
-  return HAL_OK;  
+  return HAL_USB_OK;  
 }
 
 /**
@@ -999,7 +999,7 @@ HAL_StatusTypeDef  USB_DevConnect (USB_OTG_GlobalTypeDef *USBx)
   USBx_DEVICE->DCTL &= ~USB_OTG_DCTL_SDIS ;
   SysTicks_DelayMS(3);
   
-  return HAL_OK;  
+  return HAL_USB_OK;  
 }
 
 /**
@@ -1012,7 +1012,7 @@ HAL_StatusTypeDef  USB_DevDisconnect (USB_OTG_GlobalTypeDef *USBx)
   USBx_DEVICE->DCTL |= USB_OTG_DCTL_SDIS ;
   SysTicks_DelayMS(3);
   
-  return HAL_OK;  
+  return HAL_USB_OK;  
 }
 
 /**
@@ -1129,7 +1129,7 @@ HAL_StatusTypeDef  USB_ActivateSetup (USB_OTG_GlobalTypeDef *USBx)
   }
   USBx_DEVICE->DCTL |= USB_OTG_DCTL_CGINAK;
 
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 
@@ -1176,7 +1176,7 @@ HAL_StatusTypeDef USB_EP0_OutStart(USB_OTG_GlobalTypeDef *USBx, uint8_t dma, uin
     USBx_OUTEP(0)->DOEPCTL = 0x80008000;
   }
   
-  return HAL_OK;  
+  return HAL_USB_OK;  
 }
 
 
@@ -1194,7 +1194,7 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
   {
     if (++count > 200000)
     {
-      return HAL_TIMEOUT;
+      return HAL_USB_TIMEOUT;
     }
   }
   while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_AHBIDL) == 0);
@@ -1207,12 +1207,12 @@ static HAL_StatusTypeDef USB_CoreReset(USB_OTG_GlobalTypeDef *USBx)
   {
     if (++count > 200000)
     {
-      return HAL_TIMEOUT;
+      return HAL_USB_TIMEOUT;
     }
   }
   while ((USBx->GRSTCTL & USB_OTG_GRSTCTL_CSRST) == USB_OTG_GRSTCTL_CSRST);
   
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 
@@ -1275,7 +1275,7 @@ HAL_StatusTypeDef USB_HostInit (USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef 
                     USB_OTG_GINTMSK_SOFM             |USB_OTG_GINTSTS_DISCINT|\
                     USB_OTG_GINTMSK_PXFRM_IISOOXFRM  | USB_OTG_GINTMSK_WUIM);
 
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -1301,7 +1301,7 @@ HAL_StatusTypeDef USB_InitFSLSPClkSel(USB_OTG_GlobalTypeDef *USBx , uint8_t freq
   {
     USBx_HOST->HFIR = (uint32_t)6000;
   } 
-  return HAL_OK;  
+  return HAL_USB_OK;  
 }
 
 /**
@@ -1323,7 +1323,7 @@ HAL_StatusTypeDef USB_ResetPort(USB_OTG_GlobalTypeDef *USBx)
   USBx_HPRT0 = (USB_OTG_HPRT_PRST | hprt0);  
   SysTicks_DelayMS(50);                                /* See Note #1 */
   USBx_HPRT0 = ((~USB_OTG_HPRT_PRST) & hprt0); 
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -1350,7 +1350,7 @@ HAL_StatusTypeDef USB_DriveVbus (USB_OTG_GlobalTypeDef *USBx, uint8_t state)
   {
     USBx_HPRT0 = ((~USB_OTG_HPRT_PPWR) & hprt0); 
   }
-  return HAL_OK; 
+  return HAL_USB_OK; 
 }
 
 /**
@@ -1487,7 +1487,7 @@ HAL_StatusTypeDef USB_HC_Init(USB_OTG_GlobalTypeDef *USBx,
     USBx_HC(ch_num)->HCCHAR |= USB_OTG_HCCHAR_ODDFRM ;
   }
 
-  return HAL_OK; 
+  return HAL_USB_OK; 
 }
 
 /**
@@ -1520,7 +1520,7 @@ HAL_StatusTypeDef USB_HC_StartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_HCTypeDe
     if((dma == 0) && (hc->do_ping == 1))
     {
       USB_DoPing(USBx, hc->ch_num);
-      return HAL_OK;
+      return HAL_USB_OK;
     }
     else if(dma == 1)
     {
@@ -1625,7 +1625,7 @@ HAL_StatusTypeDef USB_HC_StartXfer(USB_OTG_GlobalTypeDef *USBx, USB_OTG_HCTypeDe
     }
   }
   
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -1697,7 +1697,7 @@ HAL_StatusTypeDef USB_HC_Halt(USB_OTG_GlobalTypeDef *USBx , uint8_t hc_num)
     }
   }
   
-  return HAL_OK;
+  return HAL_USB_OK;
 }
 
 /**
@@ -1721,7 +1721,7 @@ HAL_StatusTypeDef USB_DoPing(USB_OTG_GlobalTypeDef *USBx , uint8_t ch_num)
   tmpreg |= USB_OTG_HCCHAR_CHENA;
   USBx_HC(ch_num)->HCCHAR = tmpreg;
   
-  return HAL_OK;  
+  return HAL_USB_OK;  
 }
 
 /**
@@ -1777,7 +1777,7 @@ HAL_StatusTypeDef USB_StopHost(USB_OTG_GlobalTypeDef *USBx)
   USBx_HOST->HAINT = 0xFFFFFFFF;
   USBx->GINTSTS = 0xFFFFFFFF;
   USB_EnableGlobalInt(USBx);
-  return HAL_OK;  
+  return HAL_USB_OK;  
 }
 
 
