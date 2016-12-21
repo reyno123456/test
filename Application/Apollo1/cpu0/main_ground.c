@@ -10,7 +10,6 @@
 #include "bb_spi.h"
 #include "stm32f746xx.h"
 #include "test_usbd.h"
-#include "test_sram.h"
 #include "com_task.h"
 #include "bb_ctrl_proxy.h"
 

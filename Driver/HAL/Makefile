@@ -21,12 +21,15 @@ LIB = libhal.a
 # source file(s), including c file(s)
 SRC_C := Src/hal_i2c.c \
          Src/hal_sys_ctl.c \
-         Src/hal_hdmi_rx.c
+         Src/hal_hdmi_rx.c \
+         Src/hal_sram.c
 
 INCDIRS := -IInc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/I2C/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc \
-           -I$(TOP_DIR)/Driver/Board/AR8020TEST/ADV7611/Inc
+           -I$(TOP_DIR)/Driver/Chip/AR8020/SRAM/Inc \
+           -I$(TOP_DIR)/Driver/Board/AR8020TEST/ADV7611/Inc \
+           -I$(TOP_DIR)/Configure/Include
 
 # object file(s)
 OBJ_C     := $(patsubst %.c,%.o,$(SRC_C))
@@ -45,6 +48,8 @@ install:
 	@cp -f Inc/hal_i2c.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_sys_ctl.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_hdmi_rx.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/hal_sram.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/hal_ret_type.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."
@@ -52,6 +57,7 @@ clean:
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_i2c.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_sys_ctl.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_hdmi_rx.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_sram.h
 
 .PHONY: all clean install
 #########################################################################

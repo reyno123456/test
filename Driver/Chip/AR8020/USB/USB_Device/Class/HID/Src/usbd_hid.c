@@ -526,9 +526,6 @@ static uint8_t  USBD_HID_DataIn (USBD_HandleTypeDef *pdev,
           be caused by  a new transfer before the end of the previous transfer */
     ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state[epnum & 0x7F] = HID_IDLE;
 
-    /* change endian after send finish */
-    //USB_OTG_SET_LITTLE_ENDIAN();
-
     if ((epnum | 0x80) == HID_EPIN_VIDEO_ADDR)
     {
         if (1 == sramReady0)

@@ -5,7 +5,6 @@
 #include "command.h"
 #include "serial.h"
 #include "test_usbd.h"
-#include "test_sram.h"
 #include "sram.h"
 #include "cmsis_os.h"
 #include "sys_event.h"

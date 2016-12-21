@@ -70,9 +70,9 @@ void SRAM_Ready1Confirm(void)
 }
 
 
-void SRAM_GROUND_BypassVideoConfig(void)
+void SRAM_GROUND_ReceiveVideoConfig(void)
 {
-    uint8_t      temp;
+    //uint8_t      temp;
 
     /* Base Band bypass data, directly write to SRAM */
     #if 0

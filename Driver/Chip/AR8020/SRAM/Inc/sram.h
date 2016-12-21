@@ -32,7 +32,7 @@ void SRAM_Ready0IRQHandler(void);
 void SRAM_Ready1IRQHandler(void);
 void SRAM_Ready0Confirm(void);
 void SRAM_Ready1Confirm(void);
-void SRAM_GROUND_BypassVideoConfig(void);
+void SRAM_GROUND_ReceiveVideoConfig(void);
 
 
 extern volatile uint32_t  sramReady0;

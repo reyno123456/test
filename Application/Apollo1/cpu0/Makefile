@@ -22,7 +22,7 @@ include $(BUILD_DIR)/config.mk
 CPU_NUMBER = cpu0
 
 # libs
-LD_LIBS := -lfreertos -lboard -lAR8020drv -lcommon
+LD_LIBS := -lhal -lfreertos -lboard -lAR8020drv -lcommon
 
 LDFLAGS += -Bstatic
 LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) $(LD_LIBS)
@@ -31,11 +31,11 @@ LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 SRC_S   := $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
-SRC_C   := main_sky.c command.c test_usbh.c test_usbd.c test_sram.c upgrade.c md5.c com_task.c
+SRC_C   := main_sky.c command.c test_usbh.c test_usbd.c upgrade.c md5.c com_task.c
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
-SRC_C   := main_ground.c command.c test_usbh.c test_usbd.c test_sram.c upgrade.c md5.c com_task.c
+SRC_C   := main_ground.c command.c test_usbh.c test_usbd.c upgrade.c md5.c com_task.c
 endif
 
 CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I./

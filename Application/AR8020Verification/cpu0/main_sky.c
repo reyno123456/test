@@ -6,7 +6,6 @@
 #include "command.h"
 #include "test_usbd.h"
 #include "test_usbh.h"
-#include "test_sram.h"
 #include "cmsis_os.h"
 #include "sys_event.h"
 #include "inter_core.h"

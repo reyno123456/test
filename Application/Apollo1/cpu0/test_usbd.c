@@ -5,10 +5,9 @@
 #include "interrupt.h"
 #include "command.h"
 #include "cmsis_os.h"
-#include "test_sram.h"
 #include "test_usbh.h"
 #include "sys_event.h"
-#include "sram.h"
+#include "hal_sram.h"
 
 extern USBD_HandleTypeDef   USBD_Device;
 osMessageQId                USBD_AppEvent;
@@ -40,7 +39,8 @@ void USBD_MainTask(void const *argument)
     uint8_t     buffer[30] = "test video or ctrl!";
 
     USBD_ApplicationInit();
-    test_sram_init();
+
+    HAL_SRAM_ReceiveVideoConfig();
 
     while (1)
     {
@@ -87,14 +87,14 @@ void USBD_RestartUSBDevice(void * p)
     USBD_LL_Init(&USBD_Device);
     HAL_PCD_Start(USBD_Device.pData);
 
-    if (1 == sramReady0)
+    //if (1 == sramReady0)
     {
-        SRAM_Ready0Confirm();
+        HAL_SRAM_ResetBuffer(HAL_SRAM_VIDEO_CHANNEL_0);
     }
-    
-    if (1 == sramReady1)
+
+    //if (1 == sramReady1)
     {
-        SRAM_Ready1Confirm();
+        HAL_SRAM_ResetBuffer(HAL_SRAM_VIDEO_CHANNEL_1);
     }
 }
 

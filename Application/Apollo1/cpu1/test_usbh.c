@@ -81,7 +81,8 @@ void USBH_ProcUVC(void)
 
         USBH_UVC_StartView(&hUSBHost);
     }
-    else if (APPLICATION_DISCONNECT == g_usbhAppCtrl.usbhAppState)
+    else if ((APPLICATION_DISCONNECT == g_usbhAppCtrl.usbhAppState)&&
+             (1 == g_usbhUVCStarted))
     {
         g_usbhUVCStarted = 0;
     }

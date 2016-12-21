@@ -22,5 +22,9 @@ typedef uint32_t HAL_RET_T;
 #define HAL_HDMI_RX_ERR_INIT                (HAL_HDMI_RX_ERR_MASK | 0x2)
 #define HAL_HDMI_RX_ERR_GET_VIDEO_FORMAT    (HAL_HDMI_RX_ERR_MASK | 0x3)
 
+#define HAL_SRAM_ERR_MASK                   (0x20000)
+#define HAL_SRAM_ERR_CHANNEL_INVALID        (HAL_HDMI_RX_ERR_MASK | 0x1)
+
+
 #endif
 
