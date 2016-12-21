@@ -99,16 +99,8 @@ void WITELESS_GetOSDInfo(void)
 {
     uint8_t                  *sendBuffer;
     g_pstWirelessInfoDisplay  = (STRU_WIRELESS_INFO_DISPLAY *)OSD_STATUS_SHM_ADDR;
-    sendBuffer                = (uint8_t *)g_pstWirelessInfoDisplay;
-
-    if (USB_OTG_IS_BIG_ENDIAN())
-    {
-        convert_endian((void *)sendBuffer, (void *)&g_stWirelessInfoSend, (uint32_t)(sizeof(STRU_WIRELESS_INFO_DISPLAY)));
-    }
-    else
-    {
-        memcpy((void *)&g_stWirelessInfoSend, (void *)g_pstWirelessInfoDisplay, sizeof(STRU_WIRELESS_INFO_DISPLAY));
-    }
+    
+    memcpy((void *)&g_stWirelessInfoSend, (void *)g_pstWirelessInfoDisplay, sizeof(STRU_WIRELESS_INFO_DISPLAY));
 
 }
 
@@ -124,7 +116,7 @@ void WIRELESS_SendOSDInfo(ENUM_WIRELESS_TOOL host)
         g_stWirelessInfoSend.paramLen = sendLength;
         if (USB_OTG_IS_BIG_ENDIAN())
         {
-            convert_endian((void *)&g_stWirelessInfoSend, (void *)&g_stWirelessInfoSend, 4);
+            convert_endian((void *)&g_stWirelessInfoSend, (void *)&g_stWirelessInfoSend, sendLength);
         }
     }
     else
@@ -133,7 +125,7 @@ void WIRELESS_SendOSDInfo(ENUM_WIRELESS_TOOL host)
         g_stWirelessInfoSend.paramLen = sendLength;
         if (USB_OTG_IS_BIG_ENDIAN())
         {
-            convert_endian((void *)&g_stWirelessInfoSend, (void *)&g_stWirelessInfoSend, 4);
+            convert_endian((void *)&g_stWirelessInfoSend, (void *)&g_stWirelessInfoSend, sendLength);
         }
     }
 
@@ -250,10 +242,9 @@ void WIRELESS_INTERFACE_WRITE_BB_REG_Handler(void *param)
         // dlog_info("inDebugFlag1 = %x\n",inDebugFlag);
         recvMessage->messageId = 0x0e;
         recvMessage->paramLen = 0;
-
         if (USB_OTG_IS_BIG_ENDIAN())
         {
-            convert_endian((void *)recvMessage, (void *)recvMessage, (uint32_t)(sizeof(recvMessage->messageId) + sizeof(recvMessage->paramLen)));
+            convert_endian((void *)recvMessage, (void *)recvMessage, (uint32_t)(sizeof(recvMessage)));
         }
 
         if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)recvMessage, (uint32_t)(sizeof(recvMessage->messageId) + sizeof(recvMessage->paramLen)), HID_EPIN_CTRL_ADDR))
@@ -268,18 +259,18 @@ void WIRELESS_INTERFACE_WRITE_BB_REG_Handler(void *param)
 void WIRELESS_INTERFACE_READ_BB_REG_Handler(void *param)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
+    recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
     uint8_t  inDebugFlag = 0;
 
     WITELESS_GetOSDInfo();
     inDebugFlag = g_stWirelessInfoSend.in_debug;
-    recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
+
     if (inDebugFlag == 1)
     {
         recvMessage->messageId = 0x0f;
         recvMessage->paramLen = 2;
         recvMessage->paramData[0] = recvMessage->paramData[0];
         recvMessage->paramData[1] = BB_SPI_curPageReadByte(recvMessage->paramData[0]);
-
         if (USB_OTG_IS_BIG_ENDIAN())
         {
             convert_endian((void *)recvMessage, (void *)recvMessage, (uint32_t)(sizeof(recvMessage)));
@@ -292,13 +283,11 @@ void WIRELESS_INTERFACE_READ_BB_REG_Handler(void *param)
     }
     else
     {   
-        dlog_info("inDebugFlag1 = %x\n",inDebugFlag);
         recvMessage->messageId = 0x0f;
         recvMessage->paramLen = 0;
-
         if (USB_OTG_IS_BIG_ENDIAN())
         {
-            convert_endian((void *)recvMessage, (void *)recvMessage, (uint32_t)(sizeof(recvMessage->messageId) + sizeof(recvMessage->paramLen)));
+            convert_endian((void *)recvMessage, (void *)recvMessage, (uint32_t)(sizeof(recvMessage)));
         }
 
         if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)recvMessage, (uint32_t)(sizeof(recvMessage->messageId) + sizeof(recvMessage->paramLen)), HID_EPIN_CTRL_ADDR))
