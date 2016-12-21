@@ -25,6 +25,9 @@ typedef uint32_t HAL_RET_T;
 #define HAL_SRAM_ERR_MASK                   (0x20000)
 #define HAL_SRAM_ERR_CHANNEL_INVALID        (HAL_HDMI_RX_ERR_MASK | 0x1)
 
+#define HAL_GPIO_ERR_MASK                   (0x30000)
+#define HAL_GPIO_ERR_UNKNOWN                (HAL_GPIO_ERR_MASK | 0x1)
+
 
 #endif
 

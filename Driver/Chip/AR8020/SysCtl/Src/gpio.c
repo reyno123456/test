@@ -460,6 +460,6 @@ void GPIO_Intr_ClearIntr(uint32_t gpioNum)
     
     u32_GroupNoAddr = u8_GroupNo*0x40000 + GPIO0_BASE_ADDR;
     DLOG_INFO("\n ClearInt %x %x \n",u32_GpioRegVal,GPIO_Intr_GetIntrStatus(gpioNum));
-    u32_GpioRegVal |= GPIO_Intr_GetIntrStatus(gpioNum);;
+    u32_GpioRegVal |= 1 << u8_PinNo;
     Reg_Write32(u32_GroupNoAddr + GPIO_CLEARINT_OFFSET, u32_GpioRegVal);
 }

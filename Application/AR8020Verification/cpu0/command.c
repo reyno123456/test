@@ -20,6 +20,7 @@
 #include "test_ov5640.h"
 #include "upgrade.h"
 #include "test_bbuartcom.h"
+#include "testhal_gpio.h"
 
 
 static unsigned char g_commandPos;
@@ -377,6 +378,14 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_test_BB_uart(cmdArray[1]);
     }
+    else if (memcmp(cmdArray[0], "testhal_TestGpioNormal", strlen("testhal_TestGpioNormal")) == 0)
+    {
+        commandhal_TestGpioNormal(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "testhal_TestGpioInterrupt", strlen("testhal_TestGpioInterrupt")) == 0)
+    {
+        commandhal_TestGpioInterrupt(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
     /* error command */
     else
     {
@@ -425,6 +434,8 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("test_ov5640");
         dlog_error("test_write_ov5640 <subAddr(hex)> <value>(hex)");
         dlog_error("test_read_ov5640 <subAddr(hex)>");
+        dlog_error("testhal_TestGpioNormal <gpionum> <highorlow>");
+        dlog_error("testhal_TestGpioInterrupt <gpionum> <inttype> <polarity>");
     }
 
     /* must init to receive new data from serial */
