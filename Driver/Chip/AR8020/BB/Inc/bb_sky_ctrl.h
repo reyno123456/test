@@ -49,4 +49,6 @@ void sky_soft_reset(void);
 
 void sky_search_id_timeout(void);
 
+static void BB_sky_GatherOSDInfo(void);
+
 #endif

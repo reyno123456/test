@@ -25,6 +25,10 @@ typedef enum
 #define TRUE    (1)
 
 
+#define  BLUE_LED_GPIO      (71)
+#define  RED_LED_GPIO       (67)
+
+
 typedef struct _STRU_FRQ_CHANNEL           //  Remote Controller Freq Channnel
 {
     uint8_t frq1;

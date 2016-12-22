@@ -357,12 +357,12 @@ void BB_set_LDPC(ENUM_BB_LDPC ldpc)
 
 static uint8_t mod_br_map[][2] = 
 {
-    ((MOD_BPSK<<6)  | (BW_10M <<3)  | LDPC_1_2),  1, //encoder br:1M
-    ((MOD_4QAM<<6)  | (BW_10M <<3)  | LDPC_1_2),  3, //encoder br:3M
+    ((MOD_BPSK<<6)  | (BW_10M <<3)  | LDPC_1_2),  0, //encoder br:500k
+    ((MOD_4QAM<<6)  | (BW_10M <<3)  | LDPC_1_2),  2, //encoder br:2M
     ((MOD_4QAM<<6)  | (BW_10M <<3)  | LDPC_2_3),  4, //encoder br:4M
-    ((MOD_16QAM<<6) | (BW_10M <<3)  | LDPC_1_2),  5, //encoder br:5M 
-    ((MOD_64QAM<<6) | (BW_10M <<3)  | LDPC_1_2),  6, //encoder br:6M
-    ((MOD_64QAM<<6) | (BW_10M <<3)  | LDPC_2_3),  7, //encoder br:7M
+    ((MOD_16QAM<<6) | (BW_10M <<3)  | LDPC_1_2),  6, //encoder br:7M 
+    ((MOD_64QAM<<6) | (BW_10M <<3)  | LDPC_1_2),  9, //encoder br:10M
+    ((MOD_64QAM<<6) | (BW_10M <<3)  | LDPC_2_3),  12, //encoder br:15M
 };
 
 uint8_t BB_map_modulation_to_br(uint8_t mod)

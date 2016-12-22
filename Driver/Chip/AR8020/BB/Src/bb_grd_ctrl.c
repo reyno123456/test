@@ -13,6 +13,7 @@
 #include "bb_snr_service.h"
 #include "bb_grd_ctrl.h"
 #include "bb_grd_sweep.h"
+#include "gpio.h"
 
 
 typedef enum
@@ -102,7 +103,7 @@ void grd_fec_judge(void)
         if(context.locked)
         {
             context.dev_state = FEC_LOCK;
-
+            GPIO_SetPin(BLUE_LED_GPIO, 0);  //BLUE LED ON
             #if 0
             if(context.first_freq_value == 0xff)
             { 
@@ -116,7 +117,8 @@ void grd_fec_judge(void)
         {
             context.fec_unlock_cnt++;
             if(context.fec_unlock_cnt > 64)
-            {
+            {                
+                GPIO_SetPin(BLUE_LED_GPIO, 1);  //BLUE LED OFF
                 context.fec_unlock_cnt = 0;
                 if(context.it_skip_freq_mode == AUTO)
                 {
@@ -470,19 +472,8 @@ void wimax_vsoc_tx_isr(void)
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(OSD_STATUS_SHM_ADDR);
     grd_enter_debug_mode();
     
-    if(1 == (g_stGrdDebugMode.bl_isDebugMode))
-    {   
-		//Disable TIM0 intr
-    	INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
-    	TIM_StopTimer(init_timer0_0);
-		osdptr->in_debug = (uint8_t)(g_stGrdDebugMode.bl_isDebugMode);
-		dlog_info("enter debug mode");
-	}
-	else
-    {
-        TIM_StartTimer(init_timer0_0);
-        INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
-    }
+    TIM_StartTimer(init_timer0_0);
+    INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
 }
 
 void Grd_TIM0_IRQHandler(void)
@@ -505,65 +496,74 @@ void Grd_TIM0_IRQHandler(void)
 void Grd_TIM1_IRQHandler(void)
 {
     Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_1); //disable the intr.
-    grd_add_snr_daq();
-    switch (Timer1_Delay1_Cnt)
+    grd_handle_all_cmds();
+    
+    if(1 == (g_stGrdDebugMode.bl_isDebugMode))
     {
-        case 0:
-            grd_handle_all_cmds();
-            grd_noise_sweep();
-            Timer1_Delay1_Cnt++;
-            break;
+        INTR_NVIC_DisableIRQ(TIMER_INTR01_VECTOR_NUM);                
+        TIM_StopTimer(init_timer0_1);
+    }
+    else
+    {
+        grd_add_snr_daq();
+        switch (Timer1_Delay1_Cnt)
+        {
+            case 0:
+                grd_noise_sweep();
+                Timer1_Delay1_Cnt++;
+                break;
 
-        case 1:
-            grd_fec_judge();
-            Timer1_Delay1_Cnt++;
-            break;
+            case 1:
+                grd_fec_judge();
+                Timer1_Delay1_Cnt++;
+                break;
 
-        case 2:
-            if(context.rc_skip_freq_mode == AUTO)
-            {
-                grd_rc_hopfreq();
-            }
-            Timer1_Delay1_Cnt++;
-            break;
+            case 2:
+                if(context.rc_skip_freq_mode == AUTO)
+                {
+                    grd_rc_hopfreq();
+                }
+                Timer1_Delay1_Cnt++;
+                break;
 
-        case 3:
-            Timer1_Delay1_Cnt++;
-            break;
+            case 3:
+                Timer1_Delay1_Cnt++;
+                break;
 
-        case 4:
-            Timer1_Delay1_Cnt++;
-            break;
+            case 4:
+                Timer1_Delay1_Cnt++;
+                break;
 
-        case 5:
-            Timer1_Delay1_Cnt++;
-            break;
+            case 5:
+                Timer1_Delay1_Cnt++;
+                break;
 
-        case 6:
-            Timer1_Delay1_Cnt++;
-            BB_grd_GatherOSDInfo();
-            break;
+            case 6:
+                Timer1_Delay1_Cnt++;
+                BB_grd_GatherOSDInfo();
+                break;
 
-        case 7:
-            Timer1_Delay1_Cnt++;
-            if(context.it_skip_freq_mode == AUTO && context.freq_band == RF_2G)
-            {
-                grd_freq_skip_judge();
-            }
-            break;
+            case 7:
+                Timer1_Delay1_Cnt++;
+                if(context.it_skip_freq_mode == AUTO && context.freq_band == RF_2G)
+                {
+                    grd_freq_skip_judge();
+                }
+                break;
 
-        case 8:
-            INTR_NVIC_DisableIRQ(TIMER_INTR01_VECTOR_NUM);                
-            TIM_StopTimer(init_timer0_1);
+            case 8:
+                INTR_NVIC_DisableIRQ(TIMER_INTR01_VECTOR_NUM);                
+                TIM_StopTimer(init_timer0_1);
 
-            Timer1_Delay1_Cnt = 0;
-            grd_qam_change_judge();
-            break;
+                Timer1_Delay1_Cnt = 0;
+                grd_qam_change_judge();
+                break;
 
-        default:
-            Timer1_Delay1_Cnt = 0;
-            dlog_error("Timer1_Delay1_Cnt error\n");
-            break;
+            default:
+                Timer1_Delay1_Cnt = 0;
+                dlog_error("Timer1_Delay1_Cnt error\n");
+                break;
+        }
     }
 }
 
@@ -848,7 +848,6 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
         }
     } 
 	
-	//dlog_info("class:%d item:%d value:%d\n",class,item,value);
 	if(class == WIRELESS_DEBUG_CHANGE)
     {
         switch(item)
@@ -888,50 +887,45 @@ static void BB_grd_GatherOSDInfo(void)
 {
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(OSD_STATUS_SHM_ADDR);
 
-    static int osd_cnt = 0;
-    if(osd_cnt++ > 20)
+    osdptr->messageId = 0x33;
+    osdptr->head = 0xff; //starting writing
+    osdptr->tail = 0x00;
+
+    osdptr->IT_channel = context.cur_IT_ch;
+
+    osdptr->agc_value[0] = BB_ReadReg(PAGE2, AAGC_2_RD);
+    osdptr->agc_value[1] = BB_ReadReg(PAGE2, AAGC_3_RD);
+
+    osdptr->agc_value[2] = BB_ReadReg(PAGE2, RX3_GAIN_ALL_R);
+    osdptr->agc_value[3] = BB_ReadReg(PAGE2, RX4_GAIN_ALL_R);
+
+    osdptr->snr_vlaue[0] = get_snr_average(0);
+    osdptr->snr_vlaue[1] = get_snr_average(1);
+    osdptr->snr_vlaue[2] = get_snr_average(2);
+    osdptr->snr_vlaue[3] = get_snr_average(3);
+
+    osdptr->ldpc_error = (((uint16_t)BB_ReadReg(PAGE2, LDPC_ERR_HIGH_8)) << 8) | BB_ReadReg(PAGE2, LDPC_ERR_LOW_8);
+    osdptr->harq_count = (BB_ReadReg(PAGE2, FEC_5_RD) >> 4);
+
+    osdptr->modulation_mode = grd_get_IT_QAM();
+    osdptr->code_rate       = grd_get_IT_LDPC();
+    osdptr->ch_bandwidth    = context.CH_bandwidth;         
+	osdptr->in_debug        = (uint8_t)(g_stGrdDebugMode.bl_isDebugMode);
+
+    memset(osdptr->sweep_energy, 0, sizeof(osdptr->sweep_energy));
+    grd_get_sweep_noise(0, osdptr->sweep_energy);
+    
+    if(context.brc_mode == AUTO)
     {
-        osd_cnt = 0;
-        osdptr->messageId = 0x33;
-        osdptr->head = 0xff; //starting writing
-        osdptr->tail = 0x00;
-
-        osdptr->IT_channel = context.cur_IT_ch;
-
-        osdptr->agc_value[0] = BB_ReadReg(PAGE2, AAGC_2_RD);
-        osdptr->agc_value[1] = BB_ReadReg(PAGE2, AAGC_3_RD);
-
-        osdptr->agc_value[2] = BB_ReadReg(PAGE2, RX3_GAIN_ALL_R);
-        osdptr->agc_value[3] = BB_ReadReg(PAGE2, RX4_GAIN_ALL_R);
-
-        osdptr->snr_vlaue[0] = get_snr_average(0);
-        osdptr->snr_vlaue[1] = get_snr_average(1);
-        osdptr->snr_vlaue[2] = get_snr_average(2);
-        osdptr->snr_vlaue[3] = get_snr_average(3);
-
-        osdptr->ldpc_error = (((uint16_t)BB_ReadReg(PAGE2, LDPC_ERR_HIGH_8)) << 8) | BB_ReadReg(PAGE2, LDPC_ERR_LOW_8);
-        osdptr->harq_count = (BB_ReadReg(PAGE2, FEC_5_RD) >> 4);
-
-        osdptr->modulation_mode = grd_get_IT_QAM();
-        osdptr->code_rate       = grd_get_IT_LDPC();
-        osdptr->ch_bandwidth    = context.CH_bandwidth;         
-		osdptr->in_debug        = (uint8_t)(g_stGrdDebugMode.bl_isDebugMode);
-
-        memset(osdptr->sweep_energy, 0, sizeof(osdptr->sweep_energy));
-        grd_get_sweep_noise(0, osdptr->sweep_energy);
-        
-        if(context.brc_mode == AUTO)
-        {
-            osdptr->encoder_bitrate = BB_map_modulation_to_br( (uint8_t)((osdptr->modulation_mode)<<6) | ((osdptr->ch_bandwidth) << 3) | (osdptr->code_rate));
-        }
-        else
-        {
-            osdptr->encoder_bitrate = context.brc_bps;
-        }
-
-        osdptr->head = 0x00;
-        osdptr->tail = 0xff;    //end of the writing
+        osdptr->encoder_bitrate = BB_map_modulation_to_br( (uint8_t)((osdptr->modulation_mode)<<6) | ((osdptr->ch_bandwidth) << 3) | (osdptr->code_rate));
     }
+    else
+    {
+        osdptr->encoder_bitrate = context.brc_bps;
+    }
+
+    osdptr->head = 0x00;
+    osdptr->tail = 0xff;    //end of the writing
 }
 
 /*
@@ -975,7 +969,6 @@ static void grd_enter_debug_mode(void)
 		if((g_stGrdDebugMode.u8_enterDebugModeCnt) < 30)	
 		{
 			(g_stGrdDebugMode.u8_enterDebugModeCnt) += 1;
-			//dlog_info("Cnt:%d",g_stGrdDebugMode.u8_enterDebugModeCnt);	
 		}
 		else
 		{
@@ -983,7 +976,11 @@ static void grd_enter_debug_mode(void)
 			g_stGrdDebugMode.bl_enterDebugModeFlag = 0;
 			//now grd really enter test mode
 			g_stGrdDebugMode.bl_isDebugMode	= 1;
-			dlog_info("g_stGrdDebugMode.bl_isDebugMode	= 1");	
+			dlog_info("g_stGrdDebugMode.bl_isDebugMode	= 1");
+
+            context.rc_skip_freq_mode = MANUAL;
+            context.it_skip_freq_mode = MANUAL;
+            context.qam_skip_mode     = MANUAL;
 		}
 	}
 	else

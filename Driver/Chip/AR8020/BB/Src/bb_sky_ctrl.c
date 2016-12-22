@@ -14,6 +14,8 @@
 #include "bb_sys_param.h"
 #include "debuglog.h"
 #include "sys_event.h"
+#include "gpio.h"
+
 
 #define MAX_SEARCH_ID_NUM  (5)
 #define SEARCH_ID_TIMEOUT  (2000) //ms
@@ -63,18 +65,21 @@ void BB_SKY_start(void)
 
     context.cur_IT_ch         = 0xff;
     context.it_manual_rf_band = 0xff;
-    context.rc_unlock_cnt = 0;
-    context.dev_state = SEARCH_ID;
+    context.rc_unlock_cnt     = 0;
+    context.dev_state         = SEARCH_ID;
     //context.dev_state = (context.search_id_enable == 0xff)? SEARCH_ID : CHECK_ID_MATCH;
 
     sky_id_search_init();
+
+    GPIO_SetPin(RED_LED_GPIO, 0);   //RED LED ON
+    GPIO_SetPin(BLUE_LED_GPIO, 1);  //BLUE LED OFF
 
     sky_Timer0_Init();
     sky_Timer1_Init();    
     sky_search_id_timeout_irq_enable(); //enabole TIM1 timeout
 
     reg_IrqHandle(BB_RX_ENABLE_VECTOR_NUM, wimax_vsoc_rx_isr);
-    INTR_NVIC_EnableIRQ(BB_RX_ENABLE_VECTOR_NUM);
+    INTR_NVIC_EnableIRQ(BB_RX_ENABLE_VECTOR_NUM);   
 }
 
 
@@ -165,19 +170,10 @@ void wimax_vsoc_rx_isr()
 {
     INTR_NVIC_DisableIRQ(BB_RX_ENABLE_VECTOR_NUM);   
 	
-	if(1 == (g_stSkyDebugMode.bl_isDebugMode))
-	{
-		dlog_info("enter debug mode");	
-    	INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
-    	TIM_StopTimer(sky_timer0_0);
-	}
-	else
-	{
-    	INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
-    	TIM_StartTimer(sky_timer0_0);
-	}
+    INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
+    TIM_StartTimer(sky_timer0_0);
+
 	sky_handle_all_cmds();
-	//command_TestGpioNormal2(64,(wimax_cnt++)%2);	
 }
 
 
@@ -193,16 +189,18 @@ void Sky_TIM0_IRQHandler(void)
     INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
     TIM_StopTimer(sky_timer0_0);
 
-    if(sky_timer0_1_running == 0)
+    if(0 == sky_timer0_1_running && 0 == g_stSkyDebugMode.bl_isDebugMode)
     {
         sky_physical_link_process();
-    }
+        
+        //patch for 5G switch: For demo test only.
+        if(context.freq_band == RF_5G && switch_5G_count < 5)
+        {
+            switch_5G_count++;
+            sky_soft_reset();
+        }
 
-    //patch for 5G switch: For demo test only.
-    if(context.freq_band == RF_5G && switch_5G_count < 5)
-    {
-        switch_5G_count++;
-        sky_soft_reset();
+        BB_sky_GatherOSDInfo();
     }
 
     sky_timer0_0_running = 0;
@@ -267,6 +265,7 @@ void sky_physical_link_process(void)
             sky_set_RC_id(p_id);
 
             context.dev_state = CHECK_ID_MATCH;
+            GPIO_SetPin(RED_LED_GPIO, 1);  //BLUE LED ON
             sky_soft_reset();
         }
         else
@@ -286,7 +285,8 @@ void sky_physical_link_process(void)
         {
             uint8_t data0, data1;
             context.rc_unlock_cnt = 0;
-            sky_handle_all_spi_cmds();
+            sky_handle_all_spi_cmds();            
+            GPIO_SetPin(BLUE_LED_GPIO, 0);  //BLUE LED ON            
         }
         else
         {
@@ -294,8 +294,9 @@ void sky_physical_link_process(void)
             // sky_soft_reset();
         }
 
-        if(5 <= context.rc_unlock_cnt)
-        {
+        if(10 <= context.rc_unlock_cnt)
+        {            
+            GPIO_SetPin(BLUE_LED_GPIO, 1);  //BLUE LED OFF
             context.dev_state = CHECK_ID_MATCH;
             context.rc_unlock_cnt = 0;
         }
@@ -313,6 +314,7 @@ void sky_physical_link_process(void)
             context.locked = sky_id_match();
             if(context.locked)
             {
+                GPIO_SetPin(BLUE_LED_GPIO, 1);  //BLUE LED OFF
                 if(context.rc_skip_freq_mode == AUTO)
                 {
                     sky_rc_hopfreq();
@@ -352,10 +354,11 @@ uint8_t sky_id_search_run(void)
 {    
     uint8_t rc_status = get_rc_status();
     
-    #define SKY_RC_ERR(status)  (0x80 == rc_status)
+    #define SKY_RC_ERR(status)  (0x80 == status)
     #define SKY_CRC_OK(status)  ((status & 0x02) ? 1 : 0)
-    
-    if(SKY_RC_ERR(rc_status))
+
+    context.rc_error = SKY_RC_ERR(rc_status);
+    if(context.rc_error)
     {
         sky_soft_reset();
         return FALSE;
@@ -626,15 +629,12 @@ static void sky_handle_debug_mode_cmd_spi(void)
     uint8_t data0 = BB_ReadReg(PAGE2, NTF_TEST_MODE_0);
     uint8_t data1 = BB_ReadReg(PAGE2, NTF_TEST_MODE_1);
 
-	//dlog_info("data0:%d data1:%d",data0,data1);
-    
-	if((data0+1 == data1) && (0 == data0))//enter test mode
+    if((data0+1 == data1) && (0 == data0))//enter test mode
     {
 		if(1 != (g_stSkyDebugMode.bl_isDebugMode))
 		{
 			g_stSkyDebugMode.bl_isDebugMode = 1;
 			dlog_info("g_stSkyDebugMode.bl_isDebugMode = 1");
-			//command_TestGpioNormal2(64,1);	
 		}
     }
     else if((data0+1 == data1) && (0 != data0))//out test mode
@@ -653,13 +653,16 @@ static void sky_handle_debug_mode_cmd_spi(void)
 
 static void sky_handle_debug_mode_cmd_event(uint8_t value)
 {
-	if(0 != value)//enter test mode
+	if(0 == value)//enter test mode
     {
 		if(1 != (g_stSkyDebugMode.bl_isDebugMode))
 		{
 			g_stSkyDebugMode.bl_isDebugMode = 1;
 			dlog_info("g_stSkyDebugMode.bl_isDebugMode = 1");
-			//command_TestGpioNormal2(64,1);	
+
+            context.rc_skip_freq_mode = MANUAL;
+            context.it_skip_freq_mode = MANUAL;
+            context.qam_skip_mode     = MANUAL;
 		}
     }
     else//out test mode
@@ -690,24 +693,78 @@ void sky_handle_all_spi_cmds(void)
 
 static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 {
-    uint8_t class = pcmd->configClass;
-    uint8_t item  = pcmd->configItem;
-    uint8_t value = pcmd->configValue;
+    uint8_t class  = pcmd->configClass;
+    uint8_t item   = pcmd->configItem;
+    uint32_t value = pcmd->configValue;
 
-    dlog_info("class item value %d %d %d \r\n", class, item, value);
-    	if(class == WIRELESS_DEBUG_CHANGE)
+    dlog_info("class item value %d %d 0x%0.8d \r\n", class, item, value);
+    if(class == WIRELESS_FREQ_CHANGE)
+    {
+        switch(item)
+        {
+            case FREQ_CHANNEL_SELECT:
+            {
+                sky_set_it_freq(context.freq_band, (uint8_t)value);
+                break;
+            }
+
+            case RC_CHANNEL_MODE:
+            {
+                context.rc_skip_freq_mode = (RUN_MODE)value;
+                break;
+            }
+
+            case RC_CHANNEL_SELECT:
+            {
+                sky_rc_channel = (uint8_t)value;
+                BB_set_Rcfrq(context.freq_band, sky_rc_channel);
+                break;
+            }
+            
+            default:
+            {
+                dlog_error("%s\r\n", "unknown WIRELESS_FREQ_CHANGE command");
+                break;
+            }
+        }
+    }
+    
+    if(class == WIRELESS_ENCODER_CHANGE)
+    {
+        switch(item)
+        {
+            case ENCODER_DYNAMIC_BIT_RATE_MODE:
+                context.brc_mode = (RUN_MODE)value;
+                break;
+
+            case ENCODER_DYNAMIC_BIT_RATE_SELECT:
+                sky_notify_encoder_brc((uint8_t)value);
+                break;
+
+            default:
+                dlog_error("%s\r\n", "unknown WIRELESS_ENCODER_CHANGE command");
+                break;                
+        }
+    }
+    
+	if(class == WIRELESS_DEBUG_CHANGE)
     {
         switch(item)
         {
             case 0:
-                sky_handle_debug_mode_cmd_event(value);
+                sky_handle_debug_mode_cmd_event( (uint8_t)value);
                 break;
 
             default:
                 dlog_error("%s\r\n", "unknown WIRELESS_DEBUG_CHANGE command");
                 break;                
         }
-    }   
+    }
+
+    if(class == WIRELESS_MISC)
+    {
+        BB_handle_misc_cmds(pcmd);
+    }
 }
 
 
@@ -720,4 +777,30 @@ static void sky_handle_all_cmds(void)
     {
         sky_handle_one_cmd( &cfg );
     }
+}
+
+
+/*
+ *
+*/
+static void BB_sky_GatherOSDInfo(void)
+{
+    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(OSD_STATUS_SHM_ADDR);
+
+    osdptr->messageId = 0x33;
+    osdptr->head = 0xff; //starting writing
+    osdptr->tail = 0x00;
+
+    osdptr->IT_channel = context.cur_IT_ch;
+
+    osdptr->agc_value[0] = BB_ReadReg(PAGE2, AAGC_2_RD);
+    osdptr->agc_value[1] = BB_ReadReg(PAGE2, AAGC_3_RD);
+    osdptr->agc_value[2] = BB_ReadReg(PAGE2, RX3_GAIN_ALL_R);
+    osdptr->agc_value[3] = BB_ReadReg(PAGE2, RX4_GAIN_ALL_R);
+
+    osdptr->rc_error    = context.rc_error;
+	osdptr->in_debug    = (uint8_t)(g_stSkyDebugMode.bl_isDebugMode);
+
+    osdptr->head = 0x00;
+    osdptr->tail = 0xff;    //end of the writing
 }

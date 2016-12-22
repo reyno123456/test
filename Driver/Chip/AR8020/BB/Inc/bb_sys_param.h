@@ -41,9 +41,8 @@ typedef struct
     uint16_t qam_change_threshold[QAM_CHANGE_THRESHOLD_COUNT];
     uint16_t qam_threshold_range[QAM_CHANGE_THRESHOLD_COUNT][2];
     uint8_t locked;
+    uint8_t rc_error;
     uint16_t mosaic;
-    uint8_t c5;
-    uint8_t c6;
     uint8_t retrans_num;
     uint8_t default_fac_setting;
     uint8_t search_id_enable;

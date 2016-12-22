@@ -68,7 +68,7 @@ static int RF8003s_SPI_ReadReg_internal(uint8_t u8_addr, uint8_t u8_flag)
 
     SPI_master_init(BB_SPI_BASE_IDX, &init);
 
-    SPI_write_read(BB_SPI_BASE_IDX, wdata, 3 /*sizeof(wdata)*/, rdata, 3); 
+    SPI_write_read(BB_SPI_BASE_IDX, wdata, sizeof(wdata), rdata, 3); 
 
     BB_SPI_init();
     SPI_master_init(BB_SPI_BASE_IDX, &init);
@@ -77,7 +77,6 @@ static int RF8003s_SPI_ReadReg_internal(uint8_t u8_addr, uint8_t u8_flag)
     {
         BB_SPI_curPageWriteByte(0x01,0x02);     //SPI change into 8003
     }
-    dlog_info("read out %x %x %x \r\n", rdata[0], rdata[1], rdata[2]);
     return rdata[2];
 }
 
