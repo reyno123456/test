@@ -5,7 +5,7 @@
 #include "bb_ctrl_proxy.h"
 #include "bb_spi.h"
 #include "sys_event.h"
-
+#include "rf8003s.h"
 
 STRU_WIRELESS_INFO_DISPLAY             *g_pstWirelessInfoDisplay;        //OSD Info in SRAM
 STRU_WIRELESS_INFO_DISPLAY              g_stWirelessInfoSend;            //send OSD to PAD or PC
@@ -75,8 +75,8 @@ WIRELESS_CONFIG_HANDLER g_stWirelessMsgHandler[PAD_WIRELESS_INTERFACE_PID_NUM] =
     WIRELESS_INTERFACE_RST_MCU_Handler,           
     WIRELESS_INTERFACE_RF_PWR_AUTO_Handler,       
     WIRELESS_INTERFACE_SWITCH_DEBUG_MODE_Handler, 
-    NULL,
-    NULL,
+    WIRELESS_INTERFACE_WRITE_RF_REG_Handler,
+    WIRELESS_INTERFACE_READ_RF_REG_Handler,
     NULL,
     NULL,
     NULL,
@@ -223,16 +223,12 @@ void WIRELESS_INTERFACE_MIMO_1T2R_Handler(void *param)
 
 void WIRELESS_INTERFACE_WRITE_BB_REG_Handler(void *param)
 {
-    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *pstWirelessParamConfig;
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
-    uint8_t  inDebugFlag = 0;
-    WITELESS_GetOSDInfo();
-    inDebugFlag = g_stWirelessInfoSend.in_debug;
-    pstWirelessParamConfig = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
     recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
-    if (inDebugFlag == 1)
+    WITELESS_GetOSDInfo();
+    if (g_stWirelessInfoSend.in_debug == 1)
     {
-        if (BB_SPI_curPageWriteByte(pstWirelessParamConfig->paramData[0], pstWirelessParamConfig->paramData[1]))
+        if (BB_SPI_curPageWriteByte(recvMessage->paramData[0], recvMessage->paramData[1]))
         {
             dlog_error("write fail!\n");
         }
@@ -260,12 +256,10 @@ void WIRELESS_INTERFACE_READ_BB_REG_Handler(void *param)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
     recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
-    uint8_t  inDebugFlag = 0;
-
+    
     WITELESS_GetOSDInfo();
-    inDebugFlag = g_stWirelessInfoSend.in_debug;
 
-    if (inDebugFlag == 1)
+    if (g_stWirelessInfoSend.in_debug == 1)
     {
         recvMessage->messageId = 0x0f;
         recvMessage->paramLen = 2;
@@ -371,7 +365,33 @@ void WIRELESS_INTERFACE_SET_VIDEO_FREQ_CHANNEL_MASK_Handler(void *param)
 
 void WIRELESS_INTERFACE_SELECT_VIDEO_FREQ_CHANNEL_Handler(void *param)
 {
-    dlog_info("WIRELESS_INTERFACE_SELECT_VIDEO_FREQ_CHANNEL_Handler\n");
+    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
+    recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
+    uint8_t u8_index;
+    WITELESS_GetOSDInfo();
+    if (g_stWirelessInfoSend.in_debug == 1)
+    {
+        for (u8_index = 0; u8_index < recvMessage->paramData[2]; ++u8_index)
+        {
+            BB_SPI_WriteByte(recvMessage->paramData[0],recvMessage->paramData[1],recvMessage->paramData[u8_index+3]);
+            recvMessage->paramData[1] += 1;
+        }
+    }
+    else
+    {   
+        // dlog_info("inDebugFlag1 = %x\n",inDebugFlag);
+        recvMessage->messageId = 0x0e;
+        recvMessage->paramLen = 0;
+        if (USB_OTG_IS_BIG_ENDIAN())
+        {
+            convert_endian((void *)recvMessage, (void *)recvMessage, (uint32_t)(sizeof(recvMessage)));
+        }
+
+        if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)recvMessage, (uint32_t)(sizeof(recvMessage->messageId) + sizeof(recvMessage->paramLen)), HID_EPIN_CTRL_ADDR))
+        {
+            dlog_error("send fail!\n");
+        }
+    }
 }
 
 
@@ -383,7 +403,33 @@ void WIRELESS_INTERFACE_SWITCH_QAM_MODE_Handler(void *param)
 
 void WIRELESS_INTERFACE_SET_RC_FREQ_CHANNEL_Handler(void *param)
 {
-    dlog_info("WIRELESS_INTERFACE_SET_RC_FREQ_CHANNEL_Handler\n");
+    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
+    recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
+    uint8_t u8_index;
+    WITELESS_GetOSDInfo();
+    if (g_stWirelessInfoSend.in_debug == 1)
+    {
+        for (u8_index = 0; u8_index < recvMessage->paramData[2]; ++u8_index)
+        {
+            BB_SPI_WriteByte(recvMessage->paramData[0],recvMessage->paramData[1],recvMessage->paramData[u8_index+3]);
+            recvMessage->paramData[1] += 1;
+        }
+    }
+    else
+    {   
+        // dlog_info("inDebugFlag1 = %x\n",inDebugFlag);
+        recvMessage->messageId = 0x0e;
+        recvMessage->paramLen = 0;
+        if (USB_OTG_IS_BIG_ENDIAN())
+        {
+            convert_endian((void *)recvMessage, (void *)recvMessage, (uint32_t)(sizeof(recvMessage)));
+        }
+
+        if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)recvMessage, (uint32_t)(sizeof(recvMessage->messageId) + sizeof(recvMessage->paramLen)), HID_EPIN_CTRL_ADDR))
+        {
+            dlog_error("send fail!\n");
+        }
+    }
 }
 
 
@@ -499,6 +545,76 @@ void WIRELESS_INTERFACE_SWITCH_DEBUG_MODE_Handler(void *param)
     
 }
 
+void WIRELESS_INTERFACE_WRITE_RF_REG_Handler(void *param)
+{
+    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
+    recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
+    WITELESS_GetOSDInfo();
+    dlog_info("ID = %x\n",recvMessage->messageId);
+    if (g_stWirelessInfoSend.in_debug == 1)
+    {
+        if (RF8003s_SPI_WriteReg(recvMessage->paramData[0], recvMessage->paramData[1]))
+        {
+            dlog_error("write fail!\n");
+        }
+    }
+    else
+    {   
+        // dlog_info("inDebugFlag1 = %x\n",inDebugFlag);
+        recvMessage->messageId = 0x0e;
+        recvMessage->paramLen = 0;
+        if (USB_OTG_IS_BIG_ENDIAN())
+        {
+            convert_endian((void *)recvMessage, (void *)recvMessage, (uint32_t)(sizeof(recvMessage)));
+        }
+
+        if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)recvMessage, (uint32_t)(sizeof(recvMessage->messageId) + sizeof(recvMessage->paramLen)), HID_EPIN_CTRL_ADDR))
+        {
+            dlog_error("send fail!\n");
+        }
+    }
+}
+void WIRELESS_INTERFACE_READ_RF_REG_Handler(void *param)
+{
+    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
+    recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
+    dlog_info("ID = %x\n",recvMessage->messageId);
+    WITELESS_GetOSDInfo();
+    if (g_stWirelessInfoSend.in_debug == 1)
+    {
+        recvMessage->messageId = 0x3A;
+        recvMessage->paramLen = 2;
+        recvMessage->paramData[0] = recvMessage->paramData[0];
+        if (RF8003s_SPI_ReadReg(recvMessage->paramData[0],&recvMessage->paramData[1]))
+        {
+            dlog_error("read rf8003s error\n");
+        }
+
+        if (USB_OTG_IS_BIG_ENDIAN())
+        {
+            convert_endian((void *)recvMessage, (void *)recvMessage, (uint32_t)(sizeof(recvMessage)));
+        }
+
+        if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)recvMessage, sizeof(recvMessage), HID_EPIN_CTRL_ADDR))
+        {
+            dlog_error("send fail!\n");
+        }
+    }
+    else
+    {   
+        recvMessage->messageId = 0x0f;
+        recvMessage->paramLen = 0;
+        if (USB_OTG_IS_BIG_ENDIAN())
+        {
+            convert_endian((void *)recvMessage, (void *)recvMessage, (uint32_t)(sizeof(recvMessage)));
+        }
+
+        if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)recvMessage, (uint32_t)(sizeof(recvMessage->messageId) + sizeof(recvMessage->paramLen)), HID_EPIN_CTRL_ADDR))
+        {
+            dlog_error("send fail!\n");
+        }
+    }
+}
 void WIRELESS_INTERFACE_LOAD_SKY_REG_TABLE_Handler(void *param)
 {
     dlog_info("WIRELESS_INTERFACE_LOAD_SKY_REG_TABLE_Handler\n");
@@ -634,7 +750,6 @@ void WIRELESS_ParseParamConfig(void *param)
         dlog_error("no this message\n");
         return;
     }
-
     (g_stWirelessMsgHandler[messageId])(param);
 
     return;

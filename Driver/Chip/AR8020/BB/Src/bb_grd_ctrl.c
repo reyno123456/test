@@ -964,6 +964,7 @@ static void grd_handle_debug_mode_cmd(uint8_t flag)
 
 static void grd_enter_debug_mode(void)
 {
+    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(OSD_STATUS_SHM_ADDR);
 	if(1 == (g_stGrdDebugMode.bl_enterDebugModeFlag))
 	{
 		if((g_stGrdDebugMode.u8_enterDebugModeCnt) < 30)	
@@ -977,7 +978,7 @@ static void grd_enter_debug_mode(void)
 			//now grd really enter test mode
 			g_stGrdDebugMode.bl_isDebugMode	= 1;
 			dlog_info("g_stGrdDebugMode.bl_isDebugMode	= 1");
-
+            osdptr->in_debug          = (uint8_t)(g_stGrdDebugMode.bl_isDebugMode);
             context.rc_skip_freq_mode = MANUAL;
             context.it_skip_freq_mode = MANUAL;
             context.qam_skip_mode     = MANUAL;

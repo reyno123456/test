@@ -43,6 +43,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
          SRAM/Src/sram.c \
          BB/Src/bb_uart_com.c \
          BB/Src/bb_ctrl_proxy.c \
+         BB/Src/rf8003s.c \
          SPI/Src/spi.c \
          SPI/Src/bb_spi.c \
          QuadSPI/Src/quad_spi_ctrl.c \
@@ -117,7 +118,8 @@ install:
 	@cp -f I2C/Inc/i2c.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SPI/Inc/spi.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SPI/Inc/bb_spi.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f BB/Inc/bb_uart_com.h $(OUTPUT_HEADER_STAGING_DIR) 
+	@cp -f BB/Inc/bb_uart_com.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f BB/Inc/rf8003s.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SD/Inc/* $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SRAM/Inc/sram.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)

@@ -65,6 +65,8 @@ typedef enum
     WIRELESS_INTERFACE_RST_MCU                      = 0x36,
     WIRELESS_INTERFACE_RF_PWR_AUTO                  = 0x37,
     WIRELESS_INTERFACE_SWITCH_DEBUG_MODE            = 0x38,
+    WIRELESS_INTERFACE_WRITE_RF_REG                 = 0x39,
+    WIRELESS_INTERFACE_READ_RF_REG                  = 0x3a,
     PAD_FREQUENCY_BAND_WIDTH_SELECT                 = 0x40,
     PAD_FREQUENCY_BAND_OPERATION_MODE               = 0x41,
     PAD_FREQUENCY_BAND_SELECT                       = 0x42,
@@ -149,7 +151,7 @@ typedef struct
 {
     uint8_t                     messageId;
     uint8_t                     paramLen;
-    uint8_t                     paramData[6];
+    uint8_t                     paramData[10];
 } STRU_WIRELESS_PARAM_CONFIG_MESSAGE;
 
 
@@ -212,6 +214,8 @@ void WIRELESS_INTERFACE_SET_PWR_CAL_1_Handler(void *param);
 void WIRELESS_INTERFACE_RST_MCU_Handler(void *param);
 void WIRELESS_INTERFACE_RF_PWR_AUTO_Handler(void *param);
 void WIRELESS_INTERFACE_SWITCH_DEBUG_MODE_Handler(void *param);
+void WIRELESS_INTERFACE_WRITE_RF_REG_Handler(void *param);
+void WIRELESS_INTERFACE_READ_RF_REG_Handler(void *param);
 void PAD_FREQUENCY_BAND_WIDTH_SELECT_Handler(void *param);
 void PAD_FREQUENCY_BAND_OPERATION_MODE_Handler(void *param);
 void PAD_FREQUENCY_BAND_SELECT_Handler(void *param);
