@@ -22,7 +22,7 @@
 #include "testhal_gpio.h"
 #include "testhal_timer.h"
 #include "testhal_pwm.h"
-
+#include "testhal_softpwm.h"
 
 
 static unsigned char g_commandPos;
@@ -396,6 +396,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         commandhal_TestPwmAll();
     }
+    else if (memcmp(cmdArray[0], "testhal_simulatepwm", strlen("testhal_simulatepwm")) == 0)
+    {
+        commandhal_TestSimulatePwm();
+    }
     /* error command */
     else
     {
@@ -450,6 +454,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("testhal_Testtiemrall");
         dlog_error("testhal_Testpwm <PWM Num> <PWM low> <PWM high>");
         dlog_error("testhal_pwmall");
+        dlog_error("testhal_simulatepwm");
     }
 
     /* must init to receive new data from serial */

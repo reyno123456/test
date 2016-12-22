@@ -34,6 +34,8 @@ typedef uint32_t HAL_RET_T;
 #define HAL_PWM_ERR_MASK                    (0x50000)
 #define HAL_PWM_ERR_UNKNOWN                 (HAL_PWM_ERR_MASK | 0x1)
 
+#define HAL_SOFTPWM_ERR_MASK                    (0x80000)
+
 
 #endif
 

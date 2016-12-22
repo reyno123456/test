@@ -34,7 +34,7 @@ enum timer_error
     TIMER_NOT_TIME,
     TIMER_NOEXISTENT
 };
-#define TIM_CLC_MHZ    (125)
+#define TIM_CLC_MHZ    (100)
 /*
 #define TIMER_SUCCESS 0
 #define TIMER_FULL -1
