@@ -28,6 +28,9 @@ typedef uint32_t HAL_RET_T;
 #define HAL_GPIO_ERR_MASK                   (0x30000)
 #define HAL_GPIO_ERR_UNKNOWN                (HAL_GPIO_ERR_MASK | 0x1)
 
+#define HAL_TIMER_ERR_MASK                  (0x40000)
+#define HAL_TIMER_ERR_UNKNOWN               (HAL_TIMER_ERR_MASK | 0x1)
+
 
 #endif
 

@@ -15,11 +15,25 @@ uint8_t TIM_ClearNvic(init_timer_st time_st)
     {
         return TIMER_NOEXISTENT;
     }
-    u32_TimBaseAddr =  ( u8_TimGroup==0)? BASE_ADDR_TIMER0: \
-                       ((u8_TimGroup==1)? BASE_ADDR_TIMER1: \
-                       ((u8_TimGroup==2)? BASE_ADDR_TIMER1:BASE_ADDR_TIMER2));
+    u32_TimBaseAddr =  ( u8_TimGroup==0)? BASE_ADDR_TIMER0:((u8_TimGroup==1)? BASE_ADDR_TIMER1:BASE_ADDR_TIMER2);
 
     Reg_Read32(u32_TimBaseAddr + TMRNEOI_0+(u8_TimNum*0x14));
+}
+
+uint8_t TIM_IntrGetIntrStatus(init_timer_st time_st)
+{
+    uint8_t u8_TimNum = time_st.time_num;
+    uint8_t u8_TimGroup = time_st.base_time_group;
+    uint32_t u32_TimBaseAddr = 0;
+    
+    if(u8_TimNum > 7 || u8_TimGroup > 2)
+    {
+        return TIMER_NOEXISTENT;
+    }
+
+    u32_TimBaseAddr =  ( u8_TimGroup==0)? BASE_ADDR_TIMER0:((u8_TimGroup==1)? BASE_ADDR_TIMER1:BASE_ADDR_TIMER2);
+    
+    return Reg_Read32(u32_TimBaseAddr + TIMER0_TNT_STATUS+(u8_TimNum*0x14));
 }
 
 /*
@@ -41,13 +55,13 @@ uint8_t TIM_StopTimer(init_timer_st time_st)
     uint8_t u8_TimGroup = time_st.base_time_group;
     uint8_t u8_TimCtrl = time_st.ctrl;
     uint32_t u32_TimBaseAddr = 0;
+    
     if(u8_TimNum > 7 || u8_TimGroup > 2)
     {
         return TIMER_NOEXISTENT;
     }
-    u32_TimBaseAddr =  ( u8_TimGroup==0)? BASE_ADDR_TIMER0: \
-                       ((u8_TimGroup==1)? BASE_ADDR_TIMER1: \
-                       ((u8_TimGroup==2)? BASE_ADDR_TIMER1:BASE_ADDR_TIMER2));
+    
+    u32_TimBaseAddr =  ( u8_TimGroup==0)? BASE_ADDR_TIMER0:((u8_TimGroup==1)? BASE_ADDR_TIMER1:BASE_ADDR_TIMER2);
 
     Reg_Write32(u32_TimBaseAddr + CTRL_0+(u8_TimNum*0x14), u8_TimCtrl & 0xfffffffe);
 }
@@ -66,9 +80,8 @@ uint8_t TIM_StartTimer(init_timer_st time_st)
     {
         return TIMER_NOEXISTENT;
     }
-    u32_TimBaseAddr =  ( u8_TimGroup==0)? BASE_ADDR_TIMER0: \
-                       ((u8_TimGroup==1)? BASE_ADDR_TIMER1: \
-                       ((u8_TimGroup==2)? BASE_ADDR_TIMER1:BASE_ADDR_TIMER2));
+    
+    u32_TimBaseAddr =  ( u8_TimGroup==0)? BASE_ADDR_TIMER0:((u8_TimGroup==1)? BASE_ADDR_TIMER1:BASE_ADDR_TIMER2);
 
     Reg_Write32(u32_TimBaseAddr + CTRL_0+(u8_TimNum*0x14), time_st.ctrl);   
 }
@@ -85,13 +98,17 @@ uint8_t TIM_RegisterTimer(init_timer_st time_st, uint32_t time_us)
     uint8_t u8_TimGroup = time_st.base_time_group;
     uint32_t u32_TimBaseAddr = 0;
     uint32_t u32_Tim = TIM_CLC_MHZ * time_us;
+    
     if(u8_TimNum > 7 || time_st.base_time_group > 2)
     {
         return TIMER_NOEXISTENT;
     }
-    u32_TimBaseAddr =  ( u8_TimGroup==0)? BASE_ADDR_TIMER0: \
-                       ((u8_TimGroup==1)? BASE_ADDR_TIMER1: \
-                       ((u8_TimGroup==2)? BASE_ADDR_TIMER1:BASE_ADDR_TIMER2));
+    
+    u32_TimBaseAddr =  ( u8_TimGroup==0)? BASE_ADDR_TIMER0:((u8_TimGroup==1)? BASE_ADDR_TIMER1:BASE_ADDR_TIMER2);
+    
+    dlog_info(" u32_TimBaseAddr %x ",u32_TimBaseAddr); 
+    dlog_output(100);
+    
     TIM_Config(u32_TimBaseAddr, u8_TimCtrl, CTRL_0+(u8_TimNum*0x14),
                      u32_Tim, CNT1_0+(u8_TimNum*0x14),
                      0x00, CNT2_0+(u8_TimNum*0x04));
@@ -105,13 +122,13 @@ uint8_t TIM_RegisterPwm(init_timer_st time_st, uint32_t low_us, uint32_t high_us
     uint32_t u32_TimBaseAddr = 0;
     uint32_t u32_TimLow = TIM_CLC_MHZ * low_us;
     uint32_t u32_TimHigh = TIM_CLC_MHZ * high_us;
+    
     if(u8_TimNum > 7 || time_st.base_time_group > 2)
     {
         return TIMER_NOEXISTENT;
     }
-    u32_TimBaseAddr =  (u8_TimGroup==0 )? BASE_ADDR_TIMER0: \
-                       ((u8_TimGroup==1)? BASE_ADDR_TIMER1: \
-                       ((u8_TimGroup==2)? BASE_ADDR_TIMER1:BASE_ADDR_TIMER2));
+    
+    u32_TimBaseAddr =  ( u8_TimGroup==0)? BASE_ADDR_TIMER0:((u8_TimGroup==1)? BASE_ADDR_TIMER1:BASE_ADDR_TIMER2);
 
     TIM_Config(u32_TimBaseAddr, u8_TimCtrl, CTRL_0+(u8_TimNum*0x14),
                      u32_TimLow, CNT1_0+(u8_TimNum*0x14),

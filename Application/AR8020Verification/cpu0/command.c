@@ -20,6 +20,7 @@
 #include "upgrade.h"
 #include "test_bbuartcom.h"
 #include "testhal_gpio.h"
+#include "testhal_timer.h"
 
 
 static unsigned char g_commandPos;
@@ -377,6 +378,14 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         commandhal_TestGpioInterrupt(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
+    else if (memcmp(cmdArray[0], "testhal_Testtimer", strlen("testhal_Testtimer")) == 0)
+    {
+        commandhal_TestTim(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "testhal_Testtiemrall", strlen("testhal_Testtiemrall")) == 0)
+    {
+        commandhal_TestTimAll();
+    }
     /* error command */
     else
     {
@@ -427,6 +436,8 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("test_read_ov5640 <subAddr(hex)>");
         dlog_error("testhal_TestGpioNormal <gpionum> <highorlow>");
         dlog_error("testhal_TestGpioInterrupt <gpionum> <inttype> <polarity>");
+        dlog_error("testhal_Testtimer <TIM Num> <TIM Count>");
+        dlog_error("testhal_Testtiemrall");
     }
 
     /* must init to receive new data from serial */
