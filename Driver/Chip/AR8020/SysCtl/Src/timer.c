@@ -106,9 +106,6 @@ uint8_t TIM_RegisterTimer(init_timer_st time_st, uint32_t time_us)
     
     u32_TimBaseAddr =  ( u8_TimGroup==0)? BASE_ADDR_TIMER0:((u8_TimGroup==1)? BASE_ADDR_TIMER1:BASE_ADDR_TIMER2);
     
-    dlog_info(" u32_TimBaseAddr %x ",u32_TimBaseAddr); 
-    dlog_output(100);
-    
     TIM_Config(u32_TimBaseAddr, u8_TimCtrl, CTRL_0+(u8_TimNum*0x14),
                      u32_Tim, CNT1_0+(u8_TimNum*0x14),
                      0x00, CNT2_0+(u8_TimNum*0x04));

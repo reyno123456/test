@@ -24,13 +24,16 @@ History:
 static void HAL_TIMER_VectorFunctionN0(void);
 static void HAL_TIMER_VectorFunctionN1(void);
 static void HAL_TIMER_VectorFunctionN2(void);
+static void HAL_TIMER_VectorDefault(void);
 
 static void (*g_pv_TiemrVectorNumArray[3])(void)={  HAL_TIMER_VectorFunctionN0,
                                                     HAL_TIMER_VectorFunctionN1,
                                                     HAL_TIMER_VectorFunctionN2};
 
-static void (*g_pv_TimerVectorListArray[3][8])(void);
 
+static void (*g_pv_TimerVectorListArray[3][8])(void)= {{HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault},
+                                                        {HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault},
+                                                        {HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault}};
 /**
 * @brief    register timer
 * @param    e_timerNum: timer number, the right number should be 0-23.
@@ -58,9 +61,9 @@ HAL_RET_T HAL_TIMER_RegisterTimer(ENUM_HAL_TIMER_Num e_timerNum, uint32_t u32_ti
 
     g_pv_TimerVectorListArray[st_timer.base_time_group][st_timer.time_num] = fun_callBack;
     reg_IrqHandle(TIMER_INTR00_VECTOR_NUM + e_timerNum, g_pv_TiemrVectorNumArray[st_timer.base_time_group]);
-
+    //reg_IrqHandle(TIMER_INTR00_VECTOR_NUM + e_timerNum, fun_callBack);
+    INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM + e_timerNum);
     TIM_StartTimer(st_timer);
-
     return HAL_OK;
 }
 
@@ -142,7 +145,6 @@ HAL_RET_T HAL_TIMER_ClearNvic(ENUM_HAL_TIMER_Num e_timerNum)
     st_timer.base_time_group = e_timerNum/8;
     st_timer.time_num = e_timerNum%8;
     st_timer.ctrl |= TIME_ENABLE | USER_DEFINED;
-    
     TIM_ClearNvic(st_timer);
     
     return HAL_OK;
@@ -174,13 +176,14 @@ static void HAL_TIMER_VectorFunctionN0(void)
     for(i=0; i<8; i++)
     {
         
-        u32_tmpvalue = HAL_TIMER_GetIntrStatus(i);  
+        u32_tmpvalue = HAL_TIMER_GetIntrStatus(i);
         if(0 !=u32_tmpvalue)
         {
             HAL_TIMER_ClearNvic(i);
             (*(g_pv_TimerVectorListArray[0][i]))();   
-        }
+        }        
     }
+
 }
 
 static void HAL_TIMER_VectorFunctionN1(void)
@@ -214,4 +217,9 @@ static void HAL_TIMER_VectorFunctionN2(void)
             (*(g_pv_TimerVectorListArray[2][i]))();  
         }
     }
+}
+
+
+static void HAL_TIMER_VectorDefault(void)
+{
 }
