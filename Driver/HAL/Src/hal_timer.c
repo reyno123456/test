@@ -21,19 +21,19 @@ History:
 #include "hal_timer.h"
 
 
-static void HAL_TIMER_VectorFunctionN0(void);
-static void HAL_TIMER_VectorFunctionN1(void);
-static void HAL_TIMER_VectorFunctionN2(void);
-static void HAL_TIMER_VectorDefault(void);
+static void TIMER_VectorFunctionN0(void);
+static void TIMER_VectorFunctionN1(void);
+static void TIMER_VectorFunctionN2(void);
+static void TIMER_VectorDefault(void);
 
-static void (*g_pv_TiemrVectorNumArray[3])(void)={  HAL_TIMER_VectorFunctionN0,
-                                                    HAL_TIMER_VectorFunctionN1,
-                                                    HAL_TIMER_VectorFunctionN2};
+static void (*g_pv_TiemrVectorNumArray[3])(void)={  TIMER_VectorFunctionN0,
+                                                    TIMER_VectorFunctionN1,
+                                                    TIMER_VectorFunctionN2};
 
 
-static void (*g_pv_TimerVectorListArray[3][8])(void)= {{HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault},
-                                                        {HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault},
-                                                        {HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault,HAL_TIMER_VectorDefault}};
+static void (*g_pv_TimerVectorListArray[3][8])(void)= {{TIMER_VectorDefault,TIMER_VectorDefault,TIMER_VectorDefault,TIMER_VectorDefault,TIMER_VectorDefault,TIMER_VectorDefault,TIMER_VectorDefault},
+                                                        {TIMER_VectorDefault,TIMER_VectorDefault,TIMER_VectorDefault,TIMER_VectorDefault,TIMER_VectorDefault,TIMER_VectorDefault,TIMER_VectorDefault},
+                                                        {TIMER_VectorDefault,TIMER_VectorDefault,TIMER_VectorDefault,TIMER_VectorDefault,TIMER_VectorDefault,TIMER_VectorDefault,TIMER_VectorDefault}};
 /**
 * @brief    register timer
 * @param    e_timerNum: timer number, the right number should be 0-23.
@@ -169,7 +169,7 @@ uint8_t HAL_TIMER_GetIntrStatus(ENUM_HAL_TIMER_Num e_timerNum)
 
 }
 
-static void HAL_TIMER_VectorFunctionN0(void)
+static void TIMER_VectorFunctionN0(void)
 {
     uint32_t u32_tmpvalue = 0;
     uint32_t i = 0;
@@ -186,7 +186,7 @@ static void HAL_TIMER_VectorFunctionN0(void)
 
 }
 
-static void HAL_TIMER_VectorFunctionN1(void)
+static void TIMER_VectorFunctionN1(void)
 {
     uint32_t u32_tmpvalue = 0;
     uint32_t i = 0;
@@ -203,7 +203,7 @@ static void HAL_TIMER_VectorFunctionN1(void)
 }
 
 
-static void HAL_TIMER_VectorFunctionN2(void)
+static void TIMER_VectorFunctionN2(void)
 {
     uint32_t u32_tmpvalue = 0;
     uint32_t i = 0;
@@ -220,6 +220,6 @@ static void HAL_TIMER_VectorFunctionN2(void)
 }
 
 
-static void HAL_TIMER_VectorDefault(void)
+static void TIMER_VectorDefault(void)
 {
 }

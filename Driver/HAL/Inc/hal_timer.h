@@ -71,14 +71,5 @@ HAL_RET_T HAL_TIMER_Stop(ENUM_HAL_TIMER_Num e_timerNum);
 */
 HAL_RET_T HAL_TIMER_Start(ENUM_HAL_TIMER_Num e_timerNum);
 
-/**
-* @brief    clear timer interrupt
-* @param    e_timerNum: timer number, the right number should be 0-23.
-* @retval   HAL_OK                 means the clear tiemr interrupt success.
-*           HAL_TIMER_ERR_UNKNOWN  means the timer number error. 
-* @note     none
-*/
-HAL_RET_T HAL_TIMER_ClearNvic(ENUM_HAL_TIMER_Num e_timerNum);
-
 
 #endif

@@ -14,7 +14,6 @@ static uint32_t g_u32TimCount2 = 0;
 
 void TIMHAL_IRQHandler0(void)
 { 
-    HAL_TIMER_ClearNvic(4);
     if(((g_u32TimCount1)%1000 == 0) && (0 !=g_u32TimCount1))
     {
 
@@ -27,7 +26,6 @@ void TIMHAL_IRQHandler0(void)
 void TIMHAL_IRQHandler1(void)
 {
 
-    HAL_TIMER_ClearNvic(5);
     if(((g_u32TimCount2)%1000 == 0) && (0 !=g_u32TimCount2))
     {
 

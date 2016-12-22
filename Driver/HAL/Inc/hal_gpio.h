@@ -223,14 +223,5 @@ HAL_RET_T HAL_GPIO_RegisterInterrupt(ENUM_HAL_GPIO_Num e_gpioPin,
                                      ENUM_HAL_GPIO_InterrputPolarity e_polarity,
                                      void *fun_callBack);
 
-/**
-* @brief    clear corresponding interrupt bit
-* @param    e_gpioPin: The gpio number, the right number should be 0-127.
-* @retval   HAL_OK                means that disbale corresponding interrupt.
-            HAL_GPIO_ERR_UNKNOWN  means the gpio number error.  
-* @note   none
-*/
-HAL_RET_T HAL_GPIO_DisableNvic(ENUM_HAL_GPIO_Num e_gpioPin);  
-
 
 #endif

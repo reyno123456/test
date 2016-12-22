@@ -21,6 +21,8 @@
 #include "test_bbuartcom.h"
 #include "testhal_gpio.h"
 #include "testhal_timer.h"
+#include "testhal_pwm.h"
+
 
 
 static unsigned char g_commandPos;
@@ -386,6 +388,14 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         commandhal_TestTimAll();
     }
+    else if (memcmp(cmdArray[0], "testhal_Testpwm", strlen("testhal_Testpwm")) == 0)
+    {
+        commandhal_TestPwm(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
+    else if (memcmp(cmdArray[0], "testhal_pwmall", strlen("testhal_pwmall")) == 0)
+    {
+        commandhal_TestPwmAll();
+    }
     /* error command */
     else
     {
@@ -438,6 +448,8 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("testhal_TestGpioInterrupt <gpionum> <inttype> <polarity>");
         dlog_error("testhal_Testtimer <TIM Num> <TIM Count>");
         dlog_error("testhal_Testtiemrall");
+        dlog_error("testhal_Testpwm <PWM Num> <PWM low> <PWM high>");
+        dlog_error("testhal_pwmall");
     }
 
     /* must init to receive new data from serial */

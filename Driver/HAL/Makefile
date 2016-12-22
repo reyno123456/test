@@ -24,6 +24,7 @@ SRC_C := Src/hal_i2c.c \
          Src/hal_hdmi_rx.c \
          Src/hal_gpio.c \
          Src/hal_timer.c \
+         Src/hal_pwm.c \
          Src/hal_sram.c \
          Src/hal_h264.c
 
@@ -55,6 +56,7 @@ install:
 	@cp -f Inc/hal_sram.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_gpio.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_timer.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/hal_pwm.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_h264.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_timer.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_ret_type.h $(OUTPUT_HEADER_STAGING_DIR)

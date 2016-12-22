@@ -20,15 +20,15 @@ History:
 #include "hal_gpio.h"
 
 
-static void HAL_GPIO_VectorFunctionN0(void);
-static void HAL_GPIO_VectorFunctionN1(void);
-static void HAL_GPIO_VectorFunctionN2(void);
-static void HAL_GPIO_VectorFunctionN3(void);
+static void GPIO_VectorFunctionN0(void);
+static void GPIO_VectorFunctionN1(void);
+static void GPIO_VectorFunctionN2(void);
+static void GPIO_VectorFunctionN3(void);
 
-static void (*g_pv_GpioVectorNumArray[4])(void)={ HAL_GPIO_VectorFunctionN0,
-                                                HAL_GPIO_VectorFunctionN1,
-                                                HAL_GPIO_VectorFunctionN2,
-                                                HAL_GPIO_VectorFunctionN3};
+static void (*g_pv_GpioVectorNumArray[4])(void)={ GPIO_VectorFunctionN0,
+                                                  GPIO_VectorFunctionN1,
+                                                  GPIO_VectorFunctionN2,
+                                                  GPIO_VectorFunctionN3};
 
 static void (*g_pv_GpioVectorListArray[4][8])(void);
 /**
@@ -171,7 +171,7 @@ HAL_RET_T HAL_GPIO_RegisterInterrupt(ENUM_HAL_GPIO_Num e_gpioPin,
             HAL_GPIO_ERR_UNKNOWN  means the gpio number error.          
 * @note     none
 */
-static HAL_RET_T HAL_GPIO_ClearNvic(ENUM_HAL_GPIO_Num e_gpioPin)
+static HAL_RET_T GPIO_ClearNvic(ENUM_HAL_GPIO_Num e_gpioPin)
 {
     if ((e_gpioPin%32) > 7)
     {
@@ -219,7 +219,7 @@ HAL_RET_T HAL_GPIO_DisableNvic(ENUM_HAL_GPIO_Num e_gpioPin)
 }
 
 
-static void HAL_GPIO_VectorFunctionN0(void)
+static void GPIO_VectorFunctionN0(void)
 {
     uint8_t i = 0;
 
@@ -228,14 +228,14 @@ static void HAL_GPIO_VectorFunctionN0(void)
         
         if(GPIO_Intr_GetIntrStatus(i))
         {
-            HAL_GPIO_ClearNvic(i);
+            GPIO_ClearNvic(i);
             (*(g_pv_GpioVectorListArray[0][i]))();
         }
     }
 
 }
 
-static void HAL_GPIO_VectorFunctionN1(void)
+static void GPIO_VectorFunctionN1(void)
 {
     uint8_t i = 0;
     
@@ -243,13 +243,13 @@ static void HAL_GPIO_VectorFunctionN1(void)
     {
         if(GPIO_Intr_GetIntrStatus(i))
         {
-            HAL_GPIO_ClearNvic(i);
+            GPIO_ClearNvic(i);
             (*(g_pv_GpioVectorListArray[1][i-32]))();
         }
     }
 }
 
-static void HAL_GPIO_VectorFunctionN2(void)
+static void GPIO_VectorFunctionN2(void)
 {
     uint8_t i = 0;
     
@@ -258,14 +258,14 @@ static void HAL_GPIO_VectorFunctionN2(void)
         
         if(GPIO_Intr_GetIntrStatus(i))
         {
-            HAL_GPIO_ClearNvic(i);
+            GPIO_ClearNvic(i);
             (*(g_pv_GpioVectorListArray[2][i-64]))();            
         }
 
     }
 }
 
-static void HAL_GPIO_VectorFunctionN3(void)
+static void GPIO_VectorFunctionN3(void)
 {
     uint8_t i = 0;
     
@@ -273,7 +273,7 @@ static void HAL_GPIO_VectorFunctionN3(void)
     {
         if(GPIO_Intr_GetIntrStatus(i))
         {
-            HAL_GPIO_ClearNvic(i);
+            GPIO_ClearNvic(i);
             (*(g_pv_GpioVectorListArray[3][i-96]))();
         }
     }
