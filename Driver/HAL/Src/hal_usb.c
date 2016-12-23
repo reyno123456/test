@@ -182,5 +182,3 @@ void HAL_USB_StartUVC(void)
 {
     USBH_UVC_StartView(&hUSBHost);
 }
-
-

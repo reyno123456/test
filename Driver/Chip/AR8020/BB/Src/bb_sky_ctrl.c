@@ -626,6 +626,7 @@ static void sky_handle_QAM_cmd(void)
 
 static void sky_handle_debug_mode_cmd_spi(void)
 {
+    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(OSD_STATUS_SHM_ADDR);
     uint8_t data0 = BB_ReadReg(PAGE2, NTF_TEST_MODE_0);
     uint8_t data1 = BB_ReadReg(PAGE2, NTF_TEST_MODE_1);
 
@@ -634,6 +635,7 @@ static void sky_handle_debug_mode_cmd_spi(void)
 		if(1 != (g_stSkyDebugMode.bl_isDebugMode))
 		{
 			g_stSkyDebugMode.bl_isDebugMode = 1;
+            osdptr->in_debug    = (uint8_t)(g_stSkyDebugMode.bl_isDebugMode);
 			dlog_info("g_stSkyDebugMode.bl_isDebugMode = 1");
 		}
     }

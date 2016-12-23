@@ -173,4 +173,3 @@ HAL_RET_T HAL_I2C_MasterReadData(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
     return HAL_OK;
 }
 
-

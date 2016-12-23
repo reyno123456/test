@@ -839,4 +839,3 @@ typedef struct
 #define USB_OTG_PCGCCTL_PHYSUSP                 ((uint32_t)0x00000010)            /*!<Bit 1 */
 
 #endif
-
