@@ -37,6 +37,13 @@ History:
 
 HAL_RET_T HAL_H264_Init(STRU_HAL_H264_CONFIG st_h264Cfg)
 {
+    H264_Encoder_Init(st_h264Cfg.u8_view0Gop, 
+                      st_h264Cfg.e_view0Br, 
+                      st_h264Cfg.u8_view0BrEn, 
+                      st_h264Cfg.u8_view1Gop,
+                      st_h264Cfg.e_view1Br,
+                      st_h264Cfg.u8_view1BrEn);
+
     return HAL_OK;
 }
 
