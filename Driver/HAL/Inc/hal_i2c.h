@@ -60,13 +60,15 @@ HAL_RET_T HAL_I2C_MasterInit(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
 *         u16_wrSize              The transmit buffer size in byte. 
 * @retval HAL_OK                  means the I2C data write is well done.
 *         HAL_I2C_ERR_WRITE_DATA  means some error happens in the I2C data write.
-* @note   High speed mode has some system dependency and is especially affected by the circuit capacity.
+* @note   u32_wrSize should be less than 6, this is the I2C fifo limit. There is some fifo full risk when u32_wrSize 
+          is larger than 6.
+          High speed mode has some system dependency and is especially affected by the circuit capacity.
 */
 
 HAL_RET_T HAL_I2C_MasterWriteData(ENUM_HAL_I2C_COMPONENT e_i2cComponent, 
                                   uint16_t u16_i2cAddr,
                                   uint8_t *pu8_wrData,
-                                  uint16_t u16_wrSize);
+                                  uint32_t u32_wrSize);
 
 /**
 * @brief  The I2C data read function which can be used to read I2C data by the I2C controller.
@@ -88,7 +90,7 @@ HAL_RET_T HAL_I2C_MasterReadData(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
                                  uint8_t *pu8_wrData,
                                  uint8_t  u8_wrSize,
                                  uint8_t *pu8_rdData,
-                                 uint16_t u16_rdSize);
+                                 uint32_t u32_rdSize);
 
 #endif
 
