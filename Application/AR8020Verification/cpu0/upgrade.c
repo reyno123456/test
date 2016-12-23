@@ -1,3 +1,4 @@
+#include <string.h>
 #include "test_usbh.h"
 #include "debuglog.h"
 #include "cmsis_os.h"
@@ -8,6 +9,8 @@
 #include "md5.h"
 #include "systicks.h"
 #include "bb_ctrl_proxy.h"
+#include "hal_usb.h"
+
 
 static uint8_t g_u8arrayRecData[RDWR_SECTOR_SIZE]={0};
 
@@ -73,36 +76,11 @@ static void BOOT_PrintInfo(uint32_t u32_addr)
 }
 
 
-
-static void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
-{
-    switch(id)
-    {
-    case HOST_USER_SELECT_CONFIGURATION:
-        break;
-
-    case HOST_USER_DISCONNECTION:
-        g_usbhAppCtrl.usbhAppState  = APPLICATION_DISCONNECT;
-        break;
-
-    case HOST_USER_CLASS_ACTIVE:
-        g_usbhAppCtrl.usbhAppState  = APPLICATION_READY;
-        break;
-
-    case HOST_USER_CONNECTION:
-        break;
-
-    default:
-        break;
-    }
-}
-
-
 static void UPGRADE_ModifyBootInfo()
 {
     uint8_t i=0;
     Boot_Info st_bootInfo;
-    memset(&st_bootInfo,0xff,sizeof(st_bootInfo)); 
+    memset((void *)&st_bootInfo,0xff,sizeof(st_bootInfo)); 
     NOR_FLASH_ReadByteBuffer(0x1000,(uint8_t *)(&st_bootInfo),sizeof(st_bootInfo));
     NOR_FLASH_EraseSector(0x1000);
 
@@ -113,7 +91,6 @@ static void UPGRADE_ModifyBootInfo()
 
 void UPGRADE_Upgrade(void const *argument)
 {
-
     FRESULT    fileResult;
     FIL        MyFile;
     uint32_t   u32_bytesRead= RDWR_SECTOR_SIZE;
@@ -124,7 +101,7 @@ void UPGRADE_Upgrade(void const *argument)
     MD5_CTX md5;
     g_u8upgradeFlage =0;
 
-    USBH_ApplicationInit();
+    HAL_USB_InitHost(HAL_USB_PORT_0);
     USBH_MountUSBDisk();
 
     dlog_info("Nor flash init start ... \n");
@@ -132,7 +109,8 @@ void UPGRADE_Upgrade(void const *argument)
     dlog_info("Nor flash init end   ...\n");
     dlog_output(100);
     SysTicks_DelayMS(500);
-    while(APPLICATION_READY != g_usbhAppCtrl.usbhAppState)
+
+    while (HAL_USB_STATE_READY != HAL_USB_GetHostAppState())
     {
         dlog_info("finding mass storage\n");
         SysTicks_DelayMS(500);

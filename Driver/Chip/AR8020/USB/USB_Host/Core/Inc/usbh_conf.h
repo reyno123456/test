@@ -34,10 +34,10 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f7xx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "stm32f7xx_hal_hcd.h"
 
 extern HCD_HandleTypeDef hhcd[2];
 
@@ -128,13 +128,6 @@ extern HCD_HandleTypeDef hhcd[2];
 /**
   * @}
   */ 
-typedef enum
-{
-    APPLICATION_IDLE = 0,
-    APPLICATION_READY,
-    APPLICATION_DISCONNECT,
-}ApplicationStateDef;
-
 
 /** @defgroup USBH_CONF_Exported_Macros
   * @{
@@ -149,7 +142,6 @@ typedef enum
 /**
   * @}
   */ 
-extern ApplicationStateDef Appli_state;
 
 /** @defgroup USBH_CONF_Exported_FunctionsPrototype
   * @{

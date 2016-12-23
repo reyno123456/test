@@ -13,6 +13,7 @@
 #include "upgrade.h"
 #include "bb_ctrl_proxy.h"
 #include "test_usbh.h"
+#include "hal_usb.h"
 
 
 void *malloc(size_t size)
@@ -88,7 +89,7 @@ int main(void)
 
     SysTicks_Init(200000);
 
-    USBD_ApplicationInit();
+    HAL_USB_InitDevice(HAL_USB_PORT_0);
 
     HAL_SRAM_ReceiveVideoConfig();
 

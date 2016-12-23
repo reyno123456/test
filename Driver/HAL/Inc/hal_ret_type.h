@@ -44,6 +44,8 @@ typedef uint8_t HAL_BOOL_T;
 
 #define HAL_SOFTPWM_ERR_MASK                        (0x80000)
 
+#define HAL_USB_ERR_MASK                            (0x90000)
+#define HAL_USB_ERR_PORT_INVALID                    (HAL_USB_ERR_MASK | 0x1)
 
 #endif
 

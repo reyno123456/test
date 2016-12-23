@@ -45,7 +45,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal_def.h"
-#include "stm32f746xx.h"
+#include "usb_reg_define.h"
 
 /** @addtogroup STM32F7xx_HAL
   * @{
@@ -96,6 +96,13 @@ typedef enum {
   HC_DATATGLERR
     
 }USB_OTG_HCStateTypeDef;
+
+
+typedef enum 
+{
+  DISABLE = 0, 
+  ENABLE = !DISABLE
+} FunctionalState;
 
 
 /** 

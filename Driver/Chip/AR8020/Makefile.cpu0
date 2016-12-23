@@ -52,6 +52,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
          USB/USB_Host/Class/MSC/Src/usbh_msc_bot.c \
          USB/USB_Host/Class/MSC/Src/usbh_msc.c \
          USB/USB_Host/Class/MSC/Src/usbh_msc_scsi.c \
+         USB/USB_Host/Class/UVC/Src/usbh_uvc.c \
          USB/USB_Host/Core/Src/usbh_conf.c \
          USB/USB_Host/Core/Src/usbh_core.c \
          USB/USB_Host/Core/Src/usbh_ctlreq.c \
@@ -84,6 +85,7 @@ INCDIRS := -ISysCtl/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_LL_Driver/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Core/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Class/MSC/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Class/UVC/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SD/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SRAM/Inc \
@@ -121,7 +123,6 @@ install:
 	@cp -f BB/Inc/bb_uart_com.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/rf8003s.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SD/Inc/* $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f SRAM/Inc/sram.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/pll_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/systicks.h $(OUTPUT_HEADER_STAGING_DIR)
@@ -131,28 +132,6 @@ install:
 	@cp -f SysCtl/Inc/interrupt.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f QuadSPI/Inc/quad_spi_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f DMA/Inc/dma.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_Host/Core/Inc/usbh_def.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_Host/Core/Inc/usbh_conf.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_Host/Core/Inc/usbh_core.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_Host/Core/Inc/usbh_ioreq.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_Host/Core/Inc/usbh_pipes.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_Host/Core/Inc/usbh_ctlreq.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_Host/Class/MSC/Inc/usbh_msc.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_Host/Class/MSC/Inc/usbh_msc_bot.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_Host/Class/MSC/Inc/usbh_msc_scsi.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_Host/Class/UVC/Inc/usbh_uvc.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_Device/Core/Inc/usbd_core.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_Device/Core/Inc/usbd_conf.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_Device/Core/Inc/usbd_def.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_Device/Core/Inc/usbd_ioreq.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_Device/Core/Inc/usbd_ctlreq.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_Device/Class/HID/Inc/usbd_hid.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_Device/Class/HID/Inc/usbd_hid_desc.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_LL_Driver/Inc/stm32f7xx_hal_pcd.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_LL_Driver/Inc/stm32f7xx_hal_pcd_ex.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_LL_Driver/Inc/stm32f7xx_hal_hcd.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_LL_Driver/Inc/stm32f7xx_hal_def.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f USB/USB_LL_Driver/Inc/stm32f7xx_ll_usb.h $(OUTPUT_HEADER_STAGING_DIR)
 
 
 clean:
