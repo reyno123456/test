@@ -495,17 +495,8 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
       __HAL_PCD_CLEAR_FLAG(hpcd, USB_OTG_GINTSTS_USBSUSP);
 
       USB_OTG_SET_LITTLE_ENDIAN();
-      
-      /* to resolve the problem of unplug during the transmit */
-      #if 0
-      if ((1 == sramReady0) || (1 == sramReady1))
-      {
-          dlog_info("restart usb\n");
-          USBD_LL_Init(&USBD_Device);
-          HAL_PCD_Start(USBD_Device.pData);
-      }
-      #endif
 
+      /* to resolve the problem of unplug during the transmit */
       if ((USBD_STATE_CONFIGURED == USBD_Device.dev_old_state)
         ||(USBD_STATE_CONFIGURED == USBD_Device.dev_state))
       {

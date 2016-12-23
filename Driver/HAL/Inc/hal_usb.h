@@ -31,16 +31,63 @@ typedef enum
 } ENUM_HAL_USB_STATE;
 
 
-
-
-void HAL_USB_InitHost(ENUM_HAL_USB_PORT e_usbPort);
+/**
+* @brief  Set the USB Host State for Application use.
+* @param  e_usbHostAppState             indicate the usb host state
+* @retval   void
+* @note  
+*/
 void HAL_USB_SetHostAppState(ENUM_HAL_USB_STATE e_usbHostAppState);
-ENUM_HAL_USB_STATE HAL_USB_GetHostAppState(void);
-void HAL_USB_HostProcess(void);
-void HAL_USB_InitDevice(ENUM_HAL_USB_PORT e_usbPort);
-void HAL_USB_ResetDevice(void * p);
-void HAL_USB_StartUVC(void);
 
+/**
+* @brief  Get the USB Host State for Application use.
+* @param  void
+* @retval   HAL_USB_STATE_IDLE                indicate the usb is IDLE
+*               HAL_USB_STATE_READY             indicate the usb is READY
+*               HAL_USB_STATE_DISCONNECT   indicate the usb is DISCONNECT
+* @note  
+*/
+ENUM_HAL_USB_STATE HAL_USB_GetHostAppState(void);
+
+/**
+* @brief  polling the usb state-machine 
+* @param  void
+* @retval   void
+* @note  
+*/
+void HAL_USB_HostProcess(void);
+
+/**
+* @brief  config the usb as host controller
+* @param  e_usbPort         usb port number: 0 or 1
+* @retval   void
+* @note  
+*/
+void HAL_USB_InitHost(ENUM_HAL_USB_PORT e_usbPort);
+
+/**
+* @brief  config the usb as device controller
+* @param  e_usbPort         usb port number: 0 or 1
+* @retval   void
+* @note  
+*/
+void HAL_USB_InitDevice(ENUM_HAL_USB_PORT e_usbPort);
+
+/**
+* @brief  reset the usb device controller for usb device hotplug
+* @param  void * p         for sys event call-back
+* @retval   void
+* @note  
+*/
+void HAL_USB_ResetDevice(void * p);
+
+/**
+* @brief  start the USB Video for Application use
+* @param  void
+* @retval   void
+* @note  
+*/
+void HAL_USB_StartUVC(void);
 
 
 #endif
