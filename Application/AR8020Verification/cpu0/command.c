@@ -244,7 +244,8 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     }
     else if (memcmp(cmdArray[0], "hdmigetvideoformat", strlen("hdmigetvideoformat")) == 0)
     {
-        uint32_t width, hight, framterate;
+        uint16_t width, hight;
+        uint8_t framterate;
         command_readADV7611VideoFormat(cmdArray[1], &width, &hight, &framterate);
         dlog_info("width %d, hight %d, framterate %d\n", width, hight, framterate);
     }

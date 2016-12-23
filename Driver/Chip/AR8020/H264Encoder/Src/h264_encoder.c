@@ -133,10 +133,10 @@ static int H264_Encoder_UpdateVideoInfo(unsigned char view, unsigned int resW, u
 
 static void H264_Encoder_InputVideoFormatChangeCallback(void* p)
 {
-    uint8_t index  = ((STRU_SysEvent_ADV7611FormatChangeParameter*)p)->index;
-    uint16_t width = ((STRU_SysEvent_ADV7611FormatChangeParameter*)p)->width;
-    uint16_t hight = ((STRU_SysEvent_ADV7611FormatChangeParameter*)p)->hight;
-    uint8_t framerate = ((STRU_SysEvent_ADV7611FormatChangeParameter*)p)->framerate;
+    uint8_t index  = ((STRU_SysEvent_H264InputFormatChangeParameter*)p)->index;
+    uint16_t width = ((STRU_SysEvent_H264InputFormatChangeParameter*)p)->width;
+    uint16_t hight = ((STRU_SysEvent_H264InputFormatChangeParameter*)p)->hight;
+    uint8_t framerate = ((STRU_SysEvent_H264InputFormatChangeParameter*)p)->framerate;
 
     // ADV7611 0,1 is connected to H264 encoder 1,0
     H264_Encoder_UpdateVideoInfo((index == 0) ? 1 : 0, width, hight, framerate);    
@@ -254,12 +254,12 @@ static void VEBRC_IRQ_Wrap_Handler(void)
 
 int H264_Encoder_Init(uint8_t gop0, uint8_t br0, uint8_t brc0_e, uint8_t gop1, uint8_t br1, uint8_t brc1_e)
 {
-    //variable Declaraton 
+    // variable Declaraton 
     char spi_rd_dat, i2c_rd_dat;
     unsigned int wait_cnt, i;
     unsigned char read_cnt ;
 
-    //==== Video_Soc Wait SDRAM INIT_DONE ===//
+    // Video_Soc Wait SDRAM INIT_DONE
     sdram_init_check(); 
 
     reg_IrqHandle(VIDEO_ARMCM7_IRQ_VECTOR_NUM, VEBRC_IRQ_Wrap_Handler);
@@ -275,7 +275,7 @@ int H264_Encoder_Init(uint8_t gop0, uint8_t br0, uint8_t brc0_e, uint8_t gop1, u
     g_stEncoderStatus[1].brc_enable = brc1_e;
     v1_poweron_rc_params_set = 1;
 
-    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_ADV7611_FORMAT_CHANGE_LOCAL, H264_Encoder_InputVideoFormatChangeCallback);
+    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_H264_INPUT_FORMAT_CHANGE_LOCAL, H264_Encoder_InputVideoFormatChangeCallback);
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE, H264_Encoder_BBModulationChangeCallback);
 
     dlog_info("h264 encoder init OK\n");

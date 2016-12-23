@@ -12,6 +12,7 @@
 #include "stm32f746xx.h"
 #include "com_task.h"
 #include "bb_ctrl_proxy.h"
+#include "hal_hdmi_rx.h"
 
 void *malloc(size_t size)
 {
@@ -85,8 +86,8 @@ int main(void)
 
     SysTicks_Init(200000);
 
-    ADV_7611_Initial(0);
-    ADV_7611_Initial(1);
+    HAL_HDMI_RX_Init(HAL_HDMI_RX_0);
+    HAL_HDMI_RX_Init(HAL_HDMI_RX_1);
 
     USBD_ApplicationInit();
 

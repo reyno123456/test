@@ -6,7 +6,7 @@
 
 #define TAR_24C256_ADDR       0x51
 
-#if 0
+#if 1
 #define TAR_ADV7611_ADDR      (0x98 >> 1)
 
 #define ADV_7611_I2C_COMPONENT_NUM I2C_Component_2
@@ -60,7 +60,7 @@ void command_writeADV7611(char *slvAddr, char *regAddr, char *regVal)
     dlog_info("Wrte: 0x%x, 0x%x, 0x%x", slvAddrTmp, regAddrTmp, regValTmp);
 }
 
-void command_readADV7611VideoFormat(char *index_str, uint32_t* widthPtr, uint32_t* hightPtr, uint32_t* framteratePtr)
+void command_readADV7611VideoFormat(char *index_str, uint16_t* widthPtr, uint16_t* hightPtr, uint8_t* framteratePtr)
 {
     unsigned char index = strtoul(index_str, NULL, 0);
     ADV_7611_GetVideoFormat(index, widthPtr, hightPtr, framteratePtr);

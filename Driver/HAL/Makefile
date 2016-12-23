@@ -30,12 +30,13 @@ SRC_C := Src/hal_i2c.c \
          Src/hal_h264.c
 
 INCDIRS := -IInc \
+           -I$(TOP_DIR)/Configure/Include \
+           -I$(TOP_DIR)/Library/Artosyn/Common/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/I2C/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SRAM/Inc \
            -I$(TOP_DIR)/Driver/Board/AR8020TEST/ADV7611/Inc \
-           -I$(TOP_DIR)/Driver/Chip/AR8020/H264Encoder/Inc \
-           -I$(TOP_DIR)/Configure/Include
+           -I$(TOP_DIR)/Driver/Chip/AR8020/H264Encoder/Inc
 
 # object file(s)
 OBJ_C     := $(patsubst %.c,%.o,$(SRC_C))
