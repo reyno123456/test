@@ -21,7 +21,7 @@ uint32_t UartNum;
 
 extern void BB_uart10_spi_sel(uint32_t sel_dat);
 
-void Drv_UART_IRQHandler(void)
+void Drv_UART_IRQHandler(uint32_t u32_vectorNum)
 {
     char                  c;
     unsigned int          status;
@@ -142,7 +142,7 @@ void command_init()
         default:
             break;
     }
-    reg_IrqHandle(vector_num, Drv_UART_IRQHandler);
+    reg_IrqHandle(vector_num, Drv_UART_IRQHandler, NULL);
     INTR_NVIC_EnableIRQ(vector_num);
     INTR_NVIC_SetIRQPriority(vector_num, 1);
 }

@@ -77,7 +77,7 @@ static int8_t UPGRADE_MD5SUM(uint32_t u32_addr)
     DLOG_INFO("checksum......ok\n");
     return 0; 
 }
-static void UPGRADE_IRQHandler(void)
+static void UPGRADE_IRQHandler(uint32_t vectorNum)
 {
     uint32_t          u32_isrType;
     uint32_t          u32_status;
@@ -108,7 +108,7 @@ static void UPGRADE_UartReceive(void)
     {
         ;
     }
-    reg_IrqHandle(UART_INTR0_VECTOR_NUM, UPGRADE_IRQHandler);
+    reg_IrqHandle(UART_INTR0_VECTOR_NUM, UPGRADE_IRQHandler, NULL);
     DLOG_INFO("interrupt\n");
     dlog_output(100);
     while((g_u32ImageSize!=g_u32RecCount))

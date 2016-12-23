@@ -31,7 +31,6 @@
 #include "debuglog.h"
 
 
-ApplicationStateDef Appli_state;
 
 /** @addtogroup USBH_LIB
   * @{

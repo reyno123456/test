@@ -141,7 +141,7 @@ static void BB_UARTComPacketDataAnalyze(uint8_t chData)
     }
 }
 
-static void BB_UARTComUART10IRQHandler(void)
+static void BB_UARTComUART10IRQHandler(uint32_t u32_vectorNum)
 {
     char                 c;
     unsigned int         status;
@@ -168,7 +168,7 @@ void BB_UARTComInit(void)
     *((uint32_t*)(SRAM_MODULE_LOCK_BB_UART_INIT_FLAG)) = 0;
 
     uart_init(BBCOM_UART_INDEX, ((BBCOM_UART_BAUDRATE * 100) / 166));
-    reg_IrqHandle(VIDEO_UART10_INTR_VECTOR_NUM, BB_UARTComUART10IRQHandler);
+    reg_IrqHandle(VIDEO_UART10_INTR_VECTOR_NUM, BB_UARTComUART10IRQHandler, NULL);
     INTR_NVIC_EnableIRQ(VIDEO_UART10_INTR_VECTOR_NUM);
     INTR_NVIC_SetIRQPriority(VIDEO_UART10_INTR_VECTOR_NUM, 1);
 

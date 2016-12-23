@@ -27,15 +27,23 @@ SRC_C := Src/hal_i2c.c \
          Src/hal_pwm.c \
          Src/hal_softpwm.c \
          Src/hal_sram.c \
-         Src/hal_h264.c
+         Src/hal_h264.c \
+         Src/hal_usb.c
 
 INCDIRS := -IInc \
+           -I$(TOP_DIR)/Configure/Include \
+           -I$(TOP_DIR)/Library/Artosyn/Common/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/I2C/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SRAM/Inc \
            -I$(TOP_DIR)/Driver/Board/AR8020TEST/ADV7611/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/H264Encoder/Inc \
-           -I$(TOP_DIR)/Configure/Include
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Device/Core/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Device/Class/HID/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_LL_Driver/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Core/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Class/MSC/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Class/UVC/Inc
 
 # object file(s)
 OBJ_C     := $(patsubst %.c,%.o,$(SRC_C))
@@ -62,6 +70,7 @@ install:
 	@cp -f Inc/hal_h264.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_timer.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_ret_type.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/hal_usb.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."

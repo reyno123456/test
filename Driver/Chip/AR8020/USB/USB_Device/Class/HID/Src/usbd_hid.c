@@ -549,7 +549,7 @@ static uint8_t USBD_HID_DataOut (USBD_HandleTypeDef *pdev,
     {
         /* inform CPU2 to configure the wireless param */
         USBD_LL_PrepareReceive(pdev, HID_EPOUT_ADDR, (uint8_t *)&g_stWirelessParamConfig, HID_EPOUT_SIZE);
- 
+
         WIRELESS_ParseParamConfig((void *)&g_stWirelessParamConfig);
     }
 

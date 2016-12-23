@@ -36,7 +36,7 @@ void commandhal_TestPwmAll(void)
     uint32_t i = 0;
     for(i = 0;i <10; i++)
     {
-        HAL_PWM_RegisterPwm(i, 1, 1);
+        HAL_PWM_RegisterPwm(i, 1000, 1000);
         HAL_PWM_Start(i);
     	dlog_info("start pwm u32_PwmNum %d  \n",i);
     }

@@ -25,13 +25,13 @@ void HAL_SRAM_ReceiveVideoConfig(void)
     SRAM_GROUND_ReceiveVideoConfig();
 
     /* register the irq handler */
-    reg_IrqHandle(BB_SRAM_READY_IRQ_0_VECTOR_NUM, SRAM_Ready0IRQHandler);
+    reg_IrqHandle(BB_SRAM_READY_IRQ_0_VECTOR_NUM, SRAM_Ready0IRQHandler, NULL);
 
     /* enable the SRAM_READY_0 IRQ */
     INTR_NVIC_EnableIRQ(BB_SRAM_READY_IRQ_0_VECTOR_NUM);
 
     /* register the irq handler */
-    reg_IrqHandle(BB_SRAM_READY_IRQ_1_VECTOR_NUM, SRAM_Ready1IRQHandler);
+    reg_IrqHandle(BB_SRAM_READY_IRQ_1_VECTOR_NUM, SRAM_Ready1IRQHandler, NULL);
 
     /* enable the SRAM_READY_1 IRQ */
     INTR_NVIC_EnableIRQ(BB_SRAM_READY_IRQ_1_VECTOR_NUM);
@@ -39,36 +39,10 @@ void HAL_SRAM_ReceiveVideoConfig(void)
 
 
 /**
-* @brief  Reset the SRAM Buffer to receive the next package video data.
-* @param  void
-* @retval   void
-* @note  
-*/
-HAL_RET_T HAL_SRAM_ResetBuffer(ENUM_HAL_SRAM_VIDEO_CHANNEL e_sramVideoCh)
-{
-    HAL_RET_T   ret = HAL_OK;
-
-    if (HAL_SRAM_VIDEO_CHANNEL_0 == e_sramVideoCh)
-    {
-        SRAM_Ready0Confirm();
-    }
-    else if (HAL_SRAM_VIDEO_CHANNEL_1 == e_sramVideoCh)
-    {
-        SRAM_Ready1Confirm();
-    }
-    else
-    {
-        ret = HAL_SRAM_ERR_CHANNEL_INVALID;
-    }
-
-    return ret;
-}
-
-
-/**
-* @brief  Reset the SRAM Buffer1 to receive the next package video data.
-* @param  void
-* @retval   void
+* @brief  Enable Sky Video Bypass Function
+* @param  e_sramVideoCh                                     indicate which video channel to use
+* @retval   HAL_OK                                               reset buffer success
+*               HAL_SRAM_ERR_CHANNEL_INVALID      the input channel number is not correct
 * @note  
 */
 HAL_RET_T HAL_SRAM_EnableSkyBypassVideo(ENUM_HAL_SRAM_VIDEO_CHANNEL e_sramVideoCh)
@@ -85,9 +59,10 @@ HAL_RET_T HAL_SRAM_EnableSkyBypassVideo(ENUM_HAL_SRAM_VIDEO_CHANNEL e_sramVideoC
 
 
 /**
-* @brief  Reset the SRAM Buffer1 to receive the next package video data.
-* @param  void
-* @retval   void
+* @brief  Disable Sky Video Bypass Function
+* @param  e_sramVideoCh                                     indicate which video channel to use
+* @retval   HAL_OK                                               reset buffer success
+*               HAL_SRAM_ERR_CHANNEL_INVALID      the input channel number is not correct
 * @note  
 */
 HAL_RET_T HAL_SRAM_DisableSkyBypassVideo(ENUM_HAL_SRAM_VIDEO_CHANNEL e_sramVideoCh)

@@ -10,7 +10,7 @@ volatile uint32_t               sramReady1;
 extern USBD_HandleTypeDef       USBD_Device;
 
 
-void SRAM_Ready0IRQHandler(void)
+void SRAM_Ready0IRQHandler(uint32_t u32_vectorNum)
 {
     uint8_t         *buff;
     uint32_t         dataLen;
@@ -31,7 +31,7 @@ void SRAM_Ready0IRQHandler(void)
 }
 
 
-void SRAM_Ready1IRQHandler(void)
+void SRAM_Ready1IRQHandler(uint32_t u32_vectorNum)
 {
     uint8_t         *buff;
     uint32_t         dataLen;

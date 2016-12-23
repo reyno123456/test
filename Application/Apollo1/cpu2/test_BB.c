@@ -89,7 +89,7 @@ void command_test_BB_uart(char *index_str)
 */
 static int open_video_path = 0;
 
-void TIM0_BB_Grd_handler(void)
+void TIM0_BB_Grd_handler(uint32_t u32_vectorNum)
 {
     uint8_t print_reg[][2] =  {
                             {PAGE2, 0xcc}, {PAGE2, 0xd0}, {PAGE2, 0xd7}, {PAGE2, 0xd8},
@@ -126,7 +126,7 @@ void TIM0_BB_Grd_handler(void)
 }
 
 
-void TIM0_BB_Sky_handler(void)
+void TIM0_BB_Sky_handler(uint32_t u32_vectorNum)
 {
     uint8_t RC_lock = 0;
     uint8_t print_reg[][2] =  {
@@ -162,7 +162,7 @@ void BB_debug_print_init_grd(void)
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
     TIM_StartTimer(timer0_0);
 
-    reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, TIM0_BB_Grd_handler);
+    reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, TIM0_BB_Grd_handler, NULL);
 }
 
 
@@ -178,7 +178,7 @@ void BB_debug_print_init_sky(void)
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
     TIM_StartTimer(timer0_0);
 
-    reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, TIM0_BB_Sky_handler);    
+    reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, TIM0_BB_Sky_handler, NULL);    
 }
 
 #endif

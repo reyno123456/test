@@ -12,24 +12,24 @@
 static uint32_t g_u32TimCount1 = 0;
 static uint32_t g_u32TimCount2 = 0;
 
-void TIMHAL_IRQHandler0(void)
+void TIMHAL_IRQHandler0(uint32_t u32_vectorNum)
 { 
     if(((g_u32TimCount1)%1000 == 0) && (0 !=g_u32TimCount1))
     {
 
-        dlog_info("g_u32TimCount1\n");
+        dlog_info("g_u32TimCount1 %d\n",u32_vectorNum);
     }
     g_u32TimCount1++;
 
 }
 
-void TIMHAL_IRQHandler1(void)
+void TIMHAL_IRQHandler1(uint32_t u32_vectorNum)
 {
 
     if(((g_u32TimCount2)%1000 == 0) && (0 !=g_u32TimCount2))
     {
 
-        dlog_info("g_u32TimCount2\n");
+        dlog_info("g_u32TimCount2 %d\n",u32_vectorNum);
     }
     g_u32TimCount2++;
 

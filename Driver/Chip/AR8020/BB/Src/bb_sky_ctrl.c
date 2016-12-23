@@ -78,7 +78,7 @@ void BB_SKY_start(void)
     sky_Timer1_Init();    
     sky_search_id_timeout_irq_enable(); //enabole TIM1 timeout
 
-    reg_IrqHandle(BB_RX_ENABLE_VECTOR_NUM, wimax_vsoc_rx_isr);
+    reg_IrqHandle(BB_RX_ENABLE_VECTOR_NUM, wimax_vsoc_rx_isr, NULL);
     INTR_NVIC_EnableIRQ(BB_RX_ENABLE_VECTOR_NUM);   
 }
 
@@ -166,7 +166,7 @@ void sky_auto_adjust_agc_gain(void)
 
 
 //*********************TX RX initial(14ms irq)**************
-void wimax_vsoc_rx_isr()
+void wimax_vsoc_rx_isr(uint32_t u32_vectorNum)
 {
     INTR_NVIC_DisableIRQ(BB_RX_ENABLE_VECTOR_NUM);   
 	
@@ -177,7 +177,7 @@ void wimax_vsoc_rx_isr()
 }
 
 
-void Sky_TIM0_IRQHandler(void)
+void Sky_TIM0_IRQHandler(uint32_t u32_vectorNum)
 {
     sky_timer0_0_running = 1;
     sky_search_id_timeout_irq_disable();
@@ -441,7 +441,7 @@ void sky_search_id_timeout(void)
     sky_soft_reset();
 }
 
-void Sky_TIM1_IRQHandler(void)
+void Sky_TIM1_IRQHandler(uint32_t u32_vectorNum)
 {
     static int Timer1_Delay2_Cnt = 0;    
 
@@ -478,7 +478,7 @@ void sky_Timer1_Init(void)
     sky_timer0_1.ctrl = 0;
     sky_timer0_1.ctrl |= TIME_ENABLE | USER_DEFINED;
     TIM_RegisterTimer(sky_timer0_1, 1000);
-    reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, Sky_TIM1_IRQHandler);
+    reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, Sky_TIM1_IRQHandler, NULL);
 }
 
 void sky_Timer0_Init(void)
@@ -490,7 +490,7 @@ void sky_Timer0_Init(void)
 
     TIM_RegisterTimer(sky_timer0_0, 6800);
 
-    reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, Sky_TIM0_IRQHandler);
+    reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, Sky_TIM0_IRQHandler, NULL);
 }
 
 

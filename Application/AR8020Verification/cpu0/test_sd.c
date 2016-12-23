@@ -5,7 +5,7 @@
 void InitSDIRQ()
 {
     /* register the irq handler */
-    reg_IrqHandle(SD_INTR_VECTOR_NUM, sd_IRQHandler);
+    reg_IrqHandle(SD_INTR_VECTOR_NUM, sd_IRQHandler, NULL);
     INTR_NVIC_EnableIRQ(SD_INTR_VECTOR_NUM);
     INTR_NVIC_SetIRQPriority(SD_INTR_VECTOR_NUM, 1);
 

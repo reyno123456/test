@@ -14,7 +14,7 @@ static uint32_t g_u32TimCount = 0;
 static uint32_t g_u32Index = 0;
 static uint32_t g_ACount[5][2];
 
-void TIMPWM_IRQHandler(void)
+void TIMPWM_IRQHandler(uint32_t u32_vectorNum)
 {
     TIM_ClearNvic(g_stSimulateTimer);
     g_u32TimCount++;
@@ -46,7 +46,7 @@ void command_testSimulateTimer(void)
     g_stSimulateTimer.ctrl |= TIME_ENABLE | USER_DEFINED;
 
     TIM_RegisterTimer(g_stSimulateTimer, 10);  
-    reg_IrqHandle(TIMER_INTR00_VECTOR_NUM + g_stSimulateTimer.base_time_group*8 + g_stSimulateTimer.time_num, TIMPWM_IRQHandler);
+    reg_IrqHandle(TIMER_INTR00_VECTOR_NUM + g_stSimulateTimer.base_time_group*8 + g_stSimulateTimer.time_num, TIMPWM_IRQHandler, NULL);
     
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM + g_stSimulateTimer.base_time_group*8 + g_stSimulateTimer.time_num);
     TIM_StartTimer(g_stSimulateTimer);

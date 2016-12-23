@@ -30,7 +30,7 @@ SDMMC_Status sd_erase(uint32_t StartBlock, uint32_t SectorNum);
 SDMMC_Status sd_ioctl(unsigned char cmd, void *buff);
 SDMMC_Status sd_deinit();
 void sd_getcardinfo(SD_CardInfoTypedef *CardInfo);
-void sd_IRQHandler(void);
+void sd_IRQHandler(uint32_t vectorNum);
 
 
 #ifdef __cplusplus

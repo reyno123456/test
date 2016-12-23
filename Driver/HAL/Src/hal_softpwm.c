@@ -33,7 +33,7 @@ uint32_t g_ACount[MAXSOFTPWM][2];
 * @retval   none 
 * @note     none
 */
-static void SOFTPWM_TimerIRQHandler(void)
+static void SOFTPWM_TimerIRQHandler(uint32_t u32_vectorNum)
 {
     g_u32TimCount++;
 }

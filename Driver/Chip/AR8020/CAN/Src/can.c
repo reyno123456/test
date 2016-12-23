@@ -97,13 +97,13 @@ static void CAN_ConnectIsr(void);
 
 static void CAN_PrintRxMsg(void);
 
-static void CAN0_Isr(void);
+static void CAN0_Isr(uint32_t u32_vectorNum);
 
-static void CAN1_Isr(void);
+static void CAN1_Isr(uint32_t u32_vectorNum);
 
-static void CAN2_Isr(void);
+static void CAN2_Isr(uint32_t u32_vectorNum);
 
-static void CAN3_Isr(void);
+static void CAN3_Isr(uint32_t u32_vectorNum);
 
 static CAN_Type * CAN_GetBaseAddrByCh(uint8_t ch);
 
@@ -470,7 +470,7 @@ static void CAN_PrintRxMsg(void)
 * @retval 
 * @note   
 */
-static void CAN0_Isr(void)
+static void CAN0_Isr(uint32_t u32_vectorNum)
 {
 	volatile CAN_Type *p_stCanReg;
 	uint32_t u32_id;
@@ -515,7 +515,7 @@ static void CAN0_Isr(void)
 * @retval 
 * @note   
 */
-static void CAN1_Isr(void)
+static void CAN1_Isr(uint32_t u32_vectorNum)
 {
 	volatile CAN_Type *p_stCanReg;
 	uint32_t u32_id;
@@ -559,7 +559,7 @@ static void CAN1_Isr(void)
 * @retval 
 * @note   
 */
-static void CAN2_Isr(void)
+static void CAN2_Isr(uint32_t u32_vectorNum)
 {
 	volatile CAN_Type *p_stCanReg;
 	uint32_t u32_id;
@@ -601,7 +601,7 @@ static void CAN2_Isr(void)
 * @retval 
 * @note   
 */
-static void CAN3_Isr(void)
+static void CAN3_Isr(uint32_t u32_vectorNum)
 {
 	volatile CAN_Type *p_stCanReg;
 	uint32_t u32_id;
@@ -647,19 +647,19 @@ static void CAN3_Isr(void)
 static void CAN_ConnectIsr(void)
 {
     /* register the irq handler */
-	reg_IrqHandle(CAN_IRQ0_VECTOR_NUM, CAN0_Isr);
+	reg_IrqHandle(CAN_IRQ0_VECTOR_NUM, CAN0_Isr, NULL);
     INTR_NVIC_EnableIRQ(CAN_IRQ0_VECTOR_NUM);
     //INTR_NVIC_SetIRQPriority(CAN_IRQ0_VECTOR_NUM, 1);
     
-	reg_IrqHandle(CAN_IRQ1_VECTOR_NUM, CAN1_Isr);
+	reg_IrqHandle(CAN_IRQ1_VECTOR_NUM, CAN1_Isr, NULL);
     INTR_NVIC_EnableIRQ(CAN_IRQ1_VECTOR_NUM);
     //INTR_NVIC_SetIRQPriority(CAN_IRQ1_VECTOR_NUM, 1);
     
-	reg_IrqHandle(CAN_IRQ2_VECTOR_NUM, CAN2_Isr);
+	reg_IrqHandle(CAN_IRQ2_VECTOR_NUM, CAN2_Isr, NULL);
     INTR_NVIC_EnableIRQ(CAN_IRQ2_VECTOR_NUM);
     //INTR_NVIC_SetIRQPriority(CAN_IRQ2_VECTOR_NUM, 1);
     
-	reg_IrqHandle(CAN_IRQ3_VECTOR_NUM, CAN3_Isr);
+	reg_IrqHandle(CAN_IRQ3_VECTOR_NUM, CAN3_Isr, NULL);
     INTR_NVIC_EnableIRQ(CAN_IRQ3_VECTOR_NUM);
     //INTR_NVIC_SetIRQPriority(CAN_IRQ3_VECTOR_NUM, 1);
 }

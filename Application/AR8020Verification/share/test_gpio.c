@@ -12,7 +12,7 @@ uint32_t volatile g_u32GpioCount = 0;
 uint8_t  volatile g_u8GpioNum = 0;
 uint8_t  volatile g_u8GpioType = 0;
 
-void GPIO_IRQHandler(void)
+void GPIO_IRQHandler(uint32_t u32_vectorNum)
 {
     if(1 == g_u8GpioType)
     	GPIO_Intr_ClearIntr(g_u8GpioNum);
@@ -64,7 +64,7 @@ void command_TestGpioInterrupt(uint8_t *gpionum, uint8_t *inttype, uint8_t *pola
 	GPIO_Intr_SetPinIntrPol(u8_GpioNum, u8_GpioPolarity);	
 	GPIO_SetPinDebounce(u8_GpioNum, GPIO_DEBOUNCE_ON);
 	
-	reg_IrqHandle(GPIO_INTR_N0_VECTOR_NUM + (u8_GpioNum>>5), GPIO_IRQHandler);
+	reg_IrqHandle(GPIO_INTR_N0_VECTOR_NUM + (u8_GpioNum>>5), GPIO_IRQHandler, NULL);
     INTR_NVIC_EnableIRQ(GPIO_INTR_N0_VECTOR_NUM + (u8_GpioNum>>5));
     
     while(1)

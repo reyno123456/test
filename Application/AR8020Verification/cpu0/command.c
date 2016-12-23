@@ -44,7 +44,7 @@ void command_sendCtrl(void);
 void command_sendVideo(void);
 
 /* added by xiongjiangjiang */
-void Drv_UART_IRQHandler(void)
+void Drv_UART_IRQHandler(uint32_t u32_vectorNum)
 {
     char                  c;
     unsigned int          status;
@@ -164,7 +164,7 @@ void command_init()
         default:
             break;
     }
-    reg_IrqHandle(vector_num, Drv_UART_IRQHandler);
+    reg_IrqHandle(vector_num, Drv_UART_IRQHandler, NULL);
     INTR_NVIC_EnableIRQ(vector_num);
     INTR_NVIC_SetIRQPriority(vector_num, 1);
 }
@@ -244,7 +244,8 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     }
     else if (memcmp(cmdArray[0], "hdmigetvideoformat", strlen("hdmigetvideoformat")) == 0)
     {
-        uint32_t width, hight, framterate;
+        uint16_t width, hight;
+        uint8_t framterate;
         command_readADV7611VideoFormat(cmdArray[1], &width, &hight, &framterate);
         dlog_info("width %d, hight %d, framterate %d\n", width, hight, framterate);
     }

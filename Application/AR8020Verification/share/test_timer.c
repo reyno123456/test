@@ -12,7 +12,7 @@ init_timer_st g_stTimer;
 init_timer_st g_stPwm;
 uint32_t g_u32TimCount = 0;
 
-void TIM_IRQHandler(void)
+void TIM_IRQHandler(uint32_t u32_vectorNum)
 {
     TIM_ClearNvic(g_stTimer);  
     g_u32TimCount ++;
@@ -30,7 +30,7 @@ void Test_TimerInit(uint32_t timer_group, uint32_t timer_num, uint32_t timer_cou
     g_u32TimCount = 0;
     
     TIM_RegisterTimer(g_stTimer, timer_count*1000);  
-    reg_IrqHandle(TIMER_INTR00_VECTOR_NUM + timer_group*8 + timer_num, TIM_IRQHandler);
+    reg_IrqHandle(TIMER_INTR00_VECTOR_NUM + timer_group*8 + timer_num, TIM_IRQHandler, NULL);
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM + timer_group*8 + timer_num);
 }
 

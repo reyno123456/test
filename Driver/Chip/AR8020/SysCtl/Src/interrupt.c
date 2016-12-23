@@ -8,14 +8,17 @@ static Irq_handler handlers[MAX_IRQ_VECTROS] = {
     0
 };
 
-int reg_IrqHandle(IRQ_type vct, Irq_handler hdl)
+static Irq_handler postHandlers[MAX_IRQ_VECTROS] = {
+    0
+};
+
+int reg_IrqHandle(IRQ_type vct, Irq_handler hdl, Irq_handler postHdl)
 {
     if(vct < MAX_IRQ_VECTROS)
     {
         handlers[vct] = hdl;
-        return 0;
+        postHandlers[vct] = postHdl;
     }
-
     return 1;
 }
 
@@ -24,7 +27,7 @@ int rmv_IrqHandle(IRQ_type vct)
     if(vct < MAX_IRQ_VECTROS)
     {
         handlers[vct] = 0;
-        return 0;
+        postHandlers[vct] = 0;
     }
     return 1;
 }
@@ -33,7 +36,11 @@ static inline void run_irq_hdl(IRQ_type vct)
 {
     if(handlers[vct] != 0)
     {
-        (handlers[vct])();
+        (handlers[vct])(vct);
+    }
+    if(postHandlers[vct] != 0)
+    {
+        (postHandlers[vct])(vct);
     }
 }
 

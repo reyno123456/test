@@ -25,7 +25,6 @@ install:
 	@cp -f Include/core_cmInstr.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Include/core_cmFunc.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Include/core_cmSimd.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f Device/ST/STM32F7xx/Include/stm32f7xx.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."

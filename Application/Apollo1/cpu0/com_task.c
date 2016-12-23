@@ -56,7 +56,7 @@ static void COMTASK_FlushTxBufferToUart(osMessageQId QueueId)
     }
 }
 
-static void COMTASK_UartIrqHandler3(void)
+static void COMTASK_UartIrqHandler3(uint32_t u32_vectorNum)
 {
     char                  c;
     unsigned int          status;
@@ -78,7 +78,7 @@ static void COMTASK_UartIrqHandler3(void)
     }
 }
 
-static void COMTASK_UartIrqHandler4(void)
+static void COMTASK_UartIrqHandler4(uint32_t u32_vectorNum)
 {
     char                  c;
     unsigned int          status;
@@ -103,7 +103,7 @@ static void COMTASK_UartIrqHandler4(void)
 static void COMTASK_UartInit0(void)
 {
     uart_init(3, 115200);
-    reg_IrqHandle(UART_INTR3_VECTOR_NUM, COMTASK_UartIrqHandler3);
+    reg_IrqHandle(UART_INTR3_VECTOR_NUM, COMTASK_UartIrqHandler3, NULL);
     INTR_NVIC_EnableIRQ(UART_INTR3_VECTOR_NUM);
     INTR_NVIC_SetIRQPriority(UART_INTR3_VECTOR_NUM, 1);
 }
@@ -111,7 +111,7 @@ static void COMTASK_UartInit0(void)
 static void COMTASK_UartInit1(void)
 {
     uart_init(4, 115200);
-    reg_IrqHandle(UART_INTR4_VECTOR_NUM, COMTASK_UartIrqHandler4);
+    reg_IrqHandle(UART_INTR4_VECTOR_NUM, COMTASK_UartIrqHandler4, NULL);
     INTR_NVIC_EnableIRQ(UART_INTR4_VECTOR_NUM);
     INTR_NVIC_SetIRQPriority(UART_INTR4_VECTOR_NUM, 1);
 }

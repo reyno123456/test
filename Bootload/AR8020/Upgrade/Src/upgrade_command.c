@@ -11,7 +11,7 @@ static uint8_t g_8CommandPos;
 static int8_t g_8CommandLine[50];
 static uint8_t g_u8CommandEnter = 0;
 
-void UPGRADE_UartIRQHandler(void)
+void UPGRADE_UartIRQHandler(uint32_t vectorNum)
 {
     char                  c;
     uint32_t          status;
@@ -63,7 +63,7 @@ void UPGRADE_CommandInit(uint8_t uart_num)
 {
     g_8CommandPos = 0;
     memset(g_8CommandLine, '\0', 50);
-    reg_IrqHandle(UART_INTR0_VECTOR_NUM, UPGRADE_UartIRQHandler);
+    reg_IrqHandle(UART_INTR0_VECTOR_NUM, UPGRADE_UartIRQHandler, NULL);
     INTR_NVIC_SetIRQPriority(UART_INTR0_VECTOR_NUM, 1);
     INTR_NVIC_EnableIRQ(UART_INTR0_VECTOR_NUM);
 }

@@ -15,11 +15,27 @@ History:
 #include <stdint.h>
 #include "hal_ret_type.h"
 
+typedef struct
+{
+    uint16_t u16_width;
+    uint16_t u16_hight;
+    uint8_t  u8_framerate;
+} STRU_HDMI_RX_OUTPUT_FORMAT;
+
+typedef struct
+{
+    uint8_t u8_devEnable;
+    STRU_HDMI_RX_OUTPUT_FORMAT st_videoFormat;
+} STRU_HDMI_RX_STATUS;
+
 typedef enum
 {
     HAL_HDMI_RX_0 = 0,
     HAL_HDMI_RX_1,
+    HAL_HDMI_RX_MAX
 } ENUM_HAL_HDMI_RX;
+
+#define HDMI_RX_FORMAT_NOT_SUPPORT_COUNT_MAX 50
 
 /**
 * @brief  The HDMI RX init function.
@@ -36,18 +52,18 @@ HAL_RET_T HAL_HDMI_RX_Init(ENUM_HAL_HDMI_RX e_hdmiIndex);
 * @brief  The HDMI RX init function.
 * @param  e_hdmiIndex         The HDMI RX index number, the right number should be 0-1 and totally
 *                             2 HDMI RX can be supported.
-* @param  pu32_width          The pointer to the video width value.
-* @param  pu32_hight          The pointer to the video hight value.
-* @param  pu32_framterate     The pointer to the video framerate value.
+* @param  pu16_width          The pointer to the video width value.
+* @param  pu16_hight          The pointer to the video hight value.
+* @param  pu8_framterate      The pointer to the video framerate value.
 * @retval HAL_OK                            means the HDMI RX init is well done.
 *         HAL_HDMI_RX_ERR_GET_VIDEO_FORMAT  means some error happens in the HDMI RX init.
 * @note   None.
 */
 
 HAL_RET_T HAL_HDMI_RX_GetVideoFormat(ENUM_HAL_HDMI_RX e_hdmiIndex, 
-                                     uint32_t *pu32_width, 
-                                     uint32_t *pu32_hight, 
-                                     uint32_t *pu32_framterate);
+                                     uint16_t *pu16_width, 
+                                     uint16_t *pu16_hight, 
+                                     uint8_t  *pu8_framterate);
 
 #endif
 

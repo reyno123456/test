@@ -3,7 +3,7 @@
 #include "systicks.h"
 #include "fpu.h"
 #include "adv_7611.h"
-#include "h264_encoder.h"
+#include "hal_h264.h"
 #include "test_BB.h"
 #include "command.h"
 #include "sys_event.h"
@@ -32,7 +32,16 @@ int main(void)
     SysTicks_DelayMS(10); //delay to wait cpu0 bootup and set the PLL register
     InterCore_Init();
     
-    H264_Encoder_Init(10, 1, 1, 10, 1, 1);
+    STRU_HAL_H264_CONFIG st_h264Cfg;
+    st_h264Cfg.u8_view0En = 1;
+    st_h264Cfg.u8_view0Gop = 10;
+    st_h264Cfg.e_view0Br = HAL_H264_BITRATE_500K;
+    st_h264Cfg.u8_view0BrEn = 1;
+    st_h264Cfg.u8_view1En = 1;
+    st_h264Cfg.u8_view1Gop = 10;
+    st_h264Cfg.e_view1Br = HAL_H264_BITRATE_500K;
+    st_h264Cfg.u8_view1BrEn = 1;
+    HAL_H264_Init(st_h264Cfg);
     
     test_BB_sky();
 

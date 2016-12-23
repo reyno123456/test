@@ -34,11 +34,11 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f7xx.h"  /* replace 'stm32xxx' with your HAL driver header filename, ex: stm32f4xx.h */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "data_type.h"
+#include "stm32f7xx_hal_pcd.h"
 
 extern PCD_HandleTypeDef hpcd[2];
 

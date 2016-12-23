@@ -32,6 +32,46 @@ HAL_RET_T HAL_I2C_MasterInit(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
                              uint16_t u16_i2cAddr,
                              ENUM_HAL_I2C_SPEED e_i2cSpeed)
 {
+    EN_I2C_COMPONENT en_component;
+    ENUM_I2C_Speed en_speed;
+
+    switch (e_i2cComponent)
+    {
+    case HAL_I2C_COMPONENT_0:
+        en_component = I2C_Component_0;
+        break;
+    case HAL_I2C_COMPONENT_1:
+        en_component = I2C_Component_1;
+        break;
+    case HAL_I2C_COMPONENT_2:
+        en_component = I2C_Component_2;
+        break;
+    case HAL_I2C_COMPONENT_3:
+        en_component = I2C_Component_3;
+        break;
+    case HAL_I2C_COMPONENT_4:
+        en_component = I2C_Component_4;
+        break;
+    default:
+        return HAL_I2C_ERR_INIT;
+    }
+
+    switch (e_i2cSpeed)
+    {
+    case HAL_I2C_STANDARD_SPEED:
+        en_speed = I2C_Standard_Speed;
+        break;
+    case HAL_I2C_FAST_SPEED:
+        en_speed = I2C_Fast_Speed;
+        break;
+    case HAL_I2C_HIGH_SPEED:
+        en_speed = I2C_High_Speed;
+        break;
+    default:
+        return HAL_I2C_ERR_INIT;
+    }
+    
+    I2C_Init(en_component, I2C_Master_Mode, u16_i2cAddr, en_speed);
     return HAL_OK;
 }
 
@@ -45,14 +85,41 @@ HAL_RET_T HAL_I2C_MasterInit(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
 *         u16_wrSize              The transmit buffer size in byte. 
 * @retval HAL_OK                  means the I2C data write is well done.
 *         HAL_I2C_ERR_WRITE_DATA  means some error happens in the I2C data write.
-* @note   High speed mode has some system dependency and is especially affected by the circuit capacity.
+* @note   u32_wrSize should be less than 6, this is the I2C fifo limit. There is some fifo full risk when u32_wrSize 
+          is larger than 6.
+          High speed mode has some system dependency and is especially affected by the circuit capacity.
 */
 
 HAL_RET_T HAL_I2C_MasterWriteData(ENUM_HAL_I2C_COMPONENT e_i2cComponent, 
                                   uint16_t u16_i2cAddr,
                                   uint8_t *pu8_wrData,
-                                  uint16_t u16_wrSize)
+                                  uint32_t u32_wrSize)
 {
+    EN_I2C_COMPONENT en_component;
+
+    switch (e_i2cComponent)
+    {
+    case HAL_I2C_COMPONENT_0:
+        en_component = I2C_Component_0;
+        break;
+    case HAL_I2C_COMPONENT_1:
+        en_component = I2C_Component_1;
+        break;
+    case HAL_I2C_COMPONENT_2:
+        en_component = I2C_Component_2;
+        break;
+    case HAL_I2C_COMPONENT_3:
+        en_component = I2C_Component_3;
+        break;
+    case HAL_I2C_COMPONENT_4:
+        en_component = I2C_Component_4;
+        break;
+    default:
+        return HAL_I2C_ERR_WRITE_DATA;
+    }
+
+    I2C_Master_Write_Data(en_component, u16_i2cAddr, NULL, 0, pu8_wrData, u32_wrSize);
+    
     return HAL_OK;
 }
 
@@ -76,8 +143,33 @@ HAL_RET_T HAL_I2C_MasterReadData(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
                                  uint8_t *pu8_wrData,
                                  uint8_t  u8_wrSize,
                                  uint8_t *pu8_rdData,
-                                 uint16_t u16_rdSize)
+                                 uint32_t u32_rdSize)
 {
+    EN_I2C_COMPONENT en_component;
+
+    switch (e_i2cComponent)
+    {
+    case HAL_I2C_COMPONENT_0:
+        en_component = I2C_Component_0;
+        break;
+    case HAL_I2C_COMPONENT_1:
+        en_component = I2C_Component_1;
+        break;
+    case HAL_I2C_COMPONENT_2:
+        en_component = I2C_Component_2;
+        break;
+    case HAL_I2C_COMPONENT_3:
+        en_component = I2C_Component_3;
+        break;
+    case HAL_I2C_COMPONENT_4:
+        en_component = I2C_Component_4;
+        break;
+    default:
+        return HAL_I2C_ERR_READ_DATA;
+    }
+
+    I2C_Master_Read_Data(en_component, u16_i2cAddr, pu8_wrData, u8_wrSize, pu8_rdData, u32_rdSize);
+
     return HAL_OK;
 }
 

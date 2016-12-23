@@ -28,8 +28,8 @@
 #define SRAM_BUFF_0_ADDRESS             SRAM_BB_VIDEO_BUFFER_0_ST_ADDRESS
 #define SRAM_BUFF_1_ADDRESS             SRAM_BB_VIDEO_BUFFER_1_ST_ADDRESS
 
-void SRAM_Ready0IRQHandler(void);
-void SRAM_Ready1IRQHandler(void);
+void SRAM_Ready0IRQHandler(uint32_t u32_vectorNum);
+void SRAM_Ready1IRQHandler(uint32_t u32_vectorNum);
 void SRAM_Ready0Confirm(void);
 void SRAM_Ready1Confirm(void);
 void SRAM_GROUND_ReceiveVideoConfig(void);

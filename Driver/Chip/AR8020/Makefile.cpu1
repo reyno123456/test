@@ -36,7 +36,11 @@ SRC_C := SysCtl/Src/reg_rw.c \
          I2C/Src/i2c_ll.c \
          I2C/Src/i2c.c \
          SPI/Src/spi.c \
+         SPI/Src/bb_spi.c \
+         BB/Src/bb_ctrl_proxy.c \
+         BB/Src/rf8003s.c \
          SRAM/Src/sram.c \
+         WirelessInfo/Src/wireless_interface.c \
          USB/USB_Host/Class/UVC/Src/usbh_uvc.c \
          USB/USB_Host/Class/MSC/Src/usbh_msc_bot.c \
          USB/USB_Host/Class/MSC/Src/usbh_msc.c \
@@ -73,6 +77,7 @@ INCDIRS := -ISysCtl/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Class/MSC/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Device/Core/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Device/Class/HID/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/BB/Inc \
            -I$(TOP_DIR)/Configure/Include
 
 # object file(s)

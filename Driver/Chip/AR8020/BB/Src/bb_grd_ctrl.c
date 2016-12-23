@@ -53,7 +53,7 @@ void BB_GRD_start(void)
 
     grd_sweep_freq_init();
 
-    reg_IrqHandle(BB_TX_ENABLE_VECTOR_NUM, wimax_vsoc_tx_isr);
+    reg_IrqHandle(BB_TX_ENABLE_VECTOR_NUM, wimax_vsoc_tx_isr, NULL);
     INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);
 }
 
@@ -466,7 +466,7 @@ void grd_qam_change_judge(void)
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-void wimax_vsoc_tx_isr(void)
+void wimax_vsoc_tx_isr(uint32_t u32_vectorNum)
 {
     INTR_NVIC_DisableIRQ(BB_TX_ENABLE_VECTOR_NUM);
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(OSD_STATUS_SHM_ADDR);
@@ -476,7 +476,7 @@ void wimax_vsoc_tx_isr(void)
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
 }
 
-void Grd_TIM0_IRQHandler(void)
+void Grd_TIM0_IRQHandler(uint32_t u32_vectorNum)
 {
     Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_0);
 
@@ -493,7 +493,7 @@ void Grd_TIM0_IRQHandler(void)
     INTR_NVIC_EnableIRQ(TIMER_INTR01_VECTOR_NUM);   
 }
 
-void Grd_TIM1_IRQHandler(void)
+void Grd_TIM1_IRQHandler(uint32_t u32_vectorNum)
 {
     Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_1); //disable the intr.
     grd_handle_all_cmds();
@@ -574,7 +574,7 @@ void Grd_Timer1_Init(void)
     init_timer0_1.ctrl = 0;
     init_timer0_1.ctrl |= TIME_ENABLE | USER_DEFINED;
     TIM_RegisterTimer(init_timer0_1, 1200); //1.25ms
-    reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, Grd_TIM1_IRQHandler);
+    reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, Grd_TIM1_IRQHandler, NULL);
 }
 
 void Grd_Timer0_Init(void)
@@ -585,7 +585,7 @@ void Grd_Timer0_Init(void)
     init_timer0_0.ctrl |= TIME_ENABLE | USER_DEFINED;
     
     TIM_RegisterTimer(init_timer0_0, 2500); //2.5s
-    reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, Grd_TIM0_IRQHandler);
+    reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, Grd_TIM0_IRQHandler, NULL);
 }
 
 

@@ -1,14 +1,7 @@
 #include "test_usbh.h"
 #include "debuglog.h"
-#include "interrupt.h"
-#include "sys_event.h"
-#include "dma.h"
+#include "hal_usb.h"
 #include "hal_sram.h"
-#include "quad_spi_ctrl.h"
-#include "usbd_def.h"
-#include "usbd_core.h"
-#include "usbd_hid_desc.h"
-#include "usbd_hid.h"
 
 
 #define USB_VIDEO_BYPASS_SIZE_ONCE      (8192)
@@ -16,10 +9,8 @@
 
 
 /* USB Host Global Variables */
-USBH_HandleTypeDef              hUSBHost;
 USBH_BypassVideoCtrl            g_usbhBypassVideoCtrl;
 USBH_AppCtrl                    g_usbhAppCtrl;
-extern USBD_HandleTypeDef       USBD_Device;
 
 
 void USBH_USBHostStatus(void const *argument)
@@ -28,7 +19,7 @@ void USBH_USBHostStatus(void const *argument)
 
     while (1)
     {
-        USBH_Process(&hUSBHost);
+        HAL_USB_HostProcess();
 
         osDelay(20);
     }
@@ -53,7 +44,7 @@ void USBH_BypassVideo(void const *argument)
         {
             while (1)
             {
-                if ((APPLICATION_READY == g_usbhAppCtrl.usbhAppState)
+                if ((HAL_USB_STATE_READY == HAL_USB_GetHostAppState())
                   &&(1 == g_usbhBypassVideoCtrl.taskActivate))
                 {
                     if (g_usbhBypassVideoCtrl.fileOpened == 0)
@@ -110,42 +101,6 @@ void USBH_BypassVideo(void const *argument)
 }
 
 
-void USBH_UserProcess(USBH_HandleTypeDef *phost, uint8_t id)
-{
-    switch(id)
-    {
-    case HOST_USER_SELECT_CONFIGURATION:
-        break;
-
-    case HOST_USER_DISCONNECTION:
-        g_usbhAppCtrl.usbhAppState  = APPLICATION_DISCONNECT;
-        break;
-
-    case HOST_USER_CLASS_ACTIVE:
-        g_usbhAppCtrl.usbhAppState  = APPLICATION_READY;
-        break;
-
-    case HOST_USER_CONNECTION:
-        break;
-
-    default:
-        break;
-    }
-}
-
-
-void USBH_ApplicationInit(void)
-{
-    reg_IrqHandle(OTG_INTR0_VECTOR_NUM, USB_LL_OTG0_IRQHandler);
-
-    USBH_Init(&hUSBHost, USBH_UserProcess, 0);
-
-    USBH_RegisterClass(&hUSBHost, USBH_MSC_CLASS);
-
-    USBH_Start(&hUSBHost);
-}
-
-
 void USBH_MountUSBDisk(void)
 {
     FRESULT   fileResult;
@@ -160,35 +115,6 @@ void USBH_MountUSBDisk(void)
 
         return;
     }
-}
-
-
-void USBD_ApplicationInit(void)
-{
-    reg_IrqHandle(OTG_INTR0_VECTOR_NUM, USB_LL_OTG0_IRQHandler);
-
-    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USB_PLUG_OUT, USBD_RestartUSBDevice);
-
-    USBD_Init(&USBD_Device, &HID_Desc, 0);
-
-    USBD_RegisterClass(&USBD_Device, USBD_HID_CLASS);
-
-    USBD_Start(&USBD_Device);
-
-    return;
-}
-
-
-void USBD_RestartUSBDevice(void * p)
-{
-    USBD_LL_Init(&USBD_Device);
-    HAL_PCD_Start(USBD_Device.pData);
-
-    HAL_SRAM_ResetBuffer(HAL_SRAM_VIDEO_CHANNEL_0);
-
-    HAL_SRAM_ResetBuffer(HAL_SRAM_VIDEO_CHANNEL_1);
-
-    return;
 }
 
 
@@ -212,7 +138,7 @@ void USB_MainTask(void const *argument)
                     if (0 == g_usbhBypassVideoCtrl.taskExist)
                     {
                         /* set USB as host */
-                        USBH_ApplicationInit();
+                        HAL_USB_InitHost(HAL_USB_PORT_0);
 
                         USBH_MountUSBDisk();
                     
@@ -256,7 +182,7 @@ void USB_MainTask(void const *argument)
 
                     HAL_SRAM_DisableSkyBypassVideo(HAL_SRAM_VIDEO_CHANNEL_0);
 
-                    USBD_ApplicationInit();
+                    HAL_USB_InitDevice(HAL_USB_PORT_0);
 
                     break;
                 }

@@ -7,8 +7,8 @@
 #include "lock.h"
 #include "reg_map.h"
 
-static void InterCore_IRQ0Handler(void);
-static void InterCore_IRQ1Handler(void);
+static void InterCore_IRQ0Handler(uint32_t u32_vectorNum);
+static void InterCore_IRQ1Handler(uint32_t u32_vectorNum);
 
 static void InterCore_ResetIRQ0(void)
 {
@@ -20,7 +20,7 @@ static void InterCore_ResetIRQ1(void)
     *((volatile uint32_t *)(INTER_CORE_TRIGGER_REG_ADDR)) &= ~INTER_CORE_TRIGGER_IRQ1_BITMAP;
 }
 
-static void InterCore_IRQ0Handler(void)
+static void InterCore_IRQ0Handler(uint32_t u32_vectorNum)
 {
 #ifdef INTER_CORE_DEBUG_LOG_ENABLE
     dlog_info("handler 0\n");
@@ -63,7 +63,7 @@ static void InterCore_IRQ0Handler(void)
     }
 }
 
-static void InterCore_IRQ1Handler(void)
+static void InterCore_IRQ1Handler(uint32_t u32_vectorNum)
 {
     InterCore_ResetIRQ1();
 #ifdef INTER_CORE_DEBUG_LOG_ENABLE
@@ -102,10 +102,10 @@ void InterCore_Init(void)
     memset((void*)msgPtr, 0, sizeof(INTER_CORE_MSG_TYPE)*INTER_CORE_MSG_SHARE_MEMORY_NUMBER);
 
     // Interrupt enable
-    reg_IrqHandle(VIDEO_GLOBAL2_INTR_RES_VSOC0_VECTOR_NUM, InterCore_IRQ0Handler);
+    reg_IrqHandle(VIDEO_GLOBAL2_INTR_RES_VSOC0_VECTOR_NUM, InterCore_IRQ0Handler, NULL);
     INTR_NVIC_EnableIRQ(VIDEO_GLOBAL2_INTR_RES_VSOC0_VECTOR_NUM);
     /*
-    reg_IrqHandle(VIDEO_GLOBAL2_INTR_RES_VSOC1_VECTOR_NUM, InterCore_IRQ1Handler);
+    reg_IrqHandle(VIDEO_GLOBAL2_INTR_RES_VSOC1_VECTOR_NUM, InterCore_IRQ1Handler, NULL);
     INTR_NVIC_EnableIRQ(VIDEO_GLOBAL2_INTR_RES_VSOC1_VECTOR_NUM);
     */
 }

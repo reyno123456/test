@@ -23,7 +23,7 @@ void BB_GRD_start(void);
 
 void BB_Grd_SetRCId(void);
 
-void wimax_vsoc_tx_isr(void);
+void wimax_vsoc_tx_isr(uint32_t u32_vectorNum);
 
 
 void grd_rc_hopfreq(void);

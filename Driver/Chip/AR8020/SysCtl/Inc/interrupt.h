@@ -107,9 +107,9 @@ typedef enum
     CM7_3_CTIIRQ1,                              //98
 }IRQ_type;
 
-typedef void(*Irq_handler)(void);
+typedef void(*Irq_handler)(uint32_t);
 
-int reg_IrqHandle(IRQ_type vct, Irq_handler hdl);
+int reg_IrqHandle(IRQ_type vct, Irq_handler hdl, Irq_handler postHdl);
 int rmv_IrqHandle(IRQ_type vct);
 
 void INTR_NVIC_EnableIRQ(IRQ_type vct);

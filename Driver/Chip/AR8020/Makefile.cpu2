@@ -96,7 +96,7 @@ install:
 	@cp -f SysCtl/Inc/fpu.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/timer.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/bb_ctrl_proxy.h $(OUTPUT_HEADER_STAGING_DIR)
-
+	@cp -f BB/Inc/rf8003s.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."

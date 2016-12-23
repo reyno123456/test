@@ -29,7 +29,7 @@ void sky_physical_link_process(void);
 
 void Sky_Adjust_AGCGain(void);
 
-void wimax_vsoc_rx_isr(void);
+void wimax_vsoc_rx_isr(uint32_t u32_vectorNum);
 
 uint8_t sky_id_search_run(void);
 

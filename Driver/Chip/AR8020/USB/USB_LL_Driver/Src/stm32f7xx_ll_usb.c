@@ -1781,7 +1781,7 @@ HAL_StatusTypeDef USB_StopHost(USB_OTG_GlobalTypeDef *USBx)
 }
 
 
-void USB_LL_OTG0_IRQHandler(void)
+void USB_LL_OTG0_IRQHandler(uint32_t u32_vectorNum)
 {
   if (USB_OTG0_HS->GINTSTS & 0x01)
   {
@@ -1793,7 +1793,7 @@ void USB_LL_OTG0_IRQHandler(void)
   }
 }
 
-void USB_LL_OTG1_IRQHandler(void)
+void USB_LL_OTG1_IRQHandler(uint32_t u32_vectorNum)
 {
   if (USB_OTG1_HS->GINTSTS & 0x01)
   {

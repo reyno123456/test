@@ -136,7 +136,7 @@ void sd_getcardinfo(SD_CardInfoTypedef *CardInfo)
 	Card_SD_Get_CardInfo(&sdhandle, CardInfo);
 }
 
-void sd_IRQHandler(void)
+void sd_IRQHandler(uint32_t vectorNum)
 {
 
     uint32_t status, pending, cdetect;

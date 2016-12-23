@@ -45,7 +45,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f7xx_hal_def.h"
-#include "stm32f746xx.h"
+#include "usb_reg_define.h"
 
 /** @addtogroup STM32F7xx_HAL
   * @{
@@ -96,6 +96,13 @@ typedef enum {
   HC_DATATGLERR
     
 }USB_OTG_HCStateTypeDef;
+
+
+typedef enum 
+{
+  DISABLE = 0, 
+  ENABLE = !DISABLE
+} FunctionalState;
 
 
 /** 
@@ -462,8 +469,8 @@ HAL_StatusTypeDef USB_HC_Halt(USB_OTG_GlobalTypeDef *USBx , uint8_t hc_num);
 HAL_StatusTypeDef USB_DoPing(USB_OTG_GlobalTypeDef *USBx , uint8_t ch_num);
 HAL_StatusTypeDef USB_StopHost(USB_OTG_GlobalTypeDef *USBx);
 
-void              USB_LL_OTG0_IRQHandler(void);
-void              USB_LL_OTG1_IRQHandler(void);
+void              USB_LL_OTG0_IRQHandler(uint32_t u32_vectorNum);
+void              USB_LL_OTG1_IRQHandler(uint32_t u32_vectorNum);
 
 /**
   * @}

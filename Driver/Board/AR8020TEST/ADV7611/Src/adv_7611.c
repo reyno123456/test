@@ -332,23 +332,25 @@ static unsigned char adv_i2c_addr_table[][3] =
     {0xFF, 0xFF, 0xFF}                          //End flag
 };
 
-static STRU_ADV7611Format g_ADV7611SupportedFormatArray[] =
-{
-    {720,  480,  60},
-    {1280, 720,  30},
-    {1280, 720,  50},
-    {1280, 720,  60},
-    {1920, 1080, 30},
-    {1920, 1080, 50},
-    {1920, 1080, 60},
-};
-
-static STRU_ADV7611Status g_ADV7611Status = {0};
-
 static void ADV_7611_Delay(unsigned int count)
 {
     volatile unsigned int i = count;
     while (i--);
+}
+
+static void ADV_7611_WriteByte(uint8_t slv_addr, uint8_t sub_addr, uint8_t val)
+{
+    unsigned char sub_addr_tmp = sub_addr;
+    unsigned char val_tmp = val;
+    I2C_Master_Write_Data(ADV_7611_I2C_COMPONENT_NUM, slv_addr >> 1, &sub_addr_tmp, 1, &val_tmp, 1);
+}
+
+static uint8_t ADV_7611_ReadByte(uint8_t slv_addr, uint8_t sub_addr)
+{
+    unsigned char sub_addr_tmp = sub_addr;
+    unsigned char val = 0;
+    I2C_Master_Read_Data(ADV_7611_I2C_COMPONENT_NUM, slv_addr >> 1, &sub_addr_tmp, 1, &val, 1);
+    return val;
 }
 
 static void ADV_7611_I2CInitial(void)
@@ -362,21 +364,6 @@ static void ADV_7611_I2CInitial(void)
         ADV_7611_Delay(100);
         i2c_initialized = 1;
     }
-}
-
-void ADV_7611_WriteByte(uint8_t slv_addr, uint8_t sub_addr, uint8_t val)
-{
-    unsigned char sub_addr_tmp = sub_addr;
-    unsigned char val_tmp = val;
-    I2C_Master_Write_Data(ADV_7611_I2C_COMPONENT_NUM, slv_addr >> 1, &sub_addr_tmp, 1, &val_tmp, 1);
-}
-
-uint8_t ADV_7611_ReadByte(uint8_t slv_addr, uint8_t sub_addr)
-{
-    unsigned char sub_addr_tmp = sub_addr;
-    unsigned char val = 0;
-    I2C_Master_Read_Data(ADV_7611_I2C_COMPONENT_NUM, slv_addr >> 1, &sub_addr_tmp, 1, &val, 1);
-    return val;
 }
 
 #define MAX_TABLE_ITEM_COUNT 2000
@@ -418,129 +405,26 @@ static void ADV_7611_GenericInitial(uint8_t index)
     ADV_7611_WriteTable(index, hdmi_default_settings);
 }
 
-static uint8_t ADV_7611_CheckVideoFormatSupportOrNot(uint32_t width, uint32_t hight, uint32_t framerate)
-{
-    uint8_t i = 0;
-    uint8_t array_size = sizeof(g_ADV7611SupportedFormatArray)/sizeof(g_ADV7611SupportedFormatArray[0]);
-
-    for (i = 0; i < array_size; i++)
-    {
-        if ((width == g_ADV7611SupportedFormatArray[i].width) &&
-            (hight == g_ADV7611SupportedFormatArray[i].hight) &&
-            (framerate == g_ADV7611SupportedFormatArray[i].framerate))
-        {
-            break;
-        }
-    }
-
-    if (i < array_size)
-    {
-        return TRUE;
-    }
-    else
-    {
-        return FALSE;
-    }
-}
-
-static uint8_t ADV_7611_CheckVideoFormatChangeOrNot(uint8_t index, uint32_t width, uint32_t hight, uint32_t framerate)
-{
-    if (index >= 2)
-    {
-        return FALSE;
-    }
-    
-    if ((g_ADV7611Status.video_format[index].width != width) ||
-        (g_ADV7611Status.video_format[index].hight != hight) ||
-        (g_ADV7611Status.video_format[index].framerate!= framerate))
-    {
-        return TRUE;
-    }
-    else
-    {
-        return FALSE;
-    }
-}
-
-static void ADV_7611_CheckFormatStatus(uint8_t index, uint8_t no_diff_check)
-{
-    static uint8_t format_not_support_count = 0;
-    uint32_t width, hight, framerate;
-    ADV_7611_GetVideoFormat(index, &width, &hight, &framerate);
-    if (ADV_7611_CheckVideoFormatSupportOrNot(width, hight, framerate) == TRUE)
-    {
-        format_not_support_count = 0;
-        if ((no_diff_check == TRUE) || (ADV_7611_CheckVideoFormatChangeOrNot(index, width, hight, framerate) == TRUE))
-        {
-            STRU_SysEvent_ADV7611FormatChangeParameter p;
-            p.index = index;
-            p.width = width;
-            p.hight = hight;
-            p.framerate = framerate;
-            SYS_EVENT_Notify(SYS_EVENT_ID_ADV7611_FORMAT_CHANGE, (void*)&p);
-
-            g_ADV7611Status.video_format[index].width = width;
-            g_ADV7611Status.video_format[index].hight = hight;
-            g_ADV7611Status.video_format[index].framerate = framerate;
-        }
-    }
-    else
-    {
-        // Format not supported
-        if (format_not_support_count <= FORMAT_NOT_SUPPORT_COUNT_MAX)
-        {
-            format_not_support_count++;
-        }
-
-        if (format_not_support_count == FORMAT_NOT_SUPPORT_COUNT_MAX)
-        {
-            STRU_SysEvent_ADV7611FormatChangeParameter p;
-            p.index = index;
-            p.width = 0;
-            p.hight = 0;
-            p.framerate = 0;
-            SYS_EVENT_Notify(SYS_EVENT_ID_ADV7611_FORMAT_CHANGE, (void*)&p);
-
-            g_ADV7611Status.video_format[index].width = 0;
-            g_ADV7611Status.video_format[index].hight = 0;
-            g_ADV7611Status.video_format[index].framerate = 0;
-        }
-    }
-}
-
-static void ADV_7611_IdleCallback(void *paramPtr)
-{
-    if (g_ADV7611Status.device_mask & ADV7611_0_DEVICE_ENABLE_MASK)
-    {
-        ADV_7611_CheckFormatStatus(0, FALSE);
-    }
-    
-    if (g_ADV7611Status.device_mask & ADV7611_1_DEVICE_ENABLE_MASK)
-    {
-        ADV_7611_CheckFormatStatus(1, FALSE);
-    }
-}
-
 void ADV_7611_Initial(uint8_t index)
 {
     ADV_7611_I2CInitial();
     ADV_7611_GenericInitial(index);
-    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_IDLE, ADV_7611_IdleCallback);
-    g_ADV7611Status.device_mask |= (1 << index);
     dlog_info("HDMI ADV7611 %d init finished!", index);
 }
 
-void ADV_7611_GetVideoFormat(uint8_t index, uint32_t* widthPtr, uint32_t* hightPtr, uint32_t* framteratePtr)
+void ADV_7611_GetVideoFormat(uint8_t index, uint16_t* widthPtr, uint16_t* hightPtr, uint8_t* framteratePtr)
 {
-    uint32_t val1 = 0;
-    uint32_t val2 = 0;
-    uint32_t width = 0;
-    uint32_t hight = 0;
-    uint32_t frame_rate = 0;
+    uint16_t val1 = 0;
+    uint16_t val2 = 0;
+    uint16_t width = 0;
+    uint16_t hight = 0;
+    uint8_t frame_rate = 0;
 
-    uint32_t bl_clk = 0;
+    uint16_t bl_clk = 0;
     uint32_t hfreq = 0;
-    uint32_t field0_hight = 0,  field1_hight = 0, field_hight = 0;
+    uint16_t field0_hight = 0; 
+    uint16_t field1_hight = 0;
+    uint16_t field_hight = 0;
     uint32_t vfreq = 0;
 
     uint8_t hdmi_i2c_addr = (index == 0) ? RX_I2C_HDMI_MAP_ADDR : (RX_I2C_HDMI_MAP_ADDR + 2);
