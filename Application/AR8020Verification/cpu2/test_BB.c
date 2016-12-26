@@ -6,7 +6,7 @@
 #include "interrupt.h"
 #include "bb_ctrl.h"
 #include "bb_uart_com.h"
-#include "bb_spi_operate.h"
+#include "bb_spi_com.h"
 
 #define STATIC_TEST (0)
 

@@ -349,26 +349,30 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         test_float_calculate_pi();
     }
-	else if (memcmp(cmdArray[0], "test_can_init", strlen("test_can_init")) == 0)
+    else if (memcmp(cmdArray[0], "test_can_init", strlen("test_can_init")) == 0)
     {
-      command_TestCanInit(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5], cmdArray[6]);
+         command_TestCanInit(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5], cmdArray[6]);
     } 
-	else if (memcmp(cmdArray[0], "test_can_tx", strlen("test_can_tx")) == 0)
+    else if (memcmp(cmdArray[0], "test_can_tx", strlen("test_can_tx")) == 0)
     {
         command_TestCanTx(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5], cmdArray[6]);
     }
-	else if(memcmp(cmdArray[0], "test_ov5640", strlen("test_ov5640")) == 0)
-	{
-		command_TestOv5640();
-	}
-	else if(memcmp(cmdArray[0], "test_write_ov5640", strlen("test_write_ov5640")) == 0)
-	{
-		command_TestOv5640Write(cmdArray[1], cmdArray[2]);
-	}
-	else if(memcmp(cmdArray[0], "test_read_ov5640", strlen("test_ov5640_read")) == 0)
-	{
-		command_TestOv5640Read(cmdArray[1]);
-	}
+    else if (memcmp(cmdArray[0], "test_can_rx", strlen("test_can_rx")) == 0)
+    {
+        command_TestCanRx();
+    }
+    else if(memcmp(cmdArray[0], "test_ov5640", strlen("test_ov5640")) == 0)
+    {
+        command_TestOv5640();
+    }
+    else if(memcmp(cmdArray[0], "test_write_ov5640", strlen("test_write_ov5640")) == 0)
+    {
+        command_TestOv5640Write(cmdArray[1], cmdArray[2]);
+    }
+    else if(memcmp(cmdArray[0], "test_read_ov5640", strlen("test_ov5640_read")) == 0)
+    {
+        command_TestOv5640Read(cmdArray[1]);
+    }
 	else if(memcmp(cmdArray[0], "command_test_BB_uart", strlen("command_test_BB_uart")) == 0)
     {
         command_test_BB_uart(cmdArray[1]);
@@ -446,6 +450,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("upgrade <filename>");
         dlog_error("test_can_init <ch> <br> <acode> <amsk> <rtie> <format>");
         dlog_error("test_can_tx <ch> <id> <len> <data(hex)> <format> <type>");
+        dlog_error("test_can_rx");
         dlog_error("test_ov5640");
         dlog_error("test_write_ov5640 <subAddr(hex)> <value>(hex)");
         dlog_error("test_read_ov5640 <subAddr(hex)>");

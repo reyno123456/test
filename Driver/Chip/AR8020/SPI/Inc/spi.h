@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+#ifndef NULL
+#define NULL  0
+#endif
+
 typedef enum
 {
 	SPI_0 = 0,

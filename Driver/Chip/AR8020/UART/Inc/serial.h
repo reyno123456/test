@@ -1,6 +1,9 @@
 #ifndef __UART__H
 #define __UART__H
 
+#include <stdint.h>
+#include "interrupt.h"
+
 /* Private define ------------------------------------------------------------*/
 
 #define UART0_BASE               0x40500000
@@ -31,6 +34,11 @@
 #define UART_LSR_DATAREADY       0x01
 #define UART_IIR_RECEIVEDATA     0x04
 #define UART_LSR_DR              0x01
+
+#define UART_TOTAL_CHANNEL       (11)
+
+typedef uint32_t (*UartRxFun)(uint8_t *pu8_rxBuf, uint8_t u8_len);
+
 
 typedef struct {
   unsigned int RBR_THR_DLL;
@@ -65,6 +73,12 @@ typedef struct {
   unsigned int UCV;
   unsigned int CTR;
 } uart_type;
+
+
+extern UartRxFun g_pfun_uartUserFunTbl[UART_TOTAL_CHANNEL];
+extern Irq_handler g_pfun_uartIqrEntryTbl[UART_TOTAL_CHANNEL];
+ 
+
 
 void uart_init(unsigned char index, unsigned int baud_rate);
 void uart_putc(unsigned char index, char c);

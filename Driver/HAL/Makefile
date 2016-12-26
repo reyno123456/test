@@ -28,7 +28,9 @@ SRC_C := Src/hal_i2c.c \
          Src/hal_softpwm.c \
          Src/hal_sram.c \
          Src/hal_h264.c \
-         Src/hal_usb.c
+         Src/hal_usb.c \
+         Src/hal_uart.c \
+	 Src/hal_spi.c
 
 INCDIRS := -IInc \
            -I$(TOP_DIR)/Configure/Include \
@@ -43,7 +45,9 @@ INCDIRS := -IInc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_LL_Driver/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Core/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Class/MSC/Inc \
-           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Class/UVC/Inc
+           -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Class/UVC/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/SPI/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc
 
 # object file(s)
 OBJ_C     := $(patsubst %.c,%.o,$(SRC_C))
@@ -71,6 +75,8 @@ install:
 	@cp -f Inc/hal_timer.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_ret_type.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_usb.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/hal_uart.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/hal_spi.h $(OUTPUT_HEADER_STAGING_DIR) 
 
 clean:
 	@echo "Cleaning..."
@@ -79,6 +85,8 @@ clean:
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_sys_ctl.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_hdmi_rx.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_sram.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_uart.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_spi.h
 
 .PHONY: all clean install
 #########################################################################

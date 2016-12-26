@@ -21,10 +21,13 @@ LIB = libboard.a
 # source file(s), including c file(s)
 SRC_C := ADV7611/Src/adv_7611.c \
          NORFlash/Src/nor_flash.c \
-         NORFlash/Src/w25q128.c
+         NORFlash/Src/w25q128.c \
+         MipiCtrl/Src/ov5640_mipi.c
+
 
 INCDIRS := -IADV7611/Inc \
            -INORFlash/Inc \
+           -IMipiCtrl/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/I2C/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/QuadSPI/Inc \
            -I$(TOP_DIR)/Configure \
@@ -47,12 +50,14 @@ install:
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@cp -f ADV7611/Inc/adv_7611.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f NORFlash/Inc/nor_flash.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f MipiCtrl/Inc/ov5640_mipi.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."
 	@$(RM) $(LIB) $(OBJ_C) .depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB)
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/adv_7611.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/nor_flash.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/ov5640_mipi.h
 
 .PHONY: all clean install
 #########################################################################

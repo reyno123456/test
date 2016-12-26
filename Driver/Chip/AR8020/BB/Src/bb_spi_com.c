@@ -27,7 +27,7 @@
   ******************************************************************************
   */
 
-#include "bb_spi_operate.h"
+#include "bb_spi_com.h"
 #include "bb_ctrl.h"
 #include <string.h>
 #include "bb_ctrl_internal.h"

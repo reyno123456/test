@@ -47,5 +47,18 @@ typedef uint8_t HAL_BOOL_T;
 #define HAL_USB_ERR_MASK                            (0x90000)
 #define HAL_USB_ERR_PORT_INVALID                    (HAL_USB_ERR_MASK | 0x1)
 
+#define HAL_SPI_ERR_MASK                            (0xA000)
+#define HAL_SPI_ERR_UNKNOWN                         (HAL_SPI_ERR_MASK | 0x1)
+#define HAL_SPI_ERR_INIT                            (HAL_SPI_ERR_MASK | 0x2)
+#define HAL_SPI_ERR_WRITE_DATA                      (HAL_SPI_ERR_MASK | 0x3)
+#define HAL_SPI_ERR_READ_DATA                       (HAL_SPI_ERR_MASK | 0x4)
+
+#define HAL_UART_ERR_MASK                           (0xB000)
+#define HAL_UART_ERR_UNKNOWN                        (HAL_UART_ERR_MASK | 0x1)
+#define HAL_UART_ERR_INIT                           (HAL_UART_ERR_MASK | 0x2)
+#define HAL_UART_ERR_WRITE_DATA                     (HAL_UART_ERR_MASK | 0x3)
+#define HAL_UART_ERR_READ_DATA                      (HAL_UART_ERR_MASK | 0x4)
+
+
 #endif
 

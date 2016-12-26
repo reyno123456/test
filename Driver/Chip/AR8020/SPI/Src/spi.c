@@ -100,6 +100,7 @@ static void SPI_disable(ENUM_SPI_COMPONENT en_id)
 void SPI_master_init(ENUM_SPI_COMPONENT en_id, STRU_SPI_InitTypes *st_settings)
 {
     uint32_t divider = (SPI_BASE_CLK_MHZ + st_settings->clk_Mhz-1)/st_settings->clk_Mhz;
+    //uint32_t divider = st_settings->clk_Mhz;
     Reg_Write32( (SPI_BaseList[en_id]+SSIENR),	0x00);  		//disable ssi
 
     Reg_Write32( (SPI_BaseList[en_id]+CTRLR0),	st_settings->ctrl0);

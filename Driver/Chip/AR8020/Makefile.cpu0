@@ -34,7 +34,6 @@ SRC_C := SysCtl/Src/reg_rw.c \
          SysCtl/Src/interrupt.c \
          UART/Src/serial.c \
          CAN/Src/can.c \
-         Capture/Src/ov5640_mipi.c \
          SD/Src/sd_core.c \
          SD/Src/sd_card.c \
          SD/Src/sd_host.c \
@@ -73,7 +72,6 @@ INCDIRS := -ISysCtl/Inc \
            -ISD/Inc \
            -IUART/Inc \
            -ICAN/Inc \
-           -ICapture/Inc \
            -II2C/Inc \
            -ISRAM/Inc \
            -I$(TOP_DIR)/Configure \
@@ -90,7 +88,6 @@ INCDIRS := -ISysCtl/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SD/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SRAM/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/CAN/Inc \
-           -I$(TOP_DIR)/Driver/Chip/AR8020/Capture/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/BB/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SPI/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/QuadSPI/Inc \
@@ -116,7 +113,6 @@ install:
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@cp -f UART/Inc/serial.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f CAN/Inc/can.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f Capture/Inc/ov5640_mipi.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f I2C/Inc/i2c.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SPI/Inc/spi.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SPI/Inc/bb_spi.h $(OUTPUT_HEADER_STAGING_DIR)
