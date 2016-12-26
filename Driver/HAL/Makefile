@@ -19,7 +19,8 @@ include $(BUILD_DIR)/config.mk
 LIB = libhal.a
 
 # source file(s), including c file(s)
-SRC_C := Src/hal_i2c.c \
+SRC_C := Src/hal.c \
+         Src/hal_i2c.c \
          Src/hal_sys_ctl.c \
          Src/hal_hdmi_rx.c \
          Src/hal_gpio.c \
@@ -62,6 +63,7 @@ install:
 	@echo "Installing static library: $(LIB)"
 	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)
 	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/hal.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)
 	@cp -f Inc/hal_i2c.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_sys_ctl.h $(OUTPUT_HEADER_STAGING_DIR)

@@ -1,13 +1,11 @@
 #include "serial.h"
 #include "debuglog.h"
-#include "systicks.h"
-#include "fpu.h"
-#include "adv_7611.h"
 #include "hal_h264.h"
 #include "test_BB.h"
 #include "command.h"
 #include "sys_event.h"
-#include "inter_core.h"
+#include "hal_sys_ctl.h"
+#include "hal.h"
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
@@ -23,14 +21,11 @@ void console_init(uint32_t uart_num, uint32_t baut_rate)
   */
 int main(void)
 {
+    HAL_SYS_CTL_Init(NULL);
+
     /* initialize the uart */
     console_init(2, 115200);   
     dlog_info("cpu2 start!!! \n");
-
-    FPU_AccessEnable();
-    SysTicks_Init(166000);
-    SysTicks_DelayMS(10); //delay to wait cpu0 bootup and set the PLL register
-    InterCore_Init();
 
     STRU_HAL_H264_CONFIG st_h264Cfg;
     st_h264Cfg.u8_view0En = 1;
@@ -55,7 +50,7 @@ int main(void)
         }
 
         dlog_output(200);
-        SysTicks_DelayMS(20);
+        HAL_Delay(20);
     }
 } 
 

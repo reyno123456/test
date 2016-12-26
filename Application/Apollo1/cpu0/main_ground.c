@@ -1,19 +1,16 @@
 #include "debuglog.h"
-#include "pll_ctrl.h"
 #include "command.h"
 #include "serial.h"
 #include "hal_sram.h"
 #include "cmsis_os.h"
 #include "sys_event.h"
-#include "inter_core.h"
-#include "systicks.h"
 #include "bb_spi.h"
 #include "stm32f746xx.h"
 #include "test_usbh.h"
 #include "com_task.h"
 #include "bb_ctrl_proxy.h"
 #include "hal_usb.h"
-
+#include "hal_sys_ctl.h"
 
 void *malloc(size_t size)
 {
@@ -71,21 +68,15 @@ static void IO_Task(void const *argument)
 int main(void)
 {
     BB_SetBoardMODE(SFR_TRX_MODE_GROUND);
-    BB_SPI_init();
 
-    PLLCTRL_SetCoreClk(CPU0_CPU1_CORE_PLL_CLK, CPU0_ID);
-    PLLCTRL_SetCoreClk(CPU2_CORE_PLL_CLK, CPU2_ID);
+    HAL_SYS_CTL_Init(NULL);
 
     /* initialize the uart */
     console_init(0,115200);
     dlog_info("cpu0 start!!! \n");
 
-    InterCore_Init();
-
     /* Enable the CPU Cache */
     CPU_CACHE_Enable();
-
-    SysTicks_Init(200000);
 
     HAL_USB_InitDevice(HAL_USB_PORT_0);
 

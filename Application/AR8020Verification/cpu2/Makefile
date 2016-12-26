@@ -72,7 +72,9 @@ clean:
 
 include $(BUILD_DIR)/rules.mk
 
+ifneq "$(MAKECMDGOALS)" "clean"
 sinclude .depend
+endif
 
 #########################################################################
 

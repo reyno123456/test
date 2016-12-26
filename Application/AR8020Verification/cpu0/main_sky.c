@@ -1,19 +1,15 @@
 #include "debuglog.h"
 #include "serial.h"
 #include "test_freertos.h"
-#include "test_i2c_adv7611.h"
-#include "pll_ctrl.h"
 #include "command.h"
 #include "test_usbh.h"
 #include "cmsis_os.h"
 #include "sys_event.h"
-#include "inter_core.h"
 #include "bb_spi.h"
-#include "systicks.h"
 #include "bb_ctrl_proxy.h"
 #include "hal_hdmi_rx.h"
 #include "hal_usb.h"
-
+#include "hal_sys_ctl.h"
 
 void *malloc(size_t size)
 {
@@ -71,21 +67,14 @@ int main(void)
 {
     BB_SetBoardMODE(SFR_TRX_MODE_SKY);
 
-    BB_SPI_init();
-
-    PLLCTRL_SetCoreClk(CPU0_CPU1_CORE_PLL_CLK, CPU0_ID);
-    PLLCTRL_SetCoreClk(CPU2_CORE_PLL_CLK, CPU2_ID);
+    HAL_SYS_CTL_Init(NULL);
 
     /* initialize the uart */
     console_init(0,115200);
     dlog_info("cpu0 start!!! \n");
 
-    InterCore_Init();
-
     /* Enable the CPU Cache */
     CPU_CACHE_Enable();
-
-    SysTicks_Init(200000);
 
     HAL_HDMI_RX_Init(HAL_HDMI_RX_0);
     HAL_HDMI_RX_Init(HAL_HDMI_RX_1);

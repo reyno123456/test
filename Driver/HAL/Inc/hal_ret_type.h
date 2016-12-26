@@ -21,6 +21,7 @@ typedef uint8_t HAL_BOOL_T;
 #define HAL_SYS_CTL_ERR_SET_CPU_CLK                 (HAL_SYS_CTL_ERR_MASK | 0x2)
 #define HAL_SYS_CTL_ERR_FPU_ENABLE                  (HAL_SYS_CTL_ERR_MASK | 0x3)
 #define HAL_SYS_CTL_ERR_INIT                        (HAL_SYS_CTL_ERR_MASK | 0x4)
+#define HAL_SYS_CTL_ERR_SYS_TICK_INIT               (HAL_SYS_CTL_ERR_MASK | 0x5)
 
 #define HAL_HDMI_RX_ERR_MASK                        (0x70000)
 #define HAL_HDMI_RX_ERR_UNKNOWN                     (HAL_HDMI_RX_ERR_MASK | 0x1)

@@ -26,7 +26,7 @@ int main(void)
     uint8_t tmp=0;
     BB_SPI_init();
 
-    PLLCTRL_SetCoreClk(CPU0_CPU1_CORE_PLL_CLK, CPU0_ID);
+    PLLCTRL_SetCoreClk(CPU0_CPU1_CORE_PLL_CLK, ENUM_CPU0_ID);
     SFR_TRX_MODE_SEL = 0x01;
     tmp = SFR_TRX_MODE_SEL;
     /* initialize the uart */
