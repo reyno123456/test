@@ -21,12 +21,14 @@ typedef struct
     uint16_t u16_cpu2Clk;
     uint8_t  u8_fpuEnable;
     uint16_t u16_sysTickIntervalUs;
+    uint8_t  u8_workMode;
 } STRU_HAL_SYS_CTL_CONFIG;
 
 /**
 * @brief  The CPU clock set function.
 * @param  u16_cpu0cpu1Clk               CPU0 and CPU1 clock in MHz.
 *         u16_cpu2Clk                   CPU2 clock in MHz.
+          u8_workMode                   chip work mode in sky(0) or ground(1), (2): depend on the GPIO to control sky or grd
 * @retval HAL_OK                        means the CPU clock initializtion is well done.
 *         HAL_SYS_CTL_ERR_SET_CPU_CLK   means some error happens in the CPU clock initializtion.
 * @note   This API need be called only once by CPU0.
@@ -55,7 +57,7 @@ HAL_RET_T HAL_SYS_CTL_FpuEnable(uint8_t u8_fpuEnable);
 *         3. Call the function HAL_SYS_CTL_Init to do system controller init.
 */
 
-HAL_RET_T HAL_SYS_CTL_GetConfig(STRU_HAL_SYS_CTL_CONFIG *pst_halSysCtlCfg);
+HAL_RET_T HAL_SYS_CTL_GetConfig(STRU_HAL_SYS_CTL_CONFIG **ppst_halSysCtlCfg);
 
 /**
 * @brief  The system controller initial function.

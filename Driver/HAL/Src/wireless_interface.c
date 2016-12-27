@@ -2,14 +2,13 @@
 #include "usbd_def.h"
 #include "usbd_hid.h"
 #include "debuglog.h"
-#include "bb_ctrl_proxy.h"
 #include "bb_spi.h"
+#include "../../../../HAL/Inc/hal_bb.h"
 #include "sys_event.h"
 #include "rf8003s.h"
 
 STRU_WIRELESS_INFO_DISPLAY             *g_pstWirelessInfoDisplay;        //OSD Info in SRAM
 STRU_WIRELESS_INFO_DISPLAY              g_stWirelessInfoSend;            //send OSD to PAD or PC
-
 STRU_WIRELESS_PARAM_CONFIG_MESSAGE      g_stWirelessParamConfig;         //receive from PAD or PC
 
 uint8_t eventFlag = 0;
@@ -75,8 +74,8 @@ WIRELESS_CONFIG_HANDLER g_stWirelessMsgHandler[PAD_WIRELESS_INTERFACE_PID_NUM] =
     WIRELESS_INTERFACE_RST_MCU_Handler,           
     WIRELESS_INTERFACE_RF_PWR_AUTO_Handler,       
     WIRELESS_INTERFACE_SWITCH_DEBUG_MODE_Handler, 
-    WIRELESS_INTERFACE_WRITE_RF_REG_Handler,
     WIRELESS_INTERFACE_READ_RF_REG_Handler,
+    WIRELESS_INTERFACE_WRITE_RF_REG_Handler,
     NULL,
     NULL,
     NULL,
@@ -516,7 +515,7 @@ void WIRELESS_INTERFACE_SWITCH_DEBUG_MODE_Handler(void *param)
         /*enter debug mode */
         if (!eventFlag)
         {
-           BB_SetBoardDebugMODE(0);
+           HAL_BB_SetBoardDebugModeProxy(0);
            eventFlag = 1;
         }
         WITELESS_GetOSDInfo();
@@ -528,8 +527,8 @@ void WIRELESS_INTERFACE_SWITCH_DEBUG_MODE_Handler(void *param)
         /*exit debug mode */
         if (eventFlag)
         {
-          BB_SetBoardDebugMODE(1);  
-	      eventFlag = 0;
+            HAL_BB_SetBoardDebugModeProxy(1);  
+	        eventFlag = 0;
         }
 
         WITELESS_GetOSDInfo();
@@ -670,55 +669,55 @@ void WIRELESS_INTERFACE_RF_PWR_AUTO_Handler(void *param)
 
 void PAD_FREQUENCY_BAND_WIDTH_SELECT_Handler(void *param)
 {	
-	BB_SetFreqBandwidthSelection_proxy( (ENUM_CH_BW)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
+	HAL_BB_SetFreqBandwidthSelectionProxy( (ENUM_CH_BW)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 }
 
 
 void PAD_FREQUENCY_BAND_OPERATION_MODE_Handler(void *param)
 {
-	BB_SetFreqBandSelectionMode_proxy( (RUN_MODE)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
+	HAL_BB_SetFreqBandSelectionModeProxy( (ENUM_RUN_MODE)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 }
 
 
 void PAD_FREQUENCY_BAND_SELECT_Handler(void *param)
 {
-	BB_SetFreqBand_proxy( (ENUM_RF_BAND)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
+	HAL_BB_SetFreqBandProxy( (ENUM_RF_BAND)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 }
 
 
 void PAD_FREQUENCY_CHANNEL_OPERATION_MODE_Handler(void *param)
 {
-	BB_SetITChannelSelectionMode_proxy( (RUN_MODE)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
+	HAL_BB_SetItChannelSelectionModeProxy( (ENUM_RUN_MODE)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 }
 
 
 void PAD_FREQUENCY_CHANNEL_SELECT_Handler(void *param)
 {	
-	BB_SetITChannel_proxy( (uint8_t)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
+	HAL_BB_SetItChannelProxy( (uint8_t)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 }
 
 
 void PAD_MCS_OPERATION_MODE_Handler(void *param)
 {
-	BB_SetMCSmode_proxy( (RUN_MODE)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
+	HAL_BB_SetMcsModeProxy( (ENUM_RUN_MODE)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 }
 
 
 void PAD_MCS_MODULATION_MODE_Handler(void *param)
 {
-	BB_SetITQAM_proxy( (ENUM_BB_QAM)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
+	HAL_BB_SetItQamProxy( (ENUM_BB_QAM)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 }
 
 
 void PAD_ENCODER_DYNAMIC_BITRATE_MODE_Handler(void *param)
 {
-    BB_SetEncoderBrcMode_proxy( (RUN_MODE)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
+    HAL_BB_SetEncoderBrcModeProxy( (ENUM_RUN_MODE)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 }
 
 
 void PAD_ENCODER_DYNAMIC_BITRATE_SELECT_Handler(void *param)
 {
-    BB_SetEncoderBitrate_proxy( (uint8_t)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
+    HAL_BB_SetEncoderBitrateProxy( (uint8_t)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 }
 
 
@@ -729,7 +728,6 @@ void PAD_WIRELESS_OSD_DISPLAY_Handler(void *param)
     WITELESS_GetOSDInfo();
     WIRELESS_SendOSDInfo(toolToHost);
 }
-
 
 void WIRELESS_ParseParamConfig(void *param)
 {
@@ -754,7 +752,6 @@ void WIRELESS_ParseParamConfig(void *param)
 
     return;
 }
-
 
 void convert_endian(void *src_data, void *dst_data, uint32_t dataLen)
 {

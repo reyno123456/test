@@ -43,6 +43,15 @@ void BB_GRD_start(void)
 {
     context.dev_state = INIT_DATA;
 
+    GPIO_SetMode(RED_LED_GPIO, GPIO_MODE_1);
+    GPIO_SetPinDirect(RED_LED_GPIO, GPIO_DATA_DIRECT_OUTPUT);
+
+    GPIO_SetMode(BLUE_LED_GPIO, GPIO_MODE_1);
+    GPIO_SetPinDirect(BLUE_LED_GPIO, GPIO_DATA_DIRECT_OUTPUT);
+    
+    GPIO_SetPin(RED_LED_GPIO, 0);   //RED LED ON
+    GPIO_SetPin(BLUE_LED_GPIO, 1);  //BLUE LED OFF
+    
     //BB_Grd_SetRCId();
     Grd_Timer0_Init();
     Grd_Timer1_Init();
@@ -104,6 +113,8 @@ void grd_fec_judge(void)
         {
             context.dev_state = FEC_LOCK;
             GPIO_SetPin(BLUE_LED_GPIO, 0);  //BLUE LED ON
+            GPIO_SetPin(RED_LED_GPIO, 1);   //RED LED OFF
+            
             #if 0
             if(context.first_freq_value == 0xff)
             { 
@@ -119,6 +130,8 @@ void grd_fec_judge(void)
             if(context.fec_unlock_cnt > 64)
             {                
                 GPIO_SetPin(BLUE_LED_GPIO, 1);  //BLUE LED OFF
+                GPIO_SetPin(RED_LED_GPIO, 0);   //RED LED ON
+                
                 context.fec_unlock_cnt = 0;
                 if(context.it_skip_freq_mode == AUTO)
                 {
@@ -623,7 +636,7 @@ ENUM_BB_LDPC grd_get_IT_LDPC(void)
 }
 
 
-void grd_handle_IT_mode_cmd(RUN_MODE mode)
+void grd_handle_IT_mode_cmd(ENUM_RUN_MODE mode)
 {
     context.it_skip_freq_mode = mode;
     dlog_info("mode= %d\r\n", mode);
@@ -645,7 +658,7 @@ void grd_handle_IT_CH_cmd(uint8_t ch)
   * ch: the requested channel from  
   * 
  */
-static void grd_handle_RC_mode_cmd(RUN_MODE mode)
+static void grd_handle_RC_mode_cmd(ENUM_RUN_MODE mode)
 {
     context.rc_skip_freq_mode = mode;
 
@@ -707,7 +720,7 @@ static void grd_handle_CH_bandwitdh_cmd(ENUM_CH_BW bw)
 }
 
 
-static void grd_handle_MCS_mode_cmd(RUN_MODE mode)
+static void grd_handle_MCS_mode_cmd(ENUM_RUN_MODE mode)
 {
 	context.qam_skip_mode = mode;
     dlog_info("qam_skip_mode = %d \r\n", context.qam_skip_mode);
@@ -727,7 +740,7 @@ static void grd_handle_MCS_cmd(ENUM_BB_QAM qam, ENUM_BB_LDPC ldpc)
 /*
  * handle H264 encoder brc 
 */
-static void grd_handle_brc_mode_cmd(RUN_MODE mode)
+static void grd_handle_brc_mode_cmd(ENUM_RUN_MODE mode)
 {
     context.brc_mode = mode;
 
@@ -753,9 +766,9 @@ static void grd_handle_brc_bitrate_cmd(uint8_t brc_coderate)
 
 void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 {
-    uint8_t class  = pcmd->configClass;
-    uint8_t item   = pcmd->configItem;
-    uint32_t value = pcmd->configValue;
+    uint8_t class  = pcmd->u8_configClass;
+    uint8_t item   = pcmd->u8_configItem;
+    uint32_t value = pcmd->u32_configValue;
 
     dlog_info("class item value %d %d 0x%0.8x \r\n", class, item, value);
     if(class == WIRELESS_FREQ_CHANGE)
@@ -776,7 +789,7 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 
             case FREQ_CHANNEL_MODE: //auto manual
             {
-                grd_handle_IT_mode_cmd((RUN_MODE)value);
+                grd_handle_IT_mode_cmd((ENUM_RUN_MODE)value);
                 break;
             }
             
@@ -788,13 +801,13 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 
             case RC_CHANNEL_MODE:
             {
-                grd_handle_RC_mode_cmd( (RUN_MODE)value);
+                grd_handle_RC_mode_cmd( (ENUM_RUN_MODE)value);
                 break;
             }
 
             case RC_CHANNEL_SELECT:
             {
-                grd_handle_RC_mode_cmd( (RUN_MODE)MANUAL);
+                grd_handle_RC_mode_cmd( (ENUM_RUN_MODE)MANUAL);
                 grd_handle_RC_CH_cmd((uint8_t)value);
                 break;
             }
@@ -812,7 +825,7 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
         switch(item)
         {
             case MCS_MODE_SELECT:
-                grd_handle_MCS_mode_cmd((RUN_MODE)value);
+                grd_handle_MCS_mode_cmd((ENUM_RUN_MODE)value);
                 break;
 
             case MCS_MODULATION_SELECT:
@@ -835,7 +848,7 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
         switch(item)
         {
             case ENCODER_DYNAMIC_BIT_RATE_MODE:
-                grd_handle_brc_mode_cmd( (RUN_MODE)value);
+                grd_handle_brc_mode_cmd( (ENUM_RUN_MODE)value);
                 break;
 
             case ENCODER_DYNAMIC_BIT_RATE_SELECT:
@@ -846,7 +859,7 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 dlog_error("%s\r\n", "unknown WIRELESS_ENCODER_CHANGE command");
                 break;                
         }
-    } 
+    }
 	
 	if(class == WIRELESS_DEBUG_CHANGE)
     {

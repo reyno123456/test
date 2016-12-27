@@ -18,7 +18,7 @@ History:
 static int RF8003s_SPI_WriteReg_internal(uint8_t u8_addr, uint8_t u8_data, uint8_t u8_flag)
 {
     int ret = 0;
-    uint8_t wdata[] = {0x80, u8_addr, u8_data};   //RF_8003S_SPI: wr: 0x80 ; 
+    uint8_t wdata[] = {0x80, (u8_addr <<1), u8_data};   //RF_8003S_SPI: wr: 0x80 ; 
     
     //use low speed for the RF8003 read, from test, read fail if use the same clockrate as baseband
     /*
@@ -50,7 +50,7 @@ static int RF8003s_SPI_WriteReg_internal(uint8_t u8_addr, uint8_t u8_data, uint8
 
 static int RF8003s_SPI_ReadReg_internal(uint8_t u8_addr, uint8_t u8_flag)
 {
-    uint8_t wdata[3] = {0x00, u8_addr, u8_addr};      //RF_8003S_SPI:  rd: 0x00
+    uint8_t wdata[3] = {0x00, (u8_addr<<1), u8_addr};      //RF_8003S_SPI:  rd: 0x00
     uint8_t rdata[3] = {0};
     
     //use low speed for the RF8003 read, from test, read fail if use the same clockrate as baseband
@@ -115,18 +115,13 @@ void RF8003s_init(uint8_t *pu8_regs)
 
     for(idx = 0; idx < 128; idx++)
     {
-        RF8003s_SPI_WriteReg_internal( (idx << 1), pu8_regs[idx], 0);
-
-        #if (RF_SPI_TEST ==1)
-        uint8_t data = SPI_Read8003(idx*2, 0);
-        dlog_info("%d %d \n", idx, data);
-        #endif
+        RF8003s_SPI_WriteReg_internal( idx, pu8_regs[idx], 0);
     }
 
     {
         //add patch, reset 8003
-        RF8003s_SPI_WriteReg_internal(0x15 *2, 0x51, 0);
-        RF8003s_SPI_WriteReg_internal(0x15 *2, 0x50, 0);
+        RF8003s_SPI_WriteReg_internal(0x15, 0x51, 0);
+        RF8003s_SPI_WriteReg_internal(0x15, 0x50, 0);
     }
 
     BB_SPI_curPageWriteByte(0x01,0x02);             //SPI change into 8020

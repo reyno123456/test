@@ -8,7 +8,6 @@
 #include "timer.h"
 #include "interrupt.h"
 #include "systicks.h"
-#include "wireless_interface.h"
 #include "bb_sky_ctrl.h"
 #include "bb_regs.h"
 #include "bb_sys_param.h"
@@ -70,7 +69,13 @@ void BB_SKY_start(void)
     //context.dev_state = (context.search_id_enable == 0xff)? SEARCH_ID : CHECK_ID_MATCH;
 
     sky_id_search_init();
+    
+    GPIO_SetMode(RED_LED_GPIO, GPIO_MODE_1);
+    GPIO_SetPinDirect(RED_LED_GPIO, GPIO_DATA_DIRECT_OUTPUT);
 
+    GPIO_SetMode(BLUE_LED_GPIO, GPIO_MODE_1);
+    GPIO_SetPinDirect(BLUE_LED_GPIO, GPIO_DATA_DIRECT_OUTPUT);
+    
     GPIO_SetPin(RED_LED_GPIO, 0);   //RED LED ON
     GPIO_SetPin(BLUE_LED_GPIO, 1);  //BLUE LED OFF
 
@@ -173,6 +178,8 @@ void wimax_vsoc_rx_isr(uint32_t u32_vectorNum)
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
     TIM_StartTimer(sky_timer0_0);
 
+    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(OSD_STATUS_SHM_ADDR);
+    osdptr->in_debug    = (uint8_t)(g_stSkyDebugMode.bl_isDebugMode);
 	sky_handle_all_cmds();
 }
 
@@ -265,7 +272,6 @@ void sky_physical_link_process(void)
             sky_set_RC_id(p_id);
 
             context.dev_state = CHECK_ID_MATCH;
-            GPIO_SetPin(RED_LED_GPIO, 1);  //BLUE LED ON
             sky_soft_reset();
         }
         else
@@ -286,7 +292,8 @@ void sky_physical_link_process(void)
             uint8_t data0, data1;
             context.rc_unlock_cnt = 0;
             sky_handle_all_spi_cmds();            
-            GPIO_SetPin(BLUE_LED_GPIO, 0);  //BLUE LED ON            
+            GPIO_SetPin(BLUE_LED_GPIO, 0);  //BLUE LED ON
+            GPIO_SetPin(RED_LED_GPIO, 1);   //RED LED OFF
         }
         else
         {
@@ -297,6 +304,8 @@ void sky_physical_link_process(void)
         if(10 <= context.rc_unlock_cnt)
         {            
             GPIO_SetPin(BLUE_LED_GPIO, 1);  //BLUE LED OFF
+            GPIO_SetPin(RED_LED_GPIO, 0);   //RED LED ON
+            
             context.dev_state = CHECK_ID_MATCH;
             context.rc_unlock_cnt = 0;
         }
@@ -314,7 +323,6 @@ void sky_physical_link_process(void)
             context.locked = sky_id_match();
             if(context.locked)
             {
-                GPIO_SetPin(BLUE_LED_GPIO, 1);  //BLUE LED OFF
                 if(context.rc_skip_freq_mode == AUTO)
                 {
                     sky_rc_hopfreq();
@@ -357,8 +365,8 @@ uint8_t sky_id_search_run(void)
     #define SKY_RC_ERR(status)  (0x80 == status)
     #define SKY_CRC_OK(status)  ((status & 0x02) ? 1 : 0)
 
-    context.rc_error = SKY_RC_ERR(rc_status);
-    if(context.rc_error)
+    context.rc_status = rc_status;
+    if( SKY_RC_ERR(rc_status))
     {
         sky_soft_reset();
         return FALSE;
@@ -528,8 +536,8 @@ static void sky_handle_RC_cmd(void)
 
     if(data0+1 == data1 && data2+1==data3)
     {
-        context.rc_skip_freq_mode = (RUN_MODE)(data0 & 0x7F);
-        if((RUN_MODE)data0 == MANUAL && data0!= 0xFE)
+        context.rc_skip_freq_mode = (ENUM_RUN_MODE)(data0 & 0x7F);
+        if((ENUM_RUN_MODE)data0 == MANUAL && data0!= 0xFE)
         {
             sky_rc_channel = (data0 & 0x7f);
             BB_set_Rcfrq(context.freq_band, sky_rc_channel);
@@ -585,7 +593,7 @@ static void sky_handle_brc_mode_cmd(void)
 {
     uint8_t data0 = BB_ReadReg(PAGE2, ENCODER_BRC_MODE_0);
 	uint8_t data1 = BB_ReadReg(PAGE2, ENCODER_BRC_MODE_1);
-    RUN_MODE mode = (RUN_MODE)(data0 & 0x1f);
+    ENUM_RUN_MODE mode = (ENUM_RUN_MODE)(data0 & 0x1f);
 
     if( (data1==data0+1) && ((data0&0xe0)==0xe0) && (context.brc_mode != mode))
     {
@@ -695,9 +703,9 @@ void sky_handle_all_spi_cmds(void)
 
 static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 {
-    uint8_t class  = pcmd->configClass;
-    uint8_t item   = pcmd->configItem;
-    uint32_t value = pcmd->configValue;
+    uint8_t class  = pcmd->u8_configClass;
+    uint8_t item   = pcmd->u8_configItem;
+    uint32_t value = pcmd->u32_configValue;
 
     dlog_info("class item value %d %d 0x%0.8d \r\n", class, item, value);
     if(class == WIRELESS_FREQ_CHANGE)
@@ -712,7 +720,7 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 
             case RC_CHANNEL_MODE:
             {
-                context.rc_skip_freq_mode = (RUN_MODE)value;
+                context.rc_skip_freq_mode = (ENUM_RUN_MODE)value;
                 break;
             }
 
@@ -722,7 +730,14 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 BB_set_Rcfrq(context.freq_band, sky_rc_channel);
                 break;
             }
-            
+
+            case RC_CHANNEL_FREQ:
+            {
+                sky_rc_channel = (uint8_t)value;
+                BB_set_Rcfrq(context.freq_band, sky_rc_channel);
+                break;
+            }
+
             default:
             {
                 dlog_error("%s\r\n", "unknown WIRELESS_FREQ_CHANGE command");
@@ -736,7 +751,7 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
         switch(item)
         {
             case ENCODER_DYNAMIC_BIT_RATE_MODE:
-                context.brc_mode = (RUN_MODE)value;
+                context.brc_mode = (ENUM_RUN_MODE)value;
                 break;
 
             case ENCODER_DYNAMIC_BIT_RATE_SELECT:
@@ -800,8 +815,8 @@ static void BB_sky_GatherOSDInfo(void)
     osdptr->agc_value[2] = BB_ReadReg(PAGE2, RX3_GAIN_ALL_R);
     osdptr->agc_value[3] = BB_ReadReg(PAGE2, RX4_GAIN_ALL_R);
 
-    osdptr->rc_error    = context.rc_error;
-	osdptr->in_debug    = (uint8_t)(g_stSkyDebugMode.bl_isDebugMode);
+    osdptr->rc_status    = get_rc_status();
+	osdptr->in_debug     = (uint8_t)(g_stSkyDebugMode.bl_isDebugMode);
 
     osdptr->head = 0x00;
     osdptr->tail = 0xff;    //end of the writing

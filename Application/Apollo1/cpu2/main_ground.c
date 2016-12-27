@@ -26,7 +26,7 @@ int main(void)
     console_init(2, 115200);
     dlog_info("main ground function start \n");
     
-    test_BB_grd();
+    BB_init(BB_GRD_MODE);
 
     /* We should never get here as control is now taken by the scheduler */
     for( ;; )

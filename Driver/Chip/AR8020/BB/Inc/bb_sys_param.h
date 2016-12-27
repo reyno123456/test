@@ -19,10 +19,10 @@ typedef struct
     uint8_t fec_unlock_cnt;
     uint16_t rc_unlock_cnt;
     
-    RUN_MODE it_skip_freq_mode;
-    RUN_MODE rc_skip_freq_mode;
-    RUN_MODE qam_skip_mode;
-    RUN_MODE brc_mode;
+    ENUM_RUN_MODE it_skip_freq_mode;
+    ENUM_RUN_MODE rc_skip_freq_mode;
+    ENUM_RUN_MODE qam_skip_mode;
+    ENUM_RUN_MODE brc_mode;
     ENUM_TRX_CTRL trx_ctrl;
     uint8_t  brc_bps;           //unit: Mbps
 
@@ -41,13 +41,13 @@ typedef struct
     uint16_t qam_change_threshold[QAM_CHANGE_THRESHOLD_COUNT];
     uint16_t qam_threshold_range[QAM_CHANGE_THRESHOLD_COUNT][2];
     uint8_t locked;
-    uint8_t rc_error;
+    uint8_t rc_status;
     uint16_t mosaic;
     uint8_t retrans_num;
     uint8_t default_fac_setting;
     uint8_t search_id_enable;
     uint8_t bb_power;    
-    RUN_MODE rf_power_mode;
+    ENUM_RUN_MODE rf_power_mode;
     uint8_t enable_freq_offset;
     DEVICE_STATE dev_state;
 }CONTEXT;
@@ -63,21 +63,21 @@ typedef struct
     uint8_t id_num;
     //MIMO_MODE mimo_mode;
     uint8_t test_enable;
-    RUN_MODE it_skip_freq_mode;
-    RUN_MODE rc_skip_freq_mode;
+    ENUM_RUN_MODE it_skip_freq_mode;
+    ENUM_RUN_MODE rc_skip_freq_mode;
     uint8_t search_id_enable;
     uint8_t freq_band;  
     uint8_t gp20dbm[4];
     uint8_t sp20dbm[4]; 
     ENUM_BB_LDPC ldpc;
-    RUN_MODE qam_skip_mode;
+    ENUM_RUN_MODE qam_skip_mode;
     uint8_t rc_mask[32];
     uint8_t it_mask[8];
     uint16_t qam_change_threshold[QAM_CHANGE_THRESHOLD_COUNT];
     uint8_t enable_freq_offset;
     uint8_t gp20dbmb[4];
     uint8_t sp20dbmb[4];     
-    RUN_MODE rf_power_mode;     
+    ENUM_RUN_MODE rf_power_mode;     
 }SYS_PARAM;
 
 

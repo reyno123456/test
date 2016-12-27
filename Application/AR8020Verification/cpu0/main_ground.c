@@ -5,9 +5,10 @@
 #include "serial.h"
 #include "hal_sram.h"
 #include "cmsis_os.h"
+
 #include "sys_event.h"
 #include "upgrade.h"
-#include "bb_ctrl_proxy.h"
+#include "hal_bb.h"
 #include "test_usbh.h"
 #include "hal_usb.h"
 #include "hal_sys_ctl.h"
@@ -59,6 +60,17 @@ static void IO_Task(void const *argument)
     }
 }
 
+/** 
+ * @brief       API for set board SKY mode or GROUND mode
+ * @param[in]   SFR_TRX_MODE_SKY or SFR_TRX_MODE_GROUND
+ */
+#define SFR_TRX_MODE_SEL (*(volatile uint32_t *)0x40B00068)
+
+void BB_SetBoardMODE(uint8_t mode)
+{
+    SFR_TRX_MODE_SEL = mode;
+}
+
 
 /**
   * @brief  Main program
@@ -67,9 +79,10 @@ static void IO_Task(void const *argument)
   */
 int main(void)
 {
-    BB_SetBoardMODE(SFR_TRX_MODE_GROUND);
-
-    HAL_SYS_CTL_Init(NULL);
+    STRU_HAL_SYS_CTL_CONFIG *pst_cfg;
+    HAL_SYS_CTL_GetConfig( &pst_cfg);
+    pst_cfg->u8_workMode = 1;
+    HAL_SYS_CTL_Init(pst_cfg);
 
     /* initialize the uart */
     console_init(0,115200);

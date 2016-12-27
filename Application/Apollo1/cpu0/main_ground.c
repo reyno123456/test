@@ -8,7 +8,7 @@
 #include "stm32f746xx.h"
 #include "test_usbh.h"
 #include "com_task.h"
-#include "bb_ctrl_proxy.h"
+#include "hal_bb.h"
 #include "hal_usb.h"
 #include "hal_sys_ctl.h"
 
@@ -67,9 +67,10 @@ static void IO_Task(void const *argument)
   */
 int main(void)
 {
-    BB_SetBoardMODE(SFR_TRX_MODE_GROUND);
-
-    HAL_SYS_CTL_Init(NULL);
+    STRU_HAL_SYS_CTL_CONFIG *pst_cfg;
+    HAL_SYS_CTL_GetConfig( &pst_cfg);
+    pst_cfg->u8_workMode = 1;
+    HAL_SYS_CTL_Init(pst_cfg);
 
     /* initialize the uart */
     console_init(0,115200);

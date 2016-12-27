@@ -53,6 +53,7 @@
 #include "usbd_core.h"
 #include "debuglog.h"
 #include "sram.h"
+#include "bb_types.h"
 #include "wireless_interface.h"
 
 
@@ -262,9 +263,8 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE]  _
   0x00,   0xC0,
 }; 
 
-USBD_HID_HandleTypeDef                      g_usbdHidData;
-extern STRU_WIRELESS_PARAM_CONFIG_MESSAGE   g_stWirelessParamConfig;
-
+USBD_HID_HandleTypeDef        g_usbdHidData;
+uint8_t                       g_u32USBDeviceRecv[100];
 
 /*
   * @}
@@ -316,7 +316,7 @@ static uint8_t  USBD_HID_Init (USBD_HandleTypeDef *pdev,
             ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state[i] = HID_IDLE;
         }
 
-        USBD_LL_PrepareReceive(pdev, HID_EPOUT_ADDR, (uint8_t *)&g_stWirelessParamConfig, HID_EPOUT_SIZE);
+        USBD_LL_PrepareReceive(pdev, HID_EPOUT_ADDR, g_u32USBDeviceRecv, HID_EPOUT_SIZE);
     }
 
     return ret;
@@ -545,12 +545,13 @@ static uint8_t  USBD_HID_DataIn (USBD_HandleTypeDef *pdev,
 static uint8_t USBD_HID_DataOut (USBD_HandleTypeDef *pdev,
                               uint8_t epnum)
 {
+    USBD_HID_HandleTypeDef     *hhid = (USBD_HID_HandleTypeDef*)pdev->pClassData;
+
     if (HID_EPOUT_ADDR == epnum)
     {
-        /* inform CPU2 to configure the wireless param */
-        USBD_LL_PrepareReceive(pdev, HID_EPOUT_ADDR, (uint8_t *)&g_stWirelessParamConfig, HID_EPOUT_SIZE);
+        ((USBD_HID_ItfTypeDef *)pdev->pUserData)->dataOut(g_u32USBDeviceRecv);
 
-        WIRELESS_ParseParamConfig((void *)&g_stWirelessParamConfig);
+        USBD_LL_PrepareReceive(pdev, HID_EPOUT_ADDR, g_u32USBDeviceRecv, HID_EPOUT_SIZE);
     }
 
     return USBD_OK;
@@ -571,6 +572,20 @@ static uint8_t  *USBD_HID_GetDeviceQualifierDesc (uint16_t *length)
   return USBD_HID_DeviceQualifierDesc;
 }
 
+
+uint8_t USBD_HID_RegisterInterface(USBD_HandleTypeDef *pdev,
+                             USBD_HID_ItfTypeDef *fops)
+{
+    uint8_t  ret = USBD_FAIL;
+
+    if(fops != NULL)
+    {
+        pdev->pUserData= fops;
+        ret = USBD_OK;
+    }
+
+    return ret;
+}
 
 /**
   * @}

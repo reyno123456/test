@@ -101,12 +101,18 @@ typedef enum
 HID_DataTypeDef; 
 
 
+typedef struct _USBD_HID_Itf
+{
+  void (* dataOut)(void *);
+}USBD_HID_ItfTypeDef;
+
+
 typedef struct
 {
   uint32_t             Protocol;   
   uint32_t             IdleState;  
   uint32_t             AltSetting;
-  HID_StateTypeDef     state[7];  
+  HID_StateTypeDef     state[7];
 }
 USBD_HID_HandleTypeDef; 
 /**
@@ -141,6 +147,8 @@ uint8_t USBD_HID_SendReport (USBD_HandleTypeDef *pdev,
                                  uint8_t  ep_addr);
 
 uint32_t USBD_HID_GetPollingInterval (USBD_HandleTypeDef *pdev);
+uint8_t USBD_HID_RegisterInterface(USBD_HandleTypeDef *pdev,
+                             USBD_HID_ItfTypeDef *fops);
 
 /**
   * @}

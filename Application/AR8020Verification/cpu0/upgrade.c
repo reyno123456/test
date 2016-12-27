@@ -8,7 +8,6 @@
 #include "serial.h"
 #include "md5.h"
 #include "systicks.h"
-#include "bb_ctrl_proxy.h"
 #include "hal_usb.h"
 
 

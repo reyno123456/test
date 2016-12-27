@@ -71,7 +71,7 @@ void PLLCTRL_GetCoreClk(uint16_t *pu16_pllClk, ENUM_CPU_ID e_cpuId)
 
 uint8_t PLLCTRL_CheckCoreClkReady(void)
 {
-    if (*((uint32_t *)SRAM_MODULE_SHARE_PLL_INIT_FLAG) == SRAM_CPU_PLL_INIT_FLAG_VALUE)
+    if (*((volatile uint32_t *)SRAM_MODULE_SHARE_PLL_INIT_FLAG) == SRAM_CPU_PLL_INIT_FLAG_VALUE)
     {
         return 1;
     }

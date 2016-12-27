@@ -19,6 +19,7 @@ History:
 #include "debuglog.h"
 #include "hal_sys_ctl.h"
 #include "hal_ret_type.h"
+#include "reg_rw.h"
 
 static STRU_HAL_SYS_CTL_CONFIG s_st_defHalSysCtlCfg =
 {
@@ -26,6 +27,7 @@ static STRU_HAL_SYS_CTL_CONFIG s_st_defHalSysCtlCfg =
     .u16_cpu2Clk           = CPU2_CORE_PLL_CLK,
     .u8_fpuEnable          = 1,
     .u16_sysTickIntervalUs = 1000,
+    .u8_workMode           = 2,
 };
 
 /**
@@ -100,15 +102,13 @@ HAL_RET_T HAL_SYS_CTL_SysTickInit(uint32_t u32_sysTickCount)
 *         3. Call the function HAL_SYS_CTL_Init to do system controller init.
 */
 
-HAL_RET_T HAL_SYS_CTL_GetConfig(STRU_HAL_SYS_CTL_CONFIG *pst_halSysCtlCfg)
+HAL_RET_T HAL_SYS_CTL_GetConfig(STRU_HAL_SYS_CTL_CONFIG **ppst_halSysCtlCfg)
 {
-    if (pst_halSysCtlCfg != NULL)
-    {
-        memcpy(pst_halSysCtlCfg, &s_st_defHalSysCtlCfg, sizeof(STRU_HAL_SYS_CTL_CONFIG));
-    }
+    *ppst_halSysCtlCfg = &s_st_defHalSysCtlCfg;
     
     return HAL_OK;
 }
+
 
 /**
 * @brief  The system controller initial function.
@@ -128,7 +128,7 @@ HAL_RET_T HAL_SYS_CTL_Init(STRU_HAL_SYS_CTL_CONFIG *pst_usrHalSysCtlCfg)
     uint32_t u32_tickCnt = 0;
 
     STRU_HAL_SYS_CTL_CONFIG *pst_halSysCtlCfg = NULL;
-
+    
     if (pst_usrHalSysCtlCfg == NULL)
     {
         pst_halSysCtlCfg = &s_st_defHalSysCtlCfg;
@@ -138,6 +138,12 @@ HAL_RET_T HAL_SYS_CTL_Init(STRU_HAL_SYS_CTL_CONFIG *pst_usrHalSysCtlCfg)
         pst_halSysCtlCfg = pst_usrHalSysCtlCfg;
     }
 
+    //set mode to sky or ground
+    if (CPUINFO_GetLocalCpuId() == ENUM_CPU0_ID)
+    {
+        Reg_Write32(0x40B00068, (pst_halSysCtlCfg->u8_workMode) ? 0x0:0x03);
+    }
+    
     // Inter core SRAM init
     InterCore_Init();
 

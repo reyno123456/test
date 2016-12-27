@@ -69,6 +69,7 @@ INCDIRS := -IUART/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SPI/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SRAM/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/WirelessInfo/Inc \
+           -I$(TOP_DIR)/Driver/HAL/Inc \
            -I$(TOP_DIR)/Configure/Include
 
 # object file(s)
@@ -96,7 +97,6 @@ install:
 	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/fpu.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/timer.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f BB/Inc/bb_ctrl_proxy.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/rf8003s.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:

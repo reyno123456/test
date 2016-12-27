@@ -6,7 +6,7 @@ typedef enum
 {
     AUTO,
     MANUAL
-}RUN_MODE;
+}ENUM_RUN_MODE;
 
 
 typedef enum
@@ -76,6 +76,7 @@ typedef enum
     FREQ_CHANNEL_SELECT,
     RC_CHANNEL_MODE,
     RC_CHANNEL_SELECT,
+    RC_CHANNEL_FREQ,
 } ENUM_WIRELESS_FREQ_CHANGE_ITEM;
 
 
@@ -96,10 +97,21 @@ typedef enum
 
 typedef struct
 {
-    uint8_t                 configClass;
-    uint8_t                 configItem;
-    uint32_t                configValue;
+    uint8_t                 u8_configClass;
+    uint8_t                 u8_configItem;
+    uint32_t                u32_configValue;
 } STRU_WIRELESS_CONFIG_CHANGE;
+
+
+typedef enum
+{
+    BB_UART_COM_SESSION_0 = 0,
+    BB_UART_COM_SESSION_1,
+    BB_UART_COM_SESSION_2,
+    BB_UART_COM_SESSION_3,
+    BB_UART_COM_SESSION_4,
+    BB_UART_COM_SESSION_MAX
+} ENUM_BBUartComSessionID;
 
 
 #endif

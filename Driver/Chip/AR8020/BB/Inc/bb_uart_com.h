@@ -1,6 +1,8 @@
 #ifndef BB_UARTCOM_H
 #define BB_UARTCOM_H
 
+#include "bb_types.h"
+
 #define BBCOM_UART_INDEX                    10
 #define BBCOM_UART_BAUDRATE                 256000
 #define BBCOM_UART_RX_BUF_SIZE              128
@@ -14,15 +16,6 @@ typedef enum
     BB_UART_COM_RX_CHECKSUM,
 } ENUM_BBUartComRxState;
 
-typedef enum
-{
-    BB_UART_COM_SESSION_0 = 0,
-    BB_UART_COM_SESSION_1,
-    BB_UART_COM_SESSION_2,
-    BB_UART_COM_SESSION_3,
-    BB_UART_COM_SESSION_4,
-    BB_UART_COM_SESSION_MAX
-} ENUM_BBUartComSessionID;
 
 typedef struct
 {

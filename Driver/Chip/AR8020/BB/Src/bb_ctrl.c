@@ -94,11 +94,11 @@ static uint8_t cali_reg[2][10] = {{0}, {0}};
 
 static void BB_regs_init(ENUM_BB_MODE en_mode)
 {
-    extern const uint8_t BB_sky_regs[][256];
-    extern const uint8_t BB_grd_regs[][256];
+    extern uint8_t BB_sky_regs[][256];
+    extern uint8_t BB_grd_regs[][256];
     
     uint32_t page_cnt=0;
-    const uint8_t *regs = (en_mode == BB_SKY_MODE) ? (const uint8_t *)BB_sky_regs : (const uint8_t *)BB_grd_regs;
+    uint8_t *regs = (en_mode == BB_SKY_MODE) ? (uint8_t *)BB_sky_regs : (uint8_t *)BB_grd_regs;
     
     for(page_cnt = 0 ; page_cnt < 4; page_cnt ++)
     {
@@ -225,18 +225,27 @@ void BB_use_param_setting(PARAM *user_setting)
 }
 
 
+void BB_SetBoardMode(ENUM_BB_MODE en_mode)
+{
+    SFR_TRX_MODE_SEL = (en_mode == BB_SKY_MODE) ? 0x01: 0x03;
+}
+
+
 void BB_init(ENUM_BB_MODE en_mode)
 {    
-    BB_SPI_init();
-    BB_uart10_spi_sel(0x00000003);
-    
     PARAM *user_setting = BB_get_sys_param();
     BB_use_param_setting(user_setting);
+
+    BB_SetBoardMode(en_mode);
+
+    BB_uart10_spi_sel(0x00000003);
+    BB_SPI_init();
+
     BB_regs_init(en_mode);
 
     {
-        extern const uint8_t RF_8003s_regs[128]; 
-        RF8003s_init( (uint8_t *)RF_8003s_regs);
+        extern uint8_t RF_8003s_regs[128];
+        RF8003s_init(RF_8003s_regs);
     }
 
     BB_softReset(en_mode);
@@ -256,7 +265,8 @@ void BB_init(ENUM_BB_MODE en_mode)
     {
         BB_GRD_start();
     }
-    
+
+	BB_UARTComInit();    
     dlog_info("BB mode Band %d %d %s \r\n", en_mode, context.freq_band, "BB_init Done");
 }
 
@@ -733,7 +743,7 @@ int BB_InsertCmd(STRU_WIRELESS_CONFIG_CHANGE *p)
     uint8_t found = 0;
     STRU_WIRELESS_CONFIG_CHANGE *pcmd = (STRU_WIRELESS_CONFIG_CHANGE *)p;
 
-    dlog_info("Insert Message: %d %d %d\r\n", pcmd->configClass, pcmd->configItem, pcmd->configValue);
+    dlog_info("Insert Message: %d %d %d\r\n", pcmd->u8_configClass, pcmd->u8_configItem, pcmd->u32_configValue);
     for(i = 0; i < sizeof(grd_cmds_poll)/sizeof(grd_cmds_poll[0]); i++)
     {
         if(grd_cmds_poll[i].avail == 0)
@@ -762,97 +772,97 @@ int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
     {
         case 0:
         {        
-            cmd.configClass  = WIRELESS_FREQ_CHANGE;
-            cmd.configItem   = FREQ_BAND_WIDTH_SELECT;
-            cmd.configValue  = param0;
+            cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+            cmd.u8_configItem   = FREQ_BAND_WIDTH_SELECT;
+            cmd.u32_configValue  = param0;
             break;
         }
 
         case 1:
         {
-            cmd.configClass  = WIRELESS_FREQ_CHANGE;
-            cmd.configItem   = FREQ_BAND_MODE;
-            cmd.configValue  = param0;
+            cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+            cmd.u8_configItem   = FREQ_BAND_MODE;
+            cmd.u32_configValue  = param0;
             break;            
         }
         
         case 2:
         {
-            cmd.configClass  = WIRELESS_FREQ_CHANGE;
-            cmd.configItem   = FREQ_BAND_SELECT;
-            cmd.configValue  = param0;
+            cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+            cmd.u8_configItem   = FREQ_BAND_SELECT;
+            cmd.u32_configValue  = param0;
             break;
         }
 
         case 3:
         {
-            cmd.configClass  = WIRELESS_FREQ_CHANGE;
-            cmd.configItem   = FREQ_CHANNEL_MODE;
-            cmd.configValue  = param0;
+            cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+            cmd.u8_configItem   = FREQ_CHANNEL_MODE;
+            cmd.u32_configValue  = param0;
             break;
         }
     
         case 4:
         {
-            cmd.configClass  = WIRELESS_FREQ_CHANGE;
-            cmd.configItem   = FREQ_CHANNEL_SELECT;
-            cmd.configValue  = param0;
+            cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+            cmd.u8_configItem   = FREQ_CHANNEL_SELECT;
+            cmd.u32_configValue  = param0;
             break;
         }
 
         case 5:        
         {
-            cmd.configClass  = WIRELESS_MCS_CHANGE;
-            cmd.configItem   = MCS_MODE_SELECT;
-            cmd.configValue  = param0;
+            cmd.u8_configClass  = WIRELESS_MCS_CHANGE;
+            cmd.u8_configItem   = MCS_MODE_SELECT;
+            cmd.u32_configValue  = param0;
             break;
         }
 
         case 6:
         {
-            cmd.configClass  = WIRELESS_MCS_CHANGE;
-            cmd.configItem   = MCS_MODULATION_SELECT;
-            cmd.configValue  = param0;
+            cmd.u8_configClass  = WIRELESS_MCS_CHANGE;
+            cmd.u8_configItem   = MCS_MODULATION_SELECT;
+            cmd.u32_configValue  = param0;
             break;            
         }
 
         case 7:
         {
-            cmd.configClass  = WIRELESS_MCS_CHANGE;
-            cmd.configItem   = MCS_CODE_RATE_SELECT;
-            cmd.configValue  = param0;
+            cmd.u8_configClass  = WIRELESS_MCS_CHANGE;
+            cmd.u8_configItem   = MCS_CODE_RATE_SELECT;
+            cmd.u32_configValue  = param0;
             break;
         }
 
         case 8:
         {
-            cmd.configClass  = WIRELESS_ENCODER_CHANGE;
-            cmd.configItem   = ENCODER_DYNAMIC_BIT_RATE_MODE;
-            cmd.configValue  = param0;
+            cmd.u8_configClass  = WIRELESS_ENCODER_CHANGE;
+            cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_MODE;
+            cmd.u32_configValue  = param0;
             break;
         }
 
         case 9:
         {
-            cmd.configClass  = WIRELESS_ENCODER_CHANGE;
-            cmd.configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
-            cmd.configValue  = param0;
+            cmd.u8_configClass  = WIRELESS_ENCODER_CHANGE;
+            cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
+            cmd.u32_configValue  = param0;
             break;
         }
 
         case 10:
         {
-            cmd.configClass  = WIRELESS_ENCODER_CHANGE;
-            cmd.configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
-            cmd.configValue  = param0;
+            cmd.u8_configClass  = WIRELESS_ENCODER_CHANGE;
+            cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
+            cmd.u32_configValue  = param0;
             break;
         }
 
         case 11:
         {
-            cmd.configClass  = WIRELESS_MISC;
-            cmd.configItem   = MISC_READ_RF_REG;
-            cmd.configValue  = param0;
+            cmd.u8_configClass  = WIRELESS_MISC;
+            cmd.u8_configItem   = MISC_READ_RF_REG;
+            cmd.u32_configValue  = param0;
             
             dlog_info("1:%d 2:%d 3:%d 4:%d", type, param0, param1, param2);
             break;
@@ -860,28 +870,28 @@ int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
 
         case 12:
         {
-            cmd.configClass  = WIRELESS_MISC;
-            cmd.configItem   = MISC_WRITE_RF_REG;
+            cmd.u8_configClass  = WIRELESS_MISC;
+            cmd.u8_configItem   = MISC_WRITE_RF_REG;
                                //addr, value
-            cmd.configValue  = (param0) | (param1 << 8);
+            cmd.u32_configValue  = (param0) | (param1 << 8);
             break;
         }
 
         case 13:
         {
-            cmd.configClass  = WIRELESS_MISC;
-            cmd.configItem   = MISC_READ_BB_REG;
+            cmd.u8_configClass  = WIRELESS_MISC;
+            cmd.u8_configItem   = MISC_READ_BB_REG;
                                //page, addr
-            cmd.configValue  = param0 | (param1 << 8);
+            cmd.u32_configValue  = param0 | (param1 << 8);
             break;
         }
         
         case 14:
         {
-            cmd.configClass  = WIRELESS_MISC;
-            cmd.configItem   = MISC_WRITE_BB_REG;
+            cmd.u8_configClass  = WIRELESS_MISC;
+            cmd.u8_configItem   = MISC_WRITE_BB_REG;
                                //page, addr, value
-            cmd.configValue  = (param0) | (param1<<8) | (param2<<16);
+            cmd.u32_configValue  = (param0) | (param1<<8) | (param2<<16);
             break;
         }
 
@@ -909,13 +919,13 @@ void BB_HandleEventsCallback(void *p)
 
 void BB_handle_misc_cmds(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 {
-    uint8_t class = pcmd->configClass;
-    uint8_t item  = pcmd->configItem;
+    uint8_t class = pcmd->u8_configClass;
+    uint8_t item  = pcmd->u8_configItem;
     
-    uint8_t value  = (uint8_t)(pcmd->configValue);
-    uint8_t value1 = (uint8_t)(pcmd->configValue >> 8);
-    uint8_t value2 = (uint8_t)(pcmd->configValue >> 16);
-    uint8_t value3 = (uint8_t)(pcmd->configValue >> 24);
+    uint8_t value  = (uint8_t)(pcmd->u32_configValue);
+    uint8_t value1 = (uint8_t)(pcmd->u32_configValue >> 8);
+    uint8_t value2 = (uint8_t)(pcmd->u32_configValue >> 16);
+    uint8_t value3 = (uint8_t)(pcmd->u32_configValue >> 24);
 
     if(class == WIRELESS_MISC)
     {
@@ -965,9 +975,9 @@ int BB_SetFreqBandwidthSelection(ENUM_CH_BW en_bw)
 {
     STRU_WIRELESS_CONFIG_CHANGE cmd;
     
-    cmd.configClass  = WIRELESS_FREQ_CHANGE;
-    cmd.configItem   = FREQ_BAND_WIDTH_SELECT;
-    cmd.configValue  = (uint32_t)en_bw;
+    cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+    cmd.u8_configItem   = FREQ_BAND_WIDTH_SELECT;
+    cmd.u32_configValue  = (uint32_t)en_bw;
 
     return BB_InsertCmd(&cmd);
 }
@@ -980,13 +990,13 @@ int BB_SetFreqBandwidthSelection(ENUM_CH_BW en_bw)
  * @retval      TURE:  success to add command
  * @retval      FALSE, Fail to add command
  */
-int BB_SetFreqBandSelectionMode(RUN_MODE en_mode)
+int BB_SetFreqBandSelectionMode(ENUM_RUN_MODE en_mode)
 {
     STRU_WIRELESS_CONFIG_CHANGE cmd;
     
-    cmd.configClass  = WIRELESS_FREQ_CHANGE;
-    cmd.configItem   = FREQ_BAND_MODE;
-    cmd.configValue  = (uint32_t)en_mode;
+    cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+    cmd.u8_configItem   = FREQ_BAND_MODE;
+    cmd.u32_configValue  = (uint32_t)en_mode;
 
     return BB_InsertCmd(&cmd);
 }
@@ -1003,9 +1013,9 @@ int BB_SetFreqBand(ENUM_RF_BAND band)
 {
     STRU_WIRELESS_CONFIG_CHANGE cmd;
     
-    cmd.configClass  = WIRELESS_FREQ_CHANGE;
-    cmd.configItem   = FREQ_BAND_SELECT;
-    cmd.configValue  = (uint32_t)band;
+    cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+    cmd.u8_configItem   = FREQ_BAND_SELECT;
+    cmd.u32_configValue  = (uint32_t)band;
 
     return BB_InsertCmd(&cmd);
 }
@@ -1018,13 +1028,13 @@ int BB_SetFreqBand(ENUM_RF_BAND band)
  * @retval      TURE:  success to add command
  * @retval      FALSE, Fail to add command
  */
-int BB_SetITChannelSelectionMode(RUN_MODE en_mode)
+int BB_SetITChannelSelectionMode(ENUM_RUN_MODE en_mode)
 {
     STRU_WIRELESS_CONFIG_CHANGE cmd;
     
-    cmd.configClass  = WIRELESS_FREQ_CHANGE;
-    cmd.configItem   = FREQ_CHANNEL_MODE;
-    cmd.configValue  = (uint32_t)en_mode;
+    cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+    cmd.u8_configItem   = FREQ_CHANNEL_MODE;
+    cmd.u32_configValue  = (uint32_t)en_mode;
 
     return BB_InsertCmd(&cmd);
 }
@@ -1040,9 +1050,9 @@ int BB_SetITChannel(uint8_t channelNum)
 {
     STRU_WIRELESS_CONFIG_CHANGE cmd;
     
-    cmd.configClass  = WIRELESS_FREQ_CHANGE;
-    cmd.configItem   = FREQ_CHANNEL_SELECT;
-    cmd.configValue  = channelNum;
+    cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+    cmd.u8_configItem   = FREQ_CHANNEL_SELECT;
+    cmd.u32_configValue  = channelNum;
 
     return BB_InsertCmd(&cmd);
 }
@@ -1057,13 +1067,13 @@ int BB_SetITChannel(uint8_t channelNum)
  * @retval      TURE:  success to add command
  * @retval      FALSE, Fail to add command
  */
-int BB_SetMCSmode(RUN_MODE en_mode)
+int BB_SetMCSmode(ENUM_RUN_MODE en_mode)
 {
     STRU_WIRELESS_CONFIG_CHANGE cmd;
     
-    cmd.configClass  = WIRELESS_MCS_CHANGE;
-    cmd.configItem   = MCS_MODE_SELECT;
-    cmd.configValue  = (uint32_t)en_mode;
+    cmd.u8_configClass  = WIRELESS_MCS_CHANGE;
+    cmd.u8_configItem   = MCS_MODE_SELECT;
+    cmd.u32_configValue  = (uint32_t)en_mode;
 
     return BB_InsertCmd(&cmd);
 }
@@ -1079,9 +1089,9 @@ int BB_SetITQAM(ENUM_BB_QAM qam)
 {
     STRU_WIRELESS_CONFIG_CHANGE cmd;
     
-    cmd.configClass  = WIRELESS_MCS_CHANGE;
-    cmd.configItem   = MCS_MODULATION_SELECT;
-    cmd.configValue  = (uint32_t)qam;
+    cmd.u8_configClass  = WIRELESS_MCS_CHANGE;
+    cmd.u8_configItem   = MCS_MODULATION_SELECT;
+    cmd.u32_configValue  = (uint32_t)qam;
 
     return BB_InsertCmd(&cmd);
 }
@@ -1097,9 +1107,9 @@ int BB_SetITLDPC(ENUM_BB_LDPC ldpc)
 {
     STRU_WIRELESS_CONFIG_CHANGE cmd;
 
-    cmd.configClass  = WIRELESS_MCS_CHANGE;
-    cmd.configItem   = MCS_CODE_RATE_SELECT;
-    cmd.configValue  = (uint32_t)ldpc;
+    cmd.u8_configClass  = WIRELESS_MCS_CHANGE;
+    cmd.u8_configItem   = MCS_CODE_RATE_SELECT;
+    cmd.u32_configValue  = (uint32_t)ldpc;
 
     return BB_InsertCmd(&cmd);
 }
@@ -1113,13 +1123,13 @@ int BB_SetITLDPC(ENUM_BB_LDPC ldpc)
  * @retval      TURE:  success to add command
  * @retval      FALSE, Fail to add command
  */
-int BB_SetEncoderBrcMode(RUN_MODE en_mode)
+int BB_SetEncoderBrcMode(ENUM_RUN_MODE en_mode)
 {
     STRU_WIRELESS_CONFIG_CHANGE cmd;
 
-    cmd.configClass  = WIRELESS_ENCODER_CHANGE;
-    cmd.configItem   = ENCODER_DYNAMIC_BIT_RATE_MODE;
-    cmd.configValue  = (uint32_t)en_mode;
+    cmd.u8_configClass  = WIRELESS_ENCODER_CHANGE;
+    cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_MODE;
+    cmd.u32_configValue  = (uint32_t)en_mode;
 
     return BB_InsertCmd(&cmd);
 }
@@ -1135,9 +1145,9 @@ int BB_SetEncoderBitrate(uint8_t bitrate_Mbps)
 {
     STRU_WIRELESS_CONFIG_CHANGE cmd;
 
-    cmd.configClass  = WIRELESS_ENCODER_CHANGE;
-    cmd.configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
-    cmd.configValue  = (uint32_t)bitrate_Mbps;
+    cmd.u8_configClass  = WIRELESS_ENCODER_CHANGE;
+    cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
+    cmd.u32_configValue  = (uint32_t)bitrate_Mbps;
 
     return BB_InsertCmd(&cmd);
 }

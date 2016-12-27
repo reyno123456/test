@@ -18,7 +18,7 @@ void BB_init(ENUM_BB_MODE en_mode);
  * @retval      TURE:  success to add command
  * @retval      FALSE, Fail to add command
  */
-int BB_SetFreqBandSelectionMode(RUN_MODE en_mode);
+int BB_SetFreqBandSelectionMode(ENUM_RUN_MODE en_mode);
 
 /** 
  * @brief       API for set frequency band (2G/5G)
@@ -35,7 +35,7 @@ int BB_SetFreqBand(ENUM_RF_BAND band);
  * @retval      TURE:  success to add command
  * @retval      FALSE, Fail to add command
  */
-int BB_SetITChannelSelectionMode(RUN_MODE en_mode);
+int BB_SetITChannelSelectionMode(ENUM_RUN_MODE en_mode);
 
 
 /** 
@@ -53,7 +53,7 @@ int BB_SetITChannel(uint8_t channelNum);
  * @retval      TURE:  success to add command
  * @retval      FALSE, Fail to add command
  */
-int BB_SetMCSmode(RUN_MODE en_mode);
+int BB_SetMCSmode(ENUM_RUN_MODE en_mode);
 
 
 /** 
@@ -82,7 +82,7 @@ int BB_SetITLDPC(ENUM_BB_LDPC ldpc);
  * @retval      TURE:  success to add command
  * @retval      FALSE, Fail to add command
  */
-int BB_SetEncoderBrcMode(RUN_MODE en_mode);
+int BB_SetEncoderBrcMode(ENUM_RUN_MODE en_mode);
 
 
 

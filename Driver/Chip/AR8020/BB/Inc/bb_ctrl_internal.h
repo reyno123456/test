@@ -25,8 +25,8 @@ typedef enum
 #define TRUE    (1)
 
 
-#define  BLUE_LED_GPIO      (71)
-#define  RED_LED_GPIO       (67)
+#define  BLUE_LED_GPIO      (67)
+#define  RED_LED_GPIO       (71)
 
 
 typedef struct _STRU_FRQ_CHANNEL           //  Remote Controller Freq Channnel
@@ -46,6 +46,11 @@ typedef enum
     MISC_READ_BB_REG,
     MISC_WRITE_BB_REG,
 } ENUM_WIRELESS_MISC_ITEM;
+
+
+#define SFR_TRX_MODE_SEL            (*(volatile uint32_t *)0x40B00068)
+#define SFR_TRX_MODE_GROUND         0x03
+#define SFR_TRX_MODE_SKY            0x01
 
 
 
@@ -91,5 +96,9 @@ int BB_GetCmd(STRU_WIRELESS_CONFIG_CHANGE *pconfig);
 void BB_HandleEventsCallback(void *p);
 
 void BB_handle_misc_cmds(STRU_WIRELESS_CONFIG_CHANGE* pcmd);
+
+int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2);
+
+void BB_SetBoardMode(ENUM_BB_MODE en_mode);
 
 #endif

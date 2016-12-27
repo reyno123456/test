@@ -65,8 +65,8 @@ typedef enum
     WIRELESS_INTERFACE_RST_MCU                      = 0x36,
     WIRELESS_INTERFACE_RF_PWR_AUTO                  = 0x37,
     WIRELESS_INTERFACE_SWITCH_DEBUG_MODE            = 0x38,
-    WIRELESS_INTERFACE_WRITE_RF_REG                 = 0x39,
-    WIRELESS_INTERFACE_READ_RF_REG                  = 0x3a,
+    WIRELESS_INTERFACE_READ_RF_REG                  = 0x39,    
+    WIRELESS_INTERFACE_WRITE_RF_REG                 = 0x3a,
     PAD_FREQUENCY_BAND_WIDTH_SELECT                 = 0x40,
     PAD_FREQUENCY_BAND_OPERATION_MODE               = 0x41,
     PAD_FREQUENCY_BAND_SELECT                       = 0x42,
@@ -137,7 +137,7 @@ typedef struct
     uint8_t         head;
     uint8_t         tail;
     uint8_t         in_debug;
-    uint8_t         rc_error;
+    uint8_t         rc_status;
 } STRU_WIRELESS_INFO_DISPLAY;
 
 typedef enum 

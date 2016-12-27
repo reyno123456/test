@@ -3,6 +3,7 @@
 #include "hal_h264.h"
 #include "test_BB.h"
 #include "command.h"
+#include "hal_bb.h"
 #include "sys_event.h"
 #include "hal_sys_ctl.h"
 #include "hal.h"
@@ -38,7 +39,7 @@ int main(void)
     st_h264Cfg.u8_view1BrEn = 1;
     HAL_H264_Init(st_h264Cfg);
     
-    test_BB_sky();
+    HAL_BB_init(BB_SKY_MODE );
 
     for( ;; )
     {

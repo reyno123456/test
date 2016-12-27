@@ -61,5 +61,14 @@ typedef uint8_t HAL_BOOL_T;
 #define HAL_UART_ERR_READ_DATA                      (HAL_UART_ERR_MASK | 0x4)
 
 
+#define HAL_BB_ERR_MASK                             (0xB000)
+#define HAL_BB_ERR_INIT                             (HAL_BB_ERR_MASK | 0x1)
+#define HAL_BB_ERR_EVENT_NOTIFY                     (HAL_BB_ERR_MASK | 0x2)
+#define HAL_BB_ERR_INIT_SESSION                     (HAL_BB_ERR_MASK | 0x3)
+#define HAL_BB_ERR_SESSION_OCCUPIED                 (HAL_BB_ERR_MASK | 0x4)
+#define HAL_BB_ERR_UNREGISTER_SESSION               (HAL_BB_ERR_MASK | 0x5)
+#define HAL_BB_ERR_SESSION_SEND                     (HAL_BB_ERR_MASK | 0x6)
+#define HAL_BB_ERR_SESSION_RCV                      (HAL_BB_ERR_MASK | 0x7)
+
 #endif
 

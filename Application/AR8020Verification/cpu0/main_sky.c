@@ -6,7 +6,7 @@
 #include "cmsis_os.h"
 #include "sys_event.h"
 #include "bb_spi.h"
-#include "bb_ctrl_proxy.h"
+#include "hal_bb.h"
 #include "hal_hdmi_rx.h"
 #include "hal_usb.h"
 #include "hal_sys_ctl.h"
@@ -65,9 +65,12 @@ static void IO_Task(void const *argument)
   */
 int main(void)
 {
-    BB_SetBoardMODE(SFR_TRX_MODE_SKY);
 
-    HAL_SYS_CTL_Init(NULL);
+
+    STRU_HAL_SYS_CTL_CONFIG *pst_cfg;
+    HAL_SYS_CTL_GetConfig( &pst_cfg);
+    pst_cfg->u8_workMode = 0;
+    HAL_SYS_CTL_Init(pst_cfg);
 
     /* initialize the uart */
     console_init(0,115200);
