@@ -107,6 +107,55 @@ uint32_t INTR_NVIC_GetIRQPriority(IRQ_type vct)
     }
 }
 
+
+void INTR_NVIC_SetPriorityGrouping(uint32_t PriorityGroup)
+{
+    uint32_t reg_value;
+    uint32_t PriorityGroupTmp = (PriorityGroup & (uint32_t)0x07UL);             /* only values 0..7 are used          */
+
+    reg_value  =  SCB_CTRL->AIRCR;                                                   /* read old register configuration    */
+    reg_value &= ~((uint32_t)(SCB_AIRCR_VECTKEY_Msk | SCB_AIRCR_PRIGROUP_Msk));             /* clear bits to change               */
+    reg_value  =  (reg_value                                   |
+                ((uint32_t)0x5FAUL << SCB_AIRCR_VECTKEY_Pos) |
+                (PriorityGroupTmp << 8)                       );              /* Insert write key and priorty group */
+    SCB_CTRL->AIRCR =  reg_value;
+}
+
+uint32_t INTR_NVIC_GetPriorityGrouping(void)
+{
+    return ((uint32_t)((SCB_CTRL->AIRCR & SCB_AIRCR_PRIGROUP_Msk) >> SCB_AIRCR_PRIGROUP_Pos));
+}
+
+uint32_t INTR_NVIC_EncodePriority (uint32_t PriorityGroup, uint32_t PreemptPriority, uint32_t SubPriority)
+{
+    uint32_t PriorityGroupTmp = (PriorityGroup & (uint32_t)0x07UL);   /* only values 0..7 are used          */
+    uint32_t PreemptPriorityBits;
+    uint32_t SubPriorityBits;
+
+    PreemptPriorityBits = ((7UL - PriorityGroupTmp) > (uint32_t)(__NVIC_CTRL_PRIO_BITS)) ? (uint32_t)(__NVIC_CTRL_PRIO_BITS) : (uint32_t)(7UL - PriorityGroupTmp);
+    SubPriorityBits     = ((PriorityGroupTmp + (uint32_t)(__NVIC_CTRL_PRIO_BITS)) < (uint32_t)7UL) ? (uint32_t)0UL : (uint32_t)((PriorityGroupTmp - 7UL) + (uint32_t)(__NVIC_CTRL_PRIO_BITS));
+
+    return (
+       ((PreemptPriority & (uint32_t)((1UL << (PreemptPriorityBits)) - 1UL)) << SubPriorityBits) |
+       ((SubPriority     & (uint32_t)((1UL << (SubPriorityBits    )) - 1UL)))
+     );
+}
+
+void INTR_NVIC_DecodePriority (uint32_t Priority, uint32_t PriorityGroup, uint32_t* pPreemptPriority, uint32_t* pSubPriority)
+{
+    uint32_t PriorityGroupTmp = (PriorityGroup & (uint32_t)0x07UL);   /* only values 0..7 are used          */
+    uint32_t PreemptPriorityBits;
+    uint32_t SubPriorityBits;
+
+    PreemptPriorityBits = ((7UL - PriorityGroupTmp) > (uint32_t)(__NVIC_CTRL_PRIO_BITS)) ? (uint32_t)(__NVIC_CTRL_PRIO_BITS) : (uint32_t)(7UL - PriorityGroupTmp);
+    SubPriorityBits     = ((PriorityGroupTmp + (uint32_t)(__NVIC_CTRL_PRIO_BITS)) < (uint32_t)7UL) ? (uint32_t)0UL : (uint32_t)((PriorityGroupTmp - 7UL) + (uint32_t)(__NVIC_CTRL_PRIO_BITS));
+
+    *pPreemptPriority = (Priority >> SubPriorityBits) & (uint32_t)((1UL << (PreemptPriorityBits)) - 1UL);
+    *pSubPriority     = (Priority                   ) & (uint32_t)((1UL << (SubPriorityBits    )) - 1UL);
+}
+
+
+
 __attribute__((weak)) void SysTicks_IncTickCount(void)
 {
 }

@@ -41,7 +41,7 @@ typedef struct
 }  NVIC_CTRL_Type;
 #define NVIC_CTRL ((NVIC_CTRL_Type *) NVIC_CTRL_BASE)
 
-#define __NVIC_CTRL_PRIO_BITS          4       /*!< CM7 uses 4 Bits for the Priority Levels       */
+#define __NVIC_CTRL_PRIO_BITS          5       /*!< CM7 uses 4 Bits for the Priority Levels in stm32      */
 
 #define SCB_CTRL_BASE 0xE000ED00 
 typedef struct
@@ -98,6 +98,16 @@ typedef struct
   __IO uint32_t ABFSR;                   /*!< Offset: 0x2A8 (R/W)  Auxiliary Bus Fault Status Register                   */
 } SCB_CTRL_Type;
 #define SCB_CTRL ((SCB_CTRL_Type *) SCB_CTRL_BASE)
+
+/* SCB Application Interrupt and Reset Control Register Definitions */
+#define SCB_AIRCR_VECTKEY_Pos              16                                             /*!< SCB AIRCR: VECTKEY Position */
+#define SCB_AIRCR_VECTKEY_Msk              (0xFFFFUL << SCB_AIRCR_VECTKEY_Pos)            /*!< SCB AIRCR: VECTKEY Mask */
+
+#define SCB_AIRCR_VECTKEYSTAT_Pos          16                                             /*!< SCB AIRCR: VECTKEYSTAT Position */
+#define SCB_AIRCR_VECTKEYSTAT_Msk          (0xFFFFUL << SCB_AIRCR_VECTKEYSTAT_Pos)        /*!< SCB AIRCR: VECTKEYSTAT Mask */
+
+#define SCB_AIRCR_PRIGROUP_Pos              8                                             /*!< SCB AIRCR: PRIGROUP Position */
+#define SCB_AIRCR_PRIGROUP_Msk             (7UL << SCB_AIRCR_PRIGROUP_Pos)                /*!< SCB AIRCR: PRIGROUP Mask */
 
 //Video SoC Global Reg1 ADDR
 #define VSOC_GLOBAL1_BASE               0x40B00000

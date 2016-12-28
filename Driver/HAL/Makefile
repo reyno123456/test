@@ -32,8 +32,8 @@ SRC_C := Src/hal.c \
          Src/hal_usb.c \
          Src/hal_uart.c \
          Src/hal_spi.c \
-         Src/hal_bb.c
-
+         Src/hal_bb.c \
+		 Src/hal_nvic.c
 
 INCDIRS := -IInc \
            -I$(TOP_DIR)/Configure/Include \
@@ -85,7 +85,7 @@ install:
 	@cp -f Inc/hal_uart.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_spi.h $(OUTPUT_HEADER_STAGING_DIR) 
 	@cp -f Inc/hal_bb.h $(OUTPUT_HEADER_STAGING_DIR)
-
+	@cp -f Inc/hal_nvic.h $(OUTPUT_HEADER_STAGING_DIR) 
 clean:
 	@echo "Cleaning..."
 	@$(RM) $(LIB) $(OBJ_C) .depend $(OUTPUT_LIB_STAGING_DIR)/$(LIB)

@@ -120,6 +120,10 @@ void INTR_NVIC_ClearPendingIRQ(IRQ_type vct);
 uint32_t INTR_NVIC_GetActiveIRQ(IRQ_type vct);
 void INTR_NVIC_SetIRQPriority(IRQ_type vct, uint32_t priority);
 uint32_t INTR_NVIC_GetIRQPriority(IRQ_type vct);
+void INTR_NVIC_SetPriorityGrouping(uint32_t PriorityGroup);
+uint32_t INTR_NVIC_GetPriorityGrouping(void);
+uint32_t INTR_NVIC_EncodePriority (uint32_t PriorityGroup, uint32_t PreemptPriority, uint32_t SubPriority);
+void INTR_NVIC_DecodePriority (uint32_t Priority, uint32_t PriorityGroup, uint32_t* pPreemptPriority, uint32_t* pSubPriority);
 
 void SYSTICK_IRQHandler(void);
 
