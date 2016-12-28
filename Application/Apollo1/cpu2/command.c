@@ -151,9 +151,127 @@ unsigned char command_getEnterStatus(void)
     return g_commandEnter;
 }
 
+unsigned int command_str2uint(char *str)
+{
+    unsigned int ret;
+    unsigned char strSize;
+    unsigned char i;
+
+    ret = 0;
+
+    /* the format of param can be: 0x12345678 or 12345678 */
+    if ((str[0] == '0') && (str[1] == 'x'))
+    {
+        str += 2;
+    }
+
+    strSize = strlen(str);
+
+    /* the number should not exceed 8 bits */
+    if (strSize > 8)
+    {
+        return ret;
+    }
+
+    for (i = 0; i < strSize; i++)
+    {
+        ret = ret << 4;
+
+        if ((str[i] <= '9') && (str[i] >= '0'))
+        {
+            ret += (str[i] - '0');
+        }
+        else if ((str[i] <= 'f') && (str[i] >= 'a'))
+        {
+            ret += ((str[i] - 'a') + 0xa);
+        }
+        else if ((str[i] <= 'F') && (str[i] >= 'A'))
+        {
+            ret += ((str[i] - 'A') + 0xa);
+        }
+        else
+        {
+            ret = 0xFFFFFFFF;
+            break;
+        }
+    }
+
+    return ret;
+}
+
+
+void command_readMemory(char *addr)
+{
+    unsigned int readAddress;
+    unsigned char row;
+    unsigned char column;
+
+    readAddress = command_str2uint(addr);
+
+    if (readAddress == 0xFFFFFFFF)
+    {
+
+        dlog_error("read address is illegal\n");
+
+        return;
+    }
+
+    /* align to 4 bytes */
+    readAddress -= (readAddress % 4);
+
+    /* print to serial */
+    for (row = 0; row < 8; row++)
+    {
+        /* new line */
+        dlog_info("0x%08x: 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x\n ", 
+                  readAddress,
+                  *(uint32_t *)readAddress,
+                  *(uint32_t *)(readAddress + 4),
+                  *(uint32_t *)(readAddress + 8),
+                  *(uint32_t *)(readAddress + 12),
+                  *(uint32_t *)(readAddress + 16),
+                  *(uint32_t *)(readAddress + 20),
+                  *(uint32_t *)(readAddress + 24),
+                  *(uint32_t *)(readAddress + 28));
+
+        readAddress += 32;
+    }
+}
+
+void command_writeMemory(char *addr, char *value)
+{
+    unsigned int writeAddress;
+    unsigned int writeValue;
+
+    writeAddress = command_str2uint(addr);
+
+    if (writeAddress == 0xFFFFFFFF)
+    {
+
+        dlog_error("write address is illegal\n");
+
+        return;
+    }
+
+    writeValue   = command_str2uint(value);
+
+    *((unsigned int *)(writeAddress)) = writeValue;
+}
+
+
 void command_run(char *cmdArray[], unsigned int cmdNum)
 {
-    if (memcmp(cmdArray[0], "BB_uart10_spi_sel", strlen("BB_uart10_spi_sel")) == 0)
+    /* read memory: "read $(address)" */
+    if ((memcmp(cmdArray[0], "read", 4) == 0) && (cmdNum == 2))
+    {
+        command_readMemory(cmdArray[1]);
+    }
+    /* write memory: "write $(address) $(data)" */
+    else if ((memcmp(cmdArray[0], "write", 5) == 0) && (cmdNum == 3))
+    {
+        command_writeMemory(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "BB_uart10_spi_sel", strlen("BB_uart10_spi_sel")) == 0)
     {
         BB_uart10_spi_sel( strtoul(cmdArray[1], NULL, 0) );
     }
@@ -161,6 +279,8 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         dlog_error("Command not found! Please use commands like:\n");
         dlog_error("BB_uart10_spi_sel <value>");
+        dlog_error("read <address>");
+        dlog_error("write <address> <data>");
     }
 
     /* must reset to receive new data from serial */

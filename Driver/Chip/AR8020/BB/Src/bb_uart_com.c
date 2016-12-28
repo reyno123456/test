@@ -165,7 +165,7 @@ static void BB_UARTComUART10IRQHandler(uint32_t u32_vectorNum)
 void BB_UARTComInit(void)
 {
     *((lock_type*)(SRAM_MODULE_LOCK_BB_UART_MUTEX_FLAG)) = UNLOCK_STATE;
-    *((uint32_t*)(SRAM_MODULE_LOCK_BB_UART_INIT_FLAG)) = 0;
+    *((volatile uint32_t*)(SRAM_MODULE_LOCK_BB_UART_INIT_FLAG)) = 0;
 
     uart_init(BBCOM_UART_INDEX, ((BBCOM_UART_BAUDRATE * 100) / 166));
     reg_IrqHandle(VIDEO_UART10_INTR_VECTOR_NUM, BB_UARTComUART10IRQHandler, NULL);
@@ -204,13 +204,13 @@ void BB_UARTComInit(void)
     g_BBUARTComSessionArray[4].rx_buf->header.rx_buf_rd_pos = 0;
     g_BBUARTComSessionArray[4].data_max_size = SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_SIZE - sizeof(STRU_BBUartComSessionRxBufferHeader);
 
-    *((uint32_t*)(SRAM_MODULE_LOCK_BB_UART_INIT_FLAG)) = 0x10A5A501;
+    *((volatile uint32_t*)(SRAM_MODULE_LOCK_BB_UART_INIT_FLAG)) = 0x10A5A501;
 }
 
 void BB_UARTComRemoteSessionInit(void)
 {
     // Wait for the init finish
-    while (*((uint32_t*)(SRAM_MODULE_LOCK_BB_UART_INIT_FLAG)) != 0x10A5A501) {}
+    while (*((volatile uint32_t*)(SRAM_MODULE_LOCK_BB_UART_INIT_FLAG)) != 0x10A5A501) { }
     
     g_BBUARTComSessionArray[0].rx_buf = (STRU_BBUartComSessionRxBuffer*)g_BBUARTComSession0RxBuffer;
     g_BBUARTComSessionArray[0].rx_buf->header.in_use = 1;

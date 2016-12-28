@@ -33,7 +33,7 @@ SRC_C := Src/hal.c \
          Src/hal_uart.c \
          Src/hal_spi.c \
          Src/hal_bb.c \
-		 Src/hal_nvic.c
+         Src/hal_nvic.c
 
 INCDIRS := -IInc \
            -I$(TOP_DIR)/Configure/Include \
@@ -51,8 +51,7 @@ INCDIRS := -IInc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Class/MSC/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Class/UVC/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SPI/Inc \
-           -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
-           -I$(TOP_DIR)/Driver/Chip/AR8020/BB/Inc
+           -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc
 
 
 # object file(s)

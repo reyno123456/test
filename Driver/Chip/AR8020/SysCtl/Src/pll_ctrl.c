@@ -41,9 +41,9 @@ void PLLCTRL_SetCoreClk(uint16_t u16_pllClk, ENUM_CPU_ID e_cpuId)
         s_u8_cpuClkInitFlag |= 0x2;
     }
 
-    if (s_u8_cpuClkInitFlag & 0x3)
+    if ((s_u8_cpuClkInitFlag & 0x3) == 0x3)
     {
-        *((uint32_t *)SRAM_MODULE_SHARE_PLL_INIT_FLAG) = SRAM_CPU_PLL_INIT_FLAG_VALUE;
+        *((volatile uint32_t *)SRAM_MODULE_SHARE_PLL_INIT_FLAG) = SRAM_CPU_PLL_INIT_FLAG_VALUE;
     }
 
     SPI_UART_SEL    = 0x0;
@@ -54,13 +54,13 @@ void PLLCTRL_GetCoreClk(uint16_t *pu16_pllClk, ENUM_CPU_ID e_cpuId)
     switch (e_cpuId)
     {
     case ENUM_CPU0_ID:
-        *pu16_pllClk = (uint16_t)(*((uint32_t *)SRAM_MODULE_SHARE_PLL_CPU0CPU1));
+        *pu16_pllClk = (uint16_t)(*((volatile uint32_t *)SRAM_MODULE_SHARE_PLL_CPU0CPU1));
         break;
     case ENUM_CPU1_ID:
-        *pu16_pllClk = (uint16_t)(*((uint32_t *)SRAM_MODULE_SHARE_PLL_CPU0CPU1));
+        *pu16_pllClk = (uint16_t)(*((volatile uint32_t *)SRAM_MODULE_SHARE_PLL_CPU0CPU1));
         break;
     case ENUM_CPU2_ID:
-        *pu16_pllClk = (uint16_t)(*((uint32_t *)SRAM_MODULE_SHARE_PLL_CPU2));
+        *pu16_pllClk = (uint16_t)(*((volatile uint32_t *)SRAM_MODULE_SHARE_PLL_CPU2));
         break;
     default:
         break;
