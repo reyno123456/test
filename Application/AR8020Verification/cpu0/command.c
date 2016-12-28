@@ -23,6 +23,8 @@
 #include "testhal_timer.h"
 #include "testhal_pwm.h"
 #include "testhal_softpwm.h"
+#include "test_hal_uart.h"
+#include "test_hal_spi.h"
 
 
 static unsigned char g_commandPos;
@@ -405,6 +407,30 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         commandhal_TestSimulatePwm();
     }
+    else if (memcmp(cmdArray[0], "test_hal_uart_init", strlen("test_hal_uart_init")) == 0)
+    {
+        command_TestHalUartInit(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_uart_tx", strlen("test_hal_uart_tx")) == 0)
+    {
+        command_TestHalUartTx(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_uart_rx", strlen("test_hal_uart_rx")) == 0)
+    {
+        command_TestHalUartRx(cmdArray[1]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_spi_init", strlen("test_hal_spi_init")) == 0)
+    {
+        command_TestHalSpiInit(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_spi_write", strlen("test_hal_spi_write")) == 0)
+    {
+        command_TestHalSpiTx(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_spi_read", strlen("test_hal_spi_read")) == 0)
+    {
+        command_TestHalSpiRx(cmdArray[1], cmdArray[2]);
+    }
     /* error command */
     else
     {
@@ -461,6 +487,12 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("testhal_Testpwm <PWM Num> <PWM low> <PWM high>");
         dlog_error("testhal_pwmall");
         dlog_error("testhal_simulatepwm");
+        dlog_error("test_hal_uart_init <ch> <baudr>");
+        dlog_error("test_hal_uart_tx <ch> <len>");
+        dlog_error("test_hal_uart_rx <ch>");
+        dlog_error("test_hal_spi_init <ch> <baudr> <polarity> <phase>");
+        dlog_error("test_hal_spi_write <ch> <addr> <wdata>");
+        dlog_error("test_hal_spi_read <ch> <addr>");
     }
 
     /* must init to receive new data from serial */

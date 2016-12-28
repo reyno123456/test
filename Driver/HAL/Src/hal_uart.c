@@ -12,6 +12,7 @@ History:
 
 #include "hal_uart.h"
 #include "serial.h"
+#include "debuglog.h"
 
 static const uint32_t s_u32_uartBaudrTbl[] = 
                       {9600, 19200, 38400, 57600, 115200};
@@ -74,9 +75,9 @@ HAL_RET_T HAL_UART_Init(ENUM_HAL_UART_COMPONENT e_uartComponent,
     // uart hadrware init.
     u32_uartBaudr = s_u32_uartBaudrTbl[(uint8_t)(e_uartBaudr)];
     uart_init(u8_uartCh, u32_uartBaudr);
-    
-   //connect uart interrupt service function
-   reg_IrqHandle(s_e_uartIntrVectorTbl[u8_uartCh], 
+
+    //connect uart interrupt service function
+    reg_IrqHandle(s_e_uartIntrVectorTbl[u8_uartCh], 
                  g_pfun_uartIqrEntryTbl[u8_uartCh], 
 		 NULL);
    INTR_NVIC_EnableIRQ(s_e_uartIntrVectorTbl[u8_uartCh]);
@@ -91,17 +92,17 @@ HAL_RET_T HAL_UART_Init(ENUM_HAL_UART_COMPONENT e_uartComponent,
 *                                 should be 0-8 and totally 9 UART controllers 
 *                                 can be used by application.
 *         pu8_txBuf               The transmit buffer pointer to be sent out by uart.
-*         u16_len                 The transmit buffer size in byte. 
+*         u32_len                 The transmit buffer size in byte. 
 * @retval HAL_OK                  means the UART data write is well done.
 *         HAL_UART_ERR_WRITE_DATA means some error happens in the UART data .
 * @note   None.
 */
 HAL_RET_T HAL_UART_TxData(ENUM_HAL_UART_COMPONENT e_uartComponent, 
 		          uint8_t *pu8_txBuf, 
-			  uint16_t u16_len)
+			  uint32_t u32_len)
 {
     uint8_t u8_uartCh;
-    uint16_t u16_uartTxCnt = 0;
+    uint32_t u32_uartTxCnt = 0;
     
     if (e_uartComponent > HAL_UART_COMPONENT_8)
     {
@@ -111,16 +112,16 @@ HAL_RET_T HAL_UART_TxData(ENUM_HAL_UART_COMPONENT e_uartComponent,
     {
         return HAL_UART_ERR_WRITE_DATA;
     }
-    if (0 == u16_len)
+    if (0 == u32_len)
     {
         return HAL_UART_ERR_WRITE_DATA;
     }
     u8_uartCh = (uint8_t)(e_uartComponent);
 
-    while(u16_uartTxCnt < u16_len)
+    while(u32_uartTxCnt < u32_len)
     {
-        uart_putc(u8_uartCh, pu8_txBuf[u16_uartTxCnt]);    
-	u16_uartTxCnt += 1;
+        uart_putc(u8_uartCh, pu8_txBuf[u32_uartTxCnt]);    
+	u32_uartTxCnt += 1;
     }
 
     return HAL_OK;

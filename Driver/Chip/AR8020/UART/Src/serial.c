@@ -1,17 +1,7 @@
 #include "stddef.h"
 #include "serial.h"
 
-/*static void UART0_entryFun(uint32_t u32_vectorNum);
-static void UART1_entryFun(void);
-static void UART2_entryFun(void);
-static void UART3_entryFun(void);
-static void UART4_entryFun(void);
-static void UART5_entryFun(void);
-static void UART6_entryFun(void);
-static void UART7_entryFun(void);
-static void UART8_entryFun(void);
-static void UART9_entryFun(void);
-static void UART10_entryFun(void);*/
+
 static void UART0_entryFun(uint32_t u32_vectorNum);
 static void UART1_entryFun(uint32_t u32_vectorNum);
 static void UART2_entryFun(uint32_t u32_vectorNum);
@@ -28,12 +18,7 @@ static void UART_intrSrvc(uint8_t u8_uartCh);
 UartRxFun g_pfun_uartUserFunTbl[UART_TOTAL_CHANNEL] =  
        { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
-/*Irq_handler *s_pfun_uartIqrEntryTbl[UART_TOTAL_CHANNEL](uint32_t u32_vectorNum) = 
-			{ UART0_entryFun, UART1_entryFun, UART2_entryFun, 
-			  UART3_entryFun, UART4_entryFun, UART5_entryFun, 
-			  UART6_entryFun, UART7_entryFun, UART8_entryFun, 
-			  UART9_entryFun, UART10_entryFun };*/
-Irq_handler s_pfun_uartIqrEntryTbl[UART_TOTAL_CHANNEL] = 
+Irq_handler g_pfun_uartIqrEntryTbl[UART_TOTAL_CHANNEL] = 
 			{ UART0_entryFun, UART1_entryFun, UART2_entryFun, 
 			  UART3_entryFun, UART4_entryFun, UART5_entryFun, 
 			  UART6_entryFun, UART7_entryFun, UART8_entryFun, 
