@@ -38,26 +38,27 @@ extern uint32_t g_ACount[MAXSOFTPWM][2];
 extern STRU_SoftPwmHandle g_stPwmQueue[MAXSOFTPWM];
 /**
 * @brief    register tiemr and start timer
-* @param    e_timerNum: pwm number
-* @retval   none 
+* @param    e_timerNum: timer number
+* @retval   HAL_OK : function is well done.
 * @note     none
 */
-void HAL_SOFTPWM_SetTimer(ENUM_HAL_TIMER_Num e_timerNum);
+HAL_RET_T HAL_SOFTPWM_SetTimer(ENUM_HAL_TIMER_Num e_timerNum);
 
 /**
-* @brief    and a simulatepwm
+* @brief    add a simulatepwm
 * @param    e_timerNum: pwm number
-* @retval   none 
+* @retval   HAL_SOFTPWM_ERR_GPIOMAX : softpwm over MAXSOFTPWM.
+            HAL_OK : function is well done.
 * @note     none
 */
-uint8_t HAL_SOFTPWM_AddPwm(STRU_SoftPwmHandle *tmp);
+HAL_RET_T HAL_SOFTPWM_AddPwm(STRU_SoftPwmHandle *tmp);
 /**
 * @brief    while toggle pin to creat soft pwm
-* @param    e_timerNum: pwm number
-* @retval   none 
+* @param    none
+* @retval   HAL_OK : function is well done. 
 * @note     none
 */
-void HAL_SOFTPWM_RunPwm(void);
+HAL_RET_T HAL_SOFTPWM_RunPwm(void);
 
 
 #endif
