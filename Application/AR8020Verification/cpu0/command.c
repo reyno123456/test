@@ -23,6 +23,7 @@
 #include "testhal_timer.h"
 #include "testhal_pwm.h"
 #include "testhal_softpwm.h"
+#include "testhal_i2c.h"
 #include "test_hal_uart.h"
 #include "test_hal_spi.h"
 
@@ -407,6 +408,14 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         commandhal_TestSimulatePwm();
     }
+     else if (memcmp(cmdArray[0], "testhal24c256write", strlen("testhal24c256write")) == 0)
+    {
+        commandhal_Test24C256Write(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "testhal24c256read", strlen("testhal24c256read")) == 0)
+    {
+        commandhal_Test24C256Read(cmdArray[1]);
+    }
     else if (memcmp(cmdArray[0], "test_hal_uart_init", strlen("test_hal_uart_init")) == 0)
     {
         command_TestHalUartInit(cmdArray[1], cmdArray[2]);
@@ -487,6 +496,8 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("testhal_Testpwm <PWM Num> <PWM low> <PWM high>");
         dlog_error("testhal_pwmall");
         dlog_error("testhal_simulatepwm");
+        dlog_error("testhal24c256write <i2c port> <i2c_value>");
+        dlog_error("testhal24c256read <i2c port>");
         dlog_error("test_hal_uart_init <ch> <baudr>");
         dlog_error("test_hal_uart_tx <ch> <len>");
         dlog_error("test_hal_uart_rx <ch>");
