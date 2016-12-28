@@ -401,14 +401,6 @@ typedef struct
 #define CLEAR_IN_EP_INTR(__EPNUM__, __INTERRUPT__)          (USBx_INEP(__EPNUM__)->DIEPINT = (__INTERRUPT__))
 #define CLEAR_OUT_EP_INTR(__EPNUM__, __INTERRUPT__)         (USBx_OUTEP(__EPNUM__)->DOEPINT = (__INTERRUPT__))  
 
-
-/* add for dma address and dtcm address convert */
-#define DTCM_START_ADDR            0x20000000
-#define DTCM_END_ADDR              0x20080000
-#define DTCM_CPU0_DMA_ADDR_OFFSET       0x24080000
-#define DTCM_CPU1_DMA_ADDR_OFFSET       0x24180000
-
-
 #define USB_OTG_ENDIAN                 (*((volatile uint32_t *)0x40B00074))
 #define USB_OTG_SET_BIG_ENDIAN()       (USB_OTG_ENDIAN = (USB_OTG_ENDIAN | 0x00000002))
 #define USB_OTG_SET_LITTLE_ENDIAN()    (USB_OTG_ENDIAN = (USB_OTG_ENDIAN & 0xFFFFFFFD))

@@ -1,8 +1,9 @@
 #include "dma.h"
 #include "debuglog.h"
 #include "reg_rw.h"
+#include "cpu_info.h"
 
-uint32_t g_dmaSettingConfig[16];
+uint32_t g_dmaSettingConfig[60];
 
 void dma_transfer(uint32_t *src, uint32_t *dst, uint32_t byte_num)
 {
@@ -10,7 +11,7 @@ void dma_transfer(uint32_t *src, uint32_t *dst, uint32_t byte_num)
 
     dma_finish          = 0;
 
-    dma_llp_driver(src, dst, byte_num, 4096, 1);
+    dma_llp_driver(src, dst, byte_num, 4095, 1);
 
     while(dma_finish==0)
     {
@@ -82,9 +83,9 @@ void dma_llp_driver (uint32_t *src_addr,uint32_t *dst_addr, uint32_t byte_num, u
         bsize_1st = 0;
         bsize_2nd = 0;
         bsize_3rd = blk_size_3rd;
-        hsize_1st = 0;				
-        hsize_2nd = 0;				
-        hsize_3rd = 0;				
+        hsize_1st = 0;
+        hsize_2nd = 0;
+        hsize_3rd = 0;
     }
     else if ( (!blk_numb_1st) && (blk_numb_2nd) && (!blk_numb_3rd) ) //010
     {
@@ -92,9 +93,9 @@ void dma_llp_driver (uint32_t *src_addr,uint32_t *dst_addr, uint32_t byte_num, u
         bsize_1st = 0;
         bsize_2nd = 0;
         bsize_3rd = blk_size_2nd;
-        hsize_1st = 0;				
-        hsize_2nd = 0;				
-        hsize_3rd = 2;				
+        hsize_1st = 0;	
+        hsize_2nd = 0;
+        hsize_3rd = 2;
     }
     else if ( (blk_numb_1st) && (!blk_numb_2nd) && (!blk_numb_3rd) ) //100
     {
@@ -102,9 +103,9 @@ void dma_llp_driver (uint32_t *src_addr,uint32_t *dst_addr, uint32_t byte_num, u
         bsize_1st = blk_size_1st;
         bsize_2nd = blk_size_1st;
         bsize_3rd = blk_size_1st;
-        hsize_1st = 2;				
-        hsize_2nd = 2;				
-        hsize_3rd = 2;				
+        hsize_1st = 2;
+        hsize_2nd = 2;
+        hsize_3rd = 2;
     }
     else if ( (!blk_numb_1st) && (blk_numb_2nd) && (blk_numb_3rd) ) //011
     {
@@ -112,9 +113,9 @@ void dma_llp_driver (uint32_t *src_addr,uint32_t *dst_addr, uint32_t byte_num, u
         bsize_1st = 0;
         bsize_2nd = blk_size_2nd;
         bsize_3rd = blk_size_3rd;
-        hsize_1st = 0;				
-        hsize_2nd = 2;				
-        hsize_3rd = 0;				
+        hsize_1st = 0;
+        hsize_2nd = 2;
+        hsize_3rd = 0;
     }
     else if ( (blk_numb_1st) && (!blk_numb_2nd) && (blk_numb_3rd) ) //101
     {
@@ -122,9 +123,9 @@ void dma_llp_driver (uint32_t *src_addr,uint32_t *dst_addr, uint32_t byte_num, u
         bsize_1st = blk_size_1st;
         bsize_2nd = blk_size_1st;
         bsize_3rd = blk_size_3rd;
-        hsize_1st = 2;				
-        hsize_2nd = 2;				
-        hsize_3rd = 0;				
+        hsize_1st = 2;
+        hsize_2nd = 2;
+        hsize_3rd = 0;
     }
     else if ( (blk_numb_1st) && (blk_numb_2nd) && (!blk_numb_3rd) ) //110
     {
@@ -132,9 +133,9 @@ void dma_llp_driver (uint32_t *src_addr,uint32_t *dst_addr, uint32_t byte_num, u
         bsize_1st = blk_size_1st;
         bsize_2nd = blk_size_1st;
         bsize_3rd = blk_size_2nd;
-        hsize_1st = 2;				
-        hsize_2nd = 2;				
-        hsize_3rd = 2;				
+        hsize_1st = 2;
+        hsize_2nd = 2;
+        hsize_3rd = 2;
     }
     else // if ( (blk_numb_1st) && (blk_numb_2nd) && (blk_numb_3rd) ) // 111
     {
@@ -142,12 +143,19 @@ void dma_llp_driver (uint32_t *src_addr,uint32_t *dst_addr, uint32_t byte_num, u
         bsize_1st = blk_size_1st;
         bsize_2nd = blk_size_2nd;
         bsize_3rd = blk_size_3rd;
-        hsize_1st = 2;				
-        hsize_2nd = 2;				
-        hsize_3rd = 0;				
+        hsize_1st = 2;
+        hsize_2nd = 2;
+        hsize_3rd = 0;
     }
 
-    llp_base = (((uint32_t)g_dmaSettingConfig + 0x24080000)>>2); //SRAM: llp_loc[31:2], store the LLP entry
+    if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId())
+    {
+        llp_base = (((uint32_t)g_dmaSettingConfig + DTCM_CPU0_DMA_ADDR_OFFSET)>>2); //SRAM: llp_loc[31:2], store the LLP entry        
+    }
+    else if (ENUM_CPU1_ID == CPUINFO_GetLocalCpuId())
+    {
+        llp_base = (((uint32_t)g_dmaSettingConfig + DTCM_CPU1_DMA_ADDR_OFFSET)>>2); //SRAM: llp_loc[31:2], store the LLP entry        
+    }
     llp_lms = 0; //use master 0 interface memory
     llp_loc = llp_base;
     llp0 = (llp_loc<<2) + llp_lms;

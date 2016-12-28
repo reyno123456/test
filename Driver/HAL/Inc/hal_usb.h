@@ -31,6 +31,13 @@ typedef enum
 } ENUM_HAL_USB_STATE;
 
 
+typedef enum
+{
+    HAL_USB_HOST_CLASS_MSC = 0,
+    HAL_USB_HOST_CLASS_UVC,
+} ENUM_HAL_USB_HOST_CLASS;
+
+
 /**
 * @brief  Set the USB Host State for Application use.
 * @param  e_usbHostAppState             indicate the usb host state
@@ -59,11 +66,12 @@ void HAL_USB_HostProcess(void);
 
 /**
 * @brief  config the usb as host controller
-* @param  e_usbPort         usb port number: 0 or 1
+* @param  e_usbPort            usb port number: 0 or 1
+*               e_usbHostClass    usb class, MSC or UVC
 * @retval   void
 * @note  
 */
-void HAL_USB_InitHost(ENUM_HAL_USB_PORT e_usbPort);
+void HAL_USB_InitHost(ENUM_HAL_USB_PORT e_usbPort, ENUM_HAL_USB_HOST_CLASS e_usbHostClass);
 
 /**
 * @brief  config the usb as device controller
@@ -89,5 +97,14 @@ void HAL_USB_ResetDevice(void * p);
 */
 void HAL_USB_StartUVC(void);
 
+/**
+* @brief  get the latest frame buffer
+* @param  uint8_t  *u8_buff    the dest buffer to storage the video frame
+* @retval   HAL_USB_ERR_BUFF_IS_EMPTY   : means the buffer pool is empty
+*               HAL_OK                                      : means successfully get one video frame
+* @note  
+*/
+HAL_RET_T HAL_USB_GetVideoFrame(uint8_t *u8_buff);
 
 #endif
+

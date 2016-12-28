@@ -138,7 +138,7 @@ void USB_MainTask(void const *argument)
                     if (0 == g_usbhBypassVideoCtrl.taskExist)
                     {
                         /* set USB as host */
-                        HAL_USB_InitHost(HAL_USB_PORT_0);
+                        HAL_USB_InitHost(HAL_USB_PORT_0, HAL_USB_HOST_CLASS_MSC);
 
                         USBH_MountUSBDisk();
                     

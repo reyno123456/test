@@ -832,18 +832,18 @@ USBH_StatusTypeDef  USBH_LL_Connect  (USBH_HandleTypeDef *phost)
     phost->device.is_connected = 1;
     
     if(phost->pUser != NULL)
-    {    
+    {
       phost->pUser(phost, HOST_USER_CONNECTION);
     }
-  } 
+  }
   else if(phost->gState == HOST_DEV_WAIT_FOR_ATTACHMENT )
   {
     phost->gState = HOST_DEV_ATTACHED ;
   }
 #if (USBH_USE_OS == 1)
   osMessagePut ( phost->os_event, USBH_PORT_EVENT, 0);
-#endif 
-  
+#endif
+
   return USBH_OK;
 }
 
@@ -865,11 +865,11 @@ USBH_StatusTypeDef  USBH_LL_Disconnect  (USBH_HandleTypeDef *phost)
   phost->device.is_connected = 0; 
    
   if(phost->pUser != NULL)
-  {    
+  {
     phost->pUser(phost, HOST_USER_DISCONNECTION);
   }
   dlog_info("USB Device disconnected"); 
-  
+
   /* Start the low level driver  */
   USBH_LL_Start(phost);
   
@@ -880,6 +880,15 @@ USBH_StatusTypeDef  USBH_LL_Disconnect  (USBH_HandleTypeDef *phost)
 #endif 
   
   return USBH_OK;
+}
+
+
+USBH_StatusTypeDef  USBH_LL_IsocURBDone(USBH_HandleTypeDef *phost)
+{
+    if (phost->isocURBDone != NULL)
+    {
+        phost->isocURBDone(phost);
+    }
 }
 
 

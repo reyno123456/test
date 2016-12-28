@@ -43,7 +43,7 @@ int main(void)
 
     CPU_CACHE_Enable();
 
-    HAL_USB_InitHost(HAL_USB_PORT_1);
+    HAL_USB_InitHost(HAL_USB_PORT_1, HAL_USB_HOST_CLASS_UVC);
 
     /* We should never get here as control is now taken by the scheduler */
     for( ;; )

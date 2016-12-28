@@ -811,7 +811,7 @@ uint32_t HAL_HCD_GetCurrentSpeed(HCD_HandleTypeDef *hhcd)
 static void HCD_HC_IN_IRQHandler   (HCD_HandleTypeDef *hhcd, uint8_t chnum)
 {
   USB_OTG_GlobalTypeDef *USBx = hhcd->Instance;
-    
+
   if ((USBx_HC(chnum)->HCINT) &  USB_OTG_HCINT_AHBERR)
   {
     __HAL_HCD_CLEAR_HC_INT(chnum, USB_OTG_HCINT_AHBERR);
@@ -848,7 +848,6 @@ static void HCD_HC_IN_IRQHandler   (HCD_HandleTypeDef *hhcd, uint8_t chnum)
   
   else if ((USBx_HC(chnum)->HCINT) &  USB_OTG_HCINT_XFRC)
   {
-    
     if (hhcd->Init.dma_enable)
     {
       hhcd->hc[chnum].xfer_count = hhcd->hc[chnum].xfer_len - \
@@ -866,13 +865,17 @@ static void HCD_HC_IN_IRQHandler   (HCD_HandleTypeDef *hhcd, uint8_t chnum)
       __HAL_HCD_UNMASK_HALT_HC_INT(chnum); 
       USB_HC_Halt(hhcd->Instance, chnum); 
       __HAL_HCD_CLEAR_HC_INT(chnum, USB_OTG_HCINT_NAK);
-      
     }
     else if(hhcd->hc[chnum].ep_type == EP_TYPE_INTR)
     {
       USBx_HC(chnum)->HCCHAR |= USB_OTG_HCCHAR_ODDFRM;
       hhcd->hc[chnum].urb_state = URB_DONE; 
       HAL_HCD_HC_NotifyURBChange_Callback(hhcd, chnum, hhcd->hc[chnum].urb_state);
+    }
+    else if(hhcd->hc[chnum].ep_type == EP_TYPE_ISOC)
+    {
+      hhcd->hc[chnum].urb_state = URB_DONE;
+      HAL_HCD_HC_ISOC_URBDone_Callback(hhcd);
     }
     hhcd->hc[chnum].toggle_in ^= 1;
     
@@ -1212,6 +1215,15 @@ static void HCD_Port_IRQHandler  (HCD_HandleTypeDef *hhcd)
   /* Clear Port Interrupts */
   USBx_HPRT0 = hprt0_dup;
 }
+
+
+void HAL_HCD_HC_ISOC_URBDone_Callback(HCD_HandleTypeDef *hhcd)
+{
+    USBH_LL_IsocURBDone(hhcd->pData);
+}
+
+
+
 
 /**
   * @}

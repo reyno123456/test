@@ -101,11 +101,12 @@ static void USB_HostAppState(USBH_HandleTypeDef *phost, uint8_t id)
 
 /**
 * @brief  config the usb as host controller
-* @param  e_usbPort         usb port number: 0 or 1
+* @param  e_usbPort            usb port number: 0 or 1
+*               e_usbHostClass    usb class, MSC or UVC
 * @retval   void
 * @note  
 */
-void HAL_USB_InitHost(ENUM_HAL_USB_PORT e_usbPort)
+void HAL_USB_InitHost(ENUM_HAL_USB_PORT e_usbPort, ENUM_HAL_USB_HOST_CLASS e_usbHostClass)
 {
     if (HAL_USB_PORT_0 == e_usbPort)
     {
@@ -118,7 +119,14 @@ void HAL_USB_InitHost(ENUM_HAL_USB_PORT e_usbPort)
 
     USBH_Init(&hUSBHost, USB_HostAppState, (uint8_t)e_usbPort);
 
-    USBH_RegisterClass(&hUSBHost, USBH_MSC_CLASS);
+    if (HAL_USB_HOST_CLASS_MSC == e_usbHostClass)
+    {
+        USBH_RegisterClass(&hUSBHost, USBH_MSC_CLASS);
+    }
+    else if (HAL_USB_HOST_CLASS_UVC == e_usbHostClass)
+    {
+        USBH_RegisterClass(&hUSBHost, USBH_UVC_CLASS);
+    }
 
     USBH_Start(&hUSBHost);
 }
@@ -182,3 +190,26 @@ void HAL_USB_StartUVC(void)
 {
     USBH_UVC_StartView(&hUSBHost);
 }
+
+
+/**
+* @brief  get the latest frame buffer
+* @param  uint8_t  *u8_buff    the dest buffer to storage the video frame
+* @retval   HAL_USB_ERR_BUFF_IS_EMPTY   : means the buffer pool is empty
+*               HAL_OK                                      : means successfully get one video frame
+* @note  
+*/
+HAL_RET_T HAL_USB_GetVideoFrame(uint8_t *u8_buff)
+{
+    HAL_RET_T    ret = HAL_OK;
+
+    if (USBH_OK != USBH_UVC_GetBuff(u8_buff))
+    {
+        ret = HAL_USB_ERR_BUFF_IS_EMPTY;
+    }
+
+    return ret;
+}
+
+
+

@@ -2,7 +2,6 @@
 #include "debuglog.h"
 #include "systicks.h"
 
-
 USBH_ClassTypeDef  UVC_Class = 
 {
   "UVC",
@@ -15,9 +14,12 @@ USBH_ClassTypeDef  UVC_Class =
   NULL,
 };
 
-UVC_HandleTypeDef     g_stUVCHandle;
-uint8_t               g_UVCBuffer[3120];
-
+UVC_HandleTypeDef       g_stUVCHandle;
+uint8_t                 g_UVCRecvBuffer[UVC_VIDEO_EP_MAX_SIZE];
+uint8_t                 g_UVCVideoBuffer[UVC_VIDEO_BUFF_FRAME_NUM][UVC_VIDEO_BUFF_SIZE_PER_FRAME];
+uint8_t                 g_u8curVideoBuffIndex = 0;
+uint32_t                g_u32recvBuffPos = 0;
+UVC_BuffStateTypeDef    g_enumUVCBuffState[UVC_VIDEO_BUFF_FRAME_NUM];
 
 
 static USBH_StatusTypeDef USBH_UVC_InterfaceInit (USBH_HandleTypeDef *phost)
@@ -64,8 +66,8 @@ static USBH_StatusTypeDef USBH_UVC_InterfaceInit (USBH_HandleTypeDef *phost)
             //UVC_Handle->VideoEp      = (phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].bEndpointAddress);
             //UVC_Handle->VideoEpSize  = phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].wMaxPacketSize;
 
-            UVC_Handle->VideoEp      = 0x81;
-            UVC_Handle->VideoEpSize  = 0x600;
+            UVC_Handle->VideoEp      = UVC_VIDEO_EP;
+            UVC_Handle->VideoEpSize  = UVC_VIDEO_EP_MAX_SIZE;
         }
 
         UVC_Handle->uvc_state   = UVC_STATE_INIT;
@@ -93,6 +95,8 @@ static USBH_StatusTypeDef USBH_UVC_InterfaceInit (USBH_HandleTypeDef *phost)
 
         USBH_LL_SetToggle(phost, UVC_Handle->CtrlPipe, 0);
         USBH_LL_SetToggle(phost, UVC_Handle->VideoPipe, 0);
+
+        phost->isocURBDone = USBH_UVC_UrbDone;
 
         status = USBH_OK; 
     }
@@ -364,20 +368,6 @@ static USBH_StatusTypeDef USBH_UVC_Process (USBH_HandleTypeDef *phost)
 
 static USBH_StatusTypeDef USBH_UVC_SOFProcess (USBH_HandleTypeDef *phost)
 {
-    UVC_HandleTypeDef        *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
-
-    if (1 == UVC_Handle->palying)
-    {
-        UVC_Handle->sofCount++;
-
-        if (UVC_Handle->sofCount >= 1)
-        {
-            UVC_Handle->sofCount = 0;
-            USBH_IsocReceiveData(phost, g_UVCBuffer, 3120, UVC_Handle->VideoPipe);
-        }
-        
-    }
-
     return USBH_OK;
 }
 
@@ -1629,7 +1619,7 @@ static USBH_StatusTypeDef USBH_UVC_Commit(USBH_HandleTypeDef *phost)
         break;
 
     case UVC_STATE_SET_INTERFACE1:
-        if (USBH_OK == USBH_SetInterface(phost, 1, 1))
+        if (USBH_OK == USBH_SetInterface(phost, 1, 6))
         {
             UVC_Handle->uvc_getParamState = UVC_STATE_VIDEO_PLAY;
 
@@ -1641,7 +1631,7 @@ static USBH_StatusTypeDef USBH_UVC_Commit(USBH_HandleTypeDef *phost)
 
     case UVC_STATE_VIDEO_PLAY:
         UVC_Handle->palying  = 1;
-        //USBH_IsocReceiveData(phost, g_UVCBuffer, 3120, UVC_Handle->VideoPipe);
+        USBH_IsocReceiveData(phost, g_UVCRecvBuffer, 1024, UVC_Handle->VideoPipe);
 
         status = USBH_OK;
 #if (USBH_USE_OS == 1)
@@ -1672,5 +1662,110 @@ void USBH_UVC_StartView(USBH_HandleTypeDef *phost)
 #endif
 }
 
+
+static void USBH_UVC_UrbDone(USBH_HandleTypeDef *phost)
+{
+    UVC_HandleTypeDef      *UVC_Handle;
+    uint32_t                u32_recvSize;
+
+    UVC_Handle =  (UVC_HandleTypeDef *) phost->pActiveClass->pData;
+
+    if (g_UVCRecvBuffer[0] != UVC_HEADER_SPECIAL_CHAR)
+    {
+        dlog_error("this is not UVC package");
+    }
+    else
+    {
+        u32_recvSize = USBH_LL_GetLastXferSize(phost, UVC_Handle->VideoPipe);
+
+        if (u32_recvSize > UVC_HEADER_SIZE)
+        {
+            u32_recvSize -= UVC_HEADER_SIZE;
+
+            if (UVC_HEADER_FRAME_END != (UVC_HEADER_FRAME_END & g_UVCRecvBuffer[1]))
+            {
+                //dma_transfer((uint32_t *)(g_UVCRecvBuffer + UVC_HEADER_SIZE), (uint32_t *)(g_UVCVideoBuffer[g_u8curVideoBuffIndex] + g_u32recvBuffPos), u32_recvSize);
+                memcpy((void *)(g_UVCVideoBuffer[g_u8curVideoBuffIndex] + g_u32recvBuffPos),
+                       (void *)(g_UVCRecvBuffer + UVC_HEADER_SIZE),
+                       u32_recvSize);
+
+                g_u32recvBuffPos += u32_recvSize;
+            }
+            else
+            {
+                if ((g_u32recvBuffPos + u32_recvSize) == UVC_VIDEO_BUFF_SIZE_PER_FRAME)
+                {
+                    //dma_transfer((uint32_t *)(g_UVCRecvBuffer + UVC_HEADER_SIZE), (uint32_t *)(g_UVCVideoBuffer[g_u8curVideoBuffIndex] + g_u32recvBuffPos), u32_recvSize);
+                    memcpy((void *)(g_UVCVideoBuffer[g_u8curVideoBuffIndex] + g_u32recvBuffPos),
+                           (void *)(g_UVCRecvBuffer + UVC_HEADER_SIZE),
+                           u32_recvSize);
+
+                    USBH_UVC_SetBuffState(g_u8curVideoBuffIndex, UVC_VIDEO_BUFF_VALID);
+
+                    g_u8curVideoBuffIndex = ((++g_u8curVideoBuffIndex)%UVC_VIDEO_BUFF_FRAME_NUM);
+
+                    if (USBH_UVC_GetBuffState(g_u8curVideoBuffIndex) != UVC_VIDEO_BUFF_IN_USING)
+                    {
+                        USBH_UVC_SetBuffState(g_u8curVideoBuffIndex, UVC_VIDEO_BUFF_EMPTY);
+                    }
+                    else
+                    {
+                        g_u8curVideoBuffIndex = ((++g_u8curVideoBuffIndex)%UVC_VIDEO_BUFF_FRAME_NUM);
+                    }
+                }
+
+                g_u32recvBuffPos = 0;
+            }
+
+        }
+
+    }
+
+    USBH_IsocReceiveData(phost, g_UVCRecvBuffer, UVC_VIDEO_EP_MAX_SIZE, UVC_Handle->VideoPipe);
+}
+
+
+USBH_StatusTypeDef USBH_UVC_GetBuff(uint8_t *destAddr)
+{
+    uint8_t   i;
+
+    for (i = 0; i < UVC_VIDEO_BUFF_FRAME_NUM; i++)
+    {
+        if (UVC_VIDEO_BUFF_VALID == USBH_UVC_GetBuffState(i))
+        {
+            USBH_UVC_SetBuffState(i, UVC_VIDEO_BUFF_IN_USING);
+
+            //dma_transfer((uint32_t *)g_UVCVideoBuffer[i], (uint32_t *)destAddr, UVC_VIDEO_BUFF_SIZE_PER_FRAME);
+            memcpy((void *)destAddr,
+                   (void *)g_UVCVideoBuffer[i],
+                   UVC_VIDEO_BUFF_SIZE_PER_FRAME);
+
+            USBH_UVC_SetBuffState(i, UVC_VIDEO_BUFF_EMPTY);
+
+            break;
+        }
+    }
+
+    if (i >= UVC_VIDEO_BUFF_FRAME_NUM)
+    {
+        dlog_error("buff is empty");
+
+        return USBH_FAIL;
+    }
+
+    return USBH_OK;
+}
+
+
+static void USBH_UVC_SetBuffState(uint8_t u8_buffIndex, UVC_BuffStateTypeDef e_buffState)
+{
+    g_enumUVCBuffState[u8_buffIndex] = e_buffState;
+}
+
+
+static UVC_BuffStateTypeDef USBH_UVC_GetBuffState(uint8_t u8_buffIndex)
+{
+    return g_enumUVCBuffState[u8_buffIndex];
+}
 
 

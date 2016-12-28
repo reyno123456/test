@@ -220,6 +220,8 @@ uint32_t                HAL_HCD_GetCurrentSpeed(HCD_HandleTypeDef *hhcd);
 /**
   * @}
   */
+void HAL_HCD_HC_ISOC_URBDone_Callback(HCD_HandleTypeDef *hhcd);
+
 
 /**
   * @}

@@ -8,21 +8,36 @@
 #include "usbh_core.h"
 
 
-#define UVC_CLASS             14
+#define UVC_CLASS                   14
 
 
-extern USBH_ClassTypeDef        UVC_Class;
-#define USBH_UVC_CLASS         &UVC_Class
+extern USBH_ClassTypeDef            UVC_Class;
+#define USBH_UVC_CLASS             &UVC_Class
 
 
-#define UVC_SET_CUR             0x01
-#define UVC_GET_CUR             0x81
-#define UVC_GET_MIN             0x82
-#define UVC_GET_MAX             0x83
-#define UVC_GET_RES             0x84
-#define UVC_GET_LEN             0x85
-#define UVC_GET_INFO            0x86
-#define UVC_GET_DEF             0x87
+#define UVC_SET_CUR                     0x01
+#define UVC_GET_CUR                     0x81
+#define UVC_GET_MIN                     0x82
+#define UVC_GET_MAX                     0x83
+#define UVC_GET_RES                     0x84
+#define UVC_GET_LEN                     0x85
+#define UVC_GET_INFO                    0x86
+#define UVC_GET_DEF                     0x87
+
+
+#define UVC_VIDEO_EP                    0x81
+#define UVC_VIDEO_EP_MAX_SIZE           0x400
+#define UVC_CTRL_EP                     0x83
+
+
+#define UVC_VIDEO_BUFF_FRAME_NUM        0x2
+#define UVC_VIDEO_BUFF_SIZE_PER_FRAME   38400   // 160 * 120 * 2
+
+#define UVC_HEADER_SPECIAL_CHAR         0xC
+#define UVC_HEADER_SIZE                 0xC
+
+#define UVC_HEADER_FRAME_START          0x01
+#define UVC_HEADER_FRAME_END            0x02
 
 
 typedef enum
@@ -75,6 +90,15 @@ typedef enum
 UVC_ProbeStateTypeDef;
 
 
+typedef enum
+{
+    UVC_VIDEO_BUFF_EMPTY = 0,
+    UVC_VIDEO_BUFF_VALID,
+    UVC_VIDEO_BUFF_IN_USING,
+}
+UVC_BuffStateTypeDef;
+
+
 
 typedef struct _UVC_Process
 {
@@ -119,6 +143,11 @@ static USBH_StatusTypeDef USBH_UVC_Probe(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_UVC_StillProbe(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_UVC_Commit(USBH_HandleTypeDef *phost);
 void USBH_UVC_StartView(USBH_HandleTypeDef *phost);
+static void USBH_UVC_UrbDone(USBH_HandleTypeDef *phost);
+USBH_StatusTypeDef USBH_UVC_GetBuff(uint8_t *destAddr);
+static void USBH_UVC_SetBuffState(uint8_t u8_buffIndex, UVC_BuffStateTypeDef e_buffState);
+static UVC_BuffStateTypeDef USBH_UVC_GetBuffState(uint8_t u8_buffIndex);
+
 
 
 #endif /* __USBH_AUDIO_H */

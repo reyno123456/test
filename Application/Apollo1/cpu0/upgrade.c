@@ -100,7 +100,7 @@ void UPGRADE_Upgrade(void const *argument)
     MD5_CTX md5;
     g_u8upgradeFlage =0;
 
-    HAL_USB_InitHost(HAL_USB_PORT_0);
+    HAL_USB_InitHost(HAL_USB_PORT_0, HAL_USB_HOST_CLASS_MSC);
     USBH_MountUSBDisk();
 
     dlog_info("Nor flash init start ... \n");
