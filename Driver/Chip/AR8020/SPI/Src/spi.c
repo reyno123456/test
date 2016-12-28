@@ -39,7 +39,7 @@ static STRU_SPI_InitTypes spi_inits[]= {
 /* Private function prototypes -----------------------------------------------*/
 static void SPI_disable(ENUM_SPI_COMPONENT en_id)
 {
-    Reg_Write32( (SPI_BaseList[en_id]+SSIENR),  0x00);          //disable ssi
+    Reg_Write32( (SPI_BaseList[en_id]+SPI_SSIENR),  0x00);          //disable ssi
 }
 
 
@@ -54,15 +54,15 @@ static void SPI_disable(ENUM_SPI_COMPONENT en_id)
 void SPI_master_init(ENUM_SPI_COMPONENT en_id, STRU_SPI_InitTypes *st_settings)
 {
     uint32_t divider = (SPI_BASE_CLK_MHZ + st_settings->clk_Mhz-1)/st_settings->clk_Mhz;
-    Reg_Write32( (SPI_BaseList[en_id]+SSIENR),  0x00);          //disable ssi
+    Reg_Write32( (SPI_BaseList[en_id]+SPI_SSIENR),  0x00);          //disable ssi
 
-    Reg_Write32( (SPI_BaseList[en_id]+CTRLR0),  st_settings->ctrl0);
-    Reg_Write32( (SPI_BaseList[en_id]+BAUDR),   divider);
-    Reg_Write32( (SPI_BaseList[en_id]+TXFTLR),  st_settings->Tx_Fthr);
-    Reg_Write32( (SPI_BaseList[en_id]+RXFTLR),  st_settings->Rx_Ftlr);
-    Reg_Write32( (SPI_BaseList[en_id]+SLAVE_EN),st_settings->SER);
+    Reg_Write32( (SPI_BaseList[en_id]+SPI_CTRLR0),  st_settings->ctrl0);
+    Reg_Write32( (SPI_BaseList[en_id]+SPI_BAUDR),   divider);
+    Reg_Write32( (SPI_BaseList[en_id]+SPI_TXFTLR),  st_settings->Tx_Fthr);
+    Reg_Write32( (SPI_BaseList[en_id]+SPI_RXFTLR),  st_settings->Rx_Ftlr);
+    Reg_Write32( (SPI_BaseList[en_id]+SPI_SLAVE_EN),st_settings->SER);
 
-    Reg_Write32( SPI_BaseList[en_id]+SSIENR,    0x01);          //enable ssi
+    Reg_Write32( SPI_BaseList[en_id]+SPI_SSIENR,    0x01);          //enable ssi
     memcpy( (void *)(spi_inits+en_id), (void *)st_settings, sizeof(STRU_SPI_InitTypes));
 }
 
@@ -86,7 +86,7 @@ int32_t SPI_write_read(ENUM_SPI_COMPONENT en_id,
     {
         for(i =0; i < u32_wsize; i++)
         {
-            Reg_Write32(SPI_BaseList[en_id]+DR, ptr_wbuf[i]); //write data
+            Reg_Write32(SPI_BaseList[en_id]+SPI_DR, ptr_wbuf[i]); //write data
         }
 
         busy = 0;
@@ -94,7 +94,7 @@ int32_t SPI_write_read(ENUM_SPI_COMPONENT en_id,
         {
             uint32_t start = SysTicks_GetTickCount();
             do{
-                state = Reg_Read32(SPI_BaseList[en_id]+SR);
+                state = Reg_Read32(SPI_BaseList[en_id]+SPI_SR);
                 busy = state & 0x01;
             }while(busy && SysTicks_GetTickCount() - start < SPI_DEF_TIMEOUT_TICKS);
         }    
@@ -109,7 +109,7 @@ int32_t SPI_write_read(ENUM_SPI_COMPONENT en_id,
     {
         for(i =0; i < u32_rsize; i++)
         {
-            ptr_rbuf[i] = Reg_Read32(SPI_BaseList[en_id]+DR);
+            ptr_rbuf[i] = Reg_Read32(SPI_BaseList[en_id]+SPI_DR);
         }
     }
     
