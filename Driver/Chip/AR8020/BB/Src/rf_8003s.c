@@ -11,7 +11,7 @@ History:
 #include "debuglog.h"
 #include "spi.h"
 #include "bb_spi.h"
-#include "rf8003s.h"
+#include "rf_8003s.h"
 
 #define  RF8003S_RF_CLOCKRATE    (2)    //2MHz clockrate
 

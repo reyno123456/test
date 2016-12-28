@@ -5,6 +5,7 @@
 #include "sys_event.h"
 #include "hal_sys_ctl.h"
 #include "hal.h"
+#include "hal_bb.h"
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
@@ -26,7 +27,7 @@ int main(void)
     console_init(2, 115200);
     dlog_info("main ground function start \n");
     
-    BB_init(BB_GRD_MODE);
+    HAL_BB_init(BB_GRD_MODE);
 
     /* We should never get here as control is now taken by the scheduler */
     for( ;; )

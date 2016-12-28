@@ -3,9 +3,9 @@
 #include "usbd_hid.h"
 #include "debuglog.h"
 #include "bb_spi.h"
-#include "../../../../HAL/Inc/hal_bb.h"
+#include "hal_bb.h"
 #include "sys_event.h"
-#include "rf8003s.h"
+#include "rf_8003s.h"
 
 STRU_WIRELESS_INFO_DISPLAY             *g_pstWirelessInfoDisplay;        //OSD Info in SRAM
 STRU_WIRELESS_INFO_DISPLAY              g_stWirelessInfoSend;            //send OSD to PAD or PC

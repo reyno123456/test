@@ -24,10 +24,10 @@ void command_test_BB_uart(char *index_str)
     else if (opt == 2)
     {
         uint32_t len = 0;
-        uint32_t cnt = HAL_BB_UartComReceiveMsg(BB_UART_COM_SESSION_0, data_buf_proc, sizeof(data_buf_proc), &len);
+        HAL_BB_UartComReceiveMsg(BB_UART_COM_SESSION_0, data_buf_proc, sizeof(data_buf_proc), &len);
 
         uint32_t i = 0;
-        for(i = 0; i < cnt; i++)
+        for(i = 0; i < len; i++)
         {
             dlog_info("%d,", data_buf_proc[i]);
         }

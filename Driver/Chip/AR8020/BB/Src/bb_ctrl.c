@@ -14,7 +14,7 @@
 #include "bb_sys_param.h"
 #include "bb_regs.h"
 #include "sys_event.h"
-#include "rf8003s.h"
+#include "rf_8003s.h"
 
 
 #define     BB_SPI_TEST         (0)
