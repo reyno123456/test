@@ -22,11 +22,13 @@ History:
 #include "usbd_hid.h"
 #include "usbd_hid_desc.h"
 #include "sram.h"
+#include "wireless_interface.h"
 
 
 static ENUM_HAL_USB_STATE   s_eUSBHostAppState;
 USBH_HandleTypeDef          hUSBHost;
 extern USBD_HandleTypeDef   USBD_Device;
+USBD_HID_ItfTypeDef         g_stUsbdHidItf;
 
 
 /**
@@ -150,6 +152,10 @@ void HAL_USB_InitDevice(ENUM_HAL_USB_PORT e_usbPort)
     }
 
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USB_PLUG_OUT, HAL_USB_ResetDevice);
+
+    g_stUsbdHidItf.dataOut  = WIRELESS_ParseParamConfig;
+
+    USBD_HID_RegisterInterface(&USBD_Device, &g_stUsbdHidItf);
 
     USBD_Init(&USBD_Device, &HID_Desc, (uint8_t)e_usbPort);
 
