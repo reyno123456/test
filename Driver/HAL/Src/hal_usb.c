@@ -151,7 +151,7 @@ void HAL_USB_InitDevice(ENUM_HAL_USB_PORT e_usbPort)
 
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USB_PLUG_OUT, HAL_USB_ResetDevice);
 
-    USBD_Init(&USBD_Device, &HID_Desc, 0);
+    USBD_Init(&USBD_Device, &HID_Desc, (uint8_t)e_usbPort);
 
     USBD_RegisterClass(&USBD_Device, USBD_HID_CLASS);
 
