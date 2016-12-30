@@ -99,3 +99,28 @@ HAL_RET_T HAL_PWM_Start(ENUM_HAL_PWM_NUM e_pwmNum)
 
     return HAL_OK;
 }
+/**
+* @brief    dynamic modify pwm duty cycle
+* @param    e_pwmNum: pwm number, the right number should be 0-127.
+            u32_lowus: timer load count of low
+            u32_highus: timer load count of high
+* @retval   HAL_OK                means the registeration pwm success.
+*           HAL_GPIO_ERR_UNKNOWN  means the pwm number error. 
+* @note     none
+*/
+HAL_RET_T HAL_PWM_DynamicModifyPwmDutyCycle(ENUM_HAL_PWM_NUM e_pwmNum, uint32_t u32_lowus, uint32_t u32_highus)
+{
+   if (e_pwmNum > HAL_PWM_NUM9)
+    {
+        return HAL_PWM_ERR_UNKNOWN;
+    }
+
+    init_timer_st st_pwm;
+    memset(&st_pwm,0,sizeof(init_timer_st));
+
+    st_pwm.base_time_group = e_pwmNum/8;
+    st_pwm.time_num = e_pwmNum%8;
+    st_pwm.ctrl |= TIME_ENABLE | USER_DEFINED |TIME_PWM_ENABLE;
+
+    TIM_ModifyPwmCount(st_pwm,u32_lowus,u32_highus);
+}

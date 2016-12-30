@@ -108,9 +108,11 @@ uint8_t TIM_StopTimer(init_timer_st time_st);
 uint8_t TIM_ClearNvic(init_timer_st time_st);
 uint8_t TIM_IntrGetIntrStatus(init_timer_st time_st);
 
+
 uint8_t TIM_RegisterPwm(init_timer_st time_st, uint32_t low_us, uint32_t high_us);
 uint8_t TIM_StartPwm(init_timer_st time_st);
 uint8_t TIM_StopPwm(init_timer_st time_st);
+uint8_t TIM_ModifyPwmCount(init_timer_st time_st, uint32_t low_us, uint32_t high_us);
 
 
 #endif
