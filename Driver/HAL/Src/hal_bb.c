@@ -295,19 +295,19 @@ HAL_RET_T HAL_BB_SetEncoderBrcModeProxy(ENUM_RUN_MODE e_mode)
 
 /** 
  * @brief       Set the encoder bitrate Unit:Mbps
- * @param[in]   bitrate_Mbps: select the bitrate unit: Mbps
+ * @param[in]   u8_bitrateMbps: select the bitrate unit: Mbps
  * @retval      HAL_OK,                  means command is sent sucessfully. 
  * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
  * @note        the function can only be called by cpu0,1
  */
-HAL_RET_T HAL_BB_SetEncoderBitrateProxy(uint8_t bitrate_Mbps)
+HAL_RET_T HAL_BB_SetEncoderBitrateProxy(uint8_t u8_bitrateMbps)
 {
     uint8_t u8_ret;
     STRU_WIRELESS_CONFIG_CHANGE st_cmd;
 
     st_cmd.u8_configClass  = WIRELESS_ENCODER_CHANGE;
     st_cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
-    st_cmd.u32_configValue = bitrate_Mbps;
+    st_cmd.u32_configValue = u8_bitrateMbps;
 
     u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
     if( u8_ret )
@@ -323,19 +323,19 @@ HAL_RET_T HAL_BB_SetEncoderBitrateProxy(uint8_t bitrate_Mbps)
 
 /** 
  * @brief   Set board enter or out debug mode
- * @param   mode	    0:  set Baseband to enter debug mode, 
+ * @param   u8_mode	0:  set Baseband to enter debug mode, 
                         1:  set Baseband to out debug mode.
  * @note    The function can only be called by cpu0,1 
  */
-HAL_RET_T HAL_BB_SetBoardDebugModeProxy(uint8_t mode)
+HAL_RET_T HAL_BB_SetBoardDebugModeProxy(uint8_t u8_mode)
 {
     STRU_WIRELESS_CONFIG_CHANGE st_cmd;
 
     st_cmd.u8_configClass  = WIRELESS_DEBUG_CHANGE;
     st_cmd.u8_configItem   = 0;
-    st_cmd.u32_configValue = (mode & 1);
+    st_cmd.u32_configValue = (u8_mode & 1);
 
-	return SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
+    return SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
 }
 
 
