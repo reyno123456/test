@@ -23,7 +23,7 @@ static void BB_UARTComLockRelease(void)
     UnLock(lock_p);
 }
 
-static void BB_UARTComWriteSessionRxBuffer(ENUM_BBUartComSessionID session_id, uint8_t* data_buf, uint32_t data_size)
+static void BB_UARTComWriteSessionRxBuffer(ENUM_BBUARTCOMSESSIONID session_id, uint8_t* data_buf, uint32_t data_size)
 {
     if (g_BBUARTComSessionArray[session_id].rx_buf->header.in_use == 1)
     {
@@ -58,7 +58,7 @@ static void BB_UARTComPacketDataAnalyze(uint8_t chData)
     static uint8_t rx_state = BB_UART_COM_RX_HEADER;
     static uint8_t header_buf[4];
     static uint8_t header_buf_index = 0;
-    static ENUM_BBUartComSessionID session_id = 0;
+    static ENUM_BBUARTCOMSESSIONID session_id = 0;
     static uint8_t data_length = 0;
     static uint8_t data_buf[BBCOM_UART_RX_BUF_SIZE];
     static uint8_t data_buf_index = 0;
@@ -224,7 +224,7 @@ void BB_UARTComRemoteSessionInit(void)
     g_BBUARTComSessionArray[4].data_max_size = SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_SIZE - sizeof(STRU_BBUartComSessionRxBufferHeader);
 }
 
-uint8_t BB_UARTComRegisterSession(ENUM_BBUartComSessionID session_id)
+uint8_t BB_UARTComRegisterSession(ENUM_BBUARTCOMSESSIONID session_id)
 {
     if ((session_id != BB_UART_COM_SESSION_0) && (session_id < BB_UART_COM_SESSION_MAX))
     {
@@ -243,7 +243,7 @@ uint8_t BB_UARTComRegisterSession(ENUM_BBUartComSessionID session_id)
     }
 }
 
-void BB_UARTComUnRegisterSession(ENUM_BBUartComSessionID session_id)
+void BB_UARTComUnRegisterSession(ENUM_BBUARTCOMSESSIONID session_id)
 {
     if ((session_id != BB_UART_COM_SESSION_0) && (session_id < BB_UART_COM_SESSION_MAX))
     {
@@ -253,7 +253,7 @@ void BB_UARTComUnRegisterSession(ENUM_BBUartComSessionID session_id)
     }
 }
 
-uint8_t BB_UARTComSendMsg(ENUM_BBUartComSessionID session_id, uint8_t* data_buf, uint32_t length)
+uint8_t BB_UARTComSendMsg(ENUM_BBUARTCOMSESSIONID session_id, uint8_t* data_buf, uint32_t length)
 {
     uint8_t iCnt = 0;
     uint8_t check_sum = 0;
@@ -334,7 +334,7 @@ uint8_t BB_UARTComSendMsg(ENUM_BBUartComSessionID session_id, uint8_t* data_buf,
     return 1;
 }
 
-uint32_t BB_UARTComReceiveMsg(ENUM_BBUartComSessionID session_id, uint8_t* data_buf, uint32_t length_max)
+uint32_t BB_UARTComReceiveMsg(ENUM_BBUARTCOMSESSIONID session_id, uint8_t* data_buf, uint32_t length_max)
 {
     if (g_BBUARTComSessionArray[session_id].rx_buf->header.in_use == 1)
     {

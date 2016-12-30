@@ -38,9 +38,9 @@ typedef struct
 
 void BB_UARTComInit(void);
 void BB_UARTComRemoteSessionInit(void);
-uint8_t BB_UARTComRegisterSession(ENUM_BBUartComSessionID session_id);
-void BB_UARTComUnRegisterSession(ENUM_BBUartComSessionID session_id);
-uint8_t BB_UARTComSendMsg(ENUM_BBUartComSessionID session_id, uint8_t* data_buf, uint32_t length);
-uint32_t BB_UARTComReceiveMsg(ENUM_BBUartComSessionID session_id, uint8_t* data_buf, uint32_t length_max);
+uint8_t BB_UARTComRegisterSession(ENUM_BBUARTCOMSESSIONID session_id);
+void BB_UARTComUnRegisterSession(ENUM_BBUARTCOMSESSIONID session_id);
+uint8_t BB_UARTComSendMsg(ENUM_BBUARTCOMSESSIONID session_id, uint8_t* data_buf, uint32_t length);
+uint32_t BB_UARTComReceiveMsg(ENUM_BBUARTCOMSESSIONID session_id, uint8_t* data_buf, uint32_t length_max);
 
 #endif

@@ -166,7 +166,7 @@ HAL_RET_T HAL_BB_UartComRemoteSessionInit(void);
  * @return  HAL_OK:                         means request session OK
  *          HAL_BB_ERR_SESSION_OCCUPIED:    session ID is already occupied
  */
-HAL_RET_T HAL_BB_UartComRegisterSession(ENUM_BBUartComSessionID e_sessionId);
+HAL_RET_T HAL_BB_UartComRegisterSession(ENUM_BBUARTCOMSESSIONID e_sessionId);
 
 
 
@@ -177,7 +177,7 @@ HAL_RET_T HAL_BB_UartComRegisterSession(ENUM_BBUartComSessionID e_sessionId);
  * @return  HAL_OK:                         means unrequest session OK 
  *          HAL_BB_ERR_UNREGISTER_SESSION:  means some error happens in unregister session
  */
-HAL_RET_T HAL_BB_UartComUnRegisterSession(ENUM_BBUartComSessionID e_sessionId);
+HAL_RET_T HAL_BB_UartComUnRegisterSession(ENUM_BBUARTCOMSESSIONID e_sessionId);
 
 
 
@@ -191,7 +191,7 @@ HAL_RET_T HAL_BB_UartComUnRegisterSession(ENUM_BBUartComSessionID e_sessionId);
  * @return  HAL_OK:                         means unrequest session OK 
  *          HAL_BB_ERR_UNREGISTER_SESSION:  means some error happens in unregister session 
  */
-HAL_RET_T HAL_BB_UartComSendMsg(ENUM_BBUartComSessionID e_sessionId, 
+HAL_RET_T HAL_BB_UartComSendMsg(ENUM_BBUARTCOMSESSIONID e_sessionId, 
                                 uint8_t  *pu8_dataBuf, 
                                 uint32_t u32_length);
 
@@ -205,7 +205,7 @@ HAL_RET_T HAL_BB_UartComSendMsg(ENUM_BBUartComSessionID e_sessionId,
  * @return  HAL_OK:                         means unrequest session OK 
  *          HAL_BB_ERR_SESSION_RCV:         means some error happens in receving data from session
  */
-HAL_RET_T HAL_BB_UartComReceiveMsg(ENUM_BBUartComSessionID e_sessionId, 
+HAL_RET_T HAL_BB_UartComReceiveMsg(ENUM_BBUARTCOMSESSIONID e_sessionId, 
                                    uint8_t  *pu8_dataBuf, 
                                    uint32_t u32_lengthMax,
                                    uint32_t *pu32_dataLen);
