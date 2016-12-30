@@ -8,7 +8,7 @@
 #include "md5.h"
 #include "systicks.h"
 #include <string.h>
-#include "hal_usb.h"
+#include "hal_usb_host.h"
 
 static uint8_t g_u8arrayRecData[RDWR_SECTOR_SIZE]={0};
 
@@ -100,7 +100,7 @@ void UPGRADE_Upgrade(void const *argument)
     MD5_CTX md5;
     g_u8upgradeFlage =0;
 
-    HAL_USB_InitHost(HAL_USB_PORT_0, HAL_USB_HOST_CLASS_MSC);
+    HAL_USB_InitHost(HAL_USB_HOST_PORT_0, HAL_USB_HOST_CLASS_MSC);
     USBH_MountUSBDisk();
 
     dlog_info("Nor flash init start ... \n");
@@ -109,11 +109,10 @@ void UPGRADE_Upgrade(void const *argument)
     dlog_output(100);
     SysTicks_DelayMS(500);
 
-    while (HAL_USB_STATE_READY != HAL_USB_GetHostAppState())
+    while (HAL_USB_HOST_STATE_READY != HAL_USB_GetHostAppState())
     {
         dlog_info("finding mass storage\n");
         SysTicks_DelayMS(500);
-        dlog_output(100);    
     }
 
     #if 1

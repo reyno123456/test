@@ -9,7 +9,7 @@
 #include "test_usbh.h"
 #include "com_task.h"
 #include "hal_bb.h"
-#include "hal_usb.h"
+#include "hal_usb_device.h"
 #include "hal_sys_ctl.h"
 
 void *malloc(size_t size)
@@ -79,7 +79,7 @@ int main(void)
     /* Enable the CPU Cache */
     CPU_CACHE_Enable();
 
-    HAL_USB_InitDevice(HAL_USB_PORT_0);
+    HAL_USB_InitDevice(HAL_USB_DEVICE_PORT_0);
 
     HAL_SRAM_ReceiveVideoConfig();
 

@@ -1,16 +1,17 @@
 /*****************************************************************************
 Copyright: 2016-2020, Artosyn. Co., Ltd.
-File name: hal_usb.h
+File name: hal_usb_host.h
 Description: The external HAL APIs to use the SRAM.
 Author: Artosyn Software Team
 Version: 0.0.1
 Date: 2016/12/22
 History: 
-        0.0.1    2016/12/22    The initial version of hal_usb.h
+        0.0.1    2016/12/22    The initial version of hal_usb_host.h
 *****************************************************************************/
 
-#ifndef __HAL_USB_H__
-#define __HAL_USB_H__
+#ifndef __HAL_USB_HOST_H__
+#define __HAL_USB_HOST_H__
+
 
 #include <stdint.h>
 #include "hal_ret_type.h"
@@ -18,17 +19,17 @@ History:
 
 typedef enum
 {
-    HAL_USB_PORT_0 = 0,
-    HAL_USB_PORT_1,
-} ENUM_HAL_USB_PORT;
+    HAL_USB_HOST_PORT_0 = 0,
+    HAL_USB_HOST_PORT_1,
+} ENUM_HAL_USB_HOST_PORT;
 
 
 typedef enum
 {
-    HAL_USB_STATE_IDLE = 0,
-    HAL_USB_STATE_READY,
-    HAL_USB_STATE_DISCONNECT,
-} ENUM_HAL_USB_STATE;
+    HAL_USB_HOST_STATE_IDLE = 0,
+    HAL_USB_HOST_STATE_READY,
+    HAL_USB_HOST_STATE_DISCONNECT,
+} ENUM_HAL_USB_HOST_STATE;
 
 
 typedef enum
@@ -44,7 +45,7 @@ typedef enum
 * @retval   void
 * @note  
 */
-void HAL_USB_SetHostAppState(ENUM_HAL_USB_STATE e_usbHostAppState);
+void HAL_USB_SetHostAppState(ENUM_HAL_USB_HOST_STATE e_usbHostAppState);
 
 /**
 * @brief  Get the USB Host State for Application use.
@@ -54,7 +55,7 @@ void HAL_USB_SetHostAppState(ENUM_HAL_USB_STATE e_usbHostAppState);
 *               HAL_USB_STATE_DISCONNECT   indicate the usb is DISCONNECT
 * @note  
 */
-ENUM_HAL_USB_STATE HAL_USB_GetHostAppState(void);
+ENUM_HAL_USB_HOST_STATE HAL_USB_GetHostAppState(void);
 
 /**
 * @brief  polling the usb state-machine 
@@ -71,23 +72,7 @@ void HAL_USB_HostProcess(void);
 * @retval   void
 * @note  
 */
-void HAL_USB_InitHost(ENUM_HAL_USB_PORT e_usbPort, ENUM_HAL_USB_HOST_CLASS e_usbHostClass);
-
-/**
-* @brief  config the usb as device controller
-* @param  e_usbPort         usb port number: 0 or 1
-* @retval   void
-* @note  
-*/
-void HAL_USB_InitDevice(ENUM_HAL_USB_PORT e_usbPort);
-
-/**
-* @brief  reset the usb device controller for usb device hotplug
-* @param  void * p         for sys event call-back
-* @retval   void
-* @note  
-*/
-void HAL_USB_ResetDevice(void * p);
+void HAL_USB_InitHost(ENUM_HAL_USB_HOST_PORT e_usbPort, ENUM_HAL_USB_HOST_CLASS e_usbHostClass);
 
 /**
 * @brief  start the USB Video for Application use
@@ -105,6 +90,7 @@ void HAL_USB_StartUVC(void);
 * @note  
 */
 HAL_RET_T HAL_USB_GetVideoFrame(uint8_t *u8_buff);
+
 
 #endif
 

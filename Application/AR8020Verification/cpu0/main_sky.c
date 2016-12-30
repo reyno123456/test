@@ -8,7 +8,7 @@
 #include "bb_spi.h"
 #include "hal_bb.h"
 #include "hal_hdmi_rx.h"
-#include "hal_usb.h"
+#include "hal_usb_device.h"
 #include "hal_sys_ctl.h"
 
 void *malloc(size_t size)
@@ -82,7 +82,7 @@ int main(void)
     HAL_HDMI_RX_Init(HAL_HDMI_RX_0);
     HAL_HDMI_RX_Init(HAL_HDMI_RX_1);
 
-    HAL_USB_InitDevice(HAL_USB_PORT_0);
+    HAL_USB_InitDevice(HAL_USB_DEVICE_PORT_0);
 
     /* Create Main Task */
     osThreadDef(USBMAIN_Task, USB_MainTask, osPriorityBelowNormal, 0, 4 * 128);

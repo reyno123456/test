@@ -1,6 +1,7 @@
 #include "test_usbh.h"
 #include "debuglog.h"
-#include "hal_usb.h"
+#include "hal_usb_host.h"
+#include "hal_usb_device.h"
 #include "hal_sram.h"
 
 
@@ -21,7 +22,7 @@ void USBH_USBHostStatus(void const *argument)
     {
         HAL_USB_HostProcess();
 
-        osDelay(20);
+        osDelay(10);
     }
 }
 
@@ -44,7 +45,7 @@ void USBH_BypassVideo(void const *argument)
         {
             while (1)
             {
-                if ((HAL_USB_STATE_READY == HAL_USB_GetHostAppState())
+                if ((HAL_USB_HOST_STATE_READY == HAL_USB_GetHostAppState())
                   &&(1 == g_usbhBypassVideoCtrl.taskActivate))
                 {
                     if (g_usbhBypassVideoCtrl.fileOpened == 0)
@@ -138,7 +139,7 @@ void USB_MainTask(void const *argument)
                     if (0 == g_usbhBypassVideoCtrl.taskExist)
                     {
                         /* set USB as host */
-                        HAL_USB_InitHost(HAL_USB_PORT_0, HAL_USB_HOST_CLASS_MSC);
+                        HAL_USB_InitHost(HAL_USB_HOST_PORT_0, HAL_USB_HOST_CLASS_MSC);
 
                         USBH_MountUSBDisk();
                     
@@ -182,7 +183,7 @@ void USB_MainTask(void const *argument)
 
                     HAL_SRAM_DisableSkyBypassVideo(HAL_SRAM_VIDEO_CHANNEL_0);
 
-                    HAL_USB_InitDevice(HAL_USB_PORT_0);
+                    HAL_USB_InitDevice(HAL_USB_DEVICE_PORT_0);
 
                     break;
                 }
