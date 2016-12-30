@@ -52,7 +52,6 @@ void commandhal_TestGpioNormal(uint8_t *gpionum, uint8_t *highorlow)
     HAL_GPIO_InPut(65);
     HAL_GPIO_OutPut(u8_GpioNum);
     HAL_GPIO_SetPin(u8_GpioNum, u8_GpioValue);	
-    dlog_info("get gpio state %x",HAL_GPIO_GetPin(65));
 }
 
 void commandhal_TestGpioInterrupt(uint8_t *gpionum, uint8_t *inttype, uint8_t *polarity)

@@ -188,13 +188,14 @@ HAL_RET_T HAL_GPIO_InPut(ENUM_HAL_GPIO_NUM e_gpioPin);
 /**
 * @brief    get gpio value
 * @param    e_gpioPin: The gpio number, the right number should be 0-127.
-* @retval   gpio state
+* @param    p_retGpioState: return gpio state
             0                  means the gpio is low
             1                  means the gpio is high
-            HAL_GPIO_ERR_UNKNOWN  means the gpio number error. 
-* @note     gpio must be seted input mode otherwise only retrun 0
+* @retval   HAL_OK                means the set pin state is well done.
+*           HAL_GPIO_ERR_UNKNOWN  means the gpio number error. 
+* @note     gpio must be seted input mode
 */
-uint32_t HAL_GPIO_GetPin(ENUM_HAL_GPIO_NUM e_gpioPin);
+HAL_RET_T HAL_GPIO_GetPin(ENUM_HAL_GPIO_NUM e_gpioPin,uint32_t *p_retGpioState);
 
 /**
 * @brief    set gpio high or low
