@@ -20,7 +20,7 @@ History:
 #include "hal_softpwm.h"
 
 STRU_SoftPwmHandle g_stPwmQueue[MAXSOFTPWM];
-static ENUM_HAL_TIMER_Num g_etimerNum;
+static ENUM_HAL_TIMER_NUM g_etimerNum;
 
 static uint32_t g_u32TimCount = 0;
 uint32_t g_ACount[MAXSOFTPWM][2];
@@ -42,7 +42,7 @@ static void SOFTPWM_TimerIRQHandler(uint32_t u32_vectorNum)
 * @retval   HAL_OK : function is well done.
 * @note     none
 */
-HAL_RET_T HAL_SOFTPWM_SetTimer(ENUM_HAL_TIMER_Num e_timerNum)
+HAL_RET_T HAL_SOFTPWM_SetTimer(ENUM_HAL_TIMER_NUM e_timerNum)
 {
     g_etimerNum = e_timerNum;
     HAL_TIMER_RegisterTimer(e_timerNum, MIXMODIFYTIMEUM, SOFTPWM_TimerIRQHandler);

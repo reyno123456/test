@@ -31,7 +31,7 @@ void TIMER_ClearNvic(uint32_t e_vectorNum);
 *           HAL_TIMER_ERR_UNKNOWN  means the timer number error. 
 * @note     none
 */
-HAL_RET_T HAL_TIMER_RegisterTimer(ENUM_HAL_TIMER_Num e_timerNum, uint32_t u32_timeus, void *fun_callBack)
+HAL_RET_T HAL_TIMER_RegisterTimer(ENUM_HAL_TIMER_NUM e_timerNum, uint32_t u32_timeus, void *fun_callBack)
 {
     if (e_timerNum > HAL_TIMER_NUM23)
     {
@@ -61,7 +61,7 @@ HAL_RET_T HAL_TIMER_RegisterTimer(ENUM_HAL_TIMER_Num e_timerNum, uint32_t u32_ti
 *           HAL_TIMER_ERR_UNKNOWN  means the timer number error. 
 * @note     none
 */
-HAL_RET_T HAL_TIMER_Stop(ENUM_HAL_TIMER_Num e_timerNum)
+HAL_RET_T HAL_TIMER_Stop(ENUM_HAL_TIMER_NUM e_timerNum)
 {
     if (e_timerNum > HAL_TIMER_NUM23)
     {
@@ -91,7 +91,7 @@ HAL_RET_T HAL_TIMER_Stop(ENUM_HAL_TIMER_Num e_timerNum)
 *           HAL_TIMER_ERR_UNKNOWN  means the timer number error. 
 * @note     none
 */
-HAL_RET_T HAL_TIMER_Start(ENUM_HAL_TIMER_Num e_timerNum)
+HAL_RET_T HAL_TIMER_Start(ENUM_HAL_TIMER_NUM e_timerNum)
 {
     if (e_timerNum > HAL_TIMER_NUM23)
     {

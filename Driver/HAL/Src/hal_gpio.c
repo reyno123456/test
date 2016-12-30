@@ -40,7 +40,7 @@ static void GPIO_ClearNvic(uint32_t u32_vectorNum);
 *           HAL_GPIO_ERR_UNKNOWN  means the gpio number error.
 * @note     none
 */
-HAL_RET_T HAL_GPIO_OutPut(ENUM_HAL_GPIO_Num e_gpioPin)
+HAL_RET_T HAL_GPIO_OutPut(ENUM_HAL_GPIO_NUM e_gpioPin)
 {
     if (e_gpioPin > HAL_GPIO_NUM127)
     {
@@ -63,7 +63,7 @@ HAL_RET_T HAL_GPIO_OutPut(ENUM_HAL_GPIO_Num e_gpioPin)
 *           HAL_GPIO_ERR_UNKNOWN  means the gpio number error. 
 * @note     none
 */
-HAL_RET_T HAL_GPIO_InPut(ENUM_HAL_GPIO_Num e_gpioPin)
+HAL_RET_T HAL_GPIO_InPut(ENUM_HAL_GPIO_NUM e_gpioPin)
 {
     if (e_gpioPin > HAL_GPIO_NUM127)
     {
@@ -88,7 +88,7 @@ HAL_RET_T HAL_GPIO_InPut(ENUM_HAL_GPIO_Num e_gpioPin)
             HAL_GPIO_ERR_UNKNOWN  means the gpio number error. 
 * @note     gpio must be seted input mode otherwise only retrun 0
 */
-uint32_t HAL_GPIO_GetPin(ENUM_HAL_GPIO_Num e_gpioPin)
+uint32_t HAL_GPIO_GetPin(ENUM_HAL_GPIO_NUM e_gpioPin)
 {
     if (e_gpioPin > HAL_GPIO_NUM127)
     {
@@ -108,7 +108,7 @@ uint32_t HAL_GPIO_GetPin(ENUM_HAL_GPIO_Num e_gpioPin)
 *           HAL_GPIO_ERR_UNKNOWN  means the gpio number error. 
 * @note     gpio must be seted output mode
 */
-HAL_RET_T HAL_GPIO_SetPin(ENUM_HAL_GPIO_Num e_gpioPin, ENUM_HAL_GPIO_PinState e_pinState)
+HAL_RET_T HAL_GPIO_SetPin(ENUM_HAL_GPIO_NUM e_gpioPin, ENUM_HAL_GPIO_PinState e_pinState)
 {
     if (e_gpioPin > HAL_GPIO_NUM127)
     {
@@ -131,7 +131,7 @@ HAL_RET_T HAL_GPIO_SetPin(ENUM_HAL_GPIO_Num e_gpioPin, ENUM_HAL_GPIO_PinState e_
 *           HAL_GPIO_ERR_UNKNOWN  means the gpio number error. 
 * @note     this function include set gpio input mode and debounce mode and register corresponding interrupt
 */
-HAL_RET_T HAL_GPIO_RegisterInterrupt(ENUM_HAL_GPIO_Num e_gpioPin, 
+HAL_RET_T HAL_GPIO_RegisterInterrupt(ENUM_HAL_GPIO_NUM e_gpioPin, 
                                      ENUM_HAL_GPIO_InterrputLevel e_inttype, 
                                      ENUM_HAL_GPIO_InterrputPolarity e_polarity,
                                      void *fun_callBack)
@@ -194,7 +194,7 @@ static void GPIO_ClearNvic(uint32_t u32_vectorNum)
             HAL_GPIO_ERR_UNKNOWN  means the gpio number error.  
 * @note   none
 */
-HAL_RET_T HAL_GPIO_DisableNvic(ENUM_HAL_GPIO_Num e_gpioPin)
+HAL_RET_T HAL_GPIO_DisableNvic(ENUM_HAL_GPIO_NUM e_gpioPin)
 {
     uint8_t i = 0;
     uint8_t u8_flg = 0;

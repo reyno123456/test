@@ -165,7 +165,7 @@ typedef enum
     HAL_GPIO_NUM125,
     HAL_GPIO_NUM126,
     HAL_GPIO_NUM127
-} ENUM_HAL_GPIO_Num;
+} ENUM_HAL_GPIO_NUM;
 
 /**
 * @brief    set gpio output mode.
@@ -174,7 +174,7 @@ typedef enum
 *           HAL_GPIO_ERR_UNKNOWN  means the gpio number error.
 * @note     none
 */
-HAL_RET_T HAL_GPIO_OutPut(ENUM_HAL_GPIO_Num e_gpioPin);
+HAL_RET_T HAL_GPIO_OutPut(ENUM_HAL_GPIO_NUM e_gpioPin);
 
 /**
 * @brief    set gpio input mode
@@ -183,7 +183,7 @@ HAL_RET_T HAL_GPIO_OutPut(ENUM_HAL_GPIO_Num e_gpioPin);
 *           HAL_GPIO_ERR_INIT  means some error happens in the initializtion. 
 * @note     none
 */
-HAL_RET_T HAL_GPIO_InPut(ENUM_HAL_GPIO_Num e_gpioPin);
+HAL_RET_T HAL_GPIO_InPut(ENUM_HAL_GPIO_NUM e_gpioPin);
 
 /**
 * @brief    get gpio value
@@ -194,7 +194,7 @@ HAL_RET_T HAL_GPIO_InPut(ENUM_HAL_GPIO_Num e_gpioPin);
             HAL_GPIO_ERR_UNKNOWN  means the gpio number error. 
 * @note     gpio must be seted input mode otherwise only retrun 0
 */
-uint32_t HAL_GPIO_GetPin(ENUM_HAL_GPIO_Num e_gpioPin);
+uint32_t HAL_GPIO_GetPin(ENUM_HAL_GPIO_NUM e_gpioPin);
 
 /**
 * @brief    set gpio high or low
@@ -205,7 +205,7 @@ uint32_t HAL_GPIO_GetPin(ENUM_HAL_GPIO_Num e_gpioPin);
 *           HAL_GPIO_ERR_UNKNOWN  means the gpio number error. 
 * @note     gpio must be seted output mode
 */
-HAL_RET_T HAL_GPIO_SetPin(ENUM_HAL_GPIO_Num e_gpioPin, ENUM_HAL_GPIO_PinState e_pinState);
+HAL_RET_T HAL_GPIO_SetPin(ENUM_HAL_GPIO_NUM e_gpioPin, ENUM_HAL_GPIO_PinState e_pinState);
 
 /**
 * @brief    set gpio interrupt mode
@@ -218,7 +218,7 @@ HAL_RET_T HAL_GPIO_SetPin(ENUM_HAL_GPIO_Num e_gpioPin, ENUM_HAL_GPIO_PinState e_
 *           HAL_GPIO_ERR_INIT  means some error happens in the initializtion. 
 * @note     this function include set gpio input mode and debounce mode and register corresponding interrupt
 */
-HAL_RET_T HAL_GPIO_RegisterInterrupt(ENUM_HAL_GPIO_Num e_gpioPin, 
+HAL_RET_T HAL_GPIO_RegisterInterrupt(ENUM_HAL_GPIO_NUM e_gpioPin, 
                                      ENUM_HAL_GPIO_InterrputLevel e_inttype, 
                                      ENUM_HAL_GPIO_InterrputPolarity e_polarity,
                                      void *fun_callBack);

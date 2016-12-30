@@ -27,7 +27,7 @@ typedef struct
     uint32_t u32_baseTime;              //add pwm timer    
     uint8_t  u8_polarity;               //low or high
     uint8_t  u8_pin;                    // toggle gpio    
-    HAL_RET_T (*function)(ENUM_HAL_GPIO_Num,ENUM_HAL_GPIO_PinState);//callbak  
+    HAL_RET_T (*function)(ENUM_HAL_GPIO_NUM,ENUM_HAL_GPIO_PinState);//callbak  
 
 } STRU_SoftPwmHandle;
 
@@ -42,7 +42,7 @@ extern STRU_SoftPwmHandle g_stPwmQueue[MAXSOFTPWM];
 * @retval   HAL_OK : function is well done.
 * @note     none
 */
-HAL_RET_T HAL_SOFTPWM_SetTimer(ENUM_HAL_TIMER_Num e_timerNum);
+HAL_RET_T HAL_SOFTPWM_SetTimer(ENUM_HAL_TIMER_NUM e_timerNum);
 
 /**
 * @brief    add a simulatepwm
