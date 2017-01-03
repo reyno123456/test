@@ -77,6 +77,8 @@ typedef enum
     RC_CHANNEL_MODE,
     RC_CHANNEL_SELECT,
     RC_CHANNEL_FREQ,
+    IT_CHANNEL_FREQ,
+    MICS_IT_ONLY_MODE
 } ENUM_WIRELESS_FREQ_CHANGE_ITEM;
 
 
@@ -112,6 +114,16 @@ typedef enum
     BB_UART_COM_SESSION_4,
     BB_UART_COM_SESSION_MAX
 } ENUM_BBUARTCOMSESSIONID;
+
+
+typedef enum
+{
+    PAGE0 = 0x00,
+    PAGE1 = 0x40,
+    PAGE2 = 0x80,
+    PAGE3 = 0xc0,
+    PAGE_UNKNOW = 0xFF,
+} ENUM_REG_PAGES;
 
 
 #endif

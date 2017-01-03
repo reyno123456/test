@@ -137,11 +137,13 @@ void sky_agc_gain_toggle(void)
     if(FAR_AGC == en_agcmode)
     {
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_NEAR);
+        BB_WriteReg(PAGE0, AGC_3, AAGC_GAIN_NEAR);
         en_agcmode = NEAR_AGC;
     }
     else
     {
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_FAR);
+        BB_WriteReg(PAGE0, AGC_3, AAGC_GAIN_FAR);
         en_agcmode = FAR_AGC;
     }
 }
@@ -155,6 +157,7 @@ void sky_auto_adjust_agc_gain(void)
     if((rx1_gain >= POWER_GATE)&&(rx2_gain >= POWER_GATE) && en_agcmode != FAR_AGC)
     {
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_FAR);
+        BB_WriteReg(PAGE0, AGC_3, AAGC_GAIN_FAR);
         en_agcmode = FAR_AGC;
         dlog_info("=>F", rx1_gain, rx2_gain);
     }
@@ -164,6 +167,7 @@ void sky_auto_adjust_agc_gain(void)
         && en_agcmode != NEAR_AGC)
     {
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_NEAR);
+        BB_WriteReg(PAGE0, AGC_3, AAGC_GAIN_NEAR);
         en_agcmode = NEAR_AGC;
         dlog_info("=>N", rx1_gain, rx2_gain);
     }
@@ -733,8 +737,10 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 
             case RC_CHANNEL_FREQ:
             {
-                sky_rc_channel = (uint8_t)value;
-                BB_set_Rcfrq(context.freq_band, sky_rc_channel);
+                context.rc_skip_freq_mode = (ENUM_RUN_MODE)MANUAL;                
+                BB_write_RcRegs(value);
+                
+                dlog_info("RC_CHANNEL_FREQ %x\r\n", value);
                 break;
             }
 
@@ -770,6 +776,10 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
         {
             case 0:
                 sky_handle_debug_mode_cmd_event( (uint8_t)value);
+                break;
+
+            case 1:
+                BB_WriteReg(PAGE2, 0x02, 0x06);
                 break;
 
             default:
@@ -815,7 +825,7 @@ static void BB_sky_GatherOSDInfo(void)
     osdptr->agc_value[2] = BB_ReadReg(PAGE2, RX3_GAIN_ALL_R);
     osdptr->agc_value[3] = BB_ReadReg(PAGE2, RX4_GAIN_ALL_R);
 
-    osdptr->rc_status    = get_rc_status();
+    osdptr->lock_status    = get_rc_status();
 	osdptr->in_debug     = (uint8_t)(g_stSkyDebugMode.bl_isDebugMode);
 
     osdptr->head = 0x00;

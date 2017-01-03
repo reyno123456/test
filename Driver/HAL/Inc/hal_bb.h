@@ -211,6 +211,97 @@ HAL_RET_T HAL_BB_UartComReceiveMsg(ENUM_BBUARTCOMSESSIONID e_sessionId,
                                    uint32_t *pu32_dataLen);
 
 
+/** 
+ * @brief   set Baseband Rc frequency setting registers
+ * @param   u32_freqSetting:                the registers 
+ * @retval  HAL_OK,                         means command is sent sucessfully. 
+ * @retval  HAL_BB_ERR_EVENT_NOTIFY         means error happens in sending the command to cpu2                        
+ * @note    The function can only be called by cpu0,1, and only call for debug.
+ */
+HAL_RET_T HAL_BB_SetRcFreqProxy(uint32_t u32_freqSetting);
+
+
+
+/** 
+ * @brief   set Baseband It frequency setting registers
+ * @param   u32_freqSetting:                the registers setting
+ * @retval  HAL_OK,                         means command is sent sucessfully. 
+ * @retval  HAL_BB_ERR_EVENT_NOTIFY         means error happens in sending the command to cpu2                        
+ * @note    The function can only be called by cpu0,1, and only call for debug.
+ */
+HAL_RET_T HAL_BB_SetItFreqProxy(uint32_t u32_freqSetting);
+
+
+
+
+
+/** 
+ * @brief   set Baseband to It only mode
+ * @param   mode                            1: enter It only mode
+ * @retval  HAL_OK,                         means command is sent sucessfully. 
+ * @retval  HAL_BB_ERR_EVENT_NOTIFY         means error happens in sending the command to cpu2                        
+ * @note    The function can only be called by cpu0,1, and only call for debug.
+ */
+HAL_RET_T HAL_BB_SetItOnlyFreqProxy(uint8_t mode);
+
+
+
+/** 
+ * @brief   write RF 8003s register by spi
+ * @param   u8_addr:                        rf 8003s register register address 
+ * @param   u8_data:                        the data value to write to register 
+ * @retval  HAL_OK,                         means write succesfully
+ * @retval  HAL_BB_ERR_SPI_WRITE            spi write fail
+ * @note    The function can only be called by cpu0,1, and only call for debug.
+ */
+HAL_RET_T HAL_RF8003s_writeReg(uint8_t u8_addr, uint8_t u8_data);
+
+
+/** 
+ * @brief   read RF 8003s register by spi
+ * @param   u8_addr:                        rf 8003s register register address 
+ * @param   pu8_regValue:                   pointer to the address to store rf 8003 register value
+ * @retval  HAL_OK,                         means read succesfully
+ * @retval  HAL_BB_ERR_SPI_READ             spi read fail
+ * @note    The function can only be called by cpu0,1, and only call for debug.
+ */
+HAL_RET_T HAL_RF8003s_readByte(uint8_t u8_addr, uint8_t *pu8_regValue);
+
+
+/** 
+ * @brief   write baseband register by spi
+ * @param   e_page                          register in the page
+ * @param   u8_addr:                        rf 8003s register register address 
+ * @param   u8_data:                        the data value to write to register 
+ * @retval  HAL_OK,                         means write succesfully
+ * @retval  HAL_BB_ERR_SPI_WRITE            spi write fail
+ * @note    The function can only be called by cpu0,1, and only call for debug.
+ */
+HAL_RET_T HAL_BB_writeByte(ENUM_REG_PAGES e_page, uint8_t u8_addr, uint8_t u8_data);
+
+
+
+/** 
+ * @brief   write current page baseband register by spi
+ * @param   u8_addr:                        rf 8003s register register address 
+ * @param   u8_data:                        the data value to write to register 
+ * @retval  HAL_OK,                         means write succesfully
+ * @retval  HAL_BB_ERR_SPI_WRITE            spi write fail
+ * @note    The function can only be called by cpu0,1, and only call for debug.
+ */
+HAL_RET_T HAL_BB_curPageWriteByte(uint8_t u8_addr, uint8_t u8_data);
+
+
+
+/** 
+ * @brief   read current page baseband register by spi
+ * @param   u8_addr:                        rf 8003s register register address 
+ * @param   pu8_regValue:                   pointer to the address to store rf 8003 register value 
+ * @retval  HAL_OK,                         means write succesfully
+ * @retval  HAL_BB_ERR_SPI_WRITE            spi write fail
+ * @note    The function can only be called by cpu0,1, and only call for debug.
+ */
+HAL_RET_T HAL_BB_curPageReadByte(uint8_t u8_addr, uint8_t *pu8_regValue);
 
 
 #endif

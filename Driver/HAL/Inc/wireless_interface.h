@@ -137,7 +137,7 @@ typedef struct
     uint8_t         head;
     uint8_t         tail;
     uint8_t         in_debug;
-    uint8_t         rc_status;
+    uint8_t         lock_status;
 } STRU_WIRELESS_INFO_DISPLAY;
 
 typedef enum 

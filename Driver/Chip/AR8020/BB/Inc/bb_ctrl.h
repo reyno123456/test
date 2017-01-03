@@ -104,4 +104,7 @@ int BB_SetEncoderBitrate(uint8_t bitrate_Mbps);
  */
 void BB_uart10_spi_sel(uint32_t sel_dat);
 
+
+uint8_t BB_write_RcRegs(uint32_t u32_rc);
+
 #endif

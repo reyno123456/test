@@ -37,7 +37,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
          I2C/Src/i2c_ll.c \
          I2C/Src/i2c.c \
          SPI/Src/spi.c \
-         SPI/Src/bb_spi.c \
+         BB/Src/bb_spi.c \
          BB/Src/bb_uart_com.c \
          BB/Src/rf_8003s.c \
          BB/Src/bb_sky_ctrl.c \

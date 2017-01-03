@@ -14,6 +14,9 @@ History:
 #ifndef __HAL_GPIO_H__
 #define __HAL_GPIO_H__
 
+#include "hal_ret_type.h"
+
+
 typedef enum
 {
     HAL_GPIO_PIN_RESET = 0, //gpio output 0
