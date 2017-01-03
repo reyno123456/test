@@ -76,6 +76,9 @@ typedef uint8_t HAL_BOOL_T;
 #define HAL_BB_ERR_UNREGISTER_SESSION               (HAL_BB_ERR_MASK | 0x5)
 #define HAL_BB_ERR_SESSION_SEND                     (HAL_BB_ERR_MASK | 0x6)
 #define HAL_BB_ERR_SESSION_RCV                      (HAL_BB_ERR_MASK | 0x7)
+#define HAL_BB_ERR_SPI_WRITE                        (HAL_BB_ERR_MASK | 0x8)
+#define HAL_BB_ERR_SPI_READ                         (HAL_BB_ERR_MASK | 0x9)
+
 
 
 

@@ -330,6 +330,17 @@ uint8_t BB_set_sweepfrq(ENUM_RF_BAND band, uint8_t ch)
    
 }
 
+
+uint8_t BB_write_ItRegs(uint32_t u32_it)
+{
+    BB_WriteReg(PAGE2, AGC3_0,  (uint8_t)(u32_it >> 24) & 0xff);
+    BB_WriteReg(PAGE2, AGC3_1,  (uint8_t)(u32_it >> 16) & 0xff);
+    BB_WriteReg(PAGE2, AGC3_2,  (uint8_t)(u32_it >> 8) & 0xff);
+    BB_WriteReg(PAGE2, AGC3_3,  (uint8_t)(u32_it) & 0xff); 
+}
+
+
+
 uint8_t BB_set_ITfrq(ENUM_RF_BAND band, uint8_t ch)
 {
 	STRU_FRQ_CHANNEL *it_ch_ptr = (STRU_FRQ_CHANNEL *)((band == RF_2G)?It_frq:It_5G_frq);
@@ -340,6 +351,16 @@ uint8_t BB_set_ITfrq(ENUM_RF_BAND band, uint8_t ch)
 	BB_WriteReg(PAGE2, AGC3_3, it_ch_ptr[ch].frq4);
 
 }
+
+uint8_t BB_write_RcRegs(uint32_t u32_rc)
+{
+    BB_WriteReg(PAGE2, AGC3_a,  (uint8_t)(u32_rc >> 24) & 0xff);
+    BB_WriteReg(PAGE2, AGC3_b,  (uint8_t)(u32_rc >> 16) & 0xff);
+    BB_WriteReg(PAGE2, AGC3_c,  (uint8_t)(u32_rc >> 8) & 0xff);
+    BB_WriteReg(PAGE2, AGC3_d,  (uint8_t)(u32_rc) & 0xff); 
+}
+
+
 
 uint8_t BB_set_Rcfrq(ENUM_RF_BAND band, uint8_t ch)
 {
@@ -895,6 +916,13 @@ int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
             break;
         }
 
+        case 15:
+        {
+            cmd.u8_configClass  = WIRELESS_DEBUG_CHANGE;
+            cmd.u8_configItem   = 1;
+            break;
+        }
+
         default:
         {
             ret = 0;
@@ -957,6 +985,12 @@ void BB_handle_misc_cmds(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
             {
                 BB_WriteReg((ENUM_REG_PAGES)value, (uint8_t)value1, (uint8_t)value2);
                 dlog_info("BB write PAGE=0x%0.2x addr=0x%0.2x value=0x%0.2x", value, value1, value2);
+                break;
+            }
+
+            case MICS_IT_ONLY_MODE:
+            {
+                BB_WriteReg(PAGE2, 0x02, 0x06);
                 break;
             }
         }

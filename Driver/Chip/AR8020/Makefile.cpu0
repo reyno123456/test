@@ -51,7 +51,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
          BB/Src/bb_spi_com.c \
          BB/Src/bb_uart_com.c \
          SPI/Src/spi.c \
-         SPI/Src/bb_spi.c \
+         BB/Src/bb_spi.c \
          QuadSPI/Src/quad_spi_ctrl.c \
          DMA/Src/dma.c \
          USB/USB_Host/Class/MSC/Src/usbh_msc_bot.c \
@@ -121,7 +121,7 @@ install:
 	@cp -f CAN/Inc/can.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f I2C/Inc/i2c.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SPI/Inc/spi.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f SPI/Inc/bb_spi.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f BB/Inc/bb_spi.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/bb_uart_com.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/rf_8003s.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)

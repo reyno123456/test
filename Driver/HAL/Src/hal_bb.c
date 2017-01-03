@@ -14,7 +14,9 @@ History:
 #include <stdint.h>
 #include "sys_event.h"
 
+#include "bb_spi.h"
 #include "bb_ctrl.h"
+#include "rf_8003s.h"
 #include "hal_bb.h"
 
 
@@ -263,8 +265,6 @@ HAL_RET_T HAL_BB_SetItLdpcProxy(ENUM_BB_LDPC e_ldpc)
 }
 
 
-////////////////// handlers for WIRELESS_ENCODER_CHANGE //////////////////
-
 /** 
  * @brief       Set the encoder bitrate control mode
  * @param[in]   e_mode: auto or manual selection.
@@ -323,9 +323,11 @@ HAL_RET_T HAL_BB_SetEncoderBitrateProxy(uint8_t u8_bitrateMbps)
 
 /** 
  * @brief   Set board enter or out debug mode
- * @param   u8_mode	0:  set Baseband to enter debug mode, 
+ * @param   u8_mode	    0:  set Baseband to enter debug mode, 
                         1:  set Baseband to out debug mode.
- * @note    The function can only be called by cpu0,1 
+ * @retval  HAL_OK,                  means command is sent sucessfully. 
+ * @retval  HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2                        
+ * @note    The function can only be called by cpu0,1, and only call for debug.
  */
 HAL_RET_T HAL_BB_SetBoardDebugModeProxy(uint8_t u8_mode)
 {
@@ -357,7 +359,7 @@ HAL_RET_T HAL_BB_UartComRemoteSessionInit(void)
 /** 
  * @brief   register one uart session for send or receive message
  * @param   e_sessionId:                    the session id to request
- * @return  HAL_OK:                         means request session OK
+ * @return  HAL_OK:                         means register session OK
  *          HAL_BB_ERR_SESSION_OCCUPIED:    session ID is already occupied
  */
 HAL_RET_T HAL_BB_UartComRegisterSession(ENUM_BBUARTCOMSESSIONID e_sessionId)
@@ -396,7 +398,7 @@ HAL_RET_T HAL_BB_UartComUnRegisterSession(ENUM_BBUARTCOMSESSIONID e_sessionId)
  *          pu8_dataBuf:                    buffer pointer to the data to be sent
  *          u32_length:                     data size to be sent
  *
- * @return  HAL_OK:                         means unrequest session OK 
+ * @return  HAL_OK:                         means ungister session OK 
  *          HAL_BB_ERR_UNREGISTER_SESSION:  means some error happens in unregister session 
  */
 HAL_RET_T HAL_BB_UartComSendMsg(ENUM_BBUARTCOMSESSIONID e_sessionId, 
@@ -435,5 +437,161 @@ HAL_RET_T HAL_BB_UartComReceiveMsg(ENUM_BBUARTCOMSESSIONID e_sessionId,
     uint32_t u32_rcvCnt = BB_UARTComReceiveMsg(e_sessionId, pu8_dataBuf, u32_lengthMax);
     *pu32_dataLen = u32_rcvCnt;
 
+    return HAL_OK;
+}
+
+
+/** 
+ * @brief   set Baseband Rc frequency setting registers
+ * @param   u32_freqSetting:                the registers 
+ * @retval  HAL_OK,                         means command is sent sucessfully. 
+ * @retval  HAL_BB_ERR_EVENT_NOTIFY         means error happens in sending the command to cpu2                        
+ * @note    The function can only be called by cpu0,1, and only call for debug.
+ */
+HAL_RET_T HAL_BB_SetRcFreqProxy(uint32_t u32_freqSetting)
+{
+    STRU_WIRELESS_CONFIG_CHANGE cmd;
+
+    cmd.u8_configClass   = WIRELESS_FREQ_CHANGE;
+    cmd.u8_configItem    = RC_CHANNEL_FREQ;
+    cmd.u32_configValue  = u32_freqSetting;
+
+	return SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&cmd);
+}
+
+
+/** 
+ * @brief   set Baseband It frequency setting registers
+ * @param   u32_freqSetting:                the registers setting
+ * @retval  HAL_OK,                         means command is sent sucessfully. 
+ * @retval  HAL_BB_ERR_EVENT_NOTIFY         means error happens in sending the command to cpu2                        
+ * @note    The function can only be called by cpu0,1, and only call for debug.
+ */
+HAL_RET_T HAL_BB_SetItFreqProxy(uint32_t u32_freqSetting)
+{
+    STRU_WIRELESS_CONFIG_CHANGE cmd;
+
+    cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+    cmd.u8_configItem   = IT_CHANNEL_FREQ;
+    cmd.u32_configValue  = u32_freqSetting;
+
+	return SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&cmd);
+}
+
+
+/** 
+ * @brief   set Baseband to It only mode
+ * @param   mode                            1: enter It only mode  0: exit from the debug mode
+ * @retval  HAL_OK,                         means command is sent sucessfully. 
+ * @retval  HAL_BB_ERR_EVENT_NOTIFY         means error happens in sending the command to cpu2                        
+ * @note    The function can only be called by cpu0,1, and only call for debug.
+ */
+HAL_RET_T HAL_BB_SetItOnlyFreqProxy(uint8_t mode)
+{
+    STRU_WIRELESS_CONFIG_CHANGE cmd;
+
+    cmd.u8_configClass  = WIRELESS_MISC;
+    cmd.u8_configItem   = MICS_IT_ONLY_MODE;
+    cmd.u32_configValue = mode;
+
+	return SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&cmd);
+}
+
+
+/** 
+ * @brief   write RF 8003s register by spi
+ * @param   u8_addr:                        rf 8003s register register address 
+ * @param   u8_data:                        the data value to write to register 
+ * @retval  HAL_OK,                         means write succesfully
+ * @retval  HAL_BB_ERR_SPI_WRITE            spi write fail
+ * @note    The function can only be called by cpu0,1, and only call for debug.
+ */
+HAL_RET_T HAL_RF8003s_writeReg(uint8_t u8_addr, uint8_t u8_data)
+{ 
+    if (0 == RF8003s_SPI_WriteReg(u8_addr, u8_data))
+    {
+        return HAL_OK;
+    }
+    else
+    {
+        return HAL_BB_ERR_SPI_WRITE;
+    }
+}
+
+/** 
+ * @brief   read RF 8003s register by spi
+ * @param   u8_addr:                        rf 8003s register register address 
+ * @param   pu8_regValue:                   pointer to the address to store rf 8003 register value
+ * @retval  HAL_OK,                         means read succesfully
+ * @retval  HAL_BB_ERR_SPI_READ             spi read fail
+ * @note    The function can only be called by cpu0,1, and only call for debug.
+ */
+HAL_RET_T HAL_RF8003s_readByte(uint8_t u8_addr, uint8_t *pu8_regValue)
+{
+    if ( 0 == RF8003s_SPI_ReadReg(u8_addr, pu8_regValue))
+    {
+        return HAL_OK;
+    }
+    else
+    {
+        return HAL_BB_ERR_SPI_READ;
+    }
+}
+
+
+/** 
+ * @brief   write baseband register by spi
+ * @param   e_page                          register in the page
+ * @param   u8_addr:                        rf 8003s register register address 
+ * @param   u8_data:                        the data value to write to register 
+ * @retval  HAL_OK,                         means write succesfully
+ * @retval  HAL_BB_ERR_SPI_WRITE            spi write fail
+ * @note    The function can only be called by cpu0,1, and only call for debug.
+ */
+HAL_RET_T HAL_BB_writeByte(ENUM_REG_PAGES e_page, uint8_t u8_addr, uint8_t u8_data)
+{
+    if (0 == BB_SPI_WriteByte(e_page, u8_addr, u8_data))
+    {
+        return HAL_OK;
+    }
+    else
+    {
+        return HAL_BB_ERR_SPI_READ;
+    }
+}
+
+
+/** 
+ * @brief   write current page baseband register by spi
+ * @param   u8_addr:                        rf 8003s register register address 
+ * @param   u8_data:                        the data value to write to register 
+ * @retval  HAL_OK,                         means write succesfully
+ * @retval  HAL_BB_ERR_SPI_WRITE            spi write fail
+ * @note    The function can only be called by cpu0,1, and only call for debug.
+ */
+HAL_RET_T HAL_BB_curPageWriteByte(uint8_t u8_addr, uint8_t u8_data)
+{
+    if (0 == BB_SPI_curPageWriteByte(u8_addr, u8_data))
+    {
+        return HAL_OK;
+    }
+    else
+    {
+        return HAL_BB_ERR_SPI_READ;
+    }
+}
+
+/** 
+ * @brief   read current page baseband register by spi
+ * @param   u8_addr:                        rf 8003s register register address 
+ * @param   pu8_regValue:                   pointer to the address to store rf 8003 register value 
+ * @retval  HAL_OK,                         means write succesfully
+ * @retval  HAL_BB_ERR_SPI_WRITE            spi write fail
+ * @note    The function can only be called by cpu0,1, and only call for debug.
+ */
+HAL_RET_T HAL_BB_curPageReadByte(uint8_t u8_addr, uint8_t *pu8_regValue)
+{
+    *pu8_regValue = BB_SPI_curPageReadByte(u8_addr);
+    
     return HAL_OK;
 }

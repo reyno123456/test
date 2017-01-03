@@ -130,7 +130,8 @@ void WIRELESS_SendOSDInfo(ENUM_WIRELESS_TOOL host)
 
     /* if cpu2 update info, and the info is valid */
     if ((0x0 == g_pstWirelessInfoDisplay->head)
-      &&(0xFF == g_pstWirelessInfoDisplay->tail))
+      &&(0xFF == g_pstWirelessInfoDisplay->tail)
+      &&(0x0 == g_pstWirelessInfoDisplay->in_debug))
     {
         if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)&g_stWirelessInfoSend, sendLength, HID_EPIN_CTRL_ADDR))
         {
@@ -150,7 +151,19 @@ void WIRELESS_INTERFACE_UPGRADE_Handler(void *param)
 
 void WIRELESS_INTERFACE_ENTER_TEST_MODE_Handler(void *param)
 {
-    dlog_info("WIRELESS_INTERFACE_ENTER_TEST_MODE_Handler\n");
+    dlog_info("WIRELESS_INTERFACE_ENTER_TEST_MODE_Handler\n"); 
+
+    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
+    recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
+    WITELESS_GetOSDInfo();
+    if (g_stWirelessInfoSend.in_debug == 1)
+    {
+        BB_SPI_WriteByte(PAGE2, 0x02, 0x06);
+    }
+    else
+    {
+        HAL_BB_SetItOnlyFreqProxy(1);
+    }
 }
 
 
@@ -367,6 +380,7 @@ void WIRELESS_INTERFACE_SELECT_VIDEO_FREQ_CHANNEL_Handler(void *param)
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
     recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
     uint8_t u8_index;
+    uint32_t u32_freValue = 0;
     WITELESS_GetOSDInfo();
     if (g_stWirelessInfoSend.in_debug == 1)
     {
@@ -378,18 +392,11 @@ void WIRELESS_INTERFACE_SELECT_VIDEO_FREQ_CHANNEL_Handler(void *param)
     }
     else
     {   
-        // dlog_info("inDebugFlag1 = %x\n",inDebugFlag);
-        recvMessage->messageId = 0x0e;
-        recvMessage->paramLen = 0;
-        if (USB_OTG_IS_BIG_ENDIAN())
+        for (u8_index = 0; u8_index < recvMessage->paramData[2]; ++u8_index)
         {
-            convert_endian((void *)recvMessage, (void *)recvMessage, (uint32_t)(sizeof(recvMessage)));
+            u32_freValue = (u32_freValue << 8) + recvMessage->paramData[u8_index+3];
         }
-
-        if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)recvMessage, (uint32_t)(sizeof(recvMessage->messageId) + sizeof(recvMessage->paramLen)), HID_EPIN_CTRL_ADDR))
-        {
-            dlog_error("send fail!\n");
-        }
+        HAL_BB_SetItFreqProxy(u32_freValue);
     }
 }
 
@@ -405,6 +412,7 @@ void WIRELESS_INTERFACE_SET_RC_FREQ_CHANNEL_Handler(void *param)
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
     recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
     uint8_t u8_index;
+    uint32_t u32_freValue = 0;
     WITELESS_GetOSDInfo();
     if (g_stWirelessInfoSend.in_debug == 1)
     {
@@ -416,18 +424,11 @@ void WIRELESS_INTERFACE_SET_RC_FREQ_CHANNEL_Handler(void *param)
     }
     else
     {   
-        // dlog_info("inDebugFlag1 = %x\n",inDebugFlag);
-        recvMessage->messageId = 0x0e;
-        recvMessage->paramLen = 0;
-        if (USB_OTG_IS_BIG_ENDIAN())
+        for (u8_index = 0; u8_index < recvMessage->paramData[2]; ++u8_index)
         {
-            convert_endian((void *)recvMessage, (void *)recvMessage, (uint32_t)(sizeof(recvMessage)));
+            u32_freValue = (u32_freValue << 8) + recvMessage->paramData[u8_index+3];
         }
-
-        if (USBD_OK != USBD_HID_SendReport(&USBD_Device, (uint8_t *)recvMessage, (uint32_t)(sizeof(recvMessage->messageId) + sizeof(recvMessage->paramLen)), HID_EPIN_CTRL_ADDR))
-        {
-            dlog_error("send fail!\n");
-        }
+        HAL_BB_SetRcFreqProxy(u32_freValue);
     }
 }
 

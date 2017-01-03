@@ -924,7 +924,7 @@ static void BB_grd_GatherOSDInfo(void)
     osdptr->code_rate       = grd_get_IT_LDPC();
     osdptr->ch_bandwidth    = context.CH_bandwidth;         
 	osdptr->in_debug        = (uint8_t)(g_stGrdDebugMode.bl_isDebugMode);
-
+    osdptr->lock_status     = BB_ReadReg(PAGE2, FEC_5_RD);
     memset(osdptr->sweep_energy, 0, sizeof(osdptr->sweep_energy));
     grd_get_sweep_noise(0, osdptr->sweep_energy);
     

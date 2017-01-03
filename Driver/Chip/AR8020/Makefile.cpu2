@@ -43,7 +43,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
          H264Encoder/Src/vsoc_enc.c \
          H264Encoder/Src/brc.c \
          SPI/Src/spi.c \
-         SPI/Src/bb_spi.c \
+         BB/Src/bb_spi.c \
          BB/Src/bb_sky_ctrl.c \
          BB/Src/bb_grd_ctrl.c \
          BB/Src/bb_grd_sweep.c \

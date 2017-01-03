@@ -6,6 +6,7 @@
 #include "cmsis_os.h"
 #include "sys_event.h"
 #include "bb_spi.h"
+#include "hal_gpio.h"
 #include "hal_bb.h"
 #include "hal_hdmi_rx.h"
 #include "hal_usb_device.h"
@@ -43,6 +44,11 @@ void console_init(uint32_t uart_num, uint32_t baut_rate)
     command_init();
 }
 
+void HDMI_powerOn(void)
+{
+    HAL_GPIO_OutPut(63);
+    HAL_GPIO_SetPin(63, HAL_GPIO_PIN_SET);
+}
 
 static void IO_Task(void const *argument)
 {
@@ -78,6 +84,8 @@ int main(void)
 
     /* Enable the CPU Cache */
     CPU_CACHE_Enable();
+
+    HDMI_powerOn();
 
     HAL_HDMI_RX_Init(HAL_HDMI_RX_0);
     HAL_HDMI_RX_Init(HAL_HDMI_RX_1);
