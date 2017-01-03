@@ -2,60 +2,68 @@
 #include "interrupt.h"
 #include "test_sd.h"
 
-void InitSDIRQ()
-{
-    /* register the irq handler */
-    reg_IrqHandle(SD_INTR_VECTOR_NUM, sd_IRQHandler, NULL);
-    INTR_NVIC_EnableIRQ(SD_INTR_VECTOR_NUM);
-    INTR_NVIC_SetIRQPriority(SD_INTR_VECTOR_NUM, 1);
-
-}
 
 void TestWR()
 {
-	InitSDIRQ();
+	dlog_info("testwr\n");
+	HAL_SD_InitIRQ();
 
-	int res;
-	if ((res = sd_init()) != 0)
+	HAL_RET_T res;
+	if ((res = HAL_SD_Init()) != HAL_OK)
 	{
+		dlog_error("init SD failed\n");
 		return;
 	}
 
-	// int i = 0;
-	// uint32_t sect = 0;
-	// while(i < 10)
-	// {
-	// 	sd_write(sect, 0x20000000, 1);
-	// 	delay_ms(10);
-	// 	i++;
-	// 	sect += 1;
-	// }
+	uint32_t info = 0;
+	ENUM_HAL_SD_CTRL cmd = HAL_SD_GET_SECTOR_COUNT;
+	if (HAL_SD_Ioctl(cmd, &info) != HAL_OK)
+	{
+		dlog_info("ioctl failed\n");
+	}
 
- //    sd_write(0x00000000, 0x44000000, 1); /* byte units*/
+	cmd = HAL_SD_GET_SECTOR_SIZE;
+	if (HAL_SD_Ioctl(cmd, &info) != HAL_OK)
+	{
+		dlog_info("ioctl failed\n");
+	}
 
-	// sd_read(0x440F0100, 0x00000000, 4);   /*block units*/
-	
-	// dlog_info("write finish\n");
+	cmd = HAL_SD_GET_CSD_VERSION;
+	if (HAL_SD_Ioctl(cmd, &info) != HAL_OK)
+	{
+		dlog_info("ioctl failed\n");
+	}
 
-	// sd_write(0x00000000, 0x44000000, 1); /* block units*/
+	cmd = HAL_SD_GET_MANUID;
+	if (HAL_SD_Ioctl(cmd, &info) != HAL_OK)
+	{
+		dlog_info("ioctl failed\n");
+	}
 
-	// sd_write(0x00000008, 0x44000000, 4); /* byte units*/
+	cmd = HAL_SD_GET_TRAN_SPEED;
+	if (HAL_SD_Ioctl(cmd, &info) != HAL_OK)
+	{
+		dlog_info("ioctl failed\n");
+	}
 
-	// sd_read(0x440f0100, 0x00000008,  4);   /*block units*/
+	cmd = HAL_SD_GET_CARD_STATUS;
+	if (HAL_SD_Ioctl(cmd, &info) != HAL_OK)
+	{
+		dlog_info("ioctl failed\n");
+	}
 
-	// sd_write(0x0000000a, 0x44000000, 4); /* byte units*/
+	int i = 0;
+	uint32_t sect = 0;
+	while(i < 10)
+	{
+		HAL_SD_Write(sect, 0x20000000+i*0x1400, 10);
+		i++;
+		sect += 1;
+	}
 
-	// sd_write(0x0000000d, 0x44000000, 4); /* byte units*/
+	// HAL_SD_Read(0x20000000, 0, 10);
 
-
-	// sd_write(0x00000010, 0x44000000, 4); /* byte units*/
-
-	// sd_write(0x00000014, 0x44000000, 4); /* byte units*/
-
-	// sd_write(0x00000018, 0x44000000, 4); /* byte units*/
-
-	// sd_write(0x0000001c, 0x44000000, 300);
-	//sd_deinit();
+	HAL_SD_Deinit();
 }
 
 void TestFatFs()
@@ -151,10 +159,18 @@ void TestFatFs()
 
 void command_initSdcard()
 {
-    InitSDIRQ();
+    HAL_SD_InitIRQ();
 	int res;
-	if ((res = sd_init()) != 0)
+	if ((res = HAL_SD_Init()) != 0)
 	{
 		return;
 	}
+
+}
+
+
+void command_SdcardFatFs()
+{
+    // TestWR();
+    TestFatFs();
 }

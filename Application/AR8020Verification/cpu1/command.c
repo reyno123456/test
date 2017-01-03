@@ -1,14 +1,13 @@
 #include "command.h"
-#include "sd_host.h"
 #include "debuglog.h"
 #include "interrupt.h"
 #include "serial.h"
-#include "sd_host.h"
 #include "stm32f746xx.h"
 #include "debuglog.h"
 #include <string.h>
 #include <stdlib.h>
 #include "cmsis_os.h"
+#include "hal_sd.h"
 #include "test_spi.h"
 #include "test_timer.h"
 #include "test_gpio.h"
@@ -464,7 +463,7 @@ void command_readSdcard(char *Dstaddr, char *BytesNum)
     bufferPos = readSdcardBuff;
 
     /* read from sdcard */
-    sd_read(&sdhandle, bufferPos, iBytesNum, iSrcAddr);
+    HAL_SD_Read(&sdhandle, bufferPos, iBytesNum, iSrcAddr);
 
     /* print to serial */
     for (blockIndex = iDstAddr; blockIndex <= (iDstAddr + iBytesNum / dma.BlockSize); blockIndex++)
@@ -510,7 +509,7 @@ void command_writeSdcard(char *Dstaddr, char *BytesNum, char *SrcAddr)
     memset(writeSdcardBuff, SrcAddr, iBytesNum);
 
     /* write to sdcard */
-    sd_write(&sdhandle, iDstAddr, iBytesNum, writeSdcardBuff);
+    HAL_SD_Write(&sdhandle, iDstAddr, iBytesNum, writeSdcardBuff);
     m7_free(writeSdcardBuff);
 #endif
 
@@ -534,7 +533,7 @@ void command_eraseSdcard(char *startBlock, char *blockNum)
 
 
     dlog_info("startBlock = 0x%08x\n", iStartBlock);
-    //sd_erase(&sdhandle, iStartBlock, iBlockNum);
+    // HAL_SD_Erase(&sdhandle, iStartBlock, iBlockNum);
     dlog_info("blockNum = 0x%08x\n", iBlockNum);
 }
 

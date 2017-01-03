@@ -3,8 +3,7 @@
 
 #include "ff.h"
 #include "ff_gen_drv.h"
-#include "sd_host.h"
-
+#include "hal_sd.h"
 
 FATFS SDFatFs;  /* File system object for SD card logical drive */
 FIL MyFile;     /* File object */
@@ -14,5 +13,7 @@ extern Diskio_drvTypeDef  SD_Driver;
 void TestWR(void);
 void TestFatFs(void);
 void TestSDIRQ(void);
+void command_SdcardFatFs(void);
+void command_initSdcard();
 
 #endif

@@ -93,6 +93,7 @@ SDMMC_Status Core_SDMMC_WaiteCmdStart(SDMMC_REG *SDMMCx)
   do {
     get_val = Core_SDMMC_GetCMD(SDMMCx); 
     cmd_start = (get_val & SDMMC_CMD_START_CMD);
+    // dlog_info("cmd_start?\n");
   } while (cmd_start);
   return SDMMC_OK;
 }
@@ -103,6 +104,7 @@ SDMMC_Status Core_SDMMC_WaiteVoltSwitchInt(SDMMC_REG *SDMMCx)
   do {
     get_val = Core_SDMMC_GetRINTSTS(SDMMCx);
     volt_switch_int = (get_val & SDMMC_RINTSTS_HTO);
+    // dlog_info("volt_switch_int\n");
   } while (!volt_switch_int);
   return SDMMC_OK;
 }

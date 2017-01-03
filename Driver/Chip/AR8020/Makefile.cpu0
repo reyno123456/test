@@ -36,7 +36,6 @@ SRC_C := SysCtl/Src/reg_rw.c \
          CAN/Src/can.c \
          SD/Src/sd_core.c \
          SD/Src/sd_card.c \
-         SD/Src/sd_host.c \
          I2C/Src/i2c_ll.c \
          I2C/Src/i2c.c \
          SRAM/Src/sram.c \
@@ -125,7 +124,6 @@ install:
 	@cp -f SPI/Inc/bb_spi.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/bb_uart_com.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/rf_8003s.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f SD/Inc/* $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/pll_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/systicks.h $(OUTPUT_HEADER_STAGING_DIR)

@@ -50,6 +50,7 @@ INCDIRS +=  -IFatFs/Inc \
             -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \
             -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
             -I$(TOP_DIR)/Driver/Chip/AR8020/SD/Inc \
+            -I$(TOP_DIR)/Driver/HAL/Inc/ \
             -I$(TOP_DIR)/Library/Artosyn/Common/Inc
 
  

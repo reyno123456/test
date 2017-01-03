@@ -1,9 +1,7 @@
 #include "command.h"
-#include "sd_host.h"
 #include "debuglog.h"
 #include "interrupt.h"
 #include "serial.h"
-#include "sd_host.h"
 #include "debuglog.h"
 #include <string.h>
 #include <stdlib.h>
@@ -11,6 +9,8 @@
 #include "test_freertos.h"
 #include "test_timer.h"
 #include "test_can.h"
+#include "test_sd.h"
+#include "hal_sd.h"
 #include "test_spi.h"
 #include "test_quadspi.h"
 #include "test_gpio.h"
@@ -36,7 +36,6 @@ uint32_t UartNum;
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
-void command_initSdcard();
 void command_readSdcard(char *Dstaddr, char *BlockNum);
 void command_writeSdcard(char *Dstaddr, char *BlockNum, char *SrcAddr);
 void command_eraseSdcard(char *startBlock, char *blockNum);
@@ -213,6 +212,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     else if (memcmp(cmdArray[0], "erasesd", 7) == 0)
     {
         command_eraseSdcard(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "test_sdfs", 9) == 0)
+    {
+        command_SdcardFatFs();
     }
     else if (memcmp(cmdArray[0], "startbypassvideo", strlen("startbypassvideo")) == 0)
     {
@@ -504,6 +507,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("test_hal_spi_init <ch> <baudr> <polarity> <phase>");
         dlog_error("test_hal_spi_write <ch> <addr> <wdata>");
         dlog_error("test_hal_spi_read <ch> <addr>");
+		dlog_error("test_sdfs");
     }
 
     /* must init to receive new data from serial */
@@ -690,7 +694,7 @@ void command_readSdcard(char *Dstaddr, char *BlockNum)
     // dlog_info("readSdcardBuff = 0x%08x\n", readSdcardBuff);
 
     /* read from sdcard */
-    sd_read((uint32_t)bufferPos, iSrcAddr, iBlockNum);
+    HAL_SD_Read((uint32_t)bufferPos, iSrcAddr, iBlockNum);
 
     /* print to serial */
     for (blockIndex = iSrcAddr; blockIndex < (iSrcAddr + iBlockNum); blockIndex++)
@@ -730,12 +734,8 @@ void command_writeSdcard(char *Dstaddr, char *BlockNum, char *SrcAddr)
     iBlockNum   = command_str2uint(BlockNum);
     iSrcAddr    = command_str2uint(SrcAddr);
 
-    // dlog_info("iSrcAddr = 0x%08x\n", iSrcAddr);
-    // dlog_info("iDstBlock = 0x%08x\n", iDstAddr);
-    // dlog_info("iBlockNum = 0x%08x\n", iBlockNum);
-
     /* write to sdcard */
-    sd_write(iDstAddr, iSrcAddr, iBlockNum);
+    HAL_SD_Write(iDstAddr, iSrcAddr, iBlockNum);
 
 }
 
@@ -749,7 +749,7 @@ void command_eraseSdcard(char *startBlock, char *blockNum)
 
     // dlog_info("startBlock = 0x%08x\n", iStartBlock);
     // dlog_info("blockNum = %d\n", iBlockNum);
-    sd_erase(iStartBlock, iBlockNum);
+    HAL_SD_Erase(iStartBlock, iBlockNum);
 }
 
 void delay_ms(uint32_t num)
@@ -791,5 +791,6 @@ void command_stopBypassVideo(void)
         dlog_error("Bypass Video Task is not running\n");
     }
 }
+
 
 

@@ -22,7 +22,7 @@ include $(BUILD_DIR)/config.mk
 # libs
 CPU_NUMBER := cpu0
 #LD_LIBS := -lfreertos -lAR8020drv -lcommon  -lusb
-LD_LIBS := -lAR8020drv -lcommon -lboard -lfreertos
+LD_LIBS := -lAR8020drv -lcommon -lboard -lfreertos -lhal
 
 LDFLAGS += -Bstatic
 LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) $(LD_LIBS)
@@ -36,8 +36,7 @@ SRC_C   :=  Src/upgrade_main.c \
 			Src/upgrade_core.c \
 			Src/upgrade_md5.c \
 			$(SRC_C_DIR)/SD/Src/sd_core.c \
-         	$(SRC_C_DIR)/SD/Src/sd_card.c \
-         	$(SRC_C_DIR)/SD/Src/sd_host.c 
+         	$(SRC_C_DIR)/SD/Src/sd_card.c
 
 CFLAGS +=   -I./Inc \
 			-I$(OUTPUT_HEADER_STAGING_DIR) \

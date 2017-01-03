@@ -28,12 +28,11 @@
 /* Includes ------------------------------------------------------------------*/
 #include <string.h>
 #include "ff_gen_drv.h"
-#include "sd_host.h"
 #include "debuglog.h"
+#include "hal_sd.h"
+#include "sd_card.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-/* Block Size in Bytes */
-#define BLOCK_SIZE                512
 
 /* Private variables ---------------------------------------------------------*/
 /* Disk status */
@@ -83,11 +82,11 @@ DSTATUS SD_initialize(BYTE lun)
   Stat = STA_NOINIT;
 
   /* Configure the uSD device */
-  if (sd_init() == MSD_OK)
+  if (HAL_SD_Init() == MSD_OK)
   {
     Stat &= ~STA_NOINIT;
   }
-  dlog_info("SD initializa success!\n");
+  // dlog_info("SD initializa success!\n");
   return Stat;
 }
 
@@ -99,8 +98,8 @@ DSTATUS SD_initialize(BYTE lun)
 DSTATUS SD_status(BYTE lun)
 {
   Stat = STA_NOINIT;
-
-  if (sd_getcardstatus() == SD_CARD_IDLE)
+  SD_STATUS *e_cardStatus;
+  if (SD_CardStatus(e_cardStatus) == SD_TRANSFER_READY)
   {
     Stat &= ~STA_NOINIT;
   }
@@ -120,21 +119,21 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 {
   DRESULT res = RES_OK;
 
-  dlog_info("buff addr = 0x%x\n", buff);
-  dlog_info("sector = %d\n", sector);
-  dlog_info("count = %d\n", count);
+  // dlog_info("buff addr = 0x%x\n", buff);
+  // dlog_info("sector = %d\n", sector);
+  // dlog_info("count = %d\n", count);
   
-  if (sd_read((uint32_t)buff,
+  if (HAL_SD_Read((uint32_t)buff,
               (uint32_t)sector,
               count) != MSD_OK)
   {
     res = RES_ERROR;
   }
-  dlog_info("print read");
-  for (int i = 0; i < 8; ++i)
-  {
-    dlog_info("read byte = 0x%x\n", buff[i]);
-  }
+  // dlog_info("print read");
+  // for (int i = 0; i < 8; ++i)
+  // {
+  //   dlog_info("read byte = 0x%x\n", buff[i]);
+  // }
   return res;
 }
 
@@ -151,15 +150,15 @@ DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
 {
   DRESULT res = RES_OK;
 
-  for (int j = 0; j < 8; ++j)
-  {
-    dlog_info("write byte = 0x%x\n", buff[j]);
-  }
-  dlog_info("buff addr = 0x%x\n", buff);
-  dlog_info("sector = %d\n", sector);
-  dlog_info("count = %d\n", count);
+  // for (int j = 0; j < 8; ++j)
+  // {
+  //   dlog_info("write byte = 0x%x\n", buff[j]);
+  // }
+  // dlog_info("buff addr = 0x%x\n", buff);
+  // dlog_info("sector = %d\n", sector);
+  // dlog_info("count = %d\n", count);
 
-  if (sd_write((uint64_t)sector,
+  if (HAL_SD_Write((uint64_t)sector,
                (uint32_t)buff,
                count) != MSD_OK)
   {
@@ -181,7 +180,6 @@ DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
 DRESULT SD_ioctl(BYTE lun, BYTE cmd, void *buff)
 {
   DRESULT res = RES_ERROR;
-  SD_CardInfoTypedef CardInfo;
 
   if (Stat & STA_NOINIT) return RES_NOTRDY;
 
@@ -194,21 +192,20 @@ DRESULT SD_ioctl(BYTE lun, BYTE cmd, void *buff)
 
   /* Get number of sectors on the disk (DWORD) */
   case GET_SECTOR_COUNT :
-    //sd_getcardinfo(&CardInfo);
-    //*(DWORD*)buff = CardInfo.CardCapacity;
-    *(DWORD*)buff = 31275008;
+    HAL_SD_Ioctl(HAL_SD_GET_SECTOR_COUNT, (uint32_t *)buff);
+    // *(DWORD*)buff = 31275008;
     res = RES_OK;
     break;
 
   /* Get R/W sector size (WORD) */
   case GET_SECTOR_SIZE :
-    *(WORD*)buff = BLOCK_SIZE;
+    HAL_SD_Ioctl(HAL_SD_GET_SECTOR_SIZE, (uint32_t *)buff);
     res = RES_OK;
     break;
 
   /* Get erase block size in unit of sector (DWORD) */
   case GET_BLOCK_SIZE :
-    *(DWORD*)buff = BLOCK_SIZE;
+    HAL_SD_Ioctl(HAL_SD_GET_SECTOR_SIZE, (uint32_t *)buff);
     break;
 
   default:

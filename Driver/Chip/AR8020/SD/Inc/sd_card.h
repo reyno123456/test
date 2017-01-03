@@ -11,11 +11,6 @@
 #ifndef __SD_CARD_H
 #define __SD_CARD_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 #include <stdio.h>
 #include "sd_core.h"
 
@@ -151,6 +146,33 @@ typedef struct
 
 } SD_CardStatusTypedef;
 
+/** @defgroup SD_Exported_Types_Group8 SD Card State enumeration structure
+  * @{
+  */
+typedef enum
+{
+	SD_CARD_IDLE = 0,
+	SD_CARD_READY,
+	SD_CARD_IDENTIFICATION,
+	SD_CARD_STANDBY,
+	SD_CARD_TRANSFER,
+	SD_CARD_DATA,
+	SD_CARD_RECEIVE,
+	SD_CARD_PROGRAMMING,
+	SD_CARD_DISCONNECTED,
+	SD_CARD_ERROR
+} SD_STATUS;
+
+/** @defgroup SD_Exported_Types_Group7 SD Transfer state enumeration structure
+* @{
+*/
+typedef enum
+{
+	SD_TRANSFER_READY    = 0,  /*!< Transfer success      */
+	SD_TRANSFER_BUSY  = 1,  /*!< Transfer is occurring */
+	SD_TRANSFER_ERROR = 2   /*!< Transfer failed       */
+} SD_TRANSFER_STATUS;
+
 /** @defgroup SD_Exported_Types_Group5 SD Card information structure
   * @{
   */
@@ -227,34 +249,6 @@ typedef enum
 
 } SD_ErrorTypedef;
 
-/** @defgroup SD_Exported_Types_Group7 SD Transfer state enumeration structure
-  * @{
-  */
-typedef enum
-{
-	SD_TRANSFER_OK    = 0,  /*!< Transfer success      */
-	SD_TRANSFER_BUSY  = 1,  /*!< Transfer is occurring */
-	SD_TRANSFER_ERROR = 2   /*!< Transfer failed       */
-
-} SD_TransferStateTypedef;
-
-/** @defgroup SD_Exported_Types_Group8 SD Card State enumeration structure
-  * @{
-  */
-typedef enum
-{
-	SD_CARD_IDLE = 0,
-	SD_CARD_READY,
-	SD_CARD_IDENTIFICATION,
-	SD_CARD_STANDBY,
-	SD_CARD_TRANSFER,
-	SD_CARD_DATA,
-	SD_CARD_RECEIVE,
-	SD_CARD_PROGRAMMING,
-	SD_CARD_DISCONNECTED,
-	SD_CARD_ERROR
-
-} SD_CardStateTypedef;
 
 
 /** @defgroup SD_Exported_Types_Group9 SD Operation enumeration structure
@@ -479,13 +473,9 @@ SD_ErrorTypedef SD_GetState(SD_HandleTypeDef *hsd, uint32_t *CardStatus);
   * @{
   */
 SD_ErrorTypedef Card_SD_SendSDStatus(SD_HandleTypeDef *hsd, uint32_t *pSDstatus);
+void SD_IRQHandler(uint32_t vectorNum);
+SD_TRANSFER_STATUS SD_CardStatus(SD_STATUS *e_cardStatus);
 //SD_ErrorTypedef Card_SD_GetCardStatus(SD_HandleTypeDef *hsd, HAL_SD_CardStatusTypedef *pCardStatus);
-SD_TransferStateTypedef Card_SD_GetStatus(SD_HandleTypeDef *hsd);
 
-
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
