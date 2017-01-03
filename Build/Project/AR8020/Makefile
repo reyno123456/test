@@ -33,7 +33,7 @@ all: $(LIBS)
 clean: MKARGS := clean
 
 PROJS ?= verification
-include ../../ConfigureFiles/$(addprefix config,$(addsuffix .mk,$(PROJS)))
+-include ../../config.mk
 
 MKCONFIG ?= ../../ConfigureFiles/$(addprefix config,$(addsuffix .mk,$(PROJS)))
 
@@ -66,13 +66,13 @@ sdk:
 	@tar -cvf  $(SDK_DIR_VERSION).tar.gz $(SDK_DIR)
 	@rm -rf $(SDK_DIR)
 
-ground: $(LIBS)
+ground:
 	@echo "make ground ..."
 	@echo $(APPLICATION_DIR)
 	@$(MAKE) ground -C $(APPLICATION_DIR)
 	@cp $(APPLICATION_DIR)/*.bin $(OUTPUT_DIR)
 
-sky: $(LIBS)
+sky:
 	@echo "make sky ..."
 	@echo $(APPLICATION_DIR)
 	@$(MAKE) sky -C $(APPLICATION_DIR)
