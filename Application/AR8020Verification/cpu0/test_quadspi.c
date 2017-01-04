@@ -15,6 +15,18 @@ void Reg_Write323(uint32_t regAddr, uint32_t regData)
     *ptr_regAddr = regData;
 }
 
+uint32_t Reg_Read323(uint32_t regAddr)
+{
+    volatile uint32_t* ptr_regAddr = (uint32_t*)regAddr;
+    return *ptr_regAddr;
+}
+
+uint64_t Reg_Read646(uint32_t regAddr)
+{
+    volatile uint64_t* ptr_regAddr = (uint64_t*)regAddr;
+    return *ptr_regAddr;
+}
+
 void command_setQuadSPISpeed(char* speed_str)
 {
     ENUM_QUAD_SPI_SPEED speed = (ENUM_QUAD_SPI_SPEED)strtoul(speed_str, NULL, 0);
@@ -110,6 +122,8 @@ void command_initWinbondNorFlash(void)
     QUAD_SPI_UpdateInstruct(QUAD_SPI_INSTR_20, 0x609c80, 0x17);
     //D8h
     QUAD_SPI_UpdateInstruct(QUAD_SPI_INSTR_21, 0x609f60, 0x17);
+
+     QUAD_SPI_UpdateInstruct(QUAD_SPI_INSTR_7, 0x601D2C, 0xf83f00);
 }
 
 void command_eraseWinbondNorFlash(char* type_str, char* start_addr_str)
@@ -195,18 +209,30 @@ void command_testAllNorFlashOperations(char* start_addr_str, char* size_str, cha
     uint32_t start_addr = strtoul(start_addr_str, NULL, 0);
     uint32_t size = strtoul(size_str, NULL, 0);
     uint8_t buf[10]={0};
+    uint32_t i = 0;
     /*uint8_t* buf = malloc(size);*/
     {
-        uint32_t i = 0;
-        for(i = 0; i < size; i++)
+        for(i = 0; i < 10; i++)
         {
-            buf[i] = val + i;
+            buf[i] = 0;
         }
     }
+    
     dlog_info("Nor flash init start ...");
     NOR_FLASH_Init();
+    //command_initWinbondNorFlash();
     dlog_info("Nor flash init end");
+    dlog_info("product id");
+    NOR_FLASH_ReadProductID(buf);
+    for(i = 0; i < 8; i++)
+    {
+        dlog_info("%x",buf[i]);
+    }
+    dlog_info("end");
 
+    dlog_info("chip id %x",(Reg_Read646(HP_SPI_BASE_ADDR + CMD7)));
+    dlog_info("chip id %x",(Reg_Read646(HP_SPI_BASE_ADDR + CMD7)>>32));
+    #if 0
     dlog_info("Nor flash sector erase start ...");
     NOR_FLASH_EraseSector(start_addr);
     dlog_info("Nor flash sector erase end");
@@ -267,6 +293,7 @@ void command_testAllNorFlashOperations(char* start_addr_str, char* size_str, cha
 
 
     dlog_info("test finished!");
+    #endif
 }
 
 

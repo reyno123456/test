@@ -264,4 +264,15 @@ uint8_t QUAD_SPI_UpdateInstruct(ENUM_QUAD_SPI_INSTR_ID instr_id, uint32_t cmd_h,
     return TRUE;
 }
 
+void QUAD_SPI_ReadProductID(uint8_t* data_buf)
+{
+    uint32_t i = 0;
+    uint64_t u64_id = 0;
+    u64_id = Reg_Read64(HP_SPI_BASE_ADDR + CMD7);
+    for (i=0;i<8;i++)
+    {
+        data_buf[i] = (u64_id>>i*8)&0xff;
+        dlog_info("%x",(u64_id>>i*8)&0xff);
+    }
+}
 

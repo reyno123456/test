@@ -108,3 +108,9 @@ void NOR_FLASH_ReadByteBuffer(uint32_t start_addr, uint8_t* data_buf, uint32_t s
 
     QUAD_SPI_ReadBlockByByte(start_addr, data_buf, size);
 }
+
+void NOR_FLASH_ReadProductID(uint8_t* data_buf)
+{
+    QUAD_SPI_ReadProductID(data_buf);
+
+}

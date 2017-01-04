@@ -30,5 +30,7 @@ void W25Q128_Init(void)
     QUAD_SPI_UpdateInstruct(QUAD_SPI_INSTR_20, 0x609c80, 0x17);
     //D8h
     QUAD_SPI_UpdateInstruct(QUAD_SPI_INSTR_21, 0x609f60, 0x17);
+    //4Bh
+    QUAD_SPI_UpdateInstruct(QUAD_SPI_INSTR_7, 0x601D2C, 0xf83f00);
 }
 

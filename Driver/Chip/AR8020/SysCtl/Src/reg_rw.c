@@ -39,4 +39,8 @@ uint32_t read_reg32(uint32_t *addr)
     return (*reg_addr);
 }
 
-
+uint64_t Reg_Read64(uint32_t regAddr)
+{
+    volatile uint64_t* ptr_regAddr = (uint64_t*)regAddr;
+    return *ptr_regAddr;
+}
