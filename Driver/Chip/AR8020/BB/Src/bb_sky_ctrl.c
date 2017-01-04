@@ -104,7 +104,7 @@ uint8_t sky_id_match(void)
         lock_count = 0;
     }
     
-    return (data) ? 1 : 0;
+    return (data==0x03) ? 1 : 0;
 }
 
 
