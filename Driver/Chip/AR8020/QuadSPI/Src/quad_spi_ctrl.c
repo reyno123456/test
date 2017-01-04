@@ -23,6 +23,20 @@ uint8_t QUAD_SPI_WriteEnable(void)
     uint8_t ret = TRUE;
     
     Reg_Write32(HP_SPI_BASE_ADDR + CMD16,   0x0);
+    Reg_Write32(HP_SPI_BASE_ADDR + HP_SPI_WR_HW_REG,0x739c08);
+    Reg_Write32(HP_SPI_BASE_ADDR + HP_SPI_WR_LW_REG,0xff17);
+    Reg_Write32(HP_SPI_BASE_ADDR + HP_SPI_UPDATE_WR_REG,0);
+            
+    return ret;
+}
+
+uint8_t QUAD_SPI_WriteDisable(void)
+{
+    uint8_t ret = TRUE;
+    
+    Reg_Write32(HP_SPI_BASE_ADDR + HP_SPI_WR_HW_REG,0);
+    Reg_Write32(HP_SPI_BASE_ADDR + HP_SPI_WR_LW_REG,0);
+    Reg_Write32(HP_SPI_BASE_ADDR + HP_SPI_UPDATE_WR_REG,0);
             
     return ret;
 }
@@ -272,7 +286,6 @@ void QUAD_SPI_ReadProductID(uint8_t* data_buf)
     for (i=0;i<8;i++)
     {
         data_buf[i] = (u64_id>>i*8)&0xff;
-        dlog_info("%x",(u64_id>>i*8)&0xff);
     }
 }
 

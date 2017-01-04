@@ -207,6 +207,7 @@ uint8_t QUAD_SPI_SetSpeed(ENUM_QUAD_SPI_SPEED speed);
 uint8_t QUAD_SPI_UpdateInstruct(ENUM_QUAD_SPI_INSTR_ID instr_id, uint32_t cmd_h, uint32_t cmd_l);
 void QUAD_SPI_ReadBlockByByte(uint32_t flash_blk_st_addr, uint8_t* blk_val_table, uint32_t byte_size);
 void QUAD_SPI_ReadProductID(uint8_t* data_buf);
+uint8_t QUAD_SPI_WriteDisable(void);
 
 #endif
 

@@ -31,6 +31,7 @@ uint8_t NOR_FLASH_EraseSector(uint32_t flash_start_addr)
     QUAD_SPI_CheckBusy();
     QUAD_SPI_SectorErase(flash_start_addr);
     QUAD_SPI_CheckBusy();
+    QUAD_SPI_WriteDisable();
     
     return TRUE;
 }
@@ -53,6 +54,7 @@ uint8_t NOR_FLASH_EraseBlock(uint32_t flash_start_addr)
     QUAD_SPI_CheckBusy();
     QUAD_SPI_BlockErase(flash_start_addr);
     QUAD_SPI_CheckBusy();
+    QUAD_SPI_WriteDisable();
 
     return TRUE;
 }
@@ -63,6 +65,7 @@ uint8_t NOR_FLASH_EraseChip(void)
     QUAD_SPI_CheckBusy();
     QUAD_SPI_ChipErase();
     QUAD_SPI_CheckBusy();
+    QUAD_SPI_WriteDisable();
 
     return TRUE;
 }
@@ -77,6 +80,7 @@ void NOR_FLASH_WriteByteBuffer(uint32_t start_addr, uint8_t* data_buf, uint32_t 
     QUAD_SPI_WriteBlockByByte(start_addr, data_buf, size);
 
     QUAD_SPI_CheckBusy();
+    QUAD_SPI_WriteDisable();
 }
 
 void NOR_FLASH_WriteHalfWordBuffer(uint32_t start_addr, uint16_t* data_buf, uint32_t size)
@@ -89,6 +93,7 @@ void NOR_FLASH_WriteHalfWordBuffer(uint32_t start_addr, uint16_t* data_buf, uint
     QUAD_SPI_WriteBlockByHalfWord(start_addr, data_buf, size);
 
     QUAD_SPI_CheckBusy();
+    QUAD_SPI_WriteDisable();
 }
 
 void NOR_FLASH_WriteWordBuffer(uint32_t start_addr, uint32_t* data_buf, uint32_t size)
@@ -101,6 +106,7 @@ void NOR_FLASH_WriteWordBuffer(uint32_t start_addr, uint32_t* data_buf, uint32_t
     QUAD_SPI_WriteBlockByWord(start_addr, data_buf, size);
 
     QUAD_SPI_CheckBusy();
+    QUAD_SPI_WriteDisable();
 }
 
 void NOR_FLASH_ReadByteBuffer(uint32_t start_addr, uint8_t* data_buf, uint32_t size)

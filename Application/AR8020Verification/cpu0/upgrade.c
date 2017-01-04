@@ -103,10 +103,7 @@ void UPGRADE_Upgrade(void const *argument)
     HAL_USB_InitHost(HAL_USB_HOST_PORT_0, HAL_USB_HOST_CLASS_MSC);
     USBH_MountUSBDisk();
 
-    dlog_info("Nor flash init start ... \n");
-    NOR_FLASH_Init();
-    dlog_info("Nor flash init end   ...\n");
-    dlog_output(100);
+    
     SysTicks_DelayMS(500);
 
     while (HAL_USB_HOST_STATE_READY != HAL_USB_GetHostAppState())
@@ -169,7 +166,12 @@ void UPGRADE_Upgrade(void const *argument)
     dlog_info("file checksum .........ok\n");
     dlog_output(100); 
     #endif
- 
+    
+    dlog_info("Nor flash init start ... \n");
+    NOR_FLASH_Init();
+    dlog_info("Nor flash init end   ...\n");
+    dlog_output(100);
+
     u32_bytesRead = RDWR_SECTOR_SIZE;
     fileResult = f_open(&MyFile,argument , FA_READ);
     if (FR_OK != fileResult)

@@ -29,7 +29,7 @@ void BOOT_HexGroupToString(unsigned int addr, unsigned int HexLength)
         
         OutStrBuffer[0]=BOOT_HexToASCII(((*((uint8_t*)(addr+i)))>>4)&0x0F);
         OutStrBuffer[1]=BOOT_HexToASCII((*((uint8_t*)(addr+i)))&0x0F);
-        OutStrBuffer[3]='\0';
+        OutStrBuffer[2]='\0';
         uart_puts(0,OutStrBuffer);
     }    
 }

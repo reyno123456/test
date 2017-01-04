@@ -45,6 +45,10 @@
   .type  Reset_Handler, %function
 Reset_Handler:  
   ldr  sp,  =_estack             /* set stack pointer */
+/* disable write flash command */
+  ldr  r0, =0x40C00000
+  movs  r1,  #0
+  ldr  r1, [r0, #0x1DC]
 
 /* copy the BOOT data to DTCM0 */
   movs r1, #0
