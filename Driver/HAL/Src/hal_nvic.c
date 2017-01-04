@@ -18,13 +18,13 @@ History:
 
 /**
   * @brief  register interrupt handler and clear handler.
-  * @param  e_Irqn: External interrupt number.This parameter can be an enumerator of IRQ_type enumeration
+  * @param  e_Irqn: External interrupt number.This parameter can be an enumerator of ENUM_HAL_NVIC_IRQ_NUM enumeration
   * @param  NVIC_Handler:         interrupt handler.
   * @param  NVIC_ClearHandler: clear handler.       
   * @retval HAL_OK            function is well done.
   * @note   None
   */
-HAL_RET_T HAL_NVIC_RegisterHandler(IRQ_type e_Irqn, Irq_handler NVIC_Handler, Irq_handler NVIC_ClearHandler)
+HAL_RET_T HAL_NVIC_RegisterHandler(ENUM_HAL_NVIC_IRQ_NUM e_Irqn, HAL_NVIC_Irqhandler NVIC_Handler, HAL_NVIC_Irqhandler NVIC_ClearHandler)
 { 
 
     reg_IrqHandle(e_Irqn, NVIC_Handler,NVIC_ClearHandler);
@@ -34,11 +34,11 @@ HAL_RET_T HAL_NVIC_RegisterHandler(IRQ_type e_Irqn, Irq_handler NVIC_Handler, Ir
 
 /**
   * @brief  unregister interrupt handler and clear handler.
-  * @param  e_Irqn: External interrupt number.This parameter can be an enumerator of IRQ_type enumeration    
+  * @param  e_Irqn: External interrupt number.This parameter can be an enumerator of ENUM_HAL_NVIC_IRQ_NUM enumeration    
   * @retval HAL_OK            function is well done.
   * @note   None
   */
-HAL_RET_T HAL_NVIC_UNRegisterHandler(IRQ_type e_Irqn)
+HAL_RET_T HAL_NVIC_UNRegisterHandler(ENUM_HAL_NVIC_IRQ_NUM e_Irqn)
 { 
     rmv_IrqHandle(e_Irqn);
 
@@ -75,13 +75,13 @@ HAL_RET_T HAL_NVIC_SetPriorityGrouping(uint32_t u32_priorityGroup)
 
 /**
   * @brief  Sets the priority of an interrupt.
-  * @param  e_Irqn: External interrupt number.This parameter can be an enumerator of IRQ_type enumeration
+  * @param  e_Irqn: External interrupt number.This parameter can be an enumerator of ENUM_HAL_NVIC_IRQ_NUM enumeration
   * @param  PreemptPriority: The preemption priority for the e_Irqn channel.
   * @param  SubPriority: the subpriority level for the IRQ channel.       
   * @retval HAL_OK            function is well done.
   * @note   None
   */
-HAL_RET_T HAL_NVIC_SetPriority(IRQ_type e_Irqn, uint32_t u32_preemptPriority, uint32_t u32_subPriority)
+HAL_RET_T HAL_NVIC_SetPriority(ENUM_HAL_NVIC_IRQ_NUM e_Irqn, uint32_t u32_preemptPriority, uint32_t u32_subPriority)
 { 
     uint32_t u32_priorityGroup = 0x00;
 
@@ -93,12 +93,12 @@ HAL_RET_T HAL_NVIC_SetPriority(IRQ_type e_Irqn, uint32_t u32_preemptPriority, ui
 }
 /**
   * @brief  Enables a device specific interrupt in the NVIC interrupt controller. 
-  * @param  e_Irqn: External interrupt number.This parameter can be an enumerator of IRQ_type enumeration
+  * @param  e_Irqn: External interrupt number.This parameter can be an enumerator of ENUM_HAL_NVIC_IRQ_NUM enumeration
   * @retval HAL_OK            function is well done.
   * @note   To configure interrupts priority correctly, the NVIC_PriorityGroupConfig()
   *         function should be called before.
   */
-HAL_RET_T HAL_NVIC_EnableIRQ(IRQ_type e_Irqn)
+HAL_RET_T HAL_NVIC_EnableIRQ(ENUM_HAL_NVIC_IRQ_NUM e_Irqn)
 {
     /* Enable interrupt */
     INTR_NVIC_EnableIRQ(e_Irqn);
@@ -108,11 +108,11 @@ HAL_RET_T HAL_NVIC_EnableIRQ(IRQ_type e_Irqn)
 
 /**
   * @brief  Disables a device specific interrupt in the NVIC interrupt controller.
-  * @param  e_Irqn: External interrupt number.This parameter can be an enumerator of IRQ_type enumeration
+  * @param  e_Irqn: External interrupt number.This parameter can be an enumerator of ENUM_HAL_NVIC_IRQ_NUM enumeration
   * @retval HAL_OK            function is well done.
   * @note   None
   */
-HAL_RET_T HAL_NVIC_DisableIRQ(IRQ_type e_Irqn)
+HAL_RET_T HAL_NVIC_DisableIRQ(ENUM_HAL_NVIC_IRQ_NUM e_Irqn)
 {
     /* Disable interrupt */
     INTR_NVIC_DisableIRQ(e_Irqn);
@@ -136,7 +136,7 @@ HAL_RET_T HAL_NVIC_GetPriorityGrouping(uint32_t *p_retPriorityGroup)
 
 /**
   * @brief  Gets the priority of an interrupt.
-  * @param  e_Irqn: External interrupt number.This parameter can be an enumerator of IRQ_type enumeration
+  * @param  e_Irqn: External interrupt number.This parameter can be an enumerator of ENUM_HAL_NVIC_IRQ_NUM enumeration
   * @param  PriorityGroup: the priority grouping bits length.
   *         This parameter can be one of the following values:
   *         @arg NVIC_PRIORITYGROUP_0: 0 bits for preemption priority
@@ -156,7 +156,7 @@ HAL_RET_T HAL_NVIC_GetPriorityGrouping(uint32_t *p_retPriorityGroup)
   * @retval HAL_OK            function is well done.
   * @note   None
   */
-HAL_RET_T HAL_NVIC_GetPriority(IRQ_type e_Irqn, uint32_t PriorityGroup, uint32_t *p_preemptPriority, uint32_t *p_subPriority)
+HAL_RET_T HAL_NVIC_GetPriority(ENUM_HAL_NVIC_IRQ_NUM e_Irqn, uint32_t PriorityGroup, uint32_t *p_preemptPriority, uint32_t *p_subPriority)
 {
 
     /* Get priority for Cortex-M system or device specific interrupts */
@@ -167,11 +167,11 @@ HAL_RET_T HAL_NVIC_GetPriority(IRQ_type e_Irqn, uint32_t PriorityGroup, uint32_t
 
 /**
   * @brief  Sets Pending bit of an external interrupt.
-  * @param  e_Irqn: External interrupt number.This parameter can be an enumerator of IRQ_type enumeration
+  * @param  e_Irqn: External interrupt number.This parameter can be an enumerator of ENUM_HAL_NVIC_IRQ_NUM enumeration
   * @retval HAL_OK            function is well done.
   * @note   None
   */
-HAL_RET_T HAL_NVIC_SetPendingIrq(IRQ_type e_Irqn)
+HAL_RET_T HAL_NVIC_SetPendingIrq(ENUM_HAL_NVIC_IRQ_NUM e_Irqn)
 {
 
     /* Set interrupt pending */
@@ -183,14 +183,14 @@ HAL_RET_T HAL_NVIC_SetPendingIrq(IRQ_type e_Irqn)
 /**
   * @brief  Gets Pending Interrupt (reads the pending register in the NVIC 
   *         and returns the pending bit for the specified interrupt).
-  * @param  e_Irqn： External interrupt number.This parameter can be an enumerator of IRQ_type enumeration
+  * @param  e_Irqn： External interrupt number.This parameter can be an enumerator of ENUM_HAL_NVIC_IRQ_NUM enumeration
   * @param  p_retPending  Pointer on the get pending.
   *               status  - 0  Interrupt status is not pending.
   *                       - 1  Interrupt status is pending.
   * @retval HAL_OK            function is well done.
   * @note   None
   */
-HAL_RET_T HAL_NVIC_GetPendingIrq(IRQ_type e_Irqn,uint32_t *p_retPending)
+HAL_RET_T HAL_NVIC_GetPendingIrq(ENUM_HAL_NVIC_IRQ_NUM e_Irqn,uint32_t *p_retPending)
 {
     /* Return 1 if pending else 0 */
     *p_retPending = INTR_NVIC_GetPendingIRQ(e_Irqn);
@@ -200,11 +200,11 @@ HAL_RET_T HAL_NVIC_GetPendingIrq(IRQ_type e_Irqn,uint32_t *p_retPending)
 
 /**
   * @brief  Clears the pending bit of an external interrupt.
-  * @param  e_Irqn: External interrupt number.This parameter can be an enumerator of IRQ_type enumeration
+  * @param  e_Irqn: External interrupt number.This parameter can be an enumerator of ENUM_HAL_NVIC_IRQ_NUM enumeration
   * @retval HAL_OK            function is well done.
   * @note   None
   */
-HAL_RET_T HAL_NVIC_ClearPendingIrq(IRQ_type e_Irqn)
+HAL_RET_T HAL_NVIC_ClearPendingIrq(ENUM_HAL_NVIC_IRQ_NUM e_Irqn)
 {
   
     /* Clear pending interrupt */
@@ -215,14 +215,14 @@ HAL_RET_T HAL_NVIC_ClearPendingIrq(IRQ_type e_Irqn)
 
 /**
   * @brief Gets active interrupt ( reads the active register in NVIC and returns the active bit).
-  * @param e_Irqn: External interrupt number.This parameter can be an enumerator of IRQ_type enumeration
+  * @param e_Irqn: External interrupt number.This parameter can be an enumerator of ENUM_HAL_NVIC_IRQ_NUM enumeration
   * @param  p_retActive: Pointer on the get active pending.
   *                      status   - 0  Interrupt status is not pending.
   *                               - 1  Interrupt status is pending.
   * @retval HAL_OK            function is well done.
   * @note   None
   */
-HAL_RET_T HAL_NVIC_GetActive(IRQ_type e_Irqn, uint32_t *p_retActive)
+HAL_RET_T HAL_NVIC_GetActive(ENUM_HAL_NVIC_IRQ_NUM e_Irqn, uint32_t *p_retActive)
 {
 
     /* Return 1 if active else 0 */
