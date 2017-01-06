@@ -120,6 +120,12 @@ USBH_StatusTypeDef USBH_UVC_InterfaceDeInit (USBH_HandleTypeDef *phost)
     USBH_memset((void *)UVC_Handle, 0, sizeof(UVC_HandleTypeDef));
     phost->pActiveClass->pData = 0;
 
+    USBH_UVC_SetBuffState(0, 0);
+    USBH_UVC_SetBuffState(1, 0);
+
+    g_u8curVideoBuffIndex = 0;
+    g_u32recvBuffPos = 0;
+
     return USBH_OK;
 }
 
