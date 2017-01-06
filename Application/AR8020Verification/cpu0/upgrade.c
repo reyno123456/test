@@ -1,4 +1,3 @@
-#include <string.h>
 #include "test_usbh.h"
 #include "debuglog.h"
 #include "cmsis_os.h"
@@ -8,8 +7,8 @@
 #include "serial.h"
 #include "md5.h"
 #include "systicks.h"
+#include <string.h>
 #include "hal_usb_host.h"
-
 
 static uint8_t g_u8arrayRecData[RDWR_SECTOR_SIZE]={0};
 
@@ -51,8 +50,7 @@ static uint8_t UPGRADE_MD5SUM(void)
         if(md5_value[i] != g_u8Amd5Sum[i])
         {
             dlog_info("nor flash checksum .........fail\n");
-            return -1;
-            vTaskDelete(NULL);
+            return 1;
         }
     }
     dlog_info("nor flash checksum .........ok\n"); 
@@ -90,6 +88,7 @@ static void UPGRADE_ModifyBootInfo()
 
 void UPGRADE_Upgrade(void const *argument)
 {
+
     FRESULT    fileResult;
     FIL        MyFile;
     uint32_t   u32_bytesRead= RDWR_SECTOR_SIZE;
@@ -103,7 +102,10 @@ void UPGRADE_Upgrade(void const *argument)
     HAL_USB_InitHost(HAL_USB_HOST_PORT_0, HAL_USB_HOST_CLASS_MSC);
     USBH_MountUSBDisk();
 
-    
+    dlog_info("Nor flash init start ... \n");
+    NOR_FLASH_Init();
+    dlog_info("Nor flash init end   ...\n");
+    dlog_output(100);
     SysTicks_DelayMS(500);
 
     while (HAL_USB_HOST_STATE_READY != HAL_USB_GetHostAppState())
@@ -166,12 +168,7 @@ void UPGRADE_Upgrade(void const *argument)
     dlog_info("file checksum .........ok\n");
     dlog_output(100); 
     #endif
-    
-    dlog_info("Nor flash init start ... \n");
-    NOR_FLASH_Init();
-    dlog_info("Nor flash init end   ...\n");
-    dlog_output(100);
-
+    u32_norAddr = 0x20000; 
     u32_bytesRead = RDWR_SECTOR_SIZE;
     fileResult = f_open(&MyFile,argument , FA_READ);
     if (FR_OK != fileResult)
@@ -201,12 +198,13 @@ void UPGRADE_Upgrade(void const *argument)
     f_close(&MyFile);
     dlog_info("upgrade ok %x\n",g_u32recDataSum);
     dlog_info("start checksum nor_flash .......\n");
-    dlog_output(100);
-    if(-1 != UPGRADE_MD5SUM())
+    
+    /*if(-1 != UPGRADE_MD5SUM())
     {
         UPGRADE_ModifyBootInfo();
-    }
-    
+    }*/
+    UPGRADE_MD5SUM();
+    dlog_output(100);
     vTaskDelete(NULL);
 
 }

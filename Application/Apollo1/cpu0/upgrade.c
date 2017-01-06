@@ -50,8 +50,7 @@ static uint8_t UPGRADE_MD5SUM(void)
         if(md5_value[i] != g_u8Amd5Sum[i])
         {
             dlog_info("nor flash checksum .........fail\n");
-            return -1;
-            vTaskDelete(NULL);
+            return 1;
         }
     }
     dlog_info("nor flash checksum .........ok\n"); 
@@ -169,7 +168,7 @@ void UPGRADE_Upgrade(void const *argument)
     dlog_info("file checksum .........ok\n");
     dlog_output(100); 
     #endif
- 
+    u32_norAddr = 0x20000; 
     u32_bytesRead = RDWR_SECTOR_SIZE;
     fileResult = f_open(&MyFile,argument , FA_READ);
     if (FR_OK != fileResult)
@@ -199,12 +198,13 @@ void UPGRADE_Upgrade(void const *argument)
     f_close(&MyFile);
     dlog_info("upgrade ok %x\n",g_u32recDataSum);
     dlog_info("start checksum nor_flash .......\n");
-    dlog_output(100);
-    if(-1 != UPGRADE_MD5SUM())
+    
+    /*if(-1 != UPGRADE_MD5SUM())
     {
         UPGRADE_ModifyBootInfo();
-    }
-    
+    }*/
+    UPGRADE_MD5SUM();
+    dlog_output(100);
     vTaskDelete(NULL);
 
 }

@@ -199,8 +199,8 @@ void UPGRADE_APPFromUart(void)
     
     if(-1 != UPGRADE_MD5SUM(RECEIVE_ADDR))
     {
-        UPGRADE_EraseWriteFlash(g_u32LoadAddr-0x10000000);
-        UPGRADE_ModifyBootInfo(1);
+        UPGRADE_EraseWriteFlash(0x20000);
+        //UPGRADE_ModifyBootInfo(1);
     }
     
     
