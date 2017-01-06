@@ -17,6 +17,7 @@
 #include "test_usbh.h"
 #include "test_float.h"
 #include "test_ov5640.h"
+#include "hal_dma.h"
 #include "upgrade.h"
 #include "test_bbuartcom.h"
 #include "testhal_gpio.h"
@@ -44,6 +45,7 @@ void command_stopBypassVideo(void);
 void command_upgrade(void);
 void command_sendCtrl(void);
 void command_sendVideo(void);
+void command_dma(char *,char *,char *);
 
 /* added by xiongjiangjiang */
 void Drv_UART_IRQHandler(uint32_t u32_vectorNum)
@@ -443,6 +445,11 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_TestHalSpiRx(cmdArray[1], cmdArray[2]);
     }
+    /* dma transfer: "transdma $(startBlock) $(blockNum)" */
+    else if (memcmp(cmdArray[0], "test_dma", 8) == 0)
+    {
+        command_dma(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
     /* error command */
     else
     {
@@ -453,6 +460,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("readsd <SrcAddr:0x> <SectorNum:0x>");
         dlog_error("writesd <DstAddr:0x> <SectorNum:0x> <Srcaddr:0x>");
         dlog_error("erasesd <startSector> <SectorNum>");
+        dlog_error("test_sdfs");
         dlog_error("hdmiinit <index>");
         dlog_error("hdmidump <index>");
         dlog_error("hdmigetvideoformat <index>");
@@ -507,7 +515,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("test_hal_spi_init <ch> <baudr> <polarity> <phase>");
         dlog_error("test_hal_spi_write <ch> <addr> <wdata>");
         dlog_error("test_hal_spi_read <ch> <addr>");
-		dlog_error("test_sdfs");
+        dlog_error("test_dma <src> <dst> <byte_num>");
     }
 
     /* must init to receive new data from serial */
@@ -792,5 +800,19 @@ void command_stopBypassVideo(void)
     }
 }
 
+void command_dma(char * u32_src, char *u32_dst, char *u32_byteNum)
+{
+    unsigned int iSrcAddr;
+    unsigned int iDstAddr;
+    unsigned int iNum;
 
+    iDstAddr    = command_str2uint(u32_dst);
+    iSrcAddr    = command_str2uint(u32_src);
+    iNum        = command_str2uint(u32_byteNum);
+
+    dlog_info("src = 0x%08x\n", iSrcAddr);
+    dlog_info("dst = 0x%08x\n", iDstAddr);
+    HAL_DMA_Start(iSrcAddr, iDstAddr, iNum);
+    dlog_info("num = %x\n", iNum);
+}
 

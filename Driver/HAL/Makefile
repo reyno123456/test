@@ -36,6 +36,7 @@ SRC_C := Src/hal.c \
          Src/hal_bb.c \
          Src/hal_nvic.c \
 	 Src/hal_sd.c \
+	 Src/hal_dma.c \
          Src/wireless_interface.c
 
 INCDIRS := -IInc \
@@ -56,6 +57,7 @@ INCDIRS := -IInc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Class/UVC/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SPI/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/DMA/Inc \
            -I$(TOP_DIR)/Driver/HAL/Inc
 
 
@@ -92,6 +94,7 @@ install:
 	@cp -f Inc/hal_bb.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_nvic.h $(OUTPUT_HEADER_STAGING_DIR) 
 	@cp -f Inc/hal_sd.h  $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/hal_dma.h  $(OUTPUT_HEADER_STAGING_DIR)
 clean:
 	@echo "Cleaning..."
 	@$(RM) $(LIB) $(OBJ_C) .depend $(OUTPUT_LIB_STAGING_DIR)/$(LIB)
@@ -103,6 +106,7 @@ clean:
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_spi.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_bb.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_sd.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_dma.h
 
 .PHONY: all clean install
 #########################################################################

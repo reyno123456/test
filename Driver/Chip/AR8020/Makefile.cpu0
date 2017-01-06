@@ -132,7 +132,6 @@ install:
 	@cp -f SysCtl/Inc/cpu_info.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/interrupt.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f QuadSPI/Inc/quad_spi_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f DMA/Inc/dma.h $(OUTPUT_HEADER_STAGING_DIR)
 
 
 clean:
