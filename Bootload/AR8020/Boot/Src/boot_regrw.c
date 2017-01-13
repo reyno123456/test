@@ -14,14 +14,3 @@ void Reg_Write32_Mask(uint32_t regAddr, uint32_t regData, uint32_t regDataMask)
     *ptr_regAddr = u32_regDataTmp;
 }
 
-uint32_t Reg_Read32(uint32_t regAddr)
-{
-    volatile uint32_t* ptr_regAddr = (uint32_t*)regAddr;
-    return *ptr_regAddr;
-}
-
-void Reg_Write32(uint32_t regAddr, uint32_t regData)
-{
-    volatile uint32_t* ptr_regAddr = (uint32_t*)regAddr;
-    *ptr_regAddr = regData;
-}

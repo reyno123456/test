@@ -45,7 +45,7 @@
   .type  Reset_Handler, %function
 Reset_Handler:  
   ldr  sp,  =_estack             /* set stack pointer */
-/* disable write flash command */
+  /* disable write flash command */
   ldr  r0, =0x40C00000
   movs  r1,  #0
   ldr  r1, [r0, #0x1DC]
@@ -107,7 +107,6 @@ Infinite_Loop:
   .word     _estack
   .word     Reset_Handler
   .word     default_isr
-  .word     hardfault_isr
   .word     default_isr
   .word     default_isr
   .word     default_isr
@@ -115,12 +114,12 @@ Infinite_Loop:
   .word     default_isr
   .word     default_isr
   .word     default_isr
-  .word     SVC_Handler
   .word     default_isr
   .word     default_isr
-  .word     PendSV_Handler
-  .word     SYSTICK_IRQHandler
-  .word     IRQHandler_16
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
+  .word     default_isr
   
   .word     default_isr
   .word     default_isr
@@ -184,26 +183,29 @@ Infinite_Loop:
   .word     default_isr
   .word     default_isr
   .word     default_isr
-  .word     default_isr
-  .word     default_isr
-  .word     default_isr
-  .word     default_isr
-  .word     default_isr
-  .word     default_isr
-  .word     default_isr
-  .word     default_isr
-  .word     default_isr
-  .word     default_isr
-  .word     default_isr
-  .word     default_isr
-  .word     default_isr
-  .word     default_isr
-  .word     default_isr
-  .word     default_isr
-  .word     default_isr
-  .word     default_isr
-  .word     default_isr
-  .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
+  # .word     default_isr
   
 /*******************************************************************************
 *
@@ -214,17 +216,5 @@ Infinite_Loop:
 *******************************************************************************/
    .weak      default_isr
    .thumb_set default_isr,Default_Handler
-
-   .weak      hardfault_isr
-   .thumb_set hardfault_isr,Default_Handler
-
-   .weak      SVC_Handler
-   .thumb_set SVC_Handler,Default_Handler
-
-   .weak      PendSV_Handler
-   .thumb_set PendSV_Handler,Default_Handler
-
-   .weak      SYSTICK_IRQHandler
-   .thumb_set SYSTICK_IRQHandler,Default_Handler
 
 

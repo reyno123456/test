@@ -30,6 +30,8 @@ static uint8_t g_u8Amd5Sum[16];
 #define READ_DATA_SIZE  1024*4  
 #define MD5_SIZE        16  
 
+static void UPGRADE_EraseWriteFlash(uint32_t u32_addr);
+
 static void UPGRADE_InitParament(void)
 {
     g_u32RecCount = 0;
@@ -45,11 +47,9 @@ static int8_t UPGRADE_MD5SUM(uint32_t u32_addr)
     uint32_t u32_RecCountTmp=g_u32RecCount-34;
     uint32_t u32_Count=0;
     uint8_t md5_value[MD5_SIZE];
-    //uint8_t    *p8_data = (uint8_t *)(u32_addr+34);
     uint8_t    *p8_data = (uint8_t *)(u32_addr+34);
     MD5_CTX md5;
     MD5Init(&md5);
-    DLOG_INFO("start checksum nor flash\n");
     for(i=0;i<((u32_RecCountTmp)/RDWR_SECTOR_SIZE);i++)
     {
         MD5Update(&md5, (p8_data+RDWR_SECTOR_SIZE*i), RDWR_SECTOR_SIZE);
@@ -68,10 +68,10 @@ static int8_t UPGRADE_MD5SUM(uint32_t u32_addr)
             DLOG_INFO("checksum......fail\n");
             for(j=0;j<16;j++)
             {
-                DLOG_INFO("cmp %02x %02x\n",md5_value[j],g_u8Amd5Sum[j]);
-                return -1;
+                DLOG_INFO("cmp %02x %02x\n",md5_value[j],g_u8Amd5Sum[j]);                
             }
-            
+            dlog_output(100);
+            return -1;
         }
     }
     DLOG_INFO("checksum......ok\n");
@@ -90,7 +90,6 @@ static void UPGRADE_IRQHandler(uint32_t vectorNum)
         if ((u32_status & UART_LSR_DATAREADY) == UART_LSR_DATAREADY)
         {
             *(g_pDst +g_u32RecCount) = uart_regs->RBR_THR_DLL;        
-            //g_pDst++;
             g_u32RecCount++;
         }
     }
@@ -123,10 +122,9 @@ static void UPGRADE_UartReceive(void)
             g_u32LoadAddr = GET_WORD_BOOT_INOF(p8_loadAddr);
             for(i=0;i<16;i++)
             {
-                //DLOG_INFO("cmp %02x %02x\n",md5_value[i],g_u8Amd5Sum[i]);
                 g_u8Amd5Sum[i]=*(p8_md5Addr+i);
             } 
-            DLOG_INFO("image size %x load address %x\n",g_u32ImageSize,g_u32LoadAddr);
+            DLOG_INFO("image size %x",g_u32ImageSize);
             dlog_output(100);
         }
         if((0 !=g_u32RecCount) && (0 == g_u32RecCount%10000))
@@ -140,31 +138,35 @@ static void UPGRADE_UartReceive(void)
     UPGRADE_CommandInit(0);
 }
 
-static void UPGRADE_ModifyBootInfo(uint8_t index)
+static void UPGRADE_ModifyBootInfo(void)
 {
     uint8_t i=0;
     Boot_Info st_bootInfo;
     memset(&st_bootInfo,0xff,sizeof(st_bootInfo)); 
     NOR_FLASH_ReadByteBuffer(0x1000,(uint8_t *)(&st_bootInfo),sizeof(st_bootInfo));
-    NOR_FLASH_EraseSector(0x1000);
-    
-    if(index == 0)
+    DLOG_INFO("start checksum upgrade nor flash\n");
+    if(0==st_bootInfo.present_boot)
     {
-        if(0==st_bootInfo.present_boot)
+        st_bootInfo.present_boot=1;
+        UPGRADE_EraseWriteFlash(BOOT_ADDR1-FLASH_BASE_ADDR);
+        if(0 != UPGRADE_MD5SUM(BOOT_ADDR1))
         {
-            st_bootInfo.present_boot=1;        
-        }
-        else
-        {
-            st_bootInfo.present_boot=0;                
-        }
-        st_bootInfo.bootloadaddress = g_u32LoadAddr;
+            return;    
+        }        
     }
     else
     {
-        st_bootInfo.apploadaddress=g_u32LoadAddr;
+        st_bootInfo.present_boot=0;
+        UPGRADE_EraseWriteFlash(BOOT_ADDR0-FLASH_BASE_ADDR);
+        if(0 != UPGRADE_MD5SUM(BOOT_ADDR0))
+        {
+            return;    
+        }                
     }
-    NOR_FLASH_WriteByteBuffer(0x1000,(uint8_t *)(&st_bootInfo),sizeof(st_bootInfo)); 
+    NOR_FLASH_EraseSector(0x1000);
+    
+    NOR_FLASH_WriteByteBuffer(0x1000,(uint8_t *)(&st_bootInfo),sizeof(st_bootInfo));
+     
 }
 
 static void UPGRADE_EraseWriteFlash(uint32_t u32_addr)
@@ -197,10 +199,13 @@ void UPGRADE_APPFromUart(void)
         return;
     }
     
+    DLOG_INFO("start checksum receive data\n");
     if(-1 != UPGRADE_MD5SUM(RECEIVE_ADDR))
     {
-        UPGRADE_EraseWriteFlash(0x20000);
-        //UPGRADE_ModifyBootInfo(1);
+        UPGRADE_EraseWriteFlash(APP_ADDR_OFFSET);
+        DLOG_INFO("start checksum upgrade nor flash\n");
+        UPGRADE_MD5SUM(APPLICATION_IMAGE_START);
+
     }
     
     
@@ -210,17 +215,15 @@ void UPGRADE_BootloadFromUart(void)
 {
     UPGRADE_InitParament();
     UPGRADE_UartReceive();
-    if((g_u32LoadAddr<BOOT_ADDR) || (g_u32LoadAddr>=APPLICATION_IMAGE_START) )
+    if((g_u32LoadAddr<BOOT_ADDR0) || (g_u32LoadAddr>=APPLICATION_IMAGE_START) )
     {
         DLOG_INFO("image upgrade address error\n");
         dlog_output(100);
         return;
     }
-    
-     if(-1 != UPGRADE_MD5SUM(RECEIVE_ADDR))
-    {
-        UPGRADE_EraseWriteFlash(g_u32LoadAddr-0x10000000);
-        UPGRADE_ModifyBootInfo(0);
-    }
-    
+    DLOG_INFO("start checksum receive data\n");
+    if(0 == UPGRADE_MD5SUM(RECEIVE_ADDR))
+    {        
+        UPGRADE_ModifyBootInfo();
+    }   
 }

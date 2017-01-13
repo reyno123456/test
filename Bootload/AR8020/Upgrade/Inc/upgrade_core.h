@@ -14,7 +14,10 @@
 #define ITCM0_START                0x00000000
 #define ITCM1_START                0x44100000
 #define ITCM2_START                0xB0000000
-#define BOOT_ADDR                  0x10002000
+#define FLASH_BASE_ADDR            0x10000000
+
+#define BOOT_ADDR0                 0x10002000
+#define BOOT_ADDR1                 0x10011000
 
 #define GET_WORD_FROM_ANY_ADDR(any_addr) ((uint32_t)(*any_addr) | \
                                          (((uint32_t)(*(any_addr+1))) << 8) | \

@@ -3,77 +3,57 @@
 #include "boot_serial.h"
 #include "boot_norflash.h"
 #include "boot_core.h"
-#include "boot_interrupt.h"
-#include "boot_command.h"
-#include "boot_systicks.h"
 
-uint8_t g_u8BootMode = 0;
-
-static void console_init(uint32_t uart_num, uint32_t baut_rate)
+void delay_ms(uint32_t num)
 {
-    uart_init(uart_num, baut_rate);
-}
+    volatile uint32_t i;
 
-static void uinit(void)
-{
-    SysTicks_UnInit();
+    for (i = 0; i < (num * 1000); i++)
+    {
+        ;      
+    }
 }
 
 int main(void)
 {
 
     Boot_Info st_bootInfo;    
-    console_init(0,115200);
-    uart_puts(0,"boot stag 1\r\n");
+    uart_init(0,115200);
+    uart_puts(0,"stag 1\r\n");
+    uint32_t bootAddress = 0;
     QUAD_SPI_SetSpeed();
-
-    SysTicks_Init(64000);
-    SysTicks_DelayMS(200);
+    
+    delay_ms(50);
     memset(&st_bootInfo,0xff,sizeof(st_bootInfo));
     QUAD_SPI_ReadBlockByByte(INFO_BASE,(uint8_t *)(&st_bootInfo),sizeof(st_bootInfo));
 
-    if((st_bootInfo.bootloadaddress == 0xffffffff) || (st_bootInfo.bootloadaddress == 0x0) )
-    {
-        st_bootInfo.bootloadaddress=BOOT_ADDR0;
-        uart_puts(0,"bootloadaddress default value\r\n");
-    }
-    if((st_bootInfo.apploadaddress == 0xffffffff) || (st_bootInfo.apploadaddress == 0x0))
-    {
-        st_bootInfo.apploadaddress=APPLICATION_IMAGE_START;
-        uart_puts(0,"apploadaddress default value\r\n");
-    }
-
     if('t' == uart_getc(0))
     {
-        uart_puts(0,"boot bootload\r\n");
-        ssleep(1);
+        uart_puts(0,"boot BOOT\r\n");
+        delay_ms(50);
         if('t' == uart_getc(0))
         {            
-            
-            if((0 == st_bootInfo.present_boot))
+            if(0 == st_bootInfo.present_boot)
             {
-                uart_puts(0,"boot BOOT0\r\n");       
+                uart_puts(0,"BOOT0\r\n");
+                bootAddress = BOOT_ADDR0;
             }
-            else if((1 == st_bootInfo.present_boot))
-            {   
-                uart_puts(0,"boot BOOT1\r\n");
-            }
-            else
+            else if(1 == st_bootInfo.present_boot)
             {
-                uart_puts(0,"boot info error\r\n"); 
+                uart_puts(0,"BOOT1\r\n");
+                bootAddress = BOOT_ADDR1;
             }
-            BOOT_PrintInfo(st_bootInfo.bootloadaddress+IMAGE_HAER_OFSET);
-            SysTicks_DelayMS(200);
-            uinit();
-            BOOT_StartBoot(st_bootInfo.present_boot,st_bootInfo.bootloadaddress+IMAGE_HAER_OFSET);
+            delay_ms(50);
+            BOOT_PrintInfo(bootAddress+IMAGE_HAER_OFFSET);
+            BOOT_StartBoot(st_bootInfo.present_boot,bootAddress);
         }
         
     }
+    
     uart_puts(0,"boot app\r\n");
-    BOOT_PrintInfo(st_bootInfo.apploadaddress+IMAGE_HAER_OFSET);
-    SysTicks_DelayMS(200);    
-    uinit();
-    BOOT_CopyFromNorToITCM(st_bootInfo.apploadaddress+IMAGE_HAER_OFSET);
+    BOOT_PrintInfo(0x10020000+IMAGE_HAER_OFFSET);
+    BOOT_CopyFromNorToITCM(0x10020000+IMAGE_HAER_OFFSET);
     BOOT_BootApp();
+
 } 
 

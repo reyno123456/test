@@ -24,7 +24,7 @@
 #define BOOT_ADDR1                 0x10011000
 #define BOOT_SIZE                  (1024*60)
 
-#define IMAGE_HAER_OFSET           0x22
+#define IMAGE_HAER_OFFSET           0x22
 
 #define DATEY_OFFSET               0x21
 #define DATEm_OFFSET               0x1F
@@ -53,4 +53,5 @@ void BOOT_BootApp(void);
 void BOOT_CopyFromNorToITCM(unsigned int address);
 void BOOT_StartBoot(uint8_t index,unsigned int address);
 void BOOT_PrintInfo(uint32_t u32_addr);
+uint8_t BOOT_CheckUpgradeCode(uint32_t u32_BaseAddr);
 #endif
