@@ -166,6 +166,27 @@ void free_simple(void *ap)
     freep = p;
 }
 
+unsigned int get_configure_from_flash(void)
+{
+    unsigned int address = 0x10020022;
+    uint8_t* cpu0_app_size_addr = (uint8_t*)address;
+    uint32_t cpu0_app_size = GET_WORD_FROM_ANY_ADDR(cpu0_app_size_addr);
+    uint32_t cpu0_app_start_addr = address + 4;
+
+    uint8_t* cpu1_app_size_addr = (uint8_t*)(cpu0_app_start_addr + cpu0_app_size);
+    uint32_t cpu1_app_size = GET_WORD_FROM_ANY_ADDR(cpu1_app_size_addr);
+    uint32_t cpu1_app_start_addr = cpu0_app_start_addr + cpu0_app_size + 4;
+
+    uint8_t* cpu2_app_size_addr = (uint8_t*)(cpu1_app_start_addr + cpu1_app_size);
+    uint32_t cpu2_app_size = GET_WORD_FROM_ANY_ADDR(cpu2_app_size_addr);
+    uint32_t cpu2_app_start_addr = cpu1_app_start_addr + cpu1_app_size + 4;
+
+    /*uint8_t* configure_size_addr = (uint8_t*)(cpu2_app_start_addr + cpu2_app_size);
+    uint32_t configure_size = GET_WORD_FROM_ANY_ADDR(configure_size_addr);*/
+    return (cpu2_app_start_addr + cpu2_app_size);
+
+
+}
 __attribute__((weak)) void *malloc(size_t size)
 {
     return malloc_simple(size);

@@ -27,7 +27,7 @@
 #include "testhal_i2c.h"
 #include "test_hal_uart.h"
 #include "test_hal_spi.h"
-
+#include "memory.h"
 
 static unsigned char g_commandPos;
 static char g_commandLine[50];
@@ -450,6 +450,53 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_dma(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
+    else if (memcmp(cmdArray[0], "configure", 8) == 0)
+    {
+        setting_configure *configure=NULL;
+        uint32_t i =0;
+        uint32_t j =0;
+        configure=(setting_configure *)get_configure_from_flash();
+        dlog_error("****************        HDMI       ******************");
+        dlog_error("%02x %02x %02x",configure->hdmi_configure[0][0],configure->hdmi_configure[0][1],configure->hdmi_configure[0][2]);
+        dlog_error("%02x %02x %02x",configure->hdmi_configure[262][0],configure->hdmi_configure[262][1],configure->hdmi_configure[262][2]);
+        dlog_error("****************        bb_sky       ******************");
+        for(j=0;j<4;j++)
+        {
+            for(i=0;i<16;i++)
+            {
+                dlog_error("%02x",configure->bb_sky_configure[j][i*16]);
+                dlog_output(100);
+            }
+            dlog_error("***********************************************");
+        }
+        dlog_error("***************      bb_grd            ********************");
+        for(j=0;j<4;j++)
+        {
+            for(i=0;i<16;i++)
+            {
+                dlog_error("%02x",configure->bb_grd_configure[j][i*16]);
+                dlog_output(100);
+            }
+            dlog_error("***********************************************");
+        }
+        dlog_error("*********        rf           **************");
+        for(i=0;i<8;i++)
+        {
+            dlog_error("%02x",configure->rf_configure[i*16]);
+            dlog_output(100);
+        }
+        /*for(i=0;i<263;i++)
+        {
+            dlog_error("%x %x %x",configure->hdmi_configure[i][0],configure->hdmi_configure[i][1],configure->hdmi_configure[i][2]);
+            dlog_output(100);
+        }
+        dlog_error("***********************************************");
+        for(i=0;i<263;i++)
+        {
+            dlog_error("%x %x %x",configure->hdmi_configure1[i][0],configure->hdmi_configure1[i][1],configure->hdmi_configure1[i][2]);
+            dlog_output(100);
+        }*/
+    }
     /* error command */
     else
     {
@@ -515,6 +562,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("test_hal_spi_init <ch> <baudr> <polarity> <phase>");
         dlog_error("test_hal_spi_write <ch> <addr> <wdata>");
         dlog_error("test_hal_spi_read <ch> <addr>");
+        dlog_error("configure");
         dlog_error("test_dma <src> <dst> <byte_num>");
     }
 
