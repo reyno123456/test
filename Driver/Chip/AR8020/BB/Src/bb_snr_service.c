@@ -57,10 +57,10 @@ uint16_t grd_get_it_snr()
     uint16_t snr = (((uint16_t)high) << 8) | low;
     
     static uint32_t cnt = 0;
-    if(cnt++ > 50000)
+    if(cnt++ > 5000)
     {
         cnt = 0;
-        dlog_info("SNR: %0.4x \r\n", snr);
+        dlog_info("SNR: %0.4x", snr);
     }
 
     return snr;

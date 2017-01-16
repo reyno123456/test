@@ -40,8 +40,6 @@ void grd_set_it_skip_freq(uint8_t ch);
 
 void grd_set_txmsg_qam_change(ENUM_BB_QAM qam, ENUM_CH_BW bw, ENUM_BB_LDPC ldpc);
 
-uint8_t merge_qam_ldpc_to_index(ENUM_BB_QAM qam, ENUM_BB_LDPC ldpc);
-
 uint8_t snr_static_for_qam_change(uint16_t threshod_left_section,uint16_t threshold_right_section);
 
 void grd_handle_IT_mode_cmd(ENUM_RUN_MODE mode);
@@ -67,5 +65,7 @@ static void grd_handle_brc_cmd(uint8_t coderate);
 static void grd_handle_all_cmds(void);
 
 static void BB_grd_GatherOSDInfo(void);
+
+void grd_set_txmsg_mcs_change(uint8_t index );
 
 #endif

@@ -34,9 +34,9 @@ typedef struct
 
 static DebugMode g_stSkyDebugMode = 
 {
-	.u8_enterDebugModeCnt 	= 0,
-	.bl_enterDebugModeFlag 	= 0,
-	.bl_isDebugMode 		= 0,
+    .u8_enterDebugModeCnt 	= 0,
+    .bl_enterDebugModeFlag 	= 0,
+    .bl_isDebugMode 		= 0,
 };
 
 static SEARCH_IDS_LIST search_id_list;
@@ -44,7 +44,6 @@ static uint32_t start_time_cnt = 0;
 static uint8_t  sky_rc_channel = 0;
 
 static enum EN_AGC_MODE en_agcmode = UNKOWN_AGC;
-static uint8_t cur_mod_regvalue = 0xff; 
 
 static init_timer_st sky_timer0_0;
 static init_timer_st sky_timer0_1;
@@ -84,7 +83,10 @@ void BB_SKY_start(void)
     sky_search_id_timeout_irq_enable(); //enabole TIM1 timeout
 
     reg_IrqHandle(BB_RX_ENABLE_VECTOR_NUM, wimax_vsoc_rx_isr, NULL);
-    INTR_NVIC_EnableIRQ(BB_RX_ENABLE_VECTOR_NUM);   
+    INTR_NVIC_EnableIRQ(BB_RX_ENABLE_VECTOR_NUM);
+
+    context.qam_ldpc = 0;
+    sky_set_McsByIndex(context.qam_ldpc);
 }
 
 
@@ -113,27 +115,60 @@ void sky_notify_encoder_brc(uint8_t br)
 	STRU_SysEvent_BB_ModulationChange event;
 	event.BB_MAX_support_br = br;
 	SYS_EVENT_Notify(SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE, (void*)&event);	
+    
+    dlog_info("brc =%d\r\n", br);        
 }
 
-void sky_set_ITQAM_and_notify(uint8_t mod)
-{
-    uint8_t i = 0;
-    
-    dlog_info("QAM=>0x%.2x\r\n", mod);
-    BB_WriteReg(PAGE2, TX_2, mod);
 
-	if(context.brc_mode == AUTO)
+void sky_set_McsByIndex(uint8_t idx)
+{
+    uint8_t mcs_idx_bitrate_map[] = 
+    {
+        1,      //0.6Mbps
+        2,      //1.2
+        3,      //2.4
+        6,      //5.0
+        9,      //7.5
+        11,     //10
+    };
+
+    uint8_t mcs_idx_reg0x0f_map[] = 
+    {
+        0x47,
+        0x87,
+        0x57,
+        0x37,
+        0x37,
+        0x27
+    };
+
+    uint8_t map_idx_to_mode[] = 
+    {
+        ((MOD_BPSK<<6)  | (BW_10M <<3)  | LDPC_1_2), //
+        ((MOD_BPSK<<6)  | (BW_10M <<3)  | LDPC_1_2),
+        ((MOD_4QAM<<6)  | (BW_10M <<3)  | LDPC_1_2),
+        //((MOD_4QAM<<6)  | (BW_10M <<3)  | LDPC_2_3),
+        ((MOD_16QAM<<6) | (BW_10M <<3)  | LDPC_1_2),
+        //((MOD_16QAM<<6) | (BW_10M <<3)  | LDPC_2_3),
+        ((MOD_64QAM<<6) | (BW_10M <<3)  | LDPC_1_2),
+        ((MOD_64QAM<<6) | (BW_10M <<3)  | LDPC_2_3),
+    };
+
+    dlog_info("MCS=> %d\n", map_idx_to_mode[idx]);
+
+    BB_WriteReg( PAGE2, 0x0f, mcs_idx_reg0x0f_map[idx] );
+    BB_WriteReg( PAGE2, TX_2, map_idx_to_mode[idx]);
+    
+	if ( context.brc_mode == AUTO )
 	{
-	    uint8_t br = BB_map_modulation_to_br(mod);
-        dlog_info("br=%d\r\n", br);
-        sky_notify_encoder_brc(br);
+        sky_notify_encoder_brc( mcs_idx_bitrate_map[idx] );
 	}
 }
 
 
 void sky_agc_gain_toggle(void)
 {
-    printf("AGCToggle\r\n");
+    dlog_info("AGCToggle\r\n");
     if(FAR_AGC == en_agcmode)
     {
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_NEAR);
@@ -305,10 +340,13 @@ void sky_physical_link_process(void)
             // sky_soft_reset();
         }
 
-        if(10 <= context.rc_unlock_cnt)
+        if(40 <= context.rc_unlock_cnt)
         {            
             GPIO_SetPin(BLUE_LED_GPIO, 1);  //BLUE LED OFF
             GPIO_SetPin(RED_LED_GPIO, 0);   //RED LED ON
+            
+            context.qam_ldpc = 0;
+            sky_set_McsByIndex(0);
             
             context.dev_state = CHECK_ID_MATCH;
             context.rc_unlock_cnt = 0;
@@ -629,12 +667,24 @@ static void sky_handle_QAM_cmd(void)
     uint8_t data0 = BB_ReadReg(PAGE2, QAM_CHANGE_0);
     uint8_t data1 = BB_ReadReg(PAGE2, QAM_CHANGE_1);
 
-    if(data0+1==data1 && cur_mod_regvalue != data0)
+    if(data0+1==data1 && context.qam_ldpc != data0)
     {
-        sky_set_ITQAM_and_notify(data0);
-        cur_mod_regvalue = data0;
+        BB_WriteReg(PAGE2, TX_2, data0);
     }
 }
+
+static void sky_handle_MCS_cmd(void)
+{
+    uint8_t data0 = BB_ReadReg(PAGE2, MCS_INDEX_MODE_0);
+    uint8_t data1 = BB_ReadReg(PAGE2, MCS_INDEX_MODE_1);
+
+    if(data0+1==data1 && context.qam_ldpc != data0)
+    {
+        sky_set_McsByIndex(data0);
+        context.qam_ldpc = data0;
+    }
+}
+
 
 static void sky_handle_debug_mode_cmd_spi(void)
 {
@@ -695,14 +745,17 @@ void sky_handle_all_spi_cmds(void)
 
     sky_handle_IT_CH_cmd();
 
-    sky_handle_QAM_cmd();
+    //sky_handle_QAM_cmd();
+    
+    sky_handle_MCS_cmd();
 
     sky_handle_brc_mode_cmd();
 
     sky_handle_brc_bitrate_cmd();
-    
+
     sky_handle_RF_band_cmd();
-	sky_handle_debug_mode_cmd_spi();
+
+	//sky_handle_debug_mode_cmd_spi();
 }
 
 static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
@@ -743,6 +796,15 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 dlog_info("RC_CHANNEL_FREQ %x\r\n", value);
                 break;
             }
+            
+            case IT_CHANNEL_FREQ:
+            {
+                context.it_skip_freq_mode = MANUAL;
+                BB_write_ItRegs(value);
+                dlog_info("IT_CHANNEL_FREQ %x\r\n", value);                
+                break;
+            }
+
 
             default:
             {
@@ -822,8 +884,12 @@ static void BB_sky_GatherOSDInfo(void)
 
     osdptr->agc_value[0] = BB_ReadReg(PAGE2, AAGC_2_RD);
     osdptr->agc_value[1] = BB_ReadReg(PAGE2, AAGC_3_RD);
-    osdptr->agc_value[2] = BB_ReadReg(PAGE2, RX3_GAIN_ALL_R);
-    osdptr->agc_value[3] = BB_ReadReg(PAGE2, RX4_GAIN_ALL_R);
+    
+    osdptr->agc_value[2] = get_rc_status();
+    osdptr->agc_value[3] = BB_ReadReg(PAGE2, 0xd7);
+    
+    //osdptr->agc_value[2] = BB_ReadReg(PAGE2, RX3_GAIN_ALL_R);
+    //osdptr->agc_value[3] = BB_ReadReg(PAGE2, RX4_GAIN_ALL_R);
 
     osdptr->lock_status    = get_rc_status();
 	osdptr->in_debug     = (uint8_t)(g_stSkyDebugMode.bl_isDebugMode);

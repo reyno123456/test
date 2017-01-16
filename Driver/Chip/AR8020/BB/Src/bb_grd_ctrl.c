@@ -42,6 +42,9 @@ static void grd_handle_debug_mode_cmd(uint8_t flag);
 void BB_GRD_start(void)
 {
     context.dev_state = INIT_DATA;
+    context.qam_ldpc = 0;
+
+    grd_set_txmsg_mcs_change(context.qam_ldpc);
 
     GPIO_SetMode(RED_LED_GPIO, GPIO_MODE_1);
     GPIO_SetPinDirect(RED_LED_GPIO, GPIO_DATA_DIRECT_OUTPUT);
@@ -77,10 +80,6 @@ void BB_Grd_SetRCId(void)
 }
 
 //---------------IT grd hop change--------------------------------
-#define SNR_STATIC_START_VALUE      (100)
-#define SNR_STATIC_UP_THRESHOD      (5)
-#define SNR_STATIC_DOWN_THRESHOD    (2)
-
 
 void grd_noise_sweep(void)
 {
@@ -145,8 +144,8 @@ void grd_fec_judge(void)
                     context.ldpc    = LDPC_1_2;
                     context.CH_bandwidth = BW_10M;
 
-                    context.qam_ldpc = merge_qam_ldpc_to_index(context.qam_mode, context.ldpc);
-                    grd_set_txmsg_qam_change(context.qam_mode, context.CH_bandwidth, context.ldpc);
+                    context.qam_ldpc = 0;
+                    grd_set_txmsg_mcs_change(context.qam_ldpc);
                 }
             }
         }
@@ -243,7 +242,7 @@ uint8_t is_retrans_cnt_pass(void)
 uint8_t span,retrans,snr_if;
 uint16_t iMCS;
 
-const uint16_t snr_skip_threshold[6] = { 0x004e,0x0090,0x00be,0x01fd,0x055e,0x07ec};
+const uint16_t snr_skip_threshold[7] = {0x0021, 0x004e,0x0090,0x00be,0x01fd,0x055e,0x07ec};
 uint8_t is_it_need_skip_freq(uint8_t qam_ldpc)
 {
     it_span_cnt++;
@@ -259,12 +258,14 @@ uint8_t is_it_need_skip_freq(uint8_t qam_ldpc)
         return 0;
     }
 
+    #if 0
     iMCS = snr_skip_threshold[qam_ldpc];
     snr_if = is_snr_ok(iMCS);
     if(snr_if)
     {
         return 0;
     }
+    #endif
 
     return 1;
 }
@@ -312,91 +313,25 @@ ENUM_BB_QAM Grd_get_QAM(void)
 void grd_set_txmsg_qam_change(ENUM_BB_QAM qam, ENUM_CH_BW bw, ENUM_BB_LDPC ldpc)
 {
     uint8_t data = (qam << 6) | (bw << 3) | ldpc;
-    dlog_info("GMS =>0x%.2x\r\n", data);
+    dlog_info("MCS1=>%d\n", data);
 
     BB_WriteReg(PAGE2, QAM_CHANGE_0, data);
     BB_WriteReg(PAGE2, QAM_CHANGE_1, data+1);
 }
 
 
-uint8_t merge_qam_ldpc_to_index(ENUM_BB_QAM qam, ENUM_BB_LDPC ldpc)
+void grd_set_txmsg_mcs_change(uint8_t index )
 {
-    if(qam == MOD_BPSK && ldpc == LDPC_1_2)
-    {
-        return 0;
-    }
-    else if(qam == MOD_4QAM)
-    {
-        if(ldpc == LDPC_1_2)
-        {
-            return 1;
-        }
-        else if(ldpc == LDPC_2_3)
-        {
-            return 2;
-        }
-    }
-    else if(qam == MOD_16QAM && ldpc == LDPC_1_2)
-    {
-        return 3;
-    }
-    else if(qam == MOD_64QAM)
-    {
-        if(ldpc == LDPC_1_2)
-        {
-            return 4;
-        }
-        else if(ldpc == LDPC_2_3)
-        {
-            return 5;
-        }
-    }
+    BB_WriteReg(PAGE2, MCS_INDEX_MODE_0, index);
+    BB_WriteReg(PAGE2, MCS_INDEX_MODE_1, index +1);
 
-    return 0xff;
-}
-
-void split_index_to_qam_ldpc(uint8_t index, ENUM_BB_QAM *qam, ENUM_BB_LDPC *ldpc)
-{
-    if(index == 0)
-    {
-        *qam = MOD_BPSK;
-        *ldpc = LDPC_1_2;
-    }
-    else if(index == 1)
-    {
-        *qam = MOD_4QAM;
-        *ldpc = LDPC_1_2;
-    }
-    else if(index == 2)
-    {
-        *qam = MOD_4QAM;
-        *ldpc = LDPC_2_3;
-
-    }
-    else if(index == 3)
-    {
-        *qam = MOD_16QAM;
-        *ldpc = LDPC_1_2;
-
-    }
-    else if(index == 4)
-    {
-        *qam = MOD_64QAM;
-        *ldpc = LDPC_1_2;
-
-    }
-    else if(index == 5)
-    {
-        *qam = MOD_64QAM;
-        *ldpc = LDPC_2_3;
-    }
-    return;
+    dlog_info("MCS2=>%d\n", index);
 }
 
 
 void up_down_qamldpc(QAMUPDONW up_down)
 {
-    if(context.qam_skip_mode == MANUAL)
+    if (context.qam_skip_mode == MANUAL)
     {
         return;
     }
@@ -418,8 +353,7 @@ void up_down_qamldpc(QAMUPDONW up_down)
         context.qam_ldpc--;
     }
 
-    split_index_to_qam_ldpc(context.qam_ldpc,&(context.qam_mode),&(context.ldpc));
-    grd_set_txmsg_qam_change(context.qam_mode, context.CH_bandwidth ,context.ldpc);
+    grd_set_txmsg_mcs_change( context.qam_ldpc );
 }
 
 
@@ -428,7 +362,9 @@ void grd_qam_change_judge(void)
     uint8_t snr_statice_value;
 
     if(!context.locked)
+    {
         return;
+    }
 
     snr_statice_value = snr_static_for_qam_change(context.qam_threshold_range[context.qam_ldpc][0],
                                                   context.qam_threshold_range[context.qam_ldpc][1]);
@@ -812,6 +748,22 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 break;
             }
             
+            case RC_CHANNEL_FREQ:
+            {
+                grd_handle_RC_mode_cmd( (ENUM_RUN_MODE)MANUAL);
+                BB_write_RcRegs(value);
+                dlog_info("RC_CHANNEL_FREQ %x\r\n", value);                
+                break;
+            }
+
+            case IT_CHANNEL_FREQ:
+            {
+                grd_handle_IT_mode_cmd( (ENUM_RUN_MODE)MANUAL);
+                BB_write_ItRegs(value);
+                dlog_info("IT_CHANNEL_FREQ %x\r\n", value);                
+                break;
+            }
+
             default:
             {
                 dlog_error("%s\r\n", "unknown WIRELESS_FREQ_CHANGE command");
@@ -830,10 +782,12 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 
             case MCS_MODULATION_SELECT:
                 {
+                    #if 0
                     ENUM_BB_LDPC ldpc = (ENUM_BB_LDPC)(value&0x0f);
                     ENUM_BB_QAM  qam  = (ENUM_BB_QAM)((value >> 4)&0x0f);
-                    
                     grd_handle_MCS_cmd(qam, ldpc);
+                    #endif
+                    grd_set_txmsg_mcs_change(value);
                 }
                 break;
 
@@ -908,10 +862,11 @@ static void BB_grd_GatherOSDInfo(void)
 
     osdptr->agc_value[0] = BB_ReadReg(PAGE2, AAGC_2_RD);
     osdptr->agc_value[1] = BB_ReadReg(PAGE2, AAGC_3_RD);
+    osdptr->agc_value[2] = BB_ReadReg(PAGE2, FEC_5_RD);
 
-    osdptr->agc_value[2] = BB_ReadReg(PAGE2, RX3_GAIN_ALL_R);
+    //osdptr->agc_value[2] = BB_ReadReg(PAGE2, RX3_GAIN_ALL_R);
     osdptr->agc_value[3] = BB_ReadReg(PAGE2, RX4_GAIN_ALL_R);
-
+    osdptr->lock_status  = BB_ReadReg(PAGE2, FEC_5_RD);
     osdptr->snr_vlaue[0] = get_snr_average(0);
     osdptr->snr_vlaue[1] = get_snr_average(1);
     osdptr->snr_vlaue[2] = get_snr_average(2);
@@ -919,6 +874,11 @@ static void BB_grd_GatherOSDInfo(void)
 
     osdptr->ldpc_error = (((uint16_t)BB_ReadReg(PAGE2, LDPC_ERR_HIGH_8)) << 8) | BB_ReadReg(PAGE2, LDPC_ERR_LOW_8);
     osdptr->harq_count = (BB_ReadReg(PAGE2, FEC_5_RD) >> 4);
+    uint8_t tmp = BB_ReadReg(PAGE2, 0xdd);
+    if(osdptr->ldpc_error > 0 || osdptr->harq_count > 0 || tmp > 0)
+    {
+        dlog_info("err:%x harq:%x lost:%x\n", osdptr->ldpc_error, osdptr->harq_count, tmp);
+    }
 
     osdptr->modulation_mode = grd_get_IT_QAM();
     osdptr->code_rate       = grd_get_IT_LDPC();
@@ -930,7 +890,7 @@ static void BB_grd_GatherOSDInfo(void)
     
     if(context.brc_mode == AUTO)
     {
-        osdptr->encoder_bitrate = BB_map_modulation_to_br( (uint8_t)((osdptr->modulation_mode)<<6) | ((osdptr->ch_bandwidth) << 3) | (osdptr->code_rate));
+        osdptr->encoder_bitrate = context.qam_ldpc;
     }
     else
     {

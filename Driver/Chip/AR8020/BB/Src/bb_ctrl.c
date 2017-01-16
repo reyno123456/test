@@ -181,6 +181,8 @@ void gen_qam_threshold_range(void)
             context.qam_threshold_range[i][1] = 0xffff;
         }
     }
+    
+    dlog_info("range:%x %x %x %x \r\n", context.qam_threshold_range[0][1], context.qam_threshold_range[0][1], context.qam_threshold_range[7][0], context.qam_threshold_range[7][1]);
 }
 
 
@@ -202,10 +204,8 @@ void BB_use_param_setting(PARAM *user_setting)
     context.cur_ch   = 0xff;
     #endif
     
-    context.ldpc     = user_setting->user_param.ldpc;
-    context.qam_mode = user_setting->user_param.qam_mode;
-    
-    context.qam_ldpc = merge_qam_ldpc_to_index(context.qam_mode,context.ldpc);
+    //context.ldpc     = user_setting->user_param.ldpc;
+    //context.qam_mode = user_setting->user_param.qam_mode;
 
     context.it_skip_freq_mode = user_setting->user_param.it_skip_freq_mode;
     context.rc_skip_freq_mode = user_setting->user_param.rc_skip_freq_mode;
@@ -383,41 +383,6 @@ void BB_set_LDPC(ENUM_BB_LDPC ldpc)
 {
     uint8_t data = BB_ReadReg(PAGE2, TX_2);
     BB_WriteReg(PAGE2, TX_2, (data & 0x07) | (uint8_t)ldpc);
-}
-
-
-static uint8_t mod_br_map[][2] = 
-{
-    ((MOD_BPSK<<6)  | (BW_10M <<3)  | LDPC_1_2),  0, //encoder br:500k
-    ((MOD_4QAM<<6)  | (BW_10M <<3)  | LDPC_1_2),  2, //encoder br:2M
-    ((MOD_4QAM<<6)  | (BW_10M <<3)  | LDPC_2_3),  4, //encoder br:4M
-    ((MOD_16QAM<<6) | (BW_10M <<3)  | LDPC_1_2),  6, //encoder br:7M 
-    ((MOD_64QAM<<6) | (BW_10M <<3)  | LDPC_1_2),  9, //encoder br:10M
-    ((MOD_64QAM<<6) | (BW_10M <<3)  | LDPC_2_3),  12, //encoder br:15M
-};
-
-uint8_t BB_map_modulation_to_br(uint8_t mod)
-{
-    uint8_t br = mod_br_map[0][1];
-    ENUM_CH_BW bw = (ENUM_CH_BW)((mod >> 3)& 0x07);
-    uint8_t i  = 0;
-
-    mod |= (uint8_t)(BW_10M <<3);
-    for(i = 0; i < sizeof(mod_br_map) / sizeof(mod_br_map[0]); i++)
-    {
-        if(mod_br_map[i][0] >= mod)
-        {
-            br = mod_br_map[i][1];
-            break;
-        }
-    }
-
-    if(bw == BW_20M)
-    {
-        br = br*3/2;
-    }
-
-    return br;
 }
 
 

@@ -227,8 +227,8 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
                         READ_WORD(V0_YMSEL_ADDR,ymsel_tmp); //read y-mse
                         READ_WORD(V0_YMSEH_ADDR,ymseh_tmp);
                         v0_ymse_last_p = (((int64)((ymseh_tmp>>24)&0xff)<<32) + ymsel_tmp);
-                        if (ymseh_tmp&0x1) my_v0_rc_params_ac_gop( ); // @lhu, write ac_gop start symbol
-                        if ((ymseh_tmp>>1)&0x1) my_v0_rc_params_ac_iopratio( ); // @lhu, write ac_iopratio start symbol
+                        //if (ymseh_tmp&0x1) my_v0_rc_params_ac_gop( ); // @lhu, write ac_gop start symbol
+                        //if ((ymseh_tmp>>1)&0x1) my_v0_rc_params_ac_iopratio( ); // @lhu, write ac_iopratio start symbol
                     }
                 }
                 qp = my_v0_rc_handle_mb( ); // update QP once
@@ -275,8 +275,8 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
                         READ_WORD(V1_YMSEL_ADDR,ymsel_tmp); //read y-mse
                         READ_WORD(V1_YMSEH_ADDR,ymseh_tmp);
                         v1_ymse_last_p = (((int64)((ymseh_tmp>>24)&0xff)<<32) + ymsel_tmp);
-                        if (ymseh_tmp&0x1) my_v1_rc_params_ac_gop( ); // @lhu, write ac_gop start symbol
-                        if ((ymseh_tmp>>1)&0x1) my_v1_rc_params_ac_iopratio( ); //@ lhu, write ac_iopratio start symbol
+                        //if (ymseh_tmp&0x1) my_v1_rc_params_ac_gop( ); // @lhu, write ac_gop start symbol
+                        //if ((ymseh_tmp>>1)&0x1) my_v1_rc_params_ac_iopratio( ); //@ lhu, write ac_iopratio start symbol
                     }
                 }
                 qp = my_v1_rc_handle_mb( ); // update QP once
@@ -323,8 +323,8 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
                         READ_WORD(V0_YMSEL_ADDR,ymsel_tmp); //read y-mse
                         READ_WORD(V0_YMSEH_ADDR,ymseh_tmp);
                         v1_ymse_last_p = (((int64)((ymseh_tmp>>24)&0xff)<<32) + ymsel_tmp);
-                        if (ymseh_tmp&0x1) my_v1_rc_params_ac_gop( ); // @lhu, write ac_gop start symbol
-                        if ((ymseh_tmp>>1)&0x1) my_v1_rc_params_ac_iopratio( ); //@ lhu, write ac_iopratio start symbol
+                        //if (ymseh_tmp&0x1) my_v1_rc_params_ac_gop( ); // @lhu, write ac_gop start symbol
+                        //if ((ymseh_tmp>>1)&0x1) my_v1_rc_params_ac_iopratio( ); //@ lhu, write ac_iopratio start symbol
                     }
                 }
                 qp = my_v1_rc_handle_mb( ); // update QP once
@@ -556,41 +556,51 @@ void my_rc_ac_br(int view) {
     int v1_ac_br_index,v1_ac_br;
     if (view==0) {
       READ_WORD(V0_RC_ACBR_ADDR,m);
-      v0_ac_br_index = (m>>26)&0x1f;
+      v0_ac_br_index = (m>>26)&0x3f;
 
       switch(v0_ac_br_index) {
         case 0 : v0_ac_br = 8000000 ; break; // 8Mbps
-        case 1 : v0_ac_br = 1000000 ; break; // 1Mbps
-        case 2 : v0_ac_br = 2000000 ; break; // 2Mbps
-        case 3 : v0_ac_br = 3000000 ; break; // 3Mbps
-        case 4 : v0_ac_br = 4000000 ; break; // 4Mbps
-        case 5 : v0_ac_br = 5000000 ; break; // 5Mbps
-        case 6 : v0_ac_br = 6000000 ; break; // 6Mbps
-        case 7 : v0_ac_br = 7000000 ; break; // 7Mbps
-        case 8 : v0_ac_br = 500000  ; break; // 500Kbps
-        case 9 : v0_ac_br = 9000000 ; break; // 9Mbps
-        case 10: v0_ac_br = 10000000; break; // 10Mbps
-        case 11: v0_ac_br = 11000000; break; // 11Mbps
-        case 12: v0_ac_br = 12000000; break; // 12Mbps
-        case 13: v0_ac_br = 13000000; break; // 13Mbps
-        case 14: v0_ac_br = 14000000; break; // 14Mbps
-        case 15: v0_ac_br = 15000000; break; // 15Mbps
-        case 16: v0_ac_br = 16000000; break; // 16Mbps
-        case 17: v0_ac_br = 17000000; break; // 17Mbps
-        case 18: v0_ac_br = 18000000; break; // 18Mbps
-        case 19: v0_ac_br = 19000000; break; // 19Mbps
-        case 20: v0_ac_br = 20000000; break; // 20Mbps
-        case 21: v0_ac_br = 21000000; break; // 21Mbps
-        case 22: v0_ac_br = 22000000; break; // 22Mbps
-        case 23: v0_ac_br = 23000000; break; // 23Mbps
-        case 24: v0_ac_br = 24000000; break; // 24Mbps
-        case 25: v0_ac_br = 25000000; break; // 25Mbps
-        case 26: v0_ac_br = 26000000; break; // 26Mbps
-        case 27: v0_ac_br = 27000000; break; // 27Mbps
-        case 28: v0_ac_br = 28000000; break; // 28Mbps
-        case 29: v0_ac_br = 29000000; break; // 29Mbps
-        case 30: v0_ac_br = 30000000; break; // 30Mbps
-        default: v0_ac_br = 31000000; break; // 31Mbps
+        case 1 : v0_ac_br = 600000  ; break; // 600kps
+        case 2 : v0_ac_br = 1200000 ; break; // 1.2Mbps
+        case 3 : v0_ac_br = 2400000 ; break; // 2.4Mbps
+        case 4 : v0_ac_br = 3400000 ; break; // 3.4Mbps
+        case 5 : v0_ac_br = 4800000 ; break; // 4.8Mbps
+        case 6 : v0_ac_br = 5000000 ; break; // 5Mbps
+        case 7 : v0_ac_br = 6000000 ; break; // 6Mbps
+        case 8 : v0_ac_br = 7000000 ; break; // 7Mbps
+        case 9 : v0_ac_br = 7500000 ; break; // 7.5Mbps
+        case 10: v0_ac_br = 9000000 ; break; // 9Mbps
+        case 11: v0_ac_br = 10000000; break; // 10Mbps
+        case 12: v0_ac_br = 11000000; break; // 11Mbps
+        case 13: v0_ac_br = 12000000; break; // 12Mbps
+        case 14: v0_ac_br = 13000000; break; // 13Mbps
+        case 15: v0_ac_br = 14000000; break; // 14Mbps
+        case 16: v0_ac_br = 15000000; break; // 15Mbps
+        case 17: v0_ac_br = 16000000; break; // 16Mbps
+        case 18: v0_ac_br = 17000000; break; // 17Mbps
+        case 19: v0_ac_br = 18000000; break; // 18Mbps
+        case 20: v0_ac_br = 19000000; break; // 19Mbps
+        case 21: v0_ac_br = 20000000; break; // 20Mbps
+        case 22: v0_ac_br = 21000000; break; // 21Mbps
+        case 23: v0_ac_br = 22000000; break; // 22Mbps
+        case 24: v0_ac_br = 23000000; break; // 23Mbps
+        case 25: v0_ac_br = 24000000; break; // 24Mbps
+        case 26: v0_ac_br = 25000000; break; // 25Mbps
+        case 27: v0_ac_br = 26000000; break; // 26Mbps
+        case 28: v0_ac_br = 27000000; break; // 27Mbps
+        case 29: v0_ac_br = 28000000; break; // 28Mbps
+        case 30: v0_ac_br = 29000000; break; // 29Mbps
+        case 31: v0_ac_br = 30000000; break; // 30Mbps
+        case 32: v0_ac_br = 31000000; break; // 31Mbps
+        case 33: v0_ac_br = 32000000; break; // 32Mbps
+        case 34: v0_ac_br = 33000000; break; // 32Mbps
+        case 35: v0_ac_br = 34000000; break; // 34Mbps
+        case 36: v0_ac_br = 35000000; break; // 35Mbps
+        case 37: v0_ac_br = 36000000; break; // 36Mbps
+        case 38: v0_ac_br = 37000000; break; // 37Mbps
+        case 39: v0_ac_br = 38000000; break; // 38Mbps
+        case 40: v0_ac_br = 39000000; break; // 39Mbps
+        default: v0_ac_br = 8000000 ; break; // 8Mbps
       }
       if (v0_ac_br_index != rca.v0_prev_ac_br_index)
         WRITE_WORD(V0_BR_ADDR, v0_ac_br);
@@ -598,48 +608,61 @@ void my_rc_ac_br(int view) {
     }
     else {
       READ_WORD(V1_RC_ACBR_ADDR,m);
-      v1_ac_br_index = (m>>26)&0x1f;
+      v1_ac_br_index = (m>>26)&0x3f;
 
       switch(v1_ac_br_index) {
         case 0 : v1_ac_br = 8000000 ; break; // 8Mbps
-        case 1 : v1_ac_br = 1000000 ; break; // 1Mbps
-        case 2 : v1_ac_br = 2000000 ; break; // 2Mbps
-        case 3 : v1_ac_br = 3000000 ; break; // 3Mbps
-        case 4 : v1_ac_br = 4000000 ; break; // 4Mbps
-        case 5 : v1_ac_br = 5000000 ; break; // 5Mbps
-        case 6 : v1_ac_br = 6000000 ; break; // 6Mbps
-        case 7 : v1_ac_br = 7000000 ; break; // 7Mbps
-        case 8 : v1_ac_br = 500000  ; break; // 500Kbps
-        case 9 : v1_ac_br = 9000000 ; break; // 9Mbps
-        case 10: v1_ac_br = 10000000; break; // 10Mbps
-        case 11: v1_ac_br = 11000000; break; // 11Mbps
-        case 12: v1_ac_br = 12000000; break; // 12Mbps
-        case 13: v1_ac_br = 13000000; break; // 13Mbps
-        case 14: v1_ac_br = 14000000; break; // 14Mbps
-        case 15: v1_ac_br = 15000000; break; // 15Mbps
-        case 16: v1_ac_br = 16000000; break; // 16Mbps
-        case 17: v1_ac_br = 17000000; break; // 17Mbps
-        case 18: v1_ac_br = 18000000; break; // 18Mbps
-        case 19: v1_ac_br = 19000000; break; // 19Mbps
-        case 20: v1_ac_br = 20000000; break; // 20Mbps
-        case 21: v1_ac_br = 21000000; break; // 21Mbps
-        case 22: v1_ac_br = 22000000; break; // 22Mbps
-        case 23: v1_ac_br = 23000000; break; // 23Mbps
-        case 24: v1_ac_br = 24000000; break; // 24Mbps
-        case 25: v1_ac_br = 25000000; break; // 25Mbps
-        case 26: v1_ac_br = 26000000; break; // 26Mbps
-        case 27: v1_ac_br = 27000000; break; // 27Mbps
-        case 28: v1_ac_br = 28000000; break; // 28Mbps
-        case 29: v1_ac_br = 29000000; break; // 29Mbps
-        case 30: v1_ac_br = 30000000; break; // 30Mbps
-        default: v1_ac_br = 31000000; break; // 31Mbps
+        case 1 : v1_ac_br = 600000  ; break; // 600Kbps
+        case 2 : v1_ac_br = 1200000 ; break; // 1.2Mbps
+        case 3 : v1_ac_br = 2400000 ; break; // 2.4Mbps
+        case 4 : v1_ac_br = 3400000 ; break; // 3.4Mbps
+        case 5 : v1_ac_br = 4800000 ; break; // 4.8Mbps
+        case 6 : v1_ac_br = 5000000 ; break; // 5Mbps
+        case 7 : v1_ac_br = 6000000 ; break; // 6Mbps
+        case 8 : v1_ac_br = 7000000 ; break; // 7Mbps
+        case 9 : v1_ac_br = 7500000 ; break; // 7.5Mbps
+        case 10: v1_ac_br = 9000000 ; break; // 9Mbps
+        case 11: v1_ac_br = 10000000; break; // 10Mbps
+        case 12: v1_ac_br = 11000000; break; // 11Mbps
+        case 13: v1_ac_br = 12000000; break; // 12Mbps
+        case 14: v1_ac_br = 13000000; break; // 13Mbps
+        case 15: v1_ac_br = 14000000; break; // 14Mbps
+        case 16: v1_ac_br = 15000000; break; // 15Mbps
+        case 17: v1_ac_br = 16000000; break; // 16Mbps
+        case 18: v1_ac_br = 17000000; break; // 17Mbps
+        case 19: v1_ac_br = 18000000; break; // 18Mbps
+        case 20: v1_ac_br = 19000000; break; // 19Mbps
+        case 21: v1_ac_br = 20000000; break; // 20Mbps
+        case 22: v1_ac_br = 21000000; break; // 21Mbps
+        case 23: v1_ac_br = 22000000; break; // 22Mbps
+        case 24: v1_ac_br = 23000000; break; // 23Mbps
+        case 25: v1_ac_br = 24000000; break; // 24Mbps
+        case 26: v1_ac_br = 25000000; break; // 25Mbps
+        case 27: v1_ac_br = 26000000; break; // 26Mbps
+        case 28: v1_ac_br = 27000000; break; // 27Mbps
+        case 29: v1_ac_br = 28000000; break; // 28Mbps
+        case 30: v1_ac_br = 29000000; break; // 29Mbps
+        case 31: v1_ac_br = 30000000; break; // 30Mbps
+        case 32: v1_ac_br = 31000000; break; // 31Mbps
+        case 33: v1_ac_br = 32000000; break; // 32Mbps
+        case 34: v1_ac_br = 33000000; break; // 32Mbps
+        case 35: v1_ac_br = 34000000; break; // 34Mbps
+        case 36: v1_ac_br = 35000000; break; // 35Mbps
+        case 37: v1_ac_br = 36000000; break; // 36Mbps
+        case 38: v1_ac_br = 37000000; break; // 37Mbps
+        case 39: v1_ac_br = 38000000; break; // 38Mbps
+        case 40: v1_ac_br = 39000000; break; // 39Mbps
+        default: v1_ac_br = 8000000 ; break; // 8Mbps
       }
       if (v1_ac_br_index != rca.v1_prev_ac_br_index)
         WRITE_WORD(V1_BR_ADDR, v1_ac_br);
       rca.v1_prev_ac_br_index = v1_ac_br_index;
     }
 }
+
+
 //===== Auto-config GOP based on sub-function of RCAutoConfig_GOP =====
+#if 0
 void my_v0_rc_params_ac_gop( ) {
     int i,j,m,v0_autoconfig_gop;
 
@@ -865,7 +888,7 @@ int RCAutoConfig_IOverPRatio (int w, int h, int bit_rate, int iopratio, int64 im
 
     return rc_ac_iopratio;
 }
-
+#endif
 #endif  //###########
 
 void my_v0_rc_init_seq( )
@@ -2606,6 +2629,7 @@ void my_rc_params( ) {
 #endif //###########
 
 #ifdef ARMCM7_RC  //###########
+#if 0
 //===== Auto-config GOP based on sub-function of RCAutoConfig_GOP =====
 void my_v1_rc_params_ac_gop( ) {
     int i,j,m,v1_autoconfig_gop;
@@ -2655,6 +2679,7 @@ void my_v1_rc_params_ac_iopratio( ) {
         WRITE_WORD(V1_QP_ADDR, (((i>>16)<<16)+(v1_ac_iopratio<<8)+(i&0xff)));
     }
 }
+#endif
 #endif //###########
 
 

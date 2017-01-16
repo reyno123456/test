@@ -46,38 +46,40 @@
 #define TX_7       ((uint8_t)(0x5f))  //RC_id_bits[7:0]
 
 // custom
-#define IT_FREQ_TX_0    ((uint8_t)0x60 )
-#define IT_FREQ_TX_1    ((uint8_t)0x61 )
+#define IT_FREQ_TX_0            ((uint8_t)0x60 )
+#define IT_FREQ_TX_1            ((uint8_t)0x61 )
 
-#define RC_FREQ_TX_0    ((uint8_t)0x62 )
-#define RC_FREQ_TX_1    ((uint8_t)0x63 )
+#define RC_FREQ_TX_0            ((uint8_t)0x62 )
+#define RC_FREQ_TX_1            ((uint8_t)0x63 )
 
-#define QAM_ATUO_MANUAL ((uint8_t)0x6b )
-#define QAM_CHANGE_0    ((uint8_t)0x64 )
-#define QAM_CHANGE_1    ((uint8_t)0x65 )
+#define QAM_ATUO_MANUAL         ((uint8_t)0x6b )
+#define QAM_CHANGE_0            ((uint8_t)0x64 )
+#define QAM_CHANGE_1            ((uint8_t)0x65 )
 
-#define RC_CH_CHANGE_0	((uint8_t)0x66 )
-#define RC_CH_CHANGE_1	((uint8_t)0x67 )
+#define RC_CH_CHANGE_0	        ((uint8_t)0x66 )
+#define RC_CH_CHANGE_1	        ((uint8_t)0x67 )
 
-#define RC_CH_MODE_0		((uint8_t)0x68 )
-#define RC_CH_MODE_1		((uint8_t)0x69 )
+#define RC_CH_MODE_0		    ((uint8_t)0x68 )
+#define RC_CH_MODE_1		    ((uint8_t)0x69 )
 
-#define RF_BAND_CHANGE_0	((uint8_t)0x6A )
-#define RF_BAND_CHANGE_1	((uint8_t)0x6B )
+#define RF_BAND_CHANGE_0	    ((uint8_t)0x6A )
+#define RF_BAND_CHANGE_1	    ((uint8_t)0x6B )
 
-#define RF_CH_BW_CHANGE_0	((uint8_t)0x6C )
-#define RF_CH_BW_CHANGE_1	((uint8_t)0x6D )
+#define RF_CH_BW_CHANGE_0	    ((uint8_t)0x6C )
+#define RF_CH_BW_CHANGE_1	    ((uint8_t)0x6D )
 
-#define ENCODER_BRC_MODE_0    ((uint8_t)0x6E)
-#define ENCODER_BRC_MODE_1    ((uint8_t)0x6F)
+#define ENCODER_BRC_MODE_0      ((uint8_t)0x6E)
+#define ENCODER_BRC_MODE_1      ((uint8_t)0x6F)
 
-#define ENCODER_BRC_CHAGE_0	((uint8_t)0x70)
-#define ENCODER_BRC_CHAGE_1	((uint8_t)0x71)
+#define ENCODER_BRC_CHAGE_0	    ((uint8_t)0x70)
+#define ENCODER_BRC_CHAGE_1	    ((uint8_t)0x71)
 
-#define NTF_TEST_MODE_0		((uint8_t)0x72)
-#define NTF_TEST_MODE_1		((uint8_t)0x73)
+#define NTF_TEST_MODE_0		    ((uint8_t)0x72)
+#define NTF_TEST_MODE_1		    ((uint8_t)0x73)
 
 
+#define MCS_INDEX_MODE_0		((uint8_t)0x74)
+#define MCS_INDEX_MODE_1		((uint8_t)0x75)
 #define CALI_0_1     ((uint8_t)(0xD0+0x00))/* page 0 0xD0+0x00
                                             txa_i_ofs RD  7 0 8
                                            */
@@ -295,8 +297,8 @@
 #define     FEC_2_RD_4      ((uint8_t)0xD6 )  //[7:0]Dec_rc_id[7:0]
 
 
-#define     LDPC_ERR_HIGH_8     ((uint8_t)0xD7 )  //Ldpc_err_num_rd[15:8]
-#define     LDPC_ERR_LOW_8      ((uint8_t)0xD8 )  //Ldpc_err_num_rd[7:0]
+#define     LDPC_ERR_HIGH_8     ((uint8_t)0xDE )  //Ldpc_err_num_rd[15:8]
+#define     LDPC_ERR_LOW_8      ((uint8_t)0xDF )  //Ldpc_err_num_rd[7:0]
 
 #define     FEC_4_RD            ((uint8_t)0xD9 )      /*PAGE2   0xc8  0x11  0xD9                                       
                                                 rc_err_flg  RO  [7:7]   
