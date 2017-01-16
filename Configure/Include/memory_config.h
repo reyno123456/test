@@ -200,7 +200,9 @@ typedef struct
 #endif
 }STRU_SettingConfigure;
 
-#define GET_CONFIGURE_FROM_FLASH(structaddress) {uint8_t* cpu0_app_size_addr = (uint8_t*)0x10020022;\
+#define GET_CONFIGURE_FROM_FLASH(structaddress) {do\
+                                                 {\
+                                                 uint8_t* cpu0_app_size_addr = (uint8_t*)0x10020022;\
                                                  uint32_t cpu0_app_size = GET_WORD_FROM_ANY_ADDR(cpu0_app_size_addr);\
                                                  uint32_t cpu0_app_start_addr = 0x10020022 + 4;\
                                                  uint8_t* cpu1_app_size_addr = (uint8_t*)(cpu0_app_start_addr + cpu0_app_size);\
@@ -209,7 +211,9 @@ typedef struct
                                                  uint8_t* cpu2_app_size_addr = (uint8_t*)(cpu1_app_start_addr + cpu1_app_size);\
                                                  uint32_t cpu2_app_size = GET_WORD_FROM_ANY_ADDR(cpu2_app_size_addr);\
                                                  uint32_t cpu2_app_start_addr = cpu1_app_start_addr + cpu1_app_size + 4;\
-                                                 structaddress=(STRU_SettingConfigure *)(cpu2_app_start_addr + cpu2_app_size);}
+                                                 structaddress=(STRU_SettingConfigure *)(cpu2_app_start_addr + cpu2_app_size);\
+                                                 }while(0);\
+                                                 }
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

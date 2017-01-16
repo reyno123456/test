@@ -16,35 +16,9 @@
 # }
 
 function dec2hex()
-{
+{ 
     printf "%x" $1
 }
-
-
-# if [ $# -lt 3 ]; then
-#   echo "***Too few parameters***"
-#   helptext
-#   exit
-# fi
-
-# while getopts ":i:h" OPTION
-# do
-#   case $OPTION in
-#   i) #"this is the input information"     
-#         bootimageaddr=$2
-#         bootimagemajorversion=$3
-#         bootimageminorversion=$4
-#         appimageaddr=$5
-#         appimagemajorversion=$6
-#         appimageminorversion=$7        
-#     ;;
-#   h) #"this is the help information"
-#                 helptext
-#       exit
-#   ;;
-#   esac
-# done
-
 outputtxt=ar8020.bin
 outputboottxt=boot.bin
 outputapptxt=app.bin
@@ -172,10 +146,10 @@ echo -n -e \\x${tmpinfo:3:2}  >> $outputtxt
 
 
 applengthhead=$((46+$cpu0length+$cpu1length+$cpu2length))
-for line in `ls $Bin | grep cfg | sort -d`
+for element in $CFG_BIN_FILE_NAME_LIST
 do
 
-    tmplength=`stat --format=%s $Bin/$line`
+    tmplength=`stat --format=%s $Bin/$element`
     applengthhead=$(($applengthhead+$tmplength))
 done
 #echo $applengthhead
@@ -224,9 +198,9 @@ done
 #add cpu2.bin to ar8020.bin
 cat $cpu2 >> $outputtmp
 
-for line in `ls $Bin | grep cfg | sort -d`
+for element in $CFG_BIN_FILE_NAME_LIST
 do
-    cat $Bin/$line >> $outputtmp
+    cat $Bin/$element >> $outputtmp
 done
 
 md5=`md5sum $outputtmp | cut -d ' ' -f 1`
@@ -240,8 +214,6 @@ do
 done
 cat $outputtmp >> $outputapptxt
 cat $outputtmp >> $outputtxt
-
-
 
 rm zero.image
 rm $outputtmp
