@@ -84,8 +84,8 @@ $(LIB): CFLAGS += -DCPU2_DRV
 $(LIB): $(OBJ_C)
 	@echo "Generating static library: " $(notdir $@)
 	$(AR) $(ARFLAGS) $@ $(OBJ_C)
-	$(CC) -c BB/Src/bb_init_regs.c
-	$(OBJCOPY) -O binary BB/Src/bb_init_regs.o BB/Src/$(CFG_BIN)
+	$(CC) -c BB/Src/bb_init_regs.c -o BB/Src/bb_init_regs_config.o
+	$(OBJCOPY) -O binary BB/Src/bb_init_regs_config.o BB/Src/$(CFG_BIN)
 
 install:
 	@echo "Installing static library: $(LIB)"
@@ -108,7 +108,8 @@ install:
     
 clean:
 	@echo "Cleaning..."
-	@$(RM) $(LIB) $(OBJ_C) $(obj).depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB) $(OUTPUT_BIN_STAGING_DIR)/$(CFG_BIN)
+	@$(RM) $(LIB) $(OBJ_C) $(obj).depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB) $(OUTPUT_BIN_STAGING_DIR)/$(CFG_BIN) 
+	@$(RM) BB/Src/*.o BB/Src/$(CFG_BIN) 
 
 .PHONY: all clean install
 #########################################################################

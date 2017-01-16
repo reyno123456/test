@@ -181,6 +181,37 @@ extern "C" {
 #define SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_ST_ADDR    (SRAM_BB_UART_COM_SESSION_3_SHARE_MEMORY_ST_ADDR + SRAM_BB_UART_COM_SESSION_3_SHARE_MEMORY_SIZE)
 #define SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_SIZE       0x100
 
+
+
+
+#define GET_WORD_FROM_ANY_ADDR(any_addr) ((uint32_t)(*any_addr) | \
+                                         (((uint32_t)(*(any_addr+1))) << 8) | \
+                                         (((uint32_t)(*(any_addr+2))) << 16) | \
+                                         ((uint32_t)((*(any_addr+3))) << 24))
+typedef struct 
+{    
+    unsigned char bb_sky_configure[4][256];
+    unsigned char bb_grd_configure[4][256];
+    unsigned char rf_configure[128];
+    unsigned char hdmi_configure[263][3];
+}setting_configure;
+
+inline unsigned int get_configure_from_flash(void)
+{
+    unsigned int address = 0x10020022;
+    uint8_t* cpu0_app_size_addr = (uint8_t*)address;
+    uint32_t cpu0_app_size = GET_WORD_FROM_ANY_ADDR(cpu0_app_size_addr);
+    uint32_t cpu0_app_start_addr = address + 4;
+
+    uint8_t* cpu1_app_size_addr = (uint8_t*)(cpu0_app_start_addr + cpu0_app_size);
+    uint32_t cpu1_app_size = GET_WORD_FROM_ANY_ADDR(cpu1_app_size_addr);
+    uint32_t cpu1_app_start_addr = cpu0_app_start_addr + cpu0_app_size + 4;
+
+    uint8_t* cpu2_app_size_addr = (uint8_t*)(cpu1_app_start_addr + cpu1_app_size);
+    uint32_t cpu2_app_size = GET_WORD_FROM_ANY_ADDR(cpu2_app_size_addr);
+    uint32_t cpu2_app_start_addr = cpu1_app_start_addr + cpu1_app_size + 4;
+    return (cpu2_app_start_addr + cpu2_app_size);
+}
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

@@ -50,13 +50,16 @@ outputboottxt=boot.bin
 outputapptxt=app.bin
 outputtmp=apptmp.bin
 
-
-bootload=../../Output/Staging/Lib/ar8020_boot.bin
-upgrade=../../Output/Staging/Lib/ar8020_upgrade.bin
-cpu0=../../Output/Staging/Lib/ar8020_cpu0.bin
-cpu1=../../Output/Staging/Lib/ar8020_cpu1.bin
-cpu2=../../Output/Staging/Lib/ar8020_cpu2.bin
+bin=../../Output/Staging/Lib
+bootload=$bin/ar8020_boot.bin
+upgrade=$bin/ar8020_upgrade.bin
+cpu0=$bin/ar8020_cpu0.bin
+cpu1=$bin/ar8020_cpu1.bin
+cpu2=$bin/ar8020_cpu2.bin
 ve=../../Utility/imageinfo
+
+confiugrebin=../../Output/Staging/Bin
+
 
 echo "Making the image package, please wait ..."
 
@@ -166,7 +169,15 @@ echo -n -e \\x${tmpinfo:3:2}  >> $outputapptxt
 echo -n -e \\x${tmpinfo:0:2}  >> $outputtxt
 echo -n -e \\x${tmpinfo:3:2}  >> $outputtxt
 
+
+
 applengthhead=$((46+$cpu0length+$cpu1length+$cpu2length))
+for line in `ls $confiugrebin | grep cfg | sort -d`
+do
+
+    tmplength=`stat --format=%s $confiugrebin/$line`
+    applengthhead=$(($applengthhead+$tmplength))
+done
 #echo $applengthhead
 #image length
 for i in {0..3}
@@ -213,6 +224,11 @@ done
 #add cpu2.bin to ar8020.bin
 cat $cpu2 >> $outputtmp
 
+for line in `ls $confiugrebin | grep cfg | sort -d`
+do
+    cat $confiugrebin/$line >> $outputtmp
+done
+
 md5=`md5sum $outputtmp | cut -d ' ' -f 1`
 #echo `md5sum $outputtmp | cut -d ' ' -f 1`
 for i in {0..15}
@@ -224,6 +240,8 @@ do
 done
 cat $outputtmp >> $outputapptxt
 cat $outputtmp >> $outputtxt
+
+
 
 rm zero.image
 rm $outputtmp

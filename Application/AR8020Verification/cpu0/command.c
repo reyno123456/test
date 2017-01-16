@@ -27,7 +27,7 @@
 #include "testhal_i2c.h"
 #include "test_hal_uart.h"
 #include "test_hal_spi.h"
-#include "memory.h"
+#include "memory_config.h"
 
 static unsigned char g_commandPos;
 static char g_commandLine[50];
@@ -456,33 +456,34 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         uint32_t i =0;
         uint32_t j =0;
         configure=(setting_configure *)get_configure_from_flash();
-        dlog_error("****************        HDMI       ******************");
-        dlog_error("%02x %02x %02x",configure->hdmi_configure[0][0],configure->hdmi_configure[0][1],configure->hdmi_configure[0][2]);
-        dlog_error("%02x %02x %02x",configure->hdmi_configure[262][0],configure->hdmi_configure[262][1],configure->hdmi_configure[262][2]);
-        dlog_error("****************        bb_sky       ******************");
+        dlog_info("configure address %x!!!!!!!!!!",get_configure_from_flash());
+        dlog_info("****************        HDMI       ******************");
+        dlog_info("%02x %02x %02x",configure->hdmi_configure[0][0],configure->hdmi_configure[0][1],configure->hdmi_configure[0][2]);
+        dlog_info("%02x %02x %02x",configure->hdmi_configure[262][0],configure->hdmi_configure[262][1],configure->hdmi_configure[262][2]);
+        dlog_info("****************        bb_sky       ******************");
         for(j=0;j<4;j++)
         {
             for(i=0;i<16;i++)
             {
-                dlog_error("%02x",configure->bb_sky_configure[j][i*16]);
+                dlog_info("%02x",configure->bb_sky_configure[j][i*16]);
                 dlog_output(100);
             }
-            dlog_error("***********************************************");
+            dlog_info("***********************************************");
         }
-        dlog_error("***************      bb_grd            ********************");
+        dlog_info("***************      bb_grd            ********************");
         for(j=0;j<4;j++)
         {
             for(i=0;i<16;i++)
             {
-                dlog_error("%02x",configure->bb_grd_configure[j][i*16]);
+                dlog_info("%02x",configure->bb_grd_configure[j][i*16]);
                 dlog_output(100);
             }
-            dlog_error("***********************************************");
+            dlog_info("***********************************************");
         }
-        dlog_error("*********        rf           **************");
+        dlog_info("*********        rf           **************");
         for(i=0;i<8;i++)
         {
-            dlog_error("%02x",configure->rf_configure[i*16]);
+            dlog_info("%02x",configure->rf_configure[i*16]);
             dlog_output(100);
         }
         /*for(i=0;i<263;i++)
