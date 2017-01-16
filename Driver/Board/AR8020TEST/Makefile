@@ -20,6 +20,7 @@ LIB = libboard.a
 
 # source file(s), including c file(s)
 SRC_C := ADV7611/Src/adv_7611.c \
+         ADV7611/Src/adv_7611_edid.c \
          NORFlash/Src/nor_flash.c \
          NORFlash/Src/w25q128.c \
          MipiCtrl/Src/ov5640_mipi.c
