@@ -146,6 +146,8 @@ echo -n -e \\x${tmpinfo:3:2}  >> $outputtxt
 
 
 applengthhead=$((46+$cpu0length+$cpu1length+$cpu2length))
+replenish=$((4-$applengthhead%4))
+applengthhead=$(($applengthhead+$replenish))
 for element in $CFG_BIN_FILE_NAME_LIST
 do
 
@@ -197,6 +199,10 @@ do
 done
 #add cpu2.bin to ar8020.bin
 cat $cpu2 >> $outputtmp
+for((a=0;a<=(($replenish-1));a++))
+do
+        echo -n -e \\x0 >> $outputtmp
+done
 
 for element in $CFG_BIN_FILE_NAME_LIST
 do

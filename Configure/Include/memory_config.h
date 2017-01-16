@@ -211,7 +211,7 @@ typedef struct
                                                  uint8_t* cpu2_app_size_addr = (uint8_t*)(cpu1_app_start_addr + cpu1_app_size);\
                                                  uint32_t cpu2_app_size = GET_WORD_FROM_ANY_ADDR(cpu2_app_size_addr);\
                                                  uint32_t cpu2_app_start_addr = cpu1_app_start_addr + cpu1_app_size + 4;\
-                                                 structaddress=(STRU_SettingConfigure *)(cpu2_app_start_addr + cpu2_app_size);\
+                                                 structaddress=(STRU_SettingConfigure *)(cpu2_app_start_addr + cpu2_app_size +(4-(cpu2_app_start_addr + cpu2_app_size)%4));\
                                                  }while(0);\
                                                  }
 #ifdef __cplusplus
