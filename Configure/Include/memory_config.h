@@ -190,28 +190,26 @@ extern "C" {
                                          ((uint32_t)((*(any_addr+3))) << 24))
 typedef struct 
 {    
+#ifdef USE_BB_REG_CONFIG_BIN
     unsigned char bb_sky_configure[4][256];
     unsigned char bb_grd_configure[4][256];
     unsigned char rf_configure[128];
+#endif
+#ifdef USE_ADV7611_EDID_CONFIG_BIN
     unsigned char hdmi_configure[263][3];
-}setting_configure;
+#endif
+}STRU_SettingConfigure;
 
-inline unsigned int get_configure_from_flash(void)
-{
-    unsigned int address = 0x10020022;
-    uint8_t* cpu0_app_size_addr = (uint8_t*)address;
-    uint32_t cpu0_app_size = GET_WORD_FROM_ANY_ADDR(cpu0_app_size_addr);
-    uint32_t cpu0_app_start_addr = address + 4;
-
-    uint8_t* cpu1_app_size_addr = (uint8_t*)(cpu0_app_start_addr + cpu0_app_size);
-    uint32_t cpu1_app_size = GET_WORD_FROM_ANY_ADDR(cpu1_app_size_addr);
-    uint32_t cpu1_app_start_addr = cpu0_app_start_addr + cpu0_app_size + 4;
-
-    uint8_t* cpu2_app_size_addr = (uint8_t*)(cpu1_app_start_addr + cpu1_app_size);
-    uint32_t cpu2_app_size = GET_WORD_FROM_ANY_ADDR(cpu2_app_size_addr);
-    uint32_t cpu2_app_start_addr = cpu1_app_start_addr + cpu1_app_size + 4;
-    return (cpu2_app_start_addr + cpu2_app_size);
-}
+#define GET_CONFIGURE_FROM_FLASH(structaddress) {uint8_t* cpu0_app_size_addr = (uint8_t*)0x10020022;\
+                                                 uint32_t cpu0_app_size = GET_WORD_FROM_ANY_ADDR(cpu0_app_size_addr);\
+                                                 uint32_t cpu0_app_start_addr = 0x10020022 + 4;\
+                                                 uint8_t* cpu1_app_size_addr = (uint8_t*)(cpu0_app_start_addr + cpu0_app_size);\
+                                                 uint32_t cpu1_app_size = GET_WORD_FROM_ANY_ADDR(cpu1_app_size_addr);\
+                                                 uint32_t cpu1_app_start_addr = cpu0_app_start_addr + cpu0_app_size + 4;\
+                                                 uint8_t* cpu2_app_size_addr = (uint8_t*)(cpu1_app_start_addr + cpu1_app_size);\
+                                                 uint32_t cpu2_app_size = GET_WORD_FROM_ANY_ADDR(cpu2_app_size_addr);\
+                                                 uint32_t cpu2_app_start_addr = cpu1_app_start_addr + cpu1_app_size + 4;\
+                                                 structaddress=(STRU_SettingConfigure *)(cpu2_app_start_addr + cpu2_app_size);}
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

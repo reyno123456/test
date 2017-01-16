@@ -452,11 +452,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     }
     else if (memcmp(cmdArray[0], "configure", 8) == 0)
     {
-        setting_configure *configure=NULL;
+        STRU_SettingConfigure *configure=NULL;
         uint32_t i =0;
         uint32_t j =0;
-        configure=(setting_configure *)get_configure_from_flash();
-        dlog_info("configure address %x!!!!!!!!!!",get_configure_from_flash());
+        GET_CONFIGURE_FROM_FLASH(configure);
         dlog_info("****************        HDMI       ******************");
         dlog_info("%02x %02x %02x",configure->hdmi_configure[0][0],configure->hdmi_configure[0][1],configure->hdmi_configure[0][2]);
         dlog_info("%02x %02x %02x",configure->hdmi_configure[262][0],configure->hdmi_configure[262][1],configure->hdmi_configure[262][2]);
