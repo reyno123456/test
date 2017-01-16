@@ -8,6 +8,7 @@ BUILD_DIR ?= $(TOP_DIR)/Build
 OUTPUT_DIR ?= $(TOP_DIR)/Output
 OUTPUT_HEADER_STAGING_DIR ?= $(OUTPUT_DIR)/Staging/Inc
 OUTPUT_LIB_STAGING_DIR ?= $(OUTPUT_DIR)/Staging/Lib
+OUTPUT_BIN_STAGING_DIR ?= $(OUTPUT_DIR)/Staging/Bin
 
 # current directory
 CURDIR ?= $(shell pwd)
@@ -17,6 +18,8 @@ include $(BUILD_DIR)/config.mk
 ###############################################################################
 # static library name
 LIB = libboard.a
+
+CFG_BIN = $(HDMI_EDID_CFG_BIN_FILE_NAME)
 
 # source file(s), including c file(s)
 SRC_C := ADV7611/Src/adv_7611.c \
@@ -43,19 +46,23 @@ all: .depend $(LIB) install
 $(LIB): $(OBJ_C)
 	@echo "Generating static library: " $(notdir $@)
 	$(AR) $(ARFLAGS) $@ $(OBJ_C)
+	$(CC) -c ADV7611/Src/adv_7611_edid.c
+	$(OBJCOPY) -O binary ADV7611/Src/adv_7611_edid.o ADV7611/Src/$(CFG_BIN)
 
 install:
 	@echo "Installing static library: $(LIB)"
-	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)
+	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)/$(CPU_NUMBER)
+	@mkdir -p $(OUTPUT_BIN_STAGING_DIR)
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@cp -f ADV7611/Inc/adv_7611.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f NORFlash/Inc/nor_flash.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f MipiCtrl/Inc/ov5640_mipi.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f ADV7611/Src/$(CFG_BIN) $(OUTPUT_BIN_STAGING_DIR)/
 
 clean:
 	@echo "Cleaning..."
-	@$(RM) $(LIB) $(OBJ_C) .depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB)
+	@$(RM) $(LIB) $(OBJ_C) .depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB) $(OUTPUT_BIN_STAGING_DIR)/$(CFG_BIN)
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/adv_7611.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/nor_flash.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/ov5640_mipi.h
