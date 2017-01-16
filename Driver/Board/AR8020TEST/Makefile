@@ -23,7 +23,6 @@ CFG_BIN = $(HDMI_EDID_CFG_BIN_FILE_NAME)
 
 # source file(s), including c file(s)
 SRC_C := ADV7611/Src/adv_7611.c \
-         ADV7611/Src/adv_7611_edid.c \
          NORFlash/Src/nor_flash.c \
          NORFlash/Src/w25q128.c \
          MipiCtrl/Src/ov5640_mipi.c
@@ -46,7 +45,7 @@ all: .depend $(LIB) install
 $(LIB): $(OBJ_C)
 	@echo "Generating static library: " $(notdir $@)
 	$(AR) $(ARFLAGS) $@ $(OBJ_C)
-	$(CC) -c ADV7611/Src/adv_7611_edid.c
+	$(CC) -c ADV7611/Src/adv_7611_edid.c -o ADV7611/Src/adv_7611_edid.o
 	$(OBJCOPY) -O binary ADV7611/Src/adv_7611_edid.o ADV7611/Src/$(CFG_BIN)
 
 install:
@@ -62,7 +61,7 @@ install:
 
 clean:
 	@echo "Cleaning..."
-	@$(RM) $(LIB) $(OBJ_C) .depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB) $(OUTPUT_BIN_STAGING_DIR)/$(CFG_BIN)
+	@$(RM) $(LIB) $(OBJ_C) ADV7611/Src/adv_7611_edid.o .depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB) $(OUTPUT_BIN_STAGING_DIR)/$(CFG_BIN)
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/adv_7611.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/nor_flash.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/ov5640_mipi.h

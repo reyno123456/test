@@ -1,13 +1,15 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "data_type.h"
+#include "memory_config.h"
 #include "adv_define.h"
 #include "i2c.h"
 #include "adv_7611.h"
 #include "debuglog.h"
 #include "sys_event.h"
 
-extern unsigned char hdmi_edid_table[263][3];
+typedef unsigned char (*HDMI_SET_TABLE)[3];
+static HDMI_SET_TABLE hdmi_edid_table = NULL;
 
 static unsigned char hdmi_default_settings[][3] =
 {
@@ -105,7 +107,13 @@ static void ADV_7611_I2CInitial(void)
 static void ADV_7611_WriteTable(uint8_t index, unsigned char(*reg_table)[3])
 {
     unsigned int i = 0;
-    unsigned char slv_addr_offset = (index == 0) ? 0 : 2; 
+    unsigned char slv_addr_offset = (index == 0) ? 0 : 2;
+
+    if (reg_table == NULL)
+    {
+        dlog_error("reg_table is NULL", reg_table);
+        return;
+    }
     
     while (i < MAX_TABLE_ITEM_COUNT)
     {
@@ -142,6 +150,10 @@ static void ADV_7611_GenericInitial(uint8_t index)
 
 void ADV_7611_Initial(uint8_t index)
 {
+    STRU_SettingConfigure* cfg_addr;
+    GET_CONFIGURE_FROM_FLASH(cfg_addr);    
+    hdmi_edid_table = (HDMI_SET_TABLE)(&(cfg_addr->hdmi_configure));
+    
     ADV_7611_I2CInitial();
     ADV_7611_GenericInitial(index);
     dlog_info("HDMI ADV7611 %d init finished!", index);

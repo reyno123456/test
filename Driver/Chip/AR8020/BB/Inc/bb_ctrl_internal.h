@@ -101,4 +101,12 @@ int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
 
 void BB_SetBoardMode(ENUM_BB_MODE en_mode);
 
+
+void BB_set_QAM(ENUM_BB_QAM mod);
+
+void BB_set_LDPC(ENUM_BB_LDPC ldpc);
+
+uint8_t BB_write_ItRegs(uint32_t u32_it);
+
+void sky_set_McsByIndex(uint8_t idx);
 #endif

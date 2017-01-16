@@ -142,54 +142,111 @@ static void H264_Encoder_InputVideoFormatChangeCallback(void* p)
     H264_Encoder_UpdateVideoInfo((index == 0) ? 1 : 0, width, hight, framerate);    
 }
 
-/*
- * br:   0->8M      1->1M       2->2M       3->3M       4->4M
- *       5->5M      6->6M       7->7M       8->500K     9->9M
- *       10->10M    11->11M     12->12M     13->13M     14->14M  
- *       15->15M    16->16M     17->17M     18->18M     19->19M  
- *       20->20M    21->21M     22->22M     23->23M     24->24M  
- *       25->25M    26->26M     27->27M     28->28M     29->29M     30->30M
-*/
-int H264_Encoder_UpdateBitrate(unsigned char view, unsigned char br)
+int H264_Encoder_UpdateGop(unsigned char view, unsigned char gop)
 {
+    uint32_t addr;
+
+    if(view == 0 )
+    {
+        addr = ENC_REG_ADDR + (0x02 << 2);
+    }
+    else
+    {
+        addr = ENC_REG_ADDR + (0x1b << 2);
+    }
+
+    Reg_Write32_Mask(addr, (unsigned int)(gop << 24), BIT(31)|BIT(30)|BIT(29)|BIT(28)|BIT(27)|BIT(26)|BIT(25)|BIT(24));
+}
+
+
+int H264_Encoder_UpdateIpRatio(unsigned char view, unsigned char ipratio)
+{
+    uint32_t addr;
+
+    if(view == 0 )
+    {
+        addr = ENC_REG_ADDR + (0x08 << 2);
+    }
+    else
+    {
+        addr = ENC_REG_ADDR + (0x21 << 2);
+    }
+    
+    Reg_Write32_Mask(addr, (unsigned int)(ipratio << 24), BIT(27)|BIT(26)|BIT(25)|BIT(24));
+}
+
+
+int H264_Encoder_UpdateBitrate(unsigned char view, unsigned char br_idx)
+{
+    uint8_t ratio = 0;
+
     if (view >= 2)
     {
         return 0;
     }
-    
-    if (g_stEncoderStatus[view].running && g_stEncoderStatus[view].brc_enable && (g_stEncoderStatus[view].bitrate != br))
+
+    if(br_idx == 1)       //600Kbps
+    {
+        ratio = 8;
+    }
+    else if(br_idx <= 3)  //1.2Mbps, 2.4Mbps
+    {
+        ratio = 7;
+    }
+    else if(br_idx <= 5)  //4.8Mbps
+    {
+        ratio = 6;
+    }
+    else                  //7.5Mbps, 10Mbps
+    {
+        ratio = 4;
+    }
+       
+    if (g_stEncoderStatus[view].running && g_stEncoderStatus[view].brc_enable && (g_stEncoderStatus[view].bitrate != br_idx))
     {
         if (view == 0)
         {
-            Reg_Write32_Mask(ENC_REG_ADDR+(0xA<<2), br << 26, BIT(26) | BIT(27) | BIT(28) | BIT(29) | BIT(30));
+            Reg_Write32_Mask(ENC_REG_ADDR+(0xA<<2), (unsigned int)(br_idx << 26), BIT(26) | BIT(27) | BIT(28) | BIT(29) | BIT(30));
+            if(br_idx >= 1 && br_idx <= 5)
+            {
+                H264_Encoder_UpdateGop(view, 60);
+            }
+            else
+            {
+                H264_Encoder_UpdateGop(view, 30);
+            }  
+
+            H264_Encoder_UpdateIpRatio(view, ratio);
         }
         else
         {
-            Reg_Write32_Mask(ENC_REG_ADDR+(0x23<<2), br << 26, BIT(26) | BIT(27) | BIT(28) | BIT(29) | BIT(30));
+            Reg_Write32_Mask(ENC_REG_ADDR+(0x23<<2), (unsigned int)(br_idx << 26), BIT(26) | BIT(27) | BIT(28) | BIT(29) | BIT(30));
+            if(br_idx >= 1 && br_idx <= 5)
+            {
+                H264_Encoder_UpdateGop(view, 60);
+            }
+            else
+            {
+                H264_Encoder_UpdateGop(view, 30);
+            }
+
+            H264_Encoder_UpdateIpRatio(view, ratio);            
         }
-        dlog_info("Encoder bitrate change: %d, %d\n", view, br);
+
+        dlog_info("Encoder bitrate change: %d, %d %d\n", view, br_idx, ratio);
     }
     
-    g_stEncoderStatus[view].bitrate = br;
+    g_stEncoderStatus[view].bitrate = br_idx;
     return 1;
 }
 
 static void H264_Encoder_BBModulationChangeCallback(void* p)
 {
-    uint8_t br = ((STRU_SysEvent_BB_ModulationChange *)p)->BB_MAX_support_br;
-
-    if(br == 0) //500Kbps
-    {
-        br = 8;
-    }
-    else if(br == 8) //8Mbps
-    {
-        br = 0; 
-    }
-
-    dlog_info("H264 bitrate: %d \r\n", br);
-    H264_Encoder_UpdateBitrate(0, br);
-    H264_Encoder_UpdateBitrate(1, br);
+    uint8_t br_idx = ((STRU_SysEvent_BB_ModulationChange *)p)->BB_MAX_support_br;
+    
+    dlog_info("H264 bitidx: %d \r\n", br_idx);
+    H264_Encoder_UpdateBitrate(0, br_idx);
+    H264_Encoder_UpdateBitrate(1, br_idx);
 }
 
 static void VEBRC_IRQ_Wrap_Handler(uint32_t u32_vectorNum)

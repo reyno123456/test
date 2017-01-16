@@ -37,8 +37,6 @@ void sky_agc_gain_toggle(void);
 
 uint8_t* sky_id_search_get_best_id(void);
 
-void sky_set_ITQAM_and_notify(uint8_t mod);
-
 int sky_search_id_timeout_irq_disable();
 
 int sky_search_id_timeout_irq_enable();

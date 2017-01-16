@@ -7,7 +7,7 @@ PARAM *sys_param;
 
 #define SUPPORT_USER_SETTING (0)
 
-uint8_t flash_setting[1024];
+uint8_t flash_setting[256];
 
 /* 
  *default_sys_param
@@ -43,9 +43,9 @@ const SYS_PARAM default_sys_param =
 
      .it_mask = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff},
 
-     //bpsk_ldpc12 ,qam4_ldpc12,qam4_ldpc23,qam16_ldpc12,qam64_ldpc12,qam64_ldpc23
-     //3.8db,6.5db,7.7db,11.2db,16.2db,18db
-     .qam_change_threshold = {0x009B,0x011E,0x0179,0x03F6,0x0AAA,0x0FC6},
+                                  //bpsk_1_2 ,   qam4_1_2,   qam4_2_3,    qam16_1_2,   qam16_2_3,    qam64_1_2,    qam64_2_3
+     //.qam_change_threshold = {0,  (0x4c << 1), (0x95 <<1), (0xe5 << 1), (0x1c5 << 1), (0x2bd << 1), (0x522 << 1), (0x076e << 1)},
+     .qam_change_threshold = {0,  0x6b, 0xd2, 0x280, 0x740, 0xed3},
      .enable_freq_offset   = DISABLE_FLAG,
      .rf_power_mode = MANUAL,
 };
@@ -117,7 +117,7 @@ void BB_disable_rc_freq(uint8_t *pMask)
 
 PARAM * BB_get_sys_param(void)
 {
-    BB_load_sys_param((uint32_t *)((void *)(flash_setting)), 1024);
+    BB_load_sys_param((uint32_t *)((void *)(flash_setting)), 256);
     sys_param = (PARAM *)(flash_setting);
 
     #if(SUPPORT_USER_SETTING == 1)
@@ -126,7 +126,7 @@ PARAM * BB_get_sys_param(void)
         {
             BB_load_default_setting(sys_param);
             sys_param->is_init = 0x00;
-            BB_fsave_sys_param((uint32_t *)((void *)(sys_param)), 1024);
+            //BB_fsave_sys_param((uint32_t *)((void *)(sys_param)), 1024);
         }
         
         BB_disable_rc_freq(sys_param->user_param.rc_mask);
