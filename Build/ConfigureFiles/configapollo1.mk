@@ -29,6 +29,8 @@ endif
 
 DEFS = -mthumb -mcpu=cortex-m7 -mlittle-endian -mfpu=fpv5-sp-d16 -mfloat-abi=softfp -std=c99 -c -Wa,-mimplicit-it=thumb -Werror -DSTM32F746xx -DUSE_USB_HS -DUSE_HAL_DRIVER -DUSE_WINBOND_SPI_NOR_FLASH
 
+DEFS += -DUSE_BB_REG_CONFIG_BIN -DUSE_ADV7611_EDID_CONFIG_BIN
+
 CFLAGS += $(DEFS)
 
 LDFLAGS = $(LIBS)
@@ -61,6 +63,11 @@ export BOARD
 
 export USB_DEV_CLASS_HID_ENABLE = 1
 export CROSS_COMPILE_LIB_PATH
+
+export BB_REG_CFG_BIN_FILE_NAME = 001_cfg_bb_reg.bin
+export HDMI_EDID_CFG_BIN_FILE_NAME = 002_cfg_adv_7611_edid.bin
+export CFG_BIN_FILE_NAME_LIST = $(BB_REG_CFG_BIN_FILE_NAME) $(HDMI_EDID_CFG_BIN_FILE_NAME)
+
 ###############################################################################
 
 # make all .c
