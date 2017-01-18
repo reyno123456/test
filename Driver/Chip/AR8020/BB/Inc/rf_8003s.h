@@ -26,4 +26,11 @@ int RF8003s_SPI_ReadReg(uint8_t u8_addr, uint8_t *pu8_rxValue);
   */
 void RF8003s_init(uint8_t *pu8_regs);
 
+/**
+  * @brief : 
+  * @param : 
+  * @retval  
+  */
+void RF8003s_Set(ENUM_BB_MODE en_mode);
+
 #endif

@@ -109,4 +109,11 @@ void BB_set_LDPC(ENUM_BB_LDPC ldpc);
 uint8_t BB_write_ItRegs(uint32_t u32_it);
 
 void sky_set_McsByIndex(uint8_t idx);
+
+static int BB_before_RF_cali(void);
+
+static int BB_after_RF_cali(void);
+
+static int BB_RF_start_cali();
+
 #endif

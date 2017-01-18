@@ -85,8 +85,6 @@ const STRU_FRQ_CHANNEL It_5G_frq[MAX_5G_IT_FRQ_SIZE] = {     //5G
 };
 
 
-
-static int BB_RF_start_cali();
 /*
   * cali_reg: Store the calibration registers value
  */
@@ -251,8 +249,11 @@ void BB_init(ENUM_BB_MODE en_mode)
     BB_softReset(en_mode);
 
     //RF calibration in both sky& Ground.
+    BB_before_RF_cali();
     BB_RF_start_cali();
+    //BB_after_RF_cali();  //remove to fix usb problem
     BB_set_RF_Band(en_mode, context.freq_band);
+    RF8003s_Set(en_mode);
     BB_softReset(en_mode);
 
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USER_CFG_CHANGE_LOCAL, BB_HandleEventsCallback);
@@ -406,39 +407,34 @@ void BB_set_RF_Band(ENUM_BB_MODE sky_ground, ENUM_RF_BAND rf_band)
 {
     if(rf_band == RF_2G)
     {
-        #if 0
-            BB_WriteRegMask(PAGE2, 0x20, 0, 0x04);      //bit[2] to 0
-            BB_WriteRegMask(PAGE2, 0x21, 0, 0x90);      //set to bit[7] bit[4] 0
-        #else
-            //For 5G test only.
-            BB_WriteReg(PAGE2, 0x21, 0x60);
-            BB_WriteReg(PAGE0, 0x20, 0xFE);
-        #endif
+        BB_WriteRegMask(PAGE0, 0x20, 0x08, 0x0c);
+        BB_WriteRegMask(PAGE2, 0x21, 0x00, 0x90);
+        BB_WriteRegMask(PAGE2, 0x20, 0x00, 0x04);
     }
     else
     {
-        #if 0
-        BB_WriteRegMask(PAGE2, 0x20, 0x04, 0x04);   //set to 1
-        BB_WriteRegMask(PAGE2, 0x21, 0x90, 0x90);   //set to bit[7] bit[4] 0     
-        #else
-        if(sky_ground == BB_GRD_MODE)
-        {
-            BB_WriteReg(PAGE2, 0x21, 0x70);
-            BB_WriteReg(PAGE0, 0x20, 0xF9);
-        }
-        else
-        {
-            //For 5G test only.
-            BB_WriteReg(PAGE2, 0x21, 0xF0);
-            BB_WriteReg(PAGE0, 0x20, 0xFE);
-            BB_set_QAM(MOD_16QAM);
-        }
-        BB_WriteReg(PAGE2, 0x02, 0x06);
-        BB_set_ITfrq(RF_5G, 0);   
+
+        
+        // P0 0x20 [3]=0, [2]=1,2G PA off,5G PA on
+        BB_WriteRegMask(PAGE0, 0x20, 0x04, 0x0C); 
+        // P2 0x21 [7]=1, [4]=1,rf_freq_sel_tx,rf_freq_sel_rx,5G
+        BB_WriteRegMask(PAGE2, 0x21, 0x90, 0x90); 
+        // P2 0x20 [2]=1,sweep frequency,5G
+        BB_WriteRegMask(PAGE2, 0x20, 0x04, 0x04);
+
         //softreset
         BB_softReset(sky_ground);
-        #endif
+
     }
+
+    // grd mode,use only one TX.
+    if(sky_ground == BB_GRD_MODE)
+    {
+	// turn off DAC_B
+        BB_WriteRegMask(PAGE1, 0x90, 0xF7, 0xFF);
+    }
+    // set 2 RX
+    BB_WriteRegMask(PAGE1, 0x91, 0x78, 0xFF);
 
     //calibration and reset
     BB_RF_2G_5G_switch(rf_band);
@@ -493,6 +489,18 @@ void read_cali_register(uint8_t *buf)
     //           test[5], test[6], test[7], test[8], test[9]);    
 }
 
+
+static int BB_before_RF_cali(void)
+{
+    BB_WriteRegMask(PAGE0, 0x20, 0x00, 0x0c);
+}
+
+static int BB_after_RF_cali(void)
+{
+    //BB_WriteRegMask(PAGE0, 0x20, 0x80, 0x80);
+    // enalbe RXTX
+    BB_WriteRegMask(PAGE1, 0x94, 0x10, 0xFF);
+}
 
 static int BB_RF_start_cali()
 {

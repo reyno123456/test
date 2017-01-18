@@ -126,3 +126,30 @@ void RF8003s_init(uint8_t *pu8_regs)
 
     BB_SPI_curPageWriteByte(0x01,0x02);             //SPI change into 8020
 }
+
+/**
+  * @brief : 
+  * @param : 
+  * @retval  
+  */
+void RF8003s_Set(ENUM_BB_MODE en_mode)
+{
+    uint32_t u32_delay = 1000;
+
+    BB_SPI_curPageWriteByte(0x01,0x01);             //bypass: SPI change into 8003
+
+    RF8003s_SPI_WriteReg_internal(0x35, 0x70, 0);
+    RF8003s_SPI_WriteReg_internal(0x45, 0x87, 0);
+    RF8003s_SPI_WriteReg_internal(0x15, 0x51, 0);
+    while(u32_delay--);
+    RF8003s_SPI_WriteReg_internal(0x15, 0x50, 0);
+
+    if(en_mode == BB_GRD_MODE)
+    {
+        RF8003s_SPI_WriteReg_internal(0x00, 0x74, 0);
+        RF8003s_SPI_WriteReg_internal(0x2D, 0xF6, 0);
+        RF8003s_SPI_WriteReg_internal(0x37, 0xE0, 0);
+    }
+
+    BB_SPI_curPageWriteByte(0x01,0x02);             //SPI change into 8020
+}
