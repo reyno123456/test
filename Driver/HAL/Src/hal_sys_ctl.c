@@ -20,6 +20,8 @@ History:
 #include "hal_sys_ctl.h"
 #include "hal_ret_type.h"
 #include "reg_rw.h"
+#include "hal_nvic.h"
+#include "interrupt.h"
 
 static STRU_HAL_SYS_CTL_CONFIG s_st_defHalSysCtlCfg =
 {
@@ -87,6 +89,7 @@ HAL_RET_T HAL_SYS_CTL_FpuEnable(uint8_t u8_fpuEnable)
 
 HAL_RET_T HAL_SYS_CTL_SysTickInit(uint32_t u32_sysTickCount)
 {
+    INTR_NVIC_SetIRQPriority(HAL_NVIC_SYSTICK_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,0x1f,0));
     SysTicks_Init(u32_sysTickCount);
     
     return HAL_OK;
@@ -147,7 +150,9 @@ HAL_RET_T HAL_SYS_CTL_Init(STRU_HAL_SYS_CTL_CONFIG *pst_usrHalSysCtlCfg)
     // Inter core SRAM init
     InterCore_Init();
 
-    // Default clock: CPU0 and CPU1 200M; CPU2 166M.
+    HAL_NVIC_SetPriorityGrouping(HAL_NVIC_PRIORITYGROUP_5);
+    
+	// Default clock: CPU0 and CPU1 200M; CPU2 166M.
     HAL_SYS_CTL_SetCpuClk(pst_halSysCtlCfg->u16_cpu0cpu1Clk, pst_halSysCtlCfg->u16_cpu2Clk);
 
     // Wait till the PLL ready
@@ -157,6 +162,8 @@ HAL_RET_T HAL_SYS_CTL_Init(STRU_HAL_SYS_CTL_CONFIG *pst_usrHalSysCtlCfg)
     HAL_SYS_CTL_FpuEnable(pst_halSysCtlCfg->u8_fpuEnable);
 
     // Default system tick: 1ms.
+	HAL_NVIC_SetPriority(HAL_NVIC_SYSTICK_VECTOR_NUM,0x1f,0);
+
     PLLCTRL_GetCoreClk(&u16_pllClk, CPUINFO_GetLocalCpuId());
     u32_tickCnt = ((uint32_t)u16_pllClk) * 1000 * 1000 / pst_halSysCtlCfg->u16_sysTickIntervalUs;
     HAL_SYS_CTL_SysTickInit(u32_tickCnt);

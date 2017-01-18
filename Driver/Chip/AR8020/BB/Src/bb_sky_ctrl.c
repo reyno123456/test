@@ -83,6 +83,7 @@ void BB_SKY_start(void)
     sky_search_id_timeout_irq_enable(); //enabole TIM1 timeout
 
     reg_IrqHandle(BB_RX_ENABLE_VECTOR_NUM, wimax_vsoc_rx_isr, NULL);
+	INTR_NVIC_SetIRQPriority(BB_RX_ENABLE_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_BB_RX,0));
     INTR_NVIC_EnableIRQ(BB_RX_ENABLE_VECTOR_NUM);
 
     context.qam_ldpc = 0;
@@ -529,6 +530,7 @@ void sky_Timer1_Init(void)
     sky_timer0_1.ctrl |= TIME_ENABLE | USER_DEFINED;
     TIM_RegisterTimer(sky_timer0_1, 1000);
     reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, Sky_TIM1_IRQHandler, NULL);
+	INTR_NVIC_SetIRQPriority(TIMER_INTR01_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER01,0));
 }
 
 void sky_Timer0_Init(void)
@@ -541,6 +543,7 @@ void sky_Timer0_Init(void)
     TIM_RegisterTimer(sky_timer0_0, 6800);
 
     reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, Sky_TIM0_IRQHandler, NULL);
+	INTR_NVIC_SetIRQPriority(TIMER_INTR00_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER00,0));
 }
 
 

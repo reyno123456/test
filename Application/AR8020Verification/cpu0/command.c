@@ -28,6 +28,8 @@
 #include "test_hal_uart.h"
 #include "test_hal_spi.h"
 #include "memory_config.h"
+#include "hal_ret_type.h"
+#include "hal_nvic.h"
 
 static unsigned char g_commandPos;
 static char g_commandLine[50];
@@ -169,8 +171,8 @@ void command_init()
             break;
     }
     reg_IrqHandle(vector_num, Drv_UART_IRQHandler, NULL);
+	HAL_NVIC_SetPriority(vector_num,INTR_NVIC_PRIORITY_UART0,0);
     INTR_NVIC_EnableIRQ(vector_num);
-    INTR_NVIC_SetIRQPriority(vector_num, 1);
 }
 
 void command_reset(void)

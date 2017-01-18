@@ -13,6 +13,8 @@
 #include "test_gpio.h"
 #include "test_i2c_adv7611.h"
 #include "test_simulatepwm.h"
+#include "hal_ret_type.h"
+#include "hal_nvic.h"
 
 static unsigned char g_commandPos;
 static char g_commandLine[50];
@@ -154,7 +156,7 @@ void command_init()
             break;
     }
     reg_IrqHandle(vector_num, Drv_UART_IRQHandler, NULL);
-    INTR_NVIC_SetIRQPriority(vector_num, 1);
+	HAL_NVIC_SetPriority(vector_num,INTR_NVIC_PRIORITY_UART1,0);
     INTR_NVIC_EnableIRQ(vector_num);
 }
 

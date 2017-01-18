@@ -12,6 +12,7 @@ History:
 #define __HAL_NVIC_H
 typedef enum
 {
+    HAL_NVIC_SYSTICK_VECTOR_NUM = 15,                    //15
     HAL_NVIC_UART_INTR0_VECTOR_NUM = 16,                 //16
     HAL_NVIC_UART_INTR1_VECTOR_NUM,                      //17
     HAL_NVIC_UART_INTR2_VECTOR_NUM,                      //18

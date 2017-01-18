@@ -12,6 +12,7 @@ History:
 #include <stdint.h>
 #include "sram.h"
 #include "hal_sram.h"
+#include "hal_nvic.h"
 #include "interrupt.h"
 
 /**
@@ -26,12 +27,14 @@ void HAL_SRAM_ReceiveVideoConfig(void)
 
     /* register the irq handler */
     reg_IrqHandle(BB_SRAM_READY_IRQ_0_VECTOR_NUM, SRAM_Ready0IRQHandler, NULL);
+    INTR_NVIC_SetIRQPriority(BB_SRAM_READY_IRQ_0_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_SRAM0,0));
 
     /* enable the SRAM_READY_0 IRQ */
     INTR_NVIC_EnableIRQ(BB_SRAM_READY_IRQ_0_VECTOR_NUM);
 
     /* register the irq handler */
     reg_IrqHandle(BB_SRAM_READY_IRQ_1_VECTOR_NUM, SRAM_Ready1IRQHandler, NULL);
+    INTR_NVIC_SetIRQPriority(BB_SRAM_READY_IRQ_1_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_SRAM1,0));
 
     /* enable the SRAM_READY_1 IRQ */
     INTR_NVIC_EnableIRQ(BB_SRAM_READY_IRQ_1_VECTOR_NUM);

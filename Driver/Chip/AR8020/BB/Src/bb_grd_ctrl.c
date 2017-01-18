@@ -66,6 +66,7 @@ void BB_GRD_start(void)
     grd_sweep_freq_init();
 
     reg_IrqHandle(BB_TX_ENABLE_VECTOR_NUM, wimax_vsoc_tx_isr, NULL);
+	INTR_NVIC_SetIRQPriority(BB_TX_ENABLE_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_BB_TX,0));
     INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);
 }
 
@@ -524,6 +525,7 @@ void Grd_Timer1_Init(void)
     init_timer0_1.ctrl |= TIME_ENABLE | USER_DEFINED;
     TIM_RegisterTimer(init_timer0_1, 1200); //1.25ms
     reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, Grd_TIM1_IRQHandler, NULL);
+	INTR_NVIC_SetIRQPriority(TIMER_INTR01_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER01,0));
 }
 
 void Grd_Timer0_Init(void)
@@ -535,6 +537,7 @@ void Grd_Timer0_Init(void)
     
     TIM_RegisterTimer(init_timer0_0, 2500); //2.5s
     reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, Grd_TIM0_IRQHandler, NULL);
+	INTR_NVIC_SetIRQPriority(TIMER_INTR00_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER00,0));
 }
 
 

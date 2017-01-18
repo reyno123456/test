@@ -6,6 +6,7 @@
 
 typedef enum
 {
+    SYSTICK_VECTOR_NUM = 15,                    //15
     UART_INTR0_VECTOR_NUM = 16,                 //16
     UART_INTR1_VECTOR_NUM,                      //17
     UART_INTR2_VECTOR_NUM,                      //18
@@ -106,6 +107,38 @@ typedef enum
     CM7_3_CTIIRQ0,                              //97
     CM7_3_CTIIRQ1,                              //98
 }IRQ_type;
+#define NVIC_PRIORITYGROUP_0         ((uint32_t)0x00000007) /*!< 0 bits for pre-emption priority
+                                                                 5 bits for subpriority */
+#define NVIC_PRIORITYGROUP_1         ((uint32_t)0x00000006) /*!< 1 bits for pre-emption priority
+                                                                 4 bits for subpriority */
+#define NVIC_PRIORITYGROUP_2         ((uint32_t)0x00000005) /*!< 2 bits for pre-emption priority
+                                                                 3 bits for subpriority */
+#define NVIC_PRIORITYGROUP_3         ((uint32_t)0x00000004) /*!< 3 bits for pre-emption priority
+                                                                 2 bits for subpriority */
+#define NVIC_PRIORITYGROUP_4         ((uint32_t)0x00000003) /*!< 4 bits for pre-emption priority
+                                                                 1 bits for subpriority */
+#define NVIC_PRIORITYGROUP_5         ((uint32_t)0x00000002) /*!< 5 bits for pre-emption priority
+                                                                 0 bits for subpriority */
+
+#define INTR_NVIC_PRIORITY_VIDEO_VSOC0          (8)
+#define INTR_NVIC_PRIORITY_VIDEO_VSOC1          (8)
+//cpu0 interrupt priority use 5-10,
+#define INTR_NVIC_PRIORITY_UART0                (5)
+#define INTR_NVIC_PRIORITY_OTG_INITR0           (6)
+#define INTR_NVIC_PRIORITY_OTG_INITR1           (6)
+#define INTR_NVIC_PRIORITY_SRAM0                (7)
+#define INTR_NVIC_PRIORITY_SRAM1                (7)
+#define INTR_NVIC_PRIORITY_SD                   (6)
+//cpu1 interrupt priority use 5-10,
+#define INTR_NVIC_PRIORITY_UART1                (5)
+//cpu2 interrupt priority use 5-10,
+#define INTR_NVIC_PRIORITY_VIDEO_UART10         (5)
+#define INTR_NVIC_PRIORITY_UART2                (5)
+#define INTR_NVIC_PRIORITY_TIMER00              (6)
+#define INTR_NVIC_PRIORITY_TIMER01              (6)
+#define INTR_NVIC_PRIORITY_BB_TX                (7)
+#define INTR_NVIC_PRIORITY_BB_RX                (7)
+#define INTR_NVIC_PRIORITY_VIDEO_ARMCM7         (10)
 
 typedef void(*Irq_handler)(uint32_t);
 

@@ -14,6 +14,7 @@ History:
 #include "usbh_uvc.h"
 #include "usbh_msc.h"
 #include "interrupt.h"
+#include "hal_nvic.h"
 
 
 static ENUM_HAL_USB_HOST_STATE   s_eUSBHostAppState;
@@ -103,10 +104,13 @@ void HAL_USB_InitHost(ENUM_HAL_USB_HOST_PORT e_usbPort, ENUM_HAL_USB_HOST_CLASS 
     if (HAL_USB_HOST_PORT_0 == e_usbPort)
     {
         reg_IrqHandle(OTG_INTR0_VECTOR_NUM, USB_LL_OTG0_IRQHandler, NULL);
+        INTR_NVIC_SetIRQPriority(OTG_INTR0_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_OTG_INITR0,0));
     }
     else if (HAL_USB_HOST_PORT_1 == e_usbPort)
     {
         reg_IrqHandle(OTG_INTR1_VECTOR_NUM, USB_LL_OTG1_IRQHandler, NULL);
+        INTR_NVIC_SetIRQPriority(OTG_INTR1_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_OTG_INITR1,0));
+
     }
 
     USBH_Init(&hUSBHost, USB_HostAppState, (uint8_t)e_usbPort);

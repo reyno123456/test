@@ -169,8 +169,8 @@ void BB_UARTComInit(void)
 
     uart_init(BBCOM_UART_INDEX, ((BBCOM_UART_BAUDRATE * 100) / 166));
     reg_IrqHandle(VIDEO_UART10_INTR_VECTOR_NUM, BB_UARTComUART10IRQHandler, NULL);
+	INTR_NVIC_SetIRQPriority(VIDEO_UART10_INTR_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_VIDEO_UART10,0));
     INTR_NVIC_EnableIRQ(VIDEO_UART10_INTR_VECTOR_NUM);
-    INTR_NVIC_SetIRQPriority(VIDEO_UART10_INTR_VECTOR_NUM, 1);
 
     // Session 0 is registered by default
     g_BBUARTComSessionArray[0].rx_buf = (STRU_BBUartComSessionRxBuffer*)g_BBUARTComSession0RxBuffer;

@@ -320,6 +320,7 @@ int H264_Encoder_Init(uint8_t gop0, uint8_t br0, uint8_t brc0_e, uint8_t gop1, u
     sdram_init_check(); 
 
     reg_IrqHandle(VIDEO_ARMCM7_IRQ_VECTOR_NUM, VEBRC_IRQ_Wrap_Handler, NULL);
+	INTR_NVIC_SetIRQPriority(VIDEO_ARMCM7_IRQ_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_VIDEO_ARMCM7,0));
     INTR_NVIC_DisableIRQ(VIDEO_ARMCM7_IRQ_VECTOR_NUM);
 
     g_stEncoderStatus[0].gop = gop0;

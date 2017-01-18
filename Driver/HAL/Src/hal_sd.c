@@ -11,6 +11,7 @@ History:
 #include <stdint.h>
 #include "memory_config.h"
 #include "hal_sd.h"
+#include "hal_nvic.h"
 #include "sd_card.h"
 #include "sd_core.h"
 #include "debuglog.h"
@@ -291,8 +292,8 @@ void HAL_SD_InitIRQ(void)
 {
 	 /* register the irq handler */
     reg_IrqHandle(SD_INTR_VECTOR_NUM, SD_IRQHandler, NULL);
+    INTR_NVIC_SetIRQPriority(SD_INTR_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_SD,0));
     INTR_NVIC_EnableIRQ(SD_INTR_VECTOR_NUM);
-    INTR_NVIC_SetIRQPriority(SD_INTR_VECTOR_NUM, 1);
 }
 
 
