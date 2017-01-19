@@ -862,9 +862,7 @@ void command_dma(char * u32_src, char *u32_dst, char *u32_byteNum)
     iSrcAddr    = command_str2uint(u32_src);
     iNum        = command_str2uint(u32_byteNum);
 
-    dlog_info("src = 0x%08x\n", iSrcAddr);
-    dlog_info("dst = 0x%08x\n", iDstAddr);
-    HAL_DMA_Start(iSrcAddr, iDstAddr, iNum);
-    dlog_info("num = %x\n", iNum);
+
+    HAL_DMA_Start(iSrcAddr, iDstAddr, iNum, AUTO, LINK_LIST_ITEM);
 }
 
