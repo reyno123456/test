@@ -1,6 +1,7 @@
 #ifndef __BB_TYPES_H_
 #define __BB_TYPES_H_
 
+#include "memory_config.h"
 
 typedef enum
 {
@@ -125,5 +126,30 @@ typedef enum
     PAGE_UNKNOW = 0xFF,
 } ENUM_REG_PAGES;
 
+
+/* To PC or PAD, display wireless info */
+/*if head == 0x00 && tail == 0xff, the sram data is valid*/
+typedef struct
+{
+    uint16_t        messageId;
+    uint16_t        paramLen;
+    uint16_t        snr_vlaue[4];
+    int16_t         sweep_energy[21*8];     //Max channel: 21
+    uint16_t        ldpc_error;
+    uint8_t         agc_value[4];
+    uint8_t         harq_count;
+    uint8_t         modulation_mode;
+    uint8_t         ch_bandwidth;
+    uint8_t         code_rate;
+    uint8_t         encoder_bitrate;
+    uint8_t         IT_channel;
+    uint8_t         head;
+    uint8_t         tail;
+    uint8_t         in_debug;
+    uint8_t         lock_status;
+} STRU_WIRELESS_INFO_DISPLAY;
+
+// CPU0 and CPU2 share memory for osd status info, offset in SRAM: 16K + 512Byte
+#define OSD_STATUS_SHM_ADDR              SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR
 
 #endif

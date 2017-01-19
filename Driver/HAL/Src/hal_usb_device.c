@@ -14,10 +14,10 @@ History:
 #include "usbd_hid.h"
 #include "usbd_hid_desc.h"
 #include "sram.h"
-#include "wireless_interface.h"
 #include "sys_event.h"
 #include "interrupt.h"
 #include "hal_nvic.h"
+#include "debuglog.h"
 
 extern USBD_HandleTypeDef   USBD_Device;
 USBD_HID_ItfTypeDef         g_stUsbdHidItf;
@@ -43,10 +43,6 @@ void HAL_USB_InitDevice(ENUM_HAL_USB_DEVICE_PORT e_usbPort)
     }
 
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USB_PLUG_OUT, HAL_USB_ResetDevice);
-
-    g_stUsbdHidItf.dataOut  = WIRELESS_ParseParamConfig;
-
-    USBD_HID_RegisterInterface(&USBD_Device, &g_stUsbdHidItf);
 
     USBD_Init(&USBD_Device, &HID_Desc, (uint8_t)e_usbPort);
 
@@ -74,6 +70,91 @@ void HAL_USB_ResetDevice(void * p)
     SRAM_Ready1Confirm();
 
     return;
+}
+
+
+/**
+* @brief  send video data to the host
+* @param  uint8_t    *buff                the buffer to send
+*               uint32_t    u32_len          buffer length 
+* @retval   void
+* @note
+*/
+HAL_RET_T HAL_USB_DeviceSendVideo(uint8_t *buff, uint32_t u32_len)
+{
+    uint8_t       ret;
+
+    ret = USBD_HID_SendReport(&USBD_Device, buff, u32_len, HID_EPIN_VIDEO_ADDR);
+
+    if (ret != USBD_OK)
+    {
+        if (USBD_BUSY == ret)
+        {
+            dlog_error("send video busy");
+
+            return HAL_USB_ERR_DEVICE_BUSY;
+        }
+        else
+        {
+            dlog_error("send video not configured");
+
+            return HAL_USB_ERR_DEVICE_NOT_CONGIURED;
+        }
+    }
+
+    return HAL_OK;
+}
+
+
+/**
+* @brief  send control data to the host
+* @param  uint8_t    *buff                the buffer to send
+*               uint32_t    u32_len          buffer length 
+* @retval   void
+* @note
+*/
+HAL_RET_T HAL_USB_DeviceSendCtrl(uint8_t *buff, uint32_t u32_len)
+{
+    uint8_t       ret;
+
+    if (USB_OTG_IS_BIG_ENDIAN())
+    {
+        USB_LL_ConvertEndian(buff, buff, u32_len);
+    }
+
+    ret = USBD_HID_SendReport(&USBD_Device, buff, u32_len, HID_EPIN_CTRL_ADDR);
+
+    if (ret != USBD_OK)
+    {
+        if (USBD_BUSY == ret)
+        {
+            dlog_error("send ctrl busy");
+
+            return HAL_USB_ERR_DEVICE_BUSY;
+        }
+        else
+        {
+            dlog_error("send ctrl not configured");
+
+            return HAL_USB_ERR_DEVICE_NOT_CONGIURED;
+        }
+    }
+
+    return HAL_OK;
+}
+
+
+/**
+* @brief   register the user callback function to receive host data
+* @param  void (*pUsrFunc)(void *)     user callback function
+* @retval   void
+* @note
+*/
+void HAL_USB_RegisterUserProcess(void (*pUsrFunc)(void *))
+{
+    g_stUsbdHidItf.dataOut  = pUsrFunc;
+
+    USBD_HID_RegisterInterface(&USBD_Device, &g_stUsbdHidItf);
 }
 
 

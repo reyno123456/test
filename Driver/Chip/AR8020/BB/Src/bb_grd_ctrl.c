@@ -8,7 +8,6 @@
 #include "timer.h"
 #include "reg_rw.h"
 #include "bb_regs.h"
-#include "wireless_interface.h"
 #include "bb_ctrl_internal.h"
 #include "bb_snr_service.h"
 #include "bb_grd_ctrl.h"
@@ -419,7 +418,7 @@ void grd_qam_change_judge(void)
 void wimax_vsoc_tx_isr(uint32_t u32_vectorNum)
 {
     INTR_NVIC_DisableIRQ(BB_TX_ENABLE_VECTOR_NUM);
-    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(OSD_STATUS_SHM_ADDR);
+    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
     grd_enter_debug_mode();
     
     TIM_StartTimer(init_timer0_0);
@@ -855,7 +854,7 @@ static void grd_handle_all_cmds(void)
 */
 static void BB_grd_GatherOSDInfo(void)
 {
-    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(OSD_STATUS_SHM_ADDR);
+    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
 
     osdptr->messageId = 0x33;
     osdptr->head = 0xff; //starting writing
@@ -940,7 +939,7 @@ static void grd_handle_debug_mode_cmd(uint8_t flag)
 
 static void grd_enter_debug_mode(void)
 {
-    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(OSD_STATUS_SHM_ADDR);
+    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
 	if(1 == (g_stGrdDebugMode.bl_enterDebugModeFlag))
 	{
 		if((g_stGrdDebugMode.u8_enterDebugModeCnt) < 30)	

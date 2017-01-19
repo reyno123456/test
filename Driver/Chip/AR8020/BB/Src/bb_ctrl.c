@@ -1,9 +1,7 @@
 #include <stdint.h>
 #include <string.h>
-
 #include "debuglog.h"
 #include "bb_spi.h"
-#include "wireless_interface.h"
 #include "bb_ctrl_internal.h"
 #include "bb_grd_sweep.h"
 #include "bb_grd_ctrl.h"

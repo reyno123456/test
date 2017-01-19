@@ -40,6 +40,32 @@ void HAL_USB_InitDevice(ENUM_HAL_USB_DEVICE_PORT e_usbPort);
 */
 void HAL_USB_ResetDevice(void * p);
 
+/**
+* @brief  send video data to the host
+* @param  uint8_t    *buff                the buffer to send
+*               uint32_t    u32_len          buffer length 
+* @retval   void
+* @note
+*/
+HAL_RET_T HAL_USB_DeviceSendVideo(uint8_t *buff, uint32_t u32_len);
+
+/**
+* @brief  send control data to the host
+* @param  uint8_t    *buff                the buffer to send
+*               uint32_t    u32_len          buffer length 
+* @retval   void
+* @note
+*/
+HAL_RET_T HAL_USB_DeviceSendCtrl(uint8_t *buff, uint32_t u32_len);
+
+/**
+* @brief   register the user callback function to receive host data
+* @param  void (*pUsrFunc)(void *)     user callback function
+* @retval   void
+* @note
+*/
+void HAL_USB_RegisterUserProcess(void (*pUsrFunc)(void *));
+
 
 #endif
 

@@ -1805,6 +1805,45 @@ void USB_LL_OTG1_IRQHandler(uint32_t u32_vectorNum)
   }
 }
 
+void USB_LL_ConvertEndian(void *src_data, void *dst_data, uint32_t dataLen)
+{
+    uint8_t                 temp;
+    uint32_t                i;
+    uint8_t                *source;
+    uint8_t                *dest;
+
+    source                  = (uint8_t *)src_data;
+    dest                    = (uint8_t *)dst_data;
+
+    if (source == dest)
+    {
+        for (i = 0; i < (dataLen - 3); i += 4)
+        {
+            temp            = source[i];
+            source[i]       = source[i+3];
+            source[i+3]     = temp;
+
+            temp            = source[i+1];
+            source[i+1]     = source[i+2];
+            source[i+2]     = temp;
+        }
+    }
+    else
+    {
+        for (i = 0; i < (dataLen - 3); i += 4)
+        {
+            dest[i]         = source[i+3];
+            dest[i+1]       = source[i+2];
+            dest[i+2]       = source[i+1];
+            dest[i+3]       = source[i];
+        }
+    }
+
+    return;
+}
+
+
+
 
 /**
   * @}

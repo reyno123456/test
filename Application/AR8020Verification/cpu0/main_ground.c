@@ -5,13 +5,13 @@
 #include "serial.h"
 #include "hal_sram.h"
 #include "cmsis_os.h"
-
 #include "sys_event.h"
 #include "upgrade.h"
 #include "hal_bb.h"
 #include "test_usbh.h"
 #include "hal_usb_device.h"
 #include "hal_sys_ctl.h"
+#include "wireless_interface.h"
 
 void *malloc(size_t size)
 {
@@ -100,6 +100,8 @@ int main(void)
 
     osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 4 * 128);
     osThreadCreate(osThread(IOTask), NULL);
+
+    Wireless_TaskInit();
 
     osKernelStart();
 
