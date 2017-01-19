@@ -39,6 +39,18 @@ typedef struct
                                          (11 <<  1) | \
                                          (1  <<  0)
 
+#define SRAM_CONFIGURE_MEMORY_MPU_REGION_NUMBER  2
+#define SRAM_CONFIGURE_MEMORY_MPU_REGION_ST_ADDR_0 SRAM_CONFIGURE_MEMORY_ST_ADDR
+#define SRAM_CONFIGURE_MEMORY_MPU_REGION_ATTR_1     (0  << 28) | \
+                                                    (3  << 24) | \
+                                                    (1  << 19) | \
+                                                    (0  << 18) | \
+                                                    (0  << 17) | \
+                                                    (0  << 16) | \
+                                                    (0  <<  8) | \
+                                                    (11 <<  1) | \
+                                                    (1  <<  0)
+
 void SRAM_SKY_BypassVideoConfig(uint32_t channel);
 
 void SRAM_DCacheDisable(uint8_t type);

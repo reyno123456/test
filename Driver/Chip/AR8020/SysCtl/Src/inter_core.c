@@ -6,6 +6,7 @@
 #include "sys_event.h"
 #include "lock.h"
 #include "reg_map.h"
+#include "cpu_info.h"
 
 static void InterCore_IRQ0Handler(uint32_t u32_vectorNum);
 static void InterCore_IRQ1Handler(uint32_t u32_vectorNum);
@@ -83,24 +84,65 @@ static void InterCore_TriggerIRQ1(void)
 
 static void InterCore_SRAMDCacheDisable(uint8_t type)
 {
-    if (type == 0)
+    switch (type)
     {
-        MPU->RNR  = SRAM_MEMORY_MPU_REGION_NUMBER;
-        MPU->RBAR = SRAM_MEMORY_MPU_REGION_ST_ADDR_0 | (1 << 4) | (SRAM_MEMORY_MPU_REGION_NUMBER << 0);
-        MPU->RASR = SRAM_MEMORY_MPU_REGION_ATTR_0;
-        MPU->CTRL = MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_HFNMIENA_Msk | MPU_CTRL_ENABLE_Msk;
-        __asm volatile ("dsb");
-        __asm volatile ("isb");
+        case 0:
+            {
+                MPU->RNR  = SRAM_MEMORY_MPU_REGION_NUMBER;
+                MPU->RBAR = SRAM_MEMORY_MPU_REGION_ST_ADDR_0 | (1 << 4) | (SRAM_MEMORY_MPU_REGION_NUMBER << 0);
+                MPU->RASR = SRAM_MEMORY_MPU_REGION_ATTR_0;
+                MPU->CTRL = MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_HFNMIENA_Msk | MPU_CTRL_ENABLE_Msk;
+                __asm volatile ("dsb");
+                __asm volatile ("isb");
+                break;
+            }
+        case 1:
+            {
+                MPU->RNR  = SRAM_CONFIGURE_MEMORY_MPU_REGION_NUMBER;
+                MPU->RBAR = SRAM_CONFIGURE_MEMORY_ST_ADDR | (1 << 4) | (SRAM_CONFIGURE_MEMORY_MPU_REGION_NUMBER << 0);
+                MPU->RASR = SRAM_CONFIGURE_MEMORY_MPU_REGION_ATTR_1;
+                MPU->CTRL = MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_HFNMIENA_Msk | MPU_CTRL_ENABLE_Msk;
+                __asm volatile ("dsb");
+                __asm volatile ("isb");
+                break;
+            }
     }
 }
 
+
+static void InterCore_CopyConfigureFormFlashToSRAM(void)
+{
+
+    if (CPUINFO_GetLocalCpuId() != ENUM_CPU0_ID)
+    {
+        return;
+    }
+    uint8_t* cpu0_app_size_addr = (uint8_t*)0x10020022;
+    uint32_t cpu0_app_size = GET_WORD_FROM_ANY_ADDR(cpu0_app_size_addr);
+    uint32_t cpu0_app_start_addr = 0x10020022 + 4;
+    uint8_t* cpu1_app_size_addr = (uint8_t*)(cpu0_app_start_addr + cpu0_app_size);
+    uint32_t cpu1_app_size = GET_WORD_FROM_ANY_ADDR(cpu1_app_size_addr);
+    uint32_t cpu1_app_start_addr = cpu0_app_start_addr + cpu0_app_size + 4;
+    uint8_t* cpu2_app_size_addr = (uint8_t*)(cpu1_app_start_addr + cpu1_app_size);
+    uint32_t cpu2_app_size = GET_WORD_FROM_ANY_ADDR(cpu2_app_size_addr);
+    uint32_t cpu2_app_start_addr = cpu1_app_start_addr + cpu1_app_size + 4;
+    uint32_t configure_start_addr =(cpu2_app_start_addr + cpu2_app_size +(4-(cpu2_app_start_addr + cpu2_app_size)%4));
+    uint32_t *sram_configure_start_addr = (uint32_t *)(SRAM_CONFIGURE_MEMORY_ST_ADDR);
+    while(CONFIGURE_INIT_FLAG_VALUE != (*sram_configure_start_addr))
+    {
+        InterCore_SRAMDCacheDisable(1);
+        memcpy((uint8_t *)(SRAM_CONFIGURE_MEMORY_ST_ADDR+4),(uint8_t *)(configure_start_addr),(1024*4));
+        (*sram_configure_start_addr) = CONFIGURE_INIT_FLAG_VALUE;
+    }
+    
+}
 void InterCore_Init(void)
 {
     // Init the SRAM data share buffer
     InterCore_SRAMDCacheDisable(0);
     volatile INTER_CORE_MSG_TYPE* msgPtr = (INTER_CORE_MSG_TYPE*)INTER_CORE_MSG_SHARE_MEMORY_BASE_ADDR;
     memset((void*)msgPtr, 0, sizeof(INTER_CORE_MSG_TYPE)*INTER_CORE_MSG_SHARE_MEMORY_NUMBER);
-
+    InterCore_CopyConfigureFormFlashToSRAM();
     // Interrupt enable
     reg_IrqHandle(VIDEO_GLOBAL2_INTR_RES_VSOC0_VECTOR_NUM, InterCore_IRQ0Handler, NULL);
     INTR_NVIC_EnableIRQ(VIDEO_GLOBAL2_INTR_RES_VSOC0_VECTOR_NUM);

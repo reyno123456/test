@@ -140,15 +140,15 @@ extern "C" {
 //====================================================================
 #define SRAM_BASE_ADDRESS                             0x21000000     /* start address of SRAM */
 
-// 8K video0
+/* 8K video0  */
 #define SRAM_BB_VIDEO_BUFFER_0_ST_ADDRESS             SRAM_BASE_ADDRESS
 #define SRAM_BB_VIDEO_BUFFER_0_SIZE                   0x2000
 
-// 8K video1
+/* 8K video1*/
 #define SRAM_BB_VIDEO_BUFFER_1_ST_ADDRESS             (SRAM_BB_VIDEO_BUFFER_0_ST_ADDRESS + SRAM_BB_VIDEO_BUFFER_0_SIZE)
 #define SRAM_BB_VIDEO_BUFFER_1_SIZE                   0x2000
 
-// 4K non-cache start, initialized by inter core module.
+/* 4K non-cache start, initialized by inter core module.*/
 
 // 256 inter core message
 #define SRAM_INTER_CORE_MSG_SHARE_MEMORY_ST_ADDRESS   (SRAM_BB_VIDEO_BUFFER_1_ST_ADDRESS + SRAM_BB_VIDEO_BUFFER_1_SIZE)
@@ -181,8 +181,11 @@ extern "C" {
 #define SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_ST_ADDR    (SRAM_BB_UART_COM_SESSION_3_SHARE_MEMORY_ST_ADDR + SRAM_BB_UART_COM_SESSION_3_SHARE_MEMORY_SIZE)
 #define SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_SIZE       0x100
 
+/*4k system configure*/
 
-
+#define SRAM_CONFIGURE_MEMORY_ST_ADDR    (SRAM_BASE_ADDRESS + 0x5000)
+#define SRAM_CONFIGURE_MEMORY_SIZE       (0x1000)
+#define CONFIGURE_INIT_FLAG_VALUE        SRAM_CONFIGURE_MEMORY_ST_ADDR
 
 #define GET_WORD_FROM_ANY_ADDR(any_addr) ((uint32_t)(*any_addr) | \
                                          (((uint32_t)(*(any_addr+1))) << 8) | \
@@ -190,6 +193,7 @@ extern "C" {
                                          ((uint32_t)((*(any_addr+3))) << 24))
 typedef struct 
 {    
+    unsigned char  flag[4];
 #ifdef USE_BB_REG_CONFIG_BIN
     unsigned char bb_sky_configure[4][256];
     unsigned char bb_grd_configure[4][256];
@@ -202,16 +206,7 @@ typedef struct
 
 #define GET_CONFIGURE_FROM_FLASH(structaddress) {do\
                                                  {\
-                                                 uint8_t* cpu0_app_size_addr = (uint8_t*)0x10020022;\
-                                                 uint32_t cpu0_app_size = GET_WORD_FROM_ANY_ADDR(cpu0_app_size_addr);\
-                                                 uint32_t cpu0_app_start_addr = 0x10020022 + 4;\
-                                                 uint8_t* cpu1_app_size_addr = (uint8_t*)(cpu0_app_start_addr + cpu0_app_size);\
-                                                 uint32_t cpu1_app_size = GET_WORD_FROM_ANY_ADDR(cpu1_app_size_addr);\
-                                                 uint32_t cpu1_app_start_addr = cpu0_app_start_addr + cpu0_app_size + 4;\
-                                                 uint8_t* cpu2_app_size_addr = (uint8_t*)(cpu1_app_start_addr + cpu1_app_size);\
-                                                 uint32_t cpu2_app_size = GET_WORD_FROM_ANY_ADDR(cpu2_app_size_addr);\
-                                                 uint32_t cpu2_app_start_addr = cpu1_app_start_addr + cpu1_app_size + 4;\
-                                                 structaddress=(STRU_SettingConfigure *)(cpu2_app_start_addr + cpu2_app_size +(4-(cpu2_app_start_addr + cpu2_app_size)%4));\
+                                                    structaddress=(STRU_SettingConfigure *)(SRAM_CONFIGURE_MEMORY_ST_ADDR);\
                                                  }while(0);\
                                                  }
 #ifdef __cplusplus
