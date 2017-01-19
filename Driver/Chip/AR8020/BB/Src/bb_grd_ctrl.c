@@ -877,11 +877,12 @@ static void BB_grd_GatherOSDInfo(void)
     osdptr->ldpc_error = (((uint16_t)BB_ReadReg(PAGE2, LDPC_ERR_HIGH_8)) << 8) | BB_ReadReg(PAGE2, LDPC_ERR_LOW_8);
     osdptr->harq_count = (BB_ReadReg(PAGE2, FEC_5_RD) >> 4);
     uint8_t tmp = BB_ReadReg(PAGE2, 0xdd);
-    if(osdptr->ldpc_error > 0 || osdptr->harq_count > 0 || tmp > 0)
+    #if 0
+    if(osdptr->ldpc_error > 0 || tmp > 0)
     {
         dlog_info("err:%x harq:%x lost:%x\n", osdptr->ldpc_error, osdptr->harq_count, tmp);
     }
-
+    #endif
     osdptr->modulation_mode = grd_get_IT_QAM();
     osdptr->code_rate       = grd_get_IT_LDPC();
     osdptr->ch_bandwidth    = context.CH_bandwidth;         

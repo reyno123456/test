@@ -87,14 +87,14 @@ const STRU_FRQ_CHANNEL It_5G_frq[MAX_5G_IT_FRQ_SIZE] = {     //5G
   * cali_reg: Store the calibration registers value
  */
 static uint8_t cali_reg[2][10] = {{0}, {0}};
+static uint8_t *BB_sky_regs = NULL;
+static uint8_t *BB_grd_regs = NULL;
+static uint8_t *RF_8003s_regs;
 
 static void BB_regs_init(ENUM_BB_MODE en_mode)
 {
-    extern uint8_t BB_sky_regs[][256];
-    extern uint8_t BB_grd_regs[][256];
-    
-    uint32_t page_cnt=0;
-    uint8_t *regs = (en_mode == BB_SKY_MODE) ? (uint8_t *)BB_sky_regs : (uint8_t *)BB_grd_regs;
+    uint32_t page_cnt=0;    
+    uint8_t *regs = (en_mode == BB_SKY_MODE) ? BB_sky_regs : BB_grd_regs;
     
     for(page_cnt = 0 ; page_cnt < 4; page_cnt ++)
     {
@@ -231,18 +231,21 @@ void BB_init(ENUM_BB_MODE en_mode)
 {    
     PARAM *user_setting = BB_get_sys_param();
     BB_use_param_setting(user_setting);
+    
+    STRU_SettingConfigure* cfg_addr = NULL;
+    GET_CONFIGURE_FROM_FLASH(cfg_addr);
 
+    BB_sky_regs   = &(cfg_addr->bb_sky_configure[0][0]);
+    BB_grd_regs   = &(cfg_addr->bb_grd_configure[0][0]);
+    RF_8003s_regs = &(cfg_addr->rf_configure[0]);
+    
     BB_SetBoardMode(en_mode);
 
     BB_uart10_spi_sel(0x00000003);
     BB_SPI_init();
 
     BB_regs_init(en_mode);
-
-    {
-        extern uint8_t RF_8003s_regs[128];
-        RF8003s_init(RF_8003s_regs);
-    }
+    RF8003s_init(RF_8003s_regs);
 
     BB_softReset(en_mode);
 

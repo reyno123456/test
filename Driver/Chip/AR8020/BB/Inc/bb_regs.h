@@ -297,8 +297,12 @@
 #define     FEC_2_RD_4      ((uint8_t)0xD6 )  //[7:0]Dec_rc_id[7:0]
 
 
-#define     LDPC_ERR_HIGH_8     ((uint8_t)0xDE )  //Ldpc_err_num_rd[15:8]
-#define     LDPC_ERR_LOW_8      ((uint8_t)0xDF )  //Ldpc_err_num_rd[7:0]
+//#define     LDPC_ERR_HIGH_8     ((uint8_t)0xDE )  //Ldpc_err_num_rd[15:8]
+//#define     LDPC_ERR_LOW_8      ((uint8_t)0xDF )  //Ldpc_err_num_rd[7:0]
+
+#define     LDPC_ERR_HIGH_8     ((uint8_t)0xD7 )  //Ldpc_err_num_rd[15:8]
+#define     LDPC_ERR_LOW_8      ((uint8_t)0xD8 )  //Ldpc_err_num_rd[7:0]
+
 
 #define     FEC_4_RD            ((uint8_t)0xD9 )      /*PAGE2   0xc8  0x11  0xD9                                       
                                                 rc_err_flg  RO  [7:7]   
