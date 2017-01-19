@@ -200,7 +200,7 @@ typedef struct
     unsigned char rf_configure[128];
 #endif
 #ifdef USE_ADV7611_EDID_CONFIG_BIN
-    unsigned char hdmi_configure[263][3];
+    unsigned char hdmi_configure[264][3];
 #endif
 }STRU_SettingConfigure;
 
