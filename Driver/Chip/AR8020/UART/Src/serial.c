@@ -1,5 +1,7 @@
 #include "stddef.h"
 #include "serial.h"
+#include "pll_ctrl.h"
+#include "cpu_info.h"
 
 
 static void UART0_entryFun(uint32_t u32_vectorNum);
@@ -74,6 +76,35 @@ static uart_type* get_uart_type_by_index(unsigned char index)
     return uart_regs;
 }
 
+static uint32_t get_uart_clock_by_index(unsigned char index)
+{
+    uint16_t u16_pllClk = 64;
+
+    switch (index)
+    {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+        PLLCTRL_GetCoreClk(&u16_pllClk, ENUM_CPU0_ID);
+        u16_pllClk = u16_pllClk >> 1;
+        break;
+    case 9:
+    case 10:
+        PLLCTRL_GetCoreClk(&u16_pllClk, ENUM_CPU2_ID);
+        break;
+    default:
+        break;
+    }
+
+    return (uint32_t)u16_pllClk;
+}
+
 void uart_init(unsigned char index, unsigned int baud_rate)
 {
     int devisor;
@@ -86,7 +117,7 @@ void uart_init(unsigned char index, unsigned int baud_rate)
         uart_regs->DLH_IER = 0x00000000;
         uart_regs->LCR = UART_LCR_WLEN8 & ~(UART_LCR_STOP | UART_LCR_PARITY);
 
-        devisor = CLK_FREQ / (16 * baud_rate);
+        devisor = (get_uart_clock_by_index(index) * 1000000) / (16 * baud_rate);
         uart_regs->LCR |= UART_LCR_DLAB;
         uart_regs->DLH_IER = (devisor >> 8) & 0x000000ff;
         uart_regs->RBR_THR_DLL = devisor & 0x000000ff;

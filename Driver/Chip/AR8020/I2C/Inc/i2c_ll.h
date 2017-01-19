@@ -16,7 +16,6 @@
 
 #define I2C_CMD_ID_START 0x10000
 
-#define I2C_IN_CLOCK_MHZ 100
 
 #define ROUNDUP_DIVISION(a, b) ((a % b) ? ((a / b) + 1) : (a / b))
 

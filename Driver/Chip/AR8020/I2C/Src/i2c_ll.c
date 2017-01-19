@@ -5,6 +5,8 @@
 #include "i2c_ll.h"
 #include "i2c.h"
 #include "debuglog.h"
+#include "pll_ctrl.h"
+#include "cpu_info.h"
 
 static STRU_I2C_Controller stru_i2cControllerArray[MAX_I2C_CONTOLLER_NUMBER] = 
 {
@@ -46,11 +48,37 @@ static STRU_I2C_Controller stru_i2cControllerArray[MAX_I2C_CONTOLLER_NUMBER] =
     },
 };
 
+static uint32_t I2C_LL_GetInputClockByRegBaseAddr(uint32_t u32_i2cRegBaseAddr)
+{
+    uint16_t u16_pllClk = 64;
+
+    switch (u32_i2cRegBaseAddr)
+    {
+    case BASE_ADDR_I2C0:
+    case BASE_ADDR_I2C1:
+    case BASE_ADDR_I2C2:
+    case BASE_ADDR_I2C3:
+    case BASE_ADDR_I2C4:
+        PLLCTRL_GetCoreClk(&u16_pllClk, ENUM_CPU0_ID);
+        u16_pllClk = u16_pllClk >> 1;
+        break;
+    case BASE_ADDR_I2C5:
+        PLLCTRL_GetCoreClk(&u16_pllClk, ENUM_CPU2_ID);
+        break;
+    default:
+        break;
+    }
+
+    return (uint32_t)u16_pllClk;
+}
+
 static void I2C_LL_RefreshConfigRegisters(STRU_I2C_Controller* ptr_i2cController)
 {
     if (ptr_i2cController != NULL)
     {
         STRU_I2C_Type* i2c_reg = (STRU_I2C_Type*)ptr_i2cController->u32_i2cRegBaseAddr;
+
+        uint32_t i2c_clock = I2C_LL_GetInputClockByRegBaseAddr(ptr_i2cController->u32_i2cRegBaseAddr);
         
         if (ptr_i2cController->en_i2cMode == I2C_Master_Mode)
         {
@@ -62,22 +90,22 @@ static void I2C_LL_RefreshConfigRegisters(STRU_I2C_Controller* ptr_i2cController
             {
                 i2c_reg->IC_CON &= ~(7<<2);             // [4]:addr_mst in 7-bit; [3]:addr_slv in 7-bit; [2:1]=01,standard mode;
                 i2c_reg->IC_CON |= (3<<0 | 3<<5);       // [1]; [0]:enable master-mode;[6]:disbale i2c slave-only mode; [5]:enable ic_restart
-                i2c_reg->IC_SS_SCL_HCNT = ROUNDUP_DIVISION(4000 * 2 * I2C_IN_CLOCK_MHZ, 1000);    // set high period of SCL 4000 * 2 ns
-                i2c_reg->IC_SS_SCL_LCNT = ROUNDUP_DIVISION(4700 * 2 * I2C_IN_CLOCK_MHZ, 1000);    // set low period of SCL 4700 * 2 ns
+                i2c_reg->IC_SS_SCL_HCNT = ROUNDUP_DIVISION(4000 * 2 * i2c_clock, 1000);    // set high period of SCL 4000 * 2 ns
+                i2c_reg->IC_SS_SCL_LCNT = ROUNDUP_DIVISION(4700 * 2 * i2c_clock, 1000);    // set low period of SCL 4700 * 2 ns
             }
             else if (ptr_i2cController->parameter.master.speed == I2C_Fast_Speed)  // fast speed
             {
                 i2c_reg->IC_CON &= ~(3<<3 | 1<<1);      // [4]:addr_mst in 7-bit; [3]:addr_slv in 7-bit; [2:1]=2,fast mode;
                 i2c_reg->IC_CON |= (5<<0 | 3<<5);       // [2]; [0]:enable master-mode;[6]:disbale i2c slave-only mode; [5]:enable ic_restart
-                i2c_reg->IC_FS_SCL_HCNT = ROUNDUP_DIVISION(600 * 2 * I2C_IN_CLOCK_MHZ, 1000);         // set high period of SCL 600 * 2 ns
-                i2c_reg->IC_FS_SCL_LCNT = ROUNDUP_DIVISION(1300 * 2 * I2C_IN_CLOCK_MHZ, 1000);        // set low period of SCL 1300 * 2 ns
+                i2c_reg->IC_FS_SCL_HCNT = ROUNDUP_DIVISION(600 * 2 * i2c_clock, 1000);         // set high period of SCL 600 * 2 ns
+                i2c_reg->IC_FS_SCL_LCNT = ROUNDUP_DIVISION(1300 * 2 * i2c_clock, 1000);        // set low period of SCL 1300 * 2 ns
             }
             else if (ptr_i2cController->parameter.master.speed == I2C_High_Speed)  // high mode
             {
                 i2c_reg->IC_CON &= ~(3<<3);             // [4]:addr_mst in 7-bit; [3]:addr_slv in 7-bit; [2:1]=11,high speed mode;
                 i2c_reg->IC_CON |= (7<<0 | 3<<5);       // [2:1]=0x11; [0]:enable master-mode;[6]:disbale i2c slave-only mode; [5]:enable ic_restart
-                i2c_reg->IC_HS_SCL_HCNT = ROUNDUP_DIVISION(160 * 2 * I2C_IN_CLOCK_MHZ, 1000);         // set high period of SCL 160 * 2 ns
-                i2c_reg->IC_HS_SCL_LCNT = ROUNDUP_DIVISION(320 * 2 * I2C_IN_CLOCK_MHZ, 1000);         // set low period of SCL 320 * 2 ns
+                i2c_reg->IC_HS_SCL_HCNT = ROUNDUP_DIVISION(160 * 2 * i2c_clock, 1000);         // set high period of SCL 160 * 2 ns
+                i2c_reg->IC_HS_SCL_LCNT = ROUNDUP_DIVISION(320 * 2 * i2c_clock, 1000);         // set low period of SCL 320 * 2 ns
             }
             
             i2c_reg->IC_TAR = ptr_i2cController->parameter.master.addr;  // set address of target slave

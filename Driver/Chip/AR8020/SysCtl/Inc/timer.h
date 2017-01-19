@@ -32,9 +32,9 @@ enum timer_error
     TIMER_SUCCESS = 0,
     TIMER_FULL,
     TIMER_NOT_TIME,
-    TIMER_NOEXISTENT
+    TIMER_NOEXISTENT,
+    TIMER_GETCLOCKFAIL
 };
-#define TIM_CLC_MHZ    (100)
 /*
 #define TIMER_SUCCESS 0
 #define TIMER_FULL -1

@@ -3,8 +3,9 @@
 #include "interrupt.h"
 #include "reg_rw.h"
 #include "debuglog.h"
-static timer_handle_st timer_queue[10];
-static volatile uint32_t g_timer_us;
+#include "pll_ctrl.h"
+#include "cpu_info.h"
+
 
 uint8_t TIM_ClearNvic(init_timer_st time_st)
 {
@@ -109,7 +110,14 @@ uint8_t TIM_RegisterTimer(init_timer_st time_st, uint32_t time_us)
     uint8_t u8_TimCtrl = time_st.ctrl;
     uint8_t u8_TimGroup = time_st.base_time_group;
     uint32_t u32_TimBaseAddr = 0;
-    uint32_t u32_Tim = TIM_CLC_MHZ * time_us;
+    uint16_t u16_TimerClock = 0;
+    PLLCTRL_GetCoreClk(&u16_TimerClock, ENUM_CPU0_ID);
+    u16_TimerClock = u16_TimerClock >> 1; 
+    if (0 == u16_TimerClock)
+    {
+        return TIMER_GETCLOCKFAIL;
+    }
+    uint32_t u32_Tim = u16_TimerClock * time_us;
     
     if(u8_TimNum > 7 || time_st.base_time_group > 2)
     {
@@ -129,8 +137,16 @@ uint8_t TIM_RegisterPwm(init_timer_st time_st, uint32_t low_us, uint32_t high_us
     uint8_t u8_TimCtrl = time_st.ctrl;
     uint8_t u8_TimGroup = time_st.base_time_group;
     uint32_t u32_TimBaseAddr = 0;
-    uint32_t u32_TimLow = TIM_CLC_MHZ * low_us;
-    uint32_t u32_TimHigh = TIM_CLC_MHZ * high_us;
+    uint16_t u16_TimerClock = 0; 
+    PLLCTRL_GetCoreClk(&u16_TimerClock, ENUM_CPU0_ID);
+    u16_TimerClock = u16_TimerClock >> 1; 
+    if (0 == u16_TimerClock)
+    {
+        return TIMER_GETCLOCKFAIL;
+    }
+    uint32_t u32_TimLow = u16_TimerClock * low_us;
+    uint32_t u32_TimHigh = u16_TimerClock * high_us;
+
     
     if(u8_TimNum > 7 || time_st.base_time_group > 2)
     {
@@ -150,8 +166,15 @@ uint8_t TIM_ModifyPwmCount(init_timer_st time_st, uint32_t low_us, uint32_t high
     uint8_t u8_TimCtrl = time_st.ctrl;
     uint8_t u8_TimGroup = time_st.base_time_group;
     uint32_t u32_TimBaseAddr = 0;
-    uint32_t u32_TimLow = TIM_CLC_MHZ * low_us;
-    uint32_t u32_TimHigh = TIM_CLC_MHZ * high_us;
+    int16_t u16_TimerClock = 0; 
+    PLLCTRL_GetCoreClk(&u16_TimerClock, ENUM_CPU0_ID);
+    u16_TimerClock = u16_TimerClock >> 1; 
+    if (0 == u16_TimerClock)
+    {
+        return TIMER_GETCLOCKFAIL;
+    }
+    uint32_t u32_TimLow = u16_TimerClock * low_us;
+    uint32_t u32_TimHigh = u16_TimerClock * high_us;
     
     if(u8_TimNum > 7 || time_st.base_time_group > 2)
     {
