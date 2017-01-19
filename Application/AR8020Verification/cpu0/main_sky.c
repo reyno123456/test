@@ -11,6 +11,7 @@
 #include "hal_hdmi_rx.h"
 #include "hal_usb_device.h"
 #include "hal_sys_ctl.h"
+#include "wireless_interface.h"
 
 void *malloc(size_t size)
 {
@@ -104,6 +105,8 @@ int main(void)
 
     osMessageQDef(osqueue, 1, uint16_t);
     g_usbhAppCtrl.usbhAppEvent  = osMessageCreate(osMessageQ(osqueue),NULL);
+
+    Wireless_TaskInit();
 
     osKernelStart();
 

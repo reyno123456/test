@@ -218,7 +218,7 @@ void wimax_vsoc_rx_isr(uint32_t u32_vectorNum)
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
     TIM_StartTimer(sky_timer0_0);
 
-    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(OSD_STATUS_SHM_ADDR);
+    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
     osdptr->in_debug    = (uint8_t)(g_stSkyDebugMode.bl_isDebugMode);
 	sky_handle_all_cmds();
 }
@@ -691,7 +691,7 @@ static void sky_handle_MCS_cmd(void)
 
 static void sky_handle_debug_mode_cmd_spi(void)
 {
-    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(OSD_STATUS_SHM_ADDR);
+    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
     uint8_t data0 = BB_ReadReg(PAGE2, NTF_TEST_MODE_0);
     uint8_t data1 = BB_ReadReg(PAGE2, NTF_TEST_MODE_1);
 
@@ -877,7 +877,7 @@ static void sky_handle_all_cmds(void)
 */
 static void BB_sky_GatherOSDInfo(void)
 {
-    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(OSD_STATUS_SHM_ADDR);
+    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
 
     osdptr->messageId = 0x33;
     osdptr->head = 0xff; //starting writing

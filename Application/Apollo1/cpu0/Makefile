@@ -31,11 +31,11 @@ LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 SRC_S   := $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
-SRC_C   := main_sky.c command.c test_usbh.c upgrade.c md5.c com_task.c
+SRC_C   := main_sky.c command.c test_usbh.c upgrade.c md5.c com_task.c wireless_interface.c
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
-SRC_C   := main_ground.c command.c test_usbh.c upgrade.c md5.c com_task.c
+SRC_C   := main_ground.c command.c test_usbh.c upgrade.c md5.c com_task.c wireless_interface.c
 endif
 
 CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I./

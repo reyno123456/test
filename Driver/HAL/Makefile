@@ -37,7 +37,6 @@ SRC_C := Src/hal.c \
          Src/hal_nvic.c \
 	 Src/hal_sd.c \
 	 Src/hal_dma.c \
-         Src/wireless_interface.c
 
 INCDIRS := -IInc \
            -I$(TOP_DIR)/Configure/Include \

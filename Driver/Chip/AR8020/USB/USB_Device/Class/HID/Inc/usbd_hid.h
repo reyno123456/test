@@ -58,16 +58,16 @@
 #define HID_EPOUT_ADDR                0x01
 #define HID_EPOUT_SIZE                64
 
-#define USB_HID_CONFIG_DESC_SIZ       48
+#define USB_HID_CONFIG_DESC_SIZ       66
 #define USB_HID_DESC_SIZ              9
 #define HID_MOUSE_REPORT_DESC_SIZE    40
 
 #define HID_DESCRIPTOR_TYPE           0x21
 #define HID_REPORT_DESC               0x22
 
-#define HID_HS_BINTERVAL               0x01
-#define HID_FS_BINTERVAL               0x0A
-#define HID_POLLING_INTERVAL           0x0A
+#define HID_HS_BINTERVAL              0x01
+#define HID_FS_BINTERVAL              0x0A
+#define HID_POLLING_INTERVAL          0x0A
 
 #define HID_REQ_SET_PROTOCOL          0x0B
 #define HID_REQ_GET_PROTOCOL          0x03

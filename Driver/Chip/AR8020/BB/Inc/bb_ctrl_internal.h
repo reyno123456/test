@@ -5,7 +5,6 @@
 
 #include "bb_ctrl.h"
 #include "bb_spi.h"
-#include "wireless_interface.h"
 
 typedef enum
 {
