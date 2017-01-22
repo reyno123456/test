@@ -8,6 +8,7 @@ BUILD_DIR ?= $(TOP_DIR)/Build
 OUTPUT_DIR ?= $(TOP_DIR)/Output
 OUTPUT_HEADER_STAGING_DIR ?= $(OUTPUT_DIR)/Staging/Inc
 OUTPUT_LIB_STAGING_DIR ?= $(OUTPUT_DIR)/Staging/Lib
+OUTPUT_BIN_STAGING_DIR ?= $(OUTPUT_DIR)/Staging/Bin
 UTILITY_DIR ?= $(TOP_DIR)/Utility
 CONFIGURE_DIR ?= $(TOP_DIR)/Configure/Include/
 SDK_DIR ?= $(OUTPUT_DIR)/AR8020SDK
@@ -56,11 +57,12 @@ $(LIBS):
 
 sdk: 
 	@echo "make sdk ..."
-	@mkdir -p $(SDK_DIR) $(SDK_DIR)/Build $(SDK_DIR)/Utility $(SDK_DIR)/Application
+	@mkdir -p $(SDK_DIR) $(SDK_DIR)/Build $(SDK_DIR)/Utility $(SDK_DIR)/Application 
 	@cp -r $(CONFIGURE_DIR) $(SDK_DIR)/Inc
 	@cp -r $(OUTPUT_HEADER_STAGING_DIR) $(OUTPUT_LIB_STAGING_DIR) $(SDK_DIR)
 	@cp -r $(APPLICATION_DIR)/* $(SDK_DIR)/Application
 	@cp -r $(UTILITY_DIR)/joint2flash.sh $(UTILITY_DIR)/txt2bin.exe $(UTILITY_DIR)/imageinfo $(SDK_DIR)/Utility
+	@cp -r $(OUTPUT_BIN_STAGING_DIR) $(SDK_DIR)/
 	$(UTILITY_DIR)/modifyMKpath.sh
 	@cp -r ../../*.mk $(SDK_DIR)/Build
 	@tar -cvf  $(SDK_DIR_VERSION).tar.gz $(SDK_DIR)

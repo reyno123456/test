@@ -46,4 +46,5 @@ sed -i '/^cpu0=/ccpu0=../Lib/ar8020_cpu0.bin'  ./joint2flash.sh
 sed -i '/^cpu1=/ccpu1=../Lib/ar8020_cpu1.bin'  ./joint2flash.sh
 sed -i '/^cpu2=/ccpu2=../Lib/ar8020_cpu2.bin'  ./joint2flash.sh
 sed -i '/^ve=/cve=../Utility/imageinfo'  ./joint2flash.sh
+sed -i '/^Bin=/cBin=../Bin'  ./joint2flash.sh
 
