@@ -37,6 +37,7 @@ SRC_C := Src/hal.c \
          Src/hal_nvic.c \
 	 Src/hal_sd.c \
 	 Src/hal_dma.c \
+	 Src/hal_adc.c
 
 INCDIRS := -IInc \
            -I$(TOP_DIR)/Configure/Include \
@@ -94,6 +95,7 @@ install:
 	@cp -f Inc/hal_nvic.h $(OUTPUT_HEADER_STAGING_DIR) 
 	@cp -f Inc/hal_sd.h  $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_dma.h  $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/hal_adc.h  $(OUTPUT_HEADER_STAGING_DIR)
 clean:
 	@echo "Cleaning..."
 	@$(RM) $(LIB) $(OBJ_C) .depend $(OUTPUT_LIB_STAGING_DIR)/$(LIB)
@@ -106,6 +108,7 @@ clean:
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_bb.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_sd.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_dma.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_adc.h
 
 .PHONY: all clean install
 #########################################################################

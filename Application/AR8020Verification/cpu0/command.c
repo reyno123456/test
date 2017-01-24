@@ -11,6 +11,7 @@
 #include "test_can.h"
 #include "test_sd.h"
 #include "hal_sd.h"
+#include "hal_adc.h"
 #include "test_spi.h"
 #include "test_quadspi.h"
 #include "test_gpio.h"
@@ -452,6 +453,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_dma(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
+    else if (memcmp(cmdArray[0], "test_adc", 8) == 0)
+    {
+        command_adc(cmdArray[1]);
+    }
     else if (memcmp(cmdArray[0], "configure", 8) == 0)
     {
         STRU_SettingConfigure *configure=NULL;
@@ -568,6 +573,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("test_hal_spi_read <ch> <addr>");
         dlog_error("configure");
         dlog_error("test_dma <src> <dst> <byte_num>");
+        dlog_error("test_adc <channel>");
     }
 
     /* must init to receive new data from serial */
@@ -866,3 +872,16 @@ void command_dma(char * u32_src, char *u32_dst, char *u32_byteNum)
     HAL_DMA_Start(iSrcAddr, iDstAddr, iNum, AUTO, LINK_LIST_ITEM);
 }
 
+void command_adc(char * channel)
+{
+    uint32_t u32_channel;
+    u32_channel = command_str2uint(channel);
+    uint32_t u32_index = 0;
+    while(1)
+    {
+        if (u32_index++ >= 100)
+            break;
+
+        dlog_info("channel %d value: %d", u32_channel, HAL_ADC_Read(u32_channel));
+    }
+}
