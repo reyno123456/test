@@ -49,6 +49,7 @@ void command_upgrade(void);
 void command_sendCtrl(void);
 void command_sendVideo(void);
 void command_dma(char *,char *,char *);
+void command_adc(char * channel);
 
 /* added by xiongjiangjiang */
 void Drv_UART_IRQHandler(uint32_t u32_vectorNum)
