@@ -131,7 +131,7 @@ else
 
 		elif [[ $flag = "add" ]];then
 			#copy the new files
-			if [[ $line != "#" ]]; then
+                        if [[ -e $line ]] ; then
 				if [[ $line == "no" ]]; then
 					addCpFlag="false"
 				fi
