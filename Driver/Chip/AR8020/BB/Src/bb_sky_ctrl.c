@@ -56,6 +56,9 @@ static void sky_handle_debug_mode_cmd_spi(void);
 static void sky_handle_debug_mode_cmd_event(uint8_t value);
 static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd);
 static void sky_handle_all_cmds(void);
+static int32_t sky_chk_flash_id_validity(void);
+static int32_t sky_write_id(uint8_t *u8_idArray);
+static int32_t cal_chk_sum(uint8_t *pu8_data, uint32_t u32_len, uint8_t *u8_check);
 
 void BB_SKY_start(void)
 {   
@@ -304,19 +307,46 @@ void sky_soft_reset(void)
 
 void sky_physical_link_process(void)
 {
+    uint8_t *p_id;
+
     if(context.dev_state == SEARCH_ID)
     {
-        if(sky_id_search_run())
+        if(RC_ID_AUTO_SEARCH == (context.u8_idSrcSel)) // auto serch
         {
-            uint8_t *p_id = sky_id_search_get_best_id();
-            sky_set_RC_id(p_id);
+            if(sky_id_search_run())
+            {
+                p_id = sky_id_search_get_best_id();
+                sky_set_RC_id(p_id);
+                sky_write_id(p_id);
 
-            context.dev_state = CHECK_ID_MATCH;
-            sky_soft_reset();
+                context.dev_state = CHECK_ID_MATCH;
+                sky_soft_reset();
+                dlog_info("use auto search id");
+            }
+            else
+            {
+                context.rc_unlock_cnt ++;
+            }
+        }
+        else if(RC_ID_USE_FLASH_SAVE == (context.u8_idSrcSel)) // read flash 
+        {
+            if(0 == sky_chk_flash_id_validity()) // flash id ok
+            {
+                sky_set_RC_id(context.u8_flashId);
+                context.dev_state = CHECK_ID_MATCH;
+                sky_soft_reset();
+                dlog_info("use fixed id");
+            }
+            else // flash id error,set to auto search
+            {
+                context.u8_idSrcSel = RC_ID_AUTO_SEARCH;
+                search_id_list.count = 0; // completely re-search.
+            }       
         }
         else
         {
-            context.rc_unlock_cnt ++;
+            context.u8_idSrcSel = RC_ID_AUTO_SEARCH;
+            search_id_list.count = 0; // completely re-search.
         }
     }
     else if(context.dev_state == ID_MATCH_LOCK)
@@ -899,4 +929,67 @@ static void BB_sky_GatherOSDInfo(void)
 
     osdptr->head = 0x00;
     osdptr->tail = 0xff;    //end of the writing
+}
+
+void sky_set_auto_search_rc_id(void)
+{
+    context.u8_idSrcSel = RC_ID_AUTO_SEARCH;
+    context.dev_state = SEARCH_ID;
+    search_id_list.count = 0; // completely re-search.
+}
+
+static int32_t sky_chk_flash_id_validity(void)
+{
+    uint8_t u8_chk = 0;
+   
+    cal_chk_sum(&(context.u8_flashId[0]), 5, &u8_chk);
+    
+    if (u8_chk == (context.u8_flashId[5])) // data is valid,use flash save id
+    {
+        return 0;
+    }
+    
+    return -1;
+}
+
+static int32_t sky_write_id(uint8_t *u8_idArray)
+{
+    STRU_SysEvent_NvMsg st_nvMsg;
+
+    // src:cpu0 dst:cpu2
+    st_nvMsg.u8_nvSrc = INTER_CORE_CPU2_ID;
+    st_nvMsg.u8_nvDst = INTER_CORE_CPU0_ID;
+
+    // parament number
+    st_nvMsg.e_nvNum = NV_NUM_RCID;
+
+    // parament set
+    st_nvMsg.u8_nvPar[0] = context.u8_idSrcSel;
+    memcpy(&(st_nvMsg.u8_nvPar[1]), u8_idArray, 5);
+    cal_chk_sum(&(st_nvMsg.u8_nvPar[1]), 5, &(st_nvMsg.u8_nvPar[6]));
+
+    // send msg
+    SYS_EVENT_Notify(SYS_EVENT_ID_NV_MSG, (void *)(&(st_nvMsg)));
+
+    return 0;
+}
+
+static int32_t cal_chk_sum(uint8_t *pu8_data, uint32_t u32_len, uint8_t *u8_check)
+{
+    uint8_t u8_i;
+    uint8_t u8_chk = 0;
+
+    if (NULL == pu8_data)
+    {
+        return -1;
+    }
+
+    for (u8_i = 0; u8_i < u32_len; u8_i++)
+    {
+        u8_chk += pu8_data[u8_i];
+    }
+    
+    *u8_check = u8_chk;
+
+    return 0;
 }

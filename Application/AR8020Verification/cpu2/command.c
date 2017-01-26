@@ -254,6 +254,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
             dlog_output(100);
         }*/
     }	
+    else if (memcmp(cmdArray[0], "sky_auto_search_rc_id", strlen("sky_auto_search_rc_id")) == 0)
+    {
+        command_test_SkyAutoSearhRcId();
+    }
     else 
     {
         dlog_error("Command not found! Please use commands like:\n");
@@ -272,6 +276,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("test_float_calculate_pi");
         dlog_error("configure");
         dlog_error("BB_add_cmds <type> <param0> <param1> <param2>");		
+        dlog_error("sky_auto_search_rc_id");		
     }
 
     /* must reset to receive new data from serial */

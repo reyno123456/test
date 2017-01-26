@@ -54,7 +54,7 @@ void BB_GRD_start(void)
     GPIO_SetPin(RED_LED_GPIO, 0);   //RED LED ON
     GPIO_SetPin(BLUE_LED_GPIO, 1);  //BLUE LED OFF
     
-    //BB_Grd_SetRCId();
+    BB_Grd_SetRCId(context.u8_flashId);
     Grd_Timer0_Init();
     Grd_Timer1_Init();
 
@@ -70,13 +70,20 @@ void BB_GRD_start(void)
 }
 
 
-void BB_Grd_SetRCId(void)
+void BB_Grd_SetRCId(uint8_t *pu8_id)
 {
-    BB_WriteReg(PAGE2, GRD_RC_ID_BIT39_32_REG, context.id[0]);
-    BB_WriteReg(PAGE2, GRD_RC_ID_BIT31_24_REG, context.id[1]);
-    BB_WriteReg(PAGE2, GRD_RC_ID_BIT23_16_REG, context.id[2]);
-    BB_WriteReg(PAGE2, GRD_RC_ID_BIT15_08_REG, context.id[3]);
-    BB_WriteReg(PAGE2, GRD_RC_ID_BIT07_00_REG, context.id[4]);
+    BB_WriteReg(PAGE2, GRD_RC_ID_BIT39_32_REG, pu8_id[0]);
+    BB_WriteReg(PAGE2, GRD_RC_ID_BIT31_24_REG, pu8_id[1]);
+    BB_WriteReg(PAGE2, GRD_RC_ID_BIT23_16_REG, pu8_id[2]);
+    BB_WriteReg(PAGE2, GRD_RC_ID_BIT15_08_REG, pu8_id[3]);
+    BB_WriteReg(PAGE2, GRD_RC_ID_BIT07_00_REG, pu8_id[4]);
+    
+    dlog_info("id[0~4]:0x%x 0x%x 0x%x 0x%x 0x%x",
+               pu8_id[0], 
+               pu8_id[1], 
+               pu8_id[2], 
+               pu8_id[3], 
+               pu8_id[4]);
 }
 
 //---------------IT grd hop change--------------------------------

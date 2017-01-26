@@ -6,6 +6,7 @@
 #include "interrupt.h"
 #include "hal_bb.h"
 
+
 void command_test_BB_uart(char *index_str)
 {
     static uint8_t data_buf_proc[128];
@@ -34,3 +35,7 @@ void command_test_BB_uart(char *index_str)
     }
 }
 
+void command_test_SkyAutoSearhRcId(void)
+{
+    HAL_BB_SetAutoSearchRcId();
+}

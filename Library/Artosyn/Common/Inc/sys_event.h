@@ -89,7 +89,8 @@ void SYS_EVENT_DumpAllListNodes(void);
 #define SYS_EVENT_ID_USER_CFG_CHANGE                  (SYS_EVENT_LEVEL_HIGH_MASK   | 0x0004 | SYS_EVENT_INTER_CORE_MASK)
 #define SYS_EVENT_ID_USER_CFG_CHANGE_LOCAL            (SYS_EVENT_LEVEL_HIGH_MASK   | 0x0004)
 #define SYS_EVENT_ID_USB_PLUG_OUT                     (SYS_EVENT_LEVEL_HIGH_MASK   | 0x0005)
-
+#define SYS_EVENT_ID_NV_MSG                           (SYS_EVENT_LEVEL_MIDIUM_MASK   | 0x0006 | SYS_EVENT_INTER_CORE_MASK)
+#define SYS_EVENT_ID_NV_MSG_LOCAL                     (SYS_EVENT_LEVEL_MIDIUM_MASK   | 0x0006)
 
 typedef struct _SysEvent_H264InputFormatChangeParameter
 {
@@ -111,5 +112,21 @@ typedef struct _SysEvent_BB_DATA_BUFFER_FULL_RATIO_Change
     uint8_t  BB_Data_Full_Ratio; // 0x00 - 0x80 
     uint8_t  reserve[SYS_EVENT_HANDLER_PARAMETER_LENGTH - 1];
 } STRU_SysEvent_BB_DATA_BUFFER_FULL_RATIO_Change;
+
+
+// data struct used between cpu communication
+typedef enum
+{
+    NV_NUM_RCID = 1,
+    NV_NUM_NOTICE = 0xFF,
+} ENUM_NV_NUM;
+
+typedef struct
+{
+    uint8_t u8_nvSrc  : 4;
+    uint8_t u8_nvDst  : 4;
+    ENUM_NV_NUM e_nvNum;
+    uint8_t u8_nvPar[SYS_EVENT_HANDLER_PARAMETER_LENGTH - 2];
+} STRU_SysEvent_NvMsg;
 
 #endif

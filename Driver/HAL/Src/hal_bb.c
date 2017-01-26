@@ -595,3 +595,16 @@ HAL_RET_T HAL_BB_curPageReadByte(uint8_t u8_addr, uint8_t *pu8_regValue)
     
     return HAL_OK;
 }
+
+/** 
+ * @brief       
+ * @param   
+ * @retval      
+ * @note      
+ */
+HAL_RET_T HAL_BB_SetAutoSearchRcId(void)
+{
+    BB_SetAutoSearchRcId();
+
+    return HAL_OK;
+}

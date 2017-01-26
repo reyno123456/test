@@ -12,6 +12,7 @@
 #include "hal_usb_device.h"
 #include "hal_sys_ctl.h"
 #include "wireless_interface.h"
+#include "hal_nv.h"
 
 void *malloc(size_t size)
 {
@@ -94,6 +95,8 @@ int main(void)
     HAL_USB_InitDevice(HAL_USB_DEVICE_PORT_0);
 
     HAL_SRAM_ReceiveVideoConfig();
+
+    HAL_NV_Init();
 
     osThreadDef(USBHStatus_Task, USBH_USBHostStatus, osPriorityNormal, 0, 4 * 128);
     osThreadCreate(osThread(USBHStatus_Task), NULL);

@@ -37,7 +37,8 @@ SRC_C := Src/hal.c \
          Src/hal_nvic.c \
 	 Src/hal_sd.c \
 	 Src/hal_dma.c \
-	 Src/hal_adc.c
+	 Src/hal_adc.c \
+         Src/hal_nv.c \
 
 INCDIRS := -IInc \
            -I$(TOP_DIR)/Configure/Include \
@@ -58,6 +59,7 @@ INCDIRS := -IInc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SPI/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/DMA/Inc \
+           -I$(TOP_DIR)/Driver/Board/AR8020TEST/NORFlash/Inc \
            -I$(TOP_DIR)/Driver/HAL/Inc
 
 
@@ -96,6 +98,7 @@ install:
 	@cp -f Inc/hal_sd.h  $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_dma.h  $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_adc.h  $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/hal_nv.h  $(OUTPUT_HEADER_STAGING_DIR)
 clean:
 	@echo "Cleaning..."
 	@$(RM) $(LIB) $(OBJ_C) .depend $(OUTPUT_LIB_STAGING_DIR)/$(LIB)
@@ -109,6 +112,7 @@ clean:
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_sd.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_dma.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_adc.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_nv.h
 
 .PHONY: all clean install
 #########################################################################

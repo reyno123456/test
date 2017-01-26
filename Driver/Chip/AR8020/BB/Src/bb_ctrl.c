@@ -13,7 +13,7 @@
 #include "bb_regs.h"
 #include "sys_event.h"
 #include "rf_8003s.h"
-
+#include "memory_config.h"
 
 #define     BB_SPI_TEST         (0)
 #define     RF_SPI_TEST         (0)
@@ -90,6 +90,9 @@ static uint8_t cali_reg[2][10] = {{0}, {0}};
 static uint8_t *BB_sky_regs = NULL;
 static uint8_t *BB_grd_regs = NULL;
 static uint8_t *RF_8003s_regs;
+
+static void BB_GetNv(void);
+
 
 static void BB_regs_init(ENUM_BB_MODE en_mode)
 {
@@ -238,7 +241,9 @@ void BB_init(ENUM_BB_MODE en_mode)
     BB_sky_regs   = &(cfg_addr->bb_sky_configure[0][0]);
     BB_grd_regs   = &(cfg_addr->bb_grd_configure[0][0]);
     RF_8003s_regs = &(cfg_addr->rf_configure[0]);
-    
+
+    BB_GetNv();
+
     BB_SetBoardMode(en_mode);
 
     BB_uart10_spi_sel(0x00000003);
@@ -1158,4 +1163,54 @@ int BB_SetEncoderBitrate(uint8_t bitrate_Mbps)
     cmd.u32_configValue  = (uint32_t)bitrate_Mbps;
 
     return BB_InsertCmd(&cmd);
+}
+
+static void BB_GetNv(void)
+{
+    volatile uint32_t tmpCnt = 0;
+    volatile STRU_NV *pst_nv = (STRU_NV *)SRAM_NV_MEMORY_ST_ADDR;
+
+    while(0x23178546 != (pst_nv->st_nvMng.u32_nvInitFlag))
+    {
+        tmpCnt = 0;
+        while((tmpCnt++) < 200);
+    }
+    
+    memcpy(context.u8_flashId, (void *)(pst_nv->st_nvDataUpd.u8_nvBbRcId), 5);
+    context.u8_flashId[5] = pst_nv->st_nvDataUpd.u8_nvChk;
+
+    if(TRUE != (pst_nv->st_nvMng.u8_nvVld)) // 
+    {
+        context.u8_idSrcSel = RC_ID_AUTO_SEARCH;
+    }
+    else // 
+    {
+        context.u8_idSrcSel = RC_ID_USE_FLASH_SAVE;
+    }
+
+    dlog_info("nv:0x%x 0x%x 0x%x 0x%x 0x%x 0x%x",
+               pst_nv->st_nvDataUpd.u8_nvBbRcId[0],
+               pst_nv->st_nvDataUpd.u8_nvBbRcId[1],
+               pst_nv->st_nvDataUpd.u8_nvBbRcId[2],
+               pst_nv->st_nvDataUpd.u8_nvBbRcId[3],
+               pst_nv->st_nvDataUpd.u8_nvBbRcId[4], 
+               pst_nv->st_nvDataUpd.u8_nvChk);
+    /*dlog_info("flashid:0x%x 0x%x 0x%x 0x%x 0x%x 0x%x",
+               context.u8_flashId[0],
+               context.u8_flashId[1],
+               context.u8_flashId[2],
+               context.u8_flashId[3],
+               context.u8_flashId[4], 
+               context.u8_flashId[5]);*/
+}
+
+/** 
+ * @brief       
+ * @param   
+ * @retval      
+ * @note      
+ */
+void BB_SetAutoSearchRcId(void)
+{
+    sky_set_auto_search_rc_id();
 }

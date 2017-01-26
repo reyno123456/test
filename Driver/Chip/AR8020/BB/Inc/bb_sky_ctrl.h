@@ -4,6 +4,11 @@
 #include <stdint.h>
 #include "bb_ctrl_internal.h"
 
+
+#define RC_ID_AUTO_SEARCH      (1)
+#define RC_ID_USE_FLASH_SAVE   (0)
+
+
 enum EN_AGC_MODE
 {
     FAR_AGC     = 0,
@@ -48,5 +53,7 @@ void sky_soft_reset(void);
 void sky_search_id_timeout(void);
 
 static void BB_sky_GatherOSDInfo(void);
+
+void sky_set_auto_search_rc_id(void);
 
 #endif

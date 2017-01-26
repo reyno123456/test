@@ -181,6 +181,10 @@ extern "C" {
 #define SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_ST_ADDR    (SRAM_BB_UART_COM_SESSION_3_SHARE_MEMORY_ST_ADDR + SRAM_BB_UART_COM_SESSION_3_SHARE_MEMORY_SIZE)
 #define SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_SIZE       0x100
 
+// 512 bytes, nonvolatile variable,stored in flash
+#define SRAM_NV_MEMORY_ST_ADDR       (SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_ST_ADDR + SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_SIZE)
+#define SRAM_NV_MEMORY_SIZE          0x200
+
 /*4k system configure*/
 
 #define SRAM_CONFIGURE_MEMORY_ST_ADDR    (SRAM_BASE_ADDRESS + 0x5000)
@@ -209,6 +213,40 @@ typedef struct
                                                     structaddress=(STRU_SettingConfigure *)(SRAM_CONFIGURE_MEMORY_ST_ADDR);\
                                                  }while(0);\
                                                  }
+
+// nonvolatile variable management struct 
+typedef struct
+{
+    uint8_t u8_nvChg;    // TRUE: some nv changed,FALSE: nv not change.
+    uint8_t u8_nvPrc;    // TRUE: nv in writing flash,FLASE: not being write flash
+    uint8_t u8_nvUpd;    // TRUE: nv in updating,FLASE: not being update
+    uint8_t u8_nvVld;    // TRUE: nv is valid,FALSE: nv is invalid,and set to default value.
+    uint32_t u32_nvInitFlag; //0x23178546 nv have inited.
+}STRU_NV_MNG;
+
+// nonvolatile variable data struct 
+typedef struct
+{
+    uint8_t u8_nvChk;        // data checksum,in bytes. 
+    uint8_t u8_nvBbRcId[5];  //
+}STRU_NV_DATA;
+
+typedef struct
+{
+    STRU_NV_MNG st_nvMng;
+    STRU_NV_DATA st_nvDataUpd; // use to update nv in sram
+    STRU_NV_DATA st_nvDataPrc; // use to write nv to flash
+}STRU_NV;
+
+
+
+//--------------------------------------------------------------------
+// flash  memory address space define here
+//--------------------------------------------------------------------
+
+#define NV_FLASH_ADDR1        (1016*1024)
+#define NV_FLASH_ADDR2        (1020*1024)
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

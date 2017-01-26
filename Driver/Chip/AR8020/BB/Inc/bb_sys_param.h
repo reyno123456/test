@@ -50,6 +50,9 @@ typedef struct
     ENUM_RUN_MODE rf_power_mode;
     uint8_t enable_freq_offset;
     DEVICE_STATE dev_state;
+    uint8_t u8_idSrcSel; /* 0:id comes from flash,this is default value.
+                            1:id comes from automatic search*/
+    uint8_t u8_flashId[6]; // 5B(rc_id) + 1B(check)
 }CONTEXT;
 
 typedef struct
@@ -118,5 +121,6 @@ extern volatile DEVICE_STATE dev_state;
 extern PARAM *sys_param;
 
 PARAM * BB_get_sys_param(void);
+
 
 #endif

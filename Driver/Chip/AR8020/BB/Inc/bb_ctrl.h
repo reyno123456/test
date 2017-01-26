@@ -107,4 +107,13 @@ void BB_uart10_spi_sel(uint32_t sel_dat);
 
 uint8_t BB_write_RcRegs(uint32_t u32_rc);
 
+/** 
+ * @brief       
+ * @param   
+ * @retval      
+ * @note      
+ */
+void BB_SetAutoSearchRcId(void);
+
+
 #endif
