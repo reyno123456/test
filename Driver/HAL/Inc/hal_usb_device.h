@@ -14,14 +14,8 @@ History:
 
 #include <stdint.h>
 #include "hal_ret_type.h"
+#include "hal_usb_otg.h"
 
-
-
-typedef enum
-{
-    HAL_USB_DEVICE_PORT_0 = 0,
-    HAL_USB_DEVICE_PORT_1,
-} ENUM_HAL_USB_DEVICE_PORT;
 
 
 /**
@@ -30,7 +24,7 @@ typedef enum
 * @retval   void
 * @note  
 */
-void HAL_USB_InitDevice(ENUM_HAL_USB_DEVICE_PORT e_usbPort);
+void HAL_USB_InitDevice(ENUM_HAL_USB_PORT e_usbPort);
 
 /**
 * @brief  reset the usb device controller for usb device hotplug

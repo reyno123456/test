@@ -464,6 +464,7 @@ HAL_StatusTypeDef USB_StopHost(USB_OTG_GlobalTypeDef *USBx);
 void              USB_LL_OTG0_IRQHandler(uint32_t u32_vectorNum);
 void              USB_LL_OTG1_IRQHandler(uint32_t u32_vectorNum);
 void              USB_LL_ConvertEndian(void *src_data, void *dst_data, uint32_t dataLen);
+uint8_t           USB_LL_GetCurrentOTGIDStatus(USB_OTG_GlobalTypeDef *USBx);
 
 /**
   * @}

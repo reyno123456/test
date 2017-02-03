@@ -81,7 +81,8 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
     pPcdHandle->Init.phy_itface = PCD_PHY_ULPI;
     pPcdHandle->Init.Sof_enable = 0;
     pPcdHandle->Init.speed = PCD_SPEED_HIGH;
-    pPcdHandle->Init.vbus_sensing_enable = 0;
+    pPcdHandle->Init.vbus_sensing_enable = 1;
+    pPcdHandle->Init.use_external_vbus = 1;
     pPcdHandle->pData = pdev;
     pdev->pData = pPcdHandle;
 

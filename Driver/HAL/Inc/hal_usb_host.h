@@ -15,13 +15,8 @@ History:
 
 #include <stdint.h>
 #include "hal_ret_type.h"
+#include "hal_usb_otg.h"
 
-
-typedef enum
-{
-    HAL_USB_HOST_PORT_0 = 0,
-    HAL_USB_HOST_PORT_1,
-} ENUM_HAL_USB_HOST_PORT;
 
 
 typedef enum
@@ -72,7 +67,7 @@ void HAL_USB_HostProcess(void);
 * @retval   void
 * @note  
 */
-void HAL_USB_InitHost(ENUM_HAL_USB_HOST_PORT e_usbPort, ENUM_HAL_USB_HOST_CLASS e_usbHostClass);
+void HAL_USB_InitHost(ENUM_HAL_USB_PORT e_usbPort, ENUM_HAL_USB_HOST_CLASS e_usbHostClass);
 
 /**
 * @brief  start the USB Video for Application use

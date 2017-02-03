@@ -70,8 +70,8 @@ USBH_StatusTypeDef  USBH_LL_Init(USBH_HandleTypeDef *phost)
     pHcdHandle->Init.phy_itface = HCD_PHY_ULPI;
     pHcdHandle->Init.Sof_enable = 0;
     pHcdHandle->Init.speed = HCD_SPEED_HIGH;
-    pHcdHandle->Init.vbus_sensing_enable = 0;
-    pHcdHandle->Init.use_external_vbus = 0;
+    pHcdHandle->Init.vbus_sensing_enable = 1;
+    pHcdHandle->Init.use_external_vbus = 1;
     pHcdHandle->Init.lpm_enable = 0;
     
     /* Link the driver to the stack */

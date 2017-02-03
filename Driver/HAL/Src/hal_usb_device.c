@@ -29,14 +29,14 @@ USBD_HID_ItfTypeDef         g_stUsbdHidItf;
 * @retval   void
 * @note  
 */
-void HAL_USB_InitDevice(ENUM_HAL_USB_DEVICE_PORT e_usbPort)
+void HAL_USB_InitDevice(ENUM_HAL_USB_PORT e_usbPort)
 {
-    if (HAL_USB_DEVICE_PORT_0 == e_usbPort)
+    if (HAL_USB_PORT_0 == e_usbPort)
     {
         reg_IrqHandle(OTG_INTR0_VECTOR_NUM, USB_LL_OTG0_IRQHandler, NULL);
         INTR_NVIC_SetIRQPriority(OTG_INTR0_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_OTG_INITR0,0));
     }
-    else if (HAL_USB_DEVICE_PORT_1 == e_usbPort)
+    else if (HAL_USB_PORT_1 == e_usbPort)
     {
         reg_IrqHandle(OTG_INTR1_VECTOR_NUM, USB_LL_OTG1_IRQHandler, NULL);
         INTR_NVIC_SetIRQPriority(OTG_INTR1_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_OTG_INITR1,0));

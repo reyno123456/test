@@ -147,7 +147,7 @@ HAL_StatusTypeDef HAL_HCD_Init(HCD_HandleTypeDef *hhcd)
  USB_CoreInit(hhcd->Instance, hhcd->Init);
  
  /* Force Host Mode*/
- USB_SetCurrentMode(hhcd->Instance , USB_OTG_HOST_MODE);
+ USB_SetCurrentMode(hhcd->Instance , USB_OTG_DRD_MODE);
  
  /* Init Host */
  USB_HostInit(hhcd->Instance, hhcd->Init);

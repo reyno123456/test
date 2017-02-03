@@ -91,6 +91,7 @@ void SYS_EVENT_DumpAllListNodes(void);
 #define SYS_EVENT_ID_USB_PLUG_OUT                     (SYS_EVENT_LEVEL_HIGH_MASK   | 0x0005)
 #define SYS_EVENT_ID_NV_MSG                           (SYS_EVENT_LEVEL_MIDIUM_MASK   | 0x0006 | SYS_EVENT_INTER_CORE_MASK)
 #define SYS_EVENT_ID_NV_MSG_LOCAL                     (SYS_EVENT_LEVEL_MIDIUM_MASK   | 0x0006)
+#define SYS_EVENT_ID_USB_SWITCH_HOST_DEVICE           (SYS_EVENT_LEVEL_HIGH_MASK   | 0x0007)
 
 typedef struct _SysEvent_H264InputFormatChangeParameter
 {
@@ -128,5 +129,14 @@ typedef struct
     ENUM_NV_NUM e_nvNum;
     uint8_t u8_nvPar[SYS_EVENT_HANDLER_PARAMETER_LENGTH - 2];
 } STRU_SysEvent_NvMsg;
+
+typedef struct _SysEvent_OTG_HOST_DEV_SWITCH
+{
+    uint8_t  otg_port_id;
+    uint8_t  otg_state;        // 0:device    1:host
+    uint8_t  reserve[SYS_EVENT_HANDLER_PARAMETER_LENGTH - 2];
+} STRU_SysEvent_OTG_HOST_DEV_SWITCH;
+
+
 
 #endif

@@ -31,6 +31,7 @@ SRC_C := Src/hal.c \
          Src/hal_h264.c \
          Src/hal_usb_host.c \
          Src/hal_usb_device.c \
+         Src/hal_usb_otg.c \
          Src/hal_uart.c \
          Src/hal_spi.c \
          Src/hal_bb.c \
@@ -91,6 +92,7 @@ install:
 	@cp -f Inc/hal_ret_type.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_usb_host.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_usb_device.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/hal_usb_otg.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_uart.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_spi.h $(OUTPUT_HEADER_STAGING_DIR) 
 	@cp -f Inc/hal_bb.h $(OUTPUT_HEADER_STAGING_DIR)
@@ -113,6 +115,9 @@ clean:
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_dma.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_adc.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_nv.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_usb_host.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_usb_device.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_usb_otg.h
 
 .PHONY: all clean install
 #########################################################################

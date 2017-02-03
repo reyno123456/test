@@ -62,6 +62,7 @@
 #include "usbh_conf.h"
 #include "cpu_info.h"
 #include "debuglog.h"
+#include "sys_event.h"
 
 /** @addtogroup STM32F7xx_LL_USB_DRIVER
   * @{
@@ -142,7 +143,8 @@ HAL_StatusTypeDef USB_CoreInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef c
 
   USBx->GUSBCFG &= ~(USB_OTG_GUSBCFG_TRDT | USB_OTG_GUSBCFG_TOCAL);
   USBx->GUSBCFG |= (USB_OTG_GUSBCFG_TRDT_0 | USB_OTG_GUSBCFG_TRDT_3 | USB_OTG_GUSBCFG_TOCAL_0);
-  
+  USBx->GUSBCFG |= (USB_OTG_GUSBCFG_SRPCAP | USB_OTG_GUSBCFG_HNPCAP);
+
   return HAL_USB_OK;
 }
 
@@ -318,8 +320,9 @@ HAL_StatusTypeDef USB_DevInit (USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef c
   USBx->GINTMSK |= (USB_OTG_GINTMSK_USBSUSPM | USB_OTG_GINTMSK_USBRST |\
                     USB_OTG_GINTMSK_ENUMDNEM | USB_OTG_GINTMSK_IEPINT |\
                     USB_OTG_GINTMSK_OEPINT   | USB_OTG_GINTMSK_IISOIXFRM|\
-                    USB_OTG_GINTMSK_PXFRM_IISOOXFRM | USB_OTG_GINTMSK_WUIM);
-  
+                    USB_OTG_GINTMSK_PXFRM_IISOOXFRM | USB_OTG_GINTMSK_WUIM |\
+                    USB_OTG_GINTMSK_DISCINT | USB_OTG_GINTMSK_CIDSCHGM);
+
   if(cfg.Sof_enable)
   {
     USBx->GINTMSK |= USB_OTG_GINTMSK_SOFM;
@@ -1272,8 +1275,9 @@ HAL_StatusTypeDef USB_HostInit (USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef 
   
   /* Enable interrupts matching to the Host mode ONLY */
   USBx->GINTMSK |= (USB_OTG_GINTMSK_PRTIM            | USB_OTG_GINTMSK_HCIM |\
-                    USB_OTG_GINTMSK_SOFM             |USB_OTG_GINTSTS_DISCINT|\
-                    USB_OTG_GINTMSK_PXFRM_IISOOXFRM  | USB_OTG_GINTMSK_WUIM);
+                    USB_OTG_GINTMSK_SOFM             | USB_OTG_GINTMSK_DISCINT |\
+                    USB_OTG_GINTMSK_PXFRM_IISOOXFRM  | USB_OTG_GINTMSK_WUIM |\
+                    USB_OTG_GINTMSK_CIDSCHGM);
 
   return HAL_USB_OK;
 }
@@ -1783,6 +1787,31 @@ HAL_StatusTypeDef USB_StopHost(USB_OTG_GlobalTypeDef *USBx)
 
 void USB_LL_OTG0_IRQHandler(uint32_t u32_vectorNum)
 {
+  STRU_SysEvent_OTG_HOST_DEV_SWITCH     stSyseventOtgHostDevSwitch;
+
+  if (USB_OTG0_HS->GINTSTS & USB_OTG_GINTSTS_CIDSCHG)
+  {
+    stSyseventOtgHostDevSwitch.otg_port_id = 0;
+
+    if (USB_OTG0_HS->GINTSTS & 0x01)
+    {
+      /* set to usb host */
+      stSyseventOtgHostDevSwitch.otg_state = 1;
+    }
+    else
+    {
+      /* set to usb device */
+      stSyseventOtgHostDevSwitch.otg_state = 0;
+    }
+
+    USB_OTG0_HS->GINTSTS |= USB_OTG_GINTSTS_CIDSCHG;
+
+    SYS_EVENT_Notify_From_ISR(SYS_EVENT_ID_USB_SWITCH_HOST_DEVICE,
+                              (void *)&stSyseventOtgHostDevSwitch);
+
+    return;
+  }
+
   if (USB_OTG0_HS->GINTSTS & 0x01)
   {
     HAL_HCD_IRQHandler(&hhcd[0]);
@@ -1842,6 +1871,11 @@ void USB_LL_ConvertEndian(void *src_data, void *dst_data, uint32_t dataLen)
     return;
 }
 
+
+uint8_t USB_LL_GetCurrentOTGIDStatus(USB_OTG_GlobalTypeDef *USBx)
+{
+    return ((USBx->GOTGCTL & USB_OTG_GOTGCTL_CIDSTS) == USB_OTG_GOTGCTL_CIDSTS);
+}
 
 
 

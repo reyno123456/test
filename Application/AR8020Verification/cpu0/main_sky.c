@@ -9,7 +9,7 @@
 #include "hal_gpio.h"
 #include "hal_bb.h"
 #include "hal_hdmi_rx.h"
-#include "hal_usb_device.h"
+#include "hal_usb_otg.h"
 #include "hal_sys_ctl.h"
 #include "wireless_interface.h"
 #include "hal_nv.h"
@@ -73,8 +73,6 @@ static void IO_Task(void const *argument)
   */
 int main(void)
 {
-
-
     STRU_HAL_SYS_CTL_CONFIG *pst_cfg;
     HAL_SYS_CTL_GetConfig( &pst_cfg);
     pst_cfg->u8_workMode = 0;
@@ -92,7 +90,7 @@ int main(void)
     HAL_HDMI_RX_Init(HAL_HDMI_RX_0);
     HAL_HDMI_RX_Init(HAL_HDMI_RX_1);
 
-    HAL_USB_InitDevice(HAL_USB_DEVICE_PORT_0);
+    HAL_USB_InitOTG(HAL_USB_PORT_0);
 
     HAL_NV_Init();
 

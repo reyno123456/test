@@ -35,7 +35,7 @@
 #define USBD_VID                      0xaaaa
 #define USBD_PID                      0xaa97
 #define USBD_LANGID_STRING            0x409
-#define USBD_MANUFACTURER_STRING      "STMicroelectronics"
+#define USBD_MANUFACTURER_STRING      "Artosyn Microelectronics"
 #define USBD_PRODUCT_HS_STRING        "HID Joystick in HS Mode"
 #define USBD_PRODUCT_FS_STRING        "HID Joystick in FS Mode"
 #define USBD_CONFIGURATION_HS_STRING  "HID Config"

@@ -161,8 +161,9 @@ HAL_StatusTypeDef HAL_PCD_Init(PCD_HandleTypeDef *hpcd)
  USB_CoreInit(hpcd->Instance, hpcd->Init);
 
  /* Force Device Mode*/
- USB_SetCurrentMode(hpcd->Instance , USB_OTG_DEVICE_MODE);
- 
+// USB_SetCurrentMode(hpcd->Instance , USB_OTG_DEVICE_MODE);
+ USB_SetCurrentMode(hpcd->Instance , USB_OTG_DRD_MODE);
+
  /* Init endpoints structures */
  for (i = 0; i < 15 ; i++)
  {
@@ -496,6 +497,7 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
 
       USB_OTG_SET_LITTLE_ENDIAN();
 
+      #if 0
       /* to resolve the problem of unplug during the transmit */
       if ((USBD_STATE_CONFIGURED == USBD_Device.dev_old_state)
         ||(USBD_STATE_CONFIGURED == USBD_Device.dev_state))
@@ -504,6 +506,7 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
 
           SYS_EVENT_Notify_From_ISR(SYS_EVENT_ID_USB_PLUG_OUT, NULL);
       }
+      #endif
     }
 
     /* Handle LPM Interrupt */ 
@@ -636,9 +639,13 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
     if(__HAL_PCD_GET_FLAG(hpcd, USB_OTG_GINTSTS_OTGINT))
     {
       temp = hpcd->Instance->GOTGINT;
-      
+
       if((temp & USB_OTG_GOTGINT_SEDET) == USB_OTG_GOTGINT_SEDET)
       {
+        dlog_info("restart usb\n");
+
+        SYS_EVENT_Notify_From_ISR(SYS_EVENT_ID_USB_PLUG_OUT, NULL);
+
         HAL_PCD_DisconnectCallback(hpcd);
       }
       hpcd->Instance->GOTGINT |= temp;

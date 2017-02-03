@@ -137,9 +137,6 @@ void USB_MainTask(void const *argument)
                     /* Need to start a new task */
                     if (0 == g_usbhBypassVideoCtrl.taskExist)
                     {
-                        /* set USB as host */
-                        HAL_USB_InitHost(HAL_USB_HOST_PORT_0, HAL_USB_HOST_CLASS_MSC);
-
                         USBH_MountUSBDisk();
 
                         osThreadDef(BypassTask, USBH_BypassVideo, osPriorityIdle, 0, 4 * 128);
@@ -181,8 +178,6 @@ void USB_MainTask(void const *argument)
                     dlog_info("stop bypassvideo task!\n");
 
                     HAL_SRAM_DisableSkyBypassVideo(HAL_SRAM_VIDEO_CHANNEL_0);
-
-                    HAL_USB_InitDevice(HAL_USB_DEVICE_PORT_0);
 
                     break;
                 }
