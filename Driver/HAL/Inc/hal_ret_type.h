@@ -88,5 +88,13 @@ typedef uint8_t HAL_BOOL_T;
 #define HAL_SD_ERR_BUSY                             (HAL_SD_ERR_MASK | 0x1) 
 #define HAL_SD_ERR_TIMEOUT                          (HAL_SD_ERR_MASK | 0x1)     
 
+
+#define HAL_CAN_ERR_MASK                            (0x10100)
+#define HAL_CAN_ERR_UNKNOWN                         (HAL_CAN_ERR_MASK | 0x1)
+#define HAL_CAN_ERR_INIT                            (HAL_CAN_ERR_MASK | 0x2)
+#define HAL_CAN_ERR_SEND_MSG                        (HAL_CAN_ERR_MASK | 0x3)
+#define HAL_CAN_ERR_RCV_MSG                         (HAL_CAN_ERR_MASK | 0x4)
+#define HAL_CAN_ERR_COMPONENT                       (HAL_CAN_ERR_MASK | 0x5)
+
 #endif
 

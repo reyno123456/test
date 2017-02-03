@@ -8,7 +8,7 @@
 #include "test_i2c_adv7611.h"
 #include "test_freertos.h"
 #include "test_timer.h"
-#include "test_can.h"
+#include "test_hal_can.h"
 #include "test_sd.h"
 #include "hal_sd.h"
 #include "hal_adc.h"
@@ -363,11 +363,15 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     }
     else if (memcmp(cmdArray[0], "test_can_init", strlen("test_can_init")) == 0)
     {
-         command_TestCanInit(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5], cmdArray[6]);
+         command_TestCanInit(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5]);
+    } 
+    else if (memcmp(cmdArray[0], "test_can_set_int", strlen("test_can_set_int")) == 0)
+    {
+         command_TestCanSetInt(cmdArray[1], cmdArray[2]);
     } 
     else if (memcmp(cmdArray[0], "test_can_tx", strlen("test_can_tx")) == 0)
     {
-        command_TestCanTx(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5], cmdArray[6]);
+        command_TestCanTx(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5]);
     }
     else if (memcmp(cmdArray[0], "test_can_rx", strlen("test_can_rx")) == 0)
     {
@@ -555,8 +559,9 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("test_float_calculate_pi");
 		dlog_error("command_test_BB_uart <option>");
         dlog_error("upgrade <filename>");
-        dlog_error("test_can_init <ch> <br> <acode> <amsk> <rtie> <format>");
-        dlog_error("test_can_tx <ch> <id> <len> <data(hex)> <format> <type>");
+        dlog_error("test_can_init <ch> <br> <acode> <amsk> <format>");
+        dlog_error("test_can_set_int <ch> <flag>");
+        dlog_error("test_can_tx <ch> <id> <len> <format> <type>");
         dlog_error("test_can_rx");
         dlog_error("test_ov5640");
         dlog_error("test_write_ov5640 <subAddr(hex)> <value>(hex)");

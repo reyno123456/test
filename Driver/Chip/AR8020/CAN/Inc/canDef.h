@@ -12,10 +12,10 @@
 #ifndef  __CAN_DEF_H__
 #define  __CAN_DEF_H__
 
+
 #include <stdint.h>
 #include <stdio.h>
 #include "debuglog.h"
-#include "can.h"
 #include "interrupt.h"
 
 
@@ -24,26 +24,6 @@
 #define BASE_ADDR_CAN1 (0x40340000)
 #define BASE_ADDR_CAN2 (0x40380000)
 #define BASE_ADDR_CAN3 (0x403C0000)
-
-#define CAN_RX_BUF_LEN (16)     //4 ch,total is (4 * CAN_RX_BUF_LEN)
-
-#define CAN_CH_0        (0)
-#define CAN_CH_1        (1)
-#define CAN_CH_2        (2)
-#define CAN_CH_3        (3)
-
-#define CAN_BR_125K     (0)
-#define CAN_BR_250K     (1)
-#define CAN_BR_500K     (2)
-#define CAN_BR_1M       (3)
-
-
-#define CAN_FORMAT_STD  (0)     //standard frame
-#define CAN_FORMAT_EXT  (1)     //extended frame
-
-#define CAN_TYPE_DATA   (0)     //data frame
-#define CAN_TYPE_RMT    (1)     //remote frame
-
 
 //define register RTIE
 #define CAN_RTIE_RIE    (1<<7)
@@ -70,23 +50,6 @@
 #define CAN_TBUF_EDL    (1<<5)
 #define CAN_TBUF_BRS    (1<<4)
 
-#define CAN_AMASK_ID10_0        (0x7FF)
-#define CAN_UNAMASK_ID10_0      (0x0)
-#define CAN_FRAME_LEN_AMASK     (0xF)
-
-#define CAN_AMASK_ID28_0        (0x1FFFFFFF)
-#define CAN_UNAMASK_ID28_0      (0x0)
-
-/*******************enum data type**************************/
-typedef enum{
-        CAN_PAR_BR,     //baud rate
-        CAN_PAR_ACODE,  //acceptance code
-        CAN_PAR_AMASK,  //acceptance mask
-        CAN_PAR_RTIE,   //receive and transmit interrupt
-} ENUM_CAN_PAR_NO;
-
-
-
 /*******************can register define**************************/
 typedef struct{
     volatile uint32_t    u32_rxBuf[18];          // 0x00-0x47
@@ -103,7 +66,6 @@ typedef struct{
     volatile uint32_t    u32_reg12;              // 0xb4 -->  TT_TRIG1 TT_TRIG0 TRIG_CFG1 TRIG_CFG0
     volatile uint32_t    u32_reg13;              // 0xb8 -->  --       --       TT_WTRIG1 TT_WTRIG0
 } STRU_CAN_TYPE;
-
 
 
 #endif
