@@ -7,6 +7,7 @@
 #include <string.h>
 #include "debuglog.h"
 
+void command_TestHalUartIntSet(unsigned char *ch, unsigned char *flag);
 
 void command_TestHalUartInit(unsigned char *ch, unsigned char *br);
 

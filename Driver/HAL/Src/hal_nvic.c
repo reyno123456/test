@@ -98,7 +98,7 @@ HAL_RET_T HAL_NVIC_SetPriority(ENUM_HAL_NVIC_IRQ_NUM e_Irqn, uint32_t u32_preemp
   * @note   To configure interrupts priority correctly, the NVIC_PriorityGroupConfig()
   *         function should be called before.
   */
-HAL_RET_T HAL_NVIC_EnableIRQ(ENUM_HAL_NVIC_IRQ_NUM e_Irqn)
+HAL_RET_T HAL_NVIC_EnableIrq(ENUM_HAL_NVIC_IRQ_NUM e_Irqn)
 {
     /* Enable interrupt */
     INTR_NVIC_EnableIRQ(e_Irqn);
@@ -112,7 +112,7 @@ HAL_RET_T HAL_NVIC_EnableIRQ(ENUM_HAL_NVIC_IRQ_NUM e_Irqn)
   * @retval HAL_OK            function is well done.
   * @note   None
   */
-HAL_RET_T HAL_NVIC_DisableIRQ(ENUM_HAL_NVIC_IRQ_NUM e_Irqn)
+HAL_RET_T HAL_NVIC_DisableIrq(ENUM_HAL_NVIC_IRQ_NUM e_Irqn)
 {
     /* Disable interrupt */
     INTR_NVIC_DisableIRQ(e_Irqn);

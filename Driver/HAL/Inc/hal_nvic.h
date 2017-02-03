@@ -185,7 +185,7 @@ HAL_RET_T HAL_NVIC_SetPriority(ENUM_HAL_NVIC_IRQ_NUM e_Irqn, uint32_t u32_preemp
   * @note   To configure interrupts priority correctly, the HAL_NVIC_PRIORITYGROUPConfig()
   *         function should be called before.
   */
-HAL_RET_T HAL_NVIC_EnableIRQ(ENUM_HAL_NVIC_IRQ_NUM e_Irqn);
+HAL_RET_T HAL_NVIC_EnableIrq(ENUM_HAL_NVIC_IRQ_NUM e_Irqn);
 /**
   * @brief  Disables a device specific interrupt in the NVIC interrupt controller.
   * @param  e_Irqn: External interrupt number.This parameter can be an enumerator of ENUM_HAL_NVIC_IRQ_NUM enumeration

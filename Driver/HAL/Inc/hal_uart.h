@@ -15,8 +15,9 @@ History:
 #include <stdint.h>
 #include "hal_ret_type.h"
 
+
 //uart read data function define.just read u8_len bytes from pu8_rxBuf
-typedef uint32_t (*UartRxFun)(uint8_t *pu8_rxBuf, uint8_t u8_len);
+typedef uint32_t (*HAL_UART_RxHandle)(uint8_t *pu8_rxBuf, uint8_t u8_len);
 
 typedef enum
 {
@@ -58,8 +59,8 @@ typedef enum
 *         and try do less work,just read the data.
 */
 HAL_RET_T HAL_UART_Init(ENUM_HAL_UART_COMPONENT e_uartComponent, 
-		        ENUM_HAL_UART_BAUDR e_uartBaudr, 
-			UartRxFun pfun_rxFun);
+                        ENUM_HAL_UART_BAUDR e_uartBaudr, 
+                        HAL_UART_RxHandle pfun_rxFun);
 /**
 * @brief  The uart data send function which can be used to send out uart 
 *         data by the uart controller.
@@ -73,8 +74,8 @@ HAL_RET_T HAL_UART_Init(ENUM_HAL_UART_COMPONENT e_uartComponent,
 * @note   None.
 */
 HAL_RET_T HAL_UART_TxData(ENUM_HAL_UART_COMPONENT e_uartComponent, 
-		          uint8_t *pu8_txBuf, 
-			  uint32_t u32_len);
+                          uint8_t *pu8_txBuf, 
+                          uint32_t u32_len);
 
 
 #endif

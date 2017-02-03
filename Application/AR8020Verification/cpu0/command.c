@@ -429,6 +429,10 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
     {
         command_TestHalUartInit(cmdArray[1], cmdArray[2]);
     }
+    else if (memcmp(cmdArray[0], "test_hal_uart_set_int", strlen("test_hal_uart_set_int")) == 0)
+    {
+        command_TestHalUartIntSet(cmdArray[1], cmdArray[2]);
+    }
     else if (memcmp(cmdArray[0], "test_hal_uart_tx", strlen("test_hal_uart_tx")) == 0)
     {
         command_TestHalUartTx(cmdArray[1], cmdArray[2]);
@@ -567,6 +571,7 @@ void command_run(char *cmdArray[], unsigned int cmdNum)
         dlog_error("testhal24c256write <i2c port> <i2c_value>");
         dlog_error("testhal24c256read <i2c port>");
         dlog_error("test_hal_uart_init <ch> <baudr>");
+        dlog_error("test_hal_uart_set_int <ch> <flag>");
         dlog_error("test_hal_uart_tx <ch> <len>");
         dlog_error("test_hal_uart_rx <ch>");
         dlog_error("test_hal_spi_init <ch> <baudr> <polarity> <phase>");

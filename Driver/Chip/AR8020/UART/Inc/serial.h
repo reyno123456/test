@@ -1,44 +1,45 @@
-#ifndef __UART__H
-#define __UART__H
+#ifndef __UART_H__
+#define __UART_H__
 
 #include <stdint.h>
 #include "interrupt.h"
 
 /* Private define ------------------------------------------------------------*/
 
-#define UART0_BASE               0x40500000
-#define	UART1_BASE               0x40510000
-#define	UART2_BASE               0x40520000
-#define	UART3_BASE               0x40530000
-#define	UART4_BASE               0x40540000
-#define	UART5_BASE               0x40550000
-#define	UART6_BASE               0x40560000
-#define	UART7_BASE               0x40570000
-#define	UART8_BASE               0x40580000
-#define UART9_BASE               0xA0000000
-#define UART10_BASE              0xA0060000 
+#define UART0_BASE               (0x40500000)
+#define	UART1_BASE               (0x40510000)
+#define	UART2_BASE               (0x40520000)
+#define	UART3_BASE               (0x40530000)
+#define	UART4_BASE               (0x40540000)
+#define	UART5_BASE               (0x40550000)
+#define	UART6_BASE               (0x40560000)
+#define	UART7_BASE               (0x40570000)
+#define	UART8_BASE               (0x40580000)
+#define UART9_BASE               (0xA0000000)
+#define UART10_BASE              (0xA0060000) 
 
 
-
-#define UART_FCR_ENABLE_FIFO     0x01
-#define UART_FCR_CLEAR_RCVR      0x02
-#define UART_FCR_CLEAR_XMIT      0x04
-#define UART_FCR_TRIGGER_14      0xc0
-#define UART_LCR_WLEN8           0x03
-#define UART_LCR_STOP            0x04
-#define UART_LCR_PARITY          0x08
-#define UART_LCR_DLAB            0x80
-#define UART_LSR_THRE            0x20
-#define UART_LSR_DATAREADY       0x01
-#define UART_IIR_RECEIVEDATA     0x04
-#define UART_LSR_DR              0x01
+#define UART_FCR_ENABLE_FIFO     (0x01)
+#define UART_FCR_CLEAR_RCVR      (0x02)
+#define UART_FCR_CLEAR_XMIT      (0x04)
+#define UART_FCR_TRIGGER_14      (0xc0)
+#define UART_LCR_WLEN8           (0x03)
+#define UART_LCR_STOP            (0x04)
+#define UART_LCR_PARITY          (0x08)
+#define UART_LCR_DLAB            (0x80)
+#define UART_LSR_THRE            (0x20)
+#define UART_LSR_DATAREADY       (0x01)
+#define UART_IIR_RECEIVEDATA     (0x04)
+#define UART_LSR_DR              (0x01)
 
 #define UART_TOTAL_CHANNEL       (11)
 
-typedef uint32_t (*UartRxFun)(uint8_t *pu8_rxBuf, uint8_t u8_len);
+//user CallBack for uart data receive.
+typedef uint32_t (*UART_RxHandler)(uint8_t *pu8_rxBuf, uint8_t u8_len);
 
 
-typedef struct {
+typedef struct 
+{
   unsigned int RBR_THR_DLL;
   unsigned int DLH_IER;
   unsigned int IIR_FCR;
@@ -73,11 +74,6 @@ typedef struct {
 } uart_type;
 
 
-extern UartRxFun g_pfun_uartUserFunTbl[UART_TOTAL_CHANNEL];
-extern Irq_handler g_pfun_uartIqrEntryTbl[UART_TOTAL_CHANNEL];
- 
-
-
 void uart_init(unsigned char index, unsigned int baud_rate);
 void uart_putc(unsigned char index, char c);
 void uart_puts(unsigned char index, const char *s);
@@ -88,5 +84,36 @@ void serial_putc(char c);
 void serial_puts(const char *s);
 char serial_getc(void);
 void Drv_UART0_IRQHandler(void);
+
+/**
+* @brief  uart interrupt servive function.just handled data reception.  
+* @param  u32_vectorNum           Interrupt number.
+* @retval None.
+* @note   None.
+*/
+void UART_IntrSrvc(uint32_t u32_vectorNum);
+
+/**
+* @brief  register user function for uart recevie data.called in interrupt
+*         service function.
+* @param  u8_uartCh           uart channel, 0 ~ 10.
+* @param  userHandle          user function for uart recevie data.
+* @retval 
+*         -1                  register user function failed.
+*         0                   register user function sucessed.
+* @note   None.
+*/
+int32_t UART_RegisterUserRxHandler(uint8_t u8_uartCh, UART_RxHandler userHandle);
+
+/**
+* @brief  unregister user function for uart recevie data.
+* @param  u8_uartCh           uart channel, 0 ~ 10.
+* @retval 
+*         -1                  unregister user function failed.
+*         0                   unregister user function sucessed.
+* @note   None.
+*/
+int32_t UART_UnRegisterUserRxHandler(uint8_t u8_uartCh);
+
 
 #endif

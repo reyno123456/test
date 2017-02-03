@@ -1,12 +1,25 @@
-
+#include <stdlib.h>
 #include "test_hal_uart.h"
+#include "hal_nvic.h"
 
-
-extern unsigned long strtoul(const char *cp, char **endp, unsigned int base);
 
 uint8_t s_u8_uartRxBuf[64];
 uint8_t s_u8_uartRxLen = 0;
 
+void command_TestHalUartIntSet(unsigned char *ch, unsigned char *flag)
+{
+    unsigned int u32_ch = strtoul(ch, NULL, 0);
+    unsigned int u32_flag = strtoul(flag, NULL, 0);
+
+    if(0 == u32_flag)
+    {
+       HAL_NVIC_DisableIrq(u32_ch + HAL_NVIC_UART_INTR0_VECTOR_NUM);
+    }
+    else
+    {
+        HAL_NVIC_EnableIrq(u32_ch + HAL_NVIC_UART_INTR0_VECTOR_NUM);
+    }
+}
 
 void command_TestHalUartInit(unsigned char *ch, unsigned char *br)
 {
@@ -16,9 +29,10 @@ void command_TestHalUartInit(unsigned char *ch, unsigned char *br)
     memset(s_u8_uartRxBuf, sizeof(s_u8_uartRxBuf), 0x55);
 
     HAL_UART_Init((ENUM_HAL_UART_COMPONENT)(u32_ch), 
-		        (ENUM_HAL_UART_BAUDR)(u32_br), 
-			uartRxCallBack);
+                  (ENUM_HAL_UART_BAUDR)(u32_br), 
+                  uartRxCallBack);
 }
+
 void command_TestHalUartTx(unsigned char *ch, unsigned char *len)
 {
     uint8_t u8_data;
@@ -28,26 +42,21 @@ void command_TestHalUartTx(unsigned char *ch, unsigned char *len)
     
     for(u16_i = 0; u16_i < (uint16_t)u32_len; u16_i++)
     {
-	u8_data = u16_i;
+        u8_data = u16_i;
         HAL_UART_TxData((ENUM_HAL_UART_COMPONENT)(u32_ch), 
-					          &u8_data, 
-						  1);
+                        &u8_data, 
+                        1);
     }
 }
+
 void command_TestHalUartRx(unsigned char *ch)
 {
     unsigned int u32_ch = strtoul(ch, NULL, 0);
     uint16_t u16_i;
     
-    /*for(u16_i = 0; u16_i < (uint16_t)s_u8_uartRxLen; u16_i++)
-    {
-        HAL_UART_TxData((ENUM_HAL_UART_COMPONENT)(u32_ch), 
-					          &s_u8_uartRxBuf[u16_i], 
-						  1);
-    }*/
     HAL_UART_TxData((ENUM_HAL_UART_COMPONENT)(u32_ch), 
-		     s_u8_uartRxBuf, 
-		     s_u8_uartRxLen);
+                     s_u8_uartRxBuf, 
+                     s_u8_uartRxLen);
     s_u8_uartRxLen = 0;
 }
 

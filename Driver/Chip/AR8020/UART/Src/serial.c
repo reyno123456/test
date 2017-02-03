@@ -4,27 +4,11 @@
 #include "cpu_info.h"
 
 
-static void UART0_entryFun(uint32_t u32_vectorNum);
-static void UART1_entryFun(uint32_t u32_vectorNum);
-static void UART2_entryFun(uint32_t u32_vectorNum);
-static void UART3_entryFun(uint32_t u32_vectorNum);
-static void UART4_entryFun(uint32_t u32_vectorNum);
-static void UART5_entryFun(uint32_t u32_vectorNum);
-static void UART6_entryFun(uint32_t u32_vectorNum);
-static void UART7_entryFun(uint32_t u32_vectorNum);
-static void UART8_entryFun(uint32_t u32_vectorNum);
-static void UART9_entryFun(uint32_t u32_vectorNum);
-static void UART10_entryFun(uint32_t u32_vectorNum);
-static void UART_intrSrvc(uint8_t u8_uartCh);
-
-UartRxFun g_pfun_uartUserFunTbl[UART_TOTAL_CHANNEL] =  
+//the user CallBack for uart receive data.
+static UART_RxHandler s_pfun_uartUserHandlerTbl[UART_TOTAL_CHANNEL] =  
        { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
-Irq_handler g_pfun_uartIqrEntryTbl[UART_TOTAL_CHANNEL] = 
-			{ UART0_entryFun, UART1_entryFun, UART2_entryFun, 
-			  UART3_entryFun, UART4_entryFun, UART5_entryFun, 
-			  UART6_entryFun, UART7_entryFun, UART8_entryFun, 
-			  UART9_entryFun, UART10_entryFun };
+
 /*********************************************************
  * Generic UART APIs
  *********************************************************/
@@ -160,58 +144,23 @@ char uart_getc(unsigned char index)
     return tmp;
 }
 
-static void UART0_entryFun(uint32_t u32_vectorNum)
-{
-    UART_intrSrvc(0);
-}
-static void UART1_entryFun(uint32_t u32_vectorNum)
-{
-    UART_intrSrvc(1);
-}
-static void UART2_entryFun(uint32_t u32_vectorNum)
-{
-    UART_intrSrvc(2);
-}
-static void UART3_entryFun(uint32_t u32_vectorNum)
-{
-    UART_intrSrvc(3);
-}
-static void UART4_entryFun(uint32_t u32_vectorNum)
-{
-    UART_intrSrvc(4);
-}
-static void UART5_entryFun(uint32_t u32_vectorNum)
-{
-    UART_intrSrvc(5);
-}
-static void UART6_entryFun(uint32_t u32_vectorNum)
-{
-    UART_intrSrvc(6);
-}
-static void UART7_entryFun(uint32_t u32_vectorNum)
-{
-    UART_intrSrvc(7);
-}
-static void UART8_entryFun(uint32_t u32_vectorNum)
-{
-    UART_intrSrvc(8);
-}
-static void UART9_entryFun(uint32_t u32_vectorNum)
-{
-    UART_intrSrvc(9);
-}
-static void UART10_entryFun(uint32_t u32_vectorNum)
-{
-    UART_intrSrvc(10);
-}
-static void UART_intrSrvc(uint8_t u8_uartCh)
+/**
+* @brief  uart interrupt servive function.just handled data reception.  
+* @param  u32_vectorNum           Interrupt number.
+* @retval None.
+* @note   None.
+*/
+void UART_IntrSrvc(uint32_t u32_vectorNum)
 {
     uint8_t u8_uartRxBuf[64];
     uint8_t u8_uartRxLen = 0;
+    uint8_t u8_uartCh;
     uint32_t u32_uartStatus;
     uint32_t u32_uartIsrType;
     volatile uart_type   *pst_uartRegs;
-    
+   
+    u8_uartCh = u32_vectorNum - UART_INTR0_VECTOR_NUM;
+ 
     pst_uartRegs = get_uart_type_by_index(u8_uartCh);
 
     u32_uartStatus = pst_uartRegs->LSR;
@@ -236,8 +185,53 @@ static void UART_intrSrvc(uint8_t u8_uartCh)
 
     if(u8_uartRxLen > 0) // call user function
     {
-        (g_pfun_uartUserFunTbl[u8_uartCh])(u8_uartRxBuf, u8_uartRxLen);
+        if(NULL != (s_pfun_uartUserHandlerTbl[u8_uartCh]))
+        {
+            (s_pfun_uartUserHandlerTbl[u8_uartCh])(u8_uartRxBuf, u8_uartRxLen);
+        }
     }
+}
+
+/**
+* @brief  register user function for uart recevie data.called in interrupt
+*         service function.
+* @param  u8_uartCh           uart channel, 0 ~ 10.
+* @param  userHandle          user function for uart recevie data.
+* @retval 
+*         -1                  register user function failed.
+*         0                   register user function sucessed.
+* @note   None.
+*/
+int32_t UART_RegisterUserRxHandler(uint8_t u8_uartCh, UART_RxHandler userHandle)
+{
+    if(u8_uartCh >= UART_TOTAL_CHANNEL)
+    {
+        return -1;
+    }
+
+    s_pfun_uartUserHandlerTbl[u8_uartCh] = userHandle;
+
+    return 0;
+}
+
+/**
+* @brief  unregister user function for uart recevie data.
+* @param  u8_uartCh           uart channel, 0 ~ 10.
+* @retval 
+*         -1                  unregister user function failed.
+*         0                   unregister user function sucessed.
+* @note   None.
+*/
+int32_t UART_UnRegisterUserRxHandler(uint8_t u8_uartCh)
+{
+    if(u8_uartCh >= UART_TOTAL_CHANNEL)
+    {
+        return -1;
+    }
+
+    s_pfun_uartUserHandlerTbl[u8_uartCh] = NULL;
+
+    return 0;
 }
 
 /*********************************************************

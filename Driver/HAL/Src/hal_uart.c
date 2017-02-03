@@ -13,23 +13,11 @@ History:
 #include "hal_uart.h"
 #include "serial.h"
 #include "debuglog.h"
+#include "hal_nvic.h"
+
 
 static const uint32_t s_u32_uartBaudrTbl[] = 
                       {9600, 19200, 38400, 57600, 115200};
-
-static const IRQ_type s_e_uartIntrVectorTbl[] = 
-			  { UART_INTR0_VECTOR_NUM,
-			    UART_INTR1_VECTOR_NUM,                      
-			    UART_INTR2_VECTOR_NUM,                      
-			    UART_INTR3_VECTOR_NUM,                      
-			    UART_INTR4_VECTOR_NUM,                      
-			    UART_INTR5_VECTOR_NUM,                      
-			    UART_INTR6_VECTOR_NUM,                      
-			    UART_INTR7_VECTOR_NUM,                      
-			    UART_INTR8_VECTOR_NUM,                      
-			    VIDEO_UART9_INTR_VECTOR_NUM,
-			    VIDEO_UART10_INTR_VECTOR_NUM };
-
 
 
 /**
@@ -49,12 +37,14 @@ static const IRQ_type s_e_uartIntrVectorTbl[] =
 *         and try do less work,just read the data.
 */
 HAL_RET_T HAL_UART_Init(ENUM_HAL_UART_COMPONENT e_uartComponent, 
-		        ENUM_HAL_UART_BAUDR e_uartBaudr, 
-			UartRxFun pfun_rxFun)
+                        ENUM_HAL_UART_BAUDR e_uartBaudr, 
+                        HAL_UART_RxHandle pfun_rxFun)
 {
     uint32_t u32_uartBaudr;
     uint8_t u8_uartCh;
+    uint8_t u8_uartVecNum;
 
+    //support uart9 and uart10
     if (e_uartComponent > HAL_UART_COMPONENT_8)
     {
         return HAL_UART_ERR_INIT;
@@ -63,25 +53,29 @@ HAL_RET_T HAL_UART_Init(ENUM_HAL_UART_COMPONENT e_uartComponent,
     {
         return HAL_UART_ERR_INIT;
     }
-    if (NULL == pfun_rxFun)
-    {
-        return HAL_UART_ERR_INIT;
-    }
+    
     u8_uartCh = (uint8_t)(e_uartComponent);
-
+    u8_uartVecNum = u8_uartCh + HAL_NVIC_UART_INTR0_VECTOR_NUM;
+    //first ,disable uart_x interrupt.
+    HAL_NVIC_DisableIrq(u8_uartVecNum);
+    
     //record user function
-    g_pfun_uartUserFunTbl[u8_uartCh] = pfun_rxFun;
-
+    UART_RegisterUserRxHandler(u8_uartCh, pfun_rxFun);
+    
     // uart hadrware init.
     u32_uartBaudr = s_u32_uartBaudrTbl[(uint8_t)(e_uartBaudr)];
     uart_init(u8_uartCh, u32_uartBaudr);
 
     //connect uart interrupt service function
-    reg_IrqHandle(s_e_uartIntrVectorTbl[u8_uartCh], 
-                 g_pfun_uartIqrEntryTbl[u8_uartCh], 
-		 NULL);
-   INTR_NVIC_EnableIRQ(s_e_uartIntrVectorTbl[u8_uartCh]);
-
+    HAL_NVIC_RegisterHandler(u8_uartVecNum, 
+                             UART_IntrSrvc, 
+                             NULL);
+   
+    if (NULL != pfun_rxFun) // enable uart_x interrupt.
+    {
+        HAL_NVIC_EnableIrq(u8_uartVecNum);
+    }
+ 
     return HAL_OK;
 }
 
@@ -98,12 +92,13 @@ HAL_RET_T HAL_UART_Init(ENUM_HAL_UART_COMPONENT e_uartComponent,
 * @note   None.
 */
 HAL_RET_T HAL_UART_TxData(ENUM_HAL_UART_COMPONENT e_uartComponent, 
-		          uint8_t *pu8_txBuf, 
-			  uint32_t u32_len)
+                          uint8_t *pu8_txBuf, 
+                          uint32_t u32_len)
 {
     uint8_t u8_uartCh;
     uint32_t u32_uartTxCnt = 0;
     
+    //support uart9 and uart10
     if (e_uartComponent > HAL_UART_COMPONENT_8)
     {
         return HAL_UART_ERR_WRITE_DATA;
@@ -116,12 +111,13 @@ HAL_RET_T HAL_UART_TxData(ENUM_HAL_UART_COMPONENT e_uartComponent,
     {
         return HAL_UART_ERR_WRITE_DATA;
     }
+
     u8_uartCh = (uint8_t)(e_uartComponent);
 
     while(u32_uartTxCnt < u32_len)
     {
         uart_putc(u8_uartCh, pu8_txBuf[u32_uartTxCnt]);    
-	u32_uartTxCnt += 1;
+        u32_uartTxCnt += 1;
     }
 
     return HAL_OK;
