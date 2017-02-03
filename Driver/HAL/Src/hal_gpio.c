@@ -125,12 +125,12 @@ HAL_RET_T HAL_GPIO_SetPin(ENUM_HAL_GPIO_NUM e_gpioPin, ENUM_HAL_GPIO_PinState e_
 /**
 * @brief    set gpio interrupt mode
 * @param    e_gpioPin: The gpio number, the right number should be 0-127.
-            e_inttype： GPIO_LEVEL_SENUMSITIVE is level-interrupt
-                        GPIO_EDGE_SENUMSITIVE is edge-interrupt
             e_polarity: GPIO_ACTIVE_LOW falling-edge or active-low sensitive
                         GPIO_ACTIVE_HIGH rising-edge or active-high sensitive
-* @retval   HAL_OK                means the initializtion interrupt mode is well done.
-*           HAL_GPIO_ERR_UNKNOWN  means the gpio number error. 
+            e_inttype： GPIO_LEVEL_SENUMSITIVE is level-interrupt
+                        GPIO_EDGE_SENUMSITIVE is edge-interrupt            
+* @retval   HAL_OK             means the initializtion interrupt mode is well done.
+*           HAL_GPIO_ERR_INIT  means some error happens in the initializtion. 
 * @note     this function include set gpio input mode and debounce mode and register corresponding interrupt
 */
 HAL_RET_T HAL_GPIO_RegisterInterrupt(ENUM_HAL_GPIO_NUM e_gpioPin, 
