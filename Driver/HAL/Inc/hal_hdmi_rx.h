@@ -22,10 +22,24 @@ typedef struct
     uint8_t  u8_framerate;
 } STRU_HDMI_RX_OUTPUT_FORMAT;
 
+
+typedef enum
+{
+    HAL_HDMI_POLLING = 0,
+    HAL_HDMI_INTERRUPT,
+} ENUM_HAL_HDMI_GETFORMATMETHOD;
+
+typedef struct
+{
+    ENUM_HAL_HDMI_GETFORMATMETHOD e_getFormatMethod;
+    uint8_t u8_interruptGpio;
+} STRU_HDMI_CONFIGURE;
+
 typedef struct
 {
     uint8_t u8_devEnable;
     STRU_HDMI_RX_OUTPUT_FORMAT st_videoFormat;
+    STRU_HDMI_CONFIGURE        st_configure;
 } STRU_HDMI_RX_STATUS;
 
 typedef enum
@@ -41,12 +55,15 @@ typedef enum
 * @brief  The HDMI RX init function.
 * @param  e_hdmiIndex       The HDMI RX index number, the right number should be 0-1 and totally
 *                           2 HDMI RX can be supported.
+* @param  pst_hdmiConfigure hdmiconfigure include polling or interrupr.
 * @retval HAL_OK            means the HDMI RX init is well done.
 *         HAL_I2C_ERR_INIT  means some error happens in the HDMI RX init.
+*         HAL_HDMI_GET_ERR_GORMAT_METHOD means get format method error.
+*         HAL_HDMI_INPUT_SOURCE means the nunber of hdmi input error.
 * @note   None.
 */
 
-HAL_RET_T HAL_HDMI_RX_Init(ENUM_HAL_HDMI_RX e_hdmiIndex);
+HAL_RET_T HAL_HDMI_RX_Init(ENUM_HAL_HDMI_RX e_hdmiIndex, STRU_HDMI_CONFIGURE *pst_hdmiConfigure);
 
 /**
 * @brief  The HDMI RX init function.

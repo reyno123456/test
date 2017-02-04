@@ -53,6 +53,8 @@ static unsigned char hdmi_default_settings[][3] =
     {0x68, 0x58, 0x01},    //ADI recommended setting
     {0x68, 0x03, 0x98},    //DIS_I2C_ZERO_COMPR
     {0x68, 0x75, 0x10},    //DDC drive strength
+    {0x98, 0x40, 0x21},    //INT1 Drives low when active
+    {0x98, 0x6E, 0x02},    //V_LOCKED
     {0xFF, 0xFF, 0xFF}     //End flag
 };
 
@@ -291,4 +293,32 @@ void ADV_7611_DumpOutDefaultSettings(uint8_t index)
         }
     }
 }
+
+
+uint8_t ADV_7611_IrqHandler0(void)
+{
+    unsigned char val = 0;    
+    val = ADV_7611_ReadByte(0x98, 0x6B);
+    if ((val & (ADV_7611_V_LOCKED_SET_INTERRUPT_MASK << ADV_7611_V_LOCKED_SET_INTERRUPT_POS)))        
+    {
+        ADV_7611_WriteByte(0x98, 0x6C, (ADV_7611_V_LOCKED_CLEAR_INTERRUPT_MASK << ADV_7611_V_LOCKED_CLEAR_INTERRUPT_POS));        
+        return 1;
+    }
+    return 0;
+ 
+}
+
+uint8_t ADV_7611_IrqHandler1(void)
+{
+    unsigned char val = 0;        
+    val = 0;
+    val = ADV_7611_ReadByte((0x98+2), 0x6B);
+    if ((val & (ADV_7611_V_LOCKED_SET_INTERRUPT_MASK << ADV_7611_V_LOCKED_SET_INTERRUPT_POS)))        
+    {
+        ADV_7611_WriteByte((0x98+2), 0x6C, (ADV_7611_V_LOCKED_CLEAR_INTERRUPT_MASK << ADV_7611_V_LOCKED_CLEAR_INTERRUPT_POS));
+        return 1;
+    }
+    return 0; 
+}
+
 

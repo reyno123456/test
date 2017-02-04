@@ -10,6 +10,7 @@
 #include "hal.h"
 #include "hal_bb.h"
 #include "hal_hdmi_rx.h"
+#include "hal_gpio.h"
 #include "hal_usb_otg.h"
 #include "hal_sys_ctl.h"
 #include "wireless_interface.h"
@@ -77,8 +78,12 @@ int main(void)
     /* Enable the CPU Cache */
     CPU_CACHE_Enable();
 
-    HAL_HDMI_RX_Init(HAL_HDMI_RX_0);
-    HAL_HDMI_RX_Init(HAL_HDMI_RX_1);
+    STRU_HDMI_CONFIGURE        st_configure;
+    st_configure.e_getFormatMethod = HAL_HDMI_INTERRUPT;
+    st_configure.u8_interruptGpio = HAL_GPIO_NUM98;
+
+    HAL_HDMI_RX_Init(HAL_HDMI_RX_0, &st_configure);
+    HAL_HDMI_RX_Init(HAL_HDMI_RX_1, &st_configure);
 
     HAL_USB_InitOTG(HAL_USB_PORT_0);
 

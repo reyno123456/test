@@ -30,6 +30,9 @@ typedef uint8_t HAL_BOOL_T;
 #define HAL_HDMI_RX_ERR_GET_VIDEO_FORMAT            (HAL_HDMI_RX_ERR_MASK | 0x4)
 #define HAL_HDMI_RX_ERR_VIDEO_FORMAT_NOT_SUPPORT    (HAL_HDMI_RX_ERR_MASK | 0x5)
 #define HAL_HDMI_RX_ERR_INDEX_LARGER_THAN_MAX       (HAL_HDMI_RX_ERR_MASK | 0x6)
+#define HAL_HDMI_GET_ERR_GORMAT_METHOD              (HAL_HDMI_RX_ERR_MASK | 0x7)
+#define HAL_HDMI_INPUT_COUNT                        (HAL_HDMI_RX_ERR_MASK | 0x8)
+
 
 #define HAL_SRAM_ERR_MASK                           (0x20000)
 #define HAL_SRAM_ERR_CHANNEL_INVALID                (HAL_HDMI_RX_ERR_MASK | 0x1)

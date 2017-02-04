@@ -10,12 +10,22 @@ History:
 *****************************************************************************/
 
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 #include "sys_event.h"
 #include "adv_7611.h"
 #include "hal_hdmi_rx.h"
+#include "hal_gpio.h"
+#include "gpio.h"
 #include "hal_ret_type.h"
+#include "interrupt.h"
+#include "debuglog.h"
+#include "hal_nvic.h"
+
 
 static STRU_HDMI_RX_STATUS s_st_hdmiRxStatus[HAL_HDMI_RX_MAX] = {0};
+static void HAL_HDMI_RX_IrqHandler0(uint32_t u32_vectorNum);
+static void HAL_HDMI_RX_IrqHandler1(uint32_t u32_vectorNum);
 
 static STRU_HDMI_RX_OUTPUT_FORMAT s_st_hdmiRxSupportedOutputFormat[] =
 {
@@ -91,7 +101,6 @@ static void HDMI_RX_CheckFormatStatus(ENUM_HAL_HDMI_RX e_hdmiIndex, HAL_BOOL_T b
 
     uint8_t u8_7611Index = HDMI_RX_MapToDeviceIndex(e_hdmiIndex);
     ADV_7611_GetVideoFormat(u8_7611Index, &u16_width, &u16_hight, &u8_framerate);
-
     if (HDMI_RX_CheckVideoFormatSupportOrNot(u16_width, u16_hight, u8_framerate) == HAL_TRUE)
     {
         s_u8_formatNotSupportCount = 0;
@@ -112,10 +121,17 @@ static void HDMI_RX_CheckFormatStatus(ENUM_HAL_HDMI_RX e_hdmiIndex, HAL_BOOL_T b
     }
     else
     {
-        // Format not supported
-        if (s_u8_formatNotSupportCount <= HDMI_RX_FORMAT_NOT_SUPPORT_COUNT_MAX)
+        if (HAL_HDMI_POLLING == s_st_hdmiRxStatus[e_hdmiIndex].st_configure.e_getFormatMethod)
         {
-            s_u8_formatNotSupportCount++;
+             // Format not supported
+            if (s_u8_formatNotSupportCount <= HDMI_RX_FORMAT_NOT_SUPPORT_COUNT_MAX)
+            {
+                s_u8_formatNotSupportCount++;
+            }            
+        }
+        else
+        {
+            s_u8_formatNotSupportCount = HDMI_RX_FORMAT_NOT_SUPPORT_COUNT_MAX;
         }
 
         if (s_u8_formatNotSupportCount == HDMI_RX_FORMAT_NOT_SUPPORT_COUNT_MAX)
@@ -131,6 +147,7 @@ static void HDMI_RX_CheckFormatStatus(ENUM_HAL_HDMI_RX e_hdmiIndex, HAL_BOOL_T b
             s_st_hdmiRxStatus[e_hdmiIndex].st_videoFormat.u16_hight    = 0;
             s_st_hdmiRxStatus[e_hdmiIndex].st_videoFormat.u8_framerate = 0;
         }
+       
     }
 }
 
@@ -154,19 +171,54 @@ static void HDMI_RX_IdleCallback1(void *paramPtr)
 * @brief  The HDMI RX init function.
 * @param  e_hdmiIndex       The HDMI RX index number, the right number should be 0-1 and totally
 *                           2 HDMI RX can be supported.
+* @param  pst_hdmiConfigure hdmiconfigure include polling or interrupr.
 * @retval HAL_OK            means the HDMI RX init is well done.
 *         HAL_I2C_ERR_INIT  means some error happens in the HDMI RX init.
+*         HAL_HDMI_GET_ERR_GORMAT_METHOD means get format method error.
+*         HAL_HDMI_INPUT_SOURCE means the nunber of hdmi input error.
 * @note   None.
 */
 
-HAL_RET_T HAL_HDMI_RX_Init(ENUM_HAL_HDMI_RX e_hdmiIndex)
+HAL_RET_T HAL_HDMI_RX_Init(ENUM_HAL_HDMI_RX e_hdmiIndex, STRU_HDMI_CONFIGURE *pst_hdmiConfigure)
 {
     s_st_hdmiRxStatus[e_hdmiIndex].u8_devEnable = 1;
+    memcpy(&(s_st_hdmiRxStatus[e_hdmiIndex].st_configure),pst_hdmiConfigure,sizeof(STRU_HDMI_CONFIGURE));
+
+    if (s_st_hdmiRxStatus[e_hdmiIndex].st_configure.e_getFormatMethod == HAL_HDMI_INTERRUPT)
+    {
+        HAL_NVIC_SetPriority(GPIO_INTR_N0_VECTOR_NUM + ((pst_hdmiConfigure->u8_interruptGpio)>>5),5,0);
+        switch (e_hdmiIndex)
+        {
+            case HAL_HDMI_RX_0:
+            {
+                HAL_GPIO_RegisterInterrupt(s_st_hdmiRxStatus[e_hdmiIndex].st_configure.u8_interruptGpio, 
+                                           HAL_GPIO_ACTIVE_HIGH, HAL_GPIO_EDGE_SENUMSITIVE, HAL_HDMI_RX_IrqHandler0);
+                break;
+            }
+            case HAL_HDMI_RX_1:
+            {
+                HAL_GPIO_RegisterInterrupt(s_st_hdmiRxStatus[e_hdmiIndex].st_configure.u8_interruptGpio, 
+                                           HAL_GPIO_ACTIVE_HIGH, HAL_GPIO_EDGE_SENUMSITIVE, HAL_HDMI_RX_IrqHandler1);
+                break;
+            }
+            default :
+            {
+                return HAL_HDMI_INPUT_COUNT;
+            }
+
+        }
+    }
+    else if (s_st_hdmiRxStatus[e_hdmiIndex].st_configure.e_getFormatMethod == HAL_HDMI_POLLING)
+    {
+        SYS_EVENT_RegisterHandler(SYS_EVENT_ID_IDLE, e_hdmiIndex == HAL_HDMI_RX_0 ? HDMI_RX_IdleCallback0 : HDMI_RX_IdleCallback1);
+    }
+    else
+    {
+        return HAL_HDMI_GET_ERR_GORMAT_METHOD;
+    }
 
     ADV_7611_Initial(HDMI_RX_MapToDeviceIndex(e_hdmiIndex));
-
-    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_IDLE, e_hdmiIndex == HAL_HDMI_RX_0 ? HDMI_RX_IdleCallback0 : HDMI_RX_IdleCallback1);
-
+    
     return HAL_OK;
 }
 
@@ -211,3 +263,21 @@ HAL_RET_T HAL_HDMI_RX_GetVideoFormat(ENUM_HAL_HDMI_RX e_hdmiIndex,
     return HAL_OK;
 }
 
+
+static void HAL_HDMI_RX_IrqHandler0(uint32_t u32_vectorNum)
+{
+    if (ADV_7611_IrqHandler0())
+    {
+        HDMI_RX_IdleCallback0(NULL);
+    }
+ 
+}
+
+static void HAL_HDMI_RX_IrqHandler1(uint32_t u32_vectorNum)
+{
+    
+    if (ADV_7611_IrqHandler1())
+    {
+        HDMI_RX_IdleCallback1(NULL);
+    }
+}

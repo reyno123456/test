@@ -13,7 +13,7 @@ History:
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-
+#include "debuglog.h"
 #include "interrupt.h"
 #include "hal_ret_type.h"
 #include "gpio.h"
@@ -23,6 +23,7 @@ static void GPIO_VectorFunctionN0(uint32_t u32_vectorNum);
 static void GPIO_VectorFunctionN1(uint32_t u32_vectorNum);
 static void GPIO_VectorFunctionN2(uint32_t u32_vectorNum);
 static void GPIO_VectorFunctionN3(uint32_t u32_vectorNum);
+static void GPIO_VectorFunctionNULL(uint32_t u32_vectorNum);
 
 static void (*g_pv_GpioVectorNumArray[4])(uint32_t u32_vectorNum)={ GPIO_VectorFunctionN0,
                                                                     GPIO_VectorFunctionN1,
@@ -234,8 +235,10 @@ static void GPIO_VectorFunctionN0(uint32_t u32_vectorNum)
         
         if(GPIO_Intr_GetIntrStatus(i))
         {
-            //GPIO_ClearNvic(i);
-            (*(g_pv_GpioVectorListArray[0][i]))(u32_vectorNum);
+            if (g_pv_GpioVectorListArray[3][i] != NULL)
+            {
+                (*(g_pv_GpioVectorListArray[3][i]))(u32_vectorNum);
+            }
         }
     }
 
@@ -249,25 +252,26 @@ static void GPIO_VectorFunctionN1(uint32_t u32_vectorNum)
     {
         if(GPIO_Intr_GetIntrStatus(i))
         {
-            //GPIO_ClearNvic(i);
-            (*(g_pv_GpioVectorListArray[1][i-32]))(u32_vectorNum);
+            if (g_pv_GpioVectorListArray[3][i-32] != NULL)
+            {
+                (*(g_pv_GpioVectorListArray[3][i-32]))(u32_vectorNum);
+            }
         }
     }
 }
 
 static void GPIO_VectorFunctionN2(uint32_t u32_vectorNum)
 {
-    
-
     uint8_t i = 0;
-    
+
     for (i=64; i<71; i++)
-    {
-        
+    {        
         if(GPIO_Intr_GetIntrStatus(i))
         {
-            //GPIO_ClearNvic(i);
-            (*(g_pv_GpioVectorListArray[2][i-64]))(u32_vectorNum);            
+            if (g_pv_GpioVectorListArray[3][i-64] != NULL)
+            {
+                (*(g_pv_GpioVectorListArray[3][i-64]))(u32_vectorNum);
+            }           
         }
 
     }
@@ -282,8 +286,16 @@ static void GPIO_VectorFunctionN3(uint32_t u32_vectorNum)
     {
         if(GPIO_Intr_GetIntrStatus(i))
         {
-            //GPIO_ClearNvic(i);
-            (*(g_pv_GpioVectorListArray[3][i-96]))(u32_vectorNum);
+            if (g_pv_GpioVectorListArray[3][i-96] != NULL)
+            {
+                (*(g_pv_GpioVectorListArray[3][i-96]))(u32_vectorNum);
+            }
+            
         }
     }
+}
+
+static void GPIO_VectorFunctionNULL(uint32_t u32_vectorNum)
+{
+   return;
 }
