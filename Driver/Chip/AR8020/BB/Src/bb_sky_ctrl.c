@@ -32,12 +32,8 @@ typedef struct
     uint8_t count;
 }SEARCH_IDS_LIST;
 
-static DebugMode g_stSkyDebugMode = 
-{
-    .u8_enterDebugModeCnt 	= 0,
-    .bl_enterDebugModeFlag 	= 0,
-    .bl_isDebugMode 		= 0,
-};
+
+static uint8_t s_u8_skyDebugMode = FALSE;
 
 static SEARCH_IDS_LIST search_id_list;
 static uint32_t start_time_cnt = 0;
@@ -52,7 +48,6 @@ static int sky_timer0_0_running = 0;
 static int sky_timer0_1_running = 0;
 static int switch_5G_count = 0;
 
-static void sky_handle_debug_mode_cmd_spi(void);
 static void sky_handle_debug_mode_cmd_event(uint8_t value);
 static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd);
 static void sky_handle_all_cmds(void);
@@ -222,8 +217,8 @@ void wimax_vsoc_rx_isr(uint32_t u32_vectorNum)
     TIM_StartTimer(sky_timer0_0);
 
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
-    osdptr->in_debug    = (uint8_t)(g_stSkyDebugMode.bl_isDebugMode);
-	sky_handle_all_cmds();
+    sky_handle_all_cmds();
+    osdptr->in_debug = s_u8_skyDebugMode;
 }
 
 
@@ -239,7 +234,7 @@ void Sky_TIM0_IRQHandler(uint32_t u32_vectorNum)
     INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
     TIM_StopTimer(sky_timer0_0);
 
-    if(0 == sky_timer0_1_running && 0 == g_stSkyDebugMode.bl_isDebugMode)
+    if(0 == sky_timer0_1_running && FALSE == s_u8_skyDebugMode)
     {
         sky_physical_link_process();
         
@@ -526,7 +521,7 @@ void Sky_TIM1_IRQHandler(uint32_t u32_vectorNum)
 {
     static int Timer1_Delay2_Cnt = 0;    
 
-	if(1 == (g_stSkyDebugMode.bl_isDebugMode)) 
+	if(TRUE == s_u8_skyDebugMode) 
 	{
 		return;
 	}  
@@ -718,57 +713,27 @@ static void sky_handle_MCS_cmd(void)
     }
 }
 
-
-static void sky_handle_debug_mode_cmd_spi(void)
-{
-    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
-    uint8_t data0 = BB_ReadReg(PAGE2, NTF_TEST_MODE_0);
-    uint8_t data1 = BB_ReadReg(PAGE2, NTF_TEST_MODE_1);
-
-    if((data0+1 == data1) && (0 == data0))//enter test mode
-    {
-		if(1 != (g_stSkyDebugMode.bl_isDebugMode))
-		{
-			g_stSkyDebugMode.bl_isDebugMode = 1;
-            osdptr->in_debug    = (uint8_t)(g_stSkyDebugMode.bl_isDebugMode);
-			dlog_info("g_stSkyDebugMode.bl_isDebugMode = 1");
-		}
-    }
-    else if((data0+1 == data1) && (0 != data0))//out test mode
-    {
-		if(0 != (g_stSkyDebugMode.bl_isDebugMode))
-		{
-			g_stSkyDebugMode.bl_isDebugMode = 0;
-			dlog_info("g_stSkyDebugMode.bl_isDebugMode = 0");
-		}
-    }
-	else
-	{
-		;
-	}
-}
-
 static void sky_handle_debug_mode_cmd_event(uint8_t value)
 {
-	if(0 == value)//enter test mode
+    if(!value)//enter debug mode
     {
-		if(1 != (g_stSkyDebugMode.bl_isDebugMode))
-		{
-			g_stSkyDebugMode.bl_isDebugMode = 1;
-			dlog_info("g_stSkyDebugMode.bl_isDebugMode = 1");
-
+        if(TRUE != s_u8_skyDebugMode)
+        {
             context.rc_skip_freq_mode = MANUAL;
             context.it_skip_freq_mode = MANUAL;
             context.qam_skip_mode     = MANUAL;
-		}
+            s_u8_skyDebugMode = TRUE;
+            dlog_info("skyDebugMode = TRUE");
+        }
+        else
+        {
+            //already debug mode,do nothing.	
+        }
     }
-    else//out test mode
+    else	//out debug mode
     {
-		if(0 != (g_stSkyDebugMode.bl_isDebugMode))
-		{
-			g_stSkyDebugMode.bl_isDebugMode = 0;
-			dlog_info("g_stSkyDebugMode.bl_isDebugMode = 0");
-		}
+        s_u8_skyDebugMode = FALSE;
+        dlog_info("skyDebugMode = FALSE");
     }
 }
 
@@ -787,8 +752,6 @@ void sky_handle_all_spi_cmds(void)
     sky_handle_brc_bitrate_cmd();
 
     sky_handle_RF_band_cmd();
-
-	//sky_handle_debug_mode_cmd_spi();
 }
 
 static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
@@ -925,7 +888,7 @@ static void BB_sky_GatherOSDInfo(void)
     //osdptr->agc_value[3] = BB_ReadReg(PAGE2, RX4_GAIN_ALL_R);
 
     osdptr->lock_status    = get_rc_status();
-	osdptr->in_debug     = (uint8_t)(g_stSkyDebugMode.bl_isDebugMode);
+    osdptr->in_debug     = s_u8_skyDebugMode;
 
     osdptr->head = 0x00;
     osdptr->tail = 0xff;    //end of the writing

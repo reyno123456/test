@@ -29,14 +29,8 @@ static init_timer_st init_timer0_0;
 static init_timer_st init_timer0_1;
 static uint8_t Timer1_Delay1_Cnt = 0;
 static uint8_t snr_static_count = SNR_STATIC_START_VALUE;
-static DebugMode g_stGrdDebugMode = 
-{
-	.u8_enterDebugModeCnt 	= 0,
-	.bl_enterDebugModeFlag 	= 0,
-	.bl_isDebugMode 		= 0,
-};
+static uint8_t s_u8_grdDebugMode = FALSE;
 
-static void grd_enter_debug_mode(void);
 static void grd_handle_debug_mode_cmd(uint8_t flag);
 void BB_GRD_start(void)
 {
@@ -426,7 +420,6 @@ void wimax_vsoc_tx_isr(uint32_t u32_vectorNum)
 {
     INTR_NVIC_DisableIRQ(BB_TX_ENABLE_VECTOR_NUM);
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
-    grd_enter_debug_mode();
     
     TIM_StartTimer(init_timer0_0);
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
@@ -451,10 +444,12 @@ void Grd_TIM0_IRQHandler(uint32_t u32_vectorNum)
 
 void Grd_TIM1_IRQHandler(uint32_t u32_vectorNum)
 {
+    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
     Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_1); //disable the intr.
     grd_handle_all_cmds();
-    
-    if(1 == (g_stGrdDebugMode.bl_isDebugMode))
+    osdptr->in_debug = s_u8_grdDebugMode;
+
+    if(TRUE == s_u8_grdDebugMode)
     {
         INTR_NVIC_DisableIRQ(TIMER_INTR01_VECTOR_NUM);                
         TIM_StopTimer(init_timer0_1);
@@ -824,7 +819,7 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
         }
     }
 	
-	if(class == WIRELESS_DEBUG_CHANGE)
+    if(class == WIRELESS_DEBUG_CHANGE)
     {
         switch(item)
         {
@@ -893,7 +888,7 @@ static void BB_grd_GatherOSDInfo(void)
     osdptr->modulation_mode = grd_get_IT_QAM();
     osdptr->code_rate       = grd_get_IT_LDPC();
     osdptr->ch_bandwidth    = context.CH_bandwidth;         
-	osdptr->in_debug        = (uint8_t)(g_stGrdDebugMode.bl_isDebugMode);
+    osdptr->in_debug        = s_u8_grdDebugMode;
     osdptr->lock_status     = BB_ReadReg(PAGE2, FEC_5_RD);
     memset(osdptr->sweep_energy, 0, sizeof(osdptr->sweep_energy));
     grd_get_sweep_noise(0, osdptr->sweep_energy);
@@ -916,59 +911,25 @@ static void BB_grd_GatherOSDInfo(void)
  */
 static void grd_handle_debug_mode_cmd(uint8_t flag)
 {
-	if(!flag)//enter debug mode
-	{
-		//notification sky enter/out debug mode
-		BB_WriteReg(PAGE2, NTF_TEST_MODE_0, flag);
-		BB_WriteReg(PAGE2, NTF_TEST_MODE_1, flag+1);
-		//command_TestGpioNormal2(64,1);	
-		if(0 == (g_stGrdDebugMode.bl_isDebugMode))
-		{
-			g_stGrdDebugMode.u8_enterDebugModeCnt = 0;
-			//start cnt
-			g_stGrdDebugMode.bl_enterDebugModeFlag = 1;
-			dlog_info("g_stGrdDebugMode.bl_enterDebugModeFlag = 1");
-		}
-		else
-		{
-			//already debug mode,do nothing.	
-		}
-	}
-	else	//out debug mode
-	{
-		g_stGrdDebugMode.u8_enterDebugModeCnt = 0;
-		g_stGrdDebugMode.bl_enterDebugModeFlag = 0;
-		g_stGrdDebugMode.bl_isDebugMode	= 0;
-	}
-	
-   
-   	dlog_info("flag =%d\r\n", flag);    
-}
-
-static void grd_enter_debug_mode(void)
-{
-    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
-	if(1 == (g_stGrdDebugMode.bl_enterDebugModeFlag))
-	{
-		if((g_stGrdDebugMode.u8_enterDebugModeCnt) < 30)	
-		{
-			(g_stGrdDebugMode.u8_enterDebugModeCnt) += 1;
-		}
-		else
-		{
-			g_stGrdDebugMode.u8_enterDebugModeCnt = 0;
-			g_stGrdDebugMode.bl_enterDebugModeFlag = 0;
-			//now grd really enter test mode
-			g_stGrdDebugMode.bl_isDebugMode	= 1;
-			dlog_info("g_stGrdDebugMode.bl_isDebugMode	= 1");
-            osdptr->in_debug          = (uint8_t)(g_stGrdDebugMode.bl_isDebugMode);
+    if(!flag)//enter debug mode
+    {
+        if(TRUE != s_u8_grdDebugMode)
+        {
             context.rc_skip_freq_mode = MANUAL;
             context.it_skip_freq_mode = MANUAL;
             context.qam_skip_mode     = MANUAL;
-		}
-	}
-	else
-	{
-		//do nothing
-	}	
+            s_u8_grdDebugMode = TRUE;
+            dlog_info("grdDebugMode = TRUE");
+        }
+        else
+        {
+            //already debug mode,do nothing.	
+        }
+    }
+    else	//out debug mode
+    {
+        s_u8_grdDebugMode = FALSE;
+        dlog_info("grdDebugMode = FALSE");
+    }
 }
+

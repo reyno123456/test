@@ -110,11 +110,6 @@ typedef struct param
     SYS_PARAM user_param;
 }PARAM;
 
-typedef struct{
-	uint8_t u8_enterDebugModeCnt;
-	uint8_t	bl_enterDebugModeFlag;
-	uint8_t	bl_isDebugMode;
-}DebugMode;
 
 extern CONTEXT context;
 extern volatile DEVICE_STATE dev_state;
