@@ -28,6 +28,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_ctlreq.h"
 #include "usbd_ioreq.h"
+
 /** @addtogroup STM32_USBD_STATE_DEVICE_LIBRARY
   * @{
   */
@@ -360,7 +361,7 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev ,
     switch ((uint8_t)(req->wValue))
     {
     case USBD_IDX_LANGID_STR:
-     pbuf = pdev->pDesc->GetLangIDStrDescriptor(pdev->dev_speed, &len);        
+      pbuf = pdev->pDesc->GetLangIDStrDescriptor(pdev->dev_speed, &len);
       break;
       
     case USBD_IDX_MFC_STR:
@@ -696,11 +697,29 @@ static void USBD_ClrFeature(USBD_HandleTypeDef *pdev ,
 
 void USBD_ParseSetupRequest(USBD_SetupReqTypedef *req, uint8_t *pdata)
 {
-  req->bmRequest     = *(uint8_t *)  (pdata);
-  req->bRequest      = *(uint8_t *)  (pdata +  1);
-  req->wValue        = SWAPBYTE      (pdata +  2);
-  req->wIndex        = SWAPBYTE      (pdata +  4);
-  req->wLength       = SWAPBYTE      (pdata +  6);
+#if 0
+    uint8_t    u8_i;
+    uint8_t    u8_swap;
+
+    if (USB_OTG_IS_BIG_ENDIAN())
+    {
+        for (u8_i = 0; u8_i < 8; u8_i++)
+        {
+            u8_swap         = pdata[u8_i];
+            pdata[u8_i]     = pdata[u8_i + 3];
+            pdata[u8_i + 3] = u8_swap;
+
+            u8_swap         = pdata[u8_i + 1];
+            pdata[u8_i + 1] = pdata[u8_i + 2];
+            pdata[u8_i + 2] = u8_swap;
+        }
+    }
+#endif
+    req->bmRequest          = *(uint8_t *)  (pdata);
+    req->bRequest           = *(uint8_t *)  (pdata +  1);
+    req->wValue             = SWAPBYTE      (pdata +  2);
+    req->wIndex             = SWAPBYTE      (pdata +  4);
+    req->wLength            = SWAPBYTE      (pdata +  6);
 }
 
 /**

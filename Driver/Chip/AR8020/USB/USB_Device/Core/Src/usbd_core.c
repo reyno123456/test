@@ -351,19 +351,20 @@ USBD_StatusTypeDef USBD_LL_DataInStage(USBD_HandleTypeDef *pdev ,uint8_t epnum, 
       if(pep->rem_length > pep->maxpacket)
       {
         pep->rem_length -=  pep->maxpacket;
-        
+
         USBD_CtlContinueSendData (pdev, 
                                   pdata, 
                                   pep->rem_length);
-        
+
         /* Prepare endpoint for premature end of transfer */
         USBD_LL_PrepareReceive (pdev,
                                 0,
                                 NULL,
-                                0);  
+                                0);
       }
       else
-      { /* last packet is MPS multiple, so send ZLP packet */
+      {
+        /* last packet is MPS multiple, so send ZLP packet */
         if((pep->total_length % pep->maxpacket == 0) &&
            (pep->total_length >= pep->maxpacket) &&
              (pep->total_length < pdev->ep0_data_len ))
@@ -387,6 +388,10 @@ USBD_StatusTypeDef USBD_LL_DataInStage(USBD_HandleTypeDef *pdev ,uint8_t epnum, 
           }          
           USBD_CtlReceiveStatus(pdev);
         }
+
+        USB_EP0_OutStart(((PCD_HandleTypeDef *)(pdev->pData))->Instance,
+                          1,
+                         (uint8_t *)((PCD_HandleTypeDef *)(pdev->pData))->Setup);
       }
     }
     if (pdev->dev_test_mode == 1)

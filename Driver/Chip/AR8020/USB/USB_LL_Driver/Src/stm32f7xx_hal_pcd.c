@@ -496,17 +496,6 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
       __HAL_PCD_CLEAR_FLAG(hpcd, USB_OTG_GINTSTS_USBSUSP);
 
       USB_OTG_SET_LITTLE_ENDIAN();
-
-      #if 0
-      /* to resolve the problem of unplug during the transmit */
-      if ((USBD_STATE_CONFIGURED == USBD_Device.dev_old_state)
-        ||(USBD_STATE_CONFIGURED == USBD_Device.dev_state))
-      {
-          dlog_info("restart usb\n");
-
-          SYS_EVENT_Notify_From_ISR(SYS_EVENT_ID_USB_PLUG_OUT, NULL);
-      }
-      #endif
     }
 
     /* Handle LPM Interrupt */ 
