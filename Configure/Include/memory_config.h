@@ -139,6 +139,7 @@ extern "C" {
 //SRAM MEMORY MAP
 //====================================================================
 #define SRAM_BASE_ADDRESS                             0x21000000     /* start address of SRAM */
+#define SRAM_SIZE                                     (64 * 1024)    /* size of SRAM */
 
 /* 8K video0  */
 #define SRAM_BB_VIDEO_BUFFER_0_ST_ADDRESS             SRAM_BASE_ADDRESS
@@ -238,7 +239,23 @@ typedef struct
     STRU_NV_DATA st_nvDataPrc; // use to write nv to flash
 }STRU_NV;
 
+/* 8K debug log buffer at the end of the SRAM. */
 
+#define SRAM_DEBUG_LOG_BUFFER_ST_ADDR              (SRAM_BASE_ADDRESS + SRAM_SIZE - (8 * 1024)) // 0x2100E000
+
+// 512 debug log input buffer
+#define SRAM_DEBUG_LOG_INPUT_BUFFER_ST_ADDR        SRAM_DEBUG_LOG_BUFFER_ST_ADDR
+#define SRAM_DEBUG_LOG_INPUT_BUFFER_SIZE           0x200
+
+// 2.5K * 3 debug log output buffer
+#define SRAM_DEBUG_LOG_OUTPUT_BUFFER_ST_ADDR_0  (SRAM_DEBUG_LOG_INPUT_BUFFER_ST_ADDR + SRAM_DEBUG_LOG_INPUT_BUFFER_SIZE)
+#define SRAM_DEBUG_LOG_OUTPUT_BUFFER_END_ADDR_0 (SRAM_DEBUG_LOG_OUTPUT_BUFFER_ST_ADDR_0 + 0xA00 - 1)
+
+#define SRAM_DEBUG_LOG_OUTPUT_BUFFER_ST_ADDR_1  (SRAM_DEBUG_LOG_OUTPUT_BUFFER_END_ADDR_0 + 1)
+#define SRAM_DEBUG_LOG_OUTPUT_BUFFER_END_ADDR_1 (SRAM_DEBUG_LOG_OUTPUT_BUFFER_ST_ADDR_1 + 0xA00 - 1)
+
+#define SRAM_DEBUG_LOG_OUTPUT_BUFFER_ST_ADDR_2  (SRAM_DEBUG_LOG_OUTPUT_BUFFER_END_ADDR_1 + 1)
+#define SRAM_DEBUG_LOG_OUTPUT_BUFFER_END_ADDR_2 (SRAM_DEBUG_LOG_OUTPUT_BUFFER_ST_ADDR_2 + 0xA00 - 1)
 
 //--------------------------------------------------------------------
 // flash  memory address space define here

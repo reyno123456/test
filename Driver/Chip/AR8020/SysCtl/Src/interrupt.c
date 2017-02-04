@@ -175,9 +175,47 @@ void default_isr(void)
 {
 }
 
+// hard fault monitor, with stack frame location as input parameter.
+void hard_fault_monitor(unsigned int * hardfault_args)
+{
+    unsigned int stacked_r0;
+    unsigned int stacked_r1;
+    unsigned int stacked_r2;
+    unsigned int stacked_r3;
+    unsigned int stacked_r12;
+    unsigned int stacked_lr;
+    unsigned int stacked_pc;
+    unsigned int stacked_psr;
+    stacked_r0 = ((unsigned long)hardfault_args[0]);
+    stacked_r1 = ((unsigned long)hardfault_args[1]);
+    stacked_r2 = ((unsigned long)hardfault_args[2]);
+    stacked_r3 = ((unsigned long)hardfault_args[3]);
+    stacked_r12 = ((unsigned long)hardfault_args[4]);
+    stacked_lr = ((unsigned long)hardfault_args[5]);
+    stacked_pc = ((unsigned long)hardfault_args[6]);
+    stacked_psr = ((unsigned long) hardfault_args[7]);
+    DLOG_Error("Hardfault happens!");
+    DLOG_Error("R0 = %x",stacked_r0);
+    DLOG_Error("R1 = %x\n",stacked_r1);
+    DLOG_Error("R2 = %x\n",stacked_r2);
+    DLOG_Error("R3 = %x\n",stacked_r3);
+    DLOG_Error("R12 = %x\n",stacked_r12);
+    DLOG_Error("LR [R14] = %x  subroutine call return address\n",stacked_lr);
+    DLOG_Error("PC [R15] = %x  program counter\n", stacked_pc);
+    DLOG_Error("PSR = %x\n",stacked_psr);
+    DLOG_Output(3000);
+
+    while(1) ;
+}
+
 // To replace the weak function in start.s
 void hardfault_isr(void)
 {
+    __asm("TST LR, #4");
+    __asm("ITE EQ");
+    __asm("MRSEQ R0,MSP");
+    __asm("MRSNE R0,PSP");
+    __asm("B hard_fault_monitor");
 }
 
 void IRQHandler_16(void)  { run_irq_hdl(16);  }

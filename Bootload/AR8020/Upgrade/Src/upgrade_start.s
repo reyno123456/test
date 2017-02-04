@@ -10,6 +10,7 @@
 #include "interrupt.h"
 
 .equ  DTCM0, 0x20000000
+.equ  Local_CPUID, 0x0
 
 .syntax unified
 .cpu cortex-m7
@@ -199,6 +200,7 @@ Infinite_Loop:
   .word     IRQHandler_96
   .word     IRQHandler_97
   .word     IRQHandler_98
+  .word     Local_CPUID
   
 /*******************************************************************************
 *

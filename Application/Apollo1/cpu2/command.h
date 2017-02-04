@@ -2,9 +2,6 @@
 #define __COMMAND__H
 #include <stdint.h>
 
-extern uint32_t UartNum;
-void command_init();
-unsigned char command_getEnterStatus(void);
-void command_fulfill(void);
+void command_run(char *cmdArray[], uint32_t cmdNum);
 
 #endif

@@ -7,11 +7,13 @@
 #include "test_usbh.h"
 #include "stm32f746xx.h"
 #include "com_task.h"
+#include "hal.h"
 #include "hal_bb.h"
 #include "hal_hdmi_rx.h"
 #include "hal_usb_otg.h"
 #include "hal_sys_ctl.h"
 #include "wireless_interface.h"
+#include "hal_nv.h"
 
 void *malloc(size_t size)
 {
@@ -40,9 +42,7 @@ static void CPU_CACHE_Enable(void)
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
     serial_init(uart_num, baut_rate);
-    dlog_init(uart_num);
-    UartNum = uart_num;
-    command_init();
+    dlog_init(command_run);
 }
 
 
@@ -51,12 +51,10 @@ static void IO_Task(void const *argument)
     while (1)
     {
         SYS_EVENT_Process();
-        if (command_getEnterStatus() == 1)
-        {
-            command_fulfill();
-        }
 
-        dlog_output(100);
+        DLOG_Process(NULL);
+      
+        HAL_Delay(20);
     }
 }
 
@@ -67,8 +65,6 @@ static void IO_Task(void const *argument)
   */
 int main(void)
 {
-
-
     STRU_HAL_SYS_CTL_CONFIG *pst_cfg;
     HAL_SYS_CTL_GetConfig( &pst_cfg);
     pst_cfg->u8_workMode = 0;
@@ -85,6 +81,8 @@ int main(void)
     HAL_HDMI_RX_Init(HAL_HDMI_RX_1);
 
     HAL_USB_InitOTG(HAL_USB_PORT_0);
+
+    HAL_NV_Init();
 
     /* Create Main Task */
     osThreadDef(USBMAIN_Task, USB_MainTask, osPriorityBelowNormal, 0, 4 * 128);

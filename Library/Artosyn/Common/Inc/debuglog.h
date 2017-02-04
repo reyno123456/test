@@ -1,7 +1,7 @@
-#include<stdio.h>
- 
 #ifndef DEBUGLOG_H
 #define DEBUGLOG_H
+
+#include<stdio.h>
 
 enum
 {
@@ -18,56 +18,50 @@ enum
 #define _print_log(fmt, arg...)  \
     do \
     { \
-        printf("%s\t"fmt"\n", __FUNCTION__, ##arg);   \
+        printf("CPU%d: %s\t"fmt"\n", *((int*)0x0000018C), __FUNCTION__, ##arg);   \
     }while(0)
 
 #if(LOG_LEVEL_CRITICAL <= LOG_LEVEL)
-    #define dlog_critical(fmt, arg...)    _print_log(fmt, ##arg)
+    #define DLOG_Critical(fmt, arg...)    _print_log(fmt, ##arg)
 #else
-    #define dlog_critical(fmt, arg...)    do{} while(0)
+    #define DLOG_Critical(fmt, arg...)    do{} while(0)
 #endif
  
 #if(LOG_LEVEL_ERROR <= LOG_LEVEL)
-    #define dlog_error(fmt, arg...)   _print_log(fmt, ##arg)
+    #define DLOG_Error(fmt, arg...)   _print_log(fmt, ##arg)
 #else
-    #define dlog_error(fmt, arg...)   do{} while(0)
+    #define DLOG_Error(fmt, arg...)   do{} while(0)
 #endif
 
 #if(LOG_LEVEL_WARNING <= LOG_LEVEL)
-    #define dlog_warning(fmt, arg...)   _print_log(fmt, ##arg)
+    #define DLOG_Warning(fmt, arg...)   _print_log(fmt, ##arg)
 #else
-    #define dlog_warning(fmt, arg...)   do{} while(0)
+    #define DLOG_Warning(fmt, arg...)   do{} while(0)
 #endif
 
 #if(LOG_LEVEL_INFO <= LOG_LEVEL)
-    #define dlog_info(fmt, arg...)   _print_log(fmt, ##arg)
+    #define DLOG_Info(fmt, arg...)   _print_log(fmt, ##arg)
 #else
-    #define dlog_info(fmt, arg...)   do{} while(0)
+    #define DLOG_Info(fmt, arg...)   do{} while(0)
 #endif
 
-#define USE_SRAM_DEBUG_LOG_BUFFER
+#define DEBUG_LOG_USE_SRAM_OUTPUT_BUFFER
+#define DEBUG_LOG_OUTPUT_CPU_AFTER_CPU
+//#define USE_SYS_EVENT_TRIGGER_DEBUG_LOG_PROCESS
 
-// 2K * 3 SRAM space
-enum
-{
-    SRAM_DEBUG_LOG_SPACE_0 = 0,
-    SRAM_DEBUG_LOG_SPACE_1,
-    SRAM_DEBUG_LOG_SPACE_2,
-    SRAM_DEBUG_LOG_SPACE_UNKNOWN,
-};
+/* 2.5K * 3 SRAM output space and 0.5K SRAM input space */
 
-#define DEBUG_LOG_BUFFER_WRITE_NO_OVERLAP
+typedef void (*FUNC_CommandRun)(char *cmdArray[], uint32_t cmdNum);
 
-#define SRAM_DEBUG_LOG_BUFFER_ST_ADDR_0  0x210FE800
-#define SRAM_DEBUG_LOG_BUFFER_END_ADDR_0 0x210FEFFF
+void DLOG_Init(FUNC_CommandRun func);
+unsigned int DLOG_Output(unsigned int byte_num);
+void DLOG_Process(void* p);
 
-#define SRAM_DEBUG_LOG_BUFFER_ST_ADDR_1  0x210FF000
-#define SRAM_DEBUG_LOG_BUFFER_END_ADDR_1 0x210FF7FF
-
-#define SRAM_DEBUG_LOG_BUFFER_ST_ADDR_2  0x210FF800
-#define SRAM_DEBUG_LOG_BUFFER_END_ADDR_2 0x210FFFFF
-
-void dlog_init(unsigned int index);
-unsigned int dlog_output(unsigned int byte_num);
+#define dlog_init          DLOG_Init
+#define dlog_output        DLOG_Output
+#define dlog_info(...)     DLOG_Info(__VA_ARGS__)
+#define dlog_warning(...)  DLOG_Warning(__VA_ARGS__)
+#define dlog_error(...)    DLOG_Error(__VA_ARGS__)
+#define dlog_critical(...) DLOG_Critical(__VA_ARGS__)
 
 #endif

@@ -12,6 +12,8 @@ History:
 #ifndef __HAL_H__
 #define __HAL_H__
 
+#include "hal_ret_type.h"
+
 /**
 * @brief  The hal delay function.
 * @param  u32_ms    the delay time value in millisecond unit.               

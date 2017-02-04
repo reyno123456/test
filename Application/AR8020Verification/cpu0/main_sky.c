@@ -6,6 +6,7 @@
 #include "cmsis_os.h"
 #include "sys_event.h"
 #include "bb_spi.h"
+#include "hal.h"
 #include "hal_gpio.h"
 #include "hal_bb.h"
 #include "hal_hdmi_rx.h"
@@ -41,9 +42,7 @@ static void CPU_CACHE_Enable(void)
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
     serial_init(uart_num, baut_rate);
-    dlog_init(uart_num);
-    UartNum = uart_num;
-    command_init();
+    dlog_init(command_run);
 }
 
 void HDMI_powerOn(void)
@@ -57,12 +56,10 @@ static void IO_Task(void const *argument)
     while (1)
     {
         SYS_EVENT_Process();
-        if (command_getEnterStatus() == 1)
-        {
-            command_fulfill();
-        }
-
-        dlog_output(100);
+        
+        DLOG_Process(NULL);
+        
+        HAL_Delay(20);
     }
 }
 

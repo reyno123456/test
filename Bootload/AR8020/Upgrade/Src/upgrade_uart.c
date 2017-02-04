@@ -95,6 +95,10 @@ static void UPGRADE_IRQHandler(uint32_t vectorNum)
     }
 }
 
+static void UPGRADE_RollbackIsrHandler(void)
+{
+}
+
 static void UPGRADE_UartReceive(void)
 {
     DLOG_INFO("Nor flash init start ...\n");
@@ -135,7 +139,8 @@ static void UPGRADE_UartReceive(void)
     }    
     DLOG_INFO("receive finish %d\n",g_u32RecCount);
     dlog_output(100);
-    UPGRADE_CommandInit(0);
+    
+    UPGRADE_RollbackIsrHandler();
 }
 
 static void UPGRADE_ModifyBootInfo(void)

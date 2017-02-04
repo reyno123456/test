@@ -8,6 +8,7 @@
 #include "stm32f746xx.h"
 #include "test_usbh.h"
 #include "com_task.h"
+#include "hal.h"
 #include "hal_bb.h"
 #include "hal_usb_otg.h"
 #include "hal_sys_ctl.h"
@@ -40,9 +41,7 @@ static void CPU_CACHE_Enable(void)
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
     serial_init(uart_num, baut_rate);
-    dlog_init(uart_num);
-    UartNum = uart_num;
-    command_init();
+    dlog_init(command_run);
 }
 
 
@@ -51,12 +50,11 @@ static void IO_Task(void const *argument)
     while (1)
     {
         SYS_EVENT_Process();
-        if (command_getEnterStatus() == 1)
-        {
-            command_fulfill();
-        }
+        
+        DLOG_Process(NULL);
+      
+        HAL_Delay(20);
 
-        dlog_output(100);
     }
 }
 

@@ -4,16 +4,12 @@
 #include "command.h"
 #include "sys_event.h"
 #include "hal_sys_ctl.h"
-
 #include "hal_bb.h"
 #include "hal.h"
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
-    serial_init(uart_num, baut_rate);
-    dlog_init(uart_num);
-    UartNum = uart_num;
-    command_init();
+    dlog_init(command_run);
 }
 
 /**
@@ -35,13 +31,8 @@ int main(void)
     {
         SYS_EVENT_Process();
 
-        if (command_getEnterStatus() == 1)
-        {
-            command_fulfill();
-        }
-
-        dlog_output(100);
-
+        DLOG_Process(NULL);
+      
         HAL_Delay(20);
     }
 } 

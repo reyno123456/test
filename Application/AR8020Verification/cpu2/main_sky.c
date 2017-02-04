@@ -9,10 +9,7 @@
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
-    serial_init(uart_num, baut_rate);
-    dlog_init(uart_num);
-    UartNum = uart_num;
-    command_init();
+    dlog_init(command_run);
 }
 /**
   * @brief  Main program
@@ -44,12 +41,8 @@ int main(void)
     {
         SYS_EVENT_Process();
         
-        if (command_getEnterStatus() == 1)
-        {
-            command_fulfill();
-        }
+        DLOG_Process(NULL);
 
-        dlog_output(200);
         HAL_Delay(20);
     }
 } 
