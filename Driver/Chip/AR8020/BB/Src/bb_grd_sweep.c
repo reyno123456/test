@@ -172,8 +172,8 @@ int8_t grd_add_sweep_result(int8_t bw)
 void calu_sne_average_and_fluct(uint8_t ch)
 {
     uint8_t i;
-    int8_t tmp = sweep_ch_noise_energy.noise_energy[0][ch];
-    int8_t max_tmp = tmp;
+    int16_t tmp = sweep_ch_noise_energy.noise_energy[0][ch];
+    int16_t max_tmp = tmp;
 
     for(i=1;i<SWEEP_FREQ_BLOCK_ROWS;i++)
     {
@@ -207,7 +207,7 @@ uint8_t is_it_sweep_finish(void)
 
 uint8_t get_best_freq(void)
 {
-    uint32_t sne_average;
+    int16_t sne_average;
     uint8_t i  = 0;
     uint8_t ch = 0;
     uint8_t max_ch = BAND_MAX_SWEEP_CH(context.freq_band);
@@ -227,11 +227,12 @@ uint8_t get_best_freq(void)
 
 uint8_t get_next_best_freq(uint8_t cur_best_ch)
 {
-    uint32_t sne_average;
+    int16_t sne_average;
     uint8_t i;
     uint8_t ch = 0;
 
-    sne_average = 0xffffffff;
+    sne_average = 0xff;
+
     for(i=0; i< BAND_MAX_SWEEP_CH(context.freq_band); i++)
     {
         if(i == cur_best_ch)
@@ -449,6 +450,6 @@ int16_t calc_power_db(int8_t bw, uint32_t power_td,
     }
 
     
-    *total_power = sum_power;
+    *total_power = sum_power / cnt;
     return 1;
 }

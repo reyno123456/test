@@ -245,7 +245,8 @@ void BB_init(ENUM_BB_MODE en_mode)
     BB_GetNv();
 
     BB_SetBoardMode(en_mode);
-
+    context.en_bbmode = en_mode;
+	
     BB_uart10_spi_sel(0x00000003);
     BB_SPI_init();
 
@@ -263,15 +264,6 @@ void BB_init(ENUM_BB_MODE en_mode)
     BB_softReset(en_mode);
 
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USER_CFG_CHANGE_LOCAL, BB_HandleEventsCallback);
-
-    if(en_mode == BB_SKY_MODE)
-    {
-        BB_SKY_start();
-    }
-    else
-    {
-        BB_GRD_start();
-    }
 
 	BB_UARTComInit();    
     dlog_info("BB mode Band %d %d %s \r\n", en_mode, context.freq_band, "BB_init Done");
@@ -444,7 +436,6 @@ void BB_set_RF_Band(ENUM_BB_MODE sky_ground, ENUM_RF_BAND rf_band)
 
     //calibration and reset
     BB_RF_2G_5G_switch(rf_band);
-    grd_sweep_freq_init(); //re-start sweep.
     dlog_info("Set Band %d %d\r\n", sky_ground, rf_band);
 }
 
@@ -1178,7 +1169,9 @@ static void BB_GetNv(void)
     
     memcpy(context.u8_flashId, (void *)(pst_nv->st_nvDataUpd.u8_nvBbRcId), 5);
     context.u8_flashId[5] = pst_nv->st_nvDataUpd.u8_nvChk;
-
+    context.u8_idSrcSel = RC_ID_AUTO_SEARCH;
+    
+    #if 0
     if(TRUE != (pst_nv->st_nvMng.u8_nvVld)) // 
     {
         context.u8_idSrcSel = RC_ID_AUTO_SEARCH;
@@ -1187,6 +1180,7 @@ static void BB_GetNv(void)
     {
         context.u8_idSrcSel = RC_ID_USE_FLASH_SAVE;
     }
+    #endif
 
     dlog_info("nv:0x%x 0x%x 0x%x 0x%x 0x%x 0x%x",
                pst_nv->st_nvDataUpd.u8_nvBbRcId[0],
@@ -1202,15 +1196,4 @@ static void BB_GetNv(void)
                context.u8_flashId[3],
                context.u8_flashId[4], 
                context.u8_flashId[5]);*/
-}
-
-/** 
- * @brief       
- * @param   
- * @retval      
- * @note      
- */
-void BB_SetAutoSearchRcId(void)
-{
-    sky_set_auto_search_rc_id();
 }

@@ -34,11 +34,13 @@ SRC_C := Src/hal.c \
          Src/hal_usb_otg.c \
          Src/hal_uart.c \
          Src/hal_spi.c \
-         Src/hal_bb.c \
+         Src/hal_bb_common.c \
+         Src/hal_bb_ground.c \
+         Src/hal_bb_sky.c \
          Src/hal_nvic.c \
-	 Src/hal_sd.c \
-	 Src/hal_dma.c \
-	 Src/hal_adc.c \
+	     Src/hal_sd.c \
+	     Src/hal_dma.c \
+	     Src/hal_adc.c \
          Src/hal_nv.c \
          Src/hal_can.c \
          Src/hal_camera.c \

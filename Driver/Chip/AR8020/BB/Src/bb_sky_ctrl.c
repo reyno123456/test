@@ -167,7 +167,13 @@ void sky_set_McsByIndex(uint8_t idx)
 
 void sky_agc_gain_toggle(void)
 {
-    dlog_info("AGCToggle\r\n");
+    static int loop = 0;    
+    while(loop < 1000)
+    {
+        dlog_info("AGCToggle\r\n");  
+        loop ++;        
+    }
+
     if(FAR_AGC == en_agcmode)
     {
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_NEAR);
@@ -955,4 +961,16 @@ static int32_t cal_chk_sum(uint8_t *pu8_data, uint32_t u32_len, uint8_t *u8_chec
     *u8_check = u8_chk;
 
     return 0;
+}
+
+
+/** 
+ * @brief       
+ * @param   
+ * @retval      
+ * @note      
+ */
+void BB_SetAutoSearchRcId(void)
+{
+    sky_set_auto_search_rc_id();
 }

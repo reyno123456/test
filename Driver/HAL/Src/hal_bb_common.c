@@ -21,20 +21,6 @@ History:
 
 
 /** 
- * @brief   init baseband to specified mode
- * @param   e_mode:                         baseband mode: sky mode or ground mode
- * @return  HAL_OK:                         means init baseband 
- *          HAL_BB_ERR_INIT:                means some error happens in init session 
- */
-HAL_RET_T HAL_BB_init(ENUM_BB_MODE e_mode)
-{
-    BB_init( e_mode );
-
-    return HAL_OK;    
-}
-
-
-/** 
  * @brief       set channel Bandwidth 10M/20M
  * @param[in]   e_bandwidth              channel bandwidth setting 10M/20M
  * @retval      HAL_OK                   means command is sent sucessfully. 
@@ -593,18 +579,5 @@ HAL_RET_T HAL_BB_curPageReadByte(uint8_t u8_addr, uint8_t *pu8_regValue)
 {
     *pu8_regValue = BB_SPI_curPageReadByte(u8_addr);
     
-    return HAL_OK;
-}
-
-/** 
- * @brief       
- * @param   
- * @retval      
- * @note      
- */
-HAL_RET_T HAL_BB_SetAutoSearchRcId(void)
-{
-    BB_SetAutoSearchRcId();
-
     return HAL_OK;
 }

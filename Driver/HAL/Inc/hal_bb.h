@@ -22,12 +22,21 @@ History:
 
 
 /** 
- * @brief   init baseband to specified mode
- * @param   e_mode:                         baseband mode: sky mode or ground mode
+ * @brief   init baseband to ground mode
+ * @param   NONE
  * @return  HAL_OK:                         means init baseband 
  *          HAL_BB_ERR_INIT:                means some error happens in init session 
  */
-HAL_RET_T HAL_BB_init(ENUM_BB_MODE e_mode);
+HAL_RET_T HAL_BB_initGround( void );
+
+
+/** 
+ * @brief   init baseband to sky mode
+ * @param   NONE
+ * @return  HAL_OK:                         means init baseband 
+ *          HAL_BB_ERR_INIT:                means some error happens in init session 
+ */
+HAL_RET_T HAL_BB_initSky( void );
 
 
 
