@@ -475,7 +475,6 @@ void CAN_IntrSrvc(uint32_t u32_vectorNum)
     //tx Primary or Secondary interrupt
     else if(0x00 != ((pst_canReg->u32_reg4) & 0x0C00))  
     {
-        dlog_info("CAN0_Isr tx is ok!\n");
         //clear Transmission Primary/Secondary Interrupt flag  
         pst_canReg->u32_reg4 |= 0x0C00; 
     }

@@ -17,7 +17,7 @@
 #include "test_gpio.h"
 #include "test_usbh.h"
 #include "test_float.h"
-#include "test_ov5640.h"
+#include "test_hal_camera.h"
 #include "hal_dma.h"
 #include "upgrade.h"
 #include "test_bbuartcom.h"
@@ -31,6 +31,7 @@
 #include "memory_config.h"
 #include "hal_ret_type.h"
 #include "hal_nvic.h"
+#include "test_hal_mipi.h"
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
@@ -233,17 +234,17 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestCanRx();
     }
-    else if(memcmp(cmdArray[0], "test_ov5640", strlen("test_ov5640")) == 0)
+    else if(memcmp(cmdArray[0], "test_camera_init", strlen("test_camera_init")) == 0)
     {
-        command_TestOv5640();
+        command_TestHalCameraInit(cmdArray[1], cmdArray[2]);
     }
-    else if(memcmp(cmdArray[0], "test_write_ov5640", strlen("test_write_ov5640")) == 0)
+    else if(memcmp(cmdArray[0], "test_write_camera", strlen("test_write_camera")) == 0)
     {
-        command_TestOv5640Write(cmdArray[1], cmdArray[2]);
+        command_TestCameraWrite(cmdArray[1], cmdArray[2]);
     }
-    else if(memcmp(cmdArray[0], "test_read_ov5640", strlen("test_ov5640_read")) == 0)
+    else if(memcmp(cmdArray[0], "test_read_camera", strlen("test_camera_read")) == 0)
     {
-        command_TestOv5640Read(cmdArray[1]);
+        command_TestCameraRead(cmdArray[1]);
     }
 	else if(memcmp(cmdArray[0], "command_test_BB_uart", strlen("command_test_BB_uart")) == 0)
     {
@@ -372,6 +373,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         }*/
     }
     /* error command */
+    else if (memcmp(cmdArray[0], "test_hal_mipi_init", strlen("test_hal_mipi_init")) == 0)
+    {
+        command_TestHalMipiInit();
+    }
     else
     {
         dlog_error("Command not found. Please use the commands like:");
@@ -419,9 +424,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_can_set_int <ch> <flag>");
         dlog_error("test_can_tx <ch> <id> <len> <format> <type>");
         dlog_error("test_can_rx");
-        dlog_error("test_ov5640");
-        dlog_error("test_write_ov5640 <subAddr(hex)> <value>(hex)");
-        dlog_error("test_read_ov5640 <subAddr(hex)>");
         dlog_error("testhal_TestGpioNormal <gpionum> <highorlow>");
         dlog_error("testhal_TestGpioInterrupt <gpionum> <inttype> <polarity>");
         dlog_error("testhal_Testtimer <TIM Num> <TIM Count>");
@@ -441,6 +443,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("configure");
         dlog_error("test_dma <src> <dst> <byte_num>");
         dlog_error("test_adc <channel>");
+        dlog_error("test_camera_init <rate 0~1> <mode 0~8>");
+        dlog_error("test_write_camera <subAddr(hex)> <value>(hex)");
+        dlog_error("test_read_camera <subAddr(hex)>");
+        dlog_error("test_hal_mipi_init");
     }
 }
 

@@ -25,12 +25,12 @@ CFG_BIN = $(HDMI_EDID_CFG_BIN_FILE_NAME)
 SRC_C := ADV7611/Src/adv_7611.c \
          NORFlash/Src/nor_flash.c \
          NORFlash/Src/w25q128.c \
-         MipiCtrl/Src/ov5640_mipi.c
+         OV5640/Src/ov5640.c
 
 
 INCDIRS := -IADV7611/Inc \
            -INORFlash/Inc \
-           -IMipiCtrl/Inc \
+           -IOV5640/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/I2C/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/QuadSPI/Inc \
            -I$(TOP_DIR)/Configure \
@@ -56,7 +56,7 @@ install:
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@cp -f ADV7611/Inc/adv_7611.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f NORFlash/Inc/nor_flash.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f MipiCtrl/Inc/ov5640_mipi.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f OV5640/Inc/ov5640.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f ADV7611/Src/$(CFG_BIN) $(OUTPUT_BIN_STAGING_DIR)/
 
 clean:
@@ -64,7 +64,7 @@ clean:
 	@$(RM) $(LIB) $(OBJ_C) ADV7611/Src/adv_7611_edid.o .depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB) $(OUTPUT_BIN_STAGING_DIR)/$(CFG_BIN)
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/adv_7611.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/nor_flash.h
-	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/ov5640_mipi.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/ov5640.h
 
 .PHONY: all clean install
 #########################################################################
