@@ -6,6 +6,7 @@
 #include "interrupt.h"
 #include "hal_bb.h"
 
+
 void command_test_BB_uart(char *index_str)
 {
     static uint8_t data_buf_proc[128];
@@ -34,3 +35,9 @@ void command_test_BB_uart(char *index_str)
     }
 }
 
+void command_test_SkyAutoSearhRcId(void)
+{
+    extern int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2);
+
+    BB_add_cmds(16, 0, 0, 0);
+}

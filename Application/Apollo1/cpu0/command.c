@@ -6,6 +6,11 @@
 #include "interrupt.h"
 #include "upgrade.h"
 #include "cmsis_os.h"
+#include "testhal_pwm.h"
+#include "test_hal_uart.h"
+#include "test_hal_spi.h"
+#include "test_hal_i2c.h"
+
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
@@ -36,6 +41,50 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         osThreadCreate(osThread(UsbUpgrade), path);
         vTaskDelay(100);       
     }
+    else if (memcmp(cmdArray[0], "testhal_Testpwm", strlen("testhal_Testpwm")) == 0)
+    {
+        commandhal_TestPwm(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_uart_init", strlen("test_hal_uart_init")) == 0)
+    {
+        command_TestHalUartInit(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_uart_set_int", strlen("test_hal_uart_set_int")) == 0)
+    {
+        command_TestHalUartIntSet(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_uart_tx", strlen("test_hal_uart_tx")) == 0)
+    {
+        command_TestHalUartTx(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_uart_rx", strlen("test_hal_uart_rx")) == 0)
+    {
+        command_TestHalUartRx(cmdArray[1]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_spi_init", strlen("test_hal_spi_init")) == 0)
+    {
+        command_TestHalSpiInit(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_spi_write", strlen("test_hal_spi_write")) == 0)
+    {
+        command_TestHalSpiTx(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_spi_read", strlen("test_hal_spi_read")) == 0)
+    {
+        command_TestHalSpiRx(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_i2c_init", strlen("test_hal_i2c_init")) == 0)
+    {
+        command_TestHalI2cInit(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_i2c_write", strlen("test_hal_i2c_write")) == 0)
+    {
+        command_TestHalI2cWrite(cmdArray[1]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_i2c_read", strlen("test_hal_i2c_read")) == 0)
+    {
+        command_TestHalI2cRead(cmdArray[1]);
+    }
     /* error command */
     else
     {
@@ -43,7 +92,18 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("read <address>");
         dlog_error("write <address> <data>");
         dlog_error("upgrade <filename>");
-		dlog_output(1000);
+        dlog_error("testhal_Testpwm <PWM Num> <PWM low> <PWM high>");
+        dlog_error("test_hal_uart_init <ch> <baudr>");
+        dlog_error("test_hal_uart_set_int <ch> <flag>");
+        dlog_error("test_hal_uart_tx <ch> <len>");
+        dlog_error("test_hal_uart_rx <ch>");
+        dlog_error("test_hal_spi_init <ch> <baudr> <polarity> <phase>");
+        dlog_error("test_hal_spi_write <ch> <addr> <wdata>");
+        dlog_error("test_hal_spi_read <ch> <addr>");
+        dlog_error("test_hal_i2c_init <ch> <i2c_addr> <speed>");
+        dlog_error("test_hal_i2c_write <subAddr + data>");
+        dlog_error("test_hal_i2c_read <sub_addr>");
+        dlog_output(1000);
     }
 }
 

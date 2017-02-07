@@ -6,6 +6,7 @@
 #include "serial.h"
 #include "cmsis_os.h"
 #include "bb_ctrl.h"
+#include "test_BB.h"
 
 extern void BB_uart10_spi_sel(uint32_t sel_dat);
 
@@ -89,12 +90,18 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         BB_uart10_spi_sel( strtoul(cmdArray[1], NULL, 0) );
     }
+    else if (memcmp(cmdArray[0], "sky_auto_search_rc_id", strlen("sky_auto_search_rc_id")) == 0)
+    {
+        command_test_SkyAutoSearhRcId();
+    }
     else 
     {
         dlog_error("Command not found! Please use commands like:\n");
         dlog_error("BB_uart10_spi_sel <value>");
         dlog_error("read <address>");
         dlog_error("write <address> <data>");
+        dlog_error("sky_auto_search_rc_id");
+        dlog_output(1000);
     }
 }
 
