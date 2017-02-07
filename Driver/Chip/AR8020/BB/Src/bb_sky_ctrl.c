@@ -3,7 +3,6 @@
 #include <math.h>
 #include <string.h>
 #include <stdint.h>
-
 #include "reg_rw.h"
 #include "timer.h"
 #include "interrupt.h"
@@ -834,7 +833,7 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
         }
     }
     
-	if(class == WIRELESS_DEBUG_CHANGE)
+    if(class == WIRELESS_DEBUG_CHANGE)
     {
         switch(item)
         {
@@ -855,6 +854,11 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
     if(class == WIRELESS_MISC)
     {
         BB_handle_misc_cmds(pcmd);
+    }
+
+    if(class == WIRELESS_AUTO_SEARCH_ID)
+    {
+        sky_set_auto_search_rc_id();
     }
 }
 
@@ -961,16 +965,4 @@ static int32_t cal_chk_sum(uint8_t *pu8_data, uint32_t u32_len, uint8_t *u8_chec
     *u8_check = u8_chk;
 
     return 0;
-}
-
-
-/** 
- * @brief       
- * @param   
- * @retval      
- * @note      
- */
-void BB_SetAutoSearchRcId(void)
-{
-    sky_set_auto_search_rc_id();
 }

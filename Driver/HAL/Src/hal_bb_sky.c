@@ -12,7 +12,7 @@ History:
 
 #include <stdio.h>
 #include <stdint.h>
-
+#include "sys_event.h"
 #include "bb_spi.h"
 #include "bb_ctrl.h"
 #include "bb_sky_ctrl.h"
@@ -41,7 +41,20 @@ HAL_RET_T HAL_BB_initSky( void )
  */
 HAL_RET_T HAL_BB_SetAutoSearchRcId(void)
 {
-    BB_SetAutoSearchRcId();
+    uint8_t u8_ret;
+    STRU_WIRELESS_CONFIG_CHANGE st_cmd;
 
-    return HAL_OK;
+    st_cmd.u8_configClass  = WIRELESS_AUTO_SEARCH_ID;
+    st_cmd.u8_configItem   = 0;
+    st_cmd.u32_configValue = 0;
+
+    u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
+    if( u8_ret )
+    {
+        return HAL_OK;
+    }
+    else
+    {
+        return HAL_BB_ERR_EVENT_NOTIFY;
+    }
 }

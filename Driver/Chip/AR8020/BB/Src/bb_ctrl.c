@@ -893,6 +893,13 @@ int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
             break;
         }
 
+        case 16:
+        {
+            cmd.u8_configClass  = WIRELESS_AUTO_SEARCH_ID;
+            cmd.u8_configItem   = 0;
+            break;
+        }
+
         default:
         {
             ret = 0;
@@ -1169,9 +1176,7 @@ static void BB_GetNv(void)
     
     memcpy(context.u8_flashId, (void *)(pst_nv->st_nvDataUpd.u8_nvBbRcId), 5);
     context.u8_flashId[5] = pst_nv->st_nvDataUpd.u8_nvChk;
-    context.u8_idSrcSel = RC_ID_AUTO_SEARCH;
-    
-    #if 0
+
     if(TRUE != (pst_nv->st_nvMng.u8_nvVld)) // 
     {
         context.u8_idSrcSel = RC_ID_AUTO_SEARCH;
@@ -1180,7 +1185,6 @@ static void BB_GetNv(void)
     {
         context.u8_idSrcSel = RC_ID_USE_FLASH_SAVE;
     }
-    #endif
 
     dlog_info("nv:0x%x 0x%x 0x%x 0x%x 0x%x 0x%x",
                pst_nv->st_nvDataUpd.u8_nvBbRcId[0],
@@ -1189,11 +1193,4 @@ static void BB_GetNv(void)
                pst_nv->st_nvDataUpd.u8_nvBbRcId[3],
                pst_nv->st_nvDataUpd.u8_nvBbRcId[4], 
                pst_nv->st_nvDataUpd.u8_nvChk);
-    /*dlog_info("flashid:0x%x 0x%x 0x%x 0x%x 0x%x 0x%x",
-               context.u8_flashId[0],
-               context.u8_flashId[1],
-               context.u8_flashId[2],
-               context.u8_flashId[3],
-               context.u8_flashId[4], 
-               context.u8_flashId[5]);*/
 }

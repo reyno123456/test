@@ -37,5 +37,7 @@ void command_test_BB_uart(char *index_str)
 
 void command_test_SkyAutoSearhRcId(void)
 {
-    HAL_BB_SetAutoSearchRcId();
+    extern int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2);
+
+    BB_add_cmds(16, 0, 0, 0);
 }

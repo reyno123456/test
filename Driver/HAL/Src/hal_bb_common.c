@@ -13,7 +13,6 @@ History:
 #include <stdio.h>
 #include <stdint.h>
 #include "sys_event.h"
-
 #include "bb_spi.h"
 #include "bb_ctrl.h"
 #include "rf_8003s.h"
@@ -581,3 +580,5 @@ HAL_RET_T HAL_BB_curPageReadByte(uint8_t u8_addr, uint8_t *pu8_regValue)
     
     return HAL_OK;
 }
+
+

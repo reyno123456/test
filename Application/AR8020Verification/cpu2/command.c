@@ -135,7 +135,8 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_float_calculate_pi");
         dlog_error("configure");
         dlog_error("BB_add_cmds <type> <param0> <param1> <param2>");		
-        dlog_error("sky_auto_search_rc_id");		
+        dlog_error("sky_auto_search_rc_id");
+        dlog_output(1000);	
     }
 }
 
