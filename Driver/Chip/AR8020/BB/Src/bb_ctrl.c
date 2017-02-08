@@ -181,7 +181,8 @@ void gen_qam_threshold_range(void)
         }
     }
     
-    dlog_info("range:%x %x %x %x \r\n", context.qam_threshold_range[0][1], context.qam_threshold_range[0][1], context.qam_threshold_range[7][0], context.qam_threshold_range[7][1]);
+    dlog_info("MCS:%x %x %x %x\n", context.qam_threshold_range[0][1], context.qam_threshold_range[0][1], 
+                                   context.qam_threshold_range[QAM_CHANGE_THRESHOLD_COUNT-1][0], context.qam_threshold_range[QAM_CHANGE_THRESHOLD_COUNT-1][1]);
 }
 
 
@@ -918,7 +919,26 @@ int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
 
 void BB_HandleEventsCallback(void *p)
 {
-    int ret = BB_InsertCmd( (STRU_WIRELESS_CONFIG_CHANGE * )p);
+    STRU_WIRELESS_CONFIG_CHANGE* pcmd = (STRU_WIRELESS_CONFIG_CHANGE* )p;
+    uint8_t  class  = pcmd->u8_configClass;
+    uint8_t  item   = pcmd->u8_configItem;
+    uint32_t value  = pcmd->u32_configValue;
+
+    if( class == WIRELESS_DEBUG_CHANGE && item == 0 && (value == 0 || value == 1))
+    {    
+        uint8_t u8_debugMode = ((value == 0) ? TRUE:FALSE);
+
+        if( context.u8_debugMode != u8_debugMode )
+        {
+            context.u8_flagdebugRequest = u8_debugMode | 0x80;
+            en_curPage = (BB_SPI_curPageReadByte(0x0) & 0xc0);
+        }
+        dlog_info("Event Debug: %d \n", u8_debugMode);         
+    }
+    else
+    {
+        int ret = BB_InsertCmd( (STRU_WIRELESS_CONFIG_CHANGE * )p);
+    }
 }
 
 

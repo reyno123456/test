@@ -29,9 +29,7 @@ static init_timer_st init_timer0_0;
 static init_timer_st init_timer0_1;
 static uint8_t Timer1_Delay1_Cnt = 0;
 static uint8_t snr_static_count = SNR_STATIC_START_VALUE;
-static uint8_t s_u8_grdDebugMode = FALSE;
 
-static void grd_handle_debug_mode_cmd(uint8_t flag);
 void BB_GRD_start(void)
 {
     context.dev_state = INIT_DATA;
@@ -59,7 +57,7 @@ void BB_GRD_start(void)
     grd_sweep_freq_init();
 
     reg_IrqHandle(BB_TX_ENABLE_VECTOR_NUM, wimax_vsoc_tx_isr, NULL);
-	INTR_NVIC_SetIRQPriority(BB_TX_ENABLE_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_BB_TX,0));
+    INTR_NVIC_SetIRQPriority(BB_TX_ENABLE_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_BB_TX,0));
     INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);
 }
 
@@ -153,7 +151,7 @@ void grd_fec_judge(void)
     }
     else if(context.dev_state == FEC_UNLOCK )
     {
-        if(context.it_skip_freq_mode == AUTO && context.freq_band == RF_2G) //for test 5G only
+        if(context.it_skip_freq_mode == AUTO )
         {
             grd_set_it_skip_freq(context.cur_IT_ch);
             dlog_info("Ch=>%d\n", context.cur_IT_ch);
@@ -162,20 +160,17 @@ void grd_fec_judge(void)
     }
     else if(context.dev_state == DELAY_14MS)
     {
-        #if 0
-        if(context.enable_freq_offset == ENABLE_FLAG)
+        if( context.it_skip_freq_mode == AUTO )
         {
-            bb_set_freq_offset(calu_it_skip_freq_delta(context.first_freq_value,context.cur_IT_ch));
-        }
-        #endif
-        if(context.it_manual_ch != 0xff)
-        {
-            grd_set_it_work_freq(context.freq_band, context.it_manual_ch);
-            context.it_manual_ch = 0xff;
-        }
-        else
-        {
-            grd_set_it_work_freq(context.freq_band, context.cur_IT_ch);
+            if(context.it_manual_ch != 0xff)
+            {
+                grd_set_it_work_freq(context.freq_band, context.it_manual_ch);
+                context.it_manual_ch = 0xff;
+            }
+            else
+            {
+                grd_set_it_work_freq(context.freq_band, context.cur_IT_ch);
+            }
         }
 
         if(context.it_manual_rf_band != 0xff && context.freq_band!= context.it_manual_rf_band)
@@ -188,7 +183,7 @@ void grd_fec_judge(void)
         context.dev_state = CHECK_FEC_LOCK;
     }
     
-    if(context.it_manual_ch != 0xff)
+    if(context.it_manual_ch != 0xff && context.it_skip_freq_mode == AUTO)
     {
         grd_set_it_skip_freq(context.it_manual_ch);
         context.dev_state = DELAY_14MS;
@@ -420,9 +415,29 @@ void wimax_vsoc_tx_isr(uint32_t u32_vectorNum)
 {
     INTR_NVIC_DisableIRQ(BB_TX_ENABLE_VECTOR_NUM);
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
-    
-    TIM_StartTimer(init_timer0_0);
-    INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
+
+    if( context.u8_flagdebugRequest & 0x80)
+    {
+        context.u8_debugMode = context.u8_flagdebugRequest & 0x01;
+        osdptr->in_debug = context.u8_debugMode;
+        context.u8_flagdebugRequest = 0;
+
+        if( context.u8_debugMode != FALSE )
+        {
+            grd_handle_RC_mode_cmd(MANUAL);
+            grd_handle_MCS_mode_cmd(MANUAL);
+            grd_handle_IT_mode_cmd(MANUAL);
+
+            osdptr->head = 0x00;
+            osdptr->tail = 0xff;    //end of the writing
+        }
+        dlog_info("bugMode %d %d\n", osdptr->in_debug, context.u8_debugMode);
+    }
+
+    {
+        TIM_StartTimer(init_timer0_0);
+        INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
+    }
 }
 
 void Grd_TIM0_IRQHandler(uint32_t u32_vectorNum)
@@ -439,82 +454,84 @@ void Grd_TIM0_IRQHandler(uint32_t u32_vectorNum)
     
     //Enable TIM1 intr
     TIM_StartTimer(init_timer0_1);
-    INTR_NVIC_EnableIRQ(TIMER_INTR01_VECTOR_NUM);   
+    INTR_NVIC_EnableIRQ(TIMER_INTR01_VECTOR_NUM);
+
+    if ( FALSE == context.u8_debugMode )
+    {
+        grd_handle_all_cmds(); 
+    }
 }
 
 void Grd_TIM1_IRQHandler(uint32_t u32_vectorNum)
 {
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
     Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_1); //disable the intr.
-    grd_handle_all_cmds();
-    osdptr->in_debug = s_u8_grdDebugMode;
 
-    if(TRUE == s_u8_grdDebugMode)
+    if ( context.u8_debugMode )
     {
         INTR_NVIC_DisableIRQ(TIMER_INTR01_VECTOR_NUM);                
-        TIM_StopTimer(init_timer0_1);
+        TIM_StopTimer(init_timer0_1);    
+        return;
     }
-    else
+
+    grd_add_snr_daq();
+    switch (Timer1_Delay1_Cnt)
     {
-        grd_add_snr_daq();
-        switch (Timer1_Delay1_Cnt)
-        {
-            case 0:
-                grd_noise_sweep();
-                Timer1_Delay1_Cnt++;
-                break;
+        case 0:
+            grd_noise_sweep();
+            Timer1_Delay1_Cnt++;
+            break;
 
-            case 1:
-                grd_fec_judge();
-                Timer1_Delay1_Cnt++;
-                break;
+        case 1:
+            grd_fec_judge();
+            Timer1_Delay1_Cnt++;
+            break;
 
-            case 2:
-                if(context.rc_skip_freq_mode == AUTO)
-                {
-                    grd_rc_hopfreq();
-                }
-                Timer1_Delay1_Cnt++;
-                break;
+        case 2:
+            if(context.rc_skip_freq_mode == AUTO)
+            {
+                grd_rc_hopfreq();
+            }
+            Timer1_Delay1_Cnt++;
+            break;
 
-            case 3:
-                Timer1_Delay1_Cnt++;
-                break;
+        case 3:
+            Timer1_Delay1_Cnt++;
+            break;
 
-            case 4:
-                Timer1_Delay1_Cnt++;
-                break;
+        case 4:
+            Timer1_Delay1_Cnt++;
+            break;
 
-            case 5:
-                Timer1_Delay1_Cnt++;
-                break;
+        case 5:
+            Timer1_Delay1_Cnt++;
+            break;
 
-            case 6:
-                Timer1_Delay1_Cnt++;
-                BB_grd_GatherOSDInfo();
-                break;
+        case 6:
+            Timer1_Delay1_Cnt++;
+            BB_grd_GatherOSDInfo();
+            break;
 
-            case 7:
-                Timer1_Delay1_Cnt++;
-                if(context.it_skip_freq_mode == AUTO && context.freq_band == RF_2G)
-                {
-                    grd_freq_skip_judge();
-                }
-                break;
+        case 7:
+            Timer1_Delay1_Cnt++;
+            if(context.it_skip_freq_mode == AUTO)
+            {
+                grd_freq_skip_judge();
+            }
+        break;
 
-            case 8:
-                INTR_NVIC_DisableIRQ(TIMER_INTR01_VECTOR_NUM);                
-                TIM_StopTimer(init_timer0_1);
+        case 8:
+            INTR_NVIC_DisableIRQ(TIMER_INTR01_VECTOR_NUM);                
+            TIM_StopTimer(init_timer0_1);
 
-                Timer1_Delay1_Cnt = 0;
-                grd_qam_change_judge();
-                break;
+            Timer1_Delay1_Cnt = 0;
+            grd_qam_change_judge();
+            break;
 
-            default:
-                Timer1_Delay1_Cnt = 0;
-                dlog_error("Timer1_Delay1_Cnt error\n");
-                break;
-        }
+        default:
+            Timer1_Delay1_Cnt = 0;
+            dlog_error("Timer1_Delay1_Cnt error\n");
+            break;
     }
 }
 
@@ -526,7 +543,7 @@ void Grd_Timer1_Init(void)
     init_timer0_1.ctrl |= TIME_ENABLE | USER_DEFINED;
     TIM_RegisterTimer(init_timer0_1, 1200); //1.25ms
     reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, Grd_TIM1_IRQHandler, NULL);
-	INTR_NVIC_SetIRQPriority(TIMER_INTR01_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER01,0));
+    INTR_NVIC_SetIRQPriority(TIMER_INTR01_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER01,0));
 }
 
 void Grd_Timer0_Init(void)
@@ -538,7 +555,7 @@ void Grd_Timer0_Init(void)
     
     TIM_RegisterTimer(init_timer0_0, 2500); //2.5s
     reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, Grd_TIM0_IRQHandler, NULL);
-	INTR_NVIC_SetIRQPriority(TIMER_INTR00_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER00,0));
+    INTR_NVIC_SetIRQPriority(TIMER_INTR00_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER00,0));
 }
 
 
@@ -819,20 +836,6 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
         }
     }
 	
-    if(class == WIRELESS_DEBUG_CHANGE)
-    {
-        switch(item)
-        {
-            case 0:
-                grd_handle_debug_mode_cmd( (uint8_t)value);
-                break;
-
-            default:
-                dlog_error("%s\r\n", "unknown WIRELESS_DEBUG_CHANGE command");
-                break;                
-        }
-    }
-
     if(class == WIRELESS_MISC)
     {
         BB_handle_misc_cmds(pcmd);
@@ -888,7 +891,7 @@ static void BB_grd_GatherOSDInfo(void)
     osdptr->modulation_mode = grd_get_IT_QAM();
     osdptr->code_rate       = grd_get_IT_LDPC();
     osdptr->ch_bandwidth    = context.CH_bandwidth;         
-    osdptr->in_debug        = s_u8_grdDebugMode;
+    osdptr->in_debug        = context.u8_debugMode;
     osdptr->lock_status     = BB_ReadReg(PAGE2, FEC_5_RD);
     memset(osdptr->sweep_energy, 0, sizeof(osdptr->sweep_energy));
     grd_get_sweep_noise(0, osdptr->sweep_energy);
@@ -905,31 +908,3 @@ static void BB_grd_GatherOSDInfo(void)
     osdptr->head = 0x00;
     osdptr->tail = 0xff;    //end of the writing
 }
-
-/*
-  * flag:enter/out debug mode flag
- */
-static void grd_handle_debug_mode_cmd(uint8_t flag)
-{
-    if(!flag)//enter debug mode
-    {
-        if(TRUE != s_u8_grdDebugMode)
-        {
-            context.rc_skip_freq_mode = MANUAL;
-            context.it_skip_freq_mode = MANUAL;
-            context.qam_skip_mode     = MANUAL;
-            s_u8_grdDebugMode = TRUE;
-            dlog_info("grdDebugMode = TRUE");
-        }
-        else
-        {
-            //already debug mode,do nothing.	
-        }
-    }
-    else	//out debug mode
-    {
-        s_u8_grdDebugMode = FALSE;
-        dlog_info("grdDebugMode = FALSE");
-    }
-}
-

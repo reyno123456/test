@@ -53,6 +53,8 @@ typedef struct
     uint8_t u8_idSrcSel; /* 0:id comes from flash,this is default value.
                             1:id comes from automatic search*/
     uint8_t u8_flashId[6]; // 5B(rc_id) + 1B(check)
+    uint8_t u8_debugMode;
+    uint8_t u8_flagdebugRequest;
     ENUM_BB_MODE en_bbmode;
 }CONTEXT;
 

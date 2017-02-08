@@ -32,8 +32,6 @@ typedef struct
 }SEARCH_IDS_LIST;
 
 
-static uint8_t s_u8_skyDebugMode = FALSE;
-
 static SEARCH_IDS_LIST search_id_list;
 static uint32_t start_time_cnt = 0;
 static uint8_t  sky_rc_channel = 0;
@@ -47,7 +45,7 @@ static int sky_timer0_0_running = 0;
 static int sky_timer0_1_running = 0;
 static int switch_5G_count = 0;
 
-static void sky_handle_debug_mode_cmd_event(uint8_t value);
+
 static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd);
 static void sky_handle_all_cmds(void);
 static int32_t sky_chk_flash_id_validity(void);
@@ -166,11 +164,11 @@ void sky_set_McsByIndex(uint8_t idx)
 
 void sky_agc_gain_toggle(void)
 {
-    static int loop = 0;    
-    while(loop < 1000)
+    static int loop = 0;
+    if(loop++ > 50)
     {
         dlog_info("AGCToggle\r\n");  
-        loop ++;        
+        loop = 0; 
     }
 
     if(FAR_AGC == en_agcmode)
@@ -217,13 +215,23 @@ void sky_auto_adjust_agc_gain(void)
 void wimax_vsoc_rx_isr(uint32_t u32_vectorNum)
 {
     INTR_NVIC_DisableIRQ(BB_RX_ENABLE_VECTOR_NUM);   
-	
+    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
+
+    if( context.u8_flagdebugRequest & 0x80)
+    {
+        context.u8_debugMode = (context.u8_flagdebugRequest & 0x01);
+        osdptr->in_debug = context.u8_debugMode;
+        if( context.u8_debugMode )
+        {
+            osdptr->head = 0x00;
+            osdptr->tail = 0xff;    //end of the writing
+        }
+
+        context.u8_flagdebugRequest = 0;
+    }
+
     INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
     TIM_StartTimer(sky_timer0_0);
-
-    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
-    sky_handle_all_cmds();
-    osdptr->in_debug = s_u8_skyDebugMode;
 }
 
 
@@ -238,8 +246,14 @@ void Sky_TIM0_IRQHandler(uint32_t u32_vectorNum)
     
     INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
     TIM_StopTimer(sky_timer0_0);
-
-    if(0 == sky_timer0_1_running && FALSE == s_u8_skyDebugMode)
+    
+    if( context.u8_debugMode )
+    {
+        return;
+    }
+    
+    sky_handle_all_cmds();
+    if(0 == sky_timer0_1_running )
     {
         sky_physical_link_process();
         
@@ -526,15 +540,16 @@ void Sky_TIM1_IRQHandler(uint32_t u32_vectorNum)
 {
     static int Timer1_Delay2_Cnt = 0;    
 
-	if(TRUE == s_u8_skyDebugMode) 
-	{
-		return;
-	}  
- 
 	sky_timer0_1_running = 1; 
 
     dlog_info("sky_search_id_timeout_irq_enable \r\n");
     INTR_NVIC_ClearPendingIRQ(TIMER_INTR01_VECTOR_NUM);
+	
+	if(TRUE == context.u8_debugMode) 
+	{
+		return;
+	}  	
+	
     if(Timer1_Delay2_Cnt < 560)
     {
         Timer1_Delay2_Cnt ++;
@@ -718,30 +733,6 @@ static void sky_handle_MCS_cmd(void)
     }
 }
 
-static void sky_handle_debug_mode_cmd_event(uint8_t value)
-{
-    if(!value)//enter debug mode
-    {
-        if(TRUE != s_u8_skyDebugMode)
-        {
-            context.rc_skip_freq_mode = MANUAL;
-            context.it_skip_freq_mode = MANUAL;
-            context.qam_skip_mode     = MANUAL;
-            s_u8_skyDebugMode = TRUE;
-            dlog_info("skyDebugMode = TRUE");
-        }
-        else
-        {
-            //already debug mode,do nothing.	
-        }
-    }
-    else	//out debug mode
-    {
-        s_u8_skyDebugMode = FALSE;
-        dlog_info("skyDebugMode = FALSE");
-    }
-}
-
 void sky_handle_all_spi_cmds(void)
 {
     sky_handle_RC_cmd();
@@ -833,24 +824,6 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
         }
     }
     
-    if(class == WIRELESS_DEBUG_CHANGE)
-    {
-        switch(item)
-        {
-            case 0:
-                sky_handle_debug_mode_cmd_event( (uint8_t)value);
-                break;
-
-            case 1:
-                BB_WriteReg(PAGE2, 0x02, 0x06);
-                break;
-
-            default:
-                dlog_error("%s\r\n", "unknown WIRELESS_DEBUG_CHANGE command");
-                break;                
-        }
-    }
-
     if(class == WIRELESS_MISC)
     {
         BB_handle_misc_cmds(pcmd);
@@ -897,8 +870,8 @@ static void BB_sky_GatherOSDInfo(void)
     //osdptr->agc_value[2] = BB_ReadReg(PAGE2, RX3_GAIN_ALL_R);
     //osdptr->agc_value[3] = BB_ReadReg(PAGE2, RX4_GAIN_ALL_R);
 
-    osdptr->lock_status    = get_rc_status();
-    osdptr->in_debug     = s_u8_skyDebugMode;
+    osdptr->lock_status  = get_rc_status();
+    osdptr->in_debug     = context.u8_debugMode;
 
     osdptr->head = 0x00;
     osdptr->tail = 0xff;    //end of the writing
