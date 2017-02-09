@@ -32,12 +32,14 @@ SRC_S   := $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
 SRC_C   := main_sky.c command.c test_usbh.c upgrade.c md5.c com_task.c wireless_interface.c \
-           test_hal_uart.c test_hal_spi.c test_hal_i2c.c ../share/testhal_pwm.c
+           test_hal_uart.c test_hal_spi.c test_hal_i2c.c ../share/testhal_pwm.c \
+           ../share/test_hal_spi_flash.c ../share/testhal_gpio.c
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
 SRC_C   := main_ground.c command.c test_usbh.c upgrade.c md5.c com_task.c wireless_interface.c \
-           test_hal_uart.c test_hal_spi.c test_hal_i2c.c ../share/testhal_pwm.c
+           test_hal_uart.c test_hal_spi.c test_hal_i2c.c ../share/testhal_pwm.c \
+           ../share/test_hal_spi_flash.c ../share/testhal_gpio.c
 endif
 
 CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I./ -I../share

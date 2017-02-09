@@ -96,7 +96,7 @@ HAL_RET_T HAL_SPI_MasterInit(ENUM_HAL_SPI_COMPONENT e_spiComponent,
 HAL_RET_T HAL_SPI_MasterWriteRead(ENUM_HAL_SPI_COMPONENT e_spiComponent, 
                                   uint8_t *pu8_wrData,
                                   uint32_t u32_wrSize,
-				  uint8_t *pu8_rdData,
+                                  uint8_t *pu8_rdData,
                                   uint32_t u32_rdSize)
 {
     if (e_spiComponent > HAL_SPI_COMPONENT_7)
@@ -113,9 +113,9 @@ HAL_RET_T HAL_SPI_MasterWriteRead(ENUM_HAL_SPI_COMPONENT e_spiComponent,
     }
     
     SPI_write_read((ENUM_SPI_COMPONENT)(e_spiComponent),
-		    pu8_wrData,
+                    pu8_wrData,
                     u32_wrSize,
-		    pu8_rdData,
+                    pu8_rdData,
                     u32_rdSize);
     return HAL_OK;
 }

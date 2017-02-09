@@ -10,6 +10,9 @@ History:
 *****************************************************************************/
 #ifndef __HAL_NVIC_H
 #define __HAL_NVIC_H
+
+#include "hal_ret_type.h"
+
 typedef enum
 {
     HAL_NVIC_SYSTICK_VECTOR_NUM = 15,                    //15

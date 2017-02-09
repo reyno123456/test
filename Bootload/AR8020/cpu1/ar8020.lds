@@ -49,7 +49,10 @@ SECTIONS
         *(.ramcode)
     } > DTCM1 AT > ITCM1
 
-    _data_end = _data_start + SIZEOF(.data);
+    .data_e :
+    {
+        _data_end = . ;
+    } AT> ITCM1
     
     .bss :
     {

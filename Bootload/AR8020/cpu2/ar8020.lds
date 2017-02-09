@@ -52,7 +52,10 @@ SECTIONS
         *(.ramcode)
     } > DTCM2 AT> ITCM2
 
-    _data_end = _data_start + SIZEOF(.rodata) + SIZEOF(.data); 
+    .data_e :
+    {
+        _data_end = . ;
+    } AT> ITCM2
 
     .bss :
     {

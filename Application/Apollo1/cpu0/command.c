@@ -10,10 +10,15 @@
 #include "test_hal_uart.h"
 #include "test_hal_spi.h"
 #include "test_hal_i2c.h"
+#include "test_hal_spi_flash.h"
+#include "testhal_gpio.h"
+#include "test_usbh.h"
 
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
+void command_startBypassVideo(void);
+void command_stopBypassVideo(void);
 
 void command_run(char *cmdArray[], uint32_t cmdNum)
 {
@@ -27,7 +32,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_writeMemory(cmdArray[1], cmdArray[2]);
     }
-	else if (memcmp(cmdArray[0], "upgrade", strlen("upgrade")) == 0)
+    else if (memcmp(cmdArray[0], "upgrade", strlen("upgrade")) == 0)
     {
         char path[128];
         memset(path,'\0',128);
@@ -84,6 +89,34 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     else if (memcmp(cmdArray[0], "test_hal_i2c_read", strlen("test_hal_i2c_read")) == 0)
     {
         command_TestHalI2cRead(cmdArray[1]);
+    }    
+    else if (memcmp(cmdArray[0], "test_hal_spi_flash_id", strlen("test_hal_spi_flash_id")) == 0)
+    {
+       command_WbFlashID(cmdArray[1]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_spi_flash_write_read", strlen("test_hal_spi_flash_write_read")) == 0)
+    {        
+        command_TestWbFlash(cmdArray[1]);                
+    }
+    else if (memcmp(cmdArray[0], "test_hal_spi_flash_erase", strlen("test_hal_spi_flash_erase")) == 0)
+    {
+       command_TestWbBlockErase(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
+    else if (memcmp(cmdArray[0], "testhal_TestGpioNormal", strlen("testhal_TestGpioNormal")) == 0)
+    {
+        commandhal_TestGpioNormal(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "testhal_TestGpioInterrupt", strlen("testhal_TestGpioInterrupt")) == 0)
+    {
+        commandhal_TestGpioInterrupt(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
+    else if (memcmp(cmdArray[0], "startbypassvideo", strlen("startbypassvideo")) == 0)
+    {
+        command_startBypassVideo();
+    }
+    else if (memcmp(cmdArray[0], "stopbypassvideo", strlen("stopbypassvideo")) == 0)
+    {
+        command_stopBypassVideo();
     }
     /* error command */
     else
@@ -103,6 +136,13 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_hal_i2c_init <ch> <i2c_addr> <speed>");
         dlog_error("test_hal_i2c_write <subAddr + data>");
         dlog_error("test_hal_i2c_read <sub_addr>");
+        dlog_error("test_hal_spi_flash_id <spi_port>");
+        dlog_error("test_hal_spi_flash_write_read <spi_port>");
+        dlog_error("test_hal_spi_flash_erase <spi_port>");
+        dlog_error("testhal_TestGpioNormal <gpionum> <highorlow>");
+        dlog_error("testhal_TestGpioInterrupt <gpionum> <inttype> <polarity>");
+        dlog_error("startbypassvideo");
+        dlog_error("stopbypassvideo");
         dlog_output(1000);
     }
 }
@@ -170,4 +210,36 @@ void command_writeMemory(char *addr, char *value)
     *((unsigned int *)(writeAddress)) = writeValue;
 }
 
+void command_startBypassVideo(void)
+{
+    USBH_APP_EVENT_DEF  usbhAppType;
 
+    usbhAppType = USBH_APP_START_BYPASS_VIDEO;
+
+    if (0 == g_usbhBypassVideoCtrl.taskActivate)
+    {
+        g_usbhBypassVideoCtrl.taskActivate  = 1;
+        osMessagePut(g_usbhAppCtrl.usbhAppEvent, usbhAppType, 0);
+    }
+    else
+    {
+        dlog_error("Bypass Video Task is running\n");
+    }
+}
+
+void command_stopBypassVideo(void)
+{
+    USBH_APP_EVENT_DEF  usbhAppType;
+
+    usbhAppType = USBH_APP_STOP_BYPASS_VIDEO;
+
+    if (1 == g_usbhBypassVideoCtrl.taskActivate)
+    {
+        g_usbhBypassVideoCtrl.taskActivate  = 0;
+        osMessagePut(g_usbhAppCtrl.usbhAppEvent, usbhAppType, 0);
+    }
+    else
+    {
+        dlog_error("Bypass Video Task is not running\n");
+    }
+}

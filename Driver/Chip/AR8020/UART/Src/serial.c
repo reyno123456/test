@@ -172,12 +172,12 @@ void UART_IntrSrvc(uint32_t u32_vectorNum)
         if ((u32_uartStatus & UART_LSR_DATAREADY) == UART_LSR_DATAREADY)
         {
             u8_uartRxBuf[u8_uartRxLen] = pst_uartRegs->RBR_THR_DLL;
-	    u8_uartRxLen += 1;
+            u8_uartRxLen += 1;
         }
-	if(u8_uartRxLen >= 64)
-	{
-	    break;
-	}
+        if(u8_uartRxLen >= 64)
+        {
+            break;
+        }
 
         u32_uartStatus = pst_uartRegs->LSR;
         u32_uartIsrType = pst_uartRegs->IIR_FCR;

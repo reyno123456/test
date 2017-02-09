@@ -1,9 +1,9 @@
 #include <stdint.h>
 #include "com_task.h"
 #include "cmsis_os.h"
-#include "interrupt.h"
-#include "bb_uart_com.h"
-#include "serial.h"
+#include "hal_nvic.h"
+#include "hal_bb.h"
+#include "hal_uart.h"
 #include "debuglog.h"
 #include "systicks.h"
 
@@ -38,7 +38,7 @@ static void COMTASK_FlushTxBufferToUart(osMessageQId QueueId)
             osMutexWait(tx_buf_mutex0_id, osWaitForever);
             if (tx_buf0_index != 0)
             {
-                BB_UARTComSendMsg(BB_UART_COM_SESSION_1, tx_buf0, tx_buf0_index);
+                HAL_BB_UartComSendMsg(BB_UART_COM_SESSION_1, tx_buf0, tx_buf0_index);
                 tx_buf0_index = 0;
             }
             osMutexRelease(tx_buf_mutex0_id);
@@ -48,7 +48,7 @@ static void COMTASK_FlushTxBufferToUart(osMessageQId QueueId)
             osMutexWait(tx_buf_mutex1_id, osWaitForever);
             if (tx_buf1_index != 0)
             {
-                BB_UARTComSendMsg(BB_UART_COM_SESSION_2, tx_buf1, tx_buf1_index);
+                HAL_BB_UartComSendMsg(BB_UART_COM_SESSION_2, tx_buf1, tx_buf1_index);
                 tx_buf1_index = 0;
             }
             osMutexRelease(tx_buf_mutex1_id);
@@ -56,64 +56,42 @@ static void COMTASK_FlushTxBufferToUart(osMessageQId QueueId)
     }
 }
 
-static void COMTASK_UartIrqHandler3(uint32_t u32_vectorNum)
+static uint32_t COMTASK_UartIrqHandler3(uint8_t *pu8_rxBuf, uint8_t u8_len)
 {
-    char                  c;
-    unsigned int          status;
-    unsigned int          isrType;
-    volatile uart_type   *uart_regs = (uart_type *)UART3_BASE;
+    uint8_t u8_i;
 
-    status     = uart_regs->LSR;
-    isrType    = uart_regs->IIR_FCR;
-
-    /* receive data irq, try to get the data */
-    if (UART_IIR_RECEIVEDATA == (isrType & UART_IIR_RECEIVEDATA))
+    for(u8_i = 0; u8_i < u8_len; u8_i++)
     {
-        if ((status & UART_LSR_DATAREADY) == UART_LSR_DATAREADY)
-        {
-            c = uart_regs->RBR_THR_DLL;
-            COMTASK_SendDataToQueue(com_queue0_id, c);
-            tx_last_byte_timeout0 = 0;
-        }
+        COMTASK_SendDataToQueue(com_queue0_id, pu8_rxBuf[u8_i]);   
     }
 }
 
-static void COMTASK_UartIrqHandler4(uint32_t u32_vectorNum)
+static uint32_t COMTASK_UartIrqHandler4(uint8_t *pu8_rxBuf, uint8_t u8_len)
 {
-    char                  c;
-    unsigned int          status;
-    unsigned int          isrType;
-    volatile uart_type   *uart_regs = (uart_type *)UART4_BASE;
+    uint8_t u8_i;
 
-    status     = uart_regs->LSR;
-    isrType    = uart_regs->IIR_FCR;
-
-    /* receive data irq, try to get the data */
-    if (UART_IIR_RECEIVEDATA == (isrType & UART_IIR_RECEIVEDATA))
+    for(u8_i = 0; u8_i < u8_len; u8_i++)
     {
-        if ((status & UART_LSR_DATAREADY) == UART_LSR_DATAREADY)
-        {
-            c = uart_regs->RBR_THR_DLL;
-            COMTASK_SendDataToQueue(com_queue1_id, c);
-            tx_last_byte_timeout1 = 0;
-        }
+        COMTASK_SendDataToQueue(com_queue1_id, pu8_rxBuf[u8_i]);   
     }
 }
 
 static void COMTASK_UartInit0(void)
 {
-    uart_init(3, 115200);
-    reg_IrqHandle(UART_INTR3_VECTOR_NUM, COMTASK_UartIrqHandler3, NULL);
-    INTR_NVIC_EnableIRQ(UART_INTR3_VECTOR_NUM);
-    INTR_NVIC_SetIRQPriority(UART_INTR3_VECTOR_NUM, 1);
+    HAL_UART_Init(HAL_UART_COMPONENT_3, 
+                  HAL_UART_BAUDR_115200, 
+                  COMTASK_UartIrqHandler3);
+
+    HAL_NVIC_SetPriority(HAL_NVIC_UART_INTR3_VECTOR_NUM, 5, 0);
 }
 
 static void COMTASK_UartInit1(void)
 {
-    uart_init(4, 115200);
-    reg_IrqHandle(UART_INTR4_VECTOR_NUM, COMTASK_UartIrqHandler4, NULL);
-    INTR_NVIC_EnableIRQ(UART_INTR4_VECTOR_NUM);
-    INTR_NVIC_SetIRQPriority(UART_INTR4_VECTOR_NUM, 1);
+    HAL_UART_Init(HAL_UART_COMPONENT_4, 
+                  HAL_UART_BAUDR_115200, 
+                  COMTASK_UartIrqHandler4);
+
+    HAL_NVIC_SetPriority(HAL_NVIC_UART_INTR4_VECTOR_NUM, 5, 0);
 }
 
 static void COMTASK_Tx0Function(void const *argument)
@@ -178,7 +156,6 @@ static void COMTASK_Tx1Function(void const *argument)
 
 static void COMTASK_Rx0Function(void const *argument)
 {
-    uint8_t i = 0;
     uint8_t cnt = 0;
 
     static uint8_t tx_last_byte_timeout0_bak = 0;
@@ -187,35 +164,26 @@ static void COMTASK_Rx0Function(void const *argument)
     {
         COMTASK_FlushTxBufferToUart(com_queue0_id);
     
-        i = 0;
         cnt = BB_UARTComReceiveMsg(BB_UART_COM_SESSION_1, rx_buf0, sizeof(rx_buf0));
 
-        while (i < cnt)
-        {
-            uart_putc(3, rx_buf0[i]);
-            i++;
-        }
+        HAL_UART_TxData(HAL_UART_COMPONENT_3, rx_buf0, cnt);
+
         osDelay(20);
     }
 }
 
 static void COMTASK_Rx1Function(void const *argument)
 {
-    uint8_t i = 0;
     uint8_t cnt = 0;
     
     while (1)
     {
         COMTASK_FlushTxBufferToUart(com_queue1_id);
         
-        i = 0;
         cnt = BB_UARTComReceiveMsg(BB_UART_COM_SESSION_2, rx_buf1, sizeof(rx_buf1));
 
-        while (i < cnt)
-        {
-            uart_putc(4, rx_buf1[i]);
-            i++;
-        }
+        HAL_UART_TxData(HAL_UART_COMPONENT_4, rx_buf1, cnt);
+
         osDelay(20);
     }
 }

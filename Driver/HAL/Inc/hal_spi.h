@@ -102,7 +102,7 @@ HAL_RET_T HAL_SPI_MasterInit(ENUM_HAL_SPI_COMPONENT e_spiComponent,
 HAL_RET_T HAL_SPI_MasterWriteRead(ENUM_HAL_SPI_COMPONENT e_spiComponent, 
                                   uint8_t *pu8_wrData,
                                   uint32_t u32_wrSize,
-				  uint8_t *pu8_rdData,
+                                  uint8_t *pu8_rdData,
                                   uint32_t u32_rdSize);
 
 #endif
