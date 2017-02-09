@@ -1824,6 +1824,31 @@ void USB_LL_OTG0_IRQHandler(uint32_t u32_vectorNum)
 
 void USB_LL_OTG1_IRQHandler(uint32_t u32_vectorNum)
 {
+  STRU_SysEvent_OTG_HOST_DEV_SWITCH     stSyseventOtgHostDevSwitch;
+
+  if (USB_OTG1_HS->GINTSTS & USB_OTG_GINTSTS_CIDSCHG)
+  {
+    stSyseventOtgHostDevSwitch.otg_port_id = 1;
+
+    if (USB_OTG1_HS->GINTSTS & 0x01)
+    {
+      /* set to usb host */
+      stSyseventOtgHostDevSwitch.otg_state = 1;
+    }
+    else
+    {
+      /* set to usb device */
+      stSyseventOtgHostDevSwitch.otg_state = 0;
+    }
+
+    USB_OTG1_HS->GINTSTS |= USB_OTG_GINTSTS_CIDSCHG;
+
+    SYS_EVENT_Notify_From_ISR(SYS_EVENT_ID_USB_SWITCH_HOST_DEVICE,
+                              (void *)&stSyseventOtgHostDevSwitch);
+
+    return;
+  }
+
   if (USB_OTG1_HS->GINTSTS & 0x01)
   {
     HAL_HCD_IRQHandler(&hhcd[1]);
