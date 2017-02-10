@@ -12,7 +12,7 @@ OUTPUT_BIN_STAGING_DIR ?= $(OUTPUT_DIR)/Staging/Bin
 UTILITY_DIR ?= $(TOP_DIR)/Utility
 CONFIGURE_DIR ?= $(TOP_DIR)/Configure/Include/
 SDK_DIR ?= $(OUTPUT_DIR)/AR8020SDK
-SDK_DIR_VERSION ?= $(OUTPUT_DIR)/"AR8020SDK_""`sed -n '1,1p' ../../../Document/Version`"
+SDK_DIR_VERSION ?= $(OUTPUT_DIR)/"AR8020SDK_""`sed -n '1,1p' ../../../Document/version`"
 
 # current directory
 CURDIR ?= $(shell pwd)
