@@ -27,7 +27,7 @@ History:
  * @return  HAL_OK:                         means init baseband 
  *          HAL_BB_ERR_INIT:                means some error happens in init session 
  */
-HAL_RET_T HAL_BB_initGround( void );
+HAL_RET_T HAL_BB_InitGround( void );
 
 
 /** 
@@ -36,7 +36,7 @@ HAL_RET_T HAL_BB_initGround( void );
  * @return  HAL_OK:                         means init baseband 
  *          HAL_BB_ERR_INIT:                means some error happens in init session 
  */
-HAL_RET_T HAL_BB_initSky( void );
+HAL_RET_T HAL_BB_InitSky( void );
 
 
 
@@ -263,7 +263,7 @@ HAL_RET_T HAL_BB_SetItOnlyFreqProxy(uint8_t mode);
  * @retval  HAL_BB_ERR_SPI_WRITE            spi write fail
  * @note    The function can only be called by cpu0,1, and only call for debug.
  */
-HAL_RET_T HAL_RF8003s_writeReg(uint8_t u8_addr, uint8_t u8_data);
+HAL_RET_T HAL_RF8003S_WriteReg(uint8_t u8_addr, uint8_t u8_data);
 
 
 /** 
@@ -274,7 +274,7 @@ HAL_RET_T HAL_RF8003s_writeReg(uint8_t u8_addr, uint8_t u8_data);
  * @retval  HAL_BB_ERR_SPI_READ             spi read fail
  * @note    The function can only be called by cpu0,1, and only call for debug.
  */
-HAL_RET_T HAL_RF8003s_readByte(uint8_t u8_addr, uint8_t *pu8_regValue);
+HAL_RET_T HAL_RF8003S_ReadByte(uint8_t u8_addr, uint8_t *pu8_regValue);
 
 
 /** 
@@ -286,7 +286,7 @@ HAL_RET_T HAL_RF8003s_readByte(uint8_t u8_addr, uint8_t *pu8_regValue);
  * @retval  HAL_BB_ERR_SPI_WRITE            spi write fail
  * @note    The function can only be called by cpu0,1, and only call for debug.
  */
-HAL_RET_T HAL_BB_writeByte(ENUM_REG_PAGES e_page, uint8_t u8_addr, uint8_t u8_data);
+HAL_RET_T HAL_BB_WriteByte(ENUM_REG_PAGES e_page, uint8_t u8_addr, uint8_t u8_data);
 
 
 
@@ -298,7 +298,7 @@ HAL_RET_T HAL_BB_writeByte(ENUM_REG_PAGES e_page, uint8_t u8_addr, uint8_t u8_da
  * @retval  HAL_BB_ERR_SPI_WRITE            spi write fail
  * @note    The function can only be called by cpu0,1, and only call for debug.
  */
-HAL_RET_T HAL_BB_curPageWriteByte(uint8_t u8_addr, uint8_t u8_data);
+HAL_RET_T HAL_BB_CurPageWriteByte(uint8_t u8_addr, uint8_t u8_data);
 
 
 
@@ -310,13 +310,14 @@ HAL_RET_T HAL_BB_curPageWriteByte(uint8_t u8_addr, uint8_t u8_data);
  * @retval  HAL_BB_ERR_SPI_WRITE            spi write fail
  * @note    The function can only be called by cpu0,1, and only call for debug.
  */
-HAL_RET_T HAL_BB_curPageReadByte(uint8_t u8_addr, uint8_t *pu8_regValue);
+HAL_RET_T HAL_BB_CurPageReadByte(uint8_t u8_addr, uint8_t *pu8_regValue);
 
 /** 
- * @brief       
- * @param   
- * @retval      
- * @note      
+ * @brief   Set baseband sky to auto search the ground RC id
+ * @param   NONE
+ * @retval  HAL_OK:                    means command is sent sucessfully. 
+            HAL_BB_ERR_EVENT_NOTIFY:   means error happens in sending the command to cpu2
+ * @note    
  */
 HAL_RET_T HAL_BB_SetAutoSearchRcId(void);
 

@@ -35,7 +35,7 @@ int main(void)
     st_h264Cfg.u8_view1BrEn = 1;
     HAL_H264_Init(st_h264Cfg);
     
-    HAL_BB_initSky( );
+    HAL_BB_InitSky( );
 
     for( ;; )
     {

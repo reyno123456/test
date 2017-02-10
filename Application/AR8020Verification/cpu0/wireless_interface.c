@@ -151,7 +151,7 @@ uint8_t WIRELESS_INTERFACE_ENTER_TEST_MODE_Handler(void *param)
     WITELESS_GetOSDInfo();
     if (g_stWirelessInfoSend.in_debug == 1)
     {
-        HAL_BB_writeByte(PAGE2, 0x02, 0x06);
+        HAL_BB_WriteByte(PAGE2, 0x02, 0x06);
     }
     else
     {
@@ -257,7 +257,7 @@ uint8_t WIRELESS_INTERFACE_WRITE_BB_REG_Handler(void *param)
     WITELESS_GetOSDInfo();
     if (g_stWirelessInfoSend.in_debug == 1)
     {
-        if (HAL_BB_curPageWriteByte(recvMessage->paramData[0], recvMessage->paramData[1]))
+        if (HAL_BB_CurPageWriteByte(recvMessage->paramData[0], recvMessage->paramData[1]))
         {
             dlog_error("write fail!\n");
 
@@ -294,7 +294,7 @@ uint8_t WIRELESS_INTERFACE_READ_BB_REG_Handler(void *param)
         recvMessage->messageId = 0x0f;
         recvMessage->paramLen = 2;
         recvMessage->paramData[0] = recvMessage->paramData[0];
-        HAL_BB_curPageReadByte(recvMessage->paramData[0], &recvMessage->paramData[1]);
+        HAL_BB_CurPageReadByte(recvMessage->paramData[0], &recvMessage->paramData[1]);
 
         if (HAL_OK != HAL_USB_DeviceSendCtrl((uint8_t *)recvMessage, sizeof(recvMessage)))
         {
@@ -424,7 +424,7 @@ uint8_t WIRELESS_INTERFACE_SELECT_VIDEO_FREQ_CHANNEL_Handler(void *param)
     {
         for (u8_index = 0; u8_index < recvMessage->paramData[2]; ++u8_index)
         {
-            HAL_BB_writeByte(recvMessage->paramData[0],recvMessage->paramData[1],recvMessage->paramData[u8_index+3]);
+            HAL_BB_WriteByte(recvMessage->paramData[0],recvMessage->paramData[1],recvMessage->paramData[u8_index+3]);
             recvMessage->paramData[1] += 1;
         }
     }
@@ -460,7 +460,7 @@ uint8_t WIRELESS_INTERFACE_SET_RC_FREQ_CHANNEL_Handler(void *param)
     {
         for (u8_index = 0; u8_index < recvMessage->paramData[2]; ++u8_index)
         {
-            HAL_BB_writeByte(recvMessage->paramData[0],recvMessage->paramData[1],recvMessage->paramData[u8_index+3]);
+            HAL_BB_WriteByte(recvMessage->paramData[0],recvMessage->paramData[1],recvMessage->paramData[u8_index+3]);
             recvMessage->paramData[1] += 1;
         }
     }
@@ -624,7 +624,7 @@ uint8_t WIRELESS_INTERFACE_WRITE_RF_REG_Handler(void *param)
     dlog_info("ID = %x\n",recvMessage->messageId);
     if (g_stWirelessInfoSend.in_debug == 1)
     {
-        if (HAL_RF8003s_writeReg(recvMessage->paramData[0], recvMessage->paramData[1]))
+        if (HAL_RF8003S_WriteReg(recvMessage->paramData[0], recvMessage->paramData[1]))
         {
             dlog_error("write fail!\n");
 
@@ -659,7 +659,7 @@ uint8_t WIRELESS_INTERFACE_READ_RF_REG_Handler(void *param)
         recvMessage->messageId = 0x3A;
         recvMessage->paramLen = 2;
         recvMessage->paramData[0] = recvMessage->paramData[0];
-        if (HAL_RF8003s_readByte(recvMessage->paramData[0],&recvMessage->paramData[1]))
+        if (HAL_RF8003S_ReadByte(recvMessage->paramData[0],&recvMessage->paramData[1]))
         {
             dlog_error("read rf8003s error\n");
 

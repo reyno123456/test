@@ -25,7 +25,7 @@ History:
  * @return  HAL_OK:                         means init baseband 
  *          HAL_BB_ERR_INIT:                means some error happens in init session 
  */
-HAL_RET_T HAL_BB_initSky( void )
+HAL_RET_T HAL_BB_InitSky( void )
 {
     BB_init( BB_SKY_MODE );
     BB_SKY_start();
@@ -34,10 +34,11 @@ HAL_RET_T HAL_BB_initSky( void )
 }
 
 /** 
- * @brief       
- * @param   
- * @retval      
- * @note      
+ * @brief   Set baseband sky to auto search the ground RC id
+ * @param   NONE
+ * @retval  HAL_OK:                    means command is sent sucessfully. 
+            HAL_BB_ERR_EVENT_NOTIFY:   means error happens in sending the command to cpu2
+ * @note    
  */
 HAL_RET_T HAL_BB_SetAutoSearchRcId(void)
 {

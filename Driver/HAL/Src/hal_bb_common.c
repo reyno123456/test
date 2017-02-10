@@ -491,7 +491,7 @@ HAL_RET_T HAL_BB_SetItOnlyFreqProxy(uint8_t mode)
  * @retval  HAL_BB_ERR_SPI_WRITE            spi write fail
  * @note    The function can only be called by cpu0,1, and only call for debug.
  */
-HAL_RET_T HAL_RF8003s_writeReg(uint8_t u8_addr, uint8_t u8_data)
+HAL_RET_T HAL_RF8003S_WriteReg(uint8_t u8_addr, uint8_t u8_data)
 { 
     if (0 == RF8003s_SPI_WriteReg(u8_addr, u8_data))
     {
@@ -511,7 +511,7 @@ HAL_RET_T HAL_RF8003s_writeReg(uint8_t u8_addr, uint8_t u8_data)
  * @retval  HAL_BB_ERR_SPI_READ             spi read fail
  * @note    The function can only be called by cpu0,1, and only call for debug.
  */
-HAL_RET_T HAL_RF8003s_readByte(uint8_t u8_addr, uint8_t *pu8_regValue)
+HAL_RET_T HAL_RF8003S_ReadByte(uint8_t u8_addr, uint8_t *pu8_regValue)
 {
     if ( 0 == RF8003s_SPI_ReadReg(u8_addr, pu8_regValue))
     {
@@ -533,7 +533,7 @@ HAL_RET_T HAL_RF8003s_readByte(uint8_t u8_addr, uint8_t *pu8_regValue)
  * @retval  HAL_BB_ERR_SPI_WRITE            spi write fail
  * @note    The function can only be called by cpu0,1, and only call for debug.
  */
-HAL_RET_T HAL_BB_writeByte(ENUM_REG_PAGES e_page, uint8_t u8_addr, uint8_t u8_data)
+HAL_RET_T HAL_BB_WriteByte(ENUM_REG_PAGES e_page, uint8_t u8_addr, uint8_t u8_data)
 {
     if (0 == BB_SPI_WriteByte(e_page, u8_addr, u8_data))
     {
@@ -554,7 +554,7 @@ HAL_RET_T HAL_BB_writeByte(ENUM_REG_PAGES e_page, uint8_t u8_addr, uint8_t u8_da
  * @retval  HAL_BB_ERR_SPI_WRITE            spi write fail
  * @note    The function can only be called by cpu0,1, and only call for debug.
  */
-HAL_RET_T HAL_BB_curPageWriteByte(uint8_t u8_addr, uint8_t u8_data)
+HAL_RET_T HAL_BB_CurPageWriteByte(uint8_t u8_addr, uint8_t u8_data)
 {
     if (0 == BB_SPI_curPageWriteByte(u8_addr, u8_data))
     {
@@ -574,7 +574,7 @@ HAL_RET_T HAL_BB_curPageWriteByte(uint8_t u8_addr, uint8_t u8_data)
  * @retval  HAL_BB_ERR_SPI_WRITE            spi write fail
  * @note    The function can only be called by cpu0,1, and only call for debug.
  */
-HAL_RET_T HAL_BB_curPageReadByte(uint8_t u8_addr, uint8_t *pu8_regValue)
+HAL_RET_T HAL_BB_CurPageReadByte(uint8_t u8_addr, uint8_t *pu8_regValue)
 {
     *pu8_regValue = BB_SPI_curPageReadByte(u8_addr);
     

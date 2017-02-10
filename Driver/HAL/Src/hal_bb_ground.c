@@ -24,7 +24,7 @@ History:
  * @return  HAL_OK:                         means init baseband 
  *          HAL_BB_ERR_INIT:                means some error happens in init session 
  */
-HAL_RET_T HAL_BB_initGround( void )
+HAL_RET_T HAL_BB_InitGround( void )
 {
     BB_init( BB_GRD_MODE );
 	BB_GRD_start();

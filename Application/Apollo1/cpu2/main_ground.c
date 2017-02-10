@@ -24,7 +24,7 @@ int main(void)
     console_init(2, 115200);
     dlog_info("main ground function start \n");
     
-    HAL_BB_initGround();
+    HAL_BB_InitGround();
 
     /* We should never get here as control is now taken by the scheduler */
     for( ;; )
