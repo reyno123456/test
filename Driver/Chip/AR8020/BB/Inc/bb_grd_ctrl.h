@@ -46,9 +46,9 @@ void grd_handle_IT_mode_cmd(ENUM_RUN_MODE mode);
 
 void grd_handle_IT_CH_cmd(uint8_t ch);
 
-static void Grd_Timer1_Init(void);
+static void Grd_Timer2_7_Init(void);
 
-static void Grd_Timer0_Init(void);
+static void Grd_Timer2_6_Init(void);
 
 static void grd_handle_RF_band_cmd(ENUM_RF_BAND rf_band);
 

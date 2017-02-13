@@ -20,9 +20,9 @@ uint8_t get_rc_status(void);
 
 void BB_SKY_start(void);
 
-void sky_Timer1_Init(void);
+void sky_Timer2_7_Init(void);
 
-void sky_Timer0_Init(void);
+void sky_Timer2_6_Init(void);
 
 void sky_id_search_init(void);
 

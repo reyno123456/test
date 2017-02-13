@@ -38,11 +38,11 @@ static uint8_t  sky_rc_channel = 0;
 
 static enum EN_AGC_MODE en_agcmode = UNKOWN_AGC;
 
-static init_timer_st sky_timer0_0;
-static init_timer_st sky_timer0_1;
+static init_timer_st sky_timer2_6;
+static init_timer_st sky_timer2_7;
 
-static int sky_timer0_0_running = 0;
-static int sky_timer0_1_running = 0;
+static int sky_timer2_6_running = 0;
+static int sky_timer2_7_running = 0;
 static int switch_5G_count = 0;
 
 
@@ -73,8 +73,8 @@ void BB_SKY_start(void)
     GPIO_SetPin(RED_LED_GPIO, 0);   //RED LED ON
     GPIO_SetPin(BLUE_LED_GPIO, 1);  //BLUE LED OFF
 
-    sky_Timer0_Init();
-    sky_Timer1_Init();    
+    sky_Timer2_6_Init();
+    sky_Timer2_7_Init();    
     sky_search_id_timeout_irq_enable(); //enabole TIM1 timeout
 
     reg_IrqHandle(BB_RX_ENABLE_VECTOR_NUM, wimax_vsoc_rx_isr, NULL);
@@ -230,22 +230,22 @@ void wimax_vsoc_rx_isr(uint32_t u32_vectorNum)
         context.u8_flagdebugRequest = 0;
     }
 
-    INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
-    TIM_StartTimer(sky_timer0_0);
+    INTR_NVIC_EnableIRQ(TIMER_INTR26_VECTOR_NUM);
+    TIM_StartTimer(sky_timer2_6);
 }
 
 
-void Sky_TIM0_IRQHandler(uint32_t u32_vectorNum)
+void Sky_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
 {
-    sky_timer0_0_running = 1;
+    sky_timer2_6_running = 1;
     sky_search_id_timeout_irq_disable();
 
-    Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_0);
+    Reg_Read32(BASE_ADDR_TIMER2 + TMRNEOI_6);
     INTR_NVIC_ClearPendingIRQ(BB_RX_ENABLE_VECTOR_NUM); //clear pending after TX Enable is LOW. MUST!
     INTR_NVIC_EnableIRQ(BB_RX_ENABLE_VECTOR_NUM);  
     
-    INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
-    TIM_StopTimer(sky_timer0_0);
+    INTR_NVIC_DisableIRQ(TIMER_INTR26_VECTOR_NUM);
+    TIM_StopTimer(sky_timer2_6);
     
     if( context.u8_debugMode )
     {
@@ -253,7 +253,7 @@ void Sky_TIM0_IRQHandler(uint32_t u32_vectorNum)
     }
     
     sky_handle_all_cmds();
-    if(0 == sky_timer0_1_running )
+    if(0 == sky_timer2_7_running )
     {
         sky_physical_link_process();
         
@@ -267,7 +267,7 @@ void Sky_TIM0_IRQHandler(uint32_t u32_vectorNum)
         BB_sky_GatherOSDInfo();
     }
 
-    sky_timer0_0_running = 0;
+    sky_timer2_6_running = 0;
 }
 
 
@@ -516,12 +516,12 @@ uint8_t* sky_id_search_get_best_id(void)
 
 int sky_search_id_timeout_irq_enable()
 {
-    TIM_StartTimer(sky_timer0_1);
+    TIM_StartTimer(sky_timer2_7);
 }
 
 int sky_search_id_timeout_irq_disable()
 {
-    TIM_StopTimer(sky_timer0_1);
+    TIM_StopTimer(sky_timer2_7);
 }
 
 
@@ -536,14 +536,14 @@ void sky_search_id_timeout(void)
     sky_soft_reset();
 }
 
-void Sky_TIM1_IRQHandler(uint32_t u32_vectorNum)
+void Sky_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
 {
     static int Timer1_Delay2_Cnt = 0;    
 
-	sky_timer0_1_running = 1; 
+	sky_timer2_7_running = 1; 
 
     dlog_info("sky_search_id_timeout_irq_enable \r\n");
-    INTR_NVIC_ClearPendingIRQ(TIMER_INTR01_VECTOR_NUM);
+    INTR_NVIC_ClearPendingIRQ(TIMER_INTR27_VECTOR_NUM);
 	
 	if(TRUE == context.u8_debugMode) 
 	{
@@ -556,39 +556,39 @@ void Sky_TIM1_IRQHandler(uint32_t u32_vectorNum)
     }
     else
     {
-        if(sky_timer0_0_running == 0) //To avoid the spi access conflict
+        if(sky_timer2_6_running == 0) //To avoid the spi access conflict
         {
             sky_search_id_timeout();
         }
         Timer1_Delay2_Cnt = 0;
     }
 
-    sky_timer0_1_running = 0;
+    sky_timer2_7_running = 0;
 }
 
 
-void sky_Timer1_Init(void)
+void sky_Timer2_7_Init(void)
 {
-    sky_timer0_1.base_time_group = 0;
-    sky_timer0_1.time_num = 1;
-    sky_timer0_1.ctrl = 0;
-    sky_timer0_1.ctrl |= TIME_ENABLE | USER_DEFINED;
-    TIM_RegisterTimer(sky_timer0_1, 1000);
-    reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, Sky_TIM1_IRQHandler, NULL);
-	INTR_NVIC_SetIRQPriority(TIMER_INTR01_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER01,0));
+    sky_timer2_7.base_time_group = 2;
+    sky_timer2_7.time_num = 7;
+    sky_timer2_7.ctrl = 0;
+    sky_timer2_7.ctrl |= TIME_ENABLE | USER_DEFINED;
+    TIM_RegisterTimer(sky_timer2_7, 1000);
+    reg_IrqHandle(TIMER_INTR27_VECTOR_NUM, Sky_TIM2_7_IRQHandler, NULL);
+	INTR_NVIC_SetIRQPriority(TIMER_INTR27_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER01,0));
 }
 
-void sky_Timer0_Init(void)
+void sky_Timer2_6_Init(void)
 {
-    sky_timer0_0.base_time_group = 0;
-    sky_timer0_0.time_num = 0;
-    sky_timer0_0.ctrl = 0;
-    sky_timer0_0.ctrl |= TIME_ENABLE | USER_DEFINED;
+    sky_timer2_6.base_time_group = 2;
+    sky_timer2_6.time_num = 6;
+    sky_timer2_6.ctrl = 0;
+    sky_timer2_6.ctrl |= TIME_ENABLE | USER_DEFINED;
 
-    TIM_RegisterTimer(sky_timer0_0, 6800);
+    TIM_RegisterTimer(sky_timer2_6, 6800);
 
-    reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, Sky_TIM0_IRQHandler, NULL);
-	INTR_NVIC_SetIRQPriority(TIMER_INTR00_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER00,0));
+    reg_IrqHandle(TIMER_INTR26_VECTOR_NUM, Sky_TIM2_6_IRQHandler, NULL);
+	INTR_NVIC_SetIRQPriority(TIMER_INTR26_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER00,0));
 }
 
 

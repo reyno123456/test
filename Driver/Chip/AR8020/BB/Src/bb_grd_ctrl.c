@@ -25,8 +25,8 @@ typedef enum
 #define SNR_STATIC_UP_THRESHOD      (5)
 #define SNR_STATIC_DOWN_THRESHOD    (2)
 
-static init_timer_st init_timer0_0;
-static init_timer_st init_timer0_1;
+static init_timer_st grd_timer2_6;
+static init_timer_st grd_timer2_7;
 static uint8_t Timer1_Delay1_Cnt = 0;
 static uint8_t snr_static_count = SNR_STATIC_START_VALUE;
 
@@ -47,8 +47,8 @@ void BB_GRD_start(void)
     GPIO_SetPin(BLUE_LED_GPIO, 1);  //BLUE LED OFF
     
     BB_Grd_SetRCId(context.u8_flashId);
-    Grd_Timer0_Init();
-    Grd_Timer1_Init();
+    Grd_Timer2_6_Init();
+    Grd_Timer2_7_Init();
 
     BB_set_Rcfrq(context.freq_band, 0);
     grd_set_it_skip_freq(context.cur_IT_ch);
@@ -435,26 +435,26 @@ void wimax_vsoc_tx_isr(uint32_t u32_vectorNum)
     }
 
     {
-        TIM_StartTimer(init_timer0_0);
-        INTR_NVIC_EnableIRQ(TIMER_INTR00_VECTOR_NUM);
+        TIM_StartTimer(grd_timer2_6);
+        INTR_NVIC_EnableIRQ(TIMER_INTR26_VECTOR_NUM);
     }
 }
 
-void Grd_TIM0_IRQHandler(uint32_t u32_vectorNum)
+void Grd_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
 {
-    Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_0);
+    Reg_Read32(BASE_ADDR_TIMER2 + TMRNEOI_6);
 
     //Enable BB_TX intr
     INTR_NVIC_ClearPendingIRQ(BB_TX_ENABLE_VECTOR_NUM); //clear pending after TX Enable is LOW. MUST
     INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);
 
     //Disable TIM0 intr
-    INTR_NVIC_DisableIRQ(TIMER_INTR00_VECTOR_NUM);
-    TIM_StopTimer(init_timer0_0);
+    INTR_NVIC_DisableIRQ(TIMER_INTR26_VECTOR_NUM);
+    TIM_StopTimer(grd_timer2_6);
     
     //Enable TIM1 intr
-    TIM_StartTimer(init_timer0_1);
-    INTR_NVIC_EnableIRQ(TIMER_INTR01_VECTOR_NUM);
+    TIM_StartTimer(grd_timer2_7);
+    INTR_NVIC_EnableIRQ(TIMER_INTR27_VECTOR_NUM);
 
     if ( FALSE == context.u8_debugMode )
     {
@@ -462,15 +462,15 @@ void Grd_TIM0_IRQHandler(uint32_t u32_vectorNum)
     }
 }
 
-void Grd_TIM1_IRQHandler(uint32_t u32_vectorNum)
+void Grd_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
 {
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
-    Reg_Read32(BASE_ADDR_TIMER0 + TMRNEOI_1); //disable the intr.
+    Reg_Read32(BASE_ADDR_TIMER2 + TMRNEOI_7); //disable the intr.
 
     if ( context.u8_debugMode )
     {
-        INTR_NVIC_DisableIRQ(TIMER_INTR01_VECTOR_NUM);                
-        TIM_StopTimer(init_timer0_1);    
+        INTR_NVIC_DisableIRQ(TIMER_INTR27_VECTOR_NUM);                
+        TIM_StopTimer(grd_timer2_7);    
         return;
     }
 
@@ -521,8 +521,8 @@ void Grd_TIM1_IRQHandler(uint32_t u32_vectorNum)
         break;
 
         case 8:
-            INTR_NVIC_DisableIRQ(TIMER_INTR01_VECTOR_NUM);                
-            TIM_StopTimer(init_timer0_1);
+            INTR_NVIC_DisableIRQ(TIMER_INTR27_VECTOR_NUM);                
+            TIM_StopTimer(grd_timer2_7);
 
             Timer1_Delay1_Cnt = 0;
             grd_qam_change_judge();
@@ -535,27 +535,27 @@ void Grd_TIM1_IRQHandler(uint32_t u32_vectorNum)
     }
 }
 
-void Grd_Timer1_Init(void)
+void Grd_Timer2_7_Init(void)
 {
-    init_timer0_1.base_time_group = 0;
-    init_timer0_1.time_num = 1;
-    init_timer0_1.ctrl = 0;
-    init_timer0_1.ctrl |= TIME_ENABLE | USER_DEFINED;
-    TIM_RegisterTimer(init_timer0_1, 1200); //1.25ms
-    reg_IrqHandle(TIMER_INTR01_VECTOR_NUM, Grd_TIM1_IRQHandler, NULL);
-    INTR_NVIC_SetIRQPriority(TIMER_INTR01_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER01,0));
+    grd_timer2_7.base_time_group = 2;
+    grd_timer2_7.time_num = 7;
+    grd_timer2_7.ctrl = 0;
+    grd_timer2_7.ctrl |= TIME_ENABLE | USER_DEFINED;
+    TIM_RegisterTimer(grd_timer2_7, 1200); //1.25ms
+    reg_IrqHandle(TIMER_INTR27_VECTOR_NUM, Grd_TIM2_7_IRQHandler, NULL);
+    INTR_NVIC_SetIRQPriority(TIMER_INTR27_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER01,0));
 }
 
-void Grd_Timer0_Init(void)
+void Grd_Timer2_6_Init(void)
 {
-    init_timer0_0.base_time_group = 0;
-    init_timer0_0.time_num = 0;
-    init_timer0_0.ctrl = 0;
-    init_timer0_0.ctrl |= TIME_ENABLE | USER_DEFINED;
+    grd_timer2_6.base_time_group = 2;
+    grd_timer2_6.time_num = 6;
+    grd_timer2_6.ctrl = 0;
+    grd_timer2_6.ctrl |= TIME_ENABLE | USER_DEFINED;
     
-    TIM_RegisterTimer(init_timer0_0, 2500); //2.5s
-    reg_IrqHandle(TIMER_INTR00_VECTOR_NUM, Grd_TIM0_IRQHandler, NULL);
-    INTR_NVIC_SetIRQPriority(TIMER_INTR00_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER00,0));
+    TIM_RegisterTimer(grd_timer2_6, 2500); //2.5s
+    reg_IrqHandle(TIMER_INTR26_VECTOR_NUM, Grd_TIM2_6_IRQHandler, NULL);
+    INTR_NVIC_SetIRQPriority(TIMER_INTR26_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER00,0));
 }
 
 
