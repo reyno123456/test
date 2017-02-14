@@ -18,5 +18,13 @@ typedef enum
 void HAL_USB_InitOTG(ENUM_HAL_USB_PORT e_usbPort);
 
 
+/**
+* @brief    Configure the parameters optimized by IC Designer
+* @param  void
+* @retval   void
+* @note  
+*/
+void HAL_USB_ConfigPHY(void);
+
 #endif
 

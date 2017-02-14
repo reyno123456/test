@@ -88,6 +88,8 @@ int main(void)
     /* Enable the CPU Cache */
     CPU_CACHE_Enable();
 
+    HAL_USB_ConfigPHY();
+
     HAL_USB_InitOTG(HAL_USB_PORT_0);
 
     HAL_SRAM_ReceiveVideoConfig();

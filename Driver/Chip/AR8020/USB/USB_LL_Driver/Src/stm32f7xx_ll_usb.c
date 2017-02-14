@@ -1903,6 +1903,40 @@ uint8_t USB_LL_GetCurrentOTGIDStatus(USB_OTG_GlobalTypeDef *USBx)
 }
 
 
+void USB_LL_EnterHostTestMode(USB_OTG_GlobalTypeDef *USBx)
+{
+    USB_DisableGlobalInt(USBx);
+
+    USBx_HPRT0  |= USB_OTG_HPRT_PTCTL_2;
+}
+
+
+void USB_LL_EnterDeviceTestMode(USB_OTG_GlobalTypeDef *USBx, uint8_t test_mode)
+{
+    USB_DisableGlobalInt(USBx);
+
+    USBx_DEVICE->DCTL &= ~USB_OTG_DCTL_TCTL;
+
+    USBx_DEVICE->DCTL |= (test_mode << 4);
+
+    while (1);
+}
+
+
+void USB_LL_ConfigPhy(void)
+{
+    USB_PHY_TXPREEMPHASISTUNE   = 0x3;
+    USB_PHY_TXVREFTUNE          = 0xdd;
+
+    USB_PHY_PROT_RESET          = 0x3;
+
+    SysTicks_DelayMS(1);
+
+    USB_PHY_PROT_RESET          = 0;
+}
+
+
+
 
 /**
   * @}

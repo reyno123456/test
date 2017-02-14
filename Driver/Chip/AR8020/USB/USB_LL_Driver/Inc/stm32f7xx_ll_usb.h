@@ -407,6 +407,9 @@ typedef struct
 
 #define USB_OTG_IS_BIG_ENDIAN()     ( (USB_OTG_ENDIAN & 0x2) == 0x02 ? 1 : 0)
 
+#define USB_PHY_TXPREEMPHASISTUNE       (*((volatile uint32_t *)0x40B000B8))
+#define USB_PHY_TXVREFTUNE              (*((volatile uint32_t *)0x40B000C0))
+#define USB_PHY_PROT_RESET              (*((volatile uint32_t *)0x40B000DC))
 
 /* Exported functions --------------------------------------------------------*/
 HAL_StatusTypeDef USB_CoreInit(USB_OTG_GlobalTypeDef *USBx, USB_OTG_CfgTypeDef Init);
@@ -465,6 +468,9 @@ void              USB_LL_OTG0_IRQHandler(uint32_t u32_vectorNum);
 void              USB_LL_OTG1_IRQHandler(uint32_t u32_vectorNum);
 void              USB_LL_ConvertEndian(void *src_data, void *dst_data, uint32_t dataLen);
 uint8_t           USB_LL_GetCurrentOTGIDStatus(USB_OTG_GlobalTypeDef *USBx);
+void              USB_LL_EnterHostTestMode(USB_OTG_GlobalTypeDef *USBx);
+void              USB_LL_EnterDeviceTestMode(USB_OTG_GlobalTypeDef *USBx, uint8_t test_mode);
+void              USB_LL_ConfigPhy(void);
 
 /**
   * @}

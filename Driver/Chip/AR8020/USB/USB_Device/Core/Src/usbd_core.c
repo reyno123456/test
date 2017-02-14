@@ -211,6 +211,8 @@ USBD_StatusTypeDef  USBD_Stop   (USBD_HandleTypeDef *pdev)
 */
 USBD_StatusTypeDef  USBD_RunTestMode (USBD_HandleTypeDef  *pdev) 
 {
+  USBD_LL_EnterTestMode(pdev);
+
   return USBD_OK;
 }
 
@@ -394,9 +396,9 @@ USBD_StatusTypeDef USBD_LL_DataInStage(USBD_HandleTypeDef *pdev ,uint8_t epnum, 
                          (uint8_t *)((PCD_HandleTypeDef *)(pdev->pData))->Setup);
       }
     }
-    if (pdev->dev_test_mode == 1)
+    if (pdev->dev_test_mode != 0)
     {
-      USBD_RunTestMode(pdev); 
+      USBD_RunTestMode(pdev);
       pdev->dev_test_mode = 0;
     }
   }

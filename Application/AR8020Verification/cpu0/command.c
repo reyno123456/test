@@ -31,6 +31,7 @@
 #include "memory_config.h"
 #include "hal_ret_type.h"
 #include "hal_nvic.h"
+#include "hal_usb_host.h"
 #include "test_hal_mipi.h"
 
 void command_readMemory(char *addr);
@@ -45,6 +46,7 @@ void command_sendCtrl(void);
 void command_sendVideo(void);
 void command_dma(char *,char *,char *);
 void command_adc(char * channel);
+void command_usbHostEnterTestMode(void);
 
 void command_run(char *cmdArray[], uint32_t cmdNum)
 {
@@ -377,6 +379,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestHalMipiInit();
     }
+    else if (memcmp(cmdArray[0], "host_test_mode", strlen("host_test_mode")) == 0)
+    {
+        command_usbHostEnterTestMode();
+    }
     else
     {
         dlog_error("Command not found. Please use the commands like:");
@@ -661,3 +667,15 @@ void command_adc(char * channel)
         dlog_info("channel %d value: %d", u32_channel, HAL_ADC_Read(u32_channel));
     }
 }
+
+void command_usbHostEnterTestMode(void)
+{
+    dlog_info("enter usb host test mode");
+
+    HAL_USB_EnterUSBHostTestMode();
+}
+
+
+
+
+

@@ -1251,6 +1251,13 @@ static HAL_StatusTypeDef PCD_WriteEmptyTxFifo(PCD_HandleTypeDef *hpcd, uint32_t 
   return HAL_USB_OK;  
 }
 
+
+void HAL_PCD_EnterTestMode(PCD_HandleTypeDef *hpcd, uint8_t test_mode)
+{
+  USB_LL_EnterDeviceTestMode(hpcd->Instance, test_mode);
+}
+
+
 /**
   * @}
   */

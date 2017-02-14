@@ -82,6 +82,8 @@ int main(void)
     /* Enable the CPU Cache */
     CPU_CACHE_Enable();
 
+    HAL_USB_ConfigPHY();
+
     HDMI_powerOn();
     
     STRU_HDMI_CONFIGURE        st_configure;

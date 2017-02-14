@@ -78,6 +78,8 @@ int main(void)
     /* Enable the CPU Cache */
     CPU_CACHE_Enable();
 
+    HAL_USB_ConfigPHY();
+
     STRU_HDMI_CONFIGURE        st_configure;
     st_configure.e_getFormatMethod = HAL_HDMI_INTERRUPT;
     st_configure.u8_interruptGpio = HAL_GPIO_NUM98;

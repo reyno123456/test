@@ -87,5 +87,14 @@ void HAL_USB_StartUVC(void);
 HAL_RET_T HAL_USB_GetVideoFrame(uint8_t *u8_buff);
 
 
+/**
+* @brief    configure the USB Controller to enter into TEST MODE
+* @param  void
+* @retval   void
+* @note  
+*/
+void HAL_USB_EnterUSBHostTestMode(void);
+
+
 #endif
 
