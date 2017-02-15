@@ -63,6 +63,8 @@ extern volatile uint32_t  sramReady1;
 
 void SRAM_SKY_EnableBypassVideoConfig(uint32_t channel);
 void SRAM_SKY_DisableBypassVideoConfig(uint32_t channel);
+void SRAM_OpenVideoDisplay(void);
+void SRAM_CloseVideoDisplay(void);
 
 
 #endif

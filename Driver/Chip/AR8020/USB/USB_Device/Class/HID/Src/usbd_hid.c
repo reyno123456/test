@@ -285,7 +285,7 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE]  _
 }; 
 
 USBD_HID_HandleTypeDef        g_usbdHidData;
-uint8_t                       g_u32USBDeviceRecv[100];
+uint8_t                       g_u32USBDeviceRecv[512];
 
 /*
   * @}
@@ -461,20 +461,29 @@ static uint8_t  USBD_HID_Setup (USBD_HandleTypeDef *pdev,
   * @param  buff: pointer to report
   * @retval status
   */
-uint8_t USBD_HID_SendReport     (USBD_HandleTypeDef  *pdev, 
-                                 uint8_t *report,
-                                 uint16_t len,
-                                 uint8_t  ep_addr)
+uint8_t USBD_HID_SendReport(USBD_HandleTypeDef  *pdev, 
+                           uint8_t *report,
+                           uint16_t len,
+                           uint8_t  ep_addr)
 {
     USBD_HID_HandleTypeDef     *hhid = (USBD_HID_HandleTypeDef*)pdev->pClassData;
     uint8_t                     ret  = USBD_OK;
 
-    if (pdev->dev_state == USBD_STATE_CONFIGURED )
+    if (pdev->dev_state == USBD_STATE_CONFIGURED)
     {
         if(hhid->state[0x7F & ep_addr] == HID_IDLE)
         {
             hhid->state[0x7F & ep_addr]   = HID_BUSY;
-  
+
+            /* take endian problem for consideration */
+            if ((0x7F & ep_addr) != HID_EPIN_VIDEO_ADDR)
+            {
+                if (USB_OTG_IS_BIG_ENDIAN())
+                {
+                    USB_LL_ConvertEndian(report, report, len);
+                }
+            }
+
             ret = USBD_LL_Transmit (pdev, ep_addr, report, len);
         }
         else
@@ -564,7 +573,7 @@ static uint8_t  USBD_HID_DataIn (USBD_HandleTypeDef *pdev,
 
 
 static uint8_t USBD_HID_DataOut (USBD_HandleTypeDef *pdev,
-                              uint8_t epnum)
+                                uint8_t epnum)
 {
     USBD_HID_HandleTypeDef     *hhid = (USBD_HID_HandleTypeDef*)pdev->pClassData;
 
@@ -615,6 +624,7 @@ uint8_t USBD_HID_RegisterInterface(USBD_HandleTypeDef *pdev,
 
     return ret;
 }
+
 
 /**
   * @}

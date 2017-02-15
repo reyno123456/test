@@ -92,7 +92,8 @@ int BB_SetEncoderBrcMode(ENUM_RUN_MODE en_mode);
  * @retval      TURE:  success to add command
  * @retval      FALSE, Fail to add command
  */
-int BB_SetEncoderBitrate(uint8_t bitrate_Mbps);
+int BB_SetEncoderBitrateCh1(uint8_t bitrate_Mbps);
+int BB_SetEncoderBitrateCh2(uint8_t bitrate_Mbps);
 
 
 
@@ -106,6 +107,23 @@ void BB_uart10_spi_sel(uint32_t sel_dat);
 
 
 uint8_t BB_write_RcRegs(uint32_t u32_rc);
+
+
+/** 
+ * @brief       
+ * @param   
+ * @retval      
+ * @note      
+ */
+int BB_GetDevInfo(void);
+
+/** 
+ * @brief       
+ * @param   
+ * @retval      
+ * @note      
+ */
+int BB_SwtichOnOffCh(uint8_t u8_ch, uint8_t u8_data);
 
 
 #endif

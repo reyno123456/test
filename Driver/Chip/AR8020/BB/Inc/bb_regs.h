@@ -71,8 +71,8 @@
 #define ENCODER_BRC_MODE_0      ((uint8_t)0x6E)
 #define ENCODER_BRC_MODE_1      ((uint8_t)0x6F)
 
-#define ENCODER_BRC_CHAGE_0	    ((uint8_t)0x70)
-#define ENCODER_BRC_CHAGE_1	    ((uint8_t)0x71)
+#define ENCODER_BRC_CHAGE_0_CH1	    ((uint8_t)0x70)
+#define ENCODER_BRC_CHAGE_1_CH1	    ((uint8_t)0x71)
 
 #define NTF_TEST_MODE_0		    ((uint8_t)0x72)
 #define NTF_TEST_MODE_1		    ((uint8_t)0x73)
@@ -80,6 +80,9 @@
 
 #define MCS_INDEX_MODE_0		((uint8_t)0x74)
 #define MCS_INDEX_MODE_1		((uint8_t)0x75)
+
+#define ENCODER_BRC_CHAGE_0_CH2	    ((uint8_t)0x76)
+#define ENCODER_BRC_CHAGE_1_CH2	    ((uint8_t)0x77)
 #define CALI_0_1     ((uint8_t)(0xD0+0x00))/* page 0 0xD0+0x00
                                             txa_i_ofs RD  7 0 8
                                            */

@@ -145,8 +145,16 @@ HAL_RET_T HAL_BB_SetEncoderBrcModeProxy(ENUM_RUN_MODE e_mode);
  * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
  * @note        the function can only be called by cpu0,1
  */
-HAL_RET_T HAL_BB_SetEncoderBitrateProxy(uint8_t u8_bitrateMbps);
+HAL_RET_T HAL_BB_SetEncoderBitrateProxyCh1(uint8_t u8_bitrateMbps);
 
+/** 
+ * @brief       Set the encoder bitrate Unit:Mbps
+ * @param[in]   u8_bitrateMbps: select the bitrate unit: Mbps
+ * @retval      HAL_OK,                  means command is sent sucessfully. 
+ * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
+ * @note        the function can only be called by cpu0,1
+ */
+HAL_RET_T HAL_BB_SetEncoderBitrateProxyCh2(uint8_t u8_bitrateMbps);
 
 /** 
  * @brief   Set board enter or out debug mode
@@ -320,5 +328,37 @@ HAL_RET_T HAL_BB_CurPageReadByte(uint8_t u8_addr, uint8_t *pu8_regValue);
  * @note    
  */
 HAL_RET_T HAL_BB_SetAutoSearchRcId(void);
+
+/** 
+ * @brief       
+ * @param   
+ * @retval      
+ * @note      
+ */
+HAL_RET_T HAL_BB_GetDevInfo(void);
+
+/** 
+ * @brief       
+ * @param   
+ * @retval      
+ * @note      
+ */
+HAL_RET_T HAL_BB_SetRcChannelSelectionModeProxy(ENUM_RUN_MODE e_mode);
+
+/** 
+ * @brief       
+ * @param   
+ * @retval      
+ * @note      
+ */
+HAL_RET_T HAL_BB_SwitchOnOffCh1(uint8_t u8_data);
+
+/** 
+ * @brief       
+ * @param   
+ * @retval      
+ * @note      
+ */
+HAL_RET_T HAL_BB_SwitchOnOffCh2(uint8_t u8_data);
 
 #endif

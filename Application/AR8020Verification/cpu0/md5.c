@@ -3,6 +3,8 @@
 #include "md5.h"  
 #include "stdint.h"
 #include "md5.h"   
+#include "debuglog.h"
+
 uint8_t PADDING[]={0x80,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  
                          0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  
                          0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  
@@ -160,4 +162,40 @@ void MD5Transform(uint32_t state[4],uint8_t block[64])
      state[1] += b;  
      state[2] += c;  
      state[3] += d;  
-}  
+} 
+
+
+uint8_t MD5Check(uint8_t *data,
+                 uint32_t dataLength,
+                 uint8_t *u8_md5sum)
+{
+    uint8_t             u8_i = 0;
+    uint8_t             u8_j = 0;
+    uint8_t             md5_value[16];
+    MD5_CTX             md5;
+
+    MD5Init(&md5);
+
+    MD5Update(&md5, data, dataLength);
+
+    MD5Final(&md5, md5_value);
+
+    for (u8_i = 0; u8_i < 16; u8_i++)
+    {
+        if (md5_value[u8_i] != u8_md5sum[u8_i])
+        {
+            dlog_error("checksum......fail\n");
+
+            for (u8_j = 0; u8_j < 16; u8_j++)
+            {
+                dlog_error("cmp %02x %02x\n",md5_value[u8_j], u8_md5sum[u8_j]);
+            }
+
+            return 1;
+        }
+    }
+
+    dlog_info("checksum......ok\n");
+}
+
+

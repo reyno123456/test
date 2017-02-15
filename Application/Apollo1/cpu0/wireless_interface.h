@@ -5,7 +5,17 @@
 #include "memory_config.h"
 
 #define WIRELESS_INTERFACE_MAX_MESSAGE_NUM          0x10
-#define WIRELESS_INTERFACE_SEND_FAIL_RETRY          50
+#define WIRELESS_INTERFACE_SEND_FAIL_RETRY          25
+
+
+#define HID_UPGRADE_BASE_ADDR                       ((uint8_t *)0x81000000)
+#define HID_UPGRADE_ONE_PACKET                      508
+
+#define HID_UPGRADE_FLASH_SECTOR_SIZE               4096
+#define HID_UPGRADE_FLASH_SECTOR_NUM                16
+
+#define HID_UPGRADE_APP_ADDR_IN_NOR                 0x20000
+#define HID_UPGRADE_FLASH_BASE_ADDR                 ((uint8_t *)0x10000000)
 
 
 typedef enum
@@ -60,24 +70,37 @@ typedef enum
     WIRELESS_INTERFACE_EXT_ONEKEY_IT                = 0x31,
     WIRELESS_INTERFACE_SWITCH_IT_CHAN               = 0x32,
     WIRELESS_INTERFACE_SWITCH_RMT_CHAN              = 0x33,
-    WIRELESS_INTERFACE_SET_PWR_CAL_0                = 0x34,               
+    WIRELESS_INTERFACE_SET_PWR_CAL_0                = 0x34,
     WIRELESS_INTERFACE_SET_PWR_CAL_1                = 0x35,
     WIRELESS_INTERFACE_RST_MCU                      = 0x36,
     WIRELESS_INTERFACE_RF_PWR_AUTO                  = 0x37,
     WIRELESS_INTERFACE_SWITCH_DEBUG_MODE            = 0x38,
-    WIRELESS_INTERFACE_READ_RF_REG                  = 0x39,    
-    WIRELESS_INTERFACE_WRITE_RF_REG                 = 0x3a,
-    PAD_FREQUENCY_BAND_WIDTH_SELECT                 = 0x40,
-    PAD_FREQUENCY_BAND_OPERATION_MODE               = 0x41,
-    PAD_FREQUENCY_BAND_SELECT                       = 0x42,
-    PAD_FREQUENCY_CHANNEL_OPERATION_MODE            = 0x43,
-    PAD_FREQUENCY_CHANNEL_SELECT                    = 0x44,
-    PAD_MCS_OPERATION_MODE                          = 0x45,
-    PAD_MCS_MODULATION_MODE                         = 0x46,
-    PAD_ENCODER_DYNAMIC_BITRATE_MODE                = 0x47,
-    PAD_ENCODER_DYNAMIC_BITRATE_SELECT              = 0x48,
-    PAD_WIRELESS_INTERFACE_OSD_DISPLAY              = 0x49,
-    PAD_WIRELESS_INTERFACE_PID_NUM
+    WIRELESS_INTERFACE_READ_RF_REG                  = 0x39,
+    WIRELESS_INTERFACE_WRITE_RF_REG                 = 0x3A,
+    WIRELESS_INTERFACE_OPEN_ADAPTION_BIT_STREAM     = 0x3B,
+    WIRELESS_INTERFACE_SWITCH_CH1                   = 0x3C,
+    WIRELESS_INTERFACE_SWITCH_CH2                   = 0x3D,
+    WIRELESS_INTERFACE_SET_CH1_CODE_RATE            = 0x3E,
+    WIRELESS_INTERFACE_SET_CH2_CODE_RATE            = 0x3F,
+    WIRELESS_INTERFACE_VIDEO_QAM                    = 0x40,
+    WIRELESS_INTERFACE_VIDEO_BIT_RATE               = 0x41,
+    WIRELESS_INTERFACE_RC_QAM                       = 0x42,
+    WIRELESS_INTERFACE_RC_BIT_RATE                  = 0x43,
+    WIRELESS_INTERFACE_OPEN_VIDEO                   = 0x44,
+    WIRELESS_INTERFACE_CLOSE_VIDEO                  = 0x45,
+    WIRELESS_INTERFACE_VIDEO_AUTO_HOPPING           = 0x46,
+    WIRELESS_INTERFACE_VIDEO_BAND_WIDTH             = 0x47,
+    PAD_FREQUENCY_BAND_WIDTH_SELECT                 = 0x48,
+    PAD_FREQUENCY_BAND_OPERATION_MODE               = 0x49,
+    PAD_FREQUENCY_BAND_SELECT                       = 0x50,
+    PAD_FREQUENCY_CHANNEL_OPERATION_MODE            = 0x51,
+    PAD_FREQUENCY_CHANNEL_SELECT                    = 0x52,
+    PAD_MCS_OPERATION_MODE                          = 0x53,
+    PAD_MCS_MODULATION_MODE                         = 0x54,
+    PAD_ENCODER_DYNAMIC_BITRATE_MODE                = 0x55,
+    PAD_ENCODER_DYNAMIC_BITRATE_SELECT              = 0x56,
+    PAD_WIRELESS_INTERFACE_OSD_DISPLAY              = 0x57,
+    MAX_PID_NUM
 } WIRELESS_INTRTFACE_PID_DEF;
 
 
@@ -129,7 +152,7 @@ typedef struct
 {
     uint8_t                     messageId;
     uint8_t                     paramLen;
-    uint8_t                     paramData[10];
+    uint8_t                     paramData[14];
 } STRU_WIRELESS_PARAM_CONFIG_MESSAGE;
 
 
@@ -140,6 +163,17 @@ typedef struct
     uint8_t                                 u8_buffTail;
     uint16_t                                u16_sendfailCount;
 } STRU_WIRELESS_MESSAGE_BUFF;
+
+
+
+typedef struct
+{
+    uint8_t                     messageId;
+    uint8_t                     packetFlag;
+    uint16_t                    imageLen;
+    uint8_t                     imageText[HID_UPGRADE_ONE_PACKET];
+} STRU_USBD_UPGRADE_PACKET;
+
 
 
 typedef uint8_t(*WIRELESS_CONFIG_HANDLER)(void *);
@@ -203,6 +237,8 @@ uint8_t WIRELESS_INTERFACE_RF_PWR_AUTO_Handler(void *param);
 uint8_t WIRELESS_INTERFACE_SWITCH_DEBUG_MODE_Handler(void *param);
 uint8_t WIRELESS_INTERFACE_WRITE_RF_REG_Handler(void *param);
 uint8_t WIRELESS_INTERFACE_READ_RF_REG_Handler(void *param);
+uint8_t WIRELESS_INTERFACE_OPEN_VIDEO_Handler(void *param);
+uint8_t WIRELESS_INTERFACE_CLOSE_VIDEO_Handler(void *param);
 uint8_t PAD_FREQUENCY_BAND_WIDTH_SELECT_Handler(void *param);
 uint8_t PAD_FREQUENCY_BAND_OPERATION_MODE_Handler(void *param);
 uint8_t PAD_FREQUENCY_BAND_SELECT_Handler(void *param);
@@ -216,6 +252,19 @@ uint8_t PAD_ENCODER_DYNAMIC_BITRATE_SELECT_Handler(void *param);
 uint8_t PAD_WIRELESS_OSD_DISPLAY_Handler(void *param);
 void WIRELESS_ParseParamConfig(void *param);
 void Wireless_TaskInit(void);
+static void Wireless_InsertMsgIntoReplyBuff(STRU_WIRELESS_PARAM_CONFIG_MESSAGE *pstMessage);
+uint8_t WIRELESS_INTERFACE_OPEN_ADAPTION_BIT_STREAM_Handler(void *param);
+uint8_t WIRELESS_INTERFACE_SWITCH_CH1_Handler(void *param);
+uint8_t WIRELESS_INTERFACE_SWITCH_CH2_Handler(void *param);
+uint8_t WIRELESS_INTERFACE_SET_CH1_BIT_RATE_Handler(void *param);
+uint8_t WIRELESS_INTERFACE_SET_CH2_BIT_RATE_Handler(void *param);
+uint8_t WIRELESS_INTERFACE_VIDEO_QAM_Handler(void *param);
+uint8_t WIRELESS_INTERFACE_VIDEO_CODE_RATE_Handler(void *param);
+uint8_t WIRELESS_INTERFACE_RC_QAM_Handler(void *param);
+uint8_t WIRELESS_INTERFACE_RC_CODE_RATE_Handler(void *param);
+uint8_t WIRELESS_INTERFACE_VIDEO_AUTO_HOPPING_Handler(void *param);
+uint8_t WIRELESS_INTERFACE_VIDEO_BAND_WIDTH_Handler(void *param);
+
 
 #endif
 

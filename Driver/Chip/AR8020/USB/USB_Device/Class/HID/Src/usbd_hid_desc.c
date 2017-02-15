@@ -35,7 +35,7 @@
 #define USBD_VID                      0xaaaa
 #define USBD_PID                      0xaa97
 #define USBD_LANGID_STRING            0x409
-#define USBD_MANUFACTURER_STRING      "Artosyn Microelectronics"
+#define USBD_MANUFACTURER_STRING      "ArtosynMicroelectronics"
 #define USBD_PRODUCT_HS_STRING        "HID Joystick in HS Mode"
 #define USBD_PRODUCT_FS_STRING        "HID Joystick in FS Mode"
 #define USBD_CONFIGURATION_HS_STRING  "HID Config"
@@ -185,8 +185,8 @@ uint8_t *USBD_HID_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
   *length = USB_SIZ_STRING_SERIAL;
   
   /* Update the serial number string descriptor with the data from the unique ID*/
-  Get_SerialNum();
-  
+  //Get_SerialNum();
+
   return (uint8_t*)USBD_StringSerial;
 }
 

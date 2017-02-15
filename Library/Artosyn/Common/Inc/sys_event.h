@@ -105,7 +105,8 @@ typedef struct _SysEvent_H264InputFormatChangeParameter
 typedef struct _SysEvent_BB_ModulationChange
 {
     uint8_t  BB_MAX_support_br; //BB_MAX_support_br: the MAX stream bitrate(MHz) 
-    uint8_t  reserve[SYS_EVENT_HANDLER_PARAMETER_LENGTH - 1];
+    uint8_t  u8_bbCh; // 
+    uint8_t  reserve[SYS_EVENT_HANDLER_PARAMETER_LENGTH - 2];
 } STRU_SysEvent_BB_ModulationChange;
 
 typedef struct _SysEvent_BB_DATA_BUFFER_FULL_RATIO_Change

@@ -38,7 +38,7 @@
 #define         DEVICE_ID2          (0x1FFF7A14)
 #define         DEVICE_ID3          (0x1FFF7A18)
 
-#define  USB_SIZ_STRING_SERIAL       0x1A
+#define  USB_SIZ_STRING_SERIAL       0x10
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */

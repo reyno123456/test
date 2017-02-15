@@ -39,6 +39,7 @@ typedef enum _ENUM_BB_QAM
     MOD_4QAM    = 0x01,
     MOD_16QAM   = 0x02,
     MOD_64QAM   = 0x03,
+    MOD_QPSK    = 0x04,
     MOD_MAX     = 0xff,
 }ENUM_BB_QAM;
 
@@ -47,6 +48,8 @@ typedef enum ENUM_BB_LDPC
 {
     LDPC_1_2    = 0x00,
     LDPC_2_3    = 0x01,
+    LDPC_3_4    = 0x02,
+    LDPC_5_6    = 0x03,
 }ENUM_BB_LDPC;
 
 
@@ -66,6 +69,7 @@ typedef enum
     WIRELESS_DEBUG_CHANGE,
     WIRELESS_MISC,
     WIRELESS_AUTO_SEARCH_ID,
+    WIRELESS_OTHER,
 } ENUM_WIRELESS_CONFIG_CHANGE;
 
 
@@ -80,7 +84,10 @@ typedef enum
     RC_CHANNEL_SELECT,
     RC_CHANNEL_FREQ,
     IT_CHANNEL_FREQ,
-    MICS_IT_ONLY_MODE
+    MICS_IT_ONLY_MODE,
+    GET_DEV_INFO,
+    SWITCH_ON_OFF_CH1,
+    SWITCH_ON_OFF_CH2,
 } ENUM_WIRELESS_FREQ_CHANGE_ITEM;
 
 
@@ -95,7 +102,8 @@ typedef enum
 typedef enum
 {
     ENCODER_DYNAMIC_BIT_RATE_MODE,
-    ENCODER_DYNAMIC_BIT_RATE_SELECT
+    ENCODER_DYNAMIC_BIT_RATE_SELECT_CH1,
+    ENCODER_DYNAMIC_BIT_RATE_SELECT_CH2
 } ENUM_WIRELESS_ENCODER_CHANGE_ITEM;
 
 
@@ -142,15 +150,39 @@ typedef struct
     uint8_t         modulation_mode;
     uint8_t         ch_bandwidth;
     uint8_t         code_rate;
-    uint8_t         encoder_bitrate;
+    uint8_t         reserved;
     uint8_t         IT_channel;
     uint8_t         head;
     uint8_t         tail;
     uint8_t         in_debug;
     uint8_t         lock_status;
+    uint16_t        video_width[2];
+    uint16_t        video_height[2];
+    uint8_t         frameRate[2];
+    uint8_t         encoder_bitrate[2];
 } STRU_WIRELESS_INFO_DISPLAY;
 
+
+typedef struct
+{
+    uint8_t         messageId;
+    uint8_t         paramLen;
+    uint8_t         skyGround;
+    uint8_t         band;
+    uint8_t         bandWidth;
+    uint8_t         itHopping;
+    uint8_t         rcHopping;
+    uint8_t         adapterBitrate;
+    uint8_t         channel1_on;
+    uint8_t         channel2_on;
+    uint8_t         isDebug;
+    uint8_t         reserved[5];
+} STRU_DEVICE_INFO;
+
 // CPU0 and CPU2 share memory for osd status info, offset in SRAM: 16K + 512Byte
+// last 16 bytes is for DEVICE INFO
 #define OSD_STATUS_SHM_ADDR              SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR
+#define DEVICE_INFO_SHM_SIZE             (16)
+#define DEVICE_INFO_SHM_ADDR             ((SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR + SRAM_BB_STATUS_SHARE_MEMORY_SIZE) - DEVICE_INFO_SHM_SIZE)
 
 #endif

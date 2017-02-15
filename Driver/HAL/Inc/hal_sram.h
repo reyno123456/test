@@ -51,6 +51,23 @@ HAL_RET_T HAL_SRAM_EnableSkyBypassVideo(ENUM_HAL_SRAM_VIDEO_CHANNEL e_sramVideoC
 HAL_RET_T HAL_SRAM_DisableSkyBypassVideo(ENUM_HAL_SRAM_VIDEO_CHANNEL e_sramVideoCh);
 
 
+/**
+* @brief  open the video output to PC or PAD.
+* @param  void
+* @retval   void
+* @note  
+*/
+void HAL_SRAM_OpenVideo(void);
+
+
+/**
+* @brief  close the video output to PC or PAD.
+* @param  void
+* @retval   void
+* @note  
+*/
+void HAL_SRAM_CloseVideo(void);
+
 #endif
 
 

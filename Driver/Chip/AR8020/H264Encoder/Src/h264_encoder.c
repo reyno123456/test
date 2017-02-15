@@ -10,6 +10,7 @@
 #include "reg_map.h"
 #include "sys_event.h"
 #include "reg_rw.h"
+#include "bb_types.h"
 
 static STRU_EncoderStatus g_stEncoderStatus[2] = { 0 };
 
@@ -106,6 +107,8 @@ static int H264_Encoder_CloseView(unsigned char view)
 
 static int H264_Encoder_UpdateVideoInfo(unsigned char view, unsigned int resW, unsigned int resH, unsigned int framerate)
 {
+    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(OSD_STATUS_SHM_ADDR);
+
     if (view >= 2)
     {
         return 0;
@@ -128,6 +131,10 @@ static int H264_Encoder_UpdateVideoInfo(unsigned char view, unsigned int resW, u
         dlog_info("Video format change: %d, %d, %d, %d\n", view, resW, resH, framerate);
     }
 
+    osdptr->video_width[view] = resW;
+    osdptr->video_height[view] = resH;
+    osdptr->frameRate[view] = framerate;
+
     return 1;
 }
 
@@ -139,7 +146,7 @@ static void H264_Encoder_InputVideoFormatChangeCallback(void* p)
     uint8_t framerate = ((STRU_SysEvent_H264InputFormatChangeParameter*)p)->framerate;
 
     // ADV7611 0,1 is connected to H264 encoder 1,0
-    H264_Encoder_UpdateVideoInfo((index == 0) ? 1 : 0, width, hight, framerate);    
+    H264_Encoder_UpdateVideoInfo((index == 0) ? 1 : 0, width, hight, framerate);
 }
 
 int H264_Encoder_UpdateGop(unsigned char view, unsigned char gop)
@@ -243,10 +250,25 @@ int H264_Encoder_UpdateBitrate(unsigned char view, unsigned char br_idx)
 static void H264_Encoder_BBModulationChangeCallback(void* p)
 {
     uint8_t br_idx = ((STRU_SysEvent_BB_ModulationChange *)p)->BB_MAX_support_br;
+    uint8_t ch = ((STRU_SysEvent_BB_ModulationChange *)p)->u8_bbCh;
     
-    dlog_info("H264 bitidx: %d \r\n", br_idx);
+    /*dlog_info("H264 bitidx: %d \r\n", br_idx);
     H264_Encoder_UpdateBitrate(0, br_idx);
-    H264_Encoder_UpdateBitrate(1, br_idx);
+    H264_Encoder_UpdateBitrate(1, br_idx);*/
+    if (0 == ch)
+    {
+        H264_Encoder_UpdateBitrate(0, br_idx);
+        dlog_info("H264 bitidx ch1: %d \r\n", br_idx);
+    }
+    else if (1 == ch)
+    {
+        H264_Encoder_UpdateBitrate(1, br_idx);
+        dlog_info("H264 bitidx ch2: %d \r\n", br_idx);
+    }
+    else
+    {
+    }
+
 }
 
 static void VEBRC_IRQ_Wrap_Handler(uint32_t u32_vectorNum)

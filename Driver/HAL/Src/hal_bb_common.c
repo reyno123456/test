@@ -64,7 +64,7 @@ HAL_RET_T HAL_BB_SetFreqBandSelectionModeProxy(ENUM_RUN_MODE e_mode)
     st_cmd.u8_configItem   = FREQ_BAND_MODE;
     st_cmd.u32_configValue = (uint32_t)e_mode;
 
-	u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
+    u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
     if( u8_ret )
     {
         return HAL_OK;
@@ -285,13 +285,40 @@ HAL_RET_T HAL_BB_SetEncoderBrcModeProxy(ENUM_RUN_MODE e_mode)
  * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
  * @note        the function can only be called by cpu0,1
  */
-HAL_RET_T HAL_BB_SetEncoderBitrateProxy(uint8_t u8_bitrateMbps)
+HAL_RET_T HAL_BB_SetEncoderBitrateProxyCh1(uint8_t u8_bitrateMbps)
 {
     uint8_t u8_ret;
     STRU_WIRELESS_CONFIG_CHANGE st_cmd;
 
     st_cmd.u8_configClass  = WIRELESS_ENCODER_CHANGE;
-    st_cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
+    st_cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT_CH1;
+    st_cmd.u32_configValue = u8_bitrateMbps;
+
+    u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
+    if( u8_ret )
+    {
+        return HAL_OK;
+    }
+    else
+    {
+        return HAL_BB_ERR_EVENT_NOTIFY;
+    }
+}
+
+/** 
+ * @brief       Set the encoder bitrate Unit:Mbps
+ * @param[in]   u8_bitrateMbps: select the bitrate unit: Mbps
+ * @retval      HAL_OK,                  means command is sent sucessfully. 
+ * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
+ * @note        the function can only be called by cpu0,1
+ */
+HAL_RET_T HAL_BB_SetEncoderBitrateProxyCh2(uint8_t u8_bitrateMbps)
+{
+    uint8_t u8_ret;
+    STRU_WIRELESS_CONFIG_CHANGE st_cmd;
+
+    st_cmd.u8_configClass  = WIRELESS_ENCODER_CHANGE;
+    st_cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT_CH2;
     st_cmd.u32_configValue = u8_bitrateMbps;
 
     u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
@@ -579,6 +606,111 @@ HAL_RET_T HAL_BB_CurPageReadByte(uint8_t u8_addr, uint8_t *pu8_regValue)
     *pu8_regValue = BB_SPI_curPageReadByte(u8_addr);
     
     return HAL_OK;
+}
+
+
+/** 
+ * @brief       
+ * @param   
+ * @retval      
+ * @note      
+ */
+HAL_RET_T HAL_BB_GetDevInfo(void)
+{
+    uint8_t u8_ret;
+    STRU_WIRELESS_CONFIG_CHANGE st_cmd;
+    
+    st_cmd.u8_configClass  = WIRELESS_OTHER;
+    st_cmd.u8_configItem   = GET_DEV_INFO;
+    st_cmd.u32_configValue = 0;
+
+    u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
+    if( u8_ret )
+    {
+        return HAL_OK;
+    }
+    else
+    {
+        return HAL_BB_ERR_EVENT_NOTIFY;
+    }
+}
+
+/** 
+ * @brief       
+ * @param   
+ * @retval      
+ * @note      
+ */
+HAL_RET_T HAL_BB_SetRcChannelSelectionModeProxy(ENUM_RUN_MODE e_mode)
+{
+    uint8_t u8_ret;
+    STRU_WIRELESS_CONFIG_CHANGE st_cmd;
+    
+    st_cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+    st_cmd.u8_configItem   = RC_CHANNEL_MODE;
+    st_cmd.u32_configValue = (uint32_t)e_mode;
+
+    u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
+    if( u8_ret )
+    {
+        return HAL_OK;
+    }
+    else
+    {
+        return HAL_BB_ERR_EVENT_NOTIFY;
+    }    
+}
+
+/** 
+ * @brief       
+ * @param   
+ * @retval      
+ * @note      
+ */
+HAL_RET_T HAL_BB_SwitchOnOffCh1(uint8_t u8_data)
+{
+    uint8_t u8_ret;
+    STRU_WIRELESS_CONFIG_CHANGE st_cmd;
+    
+    st_cmd.u8_configClass  = WIRELESS_OTHER;
+    st_cmd.u8_configItem   = SWITCH_ON_OFF_CH1;
+    st_cmd.u32_configValue = u8_data;
+
+    u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
+    if( u8_ret )
+    {
+        return HAL_OK;
+    }
+    else
+    {
+        return HAL_BB_ERR_EVENT_NOTIFY;
+    }
+}
+
+/** 
+ * @brief       
+ * @param   
+ * @retval      
+ * @note      
+ */
+HAL_RET_T HAL_BB_SwitchOnOffCh2(uint8_t u8_data)
+{
+    uint8_t u8_ret;
+    STRU_WIRELESS_CONFIG_CHANGE st_cmd;
+    
+    st_cmd.u8_configClass  = WIRELESS_OTHER;
+    st_cmd.u8_configItem   = SWITCH_ON_OFF_CH2;
+    st_cmd.u32_configValue = u8_data;
+
+    u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
+    if( u8_ret )
+    {
+        return HAL_OK;
+    }
+    else
+    {
+        return HAL_BB_ERR_EVENT_NOTIFY;
+    }
 }
 
 

@@ -702,13 +702,12 @@ static void USBD_ClrFeature(USBD_HandleTypeDef *pdev ,
 
 void USBD_ParseSetupRequest(USBD_SetupReqTypedef *req, uint8_t *pdata)
 {
-#if 0
     uint8_t    u8_i;
     uint8_t    u8_swap;
 
     if (USB_OTG_IS_BIG_ENDIAN())
     {
-        for (u8_i = 0; u8_i < 8; u8_i++)
+        for (u8_i = 0; u8_i < 8; u8_i += 4)
         {
             u8_swap         = pdata[u8_i];
             pdata[u8_i]     = pdata[u8_i + 3];
@@ -719,7 +718,7 @@ void USBD_ParseSetupRequest(USBD_SetupReqTypedef *req, uint8_t *pdata)
             pdata[u8_i + 2] = u8_swap;
         }
     }
-#endif
+
     req->bmRequest          = *(uint8_t *)  (pdata);
     req->bRequest           = *(uint8_t *)  (pdata +  1);
     req->wValue             = SWAPBYTE      (pdata +  2);

@@ -247,7 +247,7 @@ void BB_init(ENUM_BB_MODE en_mode)
 
     BB_SetBoardMode(en_mode);
     context.en_bbmode = en_mode;
-	
+
     BB_uart10_spi_sel(0x00000003);
     BB_SPI_init();
 
@@ -266,7 +266,7 @@ void BB_init(ENUM_BB_MODE en_mode)
 
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USER_CFG_CHANGE_LOCAL, BB_HandleEventsCallback);
 
-	BB_UARTComInit();    
+    BB_UARTComInit();    
     dlog_info("BB mode Band %d %d %s \r\n", en_mode, context.freq_band, "BB_init Done");
 }
 
@@ -837,7 +837,7 @@ int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
         case 9:
         {
             cmd.u8_configClass  = WIRELESS_ENCODER_CHANGE;
-            cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
+            cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT_CH1;
             cmd.u32_configValue  = param0;
             break;
         }
@@ -845,7 +845,7 @@ int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
         case 10:
         {
             cmd.u8_configClass  = WIRELESS_ENCODER_CHANGE;
-            cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
+            cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT_CH2;
             cmd.u32_configValue  = param0;
             break;
         }
@@ -1172,12 +1172,23 @@ int BB_SetEncoderBrcMode(ENUM_RUN_MODE en_mode)
  * @retval      TURE:  success to add command
  * @retval      FALSE, Fail to add command
  */
-int BB_SetEncoderBitrate(uint8_t bitrate_Mbps)
+int BB_SetEncoderBitrateCh1(uint8_t bitrate_Mbps)
 {
     STRU_WIRELESS_CONFIG_CHANGE cmd;
 
     cmd.u8_configClass  = WIRELESS_ENCODER_CHANGE;
-    cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT;
+    cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT_CH1;
+    cmd.u32_configValue  = (uint32_t)bitrate_Mbps;
+
+    return BB_InsertCmd(&cmd);
+}
+
+int BB_SetEncoderBitrateCh2(uint8_t bitrate_Mbps)
+{
+    STRU_WIRELESS_CONFIG_CHANGE cmd;
+
+    cmd.u8_configClass  = WIRELESS_ENCODER_CHANGE;
+    cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT_CH1;
     cmd.u32_configValue  = (uint32_t)bitrate_Mbps;
 
     return BB_InsertCmd(&cmd);
@@ -1213,4 +1224,65 @@ static void BB_GetNv(void)
                pst_nv->st_nvDataUpd.u8_nvBbRcId[3],
                pst_nv->st_nvDataUpd.u8_nvBbRcId[4], 
                pst_nv->st_nvDataUpd.u8_nvChk);
+}
+
+/** 
+ * @brief       
+ * @param   
+ * @retval      
+ * @note      
+ */
+int BB_GetDevInfo(void)
+{
+    uint8_t u8_data;
+    STRU_DEVICE_INFO *pst_devInfo = (STRU_DEVICE_INFO *)(DEVICE_INFO_SHM_ADDR);
+
+    pst_devInfo->messageId = 0x19;
+    pst_devInfo->paramLen = 0x09;
+    pst_devInfo->skyGround = context.en_bbmode;
+    pst_devInfo->band = context.freq_band;
+    pst_devInfo->bandWidth = context.CH_bandwidth;
+    pst_devInfo->itHopping = context.it_skip_freq_mode;
+    pst_devInfo->rcHopping = context.rc_skip_freq_mode;
+    pst_devInfo->adapterBitrate = context.qam_skip_mode;
+    u8_data = BB_ReadReg(PAGE1, 0x8D);
+    pst_devInfo->channel1_on = (u8_data & 0x40) >> 6;
+    pst_devInfo->channel2_on = (u8_data & 0x80) >> 7;
+    pst_devInfo->isDebug = context.u8_debugMode;
+}
+
+/** 
+ * @brief       
+ * @param   
+ * @retval      
+ * @note      
+ */
+int BB_SwtichOnOffCh(uint8_t u8_ch, uint8_t u8_data)
+{
+    uint8_t u8_regVal;
+
+    u8_regVal = BB_ReadReg(PAGE1, 0x8D);
+    if ((0 == u8_ch) && (0 == u8_data))
+    {
+        u8_regVal &= ~(0x40); // channel1 
+        BB_WriteReg(PAGE1, 0x8D, u8_regVal); 
+    }
+    else if ((0 == u8_ch) && (1 == u8_data))
+    {
+        u8_regVal |= (0x40); // channel1 
+        BB_WriteReg(PAGE1, 0x8D, u8_regVal); 
+    }
+    else if ((1 == u8_ch) && (0 == u8_data))
+    {
+        u8_regVal &= ~(0x80); // channel2 
+        BB_WriteReg(PAGE1, 0x8D, u8_regVal); 
+    }
+    else if ((1 == u8_ch) && (1 == u8_data))
+    {
+        u8_regVal |= (0x80); // channel2 
+        BB_WriteReg(PAGE1, 0x8D, u8_regVal); 
+    }
+    else
+    {
+    }
 }

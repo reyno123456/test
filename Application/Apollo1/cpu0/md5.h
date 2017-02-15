@@ -44,5 +44,7 @@ void MD5Final(MD5_CTX *context,uint8_t digest[16]);
 void MD5Transform(uint32_t state[4],uint8_t block[64]);  
 void MD5Encode(uint8_t *output,uint32_t *input,uint32_t len);  
 void MD5Decode(uint32_t *output,uint8_t *input,uint32_t len);  
-   
+uint8_t MD5Check(uint8_t *data,
+                 uint32_t dataLength,
+                 uint8_t *u8_md5sum);
 #endif  

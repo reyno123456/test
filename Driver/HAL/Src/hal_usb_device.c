@@ -63,7 +63,7 @@ void HAL_USB_InitDevice(ENUM_HAL_USB_PORT e_usbPort)
 void HAL_USB_ResetDevice(void * p)
 {
     USBD_LL_Init(&USBD_Device);
-    HAL_PCD_Start(USBD_Device.pData);
+    USBD_LL_Start(&USBD_Device);
 
     SRAM_Ready0Confirm();
 
@@ -116,11 +116,6 @@ HAL_RET_T HAL_USB_DeviceSendVideo(uint8_t *buff, uint32_t u32_len)
 HAL_RET_T HAL_USB_DeviceSendCtrl(uint8_t *buff, uint32_t u32_len)
 {
     uint8_t       ret;
-
-    if (USB_OTG_IS_BIG_ENDIAN())
-    {
-        USB_LL_ConvertEndian(buff, buff, u32_len);
-    }
 
     ret = USBD_HID_SendReport(&USBD_Device, buff, u32_len, HID_EPIN_CTRL_ADDR);
 

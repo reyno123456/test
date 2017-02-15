@@ -78,11 +78,13 @@ void BB_SKY_start(void)
     sky_search_id_timeout_irq_enable(); //enabole TIM1 timeout
 
     reg_IrqHandle(BB_RX_ENABLE_VECTOR_NUM, wimax_vsoc_rx_isr, NULL);
-	INTR_NVIC_SetIRQPriority(BB_RX_ENABLE_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_BB_RX,0));
+    INTR_NVIC_SetIRQPriority(BB_RX_ENABLE_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_BB_RX,0));
     INTR_NVIC_EnableIRQ(BB_RX_ENABLE_VECTOR_NUM);
 
     context.qam_ldpc = 0;
     sky_set_McsByIndex(context.qam_ldpc);
+
+    BB_GetDevInfo();
 }
 
 
@@ -106,16 +108,25 @@ uint8_t sky_id_match(void)
 }
 
 
-void sky_notify_encoder_brc(uint8_t br)
+void sky_notify_encoder_brc_ch1(uint8_t br)
 {
-	STRU_SysEvent_BB_ModulationChange event;
-	event.BB_MAX_support_br = br;
-	SYS_EVENT_Notify(SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE, (void*)&event);	
+    STRU_SysEvent_BB_ModulationChange event;
+    event.BB_MAX_support_br = br;
+    event.u8_bbCh = 0;
+    SYS_EVENT_Notify(SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE, (void*)&event);	
     
-    dlog_info("brc =%d\r\n", br);        
+    dlog_info("ch1 brc =%d\r\n", br);        
 }
 
-
+void sky_notify_encoder_brc_ch2(uint8_t br)
+{
+    STRU_SysEvent_BB_ModulationChange event;
+    event.BB_MAX_support_br = br;
+    event.u8_bbCh = 1;
+    SYS_EVENT_Notify(SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE, (void*)&event);	
+    
+    dlog_info("ch2 brc =%d\r\n", br);        
+}
 void sky_set_McsByIndex(uint8_t idx)
 {
     uint8_t mcs_idx_bitrate_map[] = 
@@ -157,7 +168,8 @@ void sky_set_McsByIndex(uint8_t idx)
     
 	if ( context.brc_mode == AUTO )
 	{
-        sky_notify_encoder_brc( mcs_idx_bitrate_map[idx] );
+        sky_notify_encoder_brc_ch1( mcs_idx_bitrate_map[idx] );
+        sky_notify_encoder_brc_ch2( mcs_idx_bitrate_map[idx] );
 	}
 }
 
@@ -618,7 +630,7 @@ static void sky_handle_RC_cmd(void)
 {
     uint8_t data0, data1, data2, data3;
 
-	data0 = BB_ReadReg(PAGE2, RC_CH_MODE_0);      //(AUTO, MANUAL)
+    data0 = BB_ReadReg(PAGE2, RC_CH_MODE_0);      //(AUTO, MANUAL)
     data1 = BB_ReadReg(PAGE2, RC_CH_MODE_1);      //(AUTO, MANUAL)
 
     data2 = BB_ReadReg(PAGE2, RC_CH_CHANGE_0);
@@ -696,17 +708,31 @@ static void sky_handle_brc_mode_cmd(void)
 /*
   * handle H264 encoder brc 
  */
-static void sky_handle_brc_bitrate_cmd(void)
+static void sky_handle_brc_bitrate_cmd_ch1(void)
 {
-	uint8_t data0 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_0);
-    uint8_t data1 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_1);
+    uint8_t data0 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_0_CH1);
+    uint8_t data1 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_1_CH1);
     uint8_t bps = data0&0x3F;
 
-    if( (data0+1==data1) && ( (data0&0xc0)==0xc0) && (context.brc_bps != bps))
+    if( (data0+1==data1) && ( (data0&0xc0)==0xc0) && (context.brc_bps[0] != bps))
     {
-        context.brc_bps = bps;
-        sky_notify_encoder_brc(bps);
-        dlog_info("brc_bps = %d \r\n", bps);
+        context.brc_bps[0] = bps;
+        sky_notify_encoder_brc_ch1(bps);
+        dlog_info("ch1 brc_bps = %d \r\n", bps);
+    }
+}
+
+static void sky_handle_brc_bitrate_cmd_ch2(void)
+{
+    uint8_t data0 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_0_CH2);
+    uint8_t data1 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_1_CH2);
+    uint8_t bps = data0&0x3F;
+
+    if( (data0+1==data1) && ( (data0&0xc0)==0xc0) && (context.brc_bps[1] != bps))
+    {
+        context.brc_bps[1] = bps;
+        sky_notify_encoder_brc_ch2(bps);
+        dlog_info("ch2 brc_bps = %d \r\n", bps);
     }
 }
 
@@ -745,7 +771,10 @@ void sky_handle_all_spi_cmds(void)
 
     sky_handle_brc_mode_cmd();
 
-    sky_handle_brc_bitrate_cmd();
+    sky_handle_CH_bandwitdh_cmd();
+
+    sky_handle_brc_bitrate_cmd_ch1();
+    sky_handle_brc_bitrate_cmd_ch2();
 
     sky_handle_RF_band_cmd();
 }
@@ -814,10 +843,13 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 context.brc_mode = (ENUM_RUN_MODE)value;
                 break;
 
-            case ENCODER_DYNAMIC_BIT_RATE_SELECT:
-                sky_notify_encoder_brc((uint8_t)value);
+            case ENCODER_DYNAMIC_BIT_RATE_SELECT_CH1:
+                sky_notify_encoder_brc_ch1((uint8_t)value);
                 break;
 
+            case ENCODER_DYNAMIC_BIT_RATE_SELECT_CH2:
+                sky_notify_encoder_brc_ch2((uint8_t)value);
+                break;
             default:
                 dlog_error("%s\r\n", "unknown WIRELESS_ENCODER_CHANGE command");
                 break;                
@@ -832,6 +864,33 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
     if(class == WIRELESS_AUTO_SEARCH_ID)
     {
         sky_set_auto_search_rc_id();
+    }
+
+    if(class == WIRELESS_OTHER)
+    {
+        switch(item)
+        {
+            case GET_DEV_INFO:
+            {
+                BB_GetDevInfo();
+                break;
+            }
+
+            case SWITCH_ON_OFF_CH1:
+            {
+                BB_SwtichOnOffCh(0, (uint8_t)value);
+                break;
+            }
+
+            case SWITCH_ON_OFF_CH2:
+            {
+                BB_SwtichOnOffCh(1, (uint8_t)value);
+                break;
+            }
+
+            default:
+                break;                
+        }
     }
 }
 

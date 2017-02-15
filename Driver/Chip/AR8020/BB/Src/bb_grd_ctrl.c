@@ -59,6 +59,8 @@ void BB_GRD_start(void)
     reg_IrqHandle(BB_TX_ENABLE_VECTOR_NUM, wimax_vsoc_tx_isr, NULL);
     INTR_NVIC_SetIRQPriority(BB_TX_ENABLE_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_BB_TX,0));
     INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);
+
+    BB_GetDevInfo();
 }
 
 
@@ -711,15 +713,23 @@ static void grd_handle_brc_mode_cmd(ENUM_RUN_MODE mode)
 /*
   * handle H264 encoder brc 
  */
-static void grd_handle_brc_bitrate_cmd(uint8_t brc_coderate)
+static void grd_handle_brc_bitrate_cmd_ch1(uint8_t brc_coderate)
 {
-    BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_0, (0xc0 | brc_coderate));
-    BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_1, (0xc0 | brc_coderate)+1);
-    context.brc_bps = brc_coderate;
+    BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_0_CH1, (0xc0 | brc_coderate));
+    BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_1_CH1, (0xc0 | brc_coderate)+1);
+    context.brc_bps[0] = brc_coderate;
 
-    dlog_info("brc_coderate = %d \r\n", brc_coderate);
+    dlog_info("brc_coderate_ch1 = %d \r\n", brc_coderate);
 }
 
+static void grd_handle_brc_bitrate_cmd_ch2(uint8_t brc_coderate)
+{
+    BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_0_CH2, (0xc0 | brc_coderate));
+    BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_1_CH2, (0xc0 | brc_coderate)+1);
+    context.brc_bps[1] = brc_coderate;
+
+    dlog_info("brc_coderate_ch2 = %d \r\n", brc_coderate);
+}
 
 void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 {
@@ -785,6 +795,13 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 break;
             }
 
+            case FREQ_BAND_WIDTH_SELECT:
+            {
+                grd_handle_CH_bandwitdh_cmd((ENUM_CH_BW)value);
+                dlog_info("FREQ_BAND_WIDTH_SELECT %x\r\n", value);                
+                break;
+            }
+
             default:
             {
                 dlog_error("%s\r\n", "unknown WIRELESS_FREQ_CHANGE command");
@@ -826,8 +843,12 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 grd_handle_brc_mode_cmd( (ENUM_RUN_MODE)value);
                 break;
 
-            case ENCODER_DYNAMIC_BIT_RATE_SELECT:
-                grd_handle_brc_bitrate_cmd( (uint8_t)value);
+            case ENCODER_DYNAMIC_BIT_RATE_SELECT_CH1:
+                grd_handle_brc_bitrate_cmd_ch1( (uint8_t)value);
+                break;
+
+            case ENCODER_DYNAMIC_BIT_RATE_SELECT_CH2:
+                grd_handle_brc_bitrate_cmd_ch2( (uint8_t)value);
                 break;
 
             default:
@@ -839,6 +860,33 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
     if(class == WIRELESS_MISC)
     {
         BB_handle_misc_cmds(pcmd);
+    }
+
+    if(class == WIRELESS_OTHER)
+    {
+        switch(item)
+        {
+            case GET_DEV_INFO:
+            {
+                BB_GetDevInfo();
+                break;
+            }
+
+            case SWITCH_ON_OFF_CH1:
+            {
+                BB_SwtichOnOffCh(0, (uint8_t)value);
+                break;
+            }
+
+            case SWITCH_ON_OFF_CH2:
+            {
+                BB_SwtichOnOffCh(1, (uint8_t)value);
+                break;
+            }
+
+            default:
+                break;                
+        }
     }
 }
 
@@ -898,13 +946,16 @@ static void BB_grd_GatherOSDInfo(void)
     
     if(context.brc_mode == AUTO)
     {
-        osdptr->encoder_bitrate = context.qam_ldpc;
+        osdptr->encoder_bitrate[0] = context.qam_ldpc;
+        osdptr->encoder_bitrate[1] = context.qam_ldpc;
     }
     else
     {
-        osdptr->encoder_bitrate = context.brc_bps;
+        osdptr->encoder_bitrate[0] = context.brc_bps[0];
+        osdptr->encoder_bitrate[1] = context.brc_bps[1];
     }
 
     osdptr->head = 0x00;
     osdptr->tail = 0xff;    //end of the writing
 }
+

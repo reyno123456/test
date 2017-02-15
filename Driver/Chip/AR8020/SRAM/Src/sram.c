@@ -8,6 +8,19 @@
 volatile uint32_t               sramReady0;
 volatile uint32_t               sramReady1;
 extern USBD_HandleTypeDef       USBD_Device;
+volatile uint32_t               g_u32VideoDisplay;
+
+
+void SRAM_OpenVideoDisplay(void)
+{
+    g_u32VideoDisplay = 1;
+}
+
+
+void SRAM_CloseVideoDisplay(void)
+{
+    g_u32VideoDisplay = 0;
+}
 
 
 void SRAM_Ready0IRQHandler(uint32_t u32_vectorNum)
