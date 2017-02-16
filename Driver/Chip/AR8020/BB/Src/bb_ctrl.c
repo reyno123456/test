@@ -1234,6 +1234,7 @@ static void BB_GetNv(void)
  */
 int BB_GetDevInfo(void)
 {
+    static uint32_t tmpCnt = 1;
     uint8_t u8_data;
     STRU_DEVICE_INFO *pst_devInfo = (STRU_DEVICE_INFO *)(DEVICE_INFO_SHM_ADDR);
 
@@ -1241,14 +1242,23 @@ int BB_GetDevInfo(void)
     pst_devInfo->paramLen = 0x09;
     pst_devInfo->skyGround = context.en_bbmode;
     pst_devInfo->band = context.freq_band;
-    pst_devInfo->bandWidth = context.CH_bandwidth;
+    if (BW_10M == (context.CH_bandwidth))
+    {
+        pst_devInfo->bandWidth = 0x01;
+    }
+    else
+    {
+        pst_devInfo->bandWidth = 0x02;
+    }
+    //pst_devInfo->bandWidth = context.CH_bandwidth;
     pst_devInfo->itHopping = context.it_skip_freq_mode;
     pst_devInfo->rcHopping = context.rc_skip_freq_mode;
     pst_devInfo->adapterBitrate = context.qam_skip_mode;
     u8_data = BB_ReadReg(PAGE1, 0x8D);
-    pst_devInfo->channel1_on = (u8_data & 0x40) >> 6;
-    pst_devInfo->channel2_on = (u8_data & 0x80) >> 7;
+    pst_devInfo->channel1_on = (u8_data >> 6) & 0x01;
+    pst_devInfo->channel2_on = (u8_data >> 7) & 0x01;
     pst_devInfo->isDebug = context.u8_debugMode;
+
 }
 
 /** 

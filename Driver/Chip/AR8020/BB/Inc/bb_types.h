@@ -39,7 +39,6 @@ typedef enum _ENUM_BB_QAM
     MOD_4QAM    = 0x01,
     MOD_16QAM   = 0x02,
     MOD_64QAM   = 0x03,
-    MOD_QPSK    = 0x04,
     MOD_MAX     = 0xff,
 }ENUM_BB_QAM;
 
@@ -150,7 +149,7 @@ typedef struct
     uint8_t         modulation_mode;
     uint8_t         ch_bandwidth;
     uint8_t         code_rate;
-    uint8_t         reserved;
+    uint8_t         osd_enable;
     uint8_t         IT_channel;
     uint8_t         head;
     uint8_t         tail;

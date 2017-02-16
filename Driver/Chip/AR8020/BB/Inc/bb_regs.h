@@ -83,6 +83,10 @@
 
 #define ENCODER_BRC_CHAGE_0_CH2	    ((uint8_t)0x76)
 #define ENCODER_BRC_CHAGE_1_CH2	    ((uint8_t)0x77)
+
+#define LDPC_INDEX_0		((uint8_t)0x77)
+#define LDPC_INDEX_1		((uint8_t)0x78)
+
 #define CALI_0_1     ((uint8_t)(0xD0+0x00))/* page 0 0xD0+0x00
                                             txa_i_ofs RD  7 0 8
                                            */

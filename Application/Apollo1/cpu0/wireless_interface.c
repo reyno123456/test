@@ -17,6 +17,7 @@ STRU_WIRELESS_MESSAGE_BUFF              g_stWirelessReply;     //send to PAD or 
 
 uint8_t eventFlag = 0;
 
+volatile uint8_t                        g_u8OSDToggle = 0;
 
 WIRELESS_CONFIG_HANDLER g_stWirelessMsgHandler[MAX_PID_NUM] = 
 {
@@ -132,35 +133,32 @@ uint8_t WIRELESS_GetOSDInfo(void)
 }
 
 /* Send to PAD or PC */
-void WIRELESS_SendOSDInfo(ENUM_WIRELESS_TOOL host)
+uint8_t WIRELESS_SendOSDInfo(void)
 {
-    uint32_t                                sendLength;
-    STRU_WIRELESS_PARAM_CONFIG_MESSAGE      recvMessage;
+    uint8_t               *u8_sendBuff;
+    uint32_t               u32_sendLength;
 
     if (WIRELESS_GetOSDInfo())
     {
-        return;
+        dlog_error("osd info not ready");
+
+        return 1;
     }
 
-    sendLength                = (uint32_t)(sizeof(STRU_WIRELESS_INFO_DISPLAY));
+    u8_sendBuff                     = (uint8_t *)&g_stWirelessInfoSend;
+    u32_sendLength                  = (uint32_t)(sizeof(STRU_WIRELESS_INFO_DISPLAY));
 
-    if (host == MCU_TO_PAD)
+    g_stWirelessInfoSend.messageId  = WIRELESS_INTERFACE_OSD_DISPLAY;
+    g_stWirelessInfoSend.paramLen   = u32_sendLength;
+
+    if (HAL_OK != HAL_USB_DeviceSendCtrl(u8_sendBuff, u32_sendLength))
     {
-        g_stWirelessInfoSend.messageId = PAD_WIRELESS_INTERFACE_OSD_DISPLAY;
-        g_stWirelessInfoSend.paramLen = sendLength;
-    }
-    else
-    {
-        g_stWirelessInfoSend.messageId = WIRELESS_INTERFACE_OSD_DISPLAY;
-        g_stWirelessInfoSend.paramLen = sendLength;
+        dlog_error("send osd info error");
+
+        return 1;
     }
 
-    recvMessage.messageId       = g_stWirelessInfoSend.messageId;
-    recvMessage.paramLen        = g_stWirelessInfoSend.paramLen;
-
-    Wireless_InsertMsgIntoReplyBuff(&recvMessage);
-
-    return;
+    return 0;
 }
 
 
@@ -481,11 +479,24 @@ uint8_t WIRELESS_INTERFACE_MIMO_2T2R_Handler(void *param)
 
 uint8_t WIRELESS_INTERFACE_OSD_DISPLAY_Handler(void *param)
 {
-    ENUM_WIRELESS_TOOL toolToHost = MCU_TO_PC;
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
+
     recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
 
-    WIRELESS_SendOSDInfo(toolToHost);
+    g_pstWirelessInfoDisplay  = (STRU_WIRELESS_INFO_DISPLAY *)OSD_STATUS_SHM_ADDR;
+
+    if (recvMessage->paramData[0] == 0)
+    {
+        dlog_info("close osd");
+
+        g_pstWirelessInfoDisplay->osd_enable    = 0;
+    }
+    else
+    {
+        dlog_info("open osd");
+
+        g_pstWirelessInfoDisplay->osd_enable    = 1;
+    }
 
     return 0;
 }
@@ -744,8 +755,8 @@ uint8_t WIRELESS_INTERFACE_RC_HOPPING_Handler(void *param)
         dlog_info("RC SELECT MODE\n");
     }
 
-    HAL_BB_SetItChannelSelectionModeProxy(e_mode);
-
+    //HAL_BB_SetItChannelSelectionModeProxy(e_mode);
+    HAL_BB_SetRcChannelSelectionModeProxy(e_mode);
     return 0;
 }
 
@@ -979,21 +990,56 @@ uint8_t WIRELESS_INTERFACE_OPEN_ADAPTION_BIT_STREAM_Handler(void *param)
         dlog_info("manual\n");
     }
 
-    HAL_BB_SetEncoderBrcModeProxy(enRunMode);
+    //HAL_BB_SetEncoderBrcModeProxy(enRunMode);
+    HAL_BB_SetMcsModeProxy(enRunMode);
 
     return 0;
 }
 
 uint8_t WIRELESS_INTERFACE_SWITCH_CH1_Handler(void *param)
 {
+    STRU_WIRELESS_PARAM_CONFIG_MESSAGE  *recvMessage;
+    recvMessage     = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
+    uint8_t u8_data = 0;
+
     dlog_info("WIRELESS_INTERFACE_SWITCH_CH1_Handler");
+
+    if (recvMessage->paramData[0] == 0)
+    {
+        dlog_info("ch1 off");
+        u8_data = 0;
+    }
+    else
+    {
+        dlog_info("ch1 on");
+        u8_data = 1;
+    }
+
+    HAL_BB_SwitchOnOffCh1(u8_data);
 
     return 0;
 }
 
 uint8_t WIRELESS_INTERFACE_SWITCH_CH2_Handler(void *param)
 {
+    STRU_WIRELESS_PARAM_CONFIG_MESSAGE  *recvMessage;
+    recvMessage     = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
+    uint8_t u8_data = 0;
+
     dlog_info("WIRELESS_INTERFACE_SWITCH_CH2_Handler");
+
+    if (recvMessage->paramData[0] == 0)
+    {
+        dlog_info("ch1 off");
+        u8_data = 0;
+    }
+    else
+    {
+        dlog_info("ch1 on");
+        u8_data = 1;
+    }
+
+    HAL_BB_SwitchOnOffCh2(u8_data);
 
     return 0;
 }
@@ -1023,33 +1069,9 @@ uint8_t WIRELESS_INTERFACE_VIDEO_QAM_Handler(void *param)
 
     recvMessage         = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
 
-    switch (recvMessage->paramData[0])
-    {
-        dlog_info("QAM : %d", recvMessage->paramData[0]);
-        case 0:
-            enBBQAM         = MOD_BPSK;
-            break;
+    enBBQAM             = (ENUM_BB_QAM)(recvMessage->paramData[0] & 0x3);
 
-        case 1:
-            enBBQAM         = MOD_4QAM;
-            break;
-
-        case 2:
-            enBBQAM         = MOD_16QAM;
-            break;
-
-        case 3:
-            enBBQAM         = MOD_64QAM;
-            break;
-
-        case 4:
-            enBBQAM         = MOD_QPSK;
-            break;
-
-        default:
-            enBBQAM         = MOD_BPSK;
-            break;
-    }
+    dlog_info("QAM : %d", recvMessage->paramData[0]);
 
 	HAL_BB_SetItQamProxy(enBBQAM);
 
@@ -1063,30 +1085,9 @@ uint8_t WIRELESS_INTERFACE_VIDEO_CODE_RATE_Handler(void *param)
 
     recvMessage         = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
 
-    switch (recvMessage->paramData[0])
-    {
-        dlog_info("ldpc: %d", recvMessage->paramData[0]);
+    enldpc              = (ENUM_BB_LDPC)recvMessage->paramData[0];
 
-        case 0:
-            enldpc  = LDPC_1_2;
-            break;
-
-        case 1:
-            enldpc  = LDPC_2_3;
-            break;
-
-        case 2:
-            enldpc  = LDPC_3_4;
-            break;
-
-        case 3:
-            enldpc  = LDPC_5_6;
-            break;
-
-        default:
-            enldpc  = LDPC_1_2;
-            break;
-    }
+    dlog_info("ldpc: %d", recvMessage->paramData[0]);
 
     HAL_BB_SetItLdpcProxy(enldpc);
 
@@ -1100,22 +1101,9 @@ uint8_t WIRELESS_INTERFACE_RC_QAM_Handler(void *param)
 
     recvMessage         = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
 
+    enBBQAM             = (ENUM_BB_QAM)(recvMessage->paramData[0] & 0x1);
+
     dlog_info("RC QAM : %d", recvMessage->paramData[0]);
-
-    switch (recvMessage->paramData[0])
-    {
-        case 0:
-            enBBQAM         = MOD_BPSK;
-            break;
-
-        case 4:
-            enBBQAM         = MOD_QPSK;
-            break;
-
-        default:
-            enBBQAM         = MOD_BPSK;
-            break;
-    }
 
     HAL_BB_SetItQamProxy(enBBQAM);
 
@@ -1274,11 +1262,24 @@ uint8_t PAD_ENCODER_DYNAMIC_BITRATE_SELECT_Handler(void *param)
 
 uint8_t PAD_WIRELESS_OSD_DISPLAY_Handler(void *param)
 {
-    ENUM_WIRELESS_TOOL toolToHost = MCU_TO_PAD;
+    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
 
-    dlog_info("PAD_WIRELESS_OSD_DISPLAY_Handler\n");
+    recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
 
-    WIRELESS_SendOSDInfo(toolToHost);
+    g_pstWirelessInfoDisplay  = (STRU_WIRELESS_INFO_DISPLAY *)OSD_STATUS_SHM_ADDR;
+
+    if (recvMessage->paramData[0] == 0)
+    {
+        dlog_info("close osd");
+
+        g_pstWirelessInfoDisplay->osd_enable    = 0;
+    }
+    else
+    {
+        dlog_info("open osd");
+
+        g_pstWirelessInfoDisplay->osd_enable    = 1;
+    }
 
     return 0;
 }
@@ -1313,6 +1314,8 @@ static void Wireless_Task(void const *argument)
     uint32_t                                u32_sendLength;
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *pstWirelessParamConfig;
 
+    g_pstWirelessInfoDisplay  = (STRU_WIRELESS_INFO_DISPLAY *)OSD_STATUS_SHM_ADDR;
+
     dlog_info("wireless task entry");
 
     while (1)
@@ -1323,41 +1326,22 @@ static void Wireless_Task(void const *argument)
 
             messageId              = pstWirelessParamConfig->messageId;
 
-            if ((messageId == PAD_WIRELESS_INTERFACE_OSD_DISPLAY)||
-                (messageId == WIRELESS_INTERFACE_OSD_DISPLAY))
-            {
-                u8_sendBuff         = (uint8_t *)&g_stWirelessInfoSend;
-                u32_sendLength      = g_stWirelessInfoSend.paramLen;
-            }
-            else
-            {
-                u8_sendBuff         = (uint8_t *)pstWirelessParamConfig;
-                u32_sendLength      = (uint32_t)sizeof(STRU_WIRELESS_PARAM_CONFIG_MESSAGE);
-            }
+            u8_sendBuff         = (uint8_t *)pstWirelessParamConfig;
+            u32_sendLength      = (uint32_t)sizeof(STRU_WIRELESS_PARAM_CONFIG_MESSAGE);
 
             if (HAL_OK != HAL_USB_DeviceSendCtrl(u8_sendBuff, u32_sendLength))
             {
-                if ((messageId == PAD_WIRELESS_INTERFACE_OSD_DISPLAY)||
-                    (messageId == WIRELESS_INTERFACE_OSD_DISPLAY))
+                g_stWirelessReply.u16_sendfailCount++;
+
+                if (g_stWirelessReply.u16_sendfailCount >= WIRELESS_INTERFACE_SEND_FAIL_RETRY)
                 {
-                    g_stWirelessReply.u16_sendfailCount = 0;
-                    g_stWirelessReply.u8_buffHead++;
-                    g_stWirelessReply.u8_buffHead &= (WIRELESS_INTERFACE_MAX_MESSAGE_NUM - 1);
-                }
-                else
-                {
-                    g_stWirelessReply.u16_sendfailCount++;
+                    g_stWirelessParamConfig.u16_sendfailCount = 0;
 
-                    if (g_stWirelessReply.u16_sendfailCount >= WIRELESS_INTERFACE_SEND_FAIL_RETRY)
-                    {
-                        g_stWirelessParamConfig.u16_sendfailCount = 0;
+                    dlog_error("fail counter exceed threshold");
 
-                        dlog_error("fail counter exceed threshold");
+                    HAL_USB_ResetDevice(NULL);
 
-                        HAL_USB_ResetDevice(NULL);
-
-                        osDelay(500);
-                    }
+                    osDelay(500);
                 }
             }
             else
@@ -1366,6 +1350,20 @@ static void Wireless_Task(void const *argument)
 
                 g_stWirelessReply.u8_buffHead++;
                 g_stWirelessReply.u8_buffHead &= (WIRELESS_INTERFACE_MAX_MESSAGE_NUM - 1);
+            }
+        }
+        else if (g_pstWirelessInfoDisplay->osd_enable)
+        {
+            if (g_u8OSDToggle == 0)
+            {
+                if (0 == WIRELESS_SendOSDInfo())
+                {
+                    g_u8OSDToggle  ^= 1;
+                }
+            }
+            else
+            {
+                g_u8OSDToggle  ^= 1;
             }
         }
 

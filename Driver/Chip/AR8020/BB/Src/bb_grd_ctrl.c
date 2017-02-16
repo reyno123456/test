@@ -143,7 +143,7 @@ void grd_fec_judge(void)
                 {
                     context.qam_mode= MOD_BPSK;
                     context.ldpc    = LDPC_1_2;
-                    context.CH_bandwidth = BW_10M;
+                    //context.CH_bandwidth = BW_10M;
 
                     context.qam_ldpc = 0;
                     grd_set_txmsg_mcs_change(context.qam_ldpc);
@@ -178,8 +178,8 @@ void grd_fec_judge(void)
         if(context.it_manual_rf_band != 0xff && context.freq_band!= context.it_manual_rf_band)
         {
             BB_set_RF_Band(BB_GRD_MODE, context.it_manual_rf_band);
-            context.it_manual_rf_band = 0xff;
             context.freq_band = context.it_manual_rf_band;
+            context.it_manual_rf_band = 0xff;
         }
         reset_it_span_cnt();
         context.dev_state = CHECK_FEC_LOCK;
@@ -324,6 +324,14 @@ void grd_set_txmsg_mcs_change(uint8_t index )
     BB_WriteReg(PAGE2, MCS_INDEX_MODE_1, index +1);
 
     dlog_info("MCS2=>%d\n", index);
+}
+
+void grd_set_txmsg_ldpc(uint8_t index)
+{
+    BB_WriteReg(PAGE2, LDPC_INDEX_0, index);
+    BB_WriteReg(PAGE2, LDPC_INDEX_1, index +1);
+
+    dlog_info("ldpc=>%d\n", index);
 }
 
 
@@ -499,6 +507,7 @@ void Grd_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
 
         case 3:
             Timer1_Delay1_Cnt++;
+            BB_GetDevInfo();
             break;
 
         case 4:
@@ -512,6 +521,7 @@ void Grd_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
         case 6:
             Timer1_Delay1_Cnt++;
             BB_grd_GatherOSDInfo();
+            //BB_GetDevInfo();
             break;
 
         case 7:
@@ -672,7 +682,9 @@ static void grd_handle_CH_bandwitdh_cmd(ENUM_CH_BW bw)
         BB_set_RF_bandwitdh(BB_GRD_MODE, bw);
 
         BB_WriteReg(PAGE2, RF_CH_BW_CHANGE_0, 0xc0 | (uint8_t)bw);
-        BB_WriteReg(PAGE2, RF_CH_BW_CHANGE_1, 0xc0 | (uint8_t)bw + 1);        
+        BB_WriteReg(PAGE2, RF_CH_BW_CHANGE_1, 0xc0 | (uint8_t)bw + 1);       
+
+        context.CH_bandwidth = bw; 
     }
 
     dlog_info("CH_bandwidth =%d\r\n", context.CH_bandwidth);    
@@ -829,6 +841,11 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 }
                 break;
 
+            case MCS_CODE_RATE_SELECT:
+                {
+                    grd_set_txmsg_ldpc(value);
+                }
+                break;
             default:
                 dlog_error("%s\r\n", "unknown WIRELESS_MCS_CHANGE command");
                 break;
@@ -845,10 +862,12 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 
             case ENCODER_DYNAMIC_BIT_RATE_SELECT_CH1:
                 grd_handle_brc_bitrate_cmd_ch1( (uint8_t)value);
+                dlog_info("ch1:%d",value);
                 break;
 
             case ENCODER_DYNAMIC_BIT_RATE_SELECT_CH2:
                 grd_handle_brc_bitrate_cmd_ch2( (uint8_t)value);
+                dlog_info("ch2:%d",value);
                 break;
 
             default:
@@ -908,6 +927,11 @@ static void grd_handle_all_cmds(void)
 static void BB_grd_GatherOSDInfo(void)
 {
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
+
+    if (osdptr->osd_enable == 0)
+    {
+        return;
+    }
 
     osdptr->messageId = 0x33;
     osdptr->head = 0xff; //starting writing

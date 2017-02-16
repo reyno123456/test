@@ -615,32 +615,6 @@ HAL_RET_T HAL_BB_CurPageReadByte(uint8_t u8_addr, uint8_t *pu8_regValue)
  * @retval      
  * @note      
  */
-HAL_RET_T HAL_BB_GetDevInfo(void)
-{
-    uint8_t u8_ret;
-    STRU_WIRELESS_CONFIG_CHANGE st_cmd;
-    
-    st_cmd.u8_configClass  = WIRELESS_OTHER;
-    st_cmd.u8_configItem   = GET_DEV_INFO;
-    st_cmd.u32_configValue = 0;
-
-    u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
-    if( u8_ret )
-    {
-        return HAL_OK;
-    }
-    else
-    {
-        return HAL_BB_ERR_EVENT_NOTIFY;
-    }
-}
-
-/** 
- * @brief       
- * @param   
- * @retval      
- * @note      
- */
 HAL_RET_T HAL_BB_SetRcChannelSelectionModeProxy(ENUM_RUN_MODE e_mode)
 {
     uint8_t u8_ret;

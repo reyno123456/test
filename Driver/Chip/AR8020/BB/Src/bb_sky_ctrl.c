@@ -249,6 +249,7 @@ void wimax_vsoc_rx_isr(uint32_t u32_vectorNum)
 
 void Sky_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
 {
+    static uint32_t u32_cnt = 0;
     sky_timer2_6_running = 1;
     sky_search_id_timeout_irq_disable();
 
@@ -275,8 +276,14 @@ void Sky_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
             switch_5G_count++;
             sky_soft_reset();
         }
-
-        BB_sky_GatherOSDInfo();
+        if (0 == (u32_cnt++ % 2))
+        {
+            BB_sky_GatherOSDInfo();
+        }
+        else
+        {
+            BB_GetDevInfo();
+        }
     }
 
     sky_timer2_6_running = 0;
@@ -686,6 +693,7 @@ static void sky_handle_CH_bandwitdh_cmd(void)
             //set and soft-rest
             BB_set_RF_bandwitdh(BB_SKY_MODE, bw);
             context.CH_bandwidth = bw;
+            dlog_info("CH_bandwidth =%d\r\n", context.CH_bandwidth);
         }
     }
 }
@@ -759,6 +767,19 @@ static void sky_handle_MCS_cmd(void)
     }
 }
 
+static void sky_handle_ldpc_cmd(void)
+{
+    uint8_t data0 = BB_ReadReg(PAGE2, LDPC_INDEX_0);
+    uint8_t data1 = BB_ReadReg(PAGE2, LDPC_INDEX_1);
+
+    if(data0+1==data1 && context.ldpc != data0)
+    {
+        context.ldpc = data0;
+        BB_set_LDPC(context.ldpc);
+        dlog_info("ldpc=>%d\n", context.ldpc);
+    }
+}
+
 void sky_handle_all_spi_cmds(void)
 {
     sky_handle_RC_cmd();
@@ -768,6 +789,8 @@ void sky_handle_all_spi_cmds(void)
     //sky_handle_QAM_cmd();
     
     sky_handle_MCS_cmd();
+
+    sky_handle_ldpc_cmd();
 
     sky_handle_brc_mode_cmd();
 
@@ -790,6 +813,20 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
     {
         switch(item)
         {
+            case FREQ_BAND_SELECT:
+            {
+                //grd_handle_RF_band_cmd((ENUM_RF_BAND)value);
+                context.freq_band = (ENUM_RF_BAND)(value);
+                BB_set_RF_Band(BB_SKY_MODE, context.freq_band);
+                dlog_info("context.freq_band %d \r\n", context.freq_band);
+                break;
+            }
+            case FREQ_CHANNEL_MODE: //auto manual
+            {
+                //grd_handle_IT_mode_cmd((ENUM_RUN_MODE)value);
+                context.it_skip_freq_mode = (ENUM_RUN_MODE)value;
+                break;
+            }
             case FREQ_CHANNEL_SELECT:
             {
                 sky_set_it_freq(context.freq_band, (uint8_t)value);
@@ -826,7 +863,13 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 break;
             }
 
-
+            case FREQ_BAND_WIDTH_SELECT:
+            {
+                context.CH_bandwidth = (ENUM_CH_BW)value;
+                BB_set_RF_bandwitdh(BB_SKY_MODE, context.CH_bandwidth);
+                dlog_info("FREQ_BAND_WIDTH_SELECT %x\r\n", value);                
+                break;
+            }
             default:
             {
                 dlog_error("%s\r\n", "unknown WIRELESS_FREQ_CHANGE command");
@@ -878,13 +921,15 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 
             case SWITCH_ON_OFF_CH1:
             {
-                BB_SwtichOnOffCh(0, (uint8_t)value);
+                //BB_SwtichOnOffCh(0, (uint8_t)value);
+                dlog_info("sky invalid cmd.");
                 break;
             }
 
             case SWITCH_ON_OFF_CH2:
             {
-                BB_SwtichOnOffCh(1, (uint8_t)value);
+                //BB_SwtichOnOffCh(1, (uint8_t)value);
+                dlog_info("sky invalid cmd.");
                 break;
             }
 
@@ -913,6 +958,11 @@ static void sky_handle_all_cmds(void)
 static void BB_sky_GatherOSDInfo(void)
 {
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
+
+    if (osdptr->osd_enable == 0)
+    {
+        return;
+    }
 
     osdptr->messageId = 0x33;
     osdptr->head = 0xff; //starting writing

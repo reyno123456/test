@@ -329,13 +329,6 @@ HAL_RET_T HAL_BB_CurPageReadByte(uint8_t u8_addr, uint8_t *pu8_regValue);
  */
 HAL_RET_T HAL_BB_SetAutoSearchRcId(void);
 
-/** 
- * @brief       
- * @param   
- * @retval      
- * @note      
- */
-HAL_RET_T HAL_BB_GetDevInfo(void);
 
 /** 
  * @brief       
