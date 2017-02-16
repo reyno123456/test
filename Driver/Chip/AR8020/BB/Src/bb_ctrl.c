@@ -264,7 +264,7 @@ void BB_init(ENUM_BB_MODE en_mode)
     RF8003s_Set(en_mode);
     BB_softReset(en_mode);
 
-    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USER_CFG_CHANGE_LOCAL, BB_HandleEventsCallback);
+    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USER_CFG_CHANGE, BB_HandleEventsCallback);
 
     BB_UARTComInit();    
     dlog_info("BB mode Band %d %d %s \r\n", en_mode, context.freq_band, "BB_init Done");

@@ -44,18 +44,14 @@ static void InterCore_IRQ0Handler(uint32_t u32_vectorNum)
         // Message process
         if (msg != 0)
         {
-            // Check whether this message is an inter-core system event
-            if (msg & SYS_EVENT_INTER_CORE_MASK)
-            {
-                // Remove the inter-core mask to avoid the loop notification
-                uint32_t event = msg & ~SYS_EVENT_INTER_CORE_MASK;
+            // Remove the inter-core mask to avoid the loop notification
+            uint32_t event = msg & ~SYS_EVENT_INTER_CORE_MASK;
 
-                // Notify the message as a system event to the local CPU
-                SYS_EVENT_Notify_From_ISR(event, (void*)buf);
+            // Notify the message as a system event to the local CPU
+            SYS_EVENT_Notify_From_ISR(event, (void*)buf);
 #ifdef INTER_CORE_DEBUG_LOG_ENABLE
-                dlog_info("Notify event 0x%x by inter core msg", event);
+            dlog_info("Notify event 0x%x by inter core msg", event);
 #endif
-            }
         }
         else
         {
@@ -173,17 +169,8 @@ uint8_t InterCore_SendMsg(INTER_CORE_CPU_ID dst, INTER_CORE_MSG_ID msg, uint8_t*
         return 0;
     }
 
-    // Set the other parameters 
-#if defined CPU0_DRV
-    msgPtr[i].enSrcCpuID = INTER_CORE_CPU0_ID;
-#elif defined CPU1_DRV
-    msgPtr[i].enSrcCpuID = INTER_CORE_CPU1_ID;
-#elif defined CPU2_DRV
-    msgPtr[i].enSrcCpuID = INTER_CORE_CPU2_ID;
-#else
-    dlog_error("Error CPU number!");
-    return 0;
-#endif
+    // Set the other parameters
+    msgPtr[i].enSrcCpuID = (1 << CPUINFO_GetLocalCpuId()); 
     msgPtr[i].enDstCpuID = (dst & (~(msgPtr[i].enSrcCpuID)));    // Unmask the local CPU ID
     msgPtr[i].dataAccessed = 0;
     msgPtr[i].enMsgID = msg;
@@ -209,16 +196,7 @@ uint8_t InterCore_GetMsg(INTER_CORE_MSG_ID* msg_p, uint8_t* buf, uint32_t max_le
     }
 
     // Filter to filter out other CPU's data
-#if defined CPU0_DRV
-    dst_filter = INTER_CORE_CPU0_ID;
-#elif defined CPU1_DRV
-    dst_filter = INTER_CORE_CPU1_ID;
-#elif defined CPU2_DRV
-    dst_filter = INTER_CORE_CPU2_ID;
-#else
-    dlog_error("Error CPU number!");
-    return 0;
-#endif
+    dst_filter = (1 << CPUINFO_GetLocalCpuId());
 
     // Check the data buffer to find the current CPU's data
     for(i = 0 ; i < INTER_CORE_MSG_SHARE_MEMORY_NUMBER; i++)

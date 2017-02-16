@@ -190,7 +190,7 @@ int32_t HAL_NV_Init(void)
     
     NV_GetInit();
 
-    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_NV_MSG_LOCAL, NV_Save);
+    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_NV_MSG, NV_Save);
     
     pst_nv->st_nvMng.u32_nvInitFlag = 0x23178546;
     return 0;

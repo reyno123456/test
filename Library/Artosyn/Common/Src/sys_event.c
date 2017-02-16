@@ -6,6 +6,7 @@
 #include "sys_event.h"
 #include "debuglog.h"
 #include "memory.h"
+#include "cpu_info.h"
 
 #define TRUE (1)
 #define FALSE (0)
@@ -417,6 +418,8 @@ uint8_t SYS_EVENT_RegisterHandler(uint32_t event_id, SYS_Event_Handler event_han
     uint8_t retval = FALSE;
     STRU_RegisteredSysEvent_Node* sysEventNode;
 
+    event_id &= ~SYS_EVENT_INTER_CORE_MASK;
+
     acquireSysEventList();
 
     sysEventNode = retrieveRegisteredEventNode(event_id, TRUE);
@@ -490,8 +493,8 @@ uint8_t SYS_EVENT_Notify_From_ISR(uint32_t event_id, void* parameter)
 
     if (pNewNode != NULL)
     {
-        // Add the new node to the tail
-        pNewNode->event_id = event_id;
+        // Add the new node to the tail, unmask the inter core bit.
+        pNewNode->event_id = (event_id & ~SYS_EVENT_INTER_CORE_MASK);
         memcpy((void*)(pNewNode->parameter), parameter, sizeof(pNewNode->parameter));
         pNewNode->prev = *ppLastNode;
         pNewNode->next = NULL;
@@ -513,9 +516,9 @@ uint8_t SYS_EVENT_Notify_From_ISR(uint32_t event_id, void* parameter)
         {
             INTER_CORE_CPU_ID dst = 0;
 
-            dst |= (INTER_CORE_CPU0_ID | INTER_CORE_CPU1_ID | INTER_CORE_CPU2_ID);
+            dst |= ((INTER_CORE_CPU0_ID | INTER_CORE_CPU1_ID | INTER_CORE_CPU2_ID) & (~(1 << CPUINFO_GetLocalCpuId())));
             // Inter-Core message send
-            InterCore_SendMsg(dst, event_id, parameter, SYS_EVENT_HANDLER_PARAMETER_LENGTH);
+            InterCore_SendMsg(dst, event_id & ~SYS_EVENT_INTER_CORE_MASK, parameter, SYS_EVENT_HANDLER_PARAMETER_LENGTH);
         }
 
         retval = TRUE;
