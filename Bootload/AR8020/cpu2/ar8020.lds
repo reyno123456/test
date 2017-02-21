@@ -28,26 +28,19 @@ SECTIONS
     .text :
     {
         _text_start = . ;
-        *(.text)
+        *(.text*)
     } > ITCM2
 
-    _text_end = _text_start + SIZEOF(.text) ;
-    
-
     _data_start = . ;
+
     .rodata :
     {
         *(.rodata*)
     } > DTCM2 AT> ITCM2
 
-   /* .data_array :
-    {
-        *(.data_array*)
-    } > DTCM2 AT> ITCM2
-    */
     .data :
     {
-        *(.data)
+        *(.data*)
         . = ALIGN(4);
         *(.ramcode)
     } > DTCM2 AT> ITCM2
@@ -59,11 +52,13 @@ SECTIONS
 
     .bss :
     {
-        _bss_start = .;
-        *(.bss)
+        _bss_start = . ;
+        *(.bss*)
         *(COMMON)
-        _bss_end = .;
+        _bss_end = . ;
     } > DTCM2
+
+    end = . ;
 }
 
 

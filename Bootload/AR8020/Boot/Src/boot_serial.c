@@ -5,8 +5,7 @@ void uart_init(unsigned char index, unsigned int baud_rate)
 {
     int devisor;
     volatile uart_type *uart_regs =(uart_type *)UART0_BASE;
-
-    uart_regs->IIR_FCR = UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT | UART_FCR_TRIGGER_14;
+    uart_regs->IIR_FCR = UART_FCR_ENABLE_FIFO | UART_FCR_CLEAR_RCVR | UART_FCR_CLEAR_XMIT | UART_FCR_TRIGGER_14;
     uart_regs->DLH_IER = 0x00000000;
     uart_regs->LCR = UART_LCR_WLEN8 & ~(UART_LCR_STOP | UART_LCR_PARITY);
 
@@ -37,9 +36,9 @@ void uart_puts(unsigned char index, const char *s)
 
 char uart_getc(unsigned char index)
 {
-
     volatile uart_type *uart_regs = (uart_type *)UART0_BASE;
-    if((uart_regs->LSR & UART_LSR_DATAREADY) != UART_LSR_DATAREADY)
+
+    if ((uart_regs->LSR & UART_LSR_DATAREADY) != UART_LSR_DATAREADY)
     {
         return -1;
     }
@@ -47,7 +46,6 @@ char uart_getc(unsigned char index)
     {
         return uart_regs->RBR_THR_DLL;
     }
-
 }
 
 

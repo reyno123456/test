@@ -28,13 +28,11 @@ SECTIONS
     .text : 
     {
         _text_start = . ;
-        *(.text)
+        *(.text*)
         . = ALIGN(4) ;
     } > FLASH
 
-    _text_end = _text_start + SIZEOF(.text) ;
-
-    _data_start = _text_end;
+    _data_start = .;
     
     .rodata :
     {
@@ -44,7 +42,7 @@ SECTIONS
 
     .data : 
     {
-        *(.data)
+        *(.data*)
         . = ALIGN(4) ;
         *(.ramcode)
     } >DTCM0 AT> FLASH
@@ -57,11 +55,13 @@ SECTIONS
     .bss :
     {
         _bss_start = . ;
-        *(.bss)
+        *(.bss*)
         *(COMMON)
         . = ALIGN(4);
         _bss_end = .;
     } > DTCM0
+
+    end = . ;
 }
 
 

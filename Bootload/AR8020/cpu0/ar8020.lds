@@ -25,12 +25,9 @@ SECTIONS
 
     .text :
     {
-        _text_start = . ;
-        *(.text)
+        *(.text*)
     } > ITCM0
 
-    _text_end = _text_start + SIZEOF(.text) ;
-    
     _data_start = . ;
 
     .rodata :
@@ -40,7 +37,7 @@ SECTIONS
 
     .data :
     {
-        *(.data)
+        *(.data*)
         . = ALIGN(4);
         *(.ramcode)
     } > DTCM0 AT> ITCM0
@@ -53,10 +50,12 @@ SECTIONS
     .bss :
     {
         _bss_start = .;
-        *(.bss)
+        *(.bss*)
         *(COMMON)
         _bss_end = .;
     } > DTCM0
+
+    end = . ;
 }
 
 

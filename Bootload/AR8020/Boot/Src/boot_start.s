@@ -20,10 +20,6 @@
 .global  Default_Handler
 
 /* defined in linker script */
-/* start address for the text section */
-.word  _text_start
-/* end address for the text section */
-.word  _text_end
 /* start address for the .data/rodata/bss section. */
 .word  _data_start
 /* end address for the .data/rodata/bss section. */

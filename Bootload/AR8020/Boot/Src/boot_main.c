@@ -16,21 +16,20 @@ void delay_ms(uint32_t num)
 
 int main(void)
 {
-
     Boot_Info st_bootInfo;    
     uart_init(0,115200);
     uart_puts(0,"stag 1\r\n");
     uint32_t bootAddress = 0;
     QUAD_SPI_SetSpeed();
     
-    delay_ms(50);
+    delay_ms(500);
     memset(&st_bootInfo,0xff,sizeof(st_bootInfo));
     QUAD_SPI_ReadBlockByByte(INFO_BASE,(uint8_t *)(&st_bootInfo),sizeof(st_bootInfo));
 
     if('t' == uart_getc(0))
     {
         uart_puts(0,"boot BOOT\r\n");
-        delay_ms(50);
+        delay_ms(100);
         if('t' == uart_getc(0))
         {            
             if(0 == st_bootInfo.present_boot)

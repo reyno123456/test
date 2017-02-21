@@ -24,27 +24,21 @@ SECTIONS
         *(.start*)
     } > ITCM1
 
-
     .text :
     {
-    _text_start = . ;
-        *(.text)
+        *(.text*)
     } > ITCM1
-
-    
 
     .rodata :
     {
         *(.rodata*)
     } > ITCM1
 
-    _text_end = _text_start + SIZEOF(.text) + SIZEOF(.rodata);
-
     _data_start = . ;
 
     .data :
     {
-        *(.data)
+        *(.data*)
         . = ALIGN(4);
         *(.ramcode)
     } > DTCM1 AT > ITCM1
@@ -57,12 +51,12 @@ SECTIONS
     .bss :
     {
         _bss_start = .; 
-        *(.bss)
+        *(.bss*)
         *(COMMON)
         _bss_end = .;
     } > DTCM1
 
-
+    end = . ;
 }
 
 

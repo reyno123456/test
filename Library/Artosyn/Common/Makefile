@@ -23,7 +23,9 @@ SRC_C   := Src/sys_event.c \
            Src/memory.c \
            Src/debuglog.c \
            Src/printf.c \
-           Src/string.c
+           Src/string.c \
+           Src/abs.c \
+           Src/errno.c
 
 INCDIRS :=  -IInc \
             -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc \
