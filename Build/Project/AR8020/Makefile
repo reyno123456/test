@@ -25,6 +25,7 @@ LIBS := $(TOP_DIR)/Driver/Chip \
         $(TOP_DIR)/Kernel/FreeRTOS \
         $(TOP_DIR)/Library/Artosyn/Common \
         $(TOP_DIR)/Library/ThirdParty/CMSIS \
+        $(TOP_DIR)/Library/ThirdParty/MP3Encoder \
         $(TOP_DIR)/Bootload/ \
 
 
