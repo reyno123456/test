@@ -8,7 +8,8 @@
 #define MULTIPLE           				(1)   
 
 #define GPIO_MODE_0     				(0x0)
-#define GPIO_MODE_1     				(0x2)
+#define GPIO_MODE_1                     (0x1)
+#define GPIO_MODE_2     				(0x2)
 
 
 #define GPIO0_BASE_ADDR                 0x40400000
@@ -96,7 +97,6 @@ void GPIO_Intr_SetPinIntrEn(uint32_t gpioNum, uint32_t mode);
 void GPIO_Intr_SetPinIntrMask(uint32_t gpioNum, uint32_t mode);
 void GPIO_Intr_SetPinIntrType(uint32_t gpioNum, uint32_t mode);
 void GPIO_Intr_SetPinIntrPol(uint32_t gpioNum, uint32_t mode);
-void GPIO_SetPinDebounce(uint32_t gpioNum, uint32_t mode);
 uint32_t GPIO_Intr_GetIntrStatus(uint32_t gpioNum);
 uint32_t GPIO_Intr_GetRawIntrStatus(uint32_t gpioNum);
 void GPIO_Intr_ClearIntr(uint32_t gpioNum);

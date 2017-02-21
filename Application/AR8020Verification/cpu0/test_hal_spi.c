@@ -1,4 +1,5 @@
 #include "test_hal_spi.h"
+#include "hal_gpio.h"
 
 extern unsigned long strtoul(const char *cp, char **endp, unsigned int base);
 
@@ -16,6 +17,14 @@ void command_TestHalSpiInit(unsigned char *ch, unsigned char *br, unsigned char 
 
     HAL_SPI_MasterInit((ENUM_HAL_SPI_COMPONENT)(u32_ch), 
                         &st_spiInitInfo);
+
+    if (5 == u32_ch)
+    {
+        HAL_GPIO_SetMode(HAL_GPIO_NUM50,HAL_GPIO_PIN_MODE1);
+        HAL_GPIO_SetMode(HAL_GPIO_NUM51,HAL_GPIO_PIN_MODE1);
+        HAL_GPIO_SetMode(HAL_GPIO_NUM52,HAL_GPIO_PIN_MODE1);
+        HAL_GPIO_SetMode(HAL_GPIO_NUM53,HAL_GPIO_PIN_MODE1);
+    }
 }
 
 void command_TestHalSpiTx(unsigned char *ch,  unsigned char *addr, unsigned char *wdata)

@@ -14,4 +14,5 @@ void commandhal_TestGpioNormal(uint8_t *gpionum, uint8_t *highorlow);
 
 void commandhal_TestGpioInterrupt(uint8_t *gpionum, uint8_t *inttype, uint8_t *polarity);
 
+void commandhal_TestGetGpio(uint8_t *gpionum);
 #endif

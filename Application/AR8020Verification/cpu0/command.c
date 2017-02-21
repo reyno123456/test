@@ -260,6 +260,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         commandhal_TestGpioInterrupt(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
+    else if (memcmp(cmdArray[0], "testhal_TestGetGpio", strlen("testhal_TestGetGpio")) == 0)
+    {
+        commandhal_TestGetGpio(cmdArray[1]);
+    }
     else if (memcmp(cmdArray[0], "testhal_Testtimer", strlen("testhal_Testtimer")) == 0)
     {
         commandhal_TestTim(cmdArray[1], cmdArray[2]);
@@ -431,7 +435,8 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_can_tx <ch> <id> <len> <format> <type>");
         dlog_error("test_can_rx");
         dlog_error("testhal_TestGpioNormal <gpionum> <highorlow>");
-        dlog_error("testhal_TestGpioInterrupt <gpionum> <inttype> <polarity>");
+        dlog_error("testhal_TestGetGpio <gpionum>");
+        dlog_error("testhal_TestGpioInterrupt <gpionum> <inttype> <polarity>");        
         dlog_error("testhal_Testtimer <TIM Num> <TIM Count>");
         dlog_error("testhal_Testtiemrall");
         dlog_error("testhal_Testpwm <PWM Num> <PWM low> <PWM high>");

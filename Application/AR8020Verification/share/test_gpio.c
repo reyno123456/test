@@ -62,8 +62,7 @@ void command_TestGpioInterrupt(uint8_t *gpionum, uint8_t *inttype, uint8_t *pola
 	GPIO_Intr_SetPinIntrMask(u8_GpioNum, GPIO_MASK_MASK);
 	GPIO_Intr_SetPinIntrType(u8_GpioNum, u8_GpioIntType);
 	GPIO_Intr_SetPinIntrPol(u8_GpioNum, u8_GpioPolarity);	
-	GPIO_SetPinDebounce(u8_GpioNum, GPIO_DEBOUNCE_ON);
-	
+
 	reg_IrqHandle(GPIO_INTR_N0_VECTOR_NUM + (u8_GpioNum>>5), GPIO_IRQHandler, NULL);
     INTR_NVIC_EnableIRQ(GPIO_INTR_N0_VECTOR_NUM + (u8_GpioNum>>5));
     

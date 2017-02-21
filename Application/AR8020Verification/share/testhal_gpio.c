@@ -20,6 +20,15 @@ History: test gpio
 static uint32_t volatile g_u32GpioCount = 0;
 static uint32_t volatile g_u32GpioCount2 = 0;
 
+void commandhal_TestGetGpio(uint8_t *gpionum)
+{
+    uint8_t u8_GpioNum = strtoul(gpionum, NULL, 0);
+    uint32_t u32_Gpioval=0;
+    HAL_GPIO_InPut(u8_GpioNum);
+    HAL_GPIO_GetPin(u8_GpioNum,&u32_Gpioval);
+    dlog_info("gpio %d state=%d\n",u8_GpioNum,u32_Gpioval);
+
+}
 static void GPIOhal_IRQHandler(uint32_t u32_vectorNum)
 { 
     if(((g_u32GpioCount)%1000 == 0) && (0 !=g_u32GpioCount))

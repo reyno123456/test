@@ -34,6 +34,26 @@ static void (*g_pv_GpioVectorListArray[4][8])(uint32_t u32_vectorNum);
 
 static void GPIO_ClearNvic(uint32_t u32_vectorNum);
 
+
+/**
+* @brief    set gpio input mode.
+* @param    e_gpioPin: The gpio number, the right number should be 0-127.
+* @param    e_gpioMode: The gpio mode, the right number should be 0-2.
+* @retval   HAL_OK                means the initializtion mode is well done.
+*           HAL_GPIO_ERR_UNKNOWN  means the gpio number error. 
+* @note     none
+*/
+HAL_RET_T HAL_GPIO_SetMode(ENUM_HAL_GPIO_NUM e_gpioPin,ENUM_HAL_GPIO_PinMode e_gpioMode)
+{
+    if ((e_gpioPin > HAL_GPIO_NUM127) && (e_gpioMode > HAL_GPIO_PIN_MODE2))
+    {
+        return HAL_GPIO_ERR_UNKNOWN;
+    }
+
+    GPIO_SetMode(e_gpioPin, e_gpioMode);
+    return HAL_OK;
+}
+
 /**
 * @brief    set gpio output mode.
 * @param    e_gpioPin: The gpio number, the right number should be 0-127.
@@ -161,8 +181,6 @@ HAL_RET_T HAL_GPIO_RegisterInterrupt(ENUM_HAL_GPIO_NUM e_gpioPin,
     GPIO_Intr_SetPinIntrType(e_gpioPin, e_inttype);
 
     GPIO_Intr_SetPinIntrPol(e_gpioPin, e_polarity);   
-
-    GPIO_SetPinDebounce(e_gpioPin, GPIO_DEBOUNCE_ON);
     
     INTR_NVIC_EnableIRQ(GPIO_INTR_N0_VECTOR_NUM + (e_gpioPin>>5));
 

@@ -190,7 +190,7 @@ uint32_t GPIO_Get(uint32_t gpioNum)
     
     
     u32_GroupNoAddr = u8_GroupNo*0x40000 + GPIO0_BASE_ADDR;
-    u32_RegNoAddr = u8_RegNo*0x0C + GPIO_EXT_PORT_A_OFFSET;
+    u32_RegNoAddr = u8_RegNo*0x04 + GPIO_EXT_PORT_A_OFFSET;
     
     u32_GpioRegVal = Reg_Read32(u32_GroupNoAddr + u32_RegNoAddr);
     return ((u32_GpioRegVal >> u8_PinNo) & 1);
@@ -379,6 +379,7 @@ void GPIO_Intr_SetPinIntrPol(uint32_t gpioNum, uint32_t mode)
     DLOG_INFO("\n SetPinIntpol %x\n",Reg_Read32(u32_GroupNoAddr + GPIO_INTPOL_OFFSET));
 
 }
+#if 0
 void GPIO_SetPinDebounce(uint32_t gpioNum, uint32_t mode)
 {
     uint32_t u32_GroupNoAddr = 0;
@@ -394,7 +395,7 @@ void GPIO_SetPinDebounce(uint32_t gpioNum, uint32_t mode)
 
     u32_GroupNoAddr = u8_GroupNo*0x40000 + GPIO0_BASE_ADDR;    
     u32_GpioRegVal = Reg_Read32(u32_GroupNoAddr + GPIO_DEBOUNCE_OFFSET);
-    if(GPIO_INTPOL_HIGH == mode)
+    if(GPIO_DEBOUNCE_ON == mode)
     {        
         u32_GpioRegVal |= (mode << u8_PinNo);
     }
@@ -407,7 +408,7 @@ void GPIO_SetPinDebounce(uint32_t gpioNum, uint32_t mode)
 
     DLOG_INFO("\n SetPinDebounce %x\n",Reg_Read32(u32_GroupNoAddr + GPIO_DEBOUNCE_OFFSET));
 }
-
+#endif
 uint32_t GPIO_Intr_GetIntrStatus(uint32_t gpioNum)
 {
     uint32_t u32_GroupNoAddr = 0;

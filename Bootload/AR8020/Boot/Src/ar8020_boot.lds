@@ -49,7 +49,10 @@ SECTIONS
         *(.ramcode)
     } >DTCM0 AT> FLASH
 
-    _data_end = _data_start + SIZEOF(.rodata) + SIZEOF(.data);
+    .data_e :
+    {
+        _data_end = . ;
+    } AT> FLASH
 
     .bss :
     {

@@ -17,6 +17,15 @@ History:
 #include "hal_ret_type.h"
 
 
+
+typedef enum
+{
+    HAL_GPIO_PIN_MODE0 = 0, 
+    HAL_GPIO_PIN_MODE1,
+    HAL_GPIO_PIN_MODE2        
+} ENUM_HAL_GPIO_PinMode;
+
+
 typedef enum
 {
     HAL_GPIO_PIN_RESET = 0, //gpio output 0
@@ -166,6 +175,16 @@ typedef enum
     HAL_GPIO_NUM126,
     HAL_GPIO_NUM127
 } ENUM_HAL_GPIO_NUM;
+
+/**
+* @brief    set gpio input mode.
+* @param    e_gpioPin: The gpio number, the right number should be 0-127.
+* @param    e_gpioMode: The gpio mode, the right number should be 0-2.
+* @retval   HAL_OK                means the initializtion mode is well done.
+*           HAL_GPIO_ERR_UNKNOWN  means the gpio number error. 
+* @note     none
+*/
+HAL_RET_T HAL_GPIO_SetMode(ENUM_HAL_GPIO_NUM e_gpioPin,ENUM_HAL_GPIO_PinMode e_gpioMode);
 
 /**
 * @brief    set gpio output mode.

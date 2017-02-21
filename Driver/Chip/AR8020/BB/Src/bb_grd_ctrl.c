@@ -37,10 +37,10 @@ void BB_GRD_start(void)
 
     grd_set_txmsg_mcs_change(context.qam_ldpc);
 
-    GPIO_SetMode(RED_LED_GPIO, GPIO_MODE_1);
+    GPIO_SetMode(RED_LED_GPIO, GPIO_MODE_2);
     GPIO_SetPinDirect(RED_LED_GPIO, GPIO_DATA_DIRECT_OUTPUT);
 
-    GPIO_SetMode(BLUE_LED_GPIO, GPIO_MODE_1);
+    GPIO_SetMode(BLUE_LED_GPIO, GPIO_MODE_2);
     GPIO_SetPinDirect(BLUE_LED_GPIO, GPIO_DATA_DIRECT_OUTPUT);
     
     GPIO_SetPin(RED_LED_GPIO, 0);   //RED LED ON

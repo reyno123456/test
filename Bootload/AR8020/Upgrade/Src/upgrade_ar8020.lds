@@ -7,7 +7,7 @@ _estack = 0x20080000;
 
 MEMORY 
 {
-    FLASH : ORIGIN = 0x00000000, LENGTH = 0xF000
+    ITCM0 : ORIGIN = 0x00000000, LENGTH = 0xF000
     DTCM0 : ORIGIN = 0x20000000, LENGTH = 0x80000
 }
 
@@ -18,19 +18,19 @@ SECTIONS
         _vectors_start = . ;
         *(.isr_vectors)
         _vectors_end = . ;
-    } > FLASH
+    } > ITCM0
 
     .start :
     {
         *(.start.*)
-    } > FLASH
+    } > ITCM0
 
     .text : 
     {
         _text_start = . ;
         *(.text)
         . = ALIGN(4) ;
-    } > FLASH
+    } > ITCM0
 
     _text_end = _text_start + SIZEOF(.text) ;
 
@@ -40,16 +40,20 @@ SECTIONS
     {
         *(.rodata*)
         . = ALIGN(4) ;
-    }  >DTCM0 AT> FLASH
+    }  >DTCM0 AT> ITCM0
+
 
     .data : 
     {
         *(.data)
         . = ALIGN(4) ;
         *(.ramcode)
-    } >DTCM0 AT> FLASH
+    } >DTCM0 AT> ITCM0
 
-    _data_end = _data_start + SIZEOF(.rodata) + SIZEOF(.data);
+    .data_e :
+    {
+        _data_end = . ;
+    } AT> ITCM0
 
     .bss :
     {
