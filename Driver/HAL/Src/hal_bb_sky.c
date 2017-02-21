@@ -40,7 +40,7 @@ HAL_RET_T HAL_BB_InitSky( void )
             HAL_BB_ERR_EVENT_NOTIFY:   means error happens in sending the command to cpu2
  * @note    
  */
-HAL_RET_T HAL_BB_SetAutoSearchRcId(void)
+HAL_RET_T HAL_BB_SetAutoSearchRcIdProxy(void)
 {
     uint8_t u8_ret;
     STRU_WIRELESS_CONFIG_CHANGE st_cmd;

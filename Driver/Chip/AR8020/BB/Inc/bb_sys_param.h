@@ -29,7 +29,9 @@ typedef struct
     ENUM_RF_BAND freq_band;       //2.5G, 5.8G
     ENUM_CH_BW   CH_bandwidth;    //10M, 20M
     ENUM_BB_QAM  qam_mode;
+    ENUM_BB_QAM  rc_qam_mode;
     ENUM_BB_LDPC ldpc;
+    ENUM_BB_LDPC rc_ldpc;
     uint8_t qam_ldpc;
     uint8_t enable_plot;
     //DEVICE_TYPE dev_type;

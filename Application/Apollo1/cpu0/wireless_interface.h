@@ -90,16 +90,17 @@ typedef enum
     WIRELESS_INTERFACE_CLOSE_VIDEO                  = 0x45,
     WIRELESS_INTERFACE_VIDEO_AUTO_HOPPING           = 0x46,
     WIRELESS_INTERFACE_VIDEO_BAND_WIDTH             = 0x47,
-    PAD_FREQUENCY_BAND_WIDTH_SELECT                 = 0x48,
-    PAD_FREQUENCY_BAND_OPERATION_MODE               = 0x49,
-    PAD_FREQUENCY_BAND_SELECT                       = 0x50,
-    PAD_FREQUENCY_CHANNEL_OPERATION_MODE            = 0x51,
-    PAD_FREQUENCY_CHANNEL_SELECT                    = 0x52,
-    PAD_MCS_OPERATION_MODE                          = 0x53,
-    PAD_MCS_MODULATION_MODE                         = 0x54,
-    PAD_ENCODER_DYNAMIC_BITRATE_MODE                = 0x55,
-    PAD_ENCODER_DYNAMIC_BITRATE_SELECT              = 0x56,
-    PAD_WIRELESS_INTERFACE_OSD_DISPLAY              = 0x57,
+    WIRELESS_INTERFACE_RESET_BB                     = 0x48,
+    PAD_FREQUENCY_BAND_WIDTH_SELECT                 = 0x49,
+    PAD_FREQUENCY_BAND_OPERATION_MODE               = 0x50,
+    PAD_FREQUENCY_BAND_SELECT                       = 0x51,
+    PAD_FREQUENCY_CHANNEL_OPERATION_MODE            = 0x52,
+    PAD_FREQUENCY_CHANNEL_SELECT                    = 0x53,
+    PAD_MCS_OPERATION_MODE                          = 0x54,
+    PAD_MCS_MODULATION_MODE                         = 0x55,
+    PAD_ENCODER_DYNAMIC_BITRATE_MODE                = 0x56,
+    PAD_ENCODER_DYNAMIC_BITRATE_SELECT              = 0x57,
+    PAD_WIRELESS_INTERFACE_OSD_DISPLAY              = 0x58,
     MAX_PID_NUM
 } WIRELESS_INTRTFACE_PID_DEF;
 
@@ -152,7 +153,7 @@ typedef struct
 {
     uint8_t                     messageId;
     uint8_t                     paramLen;
-    uint8_t                     paramData[14];
+    uint8_t                     paramData[18];
 } STRU_WIRELESS_PARAM_CONFIG_MESSAGE;
 
 
@@ -239,6 +240,7 @@ uint8_t WIRELESS_INTERFACE_WRITE_RF_REG_Handler(void *param);
 uint8_t WIRELESS_INTERFACE_READ_RF_REG_Handler(void *param);
 uint8_t WIRELESS_INTERFACE_OPEN_VIDEO_Handler(void *param);
 uint8_t WIRELESS_INTERFACE_CLOSE_VIDEO_Handler(void *param);
+uint8_t WIRELESS_INTERFACE_RESET_BB_Handler(void *param);
 uint8_t PAD_FREQUENCY_BAND_WIDTH_SELECT_Handler(void *param);
 uint8_t PAD_FREQUENCY_BAND_OPERATION_MODE_Handler(void *param);
 uint8_t PAD_FREQUENCY_BAND_SELECT_Handler(void *param);

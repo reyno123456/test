@@ -93,6 +93,7 @@ WIRELESS_CONFIG_HANDLER g_stWirelessMsgHandler[MAX_PID_NUM] =
     WIRELESS_INTERFACE_CLOSE_VIDEO_Handler,
     WIRELESS_INTERFACE_VIDEO_AUTO_HOPPING_Handler,
     WIRELESS_INTERFACE_VIDEO_BAND_WIDTH_Handler,
+    WIRELESS_INTERFACE_RESET_BB_Handler,
     PAD_FREQUENCY_BAND_WIDTH_SELECT_Handler,
     PAD_FREQUENCY_BAND_OPERATION_MODE_Handler,
     PAD_FREQUENCY_BAND_SELECT_Handler,
@@ -1015,7 +1016,7 @@ uint8_t WIRELESS_INTERFACE_SWITCH_CH1_Handler(void *param)
         u8_data = 1;
     }
 
-    HAL_BB_SwitchOnOffCh1(u8_data);
+    HAL_BB_SwitchOnOffChProxy(0, u8_data);
 
     return 0;
 }
@@ -1039,7 +1040,7 @@ uint8_t WIRELESS_INTERFACE_SWITCH_CH2_Handler(void *param)
         u8_data = 1;
     }
 
-    HAL_BB_SwitchOnOffCh2(u8_data);
+    HAL_BB_SwitchOnOffChProxy(1, u8_data);
 
     return 0;
 }
@@ -1048,7 +1049,7 @@ uint8_t WIRELESS_INTERFACE_SET_CH1_BIT_RATE_Handler(void *param)
 {
     dlog_info("set ch1 bit rate");
 
-    HAL_BB_SetEncoderBitrateProxyCh1( (uint8_t)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
+    HAL_BB_SetEncoderBitrateProxy(0, (uint8_t)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 
     return 0;
 }
@@ -1057,7 +1058,7 @@ uint8_t WIRELESS_INTERFACE_SET_CH2_BIT_RATE_Handler(void *param)
 {
     dlog_info("set ch2 bit rate");
 
-    HAL_BB_SetEncoderBitrateProxyCh2( (uint8_t)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
+    HAL_BB_SetEncoderBitrateProxy(1, (uint8_t)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 
     return 0;
 }
@@ -1073,7 +1074,7 @@ uint8_t WIRELESS_INTERFACE_VIDEO_QAM_Handler(void *param)
 
     dlog_info("QAM : %d", recvMessage->paramData[0]);
 
-	HAL_BB_SetItQamProxy(enBBQAM);
+    HAL_BB_SetFreqBandQamSelectionProxy(enBBQAM);
 
     return 0;
 }
@@ -1105,7 +1106,7 @@ uint8_t WIRELESS_INTERFACE_RC_QAM_Handler(void *param)
 
     dlog_info("RC QAM : %d", recvMessage->paramData[0]);
 
-    HAL_BB_SetItQamProxy(enBBQAM);
+    HAL_BB_SetRcQamSelectionProxy(enBBQAM);
 
     return 0;
 }
@@ -1121,11 +1122,11 @@ uint8_t WIRELESS_INTERFACE_RC_CODE_RATE_Handler(void *param)
 
     switch (recvMessage->paramData[0])
     {
-        case 1:
+        case 0:
             e_ldpc      = LDPC_1_2;
             break;
 
-        case 2:
+        case 1:
             e_ldpc      = LDPC_2_3;        
             break;
 
@@ -1134,7 +1135,7 @@ uint8_t WIRELESS_INTERFACE_RC_CODE_RATE_Handler(void *param)
             break;
     }
 
-    HAL_BB_SetItLdpcProxy(e_ldpc);
+    HAL_BB_SetRcLdpcProxy(e_ldpc);
 
     return 0;
 }
@@ -1184,6 +1185,14 @@ uint8_t WIRELESS_INTERFACE_VIDEO_BAND_WIDTH_Handler(void *param)
 
 	HAL_BB_SetFreqBandwidthSelectionProxy(enBandWidth);
 
+    return 0;
+}
+
+
+uint8_t WIRELESS_INTERFACE_RESET_BB_Handler(void *param)
+{
+    dlog_info("reset bb");
+    HAL_BB_SoftResetProxy();
     return 0;
 }
 
@@ -1254,7 +1263,7 @@ uint8_t PAD_ENCODER_DYNAMIC_BITRATE_MODE_Handler(void *param)
 
 uint8_t PAD_ENCODER_DYNAMIC_BITRATE_SELECT_Handler(void *param)
 {
-    HAL_BB_SetEncoderBitrateProxyCh1( (uint8_t)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
+    HAL_BB_SetEncoderBitrateProxy(0, (uint8_t)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 
     return 0;
 }

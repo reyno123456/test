@@ -58,7 +58,7 @@ HAL_RET_T HAL_BB_SetFreqBandwidthSelectionProxy(ENUM_CH_BW e_bandwidth);
  * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
  * @note        The function can only be called by cpu0,1  
  */
-HAL_RET_T HAL_BB_SetFreqBandSelectionModeProxy(ENUM_RUN_MODE e_mode);
+HAL_RET_T HAL_BB_SetFreqBandSelectionModeProxy(ENUM_RF_BAND e_mode);
 
 
 /**
@@ -115,8 +115,6 @@ HAL_RET_T HAL_BB_SetMcsModeProxy(ENUM_RUN_MODE e_mode);
  */
 HAL_RET_T HAL_BB_SetItQamProxy(ENUM_BB_QAM e_qam);
 
-
-
 /** 
  * @brief       Set the image transmit LDPC coderate
  * @param[in]   e_ldpc:                  ldpc coderate 
@@ -126,6 +124,14 @@ HAL_RET_T HAL_BB_SetItQamProxy(ENUM_BB_QAM e_qam);
  */
 HAL_RET_T HAL_BB_SetItLdpcProxy(ENUM_BB_LDPC e_ldpc);
 
+/** 
+ * @brief       Set the rc transmit LDPC coderate
+ * @param[in]   e_ldpc:                  ldpc coderate 
+ * @retval      HAL_OK,                  means command is sent sucessfully. 
+ * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
+ * @note        The function can only be called by cpu0,1   
+ */
+HAL_RET_T HAL_BB_SetRcLdpcProxy(ENUM_BB_LDPC e_ldpc);
 
 /** 
  * @brief       Set the encoder bitrate control mode
@@ -140,21 +146,14 @@ HAL_RET_T HAL_BB_SetEncoderBrcModeProxy(ENUM_RUN_MODE e_mode);
 
 /** 
  * @brief       Set the encoder bitrate Unit:Mbps
+ * @param[in]   u8_ch: channel, 0:ch1 1:ch2
  * @param[in]   u8_bitrateMbps: select the bitrate unit: Mbps
  * @retval      HAL_OK,                  means command is sent sucessfully. 
  * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
  * @note        the function can only be called by cpu0,1
  */
-HAL_RET_T HAL_BB_SetEncoderBitrateProxyCh1(uint8_t u8_bitrateMbps);
+HAL_RET_T HAL_BB_SetEncoderBitrateProxy(uint8_t u8_ch, uint8_t u8_bitrateMbps);
 
-/** 
- * @brief       Set the encoder bitrate Unit:Mbps
- * @param[in]   u8_bitrateMbps: select the bitrate unit: Mbps
- * @retval      HAL_OK,                  means command is sent sucessfully. 
- * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
- * @note        the function can only be called by cpu0,1
- */
-HAL_RET_T HAL_BB_SetEncoderBitrateProxyCh2(uint8_t u8_bitrateMbps);
 
 /** 
  * @brief   Set board enter or out debug mode
@@ -327,31 +326,53 @@ HAL_RET_T HAL_BB_CurPageReadByte(uint8_t u8_addr, uint8_t *pu8_regValue);
             HAL_BB_ERR_EVENT_NOTIFY:   means error happens in sending the command to cpu2
  * @note    
  */
-HAL_RET_T HAL_BB_SetAutoSearchRcId(void);
+HAL_RET_T HAL_BB_SetAutoSearchRcIdProxy(void);
 
 
 /** 
- * @brief       
- * @param   
- * @retval      
- * @note      
+ * @brief       Set RC channel selection RUN mode(AUTO/Manual)
+ * @param[in]   e_mode:                  the modulation QAM mode for rc.
+ * @retval      HAL_OK,                  means command is sent sucessfully. 
+ * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
+ * @note        The function can only be called by cpu0,1  
  */
 HAL_RET_T HAL_BB_SetRcChannelSelectionModeProxy(ENUM_RUN_MODE e_mode);
 
 /** 
- * @brief       
- * @param   
- * @retval      
- * @note      
+ * @brief       Set It(image transmit) QAM
+ * @param[in]   e_qam:                  the modulation QAM mode for image transmit.
+ * @retval      HAL_OK,                  means command is sent sucessfully. 
+ * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
+ * @note        The function can only be called by cpu0,1  
  */
-HAL_RET_T HAL_BB_SwitchOnOffCh1(uint8_t u8_data);
+HAL_RET_T HAL_BB_SetFreqBandQamSelectionProxy(ENUM_BB_QAM e_qam);
 
 /** 
- * @brief       
- * @param   
- * @retval      
- * @note      
+ * @brief       Set rc QAM
+ * @param[in]   e_qam:                  the modulation QAM mode for image transmit.
+ * @retval      HAL_OK,                  means command is sent sucessfully. 
+ * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
+ * @note        The function can only be called by cpu0,1  
  */
-HAL_RET_T HAL_BB_SwitchOnOffCh2(uint8_t u8_data);
+HAL_RET_T HAL_BB_SetRcQamSelectionProxy(ENUM_BB_QAM e_qam);
+
+/** 
+ * @brief       switch encoder channel on/off
+ * @param[in]   u8_ch:   channel,0:ch1,1:ch2
+ * @param[in]   u8_data: 0:off, 1:on 
+ * @retval      HAL_OK,                  means command is sent sucessfully. 
+ * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
+ * @note        The function can only be called by cpu0,1        
+ */
+HAL_RET_T HAL_BB_SwitchOnOffChProxy(uint8_t u8_ch, uint8_t u8_data);
+
+/** 
+ * @brief       force baseband reset.
+ * @param       none.
+ * @retval      HAL_OK,                  means command is sent sucessfully. 
+ * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
+ * @note        The function can only be called by cpu0,1         
+ */
+HAL_RET_T HAL_BB_SoftResetProxy(void);
 
 #endif

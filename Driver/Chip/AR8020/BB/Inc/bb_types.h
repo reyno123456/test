@@ -87,6 +87,11 @@ typedef enum
     GET_DEV_INFO,
     SWITCH_ON_OFF_CH1,
     SWITCH_ON_OFF_CH2,
+    FREQ_BAND_QAM_SELECT,
+    FREQ_BAND_CODE_RATE_SELECT,
+    RC_QAM_SELECT,
+    RC_CODE_RATE_SELECT,
+    BB_SOFT_RESET,
 } ENUM_WIRELESS_FREQ_CHANGE_ITEM;
 
 
@@ -159,6 +164,10 @@ typedef struct
     uint16_t        video_height[2];
     uint8_t         frameRate[2];
     uint8_t         encoder_bitrate[2];
+    uint8_t         rc_modulation_mode;
+    uint8_t         rc_code_rate;
+    uint8_t         encoder_status;
+    uint8_t         reserved[1];
 } STRU_WIRELESS_INFO_DISPLAY;
 
 
@@ -175,13 +184,19 @@ typedef struct
     uint8_t         channel1_on;
     uint8_t         channel2_on;
     uint8_t         isDebug;
-    uint8_t         reserved[5];
+    uint8_t         itQAM;
+    uint8_t         itCodeRate;
+    uint8_t         rcQAM;
+    uint8_t         rcCodeRate;
+    uint8_t         ch1Bitrates;
+    uint8_t         ch2Bitrates;
+    uint8_t         reserved[3];
 } STRU_DEVICE_INFO;
 
 // CPU0 and CPU2 share memory for osd status info, offset in SRAM: 16K + 512Byte
 // last 16 bytes is for DEVICE INFO
 #define OSD_STATUS_SHM_ADDR              SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR
-#define DEVICE_INFO_SHM_SIZE             (16)
+#define DEVICE_INFO_SHM_SIZE             (20)
 #define DEVICE_INFO_SHM_ADDR             ((SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR + SRAM_BB_STATUS_SHARE_MEMORY_SIZE) - DEVICE_INFO_SHM_SIZE)
 
 #endif

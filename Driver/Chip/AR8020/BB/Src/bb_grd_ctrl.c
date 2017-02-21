@@ -326,13 +326,7 @@ void grd_set_txmsg_mcs_change(uint8_t index )
     dlog_info("MCS2=>%d\n", index);
 }
 
-void grd_set_txmsg_ldpc(uint8_t index)
-{
-    BB_WriteReg(PAGE2, LDPC_INDEX_0, index);
-    BB_WriteReg(PAGE2, LDPC_INDEX_1, index +1);
 
-    dlog_info("ldpc=>%d\n", index);
-}
 
 
 void up_down_qamldpc(QAMUPDONW up_down)
@@ -604,7 +598,6 @@ ENUM_BB_LDPC grd_get_IT_LDPC(void)
     return (ENUM_BB_LDPC)( (BB_ReadReg(PAGE2, GRD_FEC_QAM_CR_TLV) >>2) & 0x07);
 }
 
-
 void grd_handle_IT_mode_cmd(ENUM_RUN_MODE mode)
 {
     context.it_skip_freq_mode = mode;
@@ -690,6 +683,30 @@ static void grd_handle_CH_bandwitdh_cmd(ENUM_CH_BW bw)
     dlog_info("CH_bandwidth =%d\r\n", context.CH_bandwidth);    
 }
 
+static void grd_handle_CH_qam_cmd(ENUM_BB_QAM qam)
+{
+    //set and soft-rest
+    if(context.qam_mode != qam)
+    {
+        BB_WriteReg(PAGE2, RF_CH_QAM_CHANGE_0, 0xc0 | (uint8_t)qam);
+        BB_WriteReg(PAGE2, RF_CH_QAM_CHANGE_1, 0xc0 | (uint8_t)qam + 1);       
+
+        context.qam_mode = qam; 
+    }
+
+    dlog_info("CH_QAM =%d\r\n", context.qam_mode);    
+}
+
+void grd_handle_CH_ldpc_cmd(ENUM_BB_LDPC e_ldpc)
+{
+    if(context.ldpc != e_ldpc)
+    {
+        BB_WriteReg(PAGE2, RF_CH_LDPC_CHANGE_0, e_ldpc);
+        BB_WriteReg(PAGE2, RF_CH_LDPC_CHANGE_1, e_ldpc +1);
+        context.ldpc = e_ldpc;
+    }
+    dlog_info("CH_LDPC =%d\r\n", context.ldpc);
+}
 
 static void grd_handle_MCS_mode_cmd(ENUM_RUN_MODE mode)
 {
@@ -725,23 +742,26 @@ static void grd_handle_brc_mode_cmd(ENUM_RUN_MODE mode)
 /*
   * handle H264 encoder brc 
  */
-static void grd_handle_brc_bitrate_cmd_ch1(uint8_t brc_coderate)
+static void grd_handle_brc_bitrate_cmd(uint8_t u8_ch, uint8_t brc_coderate)
 {
-    BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_0_CH1, (0xc0 | brc_coderate));
-    BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_1_CH1, (0xc0 | brc_coderate)+1);
-    context.brc_bps[0] = brc_coderate;
+    if (0 == u8_ch)
+    {
+        BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_0_CH1, (0xc0 | brc_coderate));
+        BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_1_CH1, (0xc0 | brc_coderate)+1);
+        context.brc_bps[0] = brc_coderate;
 
-    dlog_info("brc_coderate_ch1 = %d \r\n", brc_coderate);
+        dlog_info("brc_coderate_ch1 = %d \r\n", brc_coderate);
+    }
+    else
+    {
+        BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_0_CH2, (0xc0 | brc_coderate));
+        BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_1_CH2, (0xc0 | brc_coderate)+1);
+        context.brc_bps[1] = brc_coderate;
+
+        dlog_info("brc_coderate_ch2 = %d \r\n", brc_coderate);
+    }
 }
 
-static void grd_handle_brc_bitrate_cmd_ch2(uint8_t brc_coderate)
-{
-    BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_0_CH2, (0xc0 | brc_coderate));
-    BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_1_CH2, (0xc0 | brc_coderate)+1);
-    context.brc_bps[1] = brc_coderate;
-
-    dlog_info("brc_coderate_ch2 = %d \r\n", brc_coderate);
-}
 
 void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 {
@@ -814,6 +834,36 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 break;
             }
 
+            case FREQ_BAND_QAM_SELECT:
+            {
+                grd_handle_CH_qam_cmd((ENUM_BB_QAM)value);
+                dlog_info("FREQ_BAND_QAM_SELECT %x\r\n", value);                
+                break;
+            }
+            
+            case FREQ_BAND_CODE_RATE_SELECT:
+            {
+                grd_handle_CH_ldpc_cmd((ENUM_BB_LDPC)value);
+                dlog_info("FREQ_BAND_CODE_RATE_SELECT %x\r\n", value);  
+                break;              
+            }
+                
+            case RC_QAM_SELECT:
+            {
+                context.rc_qam_mode = (ENUM_BB_QAM)(value & 0x01);
+                BB_set_QAM(context.rc_qam_mode);
+                dlog_info("RC_QAM_SELECT %x\r\n", value);                
+                break;
+            }
+            
+            case RC_CODE_RATE_SELECT:
+            {
+                context.rc_ldpc = (ENUM_BB_LDPC)(value & 0x01);
+                BB_set_LDPC(context.rc_ldpc);
+                dlog_info("RC_CODE_RATE_SELECT %x\r\n", value); 
+                break;               
+            }
+                
             default:
             {
                 dlog_error("%s\r\n", "unknown WIRELESS_FREQ_CHANGE command");
@@ -828,6 +878,7 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
         {
             case MCS_MODE_SELECT:
                 grd_handle_MCS_mode_cmd((ENUM_RUN_MODE)value);
+                grd_handle_brc_mode_cmd( (ENUM_RUN_MODE)value);
                 break;
 
             case MCS_MODULATION_SELECT:
@@ -843,7 +894,7 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 
             case MCS_CODE_RATE_SELECT:
                 {
-                    grd_set_txmsg_ldpc(value);
+                    //grd_set_txmsg_ldpc(value);
                 }
                 break;
             default:
@@ -861,12 +912,12 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 break;
 
             case ENCODER_DYNAMIC_BIT_RATE_SELECT_CH1:
-                grd_handle_brc_bitrate_cmd_ch1( (uint8_t)value);
+                grd_handle_brc_bitrate_cmd(0, (uint8_t)value);
                 dlog_info("ch1:%d",value);
                 break;
 
             case ENCODER_DYNAMIC_BIT_RATE_SELECT_CH2:
-                grd_handle_brc_bitrate_cmd_ch2( (uint8_t)value);
+                grd_handle_brc_bitrate_cmd(1, (uint8_t)value);
                 dlog_info("ch2:%d",value);
                 break;
 
@@ -903,6 +954,12 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 break;
             }
 
+            case BB_SOFT_RESET:
+            {
+                dlog_info("grd bb reset.");
+                BB_softReset(BB_GRD_MODE);
+                break;
+            }
             default:
                 break;                
         }
@@ -926,6 +983,7 @@ static void grd_handle_all_cmds(void)
 */
 static void BB_grd_GatherOSDInfo(void)
 {
+    uint8_t u8_data;
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
 
     if (osdptr->osd_enable == 0)
@@ -962,6 +1020,10 @@ static void BB_grd_GatherOSDInfo(void)
     #endif
     osdptr->modulation_mode = grd_get_IT_QAM();
     osdptr->code_rate       = grd_get_IT_LDPC();
+    
+    u8_data = BB_ReadReg(PAGE2, TX_2);
+    osdptr->rc_modulation_mode = (u8_data >> 6) & 0x01;
+    osdptr->rc_code_rate       = (u8_data >> 0) & 0x01;
     osdptr->ch_bandwidth    = context.CH_bandwidth;         
     osdptr->in_debug        = context.u8_debugMode;
     osdptr->lock_status     = BB_ReadReg(PAGE2, FEC_5_RD);

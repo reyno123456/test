@@ -382,7 +382,7 @@ void BB_set_QAM(ENUM_BB_QAM mod)
 void BB_set_LDPC(ENUM_BB_LDPC ldpc)
 {
     uint8_t data = BB_ReadReg(PAGE2, TX_2);
-    BB_WriteReg(PAGE2, TX_2, (data & 0x07) | (uint8_t)ldpc);
+    BB_WriteReg(PAGE2, TX_2, (data & 0xF8) | (uint8_t)ldpc);
 }
 
 
@@ -446,8 +446,14 @@ void BB_set_RF_Band(ENUM_BB_MODE sky_ground, ENUM_RF_BAND rf_band)
 */
 void BB_set_RF_bandwitdh(ENUM_BB_MODE sky_ground, ENUM_CH_BW rf_bw)
 {
-    uint8_t regaddr = (sky_ground == BB_SKY_MODE)? RX_MODULATION: TX_2;
-    BB_WriteRegMask(PAGE2, RX_MODULATION, (rf_bw << 3), 0x38); /*bit[5:3]*/
+    if (sky_ground == BB_SKY_MODE)
+    {
+        BB_WriteRegMask(PAGE2, TX_2, (rf_bw << 3) & 0x38, 0x38); /*bit[5:3]*/
+    }
+    else
+    {
+        BB_WriteRegMask(PAGE2, RX_MODULATION, (rf_bw << 0) & 0x07, 0x07); /*bit[2:0]*/
+    }
    
     //softreset
     BB_softReset(sky_ground);
@@ -900,7 +906,22 @@ int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
             cmd.u8_configItem   = 0;
             break;
         }
-
+        
+        case 17:
+        {
+            cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+            cmd.u8_configItem   = RC_QAM_SELECT;
+            cmd.u32_configValue  = (param0);
+            break;
+        }
+        
+        case 18:
+        {
+            cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+            cmd.u8_configItem   = RC_CODE_RATE_SELECT;
+            cmd.u32_configValue  = (param0);
+            break;
+        }
         default:
         {
             ret = 0;
@@ -1233,23 +1254,17 @@ static void BB_GetNv(void)
  * @note      
  */
 int BB_GetDevInfo(void)
-{
-    static uint32_t tmpCnt = 1;
+{ 
+    static uint32_t u32_cnt = 1;
     uint8_t u8_data;
     STRU_DEVICE_INFO *pst_devInfo = (STRU_DEVICE_INFO *)(DEVICE_INFO_SHM_ADDR);
+    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
 
     pst_devInfo->messageId = 0x19;
-    pst_devInfo->paramLen = 0x09;
+    pst_devInfo->paramLen = 0xF;
     pst_devInfo->skyGround = context.en_bbmode;
     pst_devInfo->band = context.freq_band;
-    if (BW_10M == (context.CH_bandwidth))
-    {
-        pst_devInfo->bandWidth = 0x01;
-    }
-    else
-    {
-        pst_devInfo->bandWidth = 0x02;
-    }
+    
     //pst_devInfo->bandWidth = context.CH_bandwidth;
     pst_devInfo->itHopping = context.it_skip_freq_mode;
     pst_devInfo->rcHopping = context.rc_skip_freq_mode;
@@ -1258,7 +1273,40 @@ int BB_GetDevInfo(void)
     pst_devInfo->channel1_on = (u8_data >> 6) & 0x01;
     pst_devInfo->channel2_on = (u8_data >> 7) & 0x01;
     pst_devInfo->isDebug = context.u8_debugMode;
+    if (BB_GRD_MODE == context.en_bbmode)
+    {
+        u8_data = BB_ReadReg(PAGE2, GRD_FEC_QAM_CR_TLV);
+        pst_devInfo->itQAM = u8_data & 0x03;
+        pst_devInfo->itCodeRate  = ((u8_data >>2) & 0x07);
+        u8_data = BB_ReadReg(PAGE2, RX_MODULATION);
+        pst_devInfo->bandWidth = (u8_data >> 0) & 0x07;
+       
+        u8_data = BB_ReadReg(PAGE2, TX_2);
+        pst_devInfo->rcQAM = (u8_data >> 6) & 0x01;
+        pst_devInfo->rcCodeRate = (u8_data >> 0) & 0x01;
+    }
+    else
+    {
+        u8_data = BB_ReadReg(PAGE2, TX_2);
+        pst_devInfo->itQAM = (u8_data >> 6) & 0x03;
+        pst_devInfo->bandWidth = (u8_data >> 3) & 0x07;
+        pst_devInfo->itCodeRate  = ((u8_data >> 0) & 0x07);
+        
+        u8_data = BB_ReadReg(PAGE2, 0x09);
+        pst_devInfo->rcQAM = (u8_data >> 0) & 0x01;
+        pst_devInfo->rcCodeRate = (u8_data >> 2) & 0x01;
+    }
 
+    if(context.brc_mode == AUTO)
+    {
+        pst_devInfo->ch1Bitrates = context.qam_ldpc;
+        pst_devInfo->ch2Bitrates = context.qam_ldpc;
+    }
+    else
+    {
+        pst_devInfo->ch1Bitrates = context.brc_bps[0];
+        pst_devInfo->ch2Bitrates = context.brc_bps[1];
+    }
 }
 
 /** 

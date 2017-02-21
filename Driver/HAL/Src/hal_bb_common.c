@@ -55,7 +55,7 @@ HAL_RET_T HAL_BB_SetFreqBandwidthSelectionProxy(ENUM_CH_BW e_bandwidth)
  * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
  * @note        The function can only be called by cpu0,1  
  */
-HAL_RET_T HAL_BB_SetFreqBandSelectionModeProxy(ENUM_RUN_MODE e_mode)
+HAL_RET_T HAL_BB_SetFreqBandSelectionModeProxy(ENUM_RF_BAND e_mode)
 {
     uint8_t u8_ret;
     STRU_WIRELESS_CONFIG_CHANGE st_cmd;
@@ -234,11 +234,38 @@ HAL_RET_T HAL_BB_SetItLdpcProxy(ENUM_BB_LDPC e_ldpc)
     uint8_t u8_ret;
     STRU_WIRELESS_CONFIG_CHANGE st_cmd;
 
-    st_cmd.u8_configClass  = WIRELESS_MCS_CHANGE;
-    st_cmd.u8_configItem   = MCS_CODE_RATE_SELECT;
+    st_cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+    st_cmd.u8_configItem   = FREQ_BAND_CODE_RATE_SELECT;
     st_cmd.u32_configValue = (uint32_t)e_ldpc;
 
-	u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
+    u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
+    if( u8_ret )
+    {
+        return HAL_OK;
+    }
+    else
+    {
+        return HAL_BB_ERR_EVENT_NOTIFY;
+    }
+}
+
+/** 
+ * @brief       Set the rc transmit LDPC coderate
+ * @param[in]   e_ldpc:                  ldpc coderate 
+ * @retval      HAL_OK,                  means command is sent sucessfully. 
+ * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
+ * @note        The function can only be called by cpu0,1   
+ */
+HAL_RET_T HAL_BB_SetRcLdpcProxy(ENUM_BB_LDPC e_ldpc)
+{
+    uint8_t u8_ret;
+    STRU_WIRELESS_CONFIG_CHANGE st_cmd;
+
+    st_cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+    st_cmd.u8_configItem   = RC_CODE_RATE_SELECT;
+    st_cmd.u32_configValue = (uint32_t)e_ldpc;
+
+    u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
     if( u8_ret )
     {
         return HAL_OK;
@@ -285,13 +312,20 @@ HAL_RET_T HAL_BB_SetEncoderBrcModeProxy(ENUM_RUN_MODE e_mode)
  * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
  * @note        the function can only be called by cpu0,1
  */
-HAL_RET_T HAL_BB_SetEncoderBitrateProxyCh1(uint8_t u8_bitrateMbps)
+HAL_RET_T HAL_BB_SetEncoderBitrateProxy(uint8_t u8_ch, uint8_t u8_bitrateMbps)
 {
     uint8_t u8_ret;
     STRU_WIRELESS_CONFIG_CHANGE st_cmd;
 
     st_cmd.u8_configClass  = WIRELESS_ENCODER_CHANGE;
-    st_cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT_CH1;
+    if (0 == u8_ch)
+    {
+        st_cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT_CH1;
+    }
+    else
+    {
+        st_cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT_CH2;
+    }
     st_cmd.u32_configValue = u8_bitrateMbps;
 
     u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
@@ -610,10 +644,11 @@ HAL_RET_T HAL_BB_CurPageReadByte(uint8_t u8_addr, uint8_t *pu8_regValue)
 
 
 /** 
- * @brief       
- * @param   
- * @retval      
- * @note      
+ * @brief       Set RC channel selection RUN mode(AUTO/Manual)
+ * @param[in]   e_mode:                  the modulation QAM mode for rc.
+ * @retval      HAL_OK,                  means command is sent sucessfully. 
+ * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
+ * @note        The function can only be called by cpu0,1  
  */
 HAL_RET_T HAL_BB_SetRcChannelSelectionModeProxy(ENUM_RUN_MODE e_mode)
 {
@@ -636,18 +671,28 @@ HAL_RET_T HAL_BB_SetRcChannelSelectionModeProxy(ENUM_RUN_MODE e_mode)
 }
 
 /** 
- * @brief       
- * @param   
- * @retval      
- * @note      
+ * @brief       switch encoder channel on/off
+ * @param[in]   u8_ch:   channel,0:ch1,1:ch2
+ * @param[in]   u8_data: 0:off, 1:on 
+ * @retval      HAL_OK,                  means command is sent sucessfully. 
+ * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
+ * @note        The function can only be called by cpu0,1        
  */
-HAL_RET_T HAL_BB_SwitchOnOffCh1(uint8_t u8_data)
+HAL_RET_T HAL_BB_SwitchOnOffChProxy(uint8_t u8_ch, uint8_t u8_data)
 {
     uint8_t u8_ret;
     STRU_WIRELESS_CONFIG_CHANGE st_cmd;
     
     st_cmd.u8_configClass  = WIRELESS_OTHER;
-    st_cmd.u8_configItem   = SWITCH_ON_OFF_CH1;
+    if (0 == u8_ch)
+    {
+        st_cmd.u8_configItem   = SWITCH_ON_OFF_CH1;
+    }
+    else
+    {
+        st_cmd.u8_configItem   = SWITCH_ON_OFF_CH2;
+    }
+
     st_cmd.u32_configValue = u8_data;
 
     u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
@@ -662,19 +707,20 @@ HAL_RET_T HAL_BB_SwitchOnOffCh1(uint8_t u8_data)
 }
 
 /** 
- * @brief       
- * @param   
- * @retval      
- * @note      
+ * @brief       Set It(image transmit) QAM
+ * @param[in]   e_qam:                  the modulation QAM mode for image transmit.
+ * @retval      HAL_OK,                  means command is sent sucessfully. 
+ * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
+ * @note        The function can only be called by cpu0,1  
  */
-HAL_RET_T HAL_BB_SwitchOnOffCh2(uint8_t u8_data)
+HAL_RET_T HAL_BB_SetFreqBandQamSelectionProxy(ENUM_BB_QAM e_qam)
 {
     uint8_t u8_ret;
     STRU_WIRELESS_CONFIG_CHANGE st_cmd;
     
-    st_cmd.u8_configClass  = WIRELESS_OTHER;
-    st_cmd.u8_configItem   = SWITCH_ON_OFF_CH2;
-    st_cmd.u32_configValue = u8_data;
+    st_cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+    st_cmd.u8_configItem   = FREQ_BAND_QAM_SELECT;
+    st_cmd.u32_configValue = (uint32_t)e_qam;
 
     u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
     if( u8_ret )
@@ -687,4 +733,56 @@ HAL_RET_T HAL_BB_SwitchOnOffCh2(uint8_t u8_data)
     }
 }
 
+/** 
+ * @brief       Set rc QAM
+ * @param[in]   e_qam:                  the modulation QAM mode for image transmit.
+ * @retval      HAL_OK,                  means command is sent sucessfully. 
+ * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
+ * @note        The function can only be called by cpu0,1  
+ */
+HAL_RET_T HAL_BB_SetRcQamSelectionProxy(ENUM_BB_QAM e_qam)
+{
+    uint8_t u8_ret;
+    STRU_WIRELESS_CONFIG_CHANGE st_cmd;
+    
+    st_cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+    st_cmd.u8_configItem   = RC_QAM_SELECT;
+    st_cmd.u32_configValue = (uint32_t)e_qam;
 
+    u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
+    if( u8_ret )
+    {
+        return HAL_OK;
+    }
+    else
+    {
+        return HAL_BB_ERR_EVENT_NOTIFY;
+    }
+}
+
+/** 
+ * @brief       force baseband reset.
+ * @param       none.
+ * @retval      HAL_OK,                  means command is sent sucessfully. 
+ * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
+ * @note        The function can only be called by cpu0,1         
+ */
+HAL_RET_T HAL_BB_SoftResetProxy(void)
+{
+    uint8_t u8_ret;
+    STRU_WIRELESS_CONFIG_CHANGE st_cmd;
+    
+    st_cmd.u8_configClass  = WIRELESS_OTHER;
+    st_cmd.u8_configItem   = BB_SOFT_RESET;
+    st_cmd.u32_configValue = 0;
+
+    u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
+    if( u8_ret )
+    {
+        return HAL_OK;
+    }
+    else
+    {
+        return HAL_BB_ERR_EVENT_NOTIFY;
+    }
+}

@@ -51,6 +51,7 @@ static void sky_handle_all_cmds(void);
 static int32_t sky_chk_flash_id_validity(void);
 static int32_t sky_write_id(uint8_t *u8_idArray);
 static int32_t cal_chk_sum(uint8_t *pu8_data, uint32_t u32_len, uint8_t *u8_check);
+extern int BB_WriteRegMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t data, uint8_t mask);
 
 void BB_SKY_start(void)
 {   
@@ -108,25 +109,23 @@ uint8_t sky_id_match(void)
 }
 
 
-void sky_notify_encoder_brc_ch1(uint8_t br)
+void sky_notify_encoder_brc(uint8_t u8_ch, uint8_t br)
 {
     STRU_SysEvent_BB_ModulationChange event;
     event.BB_MAX_support_br = br;
-    event.u8_bbCh = 0;
+    if (0 == u8_ch)
+    {
+        event.u8_bbCh = 0;
+    }
+    else
+    {
+        event.u8_bbCh = 1;
+    }
     SYS_EVENT_Notify(SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE, (void*)&event);	
     
-    dlog_info("ch1 brc =%d\r\n", br);        
+    dlog_info("ch%d brc =%d\r\n", u8_ch, br);        
 }
 
-void sky_notify_encoder_brc_ch2(uint8_t br)
-{
-    STRU_SysEvent_BB_ModulationChange event;
-    event.BB_MAX_support_br = br;
-    event.u8_bbCh = 1;
-    SYS_EVENT_Notify(SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE, (void*)&event);	
-    
-    dlog_info("ch2 brc =%d\r\n", br);        
-}
 void sky_set_McsByIndex(uint8_t idx)
 {
     uint8_t mcs_idx_bitrate_map[] = 
@@ -168,8 +167,8 @@ void sky_set_McsByIndex(uint8_t idx)
     
 	if ( context.brc_mode == AUTO )
 	{
-        sky_notify_encoder_brc_ch1( mcs_idx_bitrate_map[idx] );
-        sky_notify_encoder_brc_ch2( mcs_idx_bitrate_map[idx] );
+        sky_notify_encoder_brc(0, mcs_idx_bitrate_map[idx] );
+        sky_notify_encoder_brc(1, mcs_idx_bitrate_map[idx] );
 	}
 }
 
@@ -409,8 +408,11 @@ void sky_physical_link_process(void)
             GPIO_SetPin(BLUE_LED_GPIO, 1);  //BLUE LED OFF
             GPIO_SetPin(RED_LED_GPIO, 0);   //RED LED ON
             
-            context.qam_ldpc = 0;
-            sky_set_McsByIndex(0);
+            if ( context.brc_mode == AUTO )
+            {
+                context.qam_ldpc = 0;
+                sky_set_McsByIndex(0);
+            }
             
             context.dev_state = CHECK_ID_MATCH;
             context.rc_unlock_cnt = 0;
@@ -420,11 +422,11 @@ void sky_physical_link_process(void)
     }
     else if(context.dev_state == CHECK_ID_MATCH)
     {
-        if( context.freq_band == RF_5G)
+        /*if( context.freq_band == RF_5G)
         {
             //For test, do nothing when 5G
         }
-        else
+        else*/
         {
             context.locked = sky_id_match();
             if(context.locked)
@@ -680,6 +682,7 @@ static void sky_handle_RF_band_cmd(void)
 static void sky_handle_CH_bandwitdh_cmd(void)
 {   
     uint8_t data0, data1;
+    uint8_t u8_data;
     
     data0 = BB_ReadReg(PAGE2, RF_CH_BW_CHANGE_0);
     data1 = BB_ReadReg(PAGE2, RF_CH_BW_CHANGE_1);
@@ -698,7 +701,39 @@ static void sky_handle_CH_bandwitdh_cmd(void)
     }
 }
 
+static void sky_handle_CH_qam_cmd(void)
+{   
+    uint8_t data0, data1;
+    
+    data0 = BB_ReadReg(PAGE2, RF_CH_QAM_CHANGE_0);
+    data1 = BB_ReadReg(PAGE2, RF_CH_QAM_CHANGE_1);
 
+    if( data1==data0+1 && (data0&0xc0)==0xc0)
+    {
+        ENUM_BB_QAM qam = (ENUM_BB_QAM)(data0 & 0x03);
+
+        if(context.qam_mode != qam)
+        {
+            //set and soft-rest
+            BB_set_QAM(qam);
+            context.qam_mode = qam;
+            dlog_info("CH_QAM =%d\r\n", context.qam_mode);
+        }
+    }
+}
+
+static void sky_handle_CH_ldpc_cmd(void)
+{
+    uint8_t data0 = BB_ReadReg(PAGE2, RF_CH_LDPC_CHANGE_0);
+    uint8_t data1 = BB_ReadReg(PAGE2, RF_CH_LDPC_CHANGE_1);
+
+    if(data0+1==data1 && context.ldpc != data0)
+    {
+        context.ldpc = data0;
+        BB_set_LDPC(context.ldpc);
+        dlog_info("CH_ldpc=>%d\n", context.ldpc);
+    }
+}
 static void sky_handle_brc_mode_cmd(void)
 {
     uint8_t data0 = BB_ReadReg(PAGE2, ENCODER_BRC_MODE_0);
@@ -716,30 +751,30 @@ static void sky_handle_brc_mode_cmd(void)
 /*
   * handle H264 encoder brc 
  */
-static void sky_handle_brc_bitrate_cmd_ch1(void)
+static void sky_handle_brc_bitrate_cmd(void)
 {
-    uint8_t data0 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_0_CH1);
-    uint8_t data1 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_1_CH1);
-    uint8_t bps = data0&0x3F;
+    uint8_t data0;
+    uint8_t data1;
+    uint8_t bps;
+    data0 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_0_CH1);
+    data1 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_1_CH1);
+    bps = data0&0x3F;
 
     if( (data0+1==data1) && ( (data0&0xc0)==0xc0) && (context.brc_bps[0] != bps))
     {
         context.brc_bps[0] = bps;
-        sky_notify_encoder_brc_ch1(bps);
+        sky_notify_encoder_brc(0, bps);
         dlog_info("ch1 brc_bps = %d \r\n", bps);
     }
-}
 
-static void sky_handle_brc_bitrate_cmd_ch2(void)
-{
-    uint8_t data0 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_0_CH2);
-    uint8_t data1 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_1_CH2);
-    uint8_t bps = data0&0x3F;
+    data0 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_0_CH2);
+    data1 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_1_CH2);
+    bps = data0&0x3F;
 
     if( (data0+1==data1) && ( (data0&0xc0)==0xc0) && (context.brc_bps[1] != bps))
     {
         context.brc_bps[1] = bps;
-        sky_notify_encoder_brc_ch2(bps);
+        sky_notify_encoder_brc(1, bps);
         dlog_info("ch2 brc_bps = %d \r\n", bps);
     }
 }
@@ -767,18 +802,7 @@ static void sky_handle_MCS_cmd(void)
     }
 }
 
-static void sky_handle_ldpc_cmd(void)
-{
-    uint8_t data0 = BB_ReadReg(PAGE2, LDPC_INDEX_0);
-    uint8_t data1 = BB_ReadReg(PAGE2, LDPC_INDEX_1);
 
-    if(data0+1==data1 && context.ldpc != data0)
-    {
-        context.ldpc = data0;
-        BB_set_LDPC(context.ldpc);
-        dlog_info("ldpc=>%d\n", context.ldpc);
-    }
-}
 
 void sky_handle_all_spi_cmds(void)
 {
@@ -790,20 +814,23 @@ void sky_handle_all_spi_cmds(void)
     
     sky_handle_MCS_cmd();
 
-    sky_handle_ldpc_cmd();
 
     sky_handle_brc_mode_cmd();
 
     sky_handle_CH_bandwitdh_cmd();
 
-    sky_handle_brc_bitrate_cmd_ch1();
-    sky_handle_brc_bitrate_cmd_ch2();
+    sky_handle_CH_qam_cmd();
+
+    sky_handle_CH_ldpc_cmd();
+
+    sky_handle_brc_bitrate_cmd();
 
     sky_handle_RF_band_cmd();
 }
 
 static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 {
+    uint8_t u8_data;
     uint8_t class  = pcmd->u8_configClass;
     uint8_t item   = pcmd->u8_configItem;
     uint32_t value = pcmd->u32_configValue;
@@ -867,8 +894,37 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
             {
                 context.CH_bandwidth = (ENUM_CH_BW)value;
                 BB_set_RF_bandwitdh(BB_SKY_MODE, context.CH_bandwidth);
-                dlog_info("FREQ_BAND_WIDTH_SELECT %x\r\n", value);                
+                dlog_info("FREQ_BAND_WIDTH_SELECT %x\r\n", value);         
                 break;
+            }
+            case FREQ_BAND_QAM_SELECT:
+            {
+                BB_set_QAM((ENUM_BB_QAM)value);
+                dlog_info("FREQ_BAND_QAM_SELECT %x\r\n", value);                
+                break;
+            }
+            
+            case FREQ_BAND_CODE_RATE_SELECT:
+            {
+                BB_set_LDPC((ENUM_BB_LDPC)value);
+                dlog_info("FREQ_BAND_CODE_RATE_SELECT %x\r\n", value);             
+                break;
+            }
+            
+            case RC_QAM_SELECT:
+            {
+                context.rc_qam_mode = (ENUM_BB_QAM)value;
+                BB_WriteRegMask(PAGE2, 0x09, (value << 0) & 0x03, 0x03);
+                dlog_info("RC_QAM_SELECT %x\r\n", value);                
+                break;
+            }
+            
+            case RC_CODE_RATE_SELECT:
+            {
+                context.rc_ldpc = (ENUM_BB_LDPC)value;
+                BB_WriteRegMask(PAGE2, 0x09, (value << 2) & 0x1C, 0x1C);
+                dlog_info("RC_CODE_RATE_SELECT %x\r\n", value); 
+                break;               
             }
             default:
             {
@@ -878,6 +934,32 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
         }
     }
     
+    if(class == WIRELESS_MCS_CHANGE)
+    {
+        switch(item)
+        {
+            case MCS_MODE_SELECT:
+                context.qam_skip_mode = (ENUM_RUN_MODE)value;
+                context.brc_mode = (ENUM_RUN_MODE)value;
+                dlog_info("qam_skip_mode = %d \r\n", context.qam_skip_mode);
+                dlog_info("brc_mode = %d \r\n", context.brc_mode);
+                break;
+
+            case MCS_MODULATION_SELECT:
+                {
+                   
+                }
+                break;
+
+            case MCS_CODE_RATE_SELECT:
+                {
+                }
+                break;
+            default:
+                dlog_error("%s\r\n", "unknown WIRELESS_MCS_CHANGE command");
+                break;
+        }        
+    }
     if(class == WIRELESS_ENCODER_CHANGE)
     {
         switch(item)
@@ -887,11 +969,11 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 break;
 
             case ENCODER_DYNAMIC_BIT_RATE_SELECT_CH1:
-                sky_notify_encoder_brc_ch1((uint8_t)value);
+                sky_notify_encoder_brc(0,(uint8_t)value);
                 break;
 
             case ENCODER_DYNAMIC_BIT_RATE_SELECT_CH2:
-                sky_notify_encoder_brc_ch2((uint8_t)value);
+                sky_notify_encoder_brc(1, (uint8_t)value);
                 break;
             default:
                 dlog_error("%s\r\n", "unknown WIRELESS_ENCODER_CHANGE command");
@@ -932,7 +1014,13 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 dlog_info("sky invalid cmd.");
                 break;
             }
-
+ 
+            case BB_SOFT_RESET:
+            {
+                dlog_info("sky bb reset.");
+                BB_softReset(BB_SKY_MODE);
+                break;
+            }
             default:
                 break;                
         }
@@ -957,6 +1045,7 @@ static void sky_handle_all_cmds(void)
 */
 static void BB_sky_GatherOSDInfo(void)
 {
+    uint8_t u8_data;
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
 
     if (osdptr->osd_enable == 0)
@@ -978,6 +1067,13 @@ static void BB_sky_GatherOSDInfo(void)
     
     //osdptr->agc_value[2] = BB_ReadReg(PAGE2, RX3_GAIN_ALL_R);
     //osdptr->agc_value[3] = BB_ReadReg(PAGE2, RX4_GAIN_ALL_R);
+    u8_data = BB_ReadReg(PAGE2, TX_2);
+    osdptr->modulation_mode = (u8_data >> 6) & 0x03;
+    osdptr->code_rate       = (u8_data >> 0) & 0x07;
+    
+    u8_data = BB_ReadReg(PAGE2, 0x09);
+    osdptr->rc_modulation_mode = (u8_data >> 2) & 0x07;
+    osdptr->rc_code_rate       = (u8_data >> 0) & 0x03;
 
     osdptr->lock_status  = get_rc_status();
     osdptr->in_debug     = context.u8_debugMode;

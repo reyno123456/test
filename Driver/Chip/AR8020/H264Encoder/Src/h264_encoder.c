@@ -107,6 +107,9 @@ static int H264_Encoder_CloseView(unsigned char view)
 
 static int H264_Encoder_UpdateVideoInfo(unsigned char view, unsigned int resW, unsigned int resH, unsigned int framerate)
 {
+    unsigned int u32_data; 
+    unsigned int tmp_resW;
+    unsigned int tmp_resH;
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(OSD_STATUS_SHM_ADDR);
 
     if (view >= 2)
@@ -134,6 +137,30 @@ static int H264_Encoder_UpdateVideoInfo(unsigned char view, unsigned int resW, u
     osdptr->video_width[view] = resW;
     osdptr->video_height[view] = resH;
     osdptr->frameRate[view] = framerate;
+    
+    READ_WORD((ENC_REG_ADDR+(0x01<<2)), u32_data);
+    tmp_resW = (u32_data >> 16) & 0xFFFF;
+    tmp_resH = (u32_data >> 0) & 0xFFFF;
+    if ((tmp_resW == (g_stEncoderStatus[0].resW)) && (tmp_resH == (g_stEncoderStatus[0].resH)))
+    {
+        osdptr->encoder_status |= 0x01;
+    }
+    else
+    {
+        osdptr->encoder_status &= ~0x01;
+    }
+    
+    READ_WORD((ENC_REG_ADDR+(0x1a<<2)), u32_data);
+    tmp_resW = (u32_data >> 16) & 0xFFFF;
+    tmp_resH = (u32_data >> 0) & 0xFFFF;
+    if ((tmp_resW == (g_stEncoderStatus[1].resW)) && (tmp_resH == (g_stEncoderStatus[1].resH)))
+    {
+        osdptr->encoder_status |= 0x02;
+    }
+    else
+    {
+        osdptr->encoder_status &= ~0x02;
+    }
 
     return 1;
 }
