@@ -669,9 +669,12 @@ static void sky_handle_RF_band_cmd(void)
     if( (data0 == 0xc0 && data1 == 0xc1) || (data0 == 0xc1 && data1 == 0xc2))
     {
         ENUM_RF_BAND band = (ENUM_RF_BAND)(data0 & 0x01);
-        BB_set_RF_Band(BB_SKY_MODE, band);
-        context.freq_band = band;
-        dlog_info("sky set band %d \r\n", band);
+        if ((context.freq_band) != band)
+        {
+            BB_set_RF_Band(BB_SKY_MODE, band);
+            context.freq_band = band;
+            dlog_info("sky set band %d \r\n", band);
+        }
     }
 }
 
