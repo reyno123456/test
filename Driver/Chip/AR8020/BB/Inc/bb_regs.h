@@ -19,12 +19,12 @@
                                       [1]manual_reset_rx_en  1'b1: reset RX on  1'b0: off
                                       [0]manual_reset_trx_en 1'b1: reset TX/RX on 1'b0: off
                                     */
-#define FSM_1      ((uint8_t)0x01 )  /*[7:2]reserved
-                                      [1:0]spi_bus_sel
+#define FSM_1      ((uint8_t)0x01 )     /*[7:2]reserved
+                                          [1:0]spi_bus_sel
                                            2'b00: spi for fpga
                                            2'b01: spi for ad9363 or ar8003
                                            2'b10: spi from agc to ad9363 or ar8003
-                                    */
+                                        */
 
 
 // ************                    Page1                ***************

@@ -29,11 +29,15 @@ static init_timer_st grd_timer2_6;
 static init_timer_st grd_timer2_7;
 static uint8_t Timer1_Delay1_Cnt = 0;
 static uint8_t snr_static_count = SNR_STATIC_START_VALUE;
+static uint8_t hop_count = 0;
+static uint8_t flag_itFreqskip = 0;
+static uint8_t flag_snrPostCheck;
 
 void BB_GRD_start(void)
 {
     context.dev_state = INIT_DATA;
     context.qam_ldpc = 0;
+    context.flag_mrs = 0;
 
     grd_set_txmsg_mcs_change(context.qam_ldpc);
 
@@ -51,10 +55,13 @@ void BB_GRD_start(void)
     Grd_Timer2_7_Init();
 
     BB_set_Rcfrq(context.freq_band, 0);
-    grd_set_it_skip_freq(context.cur_IT_ch);
-    grd_set_it_work_freq(context.freq_band, context.cur_IT_ch);
+    
+    //To avoid the VT lock before sweep finish
+    context.cur_IT_ch = 0;
+    grd_set_it_skip_freq(1);
+    grd_set_it_work_freq(context.freq_band, 0);
 
-    grd_sweep_freq_init();
+    BB_SweepStart(context.freq_band, context.CH_bandwidth);
 
     reg_IrqHandle(BB_TX_ENABLE_VECTOR_NUM, wimax_vsoc_tx_isr, NULL);
     INTR_NVIC_SetIRQPriority(BB_TX_ENABLE_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_BB_TX,0));
@@ -82,28 +89,48 @@ void BB_Grd_SetRCId(uint8_t *pu8_id)
 
 //---------------IT grd hop change--------------------------------
 
-void grd_noise_sweep(void)
+uint32_t it_span_cnt = 0;
+void reset_it_span_cnt(void)
 {
-    int8_t result = grd_add_sweep_result(context.CH_bandwidth);
-    if(result == 1)
-    {
-        grd_set_next_sweep_freq();
-        if(is_init_sne_average_and_fluct())
-        {
-            calu_sne_average_and_fluct(get_sweep_freq());
-        }
-    }
+    it_span_cnt = 0;
 }
 
 void grd_fec_judge(void)
 {
+    if( context.flag_mrs == 1 )
+    {
+        context.flag_mrs = 2;
+        BB_WriteRegMask(PAGE1, 0x83, 0x01, 0x01); 
+        dlog_info("Disable %d\n", context.cycle_count);        
+    }
+    else if( context.flag_mrs == 2 )
+    {
+        context.flag_mrs = 0;
+        BB_WriteRegMask(PAGE1, 0x83, 0x00, 0x01);   
+        dlog_info("Enable %d\n", context.cycle_count);        
+    }
+
     if(context.dev_state == INIT_DATA)
     {
-        if(is_it_sweep_finish())
+        context.locked = grd_is_bb_fec_lock();
+        if( !context.locked )
         {
-            init_sne_average_and_fluct();
-            context.cur_IT_ch = get_best_freq();
-            context.dev_state = FEC_UNLOCK;
+            if (context.fec_unlock_cnt ++ > 10 )
+            {
+                uint8_t bestch, optch;
+                if( BB_selectBestCh(SELECT_MAIN_OPT, &bestch, &optch, 0))
+                {
+                    context.cur_IT_ch = bestch;
+                    grd_set_it_skip_freq(context.cur_IT_ch);
+                    grd_set_it_work_freq(context.freq_band, context.cur_IT_ch);
+                    dlog_info("BestCh %d %d \n", bestch, optch);
+                }
+                context.fec_unlock_cnt = 0;
+            }
+        }
+        else
+        {
+            context.dev_state = CHECK_FEC_LOCK;
         }
     }
     else if(context.dev_state == CHECK_FEC_LOCK || context.dev_state == FEC_LOCK)
@@ -135,7 +162,11 @@ void grd_fec_judge(void)
                 context.fec_unlock_cnt = 0;
                 if(context.it_skip_freq_mode == AUTO)
                 {
-                    context.cur_IT_ch = get_next_best_freq(context.cur_IT_ch);
+                    uint8_t bestch = context.cur_IT_ch, optch;
+                    BB_selectBestCh(CHANGE_MAIN, &bestch, &optch, 1);
+                    dlog_info("unlock: select channel %d %d", bestch, optch);
+
+                    context.cur_IT_ch = bestch;
                     context.dev_state = FEC_UNLOCK;
                 }
 
@@ -156,7 +187,9 @@ void grd_fec_judge(void)
         if(context.it_skip_freq_mode == AUTO )
         {
             grd_set_it_skip_freq(context.cur_IT_ch);
-            dlog_info("Ch=>%d\n", context.cur_IT_ch);
+            dlog_info("Set Ch:%d %d %d %x %x %x\n", context.cur_IT_ch, context.cycle_count,  ((BB_ReadReg(PAGE2, FEC_5_RD)& 0xF0) >> 4), grd_get_it_snr(),
+                        (((uint16_t)BB_ReadReg(PAGE2, 0xd7)) << 8) | BB_ReadReg(PAGE2, 0xd8)
+                     );
         }
         context.dev_state = DELAY_14MS;
     }
@@ -168,10 +201,13 @@ void grd_fec_judge(void)
             {
                 grd_set_it_work_freq(context.freq_band, context.it_manual_ch);
                 context.it_manual_ch = 0xff;
+                context.flag_mrs = 1;
             }
             else
             {
                 grd_set_it_work_freq(context.freq_band, context.cur_IT_ch);
+                dlog_info("Hop:%d Harq:%d\n", context.cycle_count, ((BB_ReadReg(PAGE2, FEC_5_RD)& 0xF0) >> 4));
+                context.flag_mrs = 1; 
             }
         }
 
@@ -194,79 +230,125 @@ void grd_fec_judge(void)
     
     if(context.freq_band != context.it_manual_rf_band && context.it_manual_rf_band != 0xff)
     {
-        dlog_info("To switch band: %d %d\r\n", context.freq_band, context.it_manual_rf_band);
+        dlog_info("To band: %d %d\r\n", context.freq_band, context.it_manual_rf_band);
         context.dev_state = DELAY_14MS;
     }
 }
 
-void grd_freq_skip_judge(void)
-{    
-    if(context.dev_state != FEC_LOCK)
-    {
-        return;
-    }
 
-    if(!is_it_need_skip_freq(context.qam_ldpc))
-    {
-        return;
-    }
 
-    context.next_IT_ch = get_next_best_freq(context.cur_IT_ch);
-    if(is_next_best_freq_pass(context.cur_IT_ch,context.next_IT_ch))
-    {
-       context.cur_IT_ch = context.next_IT_ch;
-       context.dev_state = FEC_UNLOCK;
-    }
-
-}
-
-uint32_t it_span_cnt = 0;
-void reset_it_span_cnt(void)
-{
-    it_span_cnt = 0;
-}
-
+/*
+ * return 1:  need to check in next 14ms.
+ *        0:  not need to check in next 14ms.
+*/
 uint8_t is_retrans_cnt_pass(void)
 {
-    uint8_t Harqcnt = BB_ReadReg(PAGE2, FEC_5_RD);
-    if(((Harqcnt & 0xF0) >> 4) >=2)
+    uint8_t Harqcnt  = ((BB_ReadReg(PAGE2, FEC_5_RD)& 0xF0) >> 4);
+    uint8_t Harqcnt1 = ((BB_ReadReg(PAGE2, 0xd1)& 0xF0) >> 4);
+    int8_t  ret = 0;
+
+    ret = ( Harqcnt >= 2 && Harqcnt1 >= 2) ? 0 : 1;
+    if(Harqcnt > 0)
     {
-        return 0;
+        dlog_info("Harq %d:%d %d snr:%x %x %d ret=%d", Harqcnt, Harqcnt1, context.cycle_count, grd_get_it_snr(), 
+                                            (((uint16_t)BB_ReadReg(PAGE2, 0xc2)) << 8) | BB_ReadReg(PAGE2, 0xc3),
+                                            (((uint16_t)BB_ReadReg(PAGE2, 0xd7)) << 8) | BB_ReadReg(PAGE2, 0xd8),
+                                            ret
+                                            );
     }
 
-    return 1;
+    return ret;
 }
 
-uint8_t span,retrans,snr_if;
-uint16_t iMCS;
 
-const uint16_t snr_skip_threshold[7] = {0x0021, 0x004e,0x0090,0x00be,0x01fd,0x055e,0x07ec};
-uint8_t is_it_need_skip_freq(uint8_t qam_ldpc)
+const uint16_t snr_skip_threshold[] = {0x23,    //bpsk 1/2
+                                        0x2d,    //bpsk 1/2
+                                        0x6c,    //qpsk 1/2
+                                        0x181,   //16QAM 1/2
+                                        0x492,   //64QAM 1/2
+                                        0x52c};  //64QAM 2/3
+
+int grd_freq_skip_pre_judge(void)
 {
-    it_span_cnt++;
+    uint8_t flag = 0;
+    int16_t aver, fluct;
+    uint8_t bestch, optch;    
+    
+    if ( context.dev_state != FEC_LOCK )
+    {
+        return 0;
+    }
+    
+    if( it_span_cnt < 10 )
+    {
+        it_span_cnt ++;
+        return 0;
+    }
 
-    if(it_span_cnt < 100)
+    if ( is_retrans_cnt_pass() )
     {
         return 0;
     }
 
-    retrans = is_retrans_cnt_pass();
-    if(retrans)
+    flag = grd_check_piecewiseSnrPass(1, snr_skip_threshold[context.qam_ldpc]);
+    if ( 1 == flag ) //snr pass
     {
         return 0;
     }
 
-    #if 0
-    iMCS = snr_skip_threshold[qam_ldpc];
-    snr_if = is_snr_ok(iMCS);
-    if(snr_if)
+    //reselect the main and opt channel excluding current VT channel
+    bestch = context.cur_IT_ch;
+    BB_selectBestCh(CHANGE_MAIN, &bestch, &optch, 1);
+    int16_t cmp = compare_chNoisePower(context.cur_IT_ch, bestch, &aver, &fluct );
+    dlog_info("ch cmp: %d %d\n", cmp, aver);
+    
+    if( aver >= 3 ) //next channel is better than current channel
+    {
+        if( 0 == flag ) //already Fail
+        {
+            reset_it_span_cnt( );
+            context.cur_IT_ch  = bestch;
+            context.next_IT_ch = optch;
+            grd_set_it_skip_freq(context.cur_IT_ch);
+            dlog_info("Set Ch:%d %d %d %x\n", 
+                       context.cur_IT_ch, context.cycle_count, ((BB_ReadReg(PAGE2, FEC_5_RD)& 0xF0) >> 4), grd_get_it_snr());
+            context.dev_state = DELAY_14MS;
+        }
+        else
+        {
+            context.next_IT_ch = bestch;
+            return 1;  //need to check in the next 1.25ms
+        }
+    }
+    else
     {
         return 0;
     }
-    #endif
-
-    return 1;
 }
+
+
+void grd_freq_skip_post_judge(void)
+{
+    if(context.dev_state != FEC_LOCK )
+    {
+        return;
+    }
+
+    if ( 0 == grd_check_piecewiseSnrPass( 0, snr_skip_threshold[context.qam_ldpc] ) ) //Fail, need to hop
+    {
+        if( context.cur_IT_ch != context.next_IT_ch )
+        {
+            reset_it_span_cnt( );
+            context.cur_IT_ch = context.next_IT_ch;
+            grd_set_it_skip_freq(context.cur_IT_ch);            
+            dlog_info("Set Ch:%d %d %d %x\n", context.cur_IT_ch, context.cycle_count, 
+                                             ((BB_ReadReg(PAGE2, FEC_5_RD)& 0xF0) >> 4), grd_get_it_snr());
+        }
+
+        context.dev_state = DELAY_14MS;        
+    }
+}
+
 
 void grd_set_it_skip_freq(uint8_t ch)
 {
@@ -463,7 +545,9 @@ void Grd_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
     if ( FALSE == context.u8_debugMode )
     {
         grd_handle_all_cmds(); 
+		
     }
+	Timer1_Delay1_Cnt = 0;
 }
 
 void Grd_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
@@ -478,11 +562,18 @@ void Grd_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
         return;
     }
 
-    grd_add_snr_daq();
+
     switch (Timer1_Delay1_Cnt)
     {
         case 0:
-            grd_noise_sweep();
+            {
+                uint8_t Harqcnt = ((BB_ReadReg(PAGE2, FEC_5_RD)& 0xF0) >> 4);
+                BB_DoSweep();
+                if ( Harqcnt > 0 )
+                {
+                    BB_forceSweep( (Harqcnt-1) % 3);
+                }
+            }
             Timer1_Delay1_Cnt++;
             break;
 
@@ -502,6 +593,8 @@ void Grd_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
         case 3:
             Timer1_Delay1_Cnt++;
             BB_GetDevInfo();
+            grd_get_snr();
+            grd_qam_change_judge();
             break;
 
         case 4:
@@ -510,34 +603,31 @@ void Grd_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
 
         case 5:
             Timer1_Delay1_Cnt++;
+            BB_grd_GatherOSDInfo();
             break;
 
         case 6:
             Timer1_Delay1_Cnt++;
-            BB_grd_GatherOSDInfo();
-            //BB_GetDevInfo();
+            if(context.it_skip_freq_mode == AUTO)
+            {
+                flag_snrPostCheck = grd_freq_skip_pre_judge( );
+            }
             break;
 
         case 7:
             Timer1_Delay1_Cnt++;
-            if(context.it_skip_freq_mode == AUTO)
-            {
-                grd_freq_skip_judge();
-            }
-        break;
-
-        case 8:
-            INTR_NVIC_DisableIRQ(TIMER_INTR27_VECTOR_NUM);                
+            INTR_NVIC_DisableIRQ(TIMER_INTR27_VECTOR_NUM);
             TIM_StopTimer(grd_timer2_7);
+            if( context.it_skip_freq_mode == AUTO && flag_snrPostCheck )
+            {
+                grd_freq_skip_post_judge( );
+            }
 
-            Timer1_Delay1_Cnt = 0;
-            grd_qam_change_judge();
-            break;
+                break;
 
-        default:
-            Timer1_Delay1_Cnt = 0;
-            dlog_error("Timer1_Delay1_Cnt error\n");
-            break;
+            default:
+                Timer1_Delay1_Cnt = 0;
+                break;
     }
 }
 
@@ -547,7 +637,7 @@ void Grd_Timer2_7_Init(void)
     grd_timer2_7.time_num = 7;
     grd_timer2_7.ctrl = 0;
     grd_timer2_7.ctrl |= TIME_ENABLE | USER_DEFINED;
-    TIM_RegisterTimer(grd_timer2_7, 1200); //1.25ms
+    TIM_RegisterTimer(grd_timer2_7, 1250); //1.25ms
     reg_IrqHandle(TIMER_INTR27_VECTOR_NUM, Grd_TIM2_7_IRQHandler, NULL);
     INTR_NVIC_SetIRQPriority(TIMER_INTR27_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER01,0));
 }
@@ -559,7 +649,7 @@ void Grd_Timer2_6_Init(void)
     grd_timer2_6.ctrl = 0;
     grd_timer2_6.ctrl |= TIME_ENABLE | USER_DEFINED;
     
-    TIM_RegisterTimer(grd_timer2_6, 2500); //2.5s
+    TIM_RegisterTimer(grd_timer2_6, 3500); //2.5s
     reg_IrqHandle(TIMER_INTR26_VECTOR_NUM, Grd_TIM2_6_IRQHandler, NULL);
     INTR_NVIC_SetIRQPriority(TIMER_INTR26_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER00,0));
 }
@@ -1012,12 +1102,13 @@ static void BB_grd_GatherOSDInfo(void)
     osdptr->ldpc_error = (((uint16_t)BB_ReadReg(PAGE2, LDPC_ERR_HIGH_8)) << 8) | BB_ReadReg(PAGE2, LDPC_ERR_LOW_8);
     osdptr->harq_count = (BB_ReadReg(PAGE2, FEC_5_RD) >> 4);
     uint8_t tmp = BB_ReadReg(PAGE2, 0xdd);
-    #if 0
-    if(osdptr->ldpc_error > 0 || tmp > 0)
+    if(osdptr->harq_count > 1 )
     {
-        dlog_info("err:%x harq:%x lost:%x\n", osdptr->ldpc_error, osdptr->harq_count, tmp);
+        dlog_info("err:0x%x harq:0x%x lost:0x%x SNR:0x%x 0x%x\n", osdptr->ldpc_error, osdptr->harq_count, tmp, grd_get_it_snr(),
+                                                                  (((uint16_t)BB_ReadReg(PAGE2, 0xc2)) << 8) | BB_ReadReg(PAGE2, 0xc3)
+                                                            );
     }
-    #endif
+
     osdptr->modulation_mode = grd_get_IT_QAM();
     osdptr->code_rate       = grd_get_IT_LDPC();
     
@@ -1028,7 +1119,7 @@ static void BB_grd_GatherOSDInfo(void)
     osdptr->in_debug        = context.u8_debugMode;
     osdptr->lock_status     = BB_ReadReg(PAGE2, FEC_5_RD);
     memset(osdptr->sweep_energy, 0, sizeof(osdptr->sweep_energy));
-    grd_get_sweep_noise(0, osdptr->sweep_energy);
+    BB_GetSweepNoise(0, osdptr->sweep_energy);
     
     if(context.brc_mode == AUTO)
     {

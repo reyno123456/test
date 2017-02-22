@@ -128,7 +128,7 @@ void RF8003s_init(uint8_t *pu8_regs)
 }
 
 /**
-  * @brief : 
+  * @brief :  power consumption for RF8003s
   * @param : 
   * @retval  
   */

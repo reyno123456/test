@@ -1,43 +1,44 @@
 #ifndef _SWEEP_FREQ_SERVICE_H__
 #define _SWEEP_FREQ_SERVICE_H__
 
-#ifdef __cplusplus
- extern "C" {
-#endif
+#include <stdint.h>
+#include "bb_ctrl_internal.h"
+
+typedef enum _ENUM_CH_SEL_OPT
+{
+    SELECT_OPT      = 0,
+    SELECT_MAIN_OPT = 1,
+    CHANGE_MAIN
+}ENUM_CH_SEL_OPT;
 
 
-int16_t calc_power_db(int8_t bw, uint32_t power_td, 
-                      int16_t *power_fd, int16_t *power_db, 
-                      int16_t *total_power);
+#define MAIN_CH_CYCLE   (0)
+#define OPT_CH_CYCLE    (1)
+#define OTHER_CH_CYCLE  (2)
 
 
-void grd_sweep_freq_init(void);
 
-int8_t grd_add_sweep_result(int8_t bw);
-
-void grd_set_next_sweep_freq(void);
-
-uint8_t is_init_sne_average_and_fluct(void);
-
-void calu_sne_average_and_fluct(uint8_t ch);
-
-uint8_t get_sweep_freq(void);
-
-uint8_t is_it_sweep_finish(void);
-
-void init_sne_average_and_fluct(void);
-
-uint8_t get_best_freq(void);
-
-uint8_t get_next_best_freq(uint8_t cur_best_ch);
-
-uint8_t is_next_best_freq_pass(uint8_t cur_best_ch, uint8_t next_best_ch);
-
-void grd_get_sweep_noise(uint8_t row, int16_t *ptr_noise_power);
+#define BAND_MAX_SWEEP_CH(band) ( (band == RF_2G)?  MAX_2G_IT_FRQ_SIZE : MAX_5G_IT_FRQ_SIZE )
 
 
-#ifdef __cplusplus
-}
-#endif
+void BB_SweepStart( ENUM_RF_BAND e_rfBand, ENUM_CH_BW e_bw);
+
+uint8_t BB_DoSweep( void );
+
+
+void BB_GetSweepNoise(uint8_t row, int16_t *ptr_noise_power);
+
+int16_t compare_chNoisePower(uint8_t u8_itCh1, 
+                             uint8_t u8_itCh2, 
+                             int16_t *ps16_averdiff, 
+                             int16_t *ps16_fluctdiff);
+
+uint8_t BB_selectBestCh(ENUM_CH_SEL_OPT e_opt, 
+                        uint8_t *u8_mainCh, 
+                        uint8_t *u8_optCh, 
+                        uint8_t log);
+
+
+uint8_t BB_forceSweep( uint8_t opt );
 
 #endif

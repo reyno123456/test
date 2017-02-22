@@ -62,12 +62,51 @@ const STRU_FRQ_CHANNEL Rc_frq[MAX_2G_RC_FRQ_SIZE] =     // 2.4G
     {0xEE, 0xEE, 0xEE, 0x51},
 };
 
+const STRU_FRQ_CHANNEL Sweep_frq[ MAX_2G_IT_FRQ_SIZE ] = { 
+#if 0
+	{0x55, 0x55, 0x55, 0x53}, //25
+	{0xAA, 0xAA, 0xAA, 0x53},
+	{0x00, 0x00, 0x00, 0x54},
+	{0x55, 0x55, 0x55, 0x54},
+#else
+    {0x33, 0x33, 0x33, 0x50}, //2406
+    {0x88, 0x88, 0x88, 0x50}, //2416
+    {0xDD, 0xDD, 0xDD, 0x50}, 
+    {0x33, 0x33, 0x33, 0x51},
+    {0x88, 0x88, 0x88, 0x51},
+    {0xDD, 0xDD, 0xDD, 0x51},
+    {0x33, 0x33, 0x33, 0x52},
+    {0x88, 0x88, 0x88, 0x52} //2476
+#endif
+};
 
 
-const STRU_FRQ_CHANNEL It_frq[MAX_2G_IT_FRQ_SIZE] = {     //2.4G
-    {0x00,0x00,0x00,0x4b }, {0x00,0x00,0x00,0x4c },
-    {0x00,0x00,0x00,0x4d }, {0x00,0x00,0x00,0x4e },
-    {0x00,0x00,0x00,0x4f }, {0x00,0x00,0x00,0x50 },
+const STRU_FRQ_CHANNEL It_frq[MAX_2G_IT_FRQ_SIZE * 2 -1] = {     //2.4G
+#if 1
+    {0x33, 0x33, 0x33, 0x50},   //2406
+    {0xDD, 0xDD, 0x5D, 0x50},   //2411
+    {0x88, 0x88, 0x88, 0x50},   //2416
+    {0x33, 0x33, 0xB3, 0x50},   //2421
+    {0xDD, 0xDD, 0xDD, 0x50},   //2426
+    {0x88, 0x88, 0x08, 0x51},   //2431
+    {0x33, 0x33, 0x33, 0x51},   //2436
+    {0xDD, 0xDD, 0x5D, 0x51},   //2441
+    {0x88, 0x88, 0x88, 0x51},   //2446
+    {0x33, 0x33, 0xB3, 0x51},   //2451
+    {0xDD, 0xDD, 0xDD, 0x51},   //2456
+    {0x88, 0x88, 0x08, 0x52},   //2461
+    {0x33, 0x33, 0x33, 0x52},   //2466
+    {0xDD, 0xDD, 0x5D, 0x52},   //2471
+    {0x88, 0x88, 0x88, 0x52}    //2476
+#else
+    {0x55, 0x55, 0x55, 0x53},
+    {0x00, 0x00, 0x80, 0x53},
+    {0xAA, 0xAA, 0xAA, 0x53},
+    {0x55, 0x55, 0xD5, 0x53},
+    {0x00, 0x00, 0x00, 0x54},
+    {0xAA, 0xAA, 0x2A, 0x54},
+    {0x55, 0x55, 0x55, 0x54}
+#endif
 };
 
 
@@ -131,7 +170,7 @@ int BB_softReset(ENUM_BB_MODE en_mode)
     uint8_t reg_after_reset;
     if(en_mode == BB_GRD_MODE)
     {
-        BB_SPI_curPageWriteByte(0x00,0xB2);
+        BB_SPI_curPageWriteByte(0x00,0xB1);
         BB_SPI_curPageWriteByte(0x00,0xB0);
         reg_after_reset = 0xB0;
     }
@@ -321,7 +360,7 @@ int BB_ReadRegMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t mask)
 
 uint8_t BB_set_sweepfrq(ENUM_RF_BAND band, uint8_t ch)
 {
-	STRU_FRQ_CHANNEL *ch_ptr = (STRU_FRQ_CHANNEL *)((band == RF_2G)?It_frq:It_5G_frq);
+	const STRU_FRQ_CHANNEL *ch_ptr = ((band == RF_2G)?Sweep_frq:It_5G_frq);
 
 	BB_WriteReg(PAGE2, SWEEP_FREQ_0, ch_ptr[ch].frq1);
 	BB_WriteReg(PAGE2, SWEEP_FREQ_1, ch_ptr[ch].frq2);
@@ -343,7 +382,7 @@ uint8_t BB_write_ItRegs(uint32_t u32_it)
 
 uint8_t BB_set_ITfrq(ENUM_RF_BAND band, uint8_t ch)
 {
-	STRU_FRQ_CHANNEL *it_ch_ptr = (STRU_FRQ_CHANNEL *)((band == RF_2G)?It_frq:It_5G_frq);
+	const STRU_FRQ_CHANNEL *it_ch_ptr = ((band == RF_2G)?It_frq:It_5G_frq);
 
 	BB_WriteReg(PAGE2, AGC3_0, it_ch_ptr[ch].frq1);
 	BB_WriteReg(PAGE2, AGC3_1, it_ch_ptr[ch].frq2);
@@ -364,7 +403,8 @@ uint8_t BB_write_RcRegs(uint32_t u32_rc)
 
 uint8_t BB_set_Rcfrq(ENUM_RF_BAND band, uint8_t ch)
 {
-	STRU_FRQ_CHANNEL *rc_ch_ptr = (STRU_FRQ_CHANNEL *)((band == RF_2G)?Rc_frq:Rc_5G_frq);
+	const STRU_FRQ_CHANNEL *rc_ch_ptr = ((band == RF_2G)?Rc_frq:Rc_5G_frq);
+
 
     BB_WriteReg(PAGE2, AGC3_a, rc_ch_ptr[ch].frq1);
     BB_WriteReg(PAGE2, AGC3_b, rc_ch_ptr[ch].frq2);
@@ -412,8 +452,6 @@ void BB_set_RF_Band(ENUM_BB_MODE sky_ground, ENUM_RF_BAND rf_band)
     }
     else
     {
-
-        
         // P0 0x20 [3]=0, [2]=1,2G PA off,5G PA on
         BB_WriteRegMask(PAGE0, 0x20, 0x04, 0x0C); 
         // P2 0x21 [7]=1, [4]=1,rf_freq_sel_tx,rf_freq_sel_rx,5G
@@ -448,11 +486,11 @@ void BB_set_RF_bandwitdh(ENUM_BB_MODE sky_ground, ENUM_CH_BW rf_bw)
 {
     if (sky_ground == BB_SKY_MODE)
     {
-        BB_WriteRegMask(PAGE2, TX_2, (rf_bw << 3) & 0x38, 0x38); /*bit[5:3]*/
+        BB_WriteRegMask(PAGE2, TX_2, (rf_bw << 3), 0x38); /*bit[5:3]*/
     }
     else
     {
-        BB_WriteRegMask(PAGE2, RX_MODULATION, (rf_bw << 0) & 0x07, 0x07); /*bit[2:0]*/
+        BB_WriteRegMask(PAGE2, RX_MODULATION, (rf_bw << 0), 0x07); /*bit[2:0]*/
     }
    
     //softreset
@@ -980,14 +1018,14 @@ void BB_handle_misc_cmds(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
             case MISC_READ_RF_REG:
             {
                 uint8_t v;
-                RF8003s_SPI_ReadReg(value * 2, &v);
+                RF8003s_SPI_ReadReg(value, &v);
                 dlog_info("RF read addr=0x%0.2x value=0x%0.2x", value, v);
                 break;
             }
 
             case MISC_WRITE_RF_REG:
             {
-                RF8003s_SPI_WriteReg(value* 2, value1);
+                RF8003s_SPI_WriteReg(value, value1);
                 dlog_info("RF write addr=0x%0.2x value=0x%0.2x", value, value1);
                 break;
             }
@@ -1209,7 +1247,7 @@ int BB_SetEncoderBitrateCh2(uint8_t bitrate_Mbps)
     STRU_WIRELESS_CONFIG_CHANGE cmd;
 
     cmd.u8_configClass  = WIRELESS_ENCODER_CHANGE;
-    cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT_CH1;
+    cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT_CH2;
     cmd.u32_configValue  = (uint32_t)bitrate_Mbps;
 
     return BB_InsertCmd(&cmd);

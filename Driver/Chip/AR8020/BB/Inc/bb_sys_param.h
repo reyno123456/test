@@ -18,7 +18,7 @@ typedef struct
     uint8_t it_manual_rf_band;
     uint8_t fec_unlock_cnt;
     uint16_t rc_unlock_cnt;
-    
+
     ENUM_RUN_MODE it_skip_freq_mode;
     ENUM_RUN_MODE rc_skip_freq_mode;
     ENUM_RUN_MODE qam_skip_mode;
@@ -51,6 +51,8 @@ typedef struct
     uint8_t bb_power;    
     ENUM_RUN_MODE rf_power_mode;
     uint8_t enable_freq_offset;
+    uint8_t flag_mrs;
+    uint16_t cycle_count;
     DEVICE_STATE dev_state;
     uint8_t u8_idSrcSel; /* 0:id comes from flash,this is default value.
                             1:id comes from automatic search*/

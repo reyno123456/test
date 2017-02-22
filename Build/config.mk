@@ -20,7 +20,7 @@ CFLAGS = #-Wall
 DEBUG = y
 
 ifeq ($(DEBUG), y)
-CFLAGS += -g
+CFLAGS += -g -O1
 DEBREL = Debug
 else
 CFLAGS += -O2 -s

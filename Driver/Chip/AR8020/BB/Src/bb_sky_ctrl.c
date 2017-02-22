@@ -40,9 +40,6 @@ static enum EN_AGC_MODE en_agcmode = UNKOWN_AGC;
 
 static init_timer_st sky_timer2_6;
 static init_timer_st sky_timer2_7;
-
-static int sky_timer2_6_running = 0;
-static int sky_timer2_7_running = 0;
 static int switch_5G_count = 0;
 
 
@@ -100,7 +97,7 @@ uint8_t sky_id_match(void)
 
     if(total_count > 500)
     {
-        dlog_info("-L:%d-\n", lock_count);    
+        dlog_info("-L:%d-", lock_count);    
         total_count = 0;
         lock_count = 0;
     }
@@ -122,8 +119,7 @@ void sky_notify_encoder_brc(uint8_t u8_ch, uint8_t br)
         event.u8_bbCh = 1;
     }
     SYS_EVENT_Notify(SYS_EVENT_ID_BB_SUPPORT_BR_CHANGE, (void*)&event);	
-    
-    dlog_info("ch%d brc =%d\r\n", u8_ch, br);        
+    dlog_info("ch%d brc =%d \n", u8_ch, br);        
 }
 
 void sky_set_McsByIndex(uint8_t idx)
@@ -249,7 +245,6 @@ void wimax_vsoc_rx_isr(uint32_t u32_vectorNum)
 void Sky_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
 {
     static uint32_t u32_cnt = 0;
-    sky_timer2_6_running = 1;
     sky_search_id_timeout_irq_disable();
 
     Reg_Read32(BASE_ADDR_TIMER2 + TMRNEOI_6);
@@ -265,7 +260,7 @@ void Sky_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
     }
     
     sky_handle_all_cmds();
-    if(0 == sky_timer2_7_running )
+
     {
         sky_physical_link_process();
         
@@ -284,8 +279,6 @@ void Sky_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
             BB_GetDevInfo();
         }
     }
-
-    sky_timer2_6_running = 0;
 }
 
 
@@ -561,7 +554,7 @@ void Sky_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
 {
     static int Timer1_Delay2_Cnt = 0;    
 
-	sky_timer2_7_running = 1; 
+
 
     dlog_info("sky_search_id_timeout_irq_enable \r\n");
     INTR_NVIC_ClearPendingIRQ(TIMER_INTR27_VECTOR_NUM);
@@ -577,14 +570,10 @@ void Sky_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
     }
     else
     {
-        if(sky_timer2_6_running == 0) //To avoid the spi access conflict
-        {
-            sky_search_id_timeout();
-        }
+        sky_search_id_timeout();
         Timer1_Delay2_Cnt = 0;
     }
 
-    sky_timer2_7_running = 0;
 }
 
 
@@ -669,9 +658,12 @@ static void sky_handle_RF_band_cmd(void)
     if( (data0 == 0xc0 && data1 == 0xc1) || (data0 == 0xc1 && data1 == 0xc2))
     {
         ENUM_RF_BAND band = (ENUM_RF_BAND)(data0 & 0x01);
-        BB_set_RF_Band(BB_SKY_MODE, band);
-        context.freq_band = band;
-        dlog_info("sky set band %d \r\n", band);
+        if ((context.freq_band) != band)
+        {
+            BB_set_RF_Band(BB_SKY_MODE, band);
+            context.freq_band = band;
+            dlog_info("sky set band %d \r\n", band);
+        }
     }
 }
 
@@ -682,7 +674,6 @@ static void sky_handle_RF_band_cmd(void)
 static void sky_handle_CH_bandwitdh_cmd(void)
 {   
     uint8_t data0, data1;
-    uint8_t u8_data;
     
     data0 = BB_ReadReg(PAGE2, RF_CH_BW_CHANGE_0);
     data1 = BB_ReadReg(PAGE2, RF_CH_BW_CHANGE_1);
@@ -696,7 +687,6 @@ static void sky_handle_CH_bandwitdh_cmd(void)
             //set and soft-rest
             BB_set_RF_bandwitdh(BB_SKY_MODE, bw);
             context.CH_bandwidth = bw;
-            dlog_info("CH_bandwidth =%d\r\n", context.CH_bandwidth);
         }
     }
 }
@@ -777,6 +767,7 @@ static void sky_handle_brc_bitrate_cmd(void)
         sky_notify_encoder_brc(1, bps);
         dlog_info("ch2 brc_bps = %d \r\n", bps);
     }
+
 }
 
 static void sky_handle_QAM_cmd(void)
@@ -814,7 +805,6 @@ void sky_handle_all_spi_cmds(void)
     
     sky_handle_MCS_cmd();
 
-
     sky_handle_brc_mode_cmd();
 
     sky_handle_CH_bandwitdh_cmd();
@@ -842,7 +832,6 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
         {
             case FREQ_BAND_SELECT:
             {
-                //grd_handle_RF_band_cmd((ENUM_RF_BAND)value);
                 context.freq_band = (ENUM_RF_BAND)(value);
                 BB_set_RF_Band(BB_SKY_MODE, context.freq_band);
                 dlog_info("context.freq_band %d \r\n", context.freq_band);
@@ -850,7 +839,6 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
             }
             case FREQ_CHANNEL_MODE: //auto manual
             {
-                //grd_handle_IT_mode_cmd((ENUM_RUN_MODE)value);
                 context.it_skip_freq_mode = (ENUM_RUN_MODE)value;
                 break;
             }

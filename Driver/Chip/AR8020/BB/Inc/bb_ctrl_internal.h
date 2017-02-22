@@ -54,7 +54,7 @@ typedef enum
 
 
 #define MAX_2G_RC_FRQ_SIZE (34)
-#define MAX_2G_IT_FRQ_SIZE (6)
+#define MAX_2G_IT_FRQ_SIZE (8)
 
 #define MAX_5G_RC_FRQ_SIZE (4)
 #define MAX_5G_IT_FRQ_SIZE (4)
@@ -114,5 +114,7 @@ static int BB_before_RF_cali(void);
 static int BB_after_RF_cali(void);
 
 static int BB_RF_start_cali();
+
+int BB_WriteRegMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t data, uint8_t mask);
 
 #endif
