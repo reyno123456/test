@@ -68,7 +68,7 @@ HAL_RET_T HAL_GPIO_OutPut(ENUM_HAL_GPIO_NUM e_gpioPin)
         return HAL_GPIO_ERR_UNKNOWN;
     }
 
-    GPIO_SetMode(e_gpioPin, GPIO_MODE_1);
+    GPIO_SetMode(e_gpioPin, GPIO_MODE_2);
 
     GPIO_SetPinDirect(e_gpioPin, GPIO_DATA_DIRECT_OUTPUT);
 
@@ -91,7 +91,7 @@ HAL_RET_T HAL_GPIO_InPut(ENUM_HAL_GPIO_NUM e_gpioPin)
         return HAL_GPIO_ERR_UNKNOWN;
     }
 
-    GPIO_SetMode(e_gpioPin, GPIO_MODE_1);
+    GPIO_SetMode(e_gpioPin, GPIO_MODE_2);
 
     GPIO_SetPinDirect(e_gpioPin, GPIO_DATA_DIRECT_INPUT);
 
@@ -172,7 +172,7 @@ HAL_RET_T HAL_GPIO_RegisterInterrupt(ENUM_HAL_GPIO_NUM e_gpioPin,
 
     GPIO_SetPinCtrl(e_gpioPin, GPIO_CTRL_SOFTWARE);
 
-    GPIO_SetMode(e_gpioPin, GPIO_MODE_1);
+    GPIO_SetMode(e_gpioPin, GPIO_MODE_2);
 
     GPIO_Intr_SetPinIntrEn(e_gpioPin, GPIO_INTEN_INTERRUPT);
 
