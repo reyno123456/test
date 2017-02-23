@@ -923,36 +923,6 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 dlog_info("FREQ_BAND_WIDTH_SELECT %x\r\n", value);                
                 break;
             }
-
-            case FREQ_BAND_QAM_SELECT:
-            {
-                grd_handle_CH_qam_cmd((ENUM_BB_QAM)value);
-                dlog_info("FREQ_BAND_QAM_SELECT %x\r\n", value);                
-                break;
-            }
-            
-            case FREQ_BAND_CODE_RATE_SELECT:
-            {
-                grd_handle_CH_ldpc_cmd((ENUM_BB_LDPC)value);
-                dlog_info("FREQ_BAND_CODE_RATE_SELECT %x\r\n", value);  
-                break;              
-            }
-                
-            case RC_QAM_SELECT:
-            {
-                context.rc_qam_mode = (ENUM_BB_QAM)(value & 0x01);
-                BB_set_QAM(context.rc_qam_mode);
-                dlog_info("RC_QAM_SELECT %x\r\n", value);                
-                break;
-            }
-            
-            case RC_CODE_RATE_SELECT:
-            {
-                context.rc_ldpc = (ENUM_BB_LDPC)(value & 0x01);
-                BB_set_LDPC(context.rc_ldpc);
-                dlog_info("RC_CODE_RATE_SELECT %x\r\n", value); 
-                break;               
-            }
                 
             default:
             {
@@ -967,26 +937,58 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
         switch(item)
         {
             case MCS_MODE_SELECT:
+            {
                 grd_handle_MCS_mode_cmd((ENUM_RUN_MODE)value);
                 grd_handle_brc_mode_cmd( (ENUM_RUN_MODE)value);
                 break;
+            }
 
             case MCS_MODULATION_SELECT:
-                {
-                    #if 0
+            {
+                #if 0
                     ENUM_BB_LDPC ldpc = (ENUM_BB_LDPC)(value&0x0f);
                     ENUM_BB_QAM  qam  = (ENUM_BB_QAM)((value >> 4)&0x0f);
                     grd_handle_MCS_cmd(qam, ldpc);
-                    #endif
-                    grd_set_txmsg_mcs_change(value);
-                }
+                #endif
+                grd_set_txmsg_mcs_change(value);
                 break;
+            }
 
             case MCS_CODE_RATE_SELECT:
-                {
-                    //grd_set_txmsg_ldpc(value);
-                }
+            {
+                //grd_set_txmsg_ldpc(value);
                 break;
+            }
+
+            case MCS_IT_QAM_SELECT:
+            {
+                grd_handle_CH_qam_cmd((ENUM_BB_QAM)value);
+                dlog_info("MCS_IT_QAM_SELECT %x\r\n", value);                
+                break;
+            }
+            
+            case MCS_IT_CODE_RATE_SELECT:
+            {
+                grd_handle_CH_ldpc_cmd((ENUM_BB_LDPC)value);
+                dlog_info("MCS_IT_CODE_RATE_SELECT %x\r\n", value);  
+                break;              
+            }
+                
+            case MCS_RC_QAM_SELECT:
+            {
+                context.rc_qam_mode = (ENUM_BB_QAM)(value & 0x01);
+                BB_set_QAM(context.rc_qam_mode);
+                dlog_info("MCS_RC_QAM_SELECT %x\r\n", value);                
+                break;
+            }
+            
+            case MCS_RC_CODE_RATE_SELECT:
+            {
+                context.rc_ldpc = (ENUM_BB_LDPC)(value & 0x01);
+                BB_set_LDPC(context.rc_ldpc);
+                dlog_info("MCS_RC_CODE_RATE_SELECT %x\r\n", value); 
+                break;               
+            }
             default:
                 dlog_error("%s\r\n", "unknown WIRELESS_MCS_CHANGE command");
                 break;

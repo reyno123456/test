@@ -885,35 +885,7 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 dlog_info("FREQ_BAND_WIDTH_SELECT %x\r\n", value);         
                 break;
             }
-            case FREQ_BAND_QAM_SELECT:
-            {
-                BB_set_QAM((ENUM_BB_QAM)value);
-                dlog_info("FREQ_BAND_QAM_SELECT %x\r\n", value);                
-                break;
-            }
-            
-            case FREQ_BAND_CODE_RATE_SELECT:
-            {
-                BB_set_LDPC((ENUM_BB_LDPC)value);
-                dlog_info("FREQ_BAND_CODE_RATE_SELECT %x\r\n", value);             
-                break;
-            }
-            
-            case RC_QAM_SELECT:
-            {
-                context.rc_qam_mode = (ENUM_BB_QAM)value;
-                BB_WriteRegMask(PAGE2, 0x09, (value << 0) & 0x03, 0x03);
-                dlog_info("RC_QAM_SELECT %x\r\n", value);                
-                break;
-            }
-            
-            case RC_CODE_RATE_SELECT:
-            {
-                context.rc_ldpc = (ENUM_BB_LDPC)value;
-                BB_WriteRegMask(PAGE2, 0x09, (value << 2) & 0x1C, 0x1C);
-                dlog_info("RC_CODE_RATE_SELECT %x\r\n", value); 
-                break;               
-            }
+
             default:
             {
                 dlog_error("%s\r\n", "unknown WIRELESS_FREQ_CHANGE command");
@@ -927,22 +899,54 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
         switch(item)
         {
             case MCS_MODE_SELECT:
+            {
                 context.qam_skip_mode = (ENUM_RUN_MODE)value;
                 context.brc_mode = (ENUM_RUN_MODE)value;
                 dlog_info("qam_skip_mode = %d \r\n", context.qam_skip_mode);
                 dlog_info("brc_mode = %d \r\n", context.brc_mode);
                 break;
+            }
 
             case MCS_MODULATION_SELECT:
-                {
-                   
-                }
+            {
                 break;
+            }
 
             case MCS_CODE_RATE_SELECT:
-                {
-                }
+            {
                 break;
+            }
+                
+            case MCS_IT_QAM_SELECT:
+            {
+                BB_set_QAM((ENUM_BB_QAM)value);
+                dlog_info("MCS_IT_QAM_SELECT %x\r\n", value);                
+                break;
+            }
+            
+            case MCS_IT_CODE_RATE_SELECT:
+            {
+                BB_set_LDPC((ENUM_BB_LDPC)value);
+                dlog_info("MCS_IT_CODE_RATE_SELECT %x\r\n", value);             
+                break;
+            }
+            
+            case MCS_RC_QAM_SELECT:
+            {
+                context.rc_qam_mode = (ENUM_BB_QAM)value;
+                BB_WriteRegMask(PAGE2, 0x09, (value << 0) & 0x03, 0x03);
+                dlog_info("MCS_RC_QAM_SELECT %x\r\n", value);                
+                break;
+            }
+            
+            case MCS_RC_CODE_RATE_SELECT:
+            {
+                context.rc_ldpc = (ENUM_BB_LDPC)value;
+                BB_WriteRegMask(PAGE2, 0x09, (value << 2) & 0x1C, 0x1C);
+                dlog_info("MCS_RC_CODE_RATE_SELECT %x\r\n", value); 
+                break;               
+            }
+            
             default:
                 dlog_error("%s\r\n", "unknown WIRELESS_MCS_CHANGE command");
                 break;

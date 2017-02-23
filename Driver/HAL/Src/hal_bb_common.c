@@ -234,8 +234,8 @@ HAL_RET_T HAL_BB_SetItLdpcProxy(ENUM_BB_LDPC e_ldpc)
     uint8_t u8_ret;
     STRU_WIRELESS_CONFIG_CHANGE st_cmd;
 
-    st_cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
-    st_cmd.u8_configItem   = FREQ_BAND_CODE_RATE_SELECT;
+    st_cmd.u8_configClass  = WIRELESS_MCS_CHANGE;
+    st_cmd.u8_configItem   = MCS_IT_CODE_RATE_SELECT;
     st_cmd.u32_configValue = (uint32_t)e_ldpc;
 
     u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
@@ -261,8 +261,8 @@ HAL_RET_T HAL_BB_SetRcLdpcProxy(ENUM_BB_LDPC e_ldpc)
     uint8_t u8_ret;
     STRU_WIRELESS_CONFIG_CHANGE st_cmd;
 
-    st_cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
-    st_cmd.u8_configItem   = RC_CODE_RATE_SELECT;
+    st_cmd.u8_configClass  = WIRELESS_MCS_CHANGE;
+    st_cmd.u8_configItem   = MCS_RC_CODE_RATE_SELECT;
     st_cmd.u32_configValue = (uint32_t)e_ldpc;
 
     u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
@@ -718,8 +718,8 @@ HAL_RET_T HAL_BB_SetFreqBandQamSelectionProxy(ENUM_BB_QAM e_qam)
     uint8_t u8_ret;
     STRU_WIRELESS_CONFIG_CHANGE st_cmd;
     
-    st_cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
-    st_cmd.u8_configItem   = FREQ_BAND_QAM_SELECT;
+    st_cmd.u8_configClass  = WIRELESS_MCS_CHANGE;
+    st_cmd.u8_configItem   = MCS_IT_QAM_SELECT;
     st_cmd.u32_configValue = (uint32_t)e_qam;
 
     u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
@@ -745,8 +745,8 @@ HAL_RET_T HAL_BB_SetRcQamSelectionProxy(ENUM_BB_QAM e_qam)
     uint8_t u8_ret;
     STRU_WIRELESS_CONFIG_CHANGE st_cmd;
     
-    st_cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
-    st_cmd.u8_configItem   = RC_QAM_SELECT;
+    st_cmd.u8_configClass  = WIRELESS_MCS_CHANGE;
+    st_cmd.u8_configItem   = MCS_RC_QAM_SELECT;
     st_cmd.u32_configValue = (uint32_t)e_qam;
 
     u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
