@@ -33,6 +33,7 @@
 #include "hal_nvic.h"
 #include "hal_usb_host.h"
 #include "test_hal_mipi.h"
+#include "test_mp3.h"
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
@@ -387,6 +388,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_usbHostEnterTestMode();
     }
+    else if (memcmp(cmdArray[0], "test_mp3_encoder", strlen("test_mp3_encoder")) == 0)
+    {
+        command_TestMP3Encoder(cmdArray[1]);
+    }
     else
     {
         dlog_error("Command not found. Please use the commands like:");
@@ -458,6 +463,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_write_camera <subAddr(hex)> <value>(hex)");
         dlog_error("test_read_camera <subAddr(hex)>");
         dlog_error("test_hal_mipi_init");
+        dlog_error("test_mp3_encoder <0(PCM):1(WAV)>");
     }
 }
 

@@ -15,16 +15,6 @@
 #include "wireless_interface.h"
 #include "hal_nv.h"
 
-void *malloc(size_t size)
-{
-    return pvPortMalloc(size);
-}
-
-void free(void* p)
-{
-    vPortFree(p);
-}
-
 /**
  * @brief  CPU L1-Cache enable.
  * @param  None

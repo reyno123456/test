@@ -21,29 +21,27 @@ typedef union header Header;
 static Header base;
 static Header *freep = NULL;
 
-#define HEAP_BUFFER_SIZE (1024*8)
-static unsigned char heap_buffer[HEAP_BUFFER_SIZE] = {0};
-static unsigned int mem_malloc_start = (unsigned int)(&heap_buffer);
+extern char end;
+static unsigned int mem_malloc_start = (unsigned int)(&end);
 static unsigned int mem_malloc_end;
-static unsigned int mem_malloc_brk;
+static unsigned int mem_malloc_brk = (unsigned int)(&end);
 #define MORECORE_FAILURE (0)
 
-static unsigned char heap_initialized = 0;
+static inline void stack_get_position(void) __attribute__((optimize("O0")));
 
-static void heap_init(void)
+static inline void stack_get_position(void)
 {
-    if (heap_initialized == 0)
-    {
-        mem_malloc_end = mem_malloc_start + HEAP_BUFFER_SIZE;
-        mem_malloc_brk = mem_malloc_start;        
-        heap_initialized = 1;
-    }
+    __asm("MOV R0, SP");
+    __asm("LDR R1, =mem_malloc_end");    
+    __asm("STR R0, [R1]");
 }
 
-void *sbrk(ptrdiff_t increment)
+static void *sbrk(ptrdiff_t increment)
 {
     unsigned int old = mem_malloc_brk;
     unsigned int new = old + increment;
+
+    stack_get_position();
 
     /*
      * if we are giving memory back make sure we clear it out since
@@ -61,6 +59,8 @@ void *sbrk(ptrdiff_t increment)
     }
 
     mem_malloc_brk = new;
+
+    dlog_info("brk = 0x%x, sp = 0x%x", mem_malloc_brk, mem_malloc_end);
 
     return (void *)old;
 }
@@ -95,8 +95,6 @@ void *malloc_simple(size_t size)
     unsigned int nbytes = size;
     unsigned int nunits; 
 
-    heap_init();
-    
     nunits = (nbytes+sizeof(Header)-1)/sizeof(Header) + 1;
     
     if ((prevp = freep) == NULL)  /* no free list */
@@ -175,4 +173,35 @@ __attribute__((weak)) void free(void *ap)
 {
     free_simple(ap);
 }
+
+__attribute__((weak)) void *realloc(void *ptr, size_t size)
+{
+    void *new;
+
+    new = malloc(size);
+    if (!new)
+    {
+        return NULL;
+    }
+
+    if (ptr)    
+    {
+        free(ptr);
+    }
+
+    return new;
+}
+
+__attribute__((weak)) void *calloc (size_t n, size_t elem_size)
+{
+    void *result;
+    size_t sz = n * elem_size;
+
+    result = malloc (sz);
+    if (result != NULL)
+        memset (result, 0, sz);
+
+    return result;
+}
+
 
