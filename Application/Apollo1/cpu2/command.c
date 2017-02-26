@@ -94,9 +94,9 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_test_SkyAutoSearhRcId();
     }
-    else 
+    else if (memcmp(cmdArray[0], "help", strlen("help")) == 0) 
     {
-        dlog_error("Command not found! Please use commands like:\n");
+        dlog_error("Please use commands like:");
         dlog_error("BB_uart10_spi_sel <value>");
         dlog_error("read <address>");
         dlog_error("write <address> <data>");

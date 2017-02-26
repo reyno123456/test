@@ -119,9 +119,9 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         command_stopBypassVideo();
     }
     /* error command */
-    else
+    else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
-        dlog_error("Command not found. Please use the commands like:");
+        dlog_error("Please use the commands like:");
         dlog_error("read <address>");
         dlog_error("write <address> <data>");
         dlog_error("upgrade <filename>");

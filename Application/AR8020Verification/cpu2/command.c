@@ -117,9 +117,9 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_test_SkyAutoSearhRcId();
     }
-    else 
+    else if (memcmp(cmdArray[0], "help", strlen("help")) == 0) 
     {
-        dlog_error("Command not found! Please use commands like:\n");
+        dlog_error("Please use commands like:");
         dlog_error("encoder_dump_brc");
         dlog_error("encoder_update_brc <br>");
         dlog_error("encoder_update_video_format <W> <H> <F>");

@@ -392,9 +392,9 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestMP3Encoder(cmdArray[1]);
     }
-    else
+    else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
-        dlog_error("Command not found. Please use the commands like:");
+        dlog_error("Please use the commands like:");
         dlog_error("read <address>");
         dlog_error("write <address> <data>");
         dlog_error("initsd");
@@ -464,6 +464,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_read_camera <subAddr(hex)>");
         dlog_error("test_hal_mipi_init");
         dlog_error("test_mp3_encoder <0(PCM):1(WAV)>");
+        dlog_output(1000);
     }
 }
 
