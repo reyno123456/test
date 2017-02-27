@@ -19,6 +19,18 @@ include $(BUILD_DIR)/config.mk
 # static library name
 LIB = libboard.a
 
+ifeq ($(CPU_NUMBER), cpu0)
+    CFLAGS += $(CPU0_CFLAGS)
+endif
+
+ifeq ($(CPU_NUMBER), cpu1)
+    CFLAGS += $(CPU1_CFLAGS)
+endif
+
+ifeq ($(CPU_NUMBER), cpu2)
+    CFLAGS += $(CPU2_CFLAGS)
+endif
+
 CFG_BIN = $(HDMI_EDID_CFG_BIN_FILE_NAME)
 
 # source file(s), including c file(s)
@@ -43,7 +55,7 @@ OBJ_C     := $(patsubst %.c,%.o,$(SRC_C))
 all: .depend $(LIB) install
 
 $(LIB): $(OBJ_C)
-	@echo "Generating static library: " $(notdir $@)
+	@echo "Generating static library: $(CPU_NUMBER) " $(notdir $@)
 	$(AR) $(ARFLAGS) $@ $(OBJ_C)
 	$(CC) -c ADV7611/Src/adv_7611_edid.c -o ADV7611/Src/adv_7611_edid.o
 	$(OBJCOPY) -O binary ADV7611/Src/adv_7611_edid.o ADV7611/Src/$(CFG_BIN)
@@ -51,7 +63,6 @@ $(LIB): $(OBJ_C)
 install:
 	@echo "Installing static library: $(LIB)"
 	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
-	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)/$(CPU_NUMBER)
 	@mkdir -p $(OUTPUT_BIN_STAGING_DIR)
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@cp -f ADV7611/Inc/adv_7611.h $(OUTPUT_HEADER_STAGING_DIR)

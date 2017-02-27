@@ -18,6 +18,18 @@ include $(BUILD_DIR)/config.mk
 # static library name
 LIB = libmp3.a
 
+ifeq ($(CPU_NUMBER), cpu0)
+    CFLAGS += $(CPU0_CFLAGS)
+endif
+
+ifeq ($(CPU_NUMBER), cpu1)
+    CFLAGS += $(CPU1_CFLAGS)
+endif
+
+ifeq ($(CPU_NUMBER), cpu2)
+    CFLAGS += $(CPU2_CFLAGS)
+endif
+
 # source file(s), including c file(s)
 SRC_C   := ./shine-3.1.0/bitstream.c \
            ./shine-3.1.0/formatbits.c \
@@ -38,18 +50,18 @@ OBJ_C   := $(patsubst %.c,%.o,$(SRC_C))
 all: .depend $(LIB) install
 
 $(LIB):  $(OBJ_C)
-	@echo "Generating static library: " $(notdir $@)
+	@echo "Generating static library: $(CPU_NUMBER) " $(notdir $@)
 	@$(AR) $(ARFLAGS) $@ $^
 
 install:
+	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)
-	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)
-	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)
+	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@cp -f ./shine-3.1.0/layer3.h $(OUTPUT_HEADER_STAGING_DIR)/
 
 clean:
 	@echo "Cleaning..."
-	@$(RM) $(LIB) $(OBJ_C) $(OBJ_CPP) .depend $(OUTPUT_LIB_STAGING_DIR)/$(LIB) $(OUTPUT_HEADER_STAGING_DIR)/layer3.h
+	@$(RM) $(LIB) $(OBJ_C) $(OBJ_CPP) .depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB) $(OUTPUT_HEADER_STAGING_DIR)/layer3.h
 
 .PHONY: all clean install
 #########################################################################

@@ -21,6 +21,8 @@ include $(BUILD_DIR)/config.mk
 
 CPU_NUMBER = cpu0
 
+CFLAGS += $(CPU0_CFLAGS)
+
 # libs
 LD_LIBS := -lfreertos -lhal -lboard  -lAR8020drv -lcommon -lgcc
 

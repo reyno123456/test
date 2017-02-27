@@ -19,9 +19,9 @@ include $(BUILD_DIR)/config.mk
 
 ###############################################################################
 
-CFLAGS += -O1
-
 CPU_NUMBER = cpu2
+
+CFLAGS += $(CPU2_CFLAGS)
 
 # libs
 LD_LIBS := -lhal -lAR8020drv -lcommon -lgcc

@@ -22,7 +22,9 @@ CFLAGS = #-Wall
 DEBUG = y
 
 ifeq ($(DEBUG), y)
-CFLAGS += -g -O1
+CPU0_CFLAGS = -g
+CPU1_CFLAGS = -g
+CPU2_CFLAGS = -O1 -g
 DEBREL = Debug
 else
 CFLAGS += -O2 -s
@@ -54,6 +56,10 @@ export AR
 export ARFLAGS
 export RM
 export AS
+
+export CPU0_CFLAGS
+export CPU1_CFLAGS
+export CPU2_CFLAGS
 
 CHIP = AR8020
 BOOT = AR8020

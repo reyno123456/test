@@ -17,10 +17,10 @@ include $(BUILD_DIR)/config.mk
 ###############################################################################
 
 all:
-	@$(MAKE) -C $(BOARD) all
+	@$(MAKE) -C $(BOARD) CPU_NUMBER=$(CPU_NUMBER) all
 
 clean:
-	@$(MAKE) -C $(BOARD) clean
+	@$(MAKE) -C $(BOARD) CPU_NUMBER=$(CPU_NUMBER) clean
 
 .PHONY: all clean
 

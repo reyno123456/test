@@ -19,9 +19,9 @@ include $(BUILD_DIR)/config.mk
 
 ###############################################################################
 
-CFLAGS += -O1
-
 CPU_NUMBER = cpu0
+
+CFLAGS += $(CPU0_CFLAGS)
 
 # libs
 LD_LIBS := -lhal -lfreertos -lboard -lAR8020drv -lmp3 -lm -lcommon -lgcc

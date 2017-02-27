@@ -19,20 +19,56 @@ CURDIR ?= $(shell pwd)
 
 ###############################################################################
 
-LIBS := $(TOP_DIR)/Driver/Chip \
+LIBALL := $(TOP_DIR)/Driver/Chip \
         $(TOP_DIR)/Driver/Board \
         $(TOP_DIR)/Driver/HAL \
         $(TOP_DIR)/Kernel/FreeRTOS \
         $(TOP_DIR)/Library/Artosyn/Common \
         $(TOP_DIR)/Library/ThirdParty/CMSIS \
         $(TOP_DIR)/Library/ThirdParty/MP3Encoder \
-        $(TOP_DIR)/Bootload/ \
+        $(TOP_DIR)/Bootload
 
+LIB0 := $(TOP_DIR)/Driver/Chip \
+        $(TOP_DIR)/Driver/Board \
+        $(TOP_DIR)/Driver/HAL \
+        $(TOP_DIR)/Kernel/FreeRTOS \
+        $(TOP_DIR)/Library/Artosyn/Common \
+        $(TOP_DIR)/Library/ThirdParty/CMSIS \
+        $(TOP_DIR)/Library/ThirdParty/MP3Encoder \
+        $(TOP_DIR)/Bootload
 
-all: MKARGS := all
-all: $(LIBS)
+LIB1 := $(TOP_DIR)/Driver/Chip \
+        $(TOP_DIR)/Driver/Board \
+        $(TOP_DIR)/Driver/HAL \
+        $(TOP_DIR)/Library/Artosyn/Common
 
-clean: MKARGS := clean
+LIB2 := $(TOP_DIR)/Driver/Chip \
+        $(TOP_DIR)/Driver/Board \
+        $(TOP_DIR)/Driver/HAL \
+        $(TOP_DIR)/Library/Artosyn/Common
+
+all:
+	$(MAKE) clean0 CPU_NUMBER=cpu0
+	$(MAKE) all0   CPU_NUMBER=cpu0
+	$(MAKE) clean1 CPU_NUMBER=cpu1
+	$(MAKE) all1   CPU_NUMBER=cpu1
+	$(MAKE) clean2 CPU_NUMBER=cpu2
+	$(MAKE) all2   CPU_NUMBER=cpu2
+
+clean:
+	$(MAKE) clean0 CPU_NUMBER=cpu0
+	$(MAKE) clean1 CPU_NUMBER=cpu1
+	$(MAKE) clean2 CPU_NUMBER=cpu2
+	$(MAKE) -C $(APPLICATION_DIR) clean
+
+all0: MKARGS := all
+all0: $(LIB0)
+
+all1: MKARGS := all
+all1: $(LIB1)
+
+all2: MKARGS := all
+all2: $(LIB2)
 
 PROJS ?= verification
 -include ../../config.mk
@@ -52,7 +88,7 @@ configure:
 	@$(RM) -rf ../../config.mk
 	@cp  $(MKCONFIG) ../../config.mk
 
-$(LIBS):
+$(LIBALL):
 	@echo "make $(MKARGS) ..."
 	@$(MAKE) -C $@ $(MKARGS)
 
@@ -81,12 +117,18 @@ sky:
 	@$(MAKE) sky -C $(APPLICATION_DIR)
 	@cp $(APPLICATION_DIR)/*.bin $(OUTPUT_DIR)
 
-clean: $(LIBS)
-	@$(MAKE) -C $(APPLICATION_DIR) clean 
+clean0: MKARGS := clean
+clean0: $(LIB0)
+
+clean1: MKARGS := clean
+clean1: $(LIB1)
+
+clean2: MKARGS := clean
+clean2: $(LIB2)
 
 distclean: clean
 	@echo "make distcleaning..."
 	@$(RM) -rf  $(OUTPUT_DIR)/*
 	@$(RM) -rf  ../../config.mk
 
-.PHONY: all help sdk configure ground sky clean distclean $(LIBS)
+.PHONY: all help sdk configure ground sky clean distclean all0 all1 all2 clean0 clean1 clean2 $(LIBALL)

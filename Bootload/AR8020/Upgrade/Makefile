@@ -21,25 +21,28 @@ include $(BUILD_DIR)/config.mk
 ###############################################################################
 # libs
 CPU_NUMBER := cpu0
-#LD_LIBS := -lfreertos -lAR8020drv -lcommon  -lusb
-LD_LIBS := -lAR8020drv -lcommon -lboard -lfreertos -lhal
+
+CFLAGS += $(CPU0_CFLAGS)
+
+LD_LIBS := -lfreertos -lhal -lboard -lAR8020drv -lcommon 
 
 LDFLAGS += -Bstatic
-LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) $(LD_LIBS)
+LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) $(LD_LIBS)
                  
 # source file(s), including c file(s)
 SRC_S   :=  Src/upgrade_start.s 
 SRC_C   :=  Src/upgrade_main.c \
-			Src/upgrade_command.c \
-			Src/upgrade_uart.c \
-			Src/upgrade_core.c \
-			Src/upgrade_md5.c
+            Src/upgrade_command.c \
+            Src/upgrade_uart.c \
+            Src/upgrade_core.c \
+            Src/upgrade_md5.c
 
-CFLAGS +=   -I./Inc \
-			-I$(OUTPUT_HEADER_STAGING_DIR) \
-			-I$(TOP_DIR)/Configure/Include \
-			-I$(SRC_C_DIR)/SD/Inc \
-			-I$(SRC_C_DIR)/SysCtl/Inc \
+CFLAGS += -I./Inc \
+          -I$(OUTPUT_HEADER_STAGING_DIR) \
+          -I$(TOP_DIR)/Configure/Include \
+          -I$(TOP_DIR)/Driver/Chip/AR8020/BB/Inc \
+          -I$(SRC_C_DIR)/SD/Inc \
+          -I$(SRC_C_DIR)/SysCtl/Inc \
 
 # object file(s)
 OBJ_C   := $(patsubst %.s,%.o,$(SRC_S)) $(patsubst %.c,%.o,$(SRC_C)) 

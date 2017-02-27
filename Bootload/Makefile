@@ -17,14 +17,12 @@ include $(BUILD_DIR)/config.mk
 ###############################################################################
 
 all:
-	@$(MAKE) -C $(BOOT)/Boot -f Makefile clean
-	@$(MAKE) -C $(BOOT)/Boot -f Makefile all
-	@$(MAKE) -C $(BOOT)/Upgrade -f Makefile clean
-	@$(MAKE) -C $(BOOT)/Upgrade -f Makefile all
+	@$(MAKE) -C $(BOOT)/Boot all
+	@$(MAKE) -C $(BOOT)/Upgrade all
 
 clean:
-	@$(MAKE) -C $(BOOT)/Boot -f Makefile clean
-	@$(MAKE) -C $(BOOT)/Upgrade -f Makefile clean
+	@$(MAKE) -C $(BOOT)/Boot clean
+	@$(MAKE) -C $(BOOT)/Upgrade clean
 
 .PHONY: all clean
 

@@ -18,6 +18,18 @@ include $(BUILD_DIR)/config.mk
 # static library name
 LIB = libhal.a
 
+ifeq ($(CPU_NUMBER), cpu0)
+    CFLAGS += $(CPU0_CFLAGS)
+endif
+
+ifeq ($(CPU_NUMBER), cpu1)
+    CFLAGS += $(CPU1_CFLAGS)
+endif
+
+ifeq ($(CPU_NUMBER), cpu2)
+    CFLAGS += $(CPU2_CFLAGS)
+endif
+
 # source file(s), including c file(s)
 SRC_C := Src/hal.c \
          Src/hal_i2c.c \
@@ -38,9 +50,9 @@ SRC_C := Src/hal.c \
          Src/hal_bb_ground.c \
          Src/hal_bb_sky.c \
          Src/hal_nvic.c \
-	     Src/hal_sd.c \
-	     Src/hal_dma.c \
-	     Src/hal_adc.c \
+         Src/hal_sd.c \
+         Src/hal_dma.c \
+         Src/hal_adc.c \
          Src/hal_nv.c \
          Src/hal_can.c \
          Src/hal_camera.c \
@@ -78,15 +90,15 @@ OBJ_C     := $(patsubst %.c,%.o,$(SRC_C))
 all: .depend $(LIB) install
 
 $(LIB): $(OBJ_C)
-	@echo "Generating static library: " $(notdir $@)
+	@echo "Generating static library: $(CPU_NUMBER) " $(notdir $@)
 	$(AR) $(ARFLAGS) $@ $(OBJ_C)
 
 install:
-	@echo "Installing static library: $(LIB)"
-	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)
+	@echo "Installing static library: $(CPU_NUMBER) $(LIB)"
+	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@cp -f Inc/hal.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)
 	@cp -f Inc/hal_i2c.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_sys_ctl.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_hdmi_rx.h $(OUTPUT_HEADER_STAGING_DIR)
@@ -114,7 +126,7 @@ install:
 	@cp -f Inc/hal_mipi.h $(OUTPUT_HEADER_STAGING_DIR) 
 clean:
 	@echo "Cleaning..."
-	@$(RM) $(LIB) $(OBJ_C) .depend $(OUTPUT_LIB_STAGING_DIR)/$(LIB)
+	@$(RM) $(LIB) $(OBJ_C) .depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB)
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_i2c.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_sys_ctl.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_hdmi_rx.h

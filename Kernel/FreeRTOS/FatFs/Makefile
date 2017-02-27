@@ -41,7 +41,7 @@ CFLAGS +=
 all: .depend $(LIB) install
 
 $(LIB):  $(OBJ_C)
-	@echo "Generating static library: " $(notdir $@)
+	@echo "Generating static library: $(CPU_NUMBER) " $(notdir $@)
 	@$(AR) $(ARFLAGS) $@ $^
 
 install:
