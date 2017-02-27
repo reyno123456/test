@@ -29,6 +29,8 @@
 #include "usbd_ioreq.h"
 #include "debuglog.h"
 
+uint8_t         g_u8DescForEndian[100];
+
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
   * @{
   */
@@ -100,27 +102,27 @@ USBD_StatusTypeDef  USBD_CtlSendData (USBD_HandleTypeDef  *pdev,
   uint8_t      u8_i;
   uint8_t      u8_swap;
 
-  if (USB_OTG_IS_BIG_ENDIAN())
-  {
-    for (u8_i = 0; u8_i < len; u8_i += 4)
-    {
-      u8_swap           = pbuf[u8_i];
-      pbuf[u8_i]        = pbuf[u8_i + 3];
-      pbuf[u8_i + 3]    = u8_swap;
-
-      u8_swap           = pbuf[u8_i + 1];
-      pbuf[u8_i + 1]    = pbuf[u8_i + 2];
-      pbuf[u8_i + 2]    = u8_swap;
-    }
-  }
-
   /* Set EP0 State */
   pdev->ep0_state          = USBD_EP0_DATA_IN;
   pdev->ep_in[0].total_length = len;
   pdev->ep_in[0].rem_length   = len;
 
-  /* Start the transfer */
-  USBD_LL_Transmit (pdev, 0x00, pbuf, len);
+  if (USB_OTG_IS_BIG_ENDIAN())
+  {
+    for (u8_i = 0; u8_i < len; u8_i += 4)
+    {
+      g_u8DescForEndian[u8_i]        = pbuf[u8_i + 3];
+      g_u8DescForEndian[u8_i + 1]    = pbuf[u8_i + 2];
+      g_u8DescForEndian[u8_i + 2]    = pbuf[u8_i + 1];
+      g_u8DescForEndian[u8_i + 3]    = pbuf[u8_i + 0];
+    }
+    USBD_LL_Transmit (pdev, 0x00, g_u8DescForEndian, len);
+  }
+  else
+  {
+    /* Start the transfer */
+    USBD_LL_Transmit (pdev, 0x00, pbuf, len);
+  }
 
   return USBD_OK;
 }

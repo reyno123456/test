@@ -9,6 +9,7 @@ volatile uint32_t               sramReady0;
 volatile uint32_t               sramReady1;
 extern USBD_HandleTypeDef       USBD_Device;
 volatile uint32_t               g_u32VideoDisplay;
+volatile uint32_t               g_u32SramUSBState = 0;  //0: unstatble 1: normal
 
 
 void SRAM_OpenVideoDisplay(void)
@@ -33,14 +34,30 @@ void SRAM_Ready0IRQHandler(uint32_t u32_vectorNum)
     dataLen         = SRAM_DATA_VALID_LEN_0;
     dataLen         = (dataLen << 2);
 
+    if (g_u32VideoDisplay == 0)
+    {
+        SRAM_Ready0Confirm();
+
+        return;
+    }
+
     if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buff, dataLen, HID_EPIN_VIDEO_ADDR))
     {
         dlog_error("HID0 Send Error!\n");
 
         SRAM_Ready0Confirm();
     }
-
-    sramReady0 = 1;
+    else
+    {
+        if (g_u32SramUSBState == 0)
+        {
+            SRAM_Ready0Confirm();
+        }
+        else
+        {
+            sramReady0 = 1;
+        }
+    }
 }
 
 
@@ -54,14 +71,30 @@ void SRAM_Ready1IRQHandler(uint32_t u32_vectorNum)
     dataLen         = SRAM_DATA_VALID_LEN_1;
     dataLen         = (dataLen << 2);
 
+    if (g_u32VideoDisplay == 0)
+    {
+        SRAM_Ready1Confirm();
+
+        return;
+    }
+
     if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buff, dataLen, HID_EPIN_VIDEO_ADDR))
     {
         dlog_error("HID1 Send Error!\n");
 
         SRAM_Ready1Confirm();
     }
-
-    sramReady1 = 1;
+    else
+    {
+        if (g_u32SramUSBState == 0)
+        {
+            SRAM_Ready1Confirm();
+        }
+        else
+        {
+            sramReady1 = 1;
+        }
+    }
 }
 
 

@@ -65,9 +65,14 @@ void HAL_USB_ResetDevice(void * p)
     USBD_LL_Init(&USBD_Device);
     USBD_LL_Start(&USBD_Device);
 
-    SRAM_Ready0Confirm();
-
-    SRAM_Ready1Confirm();
+    if (sramReady0 == 1)
+    {
+        SRAM_Ready0Confirm();
+    }
+    if (sramReady1 == 1)
+    {
+        SRAM_Ready1Confirm();
+    }
 
     return;
 }

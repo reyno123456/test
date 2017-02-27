@@ -286,6 +286,7 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE]  _
 
 USBD_HID_HandleTypeDef        g_usbdHidData;
 uint8_t                       g_u32USBDeviceRecv[512];
+extern uint32_t               g_u32SramUSBState;
 
 /*
   * @}
@@ -340,6 +341,10 @@ static uint8_t  USBD_HID_Init (USBD_HandleTypeDef *pdev,
         USBD_LL_PrepareReceive(pdev, HID_EPOUT_ADDR, g_u32USBDeviceRecv, HID_EPOUT_SIZE);
     }
 
+    g_u32SramUSBState = 0;
+
+    SRAM_CloseVideoDisplay();
+
     return ret;
 }
 
@@ -370,6 +375,10 @@ static uint8_t  USBD_HID_DeInit (USBD_HandleTypeDef *pdev,
     {
         ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state[i] = HID_IDLE;
     }
+
+    g_u32SramUSBState = 0;
+
+    SRAM_CloseVideoDisplay();
 
     return USBD_OK;
 }
@@ -558,6 +567,11 @@ static uint8_t  USBD_HID_DataIn (USBD_HandleTypeDef *pdev,
 
     if ((epnum | 0x80) == HID_EPIN_VIDEO_ADDR)
     {
+        if (g_u32SramUSBState == 0)
+        {
+            g_u32SramUSBState = 1;
+        }
+
         if (1 == sramReady0)
         {
             SRAM_Ready0Confirm();

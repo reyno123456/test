@@ -74,7 +74,7 @@ void USBH_BypassVideo(void const *argument)
                         continue;
                     }
 
-                    osDelay(100);
+                    osDelay(10);
 
                     if (bytesread < USB_VIDEO_BYPASS_SIZE_ONCE)
                     {
