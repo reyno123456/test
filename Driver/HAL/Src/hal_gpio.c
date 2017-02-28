@@ -253,9 +253,9 @@ static void GPIO_VectorFunctionN0(uint32_t u32_vectorNum)
         
         if(GPIO_Intr_GetIntrStatus(i))
         {
-            if (g_pv_GpioVectorListArray[3][i] != NULL)
+            if (g_pv_GpioVectorListArray[0][i] != NULL)
             {
-                (*(g_pv_GpioVectorListArray[3][i]))(u32_vectorNum);
+                (*(g_pv_GpioVectorListArray[0][i]))(u32_vectorNum);
             }
         }
     }
@@ -270,9 +270,9 @@ static void GPIO_VectorFunctionN1(uint32_t u32_vectorNum)
     {
         if(GPIO_Intr_GetIntrStatus(i))
         {
-            if (g_pv_GpioVectorListArray[3][i-32] != NULL)
+            if (g_pv_GpioVectorListArray[1][i-32] != NULL)
             {
-                (*(g_pv_GpioVectorListArray[3][i-32]))(u32_vectorNum);
+                (*(g_pv_GpioVectorListArray[1][i-32]))(u32_vectorNum);
             }
         }
     }
@@ -286,9 +286,9 @@ static void GPIO_VectorFunctionN2(uint32_t u32_vectorNum)
     {        
         if(GPIO_Intr_GetIntrStatus(i))
         {
-            if (g_pv_GpioVectorListArray[3][i-64] != NULL)
+            if (g_pv_GpioVectorListArray[2][i-64] != NULL)
             {
-                (*(g_pv_GpioVectorListArray[3][i-64]))(u32_vectorNum);
+                (*(g_pv_GpioVectorListArray[2][i-64]))(u32_vectorNum);
             }           
         }
 
