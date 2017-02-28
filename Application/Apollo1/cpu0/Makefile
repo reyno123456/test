@@ -30,7 +30,7 @@ LDFLAGS += -Bstatic
 LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) -L$(CROSS_COMPILE_LIB_PATH) $(LD_LIBS)
 
 # source file(s), including *.s *.c file(s)
-SRC_S   := $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/start.s
+SRC_S   := start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
 SRC_C   := main_sky.c command.c test_usbh.c upgrade.c md5.c com_task.c wireless_interface.c \
@@ -57,7 +57,7 @@ TARGET = ar8020_cpu0.bin
 all: .depend $(TARGET)
 
 $(TARGET): $(OBJ_C)
-	$(LD) $^ $(LDFLAGS) -T$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/ar8020.lds -o $(TARGET).elf 
+	$(LD) $^ $(LDFLAGS) -Tar8020.lds -o $(TARGET).elf 
 	$(OBJCOPY) -O binary $(TARGET).elf $@
 	$(OBJDUMP) -D $(TARGET).elf > $(TARGET).dis
 	$(NM) $(TARGET).elf > $(TARGET).map

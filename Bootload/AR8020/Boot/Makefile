@@ -61,19 +61,11 @@ install:
 	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)/cpu0 
 	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)/cpu1 
 	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)/cpu2
-	@cp -f ../cpu0/ar8020.lds $(OUTPUT_LIB_STAGING_DIR)/cpu0/
-	@cp -f ../cpu0/start.s $(OUTPUT_LIB_STAGING_DIR)/cpu0/
-	@cp -f ../cpu1/ar8020.lds $(OUTPUT_LIB_STAGING_DIR)/cpu1/
-	@cp -f ../cpu1/start.s $(OUTPUT_LIB_STAGING_DIR)/cpu1/
-	@cp -f ../cpu2/ar8020.lds $(OUTPUT_LIB_STAGING_DIR)/cpu2/
-	@cp -f ../cpu2/start.s $(OUTPUT_LIB_STAGING_DIR)/cpu2/
+
 clean:
 	rm -f $(OBJ_C) .depend 
 	rm -f $(TARGET) $(TARGET).elf  $(TARGET).bin  $(TARGET).dis  $(TARGET).mif  $(TARGET).map $(OUTPUT_DIR)/$(TARGET).mif $(TARGET_FLASH)
 	rm -f $(OUTPUT_LIB_STAGING_DIR)/$(TARGET)
-	rm -f $(OUTPUT_LIB_STAGING_DIR)/cpu0/ar8020.lds $(OUTPUT_LIB_STAGING_DIR)/cpu0/start.s
-	rm -f $(OUTPUT_LIB_STAGING_DIR)/cpu1/ar8020.lds $(OUTPUT_LIB_STAGING_DIR)/cpu1/start.s
-	rm -f $(OUTPUT_LIB_STAGING_DIR)/cpu2/ar8020.lds $(OUTPUT_LIB_STAGING_DIR)/cpu2/start.s
 
 .PHONY: all clean $(TARGET)
 
