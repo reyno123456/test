@@ -1,6 +1,8 @@
 # cross compile...
 CROSS_COMPILE = /opt/toolchain/gcc-arm-none-eabi-5_2-2015q4/bin/arm-none-eabi-
-CROSS_COMPILE_LIB_PATH = /opt/toolchain/gcc-arm-none-eabi-5_2-2015q4/lib/gcc/arm-none-eabi/5.2.1/armv7-m
+CROSS_COMPILE_LIB_GCC_PATH = /opt/toolchain/gcc-arm-none-eabi-5_2-2015q4/lib/gcc/arm-none-eabi/5.2.1/armv7e-m
+CROSS_COMPILE_LIB_PATH = /opt/toolchain/gcc-arm-none-eabi-5_2-2015q4/arm-none-eabi/lib/armv7e-m
+
 APPLICATION_DIR ?= $(TOP_DIR)/Application/Apollo1
 
 
@@ -20,7 +22,9 @@ CFLAGS = #-Wall
 DEBUG = y
 
 ifeq ($(DEBUG), y)
-CFLAGS += -g
+CPU0_CFLAGS = -g
+CPU1_CFLAGS = -g
+CPU2_CFLAGS = -O1 -g
 DEBREL = Debug
 else
 CFLAGS += -O2 -s
@@ -33,7 +37,7 @@ DEFS += -DUSE_BB_REG_CONFIG_BIN -DUSE_ADV7611_EDID_CONFIG_BIN
 
 CFLAGS += $(DEFS)
 
-LDFLAGS = $(LIBS)
+LDFLAGS = -L$(CROSS_COMPILE_LIB_GCC_PATH) -L$(CROSS_COMPILE_LIB_PATH) $(LIBS)
 
 INCDIRS =
 
@@ -52,6 +56,10 @@ export AR
 export ARFLAGS
 export RM
 export AS
+
+export CPU0_CFLAGS
+export CPU1_CFLAGS
+export CPU2_CFLAGS
 
 CHIP = AR8020
 BOOT = AR8020
