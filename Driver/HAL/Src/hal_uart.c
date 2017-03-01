@@ -17,8 +17,16 @@ History:
 
 
 static const uint32_t s_u32_uartBaudrTbl[] = 
-                      {9600, 19200, 38400, 57600, 115200};
-
+                      {
+                          9600,        // 0
+                          19200,       // 1
+                          38400,       // 2
+                          57600,       // 3
+                          115200,      // 4
+                          230400,      // 5
+                          380400,      // 6
+                          460800       // 7
+                      };
 
 /**
 * @brief  The UART initialization function which must be called 
@@ -26,7 +34,7 @@ static const uint32_t s_u32_uartBaudrTbl[] =
 * @param  e_uartComponent   The UART controller number, the right number 
 *                           should be 0-8 and totally 9 UART controllers 
 *                           can be used by application.
-*         e_uartBaudr       uart baud rate,can be 9600 19200 ... 115200.
+*         e_uartBaudr       uart baud rate,can be 9600 19200 ... 460800.
 *         pfun_rxFun        the uart receive data function.each time uart
 *                           received data, it will be called.
 *                           
@@ -49,7 +57,7 @@ HAL_RET_T HAL_UART_Init(ENUM_HAL_UART_COMPONENT e_uartComponent,
     {
         return HAL_UART_ERR_INIT;
     }
-    if (e_uartBaudr > HAL_UART_BAUDR_115200)
+    if (e_uartBaudr > HAL_UART_BAUDR_460800)
     {
         return HAL_UART_ERR_INIT;
     }

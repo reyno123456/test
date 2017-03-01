@@ -35,11 +35,14 @@ typedef enum
 //Baud Rate
 typedef enum
 {
-    HAL_UART_BAUDR_9600 = 0,
-    HAL_UART_BAUDR_19200,
-    HAL_UART_BAUDR_38400,
-    HAL_UART_BAUDR_57600,
-    HAL_UART_BAUDR_115200,
+    HAL_UART_BAUDR_9600 = 0,    // 0
+    HAL_UART_BAUDR_19200,       // 1
+    HAL_UART_BAUDR_38400,       // 2
+    HAL_UART_BAUDR_57600,       // 3
+    HAL_UART_BAUDR_115200,      // 4
+    HAL_UART_BAUDR_230400,      // 5
+    HAL_UART_BAUDR_380400,      // 6
+    HAL_UART_BAUDR_460800       // 7
 } ENUM_HAL_UART_BAUDR;
 
 /**
