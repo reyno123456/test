@@ -103,7 +103,8 @@ HID_DataTypeDef;
 
 typedef struct _USBD_HID_Itf
 {
-  void (* dataOut)(void *);
+    void (* dataOut)(void *);
+    void (* userInit)(void);
 }USBD_HID_ItfTypeDef;
 
 
@@ -131,6 +132,9 @@ USBD_HID_HandleTypeDef;
 /** @defgroup USBD_CORE_Exported_Variables
   * @{
   */ 
+
+extern volatile uint32_t g_u32USBConnState;
+
 
 extern USBD_ClassTypeDef  USBD_HID;
 #define USBD_HID_CLASS    &USBD_HID

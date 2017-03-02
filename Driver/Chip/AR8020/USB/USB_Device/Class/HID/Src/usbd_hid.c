@@ -54,6 +54,7 @@
 #include "debuglog.h"
 #include "sram.h"
 #include "bb_types.h"
+#include "sys_event.h"
 
 
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
@@ -286,7 +287,8 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE]  _
 
 USBD_HID_HandleTypeDef        g_usbdHidData;
 uint8_t                       g_u32USBDeviceRecv[512];
-extern uint32_t               g_u32SramUSBState;
+volatile uint32_t             g_u32USBConnState = 0;  //0: disconnect 1: connect 2:normal
+uint32_t                      g_u32UsbdErrorCount = 0;
 
 /*
   * @}
@@ -341,9 +343,15 @@ static uint8_t  USBD_HID_Init (USBD_HandleTypeDef *pdev,
         USBD_LL_PrepareReceive(pdev, HID_EPOUT_ADDR, g_u32USBDeviceRecv, HID_EPOUT_SIZE);
     }
 
-    g_u32SramUSBState = 0;
+    g_u32USBConnState = 1;
+    g_u32UsbdErrorCount = 0;
 
     SRAM_CloseVideoDisplay();
+
+    if (((USBD_HID_ItfTypeDef *)pdev->pUserData)->userInit)
+    {
+        ((USBD_HID_ItfTypeDef *)pdev->pUserData)->userInit();
+    }
 
     return ret;
 }
@@ -376,9 +384,15 @@ static uint8_t  USBD_HID_DeInit (USBD_HandleTypeDef *pdev,
         ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state[i] = HID_IDLE;
     }
 
-    g_u32SramUSBState = 0;
+    g_u32USBConnState = 0;
+    g_u32UsbdErrorCount = 0;
 
     SRAM_CloseVideoDisplay();
+
+    if (((USBD_HID_ItfTypeDef *)pdev->pUserData)->userInit)
+    {
+        ((USBD_HID_ItfTypeDef *)pdev->pUserData)->userInit();
+    }
 
     return USBD_OK;
 }
@@ -463,6 +477,28 @@ static uint8_t  USBD_HID_Setup (USBD_HandleTypeDef *pdev,
   return USBD_OK;
 }
 
+
+/**
+  * @brief  USBD_HID_ErrorDetect 
+  *         detect send data error count
+  * @param  
+  * @retval status
+  */
+static void USBD_HID_ErrorDetect(void)
+{
+    g_u32UsbdErrorCount++;
+
+    if (g_u32UsbdErrorCount >= 20)
+    {
+        dlog_error("usb send fail detect");
+        g_u32UsbdErrorCount = 0;
+        g_u32USBConnState   = 0;
+
+        SYS_EVENT_Notify(SYS_EVENT_ID_USB_PLUG_OUT, NULL);
+    }
+}
+
+
 /**
   * @brief  USBD_HID_SendReport 
   *         Send HID Report
@@ -498,13 +534,15 @@ uint8_t USBD_HID_SendReport(USBD_HandleTypeDef  *pdev,
         else
         {
             ret = USBD_BUSY;
+
+            USBD_HID_ErrorDetect();
         }
     }
     else
     {
+        dlog_error("usb device not connected");
         ret = USBD_FAIL;
     }
-
 
     return ret;
 }
@@ -565,11 +603,13 @@ static uint8_t  USBD_HID_DataIn (USBD_HandleTypeDef *pdev,
           be caused by  a new transfer before the end of the previous transfer */
     ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state[epnum & 0x7F] = HID_IDLE;
 
+    g_u32UsbdErrorCount = 0;
+
     if ((epnum | 0x80) == HID_EPIN_VIDEO_ADDR)
     {
-        if (g_u32SramUSBState == 0)
+        if (g_u32USBConnState == 1)
         {
-            g_u32SramUSBState = 1;
+            g_u32USBConnState = 2;
         }
 
         if (1 == sramReady0)

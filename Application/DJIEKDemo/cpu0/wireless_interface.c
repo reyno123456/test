@@ -298,7 +298,7 @@ uint8_t WIRELESS_INTERFACE_UPGRADE_Handler(void *param)
 
     dlog_info("enter upgrade mode");
 
-    HAL_USB_RegisterUserProcess(UpgradeFirmwareFromPCTool);
+    HAL_USB_RegisterUserProcess(UpgradeFirmwareFromPCTool, NULL);
 
     st_replyMessage.messageId   = WIRELESS_INTERFACE_UPGRADE;
     st_replyMessage.paramLen    = 0;
@@ -1329,6 +1329,12 @@ static void Wireless_Task(void const *argument)
 
     while (1)
     {
+        if (HAL_USB_DeviceGetConnState() == 0)
+        {
+            osDelay(3000);
+            continue;
+        }
+
         if (g_stWirelessReply.u8_buffTail != g_stWirelessReply.u8_buffHead)
         {
             pstWirelessParamConfig = &g_stWirelessReply.stMsgPool[g_stWirelessReply.u8_buffHead];
@@ -1340,23 +1346,10 @@ static void Wireless_Task(void const *argument)
 
             if (HAL_OK != HAL_USB_DeviceSendCtrl(u8_sendBuff, u32_sendLength))
             {
-                g_stWirelessReply.u16_sendfailCount++;
-
-                if (g_stWirelessReply.u16_sendfailCount >= WIRELESS_INTERFACE_SEND_FAIL_RETRY)
-                {
-                    g_stWirelessParamConfig.u16_sendfailCount = 0;
-
-                    dlog_error("fail counter exceed threshold");
-
-                    HAL_USB_ResetDevice(NULL);
-
-                    osDelay(500);
-                }
+                dlog_error("send wireless info fail");
             }
             else
             {
-                g_stWirelessReply.u16_sendfailCount = 0;
-
                 g_stWirelessReply.u8_buffHead++;
                 g_stWirelessReply.u8_buffHead &= (WIRELESS_INTERFACE_MAX_MESSAGE_NUM - 1);
             }
@@ -1399,17 +1392,29 @@ static void Wireless_Task(void const *argument)
             g_stWirelessParamConfig.u8_buffHead &= (WIRELESS_INTERFACE_MAX_MESSAGE_NUM - 1);
         }
 
-        osDelay(10);
+        osDelay(5);
     }
+}
+
+
+void Wireless_InitBuffer(void)
+{
+    memset((void *)&g_stWirelessParamConfig, 0, sizeof(STRU_WIRELESS_MESSAGE_BUFF));
+    memset((void *)&g_stWirelessReply, 0, sizeof(STRU_WIRELESS_MESSAGE_BUFF));
+
+    g_pstWirelessInfoDisplay  = (STRU_WIRELESS_INFO_DISPLAY *)OSD_STATUS_SHM_ADDR;
+
+    g_pstWirelessInfoDisplay->osd_enable = 0;
 }
 
 
 void Wireless_TaskInit(void)
 {
-    memset((void *)&g_stWirelessParamConfig, 0, sizeof(STRU_WIRELESS_MESSAGE_BUFF));
+    Wireless_InitBuffer();
+
     memset((void *)OSD_STATUS_SHM_ADDR, 0, 512);
 
-    HAL_USB_RegisterUserProcess(WIRELESS_ParseParamConfig);
+    HAL_USB_RegisterUserProcess(WIRELESS_ParseParamConfig, Wireless_InitBuffer);
 
     osThreadDef(WIRELESS_TASK, Wireless_Task, osPriorityNormal, 0, 4 * 128);
     osThreadCreate(osThread(WIRELESS_TASK), NULL);

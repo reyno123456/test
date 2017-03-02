@@ -9,7 +9,6 @@ volatile uint32_t               sramReady0;
 volatile uint32_t               sramReady1;
 extern USBD_HandleTypeDef       USBD_Device;
 volatile uint32_t               g_u32VideoDisplay;
-volatile uint32_t               g_u32SramUSBState = 0;  //0: unstatble 1: normal
 
 
 void SRAM_OpenVideoDisplay(void)
@@ -49,7 +48,7 @@ void SRAM_Ready0IRQHandler(uint32_t u32_vectorNum)
     }
     else
     {
-        if (g_u32SramUSBState == 0)
+        if (g_u32USBConnState != 2)
         {
             SRAM_Ready0Confirm();
         }
@@ -86,7 +85,7 @@ void SRAM_Ready1IRQHandler(uint32_t u32_vectorNum)
     }
     else
     {
-        if (g_u32SramUSBState == 0)
+        if (g_u32USBConnState != 2)
         {
             SRAM_Ready1Confirm();
         }

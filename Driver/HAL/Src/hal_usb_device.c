@@ -150,11 +150,20 @@ HAL_RET_T HAL_USB_DeviceSendCtrl(uint8_t *buff, uint32_t u32_len)
 * @retval   void
 * @note
 */
-void HAL_USB_RegisterUserProcess(void (*pUsrFunc)(void *))
+void HAL_USB_RegisterUserProcess(void (*pUsrFunc)(void *),
+                               void (*pInitFunc)(void))
 {
     g_stUsbdHidItf.dataOut  = pUsrFunc;
+    g_stUsbdHidItf.userInit = pInitFunc;
 
     USBD_HID_RegisterInterface(&USBD_Device, &g_stUsbdHidItf);
 }
+
+
+uint8_t HAL_USB_DeviceGetConnState(void)
+{
+    return g_u32USBConnState;
+}
+
 
 

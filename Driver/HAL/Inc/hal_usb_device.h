@@ -58,7 +58,10 @@ HAL_RET_T HAL_USB_DeviceSendCtrl(uint8_t *buff, uint32_t u32_len);
 * @retval   void
 * @note
 */
-void HAL_USB_RegisterUserProcess(void (*pUsrFunc)(void *));
+void HAL_USB_RegisterUserProcess(void (*pUsrFunc)(void *), void (*pInitFunc)(void));
+
+
+uint8_t HAL_USB_DeviceGetConnState(void);
 
 
 #endif
