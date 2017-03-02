@@ -110,6 +110,7 @@ static STRU_OV5640_REG_VALUE OV5640_init_setting_30fps_VGA[] =
     {0x5025, 0x00, 0, 0}, {0x3a0f, 0x30, 0, 0}, {0x3a10, 0x28, 0, 0},
     {0x3a1b, 0x30, 0, 0}, {0x3a1e, 0x26, 0, 0}, {0x3a11, 0x60, 0, 0},
     {0x3a1f, 0x14, 0, 0}, {0x3008, 0x02, 0, 0}, {0x3c00, 0x04, 0, 300},
+    {0x4800, 0x24, 0, 0},
 };
 
 static STRU_OV5640_REG_VALUE OV5640_setting_30fps_VGA_640_480[] = 
@@ -901,12 +902,14 @@ static int32_t OV5640_GetCfgInfoByIndex(ENUM_OV5640_MODE e_ov5640Mode,
                 *ppst_ov5640ModeSetting = OV5640_setting_30fps_VGA_640_480;
                 *u32_ov5640ArySize = (sizeof(OV5640_setting_30fps_VGA_640_480) / 
                                       sizeof(OV5640_setting_30fps_VGA_640_480[0]));
+				dlog_info("OV5640_30_FPS / OV5640_MODE_VGA_640_480");
             }
             else if(OV5640_15_FPS == e_ov5640FrameRate)
             {
                 *ppst_ov5640ModeSetting = OV5640_setting_15fps_VGA_640_480;
                 *u32_ov5640ArySize = (sizeof(OV5640_setting_15fps_VGA_640_480) / 
                                       sizeof(OV5640_setting_15fps_VGA_640_480[0]));
+				dlog_info("OV5640_15_FPS / OV5640_MODE_VGA_640_480");
             }
             else
             {
@@ -921,12 +924,14 @@ static int32_t OV5640_GetCfgInfoByIndex(ENUM_OV5640_MODE e_ov5640Mode,
                 *ppst_ov5640ModeSetting = OV5640_setting_30fps_QVGA_320_240;
                 *u32_ov5640ArySize = (sizeof(OV5640_setting_30fps_QVGA_320_240) / 
                                       sizeof(OV5640_setting_30fps_QVGA_320_240[0]));
+				dlog_info("OV5640_30_FPS / OV5640_MODE_QVGA_320_240");
             }
             else if(OV5640_15_FPS == e_ov5640FrameRate)
             {
                 *ppst_ov5640ModeSetting = OV5640_setting_15fps_QVGA_320_240;
                 *u32_ov5640ArySize = (sizeof(OV5640_setting_15fps_QVGA_320_240) / 
                                       sizeof(OV5640_setting_15fps_QVGA_320_240[0]));
+				dlog_info("OV5640_15_FPS / OV5640_MODE_QVGA_320_240");
             }
             else
             {
@@ -941,12 +946,14 @@ static int32_t OV5640_GetCfgInfoByIndex(ENUM_OV5640_MODE e_ov5640Mode,
                 *ppst_ov5640ModeSetting = OV5640_setting_30fps_NTSC_720_480;
                 *u32_ov5640ArySize = (sizeof(OV5640_setting_30fps_NTSC_720_480) / 
                                       sizeof(OV5640_setting_30fps_NTSC_720_480[0]));
+				dlog_info("OV5640_30_FPS / OV5640_MODE_NTSC_720_480");
             }
             else if(OV5640_15_FPS == e_ov5640FrameRate)
             {
                 *ppst_ov5640ModeSetting = OV5640_setting_15fps_NTSC_720_480;
                 *u32_ov5640ArySize = (sizeof(OV5640_setting_15fps_NTSC_720_480) / 
                                       sizeof(OV5640_setting_15fps_NTSC_720_480[0]));
+				dlog_info("OV5640_15_FPS / OV5640_MODE_NTSC_720_480");
             }
             else
             {
@@ -961,12 +968,14 @@ static int32_t OV5640_GetCfgInfoByIndex(ENUM_OV5640_MODE e_ov5640Mode,
                 *ppst_ov5640ModeSetting = OV5640_setting_30fps_PAL_720_576;
                 *u32_ov5640ArySize = (sizeof(OV5640_setting_30fps_PAL_720_576) / 
                                       sizeof(OV5640_setting_30fps_PAL_720_576[0]));
+				dlog_info("OV5640_30_FPS / OV5640_MODE_PAL_720_576");
             }
             else if(OV5640_15_FPS == e_ov5640FrameRate)
             {
                 *ppst_ov5640ModeSetting = OV5640_setting_15fps_PAL_720_576;
                 *u32_ov5640ArySize = (sizeof(OV5640_setting_15fps_PAL_720_576) / 
                                       sizeof(OV5640_setting_15fps_PAL_720_576[0]));
+				dlog_info("OV5640_15_FPS / OV5640_MODE_PAL_720_576");
             }
             else
             {
@@ -981,12 +990,14 @@ static int32_t OV5640_GetCfgInfoByIndex(ENUM_OV5640_MODE e_ov5640Mode,
                 *ppst_ov5640ModeSetting = OV5640_setting_30fps_720P_1280_720;
                 *u32_ov5640ArySize = (sizeof(OV5640_setting_30fps_720P_1280_720) / 
                                       sizeof(OV5640_setting_30fps_720P_1280_720[0]));
+				dlog_info("OV5640_30_FPS / OV5640_MODE_720P_1280_720");
             }
             else if(OV5640_15_FPS == e_ov5640FrameRate)
             {
                 *ppst_ov5640ModeSetting = OV5640_setting_15fps_720P_1280_720;
                 *u32_ov5640ArySize = (sizeof(OV5640_setting_15fps_720P_1280_720) / 
                                       sizeof(OV5640_setting_15fps_720P_1280_720[0]));
+				dlog_info("OV5640_15_FPS / OV5640_MODE_720P_1280_720");
             }
             else
             {
@@ -1001,12 +1012,14 @@ static int32_t OV5640_GetCfgInfoByIndex(ENUM_OV5640_MODE e_ov5640Mode,
                 *ppst_ov5640ModeSetting = OV5640_setting_30fps_1080P_1920_1080;
                 *u32_ov5640ArySize = (sizeof(OV5640_setting_30fps_1080P_1920_1080) / 
                                       sizeof(OV5640_setting_30fps_1080P_1920_1080[0]));
+				dlog_info("OV5640_30_FPS / OV5640_MODE_1080P_1920_1080");
             }
             else if(OV5640_15_FPS == e_ov5640FrameRate)
             {
                 *ppst_ov5640ModeSetting = OV5640_setting_15fps_1080P_1920_1080;
                 *u32_ov5640ArySize = (sizeof(OV5640_setting_15fps_1080P_1920_1080) / 
                                       sizeof(OV5640_setting_15fps_1080P_1920_1080[0]));
+				dlog_info("OV5640_15_FPS / OV5640_MODE_1080P_1920_1080");
             }
             else
             {
@@ -1025,6 +1038,7 @@ static int32_t OV5640_GetCfgInfoByIndex(ENUM_OV5640_MODE e_ov5640Mode,
                 *ppst_ov5640ModeSetting = OV5640_setting_15fps_QSXGA_2592_1944;
                 *u32_ov5640ArySize = (sizeof(OV5640_setting_15fps_QSXGA_2592_1944) / 
                                       sizeof(OV5640_setting_15fps_QSXGA_2592_1944[0]));
+				dlog_info("OV5640_15_FPS / OV5640_MODE_QSXGA_2592_1944");
             }
             else
             {
@@ -1039,12 +1053,14 @@ static int32_t OV5640_GetCfgInfoByIndex(ENUM_OV5640_MODE e_ov5640Mode,
                 *ppst_ov5640ModeSetting = OV5640_setting_30fps_QCIF_176_144;
                 *u32_ov5640ArySize = (sizeof(OV5640_setting_30fps_QCIF_176_144) / 
                                       sizeof(OV5640_setting_30fps_QCIF_176_144[0]));
+				dlog_info("OV5640_30_FPS / OV5640_MODE_QCIF_176_144");
             }
             else if(OV5640_15_FPS == e_ov5640FrameRate)
             {
                 *ppst_ov5640ModeSetting = OV5640_setting_15fps_QCIF_176_144;
                 *u32_ov5640ArySize = (sizeof(OV5640_setting_15fps_QCIF_176_144) / 
                                       sizeof(OV5640_setting_15fps_QCIF_176_144[0]));
+				dlog_info("OV5640_15_FPS / OV5640_MODE_QCIF_176_144");
             }
             else
             {
@@ -1059,12 +1075,14 @@ static int32_t OV5640_GetCfgInfoByIndex(ENUM_OV5640_MODE e_ov5640Mode,
                 *ppst_ov5640ModeSetting = OV5640_setting_30fps_XGA_1024_768;
                 *u32_ov5640ArySize = (sizeof(OV5640_setting_30fps_XGA_1024_768) / 
                                       sizeof(OV5640_setting_30fps_XGA_1024_768[0]));
+				dlog_info("OV5640_30_FPS / OV5640_MODE_XGA_1024_768");
             }
             else if(OV5640_15_FPS == e_ov5640FrameRate)
             {
                 *ppst_ov5640ModeSetting = OV5640_setting_15fps_XGA_1024_768;
                 *u32_ov5640ArySize = (sizeof(OV5640_setting_15fps_XGA_1024_768) / 
                                       sizeof(OV5640_setting_15fps_XGA_1024_768[0]));
+				dlog_info("OV5640_15_FPS / OV5640_MODE_XGA_1024_768");
             }
             else
             {

@@ -21,7 +21,7 @@ History:
 
 /*******************Macro define**************************/
 #define OV5640_I2C_ADDR     (0x78 >> 1)
-#define OV5640_COMPONENT    (I2C_Component_0)
+#define OV5640_COMPONENT    (I2C_Component_1)
 
 typedef enum 
 {
