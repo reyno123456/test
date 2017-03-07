@@ -25,6 +25,14 @@ typedef enum
 	HAL_SD_GET_OEMID             /* 6: card OEM information */
 } ENUM_HAL_SD_CTRL;
 
+typedef enum
+{
+	SDR12 = 0,  
+	SDR25,     
+	SDR50,      
+	SDR104       /*TODO this mode is not supported by current level translator chip*/
+} ENUM_HAL_SD_SPEED_MODE;
+
 /**
 * @brief  Initializes the SD card according to the specified parameters in the 
             SD_HandleTypeDef and create the associated handle
@@ -32,7 +40,7 @@ typedef enum
 * @retval HAL_OK            means the initializtion is well done
 *         HAL_SD_ERR_ERROR  means some error happens in the initializtion
 */
-HAL_RET_T HAL_SD_Init();
+HAL_RET_T HAL_SD_Init(ENUM_HAL_SD_SPEED_MODE e_speedMode);
 
 /**
 * @brief  Writes block(s) to a specified address in a card. The Data transfer 
