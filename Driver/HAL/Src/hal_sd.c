@@ -22,6 +22,7 @@ extern SDMMC_DMATransTypeDef dma;
 extern SD_HandleTypeDef sdhandle;
 extern SD_CardInfoTypedef cardinfo;
 
+
 /**
 * @brief  Initializes the SD card according to the specified parameters in the 
             SD_HandleTypeDef and create the associated handle
@@ -29,10 +30,12 @@ extern SD_CardInfoTypedef cardinfo;
 * @retval HAL_OK            means the initializtion is well done
 *         HAL_SD_ERR_ERROR  means some error happens in the initializtion
 */
-HAL_RET_T HAL_SD_Init()
+HAL_RET_T HAL_SD_Init(ENUM_HAL_SD_SPEED_MODE e_speedMode)
 {
 	sdhandle.Instance = SDMMC_ADDR;
 	SDMMC_Status e_errorState = SDMMC_OK;
+	sdhandle.SpeedMode = e_speedMode;
+	dlog_info("speedMode = %x!", sdhandle.SpeedMode);
 	e_errorState = Card_SD_Init(&sdhandle, &cardinfo);
 	if (e_errorState != SDMMC_OK) {
 		return HAL_SD_ERR_ERROR;
@@ -154,6 +157,71 @@ HAL_RET_T HAL_SD_Deinit()
 	return HAL_OK;
 }
 
+/*
+ * @brief Get the time value according to SD spec
+ * @param raw value in CSD
+ * @return float value will mutiple with speed
+*/
+static float SD_SpeedTimesConvert(unsigned char times)
+{
+	float result_convert = 0;
+	switch (times)
+	{
+		case 0:
+			result_convert = 0;
+			dlog_info("SD Speed Times reserved\n");
+			break;
+		case 1:
+			result_convert = 1.0;
+			break;
+		case 2:
+			result_convert = 1.2;
+			break;
+		case 3:
+			result_convert = 1.3;
+			break;
+		case 4:
+			result_convert = 1.5;
+			break;
+		case 5:
+			result_convert = 2.0;
+			break;	
+		case 6:
+			result_convert = 2.5;
+			break;
+		case 7:
+			result_convert = 3.0;
+			break;
+		case 8:
+			result_convert = 3.5;
+			break;
+		case 9:
+			result_convert = 4.0;
+			break;
+		case 10:
+			result_convert = 4.5;
+			break;
+		case 11:
+			result_convert = 5.0;
+			break;
+		case 12:
+			result_convert = 5.5;
+			break;
+		case 13:
+			result_convert = 6.0;
+			break;
+		case 14:
+			result_convert = 7.0;
+			break;
+		case 15:
+			result_convert = 1.0;
+			break;
+		default: break;
+	}
+
+	return result_convert;
+}
+
 /**
 * @brief  IO ctrl function to acquire SD card related information
 * @param  e_sdCtrl          the SD IO ctrl enumetation variable to specify the corresponding function
@@ -163,9 +231,12 @@ HAL_RET_T HAL_SD_Deinit()
 */
 HAL_RET_T HAL_SD_Ioctl(ENUM_HAL_SD_CTRL e_sdCtrl, uint32_t *pu32_info)
 {
-	SDMMC_Status e_errorState = SDMMC_OK;
-  uint32_t u32_tmpValue = 0;
+    SDMMC_Status e_errorState = SDMMC_OK;
+    uint32_t u32_tmpValue = 0;
+    float tran_speed = 0;
+    long long int CardCapacity = 0;
 	e_errorState = Card_SD_Get_CardInfo(&sdhandle, &cardinfo);
+    
 	if (e_errorState != SDMMC_OK) 
 	{
 		dlog_info("Get SD Info failed!\n");
@@ -174,11 +245,12 @@ HAL_RET_T HAL_SD_Ioctl(ENUM_HAL_SD_CTRL e_sdCtrl, uint32_t *pu32_info)
 	switch(e_sdCtrl)
 	{
 		case HAL_SD_GET_SECTOR_COUNT:
-			  *pu32_info = (uint32_t)(cardinfo.CardCapacity / 2048);
-        dlog_info("SD card size: %dMB\n",cardinfo.CardCapacity / 2048);
-			  break;
-		case HAL_SD_GET_SECTOR_SIZE:
-		    u32_tmpValue = cardinfo.SD_csd.READ_BL_LEN;
+                    dlog_info("cardinfo.SD_csd.C_SIZE = %d\n", cardinfo.SD_csd.C_SIZE);
+                    dlog_info("cardinfo.CardBlockSize = %d\n", cardinfo.CardBlockSize);
+                   break;
+
+            case HAL_SD_GET_SECTOR_SIZE:
+            u32_tmpValue = cardinfo.SD_csd.READ_BL_LEN;
         switch(u32_tmpValue)
         {
           case 9:
@@ -208,25 +280,43 @@ HAL_RET_T HAL_SD_Ioctl(ENUM_HAL_SD_CTRL e_sdCtrl, uint32_t *pu32_info)
           dlog_info("CSD Version 1.0\n"); 
         }
 		    break;
-    case HAL_SD_GET_TRAN_SPEED:
-        *pu32_info = (uint32_t)(cardinfo.SD_csd.TRAN_SPEED & 0x7);
-        switch(*pu32_info)
-        {
-          case 0:
-            dlog_info("Maxi Data Transfer Rate: 100kbit/s\n");
-            break;
-          case 1:
-            dlog_info("Maxi Data Transfer Rate: 1Mbit/s\n");
-            break;
-          case 2:
-            dlog_info("Maxi Data Transfer Rate: 10Mbit/s\n");
-            break;
-          case 3:
-            dlog_info("Maxi Data Transfer Rate: 100Mbit/s\n");
-            break;
-          default:
-            break;
-        }
+	case HAL_SD_GET_TRAN_SPEED:
+            if (cardinfo.SD_csd.CSD_STRUCTURE == 0)
+            {
+                *pu32_info = (uint32_t)(cardinfo.SD_csd.TRAN_SPEED & 0x7);
+                switch(*pu32_info)
+                {
+                  case 0:
+                    tran_speed = 100;
+                    tran_speed *= SD_SpeedTimesConvert( (cardinfo.SD_csd.TRAN_SPEED >> 3) & 0x7);
+                    dlog_info("Maxi Data Transfer Rate: %fkbit/s\n", tran_speed);
+                    break;
+                  case 1:
+                    tran_speed = 1;
+                    tran_speed *= SD_SpeedTimesConvert( (cardinfo.SD_csd.TRAN_SPEED >> 3) & 0x7);
+                    dlog_info("Maxi Data Transfer Rate: %fMbit/s\n", tran_speed);
+                    break;
+                  case 2:
+                    tran_speed = 10;
+                    tran_speed *= SD_SpeedTimesConvert( (cardinfo.SD_csd.TRAN_SPEED >> 3) & 0x7);
+                    dlog_info("Maxi Data Transfer Rate: %fMbit/s\n", tran_speed);
+                    break;
+                  case 3:
+                    tran_speed = 100;
+                    tran_speed *= SD_SpeedTimesConvert( (cardinfo.SD_csd.TRAN_SPEED >> 3) & 0x7);
+                    dlog_info("Maxi Data Transfer Rate: %fMbit/s\n", tran_speed);
+                    break;
+                  default:
+                    break;
+                }
+            }
+            else
+            {
+                // if UHS50
+                dlog_info("Maxi Data Transfer Rate: 100Mbit/s\n");
+                // if UHS104
+               //  dlog_info("Maxi Data Transfer Rate: 200Mbit/s\n");
+            }
         break;
     case HAL_SD_GET_CARD_STATUS:
         {

@@ -61,6 +61,7 @@ SDMMC_Status Core_SDMMC_WaiteCmdDone(SDMMC_REG *SDMMCx)
     get_val = Core_SDMMC_GetRINTSTS(SDMMCx);
     cmd_done = (get_val & SDMMC_RINTSTS_CMD_DONE); 
     // dlog_info("cmd_done?\n");
+    // dlog_info("CMD_DONE RINTSTS = %x", get_val);
   } while (!cmd_done);
   return SDMMC_OK;
 }
@@ -72,6 +73,7 @@ SDMMC_Status Core_SDMMC_WaiteDataOver(SDMMC_REG *SDMMCx)
     get_val = Core_SDMMC_GetRINTSTS(SDMMCx);
     data_over = (get_val & SDMMC_RINTSTS_DATA_OVER);
     // dlog_info("data_over?\n");
+    // dlog_info("DATA_OVER RINTSTS = %x", get_val);
   } while (!data_over);
   return SDMMC_OK;
 }
@@ -83,6 +85,7 @@ SDMMC_Status Core_SDMMC_WaiteCardBusy(SDMMC_REG *SDMMCx)
     get_val = Core_SDMMC_GetSTATUS(SDMMCx);
     card_busy = (get_val & SDMMC_STATUS_DATA_BUSY); 
     // dlog_info("card_busy?\n");
+    // dlog_info("CARD_BUSY STATUS = %x", get_val);
   } while (card_busy);
   return SDMMC_OK;
 }
@@ -94,6 +97,7 @@ SDMMC_Status Core_SDMMC_WaiteCmdStart(SDMMC_REG *SDMMCx)
     get_val = Core_SDMMC_GetCMD(SDMMCx); 
     cmd_start = (get_val & SDMMC_CMD_START_CMD);
     // dlog_info("cmd_start?\n");
+    // dlog_info("CMD_START CMD = %x", get_val);
   } while (cmd_start);
   return SDMMC_OK;
 }
@@ -105,6 +109,7 @@ SDMMC_Status Core_SDMMC_WaiteVoltSwitchInt(SDMMC_REG *SDMMCx)
     get_val = Core_SDMMC_GetRINTSTS(SDMMCx);
     volt_switch_int = (get_val & SDMMC_RINTSTS_HTO);
     // dlog_info("volt_switch_int\n");
+    // dlog_output(50);
   } while (!volt_switch_int);
   return SDMMC_OK;
 }

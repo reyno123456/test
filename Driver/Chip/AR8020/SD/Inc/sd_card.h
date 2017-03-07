@@ -49,6 +49,13 @@ typedef struct
 	uint32_t des3;	          /* buffer 2 physical address */
 } IDMAC_DescTypeDef;
 
+typedef enum
+{
+	CARD_SDR12 = 0,  
+	CARD_SDR25,     
+	CARD_SDR50,      
+	CARD_SDR104    
+} SpeedModeTypedef;
 /*
  * SD Handle Structure definition
  */
@@ -63,7 +70,7 @@ typedef struct
 	uint32_t               		 SdTransferErr;    /* SD transfer error flag in non blocking mode    */
 	uint32_t              		 SdOperation;      /* SD transfer operation (read/write)             */
 	uint32_t                     Response;         /* SD response */
-
+    SpeedModeTypedef             SpeedMode;
 } SD_HandleTypeDef;
 
 
@@ -184,7 +191,6 @@ typedef struct
 	uint32_t            CardBlockSize;  /*!< Card block size                        */
 	uint32_t            RCA;            /*!< SD relative card address               */
 	uint32_t            CardType;       /*!< SD card type                           */
-
 } SD_CardInfoTypedef;
 
 //TODO
@@ -362,9 +368,9 @@ typedef enum
 #define SECURE_DIGITAL_IO_COMBO_CARD          ((uint32_t)0x00000006)
 #define HIGH_CAPACITY_MMC_CARD                ((uint32_t)0x00000007)
 
-/* 512 bytes */
-#define DATA_BLOCK_LEN          ((uint32_t)0x00000040)
-#define DATA_BYTE_CNT			 ((uint32_t)0x00000040)
+/* FIXME 512 bytes *///Minzhao//
+#define DATA_BLOCK_LEN          ((uint32_t)0x000040)
+#define DATA_BYTE_CNT			((uint32_t)0x000040)
 /**
   * @brief  Mask for ACMD41 Argument
   */
