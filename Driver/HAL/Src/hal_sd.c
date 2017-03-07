@@ -214,7 +214,7 @@ static float SD_SpeedTimesConvert(unsigned char times)
 			result_convert = 7.0;
 			break;
 		case 15:
-			result_convert = 1.0;
+			result_convert = 8.0;
 			break;
 		default: break;
 	}
