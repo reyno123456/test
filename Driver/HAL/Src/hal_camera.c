@@ -56,3 +56,26 @@ HAL_RET_T HAL_CAMERA_WriteReg(uint16_t u16_regAddr, uint8_t u8_val)
 
     return HAL_OK;
 }
+
+/**
+* @brief    
+* @param     
+* @retval  
+* @note    
+*/
+HAL_RET_T HAL_CAMERA_GetImageInfo(uint16_t *u16_width, uint16_t *u16_hight, uint8_t *u8_frameRate)
+{
+    int32_t s_result;
+    
+    s_result = OV5640_GetImageInfo(u16_width, u16_hight, u8_frameRate);
+    
+    if (0 == s_result)
+    {
+        return HAL_OK;
+    }
+    else
+    {
+        return HAL_CAMERAQ_ERR;
+    }
+}
+

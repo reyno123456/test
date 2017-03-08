@@ -53,15 +53,12 @@ typedef struct
     uint32_t u32_delayMs;
 } STRU_OV5640_REG_VALUE;
 
-
-/* image size under 1280 * 960 are SUBSAMPLING
- *  * image size upper 1280 * 960 are SCALING
- *   */
-/*enum OV5640_downsize_mode {
-    SUBSAMPLING,
-    SCALING,
-};*/
-
+typedef struct
+{
+    uint16_t u16_ov5640Width;
+    uint16_t u16_ov5640Hight;
+    uint8_t u8_ov5640FrameRate;
+} STRU_OV5640_INFO;
 
 
 /**
@@ -177,5 +174,15 @@ int32_t OV5640_ReadReg(uint16_t u16_ov5640Reg, uint8_t *pu8_ov5640Val);
 * @note   
 */
 int32_t OV5640_Init(ENUM_OV5640_FRAME_RATE e_ov5640FrameRate, ENUM_OV5640_MODE e_ov5640Mode);
+
+
+/**
+* @brief    
+* @param     
+* @retval  
+* @note    
+*/
+int32_t OV5640_GetImageInfo(uint16_t *u16_width, uint16_t *u16_hight, uint8_t *u8_frameRate);
+
 
 #endif

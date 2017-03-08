@@ -13,7 +13,31 @@ History:
 #include <stdio.h>
 
 
-HAL_RET_T HAL_MIPI_Init(void)
+/**
+* @brief    
+* @param     
+* @retval  
+* @note    
+*/
+HAL_RET_T HAL_MIPI_Init(uint8_t u8_toEncoderCh, 
+                        uint16_t u16_width,
+                        uint16_t u16_hight,
+                        uint8_t u8_frameRate)
+
 {
-    MIPI_Init();
+    int32_t s_result;
+
+    s_result = MIPI_Init(u8_toEncoderCh, 
+                        u16_width,
+                        u16_hight,
+                        u8_frameRate);
+    
+    if (0 == s_result)
+    {
+        return HAL_OK;
+    }
+    else
+    {
+        return HAL_MIPI_ERR;
+    }
 }

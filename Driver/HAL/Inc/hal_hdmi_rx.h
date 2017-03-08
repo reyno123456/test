@@ -33,6 +33,7 @@ typedef struct
 {
     ENUM_HAL_HDMI_GETFORMATMETHOD e_getFormatMethod;
     uint8_t u8_interruptGpio;
+    uint8_t u8_hdmiToEncoderCh;
 } STRU_HDMI_CONFIGURE;
 
 typedef struct

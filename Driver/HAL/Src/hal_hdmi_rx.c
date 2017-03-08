@@ -108,10 +108,18 @@ static void HDMI_RX_CheckFormatStatus(ENUM_HAL_HDMI_RX e_hdmiIndex, HAL_BOOL_T b
             (HDMI_RX_CheckVideoFormatChangeOrNot(e_hdmiIndex, u16_width, u16_hight, u8_framerate) == HAL_TRUE))
         {
             STRU_SysEvent_H264InputFormatChangeParameter p;
-            p.index = (e_hdmiIndex == HAL_HDMI_RX_0) ? 0 : 1;
+            p.index = s_st_hdmiRxStatus[e_hdmiIndex].st_configure.u8_hdmiToEncoderCh;
             p.width = u16_width;
             p.hight = u16_hight;
             p.framerate = u8_framerate;
+            if (HAL_HDMI_RX_0 == e_hdmiIndex)
+            {
+                p.e_h264InputSrc = ENCODER_INPUT_SRC_HDMI_0;
+            }
+            else
+            {
+                p.e_h264InputSrc = ENCODER_INPUT_SRC_HDMI_1;
+            }
             SYS_EVENT_Notify(SYS_EVENT_ID_H264_INPUT_FORMAT_CHANGE, (void*)&p);
 
             s_st_hdmiRxStatus[e_hdmiIndex].st_videoFormat.u16_width    = u16_width;
@@ -137,10 +145,18 @@ static void HDMI_RX_CheckFormatStatus(ENUM_HAL_HDMI_RX e_hdmiIndex, HAL_BOOL_T b
         if (s_u8_formatNotSupportCount == HDMI_RX_FORMAT_NOT_SUPPORT_COUNT_MAX)
         {
             STRU_SysEvent_H264InputFormatChangeParameter p;
-            p.index = HDMI_RX_MapToDeviceIndex(e_hdmiIndex);
+            p.index = s_st_hdmiRxStatus[e_hdmiIndex].st_configure.u8_hdmiToEncoderCh;
             p.width = 0;
             p.hight = 0;
             p.framerate = 0;
+            if (HAL_HDMI_RX_0 == e_hdmiIndex)
+            {
+                p.e_h264InputSrc = ENCODER_INPUT_SRC_HDMI_0;
+            }
+            else
+            {
+                p.e_h264InputSrc = ENCODER_INPUT_SRC_HDMI_1;
+            }
             SYS_EVENT_Notify(SYS_EVENT_ID_H264_INPUT_FORMAT_CHANGE, (void*)&p);
 
             s_st_hdmiRxStatus[e_hdmiIndex].st_videoFormat.u16_width    = 0;

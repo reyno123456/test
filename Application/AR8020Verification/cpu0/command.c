@@ -244,12 +244,13 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     else if(memcmp(cmdArray[0], "test_write_camera", strlen("test_write_camera")) == 0)
     {
         command_TestCameraWrite(cmdArray[1], cmdArray[2]);
+        command_TestHalMipiInit(cmdArray[3]);
     }
     else if(memcmp(cmdArray[0], "test_read_camera", strlen("test_camera_read")) == 0)
     {
         command_TestCameraRead(cmdArray[1]);
     }
-	else if(memcmp(cmdArray[0], "command_test_BB_uart", strlen("command_test_BB_uart")) == 0)
+    else if(memcmp(cmdArray[0], "command_test_BB_uart", strlen("command_test_BB_uart")) == 0)
     {
         command_test_BB_uart(cmdArray[1]);
     }
@@ -382,7 +383,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     /* error command */
     else if (memcmp(cmdArray[0], "test_hal_mipi_init", strlen("test_hal_mipi_init")) == 0)
     {
-        command_TestHalMipiInit();
+        command_TestHalMipiInit(cmdArray[1]);
     }
     else if (memcmp(cmdArray[0], "host_test_mode", strlen("host_test_mode")) == 0)
     {
@@ -433,7 +434,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("startbypassvideo");
         dlog_error("stopbypassvideo");
         dlog_error("test_float_calculate_pi");
-		dlog_error("command_test_BB_uart <option>");
+        dlog_error("command_test_BB_uart <option>");
         dlog_error("upgrade <filename>");
         dlog_error("test_can_init <ch> <br> <acode> <amsk> <format>");
         dlog_error("test_can_set_int <ch> <flag>");
@@ -459,10 +460,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("configure");
         dlog_error("test_dma <src> <dst> <byte_num>");
         dlog_error("test_adc <channel>");
-        dlog_error("test_camera_init <rate 0~1> <mode 0~8>");
+        dlog_error("test_camera_init <rate 0~1> <mode 0~8> <toEncoderCh 0~1>");
         dlog_error("test_write_camera <subAddr(hex)> <value>(hex)");
         dlog_error("test_read_camera <subAddr(hex)>");
-        dlog_error("test_hal_mipi_init");
+        dlog_error("test_hal_mipi_init <toEncoderCh 0~1>");
         dlog_error("test_mp3_encoder <0(PCM):1(WAV)>");
         dlog_output(1000);
     }

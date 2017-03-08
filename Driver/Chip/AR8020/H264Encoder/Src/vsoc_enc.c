@@ -116,30 +116,63 @@ void vsoc_enc_enable(){
 }
 
 
-void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsigned int fps, unsigned int br) {
-    WRITE_WORD((ENC_REG_ADDR+(0x00<<2)),0x00910736);
+void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsigned int fps, unsigned int br, ENUM_ENCODER_INPUT_SRC src) {
+    if ((src >= ENCODER_INPUT_SRC_HDMI_0) && (src <= ENCODER_INPUT_SRC_DVP_1))
+    {
+        WRITE_WORD((ENC_REG_ADDR+(0x00<<2)),0x00910736);
+    }
+    else if (ENCODER_INPUT_SRC_MIPI == src)
+    {
+        WRITE_WORD((ENC_REG_ADDR+(0x00<<2)),0x00D40736);
+    }
+    else
+    {
+        ;
+    }
+    
     WRITE_WORD((ENC_REG_ADDR+(0x01<<2)),((width<<16)+(height&0xffff)));
     WRITE_WORD((ENC_REG_ADDR+(0x02<<2)),(0x00004D28|((gop&0xff)<<24)|((fps&0xff)<<16)));
 
     if ((width == 720) && (height == 480))
     {
         WRITE_WORD((ENC_REG_ADDR+(0x03<<2)),0x003C000F);
-        WRITE_WORD((ENC_REG_ADDR+(0x04<<2)),0xF01E8008);
+        if ((src >= ENCODER_INPUT_SRC_HDMI_0) && (src <= ENCODER_INPUT_SRC_DVP_1))
+        {
+            WRITE_WORD((ENC_REG_ADDR+(0x04<<2)),0xF01E8008);
+        }
+        else if (ENCODER_INPUT_SRC_MIPI == src)
+        {
+            WRITE_WORD((ENC_REG_ADDR+(0x04<<2)),0xF01E4008);
+        }
+        else
+        {
+            ;
+        }
     }
     else
     {
         WRITE_WORD((ENC_REG_ADDR+(0x03<<2)),0x00000000);
-        WRITE_WORD((ENC_REG_ADDR+(0x04<<2)),0xF0008000);
+        if ((src >= ENCODER_INPUT_SRC_HDMI_0) && (src <= ENCODER_INPUT_SRC_DVP_1))
+        {
+            WRITE_WORD((ENC_REG_ADDR+(0x04<<2)),0xF0008000);
+        }
+        else if (ENCODER_INPUT_SRC_MIPI == src)
+        {
+            WRITE_WORD((ENC_REG_ADDR+(0x04<<2)),0xF0004000);
+        }
+        else
+        {
+            ;
+        }
     }
 
-	WRITE_WORD((ENC_REG_ADDR+(0x05<<2)),(0x00030000|(((width+15)/16)&0xffff))); //bu
+    WRITE_WORD((ENC_REG_ADDR+(0x05<<2)),(0x00030000|(((width+15)/16)&0xffff))); //bu
 
     if( br == 8 || br == 1 || br == 2)  // <= 2Mbps 
         WRITE_WORD((ENC_REG_ADDR+(0x06<<2)),0x20330806);
     else
         WRITE_WORD((ENC_REG_ADDR+(0x06<<2)),0x20300806);
 
-    //WRITE_WORD((ENC_REG_ADDR+(0x07<<2)),0x002DC6C0);
     if ( br == 8)
         WRITE_WORD((ENC_REG_ADDR+(0x07<<2)),500000); //500kbps
     else if ( br == 0)
@@ -148,7 +181,18 @@ void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsig
         WRITE_WORD((ENC_REG_ADDR+(0x07<<2)),(br*1000000));
     WRITE_WORD((ENC_REG_ADDR+(0x08<<2)),0x04040000);
     WRITE_WORD((ENC_REG_ADDR+(0x09<<2)),0x00005900);
-    WRITE_WORD((ENC_REG_ADDR+(0x0a<<2)),(0x030258FE | ((br & 0x1F)<<26) ));
+    if ((src >= ENCODER_INPUT_SRC_HDMI_0) && (src <= ENCODER_INPUT_SRC_DVP_1))
+    {
+        WRITE_WORD((ENC_REG_ADDR+(0x0a<<2)),(0x030258FE | ((br & 0x1F)<<26) ));
+    }
+    else if (ENCODER_INPUT_SRC_MIPI == src)
+    {
+        WRITE_WORD((ENC_REG_ADDR+(0x0a<<2)),(0x0302589E | ((br & 0x1F)<<26) ));
+    }
+    else
+    {
+        ;
+    }
     WRITE_WORD((ENC_REG_ADDR+(0x0b<<2)),0x12469422);
     WRITE_WORD((ENC_REG_ADDR+(0x0c<<2)),0x00FFFF00);
 
@@ -184,20 +228,54 @@ void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsig
 #endif
 }
 
-void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsigned int fps, unsigned int br) {
-    WRITE_WORD((ENC_REG_ADDR+(0x19<<2)),0x00910736);
+void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsigned int fps, unsigned int br, ENUM_ENCODER_INPUT_SRC src) {
+    if ((src >= ENCODER_INPUT_SRC_HDMI_0) && (src <= ENCODER_INPUT_SRC_DVP_1))
+    {
+        WRITE_WORD((ENC_REG_ADDR+(0x19<<2)),0x00910736);
+    }
+    else if (ENCODER_INPUT_SRC_MIPI == src)
+    {
+        WRITE_WORD((ENC_REG_ADDR+(0x19<<2)),0x00D40736);
+    }
+    else
+    {
+        ;
+    }
+
     WRITE_WORD((ENC_REG_ADDR+(0x1a<<2)),((width<<16)+(height&0xffff)));
     WRITE_WORD((ENC_REG_ADDR+(0x1b<<2)),(0x00004D28|((gop&0xff)<<24)|((fps&0xff)<<16)));
 
     if ((width == 720) && (height == 480))
     {
         WRITE_WORD((ENC_REG_ADDR+(0x1c<<2)),0x003C000F);
-        WRITE_WORD((ENC_REG_ADDR+(0x1d<<2)),0xF01E8008);
+        if ((src >= ENCODER_INPUT_SRC_HDMI_0) && (src <= ENCODER_INPUT_SRC_DVP_1))
+        {
+            WRITE_WORD((ENC_REG_ADDR+(0x1d<<2)),0xF01E8008);
+        }
+        else if (ENCODER_INPUT_SRC_MIPI == src)
+        {
+            WRITE_WORD((ENC_REG_ADDR+(0x1d<<2)),0xF01E4008);
+        }
+        else
+        {
+            ;
+        }
     }
     else
     {
         WRITE_WORD((ENC_REG_ADDR+(0x1c<<2)),0x00000000);
-        WRITE_WORD((ENC_REG_ADDR+(0x1d<<2)),0xF0008000);
+        if ((src >= ENCODER_INPUT_SRC_HDMI_0) && (src <= ENCODER_INPUT_SRC_DVP_1))
+        {
+            WRITE_WORD((ENC_REG_ADDR+(0x1d<<2)),0xF0008000);
+        }
+        else if (ENCODER_INPUT_SRC_MIPI == src)
+        {
+            WRITE_WORD((ENC_REG_ADDR+(0x1d<<2)),0xF0004000);
+        }
+        else
+        {
+            ;
+        }
     }
 
     WRITE_WORD((ENC_REG_ADDR+(0x1e<<2)),(0x00030000|(((width+15)/16)&0xffff))); //bu
@@ -207,7 +285,6 @@ void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsig
     else
         WRITE_WORD((ENC_REG_ADDR+(0x1f<<2)),0x20300806);
 
-    //WRITE_WORD((ENC_REG_ADDR+(0x20<<2)),0x007A1200);
     if ( br == 8)
         WRITE_WORD((ENC_REG_ADDR+(0x20<<2)),500000); //500kbps
     else if ( br == 0)
@@ -216,7 +293,18 @@ void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsig
         WRITE_WORD((ENC_REG_ADDR+(0x20<<2)),(br*1000000));
     WRITE_WORD((ENC_REG_ADDR+(0x21<<2)),0x04040000);
     WRITE_WORD((ENC_REG_ADDR+(0x22<<2)),0x00003000);
-    WRITE_WORD((ENC_REG_ADDR+(0x23<<2)),(0x030258FE | ((br & 0x1F)<<26) ));
+    if ((src >= ENCODER_INPUT_SRC_HDMI_0) && (src <= ENCODER_INPUT_SRC_DVP_1))
+    {
+        WRITE_WORD((ENC_REG_ADDR+(0x23<<2)),(0x030258FE | ((br & 0x1F)<<26) ));
+    }
+    else if (ENCODER_INPUT_SRC_MIPI == src)
+    {
+        WRITE_WORD((ENC_REG_ADDR+(0x23<<2)),(0x0302589E | ((br & 0x1F)<<26) ));
+    }
+    else
+    {
+        ;
+    }
     WRITE_WORD((ENC_REG_ADDR+(0x24<<2)),0x12469422);
     WRITE_WORD((ENC_REG_ADDR+(0x25<<2)),0x01FFFF00);
 

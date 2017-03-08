@@ -12,10 +12,15 @@
 #include "memory_config.h"
 #include "hal_ret_type.h"
 #include "test_hal_mipi.h"
+#include "test_usbh.h"
+
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
 void command_upgrade(void);
+void command_startBypassVideo(void);
+void command_stopBypassVideo(void);
+
 
 void command_run(char *cmdArray[], uint32_t cmdNum)
 {
@@ -69,6 +74,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     else if(memcmp(cmdArray[0], "test_camera_init", strlen("test_camera_init")) == 0)
     {
         command_TestHalCameraInit(cmdArray[1], cmdArray[2]);
+        command_TestHalMipiInit(cmdArray[3]);
     }
     else if(memcmp(cmdArray[0], "test_write_camera", strlen("test_write_camera")) == 0)
     {
@@ -80,7 +86,15 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     }
     else if (memcmp(cmdArray[0], "test_hal_mipi_init", strlen("test_hal_mipi_init")) == 0)
     {
-        command_TestHalMipiInit();
+        command_TestHalMipiInit(cmdArray[1]);
+    }
+    else if (memcmp(cmdArray[0], "startbypassvideo", strlen("startbypassvideo")) == 0)
+    {
+        command_startBypassVideo();
+    }
+    else if (memcmp(cmdArray[0], "stopbypassvideo", strlen("stopbypassvideo")) == 0)
+    {
+        command_stopBypassVideo();
     }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
@@ -93,10 +107,12 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("hdmiread <slv address> <reg address>");
         dlog_error("hdmiwrite <slv address> <reg address> <reg value>");
         dlog_error("upgrade <filename>");
-        dlog_error("test_camera_init <rate 0~1> <mode 0~8>");
+        dlog_error("test_camera_init <rate 0~1> <mode 0~8> <toEncoderCh 0~1>");
         dlog_error("test_write_camera <subAddr(hex)> <value>(hex)");
         dlog_error("test_read_camera <subAddr(hex)>");
-        dlog_error("test_hal_mipi_init");
+        dlog_error("test_hal_mipi_init <toEncoderCh 0~1>");
+        dlog_error("startbypassvideo");
+        dlog_error("stopbypassvideo");
     }
 }
 
@@ -168,4 +184,39 @@ void delay_ms(uint32_t num)
     volatile int i;
     for (i = 0; i < num * 100; i++);
 }
+
+void command_startBypassVideo(void)
+{
+    USBH_APP_EVENT_DEF  usbhAppType;
+
+    usbhAppType = USBH_APP_START_BYPASS_VIDEO;
+
+    if (0 == g_usbhBypassVideoCtrl.taskActivate)
+    {
+        g_usbhBypassVideoCtrl.taskActivate  = 1;
+        osMessagePut(g_usbhAppCtrl.usbhAppEvent, usbhAppType, 0);
+    }
+    else
+    {
+        dlog_error("Bypass Video Task is running\n");
+    }
+}
+
+void command_stopBypassVideo(void)
+{
+    USBH_APP_EVENT_DEF  usbhAppType;
+
+    usbhAppType = USBH_APP_STOP_BYPASS_VIDEO;
+
+    if (1 == g_usbhBypassVideoCtrl.taskActivate)
+    {
+        g_usbhBypassVideoCtrl.taskActivate  = 0;
+        osMessagePut(g_usbhAppCtrl.usbhAppEvent, usbhAppType, 0);
+    }
+    else
+    {
+        dlog_error("Bypass Video Task is not running\n");
+    }
+}
+
 

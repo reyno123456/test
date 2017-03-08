@@ -63,4 +63,14 @@ HAL_RET_T HAL_CAMERA_ReadReg(uint16_t u16_regAddr, uint8_t *pu8_val);
 */
 HAL_RET_T HAL_CAMERA_WriteReg(uint16_t u16_regAddr, uint8_t u8_val);
 
+/**
+* @brief    
+* @param     
+* @retval  
+* @note    
+*/
+HAL_RET_T HAL_CAMERA_GetImageInfo(uint16_t *u16_width, uint16_t *u16_hight, uint8_t *u8_frameRate);
+
+
+
 #endif

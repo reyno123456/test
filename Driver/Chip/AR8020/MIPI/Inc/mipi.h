@@ -27,12 +27,25 @@ typedef struct
 } STRU_REG_VALUE;
 
 
+typedef struct
+{
+    uint8_t u8_mipiToEncoderCh;
+    uint8_t u8_mipiFrameRate;
+    uint16_t u16_mipiWidth;
+    uint16_t u16_mipiHight;
+} STRU_MIPI_INFO;
+
+
 /**
 * @brief    
 * @param     
 * @retval  
 * @note    
 */
-int32_t MIPI_Init(void);
+int32_t MIPI_Init(uint8_t u8_toEncoderCh, 
+                  uint16_t u16_width,
+                  uint16_t u16_hight,
+                  uint8_t u8_frameRate);
+
 
 #endif

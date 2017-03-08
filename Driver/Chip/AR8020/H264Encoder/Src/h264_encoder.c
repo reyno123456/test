@@ -14,7 +14,7 @@
 
 static STRU_EncoderStatus g_stEncoderStatus[2] = { 0 };
 
-static int H264_Encoder_StartView(unsigned char view, unsigned int resW, unsigned int resH, unsigned int gop, unsigned int framerate, unsigned int bitrate)
+static int H264_Encoder_StartView(unsigned char view, unsigned int resW, unsigned int resH, unsigned int gop, unsigned int framerate, unsigned int bitrate, ENUM_ENCODER_INPUT_SRC src)
 {
     if (view >= 2)
     {
@@ -25,13 +25,13 @@ static int H264_Encoder_StartView(unsigned char view, unsigned int resW, unsigne
 
     if (view == 0)
     {
-        init_view0(resW, resH, gop, framerate, bitrate);
+        init_view0(resW, resH, gop, framerate, bitrate, src);
         my_v0_initial_all( );
         open_view0(g_stEncoderStatus[view].brc_enable);
     }
     else if (view == 1)
     {
-        init_view1(resW, resH, gop, framerate, bitrate);
+        init_view1(resW, resH, gop, framerate, bitrate, src);
         my_v1_initial_all( );
         open_view1(g_stEncoderStatus[view].brc_enable);
     }
@@ -50,7 +50,7 @@ static int H264_Encoder_StartView(unsigned char view, unsigned int resW, unsigne
     return 1;
 }
 
-static int H264_Encoder_RestartView(unsigned char view, unsigned int resW, unsigned int resH, unsigned int gop, unsigned int framerate, unsigned int bitrate)
+static int H264_Encoder_RestartView(unsigned char view, unsigned int resW, unsigned int resH, unsigned int gop, unsigned int framerate, unsigned int bitrate, ENUM_ENCODER_INPUT_SRC src)
 {
     if (view >= 2)
     {
@@ -62,12 +62,12 @@ static int H264_Encoder_RestartView(unsigned char view, unsigned int resW, unsig
     if (view == 0)
     {
         close_view0();
-        H264_Encoder_StartView(view, resW, resH, gop, framerate, bitrate);
+        H264_Encoder_StartView(view, resW, resH, gop, framerate, bitrate, src);
     }
     else if (view == 1)
     {
         close_view1();
-        H264_Encoder_StartView(view, resW, resH, gop, framerate, bitrate);
+        H264_Encoder_StartView(view, resW, resH, gop, framerate, bitrate, src);
     }
 
     return 1;
@@ -105,7 +105,7 @@ static int H264_Encoder_CloseView(unsigned char view)
     return 1;
 }
 
-static int H264_Encoder_UpdateVideoInfo(unsigned char view, unsigned int resW, unsigned int resH, unsigned int framerate)
+static int H264_Encoder_UpdateVideoInfo(unsigned char view, unsigned int resW, unsigned int resH, unsigned int framerate, ENUM_ENCODER_INPUT_SRC src)
 {
     unsigned int u32_data; 
     unsigned int tmp_resW;
@@ -119,16 +119,17 @@ static int H264_Encoder_UpdateVideoInfo(unsigned char view, unsigned int resW, u
     
     if(g_stEncoderStatus[view].resW != resW ||
        g_stEncoderStatus[view].resH != resH ||
-       g_stEncoderStatus[view].framerate != framerate)
+       g_stEncoderStatus[view].framerate != framerate || 
+       g_stEncoderStatus[view].src != src)
     {
-        if ((resW == 0) || (resH == 0) || (framerate == 0))
+        if ((resW == 0) || (resH == 0) || (framerate == 0) || (src == 0))
         {
             H264_Encoder_CloseView(view);
         }
         else
         {
             H264_Encoder_RestartView(view, resW, resH, g_stEncoderStatus[view].gop, 
-                                     framerate, g_stEncoderStatus[view].bitrate);
+                                     framerate, g_stEncoderStatus[view].bitrate, src);
         }
         
         dlog_info("Video format change: %d, %d, %d, %d\n", view, resW, resH, framerate);
@@ -171,9 +172,10 @@ static void H264_Encoder_InputVideoFormatChangeCallback(void* p)
     uint16_t width = ((STRU_SysEvent_H264InputFormatChangeParameter*)p)->width;
     uint16_t hight = ((STRU_SysEvent_H264InputFormatChangeParameter*)p)->hight;
     uint8_t framerate = ((STRU_SysEvent_H264InputFormatChangeParameter*)p)->framerate;
+    ENUM_ENCODER_INPUT_SRC src = ((STRU_SysEvent_H264InputFormatChangeParameter*)p)->e_h264InputSrc;
 
     // ADV7611 0,1 is connected to H264 encoder 1,0
-    H264_Encoder_UpdateVideoInfo((index == 0) ? 1 : 0, width, hight, framerate);
+    H264_Encoder_UpdateVideoInfo(index, width, hight, framerate, src);
 }
 
 int H264_Encoder_UpdateGop(unsigned char view, unsigned char gop)
@@ -313,7 +315,7 @@ static void VEBRC_IRQ_Wrap_Handler(uint32_t u32_vectorNum)
         {
             H264_Encoder_RestartView(0, g_stEncoderStatus[0].resW, g_stEncoderStatus[0].resH, 
                                      g_stEncoderStatus[0].gop, g_stEncoderStatus[0].framerate, 
-                                     g_stEncoderStatus[0].bitrate);
+                                     g_stEncoderStatus[0].bitrate, g_stEncoderStatus[0].src);
             dlog_info("Reset view0");
         }
 
@@ -321,7 +323,7 @@ static void VEBRC_IRQ_Wrap_Handler(uint32_t u32_vectorNum)
         {
             H264_Encoder_RestartView(1, g_stEncoderStatus[1].resW, g_stEncoderStatus[1].resH, 
                                      g_stEncoderStatus[1].gop, g_stEncoderStatus[1].framerate, 
-                                     g_stEncoderStatus[1].bitrate);
+                                     g_stEncoderStatus[1].bitrate, g_stEncoderStatus[1].src);
             dlog_info("Reset view1");
         }
     }
@@ -369,7 +371,7 @@ int H264_Encoder_Init(uint8_t gop0, uint8_t br0, uint8_t brc0_e, uint8_t gop1, u
     sdram_init_check(); 
 
     reg_IrqHandle(VIDEO_ARMCM7_IRQ_VECTOR_NUM, VEBRC_IRQ_Wrap_Handler, NULL);
-	INTR_NVIC_SetIRQPriority(VIDEO_ARMCM7_IRQ_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_VIDEO_ARMCM7,0));
+    INTR_NVIC_SetIRQPriority(VIDEO_ARMCM7_IRQ_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_VIDEO_ARMCM7,0));
     INTR_NVIC_DisableIRQ(VIDEO_ARMCM7_IRQ_VECTOR_NUM);
 
     g_stEncoderStatus[0].gop = gop0;

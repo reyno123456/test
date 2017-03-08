@@ -1,6 +1,9 @@
 #ifndef _VSOC_ENC_
 #define _VSOC_ENC_
 
+#include "sys_event.h"
+
+
 typedef struct ENC_REG_STRUCT {
    
     struct { 
@@ -124,8 +127,8 @@ typedef struct ENC_REG_STRUCT {
 } ENC_REG;
 
 //=== VSOC_ENC REG Base_Addr Definition ===//
-#define 	VSOC_ENC_REG_BASE	0xA0010000	// master
-#define 	ENC_REG_ADDR        0xA0010000	// master
+#define     VSOC_ENC_REG_BASE   0xA0010000  // master
+#define     ENC_REG_ADDR        0xA0010000  // master
 
 #define     VSOC_SOFT_RESET     0xA0030034
 
@@ -235,8 +238,8 @@ typedef struct ENC_REG_STRUCT {
 #define PAGE3_WORD_REG0     0x00000000
 
 
-void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsigned int fps, unsigned int br);
-void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsigned int fps, unsigned int br);
+void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsigned int fps, unsigned int br, ENUM_ENCODER_INPUT_SRC src);
+void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsigned int fps, unsigned int br, ENUM_ENCODER_INPUT_SRC src);
 void open_view0( unsigned int rc_en );
 void close_view0(void);
 void open_view1( unsigned int rc_en );

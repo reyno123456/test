@@ -1251,7 +1251,7 @@ uint8_t WIRELESS_INTERFACE_OPERATE_REG_Handler(void *param)
 
 uint8_t PAD_FREQUENCY_BAND_WIDTH_SELECT_Handler(void *param)
 {
-    HAL_BB_SetFreqBandwidthSelectionProxy( (ENUM_CH_BW)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
+	HAL_BB_SetFreqBandwidthSelectionProxy( (ENUM_CH_BW)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 
     return 0;
 }
@@ -1259,7 +1259,7 @@ uint8_t PAD_FREQUENCY_BAND_WIDTH_SELECT_Handler(void *param)
 
 uint8_t PAD_FREQUENCY_BAND_OPERATION_MODE_Handler(void *param)
 {
-    HAL_BB_SetFreqBandSelectionModeProxy( (ENUM_RUN_MODE)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
+	HAL_BB_SetFreqBandSelectionModeProxy( (ENUM_RUN_MODE)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 
     return 0;
 }

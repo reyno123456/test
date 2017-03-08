@@ -86,7 +86,7 @@ typedef uint8_t HAL_BOOL_T;
 
 
 
-#define HAL_SD_ERR_MASK								(0xC0000)
+#define HAL_SD_ERR_MASK                             (0xC0000)
 #define HAL_SD_ERR_ERROR                            (HAL_SD_ERR_MASK | 0x1)
 #define HAL_SD_ERR_BUSY                             (HAL_SD_ERR_MASK | 0x1) 
 #define HAL_SD_ERR_TIMEOUT                          (HAL_SD_ERR_MASK | 0x1)     
@@ -98,6 +98,16 @@ typedef uint8_t HAL_BOOL_T;
 #define HAL_CAN_ERR_SEND_MSG                        (HAL_CAN_ERR_MASK | 0x3)
 #define HAL_CAN_ERR_RCV_MSG                         (HAL_CAN_ERR_MASK | 0x4)
 #define HAL_CAN_ERR_COMPONENT                       (HAL_CAN_ERR_MASK | 0x5)
+
+#define HAL_CAMERAQ_ERR_MASK                        (0x10200)
+#define HAL_CAMERAQ_ERR                             (HAL_CAMERAQ_ERR_MASK | 0x1)
+
+#define HAL_MIPI_ERR_MASK                           (0x10300)
+#define HAL_MIPI_ERR                                (HAL_MIPI_ERR_MASK | 0x1)
+
+#define HAL_DVP_ERR_MASK                            (0x10400)
+#define HAL_DVP_ERR                                 (HAL_DVP_ERR_MASK | 0x1)
+
 
 #endif
 

@@ -7,6 +7,6 @@
 #include <string.h>
 
 
-void command_TestHalMipiInit(void);
+void command_TestHalMipiInit(char *toEncoderCh);
 
 #endif

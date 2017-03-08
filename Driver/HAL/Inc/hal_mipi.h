@@ -16,16 +16,16 @@ History:
 #include "hal_ret_type.h"
 
 
-
-
 /**
 * @brief    
 * @param     
 * @retval  
 * @note    
 */
-
-HAL_RET_T HAL_MIPI_Init(void);
+HAL_RET_T HAL_MIPI_Init(uint8_t u8_toEncoderCh, 
+                        uint16_t u16_width,
+                        uint16_t u16_hight,
+                        uint8_t u8_frameRate);
 
 
 #endif
