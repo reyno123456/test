@@ -91,16 +91,17 @@ typedef enum
     WIRELESS_INTERFACE_VIDEO_AUTO_HOPPING           = 0x46,
     WIRELESS_INTERFACE_VIDEO_BAND_WIDTH             = 0x47,
     WIRELESS_INTERFACE_RESET_BB                     = 0x48,
-    PAD_FREQUENCY_BAND_WIDTH_SELECT                 = 0x49,
-    PAD_FREQUENCY_BAND_OPERATION_MODE               = 0x50,
-    PAD_FREQUENCY_BAND_SELECT                       = 0x51,
-    PAD_FREQUENCY_CHANNEL_OPERATION_MODE            = 0x52,
-    PAD_FREQUENCY_CHANNEL_SELECT                    = 0x53,
-    PAD_MCS_OPERATION_MODE                          = 0x54,
-    PAD_MCS_MODULATION_MODE                         = 0x55,
-    PAD_ENCODER_DYNAMIC_BITRATE_MODE                = 0x56,
-    PAD_ENCODER_DYNAMIC_BITRATE_SELECT              = 0x57,
-    PAD_WIRELESS_INTERFACE_OSD_DISPLAY              = 0x58,
+    WIRELESS_INTERFACE_OPERATE_REG                  = 0x49,
+    PAD_FREQUENCY_BAND_WIDTH_SELECT                 = 0x50,
+    PAD_FREQUENCY_BAND_OPERATION_MODE               = 0x51,
+    PAD_FREQUENCY_BAND_SELECT                       = 0x52,
+    PAD_FREQUENCY_CHANNEL_OPERATION_MODE            = 0x53,
+    PAD_FREQUENCY_CHANNEL_SELECT                    = 0x54,
+    PAD_MCS_OPERATION_MODE                          = 0x55,
+    PAD_MCS_MODULATION_MODE                         = 0x56,
+    PAD_ENCODER_DYNAMIC_BITRATE_MODE                = 0x57,
+    PAD_ENCODER_DYNAMIC_BITRATE_SELECT              = 0x58,
+    PAD_WIRELESS_INTERFACE_OSD_DISPLAY              = 0x59,
     MAX_PID_NUM
 } WIRELESS_INTRTFACE_PID_DEF;
 
@@ -266,7 +267,7 @@ uint8_t WIRELESS_INTERFACE_RC_QAM_Handler(void *param);
 uint8_t WIRELESS_INTERFACE_RC_CODE_RATE_Handler(void *param);
 uint8_t WIRELESS_INTERFACE_VIDEO_AUTO_HOPPING_Handler(void *param);
 uint8_t WIRELESS_INTERFACE_VIDEO_BAND_WIDTH_Handler(void *param);
-
+uint8_t WIRELESS_INTERFACE_OPERATE_REG_Handler(void *param);
 
 #endif
 
