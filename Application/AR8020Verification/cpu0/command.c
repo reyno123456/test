@@ -34,6 +34,8 @@
 #include "hal_usb_host.h"
 #include "test_hal_mipi.h"
 #include "test_mp3.h"
+#include "test_hal_nv.h"
+
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
@@ -393,6 +395,18 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestMP3Encoder(cmdArray[1]);
     }
+    else if (memcmp(cmdArray[0], "sky_auto_search_rc_id", strlen("sky_auto_search_rc_id")) == 0)
+    {
+        command_TestNvSkyAutoSearhRcId();
+    }
+    else if (memcmp(cmdArray[0], "NvResetBbRcId", strlen("NvResetBbRcId")) == 0)
+    {
+        command_TestNvResetBbRcId();
+    }
+    else if (memcmp(cmdArray[0], "NvSetBbRcId", strlen("NvSetBbRcId")) == 0)
+    {
+        command_TestNvSetBbRcId(cmdArray[1],cmdArray[2],cmdArray[3],cmdArray[4],cmdArray[5]);
+    }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
         dlog_error("Please use the commands like:");
@@ -465,6 +479,9 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_read_camera <subAddr(hex)>");
         dlog_error("test_hal_mipi_init <toEncoderCh 0~1>");
         dlog_error("test_mp3_encoder <0(PCM):1(WAV)>");
+        dlog_error("sky_auto_search_rc_id");
+        dlog_error("NvResetBbRcId");
+        dlog_error("NvSetBbRcId <id1> <id2> <id3> <id4> <id5>");
         dlog_output(1000);
     }
 }

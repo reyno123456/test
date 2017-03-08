@@ -112,10 +112,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
             dlog_error("%x %x %x",configure->hdmi_configure1[i][0],configure->hdmi_configure1[i][1],configure->hdmi_configure1[i][2]);
             dlog_output(100);
         }*/
-    }	
-    else if (memcmp(cmdArray[0], "sky_auto_search_rc_id", strlen("sky_auto_search_rc_id")) == 0)
-    {
-        command_test_SkyAutoSearhRcId();
     }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0) 
     {
@@ -135,7 +131,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_float_calculate_pi");
         dlog_error("configure");
         dlog_error("BB_add_cmds <type> <param0> <param1> <param2>");		
-        dlog_error("sky_auto_search_rc_id");
         dlog_output(1000);	
     }
 }

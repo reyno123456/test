@@ -73,12 +73,12 @@ static int32_t NV_WriteFlashProc(void)
     {
         NOR_FLASH_EraseSector(NV_FLASH_ADDR1);
 
-        pst_nv->st_nvMng.u8_nvPrc = TRUE;		    
+        pst_nv->st_nvMng.u8_nvPrc = TRUE;           
         memcpy((uint8_t *)(&(pst_nv->st_nvDataPrc)), 
                (uint8_t *)(&(pst_nv->st_nvDataUpd)), 
                sizeof(STRU_NV_DATA));
-        pst_nv->st_nvMng.u8_nvPrc = FALSE;		    
-	    
+        pst_nv->st_nvMng.u8_nvPrc = FALSE;          
+        
         pst_nv->st_nvMng.u8_nvChg = FALSE;
             
         NV_WriteToFlash(NV_FLASH_ADDR1, &(pst_nv->st_nvDataPrc));
@@ -151,13 +151,13 @@ static int32_t NV_Update(void *par)
     if( INTER_CORE_CPU0_ID == (pst_nvMsg->u8_nvDst)) // dst:cpu0
     {
         if(NV_NUM_RCID == (pst_nvMsg->e_nvNum))
-	{
-            NV_UpdateBbRcId(&(pst_nvMsg->u8_nvPar[1]));
-	}
-	else
-	{
-	    ;
-	}
+        {
+                NV_UpdateBbRcId(&(pst_nvMsg->u8_nvPar[1]));
+        }
+        else
+        {
+            ;
+        }
     }
 
     return 0;
@@ -174,26 +174,6 @@ static void NV_Save(void *par)
     NV_Update(par);
 
     NV_WriteFlashProc();
-}
-
-/**
-* @brief      
-* @param    
-* @retval   
-* @note   
-*/
-int32_t HAL_NV_Init(void)
-{
-    STRU_NV *pst_nv = (STRU_NV *)NV_SRAM_ADDR;
-
-    NOR_FLASH_Init();
-    
-    NV_GetInit();
-
-    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_NV_MSG, NV_Save);
-    
-    pst_nv->st_nvMng.u32_nvInitFlag = 0x23178546;
-    return 0;
 }
 
 /**
@@ -259,6 +239,10 @@ static int32_t NV_Get(void)
         dlog_info("flash1 chk ok");
         result = 0;
     }
+    else
+    {
+        dlog_info("flash1 chk error");
+    }
     
     if (0 != result)
     {
@@ -271,6 +255,10 @@ static int32_t NV_Get(void)
                    sizeof(STRU_NV_DATA));
             dlog_info("flash2 chk ok");
             result = 0;
+        }
+        else
+        {
+            dlog_info("flash2 chk error");
         }
     }
 
@@ -377,5 +365,65 @@ static int32_t NV_GetInit(void)
     {
         pst_nv->st_nvMng.u8_nvVld = TRUE;
     }
-
 }
+
+/**
+* @brief      
+* @param    
+* @retval   
+* @note   
+*/
+HAL_RET_T HAL_NV_Init(void)
+{
+    STRU_NV *pst_nv = (STRU_NV *)NV_SRAM_ADDR;
+
+    NOR_FLASH_Init();
+    
+    NV_GetInit();
+
+    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_NV_MSG, NV_Save);
+    
+    pst_nv->st_nvMng.u32_nvInitFlag = 0x23178546;
+    
+    return HAL_OK;
+}
+
+/**
+* @brief      
+* @param    
+* @retval   
+* @note   
+*/
+HAL_RET_T HAL_NV_ResetBbRcId(void)
+{
+    uint8_t u8_id[8];
+
+    memset(u8_id, 0x00, 8);
+    NOR_FLASH_ReadProductID(u8_id);
+
+    NV_UpdateBbRcId(&u8_id[3]);
+
+    NV_WriteFlashProc();
+
+    return HAL_OK;
+}
+
+/**
+* @brief      
+* @param    
+* @retval   
+* @note   
+*/
+HAL_RET_T HAL_NV_SetBbRcId(uint8_t *u8_bbRcId)
+{
+    uint8_t u8_data[5];
+    
+    memcpy(u8_data, u8_bbRcId, 5);
+
+    NV_UpdateBbRcId(u8_data);
+
+    NV_WriteFlashProc();
+
+    return HAL_OK;
+}
+

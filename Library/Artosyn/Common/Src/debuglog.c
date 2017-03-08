@@ -314,7 +314,7 @@ static void DLOG_InputCommandParse(char *cmd)
     cmdIndex = 0;
     memset(tempCommand, 0, 5);
 
-    while (cmdIndex < 5)
+    while (cmdIndex < 6)
     {
         /* skip the sapce */
         while ((*cmd == ' ') || (*cmd == '\t'))

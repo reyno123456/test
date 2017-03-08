@@ -48,10 +48,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
                     strtoul(cmdArray[4], NULL, 0)   //param2
                     );
     }
-    else if (memcmp(cmdArray[0], "sky_auto_search_rc_id", strlen("sky_auto_search_rc_id")) == 0)
-    {
-        command_test_SkyAutoSearhRcId();
-    }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0) 
     {
         dlog_error("Please use commands like:");
@@ -60,8 +56,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("encoder_update_video_format <W> <H> <F>");
         dlog_error("BB_uart10_spi_sel <value>");
         dlog_error("command_test_BB_uart");
-        dlog_error("BB_add_cmds <type> <param0> <param1> <param2>");		
-        dlog_error("sky_auto_search_rc_id");
+        dlog_error("BB_add_cmds <type> <param0> <param1> <param2>");
     }
 }
 
