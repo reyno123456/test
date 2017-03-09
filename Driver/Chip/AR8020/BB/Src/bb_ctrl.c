@@ -203,37 +203,15 @@ int BB_softReset(ENUM_BB_MODE en_mode)
 
 
 
-void gen_qam_threshold_range(void)
-{
-    uint8_t i;
-    for(i=0;i<QAM_CHANGE_THRESHOLD_COUNT;i++)
-    {
-        if(i < QAM_CHANGE_THRESHOLD_COUNT - 1)
-        {
-            context.qam_threshold_range[i][0] = context.qam_change_threshold[i];
-            context.qam_threshold_range[i][1] = context.qam_change_threshold[i+1]- 1 ;
-        }
-        else
-        {
-            context.qam_threshold_range[i][0] = context.qam_change_threshold[i];
-            context.qam_threshold_range[i][1] = 0xffff;
-        }
-    }
-    
-    dlog_info("MCS:%x %x %x %x\n", context.qam_threshold_range[0][1], context.qam_threshold_range[0][1], 
-                                   context.qam_threshold_range[QAM_CHANGE_THRESHOLD_COUNT-1][0], context.qam_threshold_range[QAM_CHANGE_THRESHOLD_COUNT-1][1]);
-}
-
-
 void BB_use_param_setting(PARAM *user_setting)
 {
     memcpy(context.id, user_setting->rc_id.id1, 5);
     memcpy(context.rc_mask, user_setting->user_param.rc_mask, sizeof(context.rc_mask));
     memcpy(context.it_mask, user_setting->user_param.it_mask, sizeof(context.it_mask));
     
-    memcpy( (uint8_t *)((void *)(context.qam_change_threshold)),
+    memcpy( (uint8_t *)((void *)(context.qam_threshold_range)),
             (uint8_t *)((void *)(user_setting->user_param.qam_change_threshold)),
-            sizeof(context.qam_change_threshold));
+            sizeof(context.qam_threshold_range));
 
     #if 0
     memcpy(context.sp20dbm,  user_setting->user_param.sp20dbm,  4);
@@ -243,9 +221,6 @@ void BB_use_param_setting(PARAM *user_setting)
     context.cur_ch   = 0xff;
     #endif
     
-    //context.ldpc     = user_setting->user_param.ldpc;
-    //context.qam_mode = user_setting->user_param.qam_mode;
-
     context.it_skip_freq_mode = user_setting->user_param.it_skip_freq_mode;
     context.rc_skip_freq_mode = user_setting->user_param.rc_skip_freq_mode;
     context.pwr = user_setting->user_param.power;
@@ -257,10 +232,8 @@ void BB_use_param_setting(PARAM *user_setting)
     context.it_manual_ch  = 0xff;
     context.qam_skip_mode = AUTO;
     context.CH_bandwidth      = BW_10M;
-    context.it_manual_rf_band = 0xff;
-    context.trx_ctrl          = IT_RC_MODE;
-    
-    gen_qam_threshold_range();    
+    //context.it_manual_rf_band = 0xff;
+    context.trx_ctrl      = IT_RC_MODE;
 }
 
 
@@ -305,8 +278,7 @@ void BB_init(ENUM_BB_MODE en_mode)
 
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USER_CFG_CHANGE, BB_HandleEventsCallback);
 
-    BB_UARTComInit();    
-    dlog_info("BB mode Band %d %d %s \r\n", en_mode, context.freq_band, "BB_init Done");
+    BB_UARTComInit(); 
 }
 
 
@@ -366,16 +338,56 @@ uint8_t BB_set_sweepfrq(ENUM_RF_BAND band, uint8_t ch)
 	BB_WriteReg(PAGE2, SWEEP_FREQ_1, ch_ptr[ch].frq2);
 	BB_WriteReg(PAGE2, SWEEP_FREQ_2, ch_ptr[ch].frq3);
 	BB_WriteReg(PAGE2, SWEEP_FREQ_3, ch_ptr[ch].frq4);
-   
+}
+
+
+void BB_grd_notify_it_skip_freq(ENUM_RF_BAND band, uint8_t u8_ch)
+{
+	const STRU_FRQ_CHANNEL *pstru_frq = ((band == RF_2G)?It_frq:It_5G_frq);
+
+    BB_WriteReg(PAGE2, IT_FRQ_0, pstru_frq[u8_ch].frq1);
+    BB_WriteReg(PAGE2, IT_FRQ_1, pstru_frq[u8_ch].frq2);
+    BB_WriteReg(PAGE2, IT_FRQ_2, pstru_frq[u8_ch].frq3);
+    BB_WriteReg(PAGE2, IT_FRQ_3, pstru_frq[u8_ch].frq4);
+}
+
+
+const uint8_t mcs_idx_bitrate_map[] = 
+{
+    1,      //0.6Mbps BPSK 1/2
+    2,      //1.2     BPSK 1/2
+    3,      //2.4     QPSK 1/2
+    6,      //5.0     16QAM 1/2
+    9,      //7.5     64QAM 1/2
+    11,     //10      64QAM 2/3
+};
+
+
+uint8_t BB_get_bitrateByMcs(uint8_t u8_mcs)
+{
+    return mcs_idx_bitrate_map[u8_mcs];
+}
+
+void BB_grd_notify_it_skip_freq_1(void)
+{
+    BB_WriteReg(PAGE2, IT_FRQ_0, context.stru_itRegs.frq1);
+    BB_WriteReg(PAGE2, IT_FRQ_1, context.stru_itRegs.frq2);
+    BB_WriteReg(PAGE2, IT_FRQ_2, context.stru_itRegs.frq3);
+    BB_WriteReg(PAGE2, IT_FRQ_3, context.stru_itRegs.frq4);
 }
 
 
 uint8_t BB_write_ItRegs(uint32_t u32_it)
 {
-    BB_WriteReg(PAGE2, AGC3_0,  (uint8_t)(u32_it >> 24) & 0xff);
-    BB_WriteReg(PAGE2, AGC3_1,  (uint8_t)(u32_it >> 16) & 0xff);
-    BB_WriteReg(PAGE2, AGC3_2,  (uint8_t)(u32_it >> 8) & 0xff);
-    BB_WriteReg(PAGE2, AGC3_3,  (uint8_t)(u32_it) & 0xff); 
+    context.stru_itRegs.frq1 = (uint8_t)(u32_it >> 24) & 0xff;
+    context.stru_itRegs.frq2 = (uint8_t)(u32_it >> 16) & 0xff;
+    context.stru_itRegs.frq3 = (uint8_t)(u32_it >>  8) & 0xff;
+    context.stru_itRegs.frq4 = (uint8_t)(u32_it) & 0xff;
+
+    BB_WriteReg(PAGE2, AGC3_0, context.stru_itRegs.frq1);
+    BB_WriteReg(PAGE2, AGC3_1, context.stru_itRegs.frq2);
+    BB_WriteReg(PAGE2, AGC3_2, context.stru_itRegs.frq3);
+    BB_WriteReg(PAGE2, AGC3_3, context.stru_itRegs.frq4);
 }
 
 
@@ -384,32 +396,44 @@ uint8_t BB_set_ITfrq(ENUM_RF_BAND band, uint8_t ch)
 {
 	const STRU_FRQ_CHANNEL *it_ch_ptr = ((band == RF_2G)?It_frq:It_5G_frq);
 
+    context.stru_itRegs.frq1 = it_ch_ptr[ch].frq1;
+    context.stru_itRegs.frq2 = it_ch_ptr[ch].frq2;
+    context.stru_itRegs.frq3 = it_ch_ptr[ch].frq3;
+    context.stru_itRegs.frq4 = it_ch_ptr[ch].frq4;
+
 	BB_WriteReg(PAGE2, AGC3_0, it_ch_ptr[ch].frq1);
 	BB_WriteReg(PAGE2, AGC3_1, it_ch_ptr[ch].frq2);
 	BB_WriteReg(PAGE2, AGC3_2, it_ch_ptr[ch].frq3);
-	BB_WriteReg(PAGE2, AGC3_3, it_ch_ptr[ch].frq4);
-
+	BB_WriteReg(PAGE2, AGC3_3, it_ch_ptr[ch].frq4);    
 }
 
 uint8_t BB_write_RcRegs(uint32_t u32_rc)
 {
-    BB_WriteReg(PAGE2, AGC3_a,  (uint8_t)(u32_rc >> 24) & 0xff);
-    BB_WriteReg(PAGE2, AGC3_b,  (uint8_t)(u32_rc >> 16) & 0xff);
-    BB_WriteReg(PAGE2, AGC3_c,  (uint8_t)(u32_rc >> 8) & 0xff);
-    BB_WriteReg(PAGE2, AGC3_d,  (uint8_t)(u32_rc) & 0xff); 
-}
+    context.stru_rcRegs.frq1 = (uint8_t)(u32_rc >> 24) & 0xff;
+    context.stru_rcRegs.frq2 = (uint8_t)(u32_rc >> 16) & 0xff;
+    context.stru_rcRegs.frq3 = (uint8_t)(u32_rc >>  8) & 0xff;
+    context.stru_rcRegs.frq4 = (uint8_t)(u32_rc) & 0xff;
 
+    BB_WriteReg(PAGE2, AGC3_a, context.stru_rcRegs.frq1);
+    BB_WriteReg(PAGE2, AGC3_b, context.stru_rcRegs.frq2);
+    BB_WriteReg(PAGE2, AGC3_c, context.stru_rcRegs.frq3);
+    BB_WriteReg(PAGE2, AGC3_d, context.stru_rcRegs.frq4);
+}
 
 
 uint8_t BB_set_Rcfrq(ENUM_RF_BAND band, uint8_t ch)
 {
-	const STRU_FRQ_CHANNEL *rc_ch_ptr = ((band == RF_2G)?Rc_frq:Rc_5G_frq);
+	const STRU_FRQ_CHANNEL *pu8_rcRegs = ((band == RF_2G)?Rc_frq:Rc_5G_frq);
 
+    context.stru_rcRegs.frq1 = pu8_rcRegs[ch].frq1;
+    context.stru_rcRegs.frq2 = pu8_rcRegs[ch].frq2;
+    context.stru_rcRegs.frq3 = pu8_rcRegs[ch].frq3;
+    context.stru_rcRegs.frq4 = pu8_rcRegs[ch].frq4;
 
-    BB_WriteReg(PAGE2, AGC3_a, rc_ch_ptr[ch].frq1);
-    BB_WriteReg(PAGE2, AGC3_b, rc_ch_ptr[ch].frq2);
-    BB_WriteReg(PAGE2, AGC3_c, rc_ch_ptr[ch].frq3);
-    BB_WriteReg(PAGE2, AGC3_d, rc_ch_ptr[ch].frq4); 
+    BB_WriteReg(PAGE2, AGC3_a, pu8_rcRegs[ch].frq1);
+    BB_WriteReg(PAGE2, AGC3_b, pu8_rcRegs[ch].frq2);
+    BB_WriteReg(PAGE2, AGC3_c, pu8_rcRegs[ch].frq3);
+    BB_WriteReg(PAGE2, AGC3_d, pu8_rcRegs[ch].frq4); 
 }
 
 
@@ -460,7 +484,7 @@ void BB_set_RF_Band(ENUM_BB_MODE sky_ground, ENUM_RF_BAND rf_band)
         BB_WriteRegMask(PAGE2, 0x20, 0x04, 0x04);
 
         //softreset
-        //BB_softReset(sky_ground);
+        BB_softReset(sky_ground);
 
     }
 
@@ -723,23 +747,7 @@ void BB_RF_2G_5G_switch(ENUM_RF_BAND rf_band)
     BB_WriteReg(PAGE0, 0x00, data);
     
     data &= 0xfe;
-    BB_WriteReg(PAGE0, 0x00, data);
-
-    uint8_t test[10];
-    test[0] = BB_ReadReg(PAGE0, 0x64);
-    test[1] = BB_ReadReg(PAGE0, 0x67);
-    test[2] = BB_ReadReg(PAGE0, 0x68);
-    test[3] = BB_ReadReg(PAGE0, 0x69);
-    test[4] = BB_ReadReg(PAGE0, 0x6a);
-    test[5] = BB_ReadReg(PAGE0, 0x6b);
-    test[6] = BB_ReadReg(PAGE0, 0x6c);
-    test[7] = BB_ReadReg(PAGE0, 0x6d);
-    test[8] = BB_ReadReg(PAGE0, 0x6e);
-    test[9] = BB_ReadReg(PAGE0, 0x6f);
-    
-    dlog_info("Before cali: %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x\r\n", 
-               test[0], test[1], test[2], test[3], test[4],
-               test[5], test[6], test[7], test[8], test[9]);        
+    BB_WriteReg(PAGE0, 0x00, data);     
 }
 
 
@@ -1312,10 +1320,13 @@ int BB_GetDevInfo(void)
     static uint32_t u32_cnt = 1;
     uint8_t u8_data;
     STRU_DEVICE_INFO *pst_devInfo = (STRU_DEVICE_INFO *)(DEVICE_INFO_SHM_ADDR);
-    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
+
+    //pst_devInfo->u8_startWrite = 1;
+    //pst_devInfo->u8_endWrite   = 0;
 
     pst_devInfo->messageId = 0x19;
-    pst_devInfo->paramLen = 0xF;
+    pst_devInfo->paramLen = sizeof(STRU_DEVICE_INFO);
+
     pst_devInfo->skyGround = context.en_bbmode;
     pst_devInfo->band = context.freq_band;
     
@@ -1327,7 +1338,7 @@ int BB_GetDevInfo(void)
     pst_devInfo->channel1_on = (u8_data >> 6) & 0x01;
     pst_devInfo->channel2_on = (u8_data >> 7) & 0x01;
     pst_devInfo->isDebug = context.u8_debugMode;
-    if (BB_GRD_MODE == context.en_bbmode)
+    if (BB_GRD_MODE == context.en_bbmode )
     {
         u8_data = BB_ReadReg(PAGE2, GRD_FEC_QAM_CR_TLV);
         pst_devInfo->itQAM = u8_data & 0x03;
@@ -1361,6 +1372,19 @@ int BB_GetDevInfo(void)
         pst_devInfo->ch1Bitrates = context.brc_bps[0];
         pst_devInfo->ch2Bitrates = context.brc_bps[1];
     }
+
+    pst_devInfo->u8_itRegs[0] = context.stru_itRegs.frq1;
+    pst_devInfo->u8_itRegs[1] = context.stru_itRegs.frq2;
+    pst_devInfo->u8_itRegs[2] = context.stru_itRegs.frq3;
+    pst_devInfo->u8_itRegs[3] = context.stru_itRegs.frq4;
+
+    pst_devInfo->u8_rcRegs[0] = context.stru_rcRegs.frq1;
+    pst_devInfo->u8_rcRegs[1] = context.stru_rcRegs.frq2;
+    pst_devInfo->u8_rcRegs[2] = context.stru_rcRegs.frq3;
+    pst_devInfo->u8_rcRegs[3] = context.stru_rcRegs.frq4;   
+
+    //pst_devInfo->u8_startWrite = 0;
+    //pst_devInfo->u8_endWrite = 1;    
 }
 
 /** 

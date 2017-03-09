@@ -488,7 +488,7 @@ static void USBD_HID_ErrorDetect(void)
 {
     g_u32UsbdErrorCount++;
 
-    if (g_u32UsbdErrorCount >= 20)
+    if (g_u32UsbdErrorCount >= 50)
     {
         dlog_error("usb send fail detect");
         g_u32UsbdErrorCount = 0;

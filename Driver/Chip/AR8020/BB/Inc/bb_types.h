@@ -191,12 +191,16 @@ typedef struct
     uint8_t         ch1Bitrates;
     uint8_t         ch2Bitrates;
     uint8_t         reserved[3];
+    uint8_t         u8_itRegs[4];
+    uint8_t         u8_rcRegs[4];    
+    uint8_t         u8_startWrite;  //u8_startWrite: cpu2 start update the flag
+    uint8_t         u8_endWrite;    //u8_endWrite:   cpu2 end update the flag
 } STRU_DEVICE_INFO;
 
 // CPU0 and CPU2 share memory for osd status info, offset in SRAM: 16K + 512Byte
 // last 16 bytes is for DEVICE INFO
 #define OSD_STATUS_SHM_ADDR              SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR
-#define DEVICE_INFO_SHM_SIZE             (20)
+#define DEVICE_INFO_SHM_SIZE             (sizeof(STRU_DEVICE_INFO))
 #define DEVICE_INFO_SHM_ADDR             ((SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR + SRAM_BB_STATUS_SHARE_MEMORY_SIZE) - DEVICE_INFO_SHM_SIZE)
 
 #endif

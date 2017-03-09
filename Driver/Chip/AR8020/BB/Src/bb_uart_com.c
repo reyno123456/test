@@ -123,8 +123,7 @@ static void BB_UARTComPacketDataAnalyze(uint8_t chData)
     case BB_UART_COM_RX_CHECKSUM:
         if (check_sum == chData)
         {
-            dlog_info("Get BB UARTCom session %d data.", session_id);
-
+            //dlog_info("Get BB UARTCom session %d data.", session_id);
             if (session_id < BB_UART_COM_SESSION_MAX)
             {
                 BB_UARTComWriteSessionRxBuffer(session_id, data_buf, data_length);

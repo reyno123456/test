@@ -47,7 +47,7 @@ typedef struct
     uint8_t u8_curRow;
 
     uint8_t u8_prevSweepCh;       //previous sweep channel, main channel and optional channel may change
-    
+
     uint8_t u8_cycleCnt;
     uint8_t u8_preMainCh;
     uint8_t u8_isFull;
@@ -82,10 +82,38 @@ void BB_SweepStart( ENUM_RF_BAND e_rfBand , ENUM_CH_BW e_bw)
 
 void BB_GetSweepNoise(uint8_t row, int16_t *ptr_noise_power)
 {
-    memcpy( (void *)ptr_noise_power,
-            (void *)stru_sweepPower.s16_slicePower[row],
-            sizeof(stru_sweepPower.s16_slicePower[row]) );
-    
+    uint8_t i;
+    for(i = 0; i < (MAX_2G_IT_FRQ_SIZE * 8); i++)
+    {
+        uint8_t j;
+        int16_t sum  = 0;
+        int16_t aver = 0;
+        for(j = 0; j < SWEEP_FREQ_BLOCK_ROWS; j++)
+        {
+            sum += stru_sweepPower.s16_slicePower[j][i];
+        }
+        aver  = (sum / SWEEP_FREQ_BLOCK_ROWS);
+
+        sum = 0;
+        for(j = 0; j < SWEEP_FREQ_BLOCK_ROWS; j++)
+        {
+            if ( stru_sweepPower.s16_slicePower[j][i] - aver >= 3 )
+            {
+                sum += (aver + 3);
+            }
+            else if( stru_sweepPower.s16_slicePower[j][i] - aver <= -3)
+            {
+                sum += (aver - 3);
+            }
+            else
+            {
+                sum += stru_sweepPower.s16_slicePower[j][i];
+            }
+        }
+        
+        ptr_noise_power[i] = (sum / SWEEP_FREQ_BLOCK_ROWS);
+    }
+
     #if 0
     {
         static int loop;

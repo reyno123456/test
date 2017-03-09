@@ -126,4 +126,14 @@ int BB_GetDevInfo(void);
 int BB_SwtichOnOffCh(uint8_t u8_ch, uint8_t u8_data);
 
 
+void BB_grd_notify_it_skip_freq(ENUM_RF_BAND band, uint8_t u8_ch);
+
+void BB_grd_notify_rc_skip_freq(uint32_t u32_rcfrq);
+
+
+void BB_grd_notify_it_skip_freq_1(void);
+
+uint8_t BB_get_bitrateByMcs(uint8_t u8_mcs);
+
+int BB_InsertCmd(STRU_WIRELESS_CONFIG_CHANGE *p);
 #endif

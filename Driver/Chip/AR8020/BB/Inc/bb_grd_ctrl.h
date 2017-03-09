@@ -28,15 +28,11 @@ void wimax_vsoc_tx_isr(uint32_t u32_vectorNum);
 
 void grd_rc_hopfreq(void);
 
-void grd_set_it_work_freq(ENUM_RF_BAND rf_band, uint8_t ch);
-
 void reset_it_span_cnt(void);
 
 uint8_t grd_is_bb_fec_lock(void);
 
 uint8_t is_it_need_skip_freq(uint8_t qam_ldpc);
-
-void grd_set_it_skip_freq(uint8_t ch);
 
 void grd_set_txmsg_qam_change(ENUM_BB_QAM qam, ENUM_CH_BW bw, ENUM_BB_LDPC ldpc);
 

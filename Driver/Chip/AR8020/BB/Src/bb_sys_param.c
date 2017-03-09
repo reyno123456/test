@@ -1,18 +1,17 @@
 #include "bb_sys_param.h"
+#include <string.h>
 
+#define SYS_PARAM_START_FLASH_ADDR  ((uint32_t)(0x0800FC00))
 
-#define SYS_PARAM_START_FLASH_ADDR ((uint32_t)(0x0800FC00))
-#define offsetof(TYPE, MEMBER) ((uint32_t) &((TYPE *)0)->MEMBER)
 PARAM *sys_param;
 
 #define SUPPORT_USER_SETTING (0)
 
-uint8_t flash_setting[256];
+uint8_t flash_setting[128];
 
 /* 
  *default_sys_param
 */
-const uint8_t mask_freq[] = {19,30,50,71,91,122,153,190};
 
 const SYS_PARAM default_sys_param =
 {
@@ -43,23 +42,11 @@ const SYS_PARAM default_sys_param =
 
      .it_mask = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff},
 
-                                  //bpsk_1_2 ,   qam4_1_2,   qam4_2_3,    qam16_1_2,   qam16_2_3,    qam64_1_2,    qam64_2_3
-     //.qam_change_threshold = {0,  (0x4c << 1), (0x95 <<1), (0xe5 << 1), (0x1c5 << 1), (0x2bd << 1), (0x522 << 1), (0x076e << 1)},
-     .qam_change_threshold = {0,  0x6b, 0xd2, 0x280, 0x740, 0xed3},
+     .qam_change_threshold = { {0, 0x6A}, {0x54, 0x129}, {0xec, 0x388}, {0x2ce, 0xa3e}, {0x823, 0x1d94}, {0x12aa, 0xffff}},
      .enable_freq_offset   = DISABLE_FLAG,
      .rf_power_mode = MANUAL,
 };
 
-
-uint8_t BB_load_sys_param(uint32_t *p_data, uint32_t size)
-{
-    //return flash_read(SYS_PARAM_START_FLASH_ADDR,p_data,size);
-}
-
-uint8_t BB_fsave_sys_param(uint32_t *p_data,uint32_t size)
-{
-    //return flash_write(SYS_PARAM_START_FLASH_ADDR,p_data,size);
-}
 
 uint8_t BB_load_default_setting(PARAM *p_param)
 {
@@ -68,68 +55,18 @@ uint8_t BB_load_default_setting(PARAM *p_param)
 
     pw = (uint8_t *)((void *)((uint8_t *)p_param + offsetof(PARAM,user_param)));
     pc = (uint8_t *)((void *)(&default_sys_param));
-    for(i=0;i<sizeof(SYS_PARAM);i++)
-    {
-        *pw = *pc;
-        pw++;
-        pc++;
-    }
-    
+
+    memcpy(pw, pc, sizeof(SYS_PARAM));
+
     return 0x00;
 }
 
-void BB_reback_to_fac_setting(void)
-{
-    uint8_t i;
-    uint8_t *pw,*pc;
-    SYS_PARAM *p_sys_param;
-
-    pw = (uint8_t *)((void *)((uint8_t *)sys_param + offsetof(PARAM,user_param)));
-    pc = (uint8_t *)((void *)(&default_sys_param));
-    
-    for(i=0;i<sizeof(SYS_PARAM);i++)
-    {
-        *pw = *pc;
-        pw++;
-        pc++;
-    }
-
-    p_sys_param = (SYS_PARAM *)(pw - sizeof(SYS_PARAM));
-
-    #if 0
-    memcpy(context.sp20dbm ,  p_sys_param->sp20dbm,  4);
-    memcpy(context.sp20dbmb,  p_sys_param->sp20dbmb, 4);
-    memcpy(context.gp20dbm ,  p_sys_param->gp20dbm,  4);
-    memcpy(context.gp20dbmb,  p_sys_param->gp20dbmb, 4);
-    #endif
-}
-
-
-void BB_disable_rc_freq(uint8_t *pMask)
-{
-    uint8_t i;
-    for(i=0; i<sizeof(mask_freq); i++)
-    {
-        pMask[mask_freq[i]/8] &= (~(1 << (7 - mask_freq[i] % 8)));
-    }
-}
 
 
 PARAM * BB_get_sys_param(void)
 {
-    BB_load_sys_param((uint32_t *)((void *)(flash_setting)), 256);
     sys_param = (PARAM *)(flash_setting);
-
-    #if(SUPPORT_USER_SETTING == 1)
-        if(sys_param->is_init == 0xff)
-    #endif
-        {
-            BB_load_default_setting(sys_param);
-            sys_param->is_init = 0x00;
-            //BB_fsave_sys_param((uint32_t *)((void *)(sys_param)), 1024);
-        }
-        
-        BB_disable_rc_freq(sys_param->user_param.rc_mask);
+    BB_load_default_setting(sys_param);
     
     return sys_param;
 }

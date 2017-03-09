@@ -45,9 +45,9 @@
 #define TX_6       ((uint8_t)(0x5e))  //RC_id_bits[15:8]
 #define TX_7       ((uint8_t)(0x5f))  //RC_id_bits[7:0]
 
-// custom
-#define IT_FREQ_TX_0            ((uint8_t)0x60 )
-#define IT_FREQ_TX_1            ((uint8_t)0x61 )
+/****start of ground - > sky registers From 0x60 -> 0x9F */
+//#define IT_FREQ_TX_0            ((uint8_t)0x60 )
+//#define IT_FREQ_TX_1            ((uint8_t)0x61 )
 
 #define RC_FREQ_TX_0            ((uint8_t)0x62 )
 #define RC_FREQ_TX_1            ((uint8_t)0x63 )
@@ -84,105 +84,29 @@
 #define ENCODER_BRC_CHAGE_0_CH2	    ((uint8_t)0x76)
 #define ENCODER_BRC_CHAGE_1_CH2	    ((uint8_t)0x77)
 
-#define RF_CH_LDPC_CHANGE_0		((uint8_t)0x77)
-#define RF_CH_LDPC_CHANGE_1		((uint8_t)0x78)
+#define RF_CH_LDPC_CHANGE_0		((uint8_t)0x77 )
+#define RF_CH_LDPC_CHANGE_1		((uint8_t)0x78 )
 
 #define RF_CH_QAM_CHANGE_0	    ((uint8_t)0x79 )
 #define RF_CH_QAM_CHANGE_1	    ((uint8_t)0x7A )
 
 
-#define CALI_0_1     ((uint8_t)(0xD0+0x00))/* page 0 0xD0+0x00
-                                            txa_i_ofs RD  7 0 8
-                                           */
-#define CALI_0_2     ((uint8_t)(0xD0+0x00))/*
-                                            txa_q_ofs RD  7 0 8
-                                           */
-#define CALI_0     ((uint8_t)0x90 ) /*[7:0] If reg_rd_cali_result is 0, txa_i_ofs
-                                            If reg_rd_cali_result is 1, rxa_i_ofs
-                                    */
+#define     RC_FRQ_0            ( (uint8_t)0x80 )
+#define     RC_FRQ_1            ( (uint8_t)0x81 )
+#define     RC_FRQ_2            ( (uint8_t)0x82 )
+#define     RC_FRQ_3            ( (uint8_t)0x83 )
 
-#define CALI_1     ((uint8_t)0x91 ) /*[7:0] If reg_rd_cali_result is 0, txa_q_ofs
-                                            If reg_rd_cali_result is 1, rxa_q_ofs
-                                    */
-#define CALI_2     ((uint8_t)0x92 ) /*[7:0] If reg_rd_cali_result is 0, txa_sin_ofs[7:0]
-                                            If reg_rd_cali_result is 1, rxa_sin_ofs[7:0]
-                                    */
-#define CALI_3     ((uint8_t)0x93 ) /*[7:4] Reserved
-                                      [3:0] If reg_rd_cali_result is 0, txa_sin_ofs[11:8]
-                                            If reg_rd_cali_result is 1, rxa_sin_ofs[11:8]
-                                    */
-#define CALI_4     ((uint8_t)0x94 ) /*[7:0] If reg_rd_cali_result is 0, txa_alph_ofs
-                                            If reg_rd_cali_result is 1, rxa_alph_ofs
-                                    */
-#define CALI_5     ((uint8_t)0x95 ) /*[7:0] If reg_rd_cali_result is 0, txb_i_ofs
-                                            If reg_rd_cali_result is 1, rxb_i_ofs
-                                    */
-#define CALI_6     ((uint8_t)0x96 ) /*[7:0] If reg_rd_cali_result is 0, txb_q_ofs
-                                            If reg_rd_cali_result is 1, rxb_q_ofs
-                                    */
+#define     IT_FRQ_0            ( (uint8_t)0x84 )
+#define     IT_FRQ_1            ( (uint8_t)0x85 )
+#define     IT_FRQ_2            ( (uint8_t)0x86 )
+#define     IT_FRQ_3            ( (uint8_t)0x87 )
 
-#define CALI_7     ((uint8_t)0x97 ) /*[7:0] If reg_rd_cali_result is 0, txb_sin_ofs[7:0]
-                                            If reg_rd_cali_result is 1, rxb_sin_ofs[7:0]
-                                    */
-#define CALI_8     ((uint8_t)0x98 ) /*[7:4] Reserved
-                                      [3:0] If reg_rd_cali_result is 0, txb_sin_ofs[11:8]
-                                            If reg_rd_cali_result is 1, rxb_sin_ofs[11:8]
-                                    */
-
-#define CALI_9     ((uint8_t)0x99 ) /*[7:0] If reg_rd_cali_result is 0, txb_alph_ofs
-                                            If reg_rd_cali_result is 1, rxb_alph_ofs
-                                    */
-
-#define CALI_A     ((uint8_t)0x9A ) //[7:0] tssi_dc_code
-#define CA_0       ((uint8_t)0xA0 )
-#define CA_1       ((uint8_t)0xA1 )     /*
-                                           [7]reg_rx_cali_on
-                                           [6]reg_rx_dcoff_on
-                                           [5]reg_rx_iq_on
-                                           [4]reg_rx_gain_on
-                                           [3]reg_tx_cali_on
-                                           [2]reg_tx_dcoff_on
-                                           [1]reg_tx_iq_on
-                                           [0]reg_tx_gain_on
-                                       */
+/****end of ground - > sky registers From 0x60 -> 0x9F */
 
 #define     SWEEP_ENERGY_HIGH       (0xa2)
 #define     SWEEP_ENERGY_MID        (0xa3)
 #define     SWEEP_ENERGY_LOW        (0xa4)
 
-#define CA_5       ((uint8_t)0xA5 )     /*
-                                          [7:0]reg_fix_tx_sign; 1: minus; 0:plus
-                                          [7]  reg_txa_ofs_i_sign
-                                          [6]  reg_txa_ofs_q_sign
-                                          [5]  reg_txa_alph_sign
-                                          [4]  reg_txa_phase_sign
-                                          [3]  reg_txb_ofs_i_sign
-                                          [2]  reg_txb_ofs_q_sign
-                                          [1]  reg_txb_alph_sign
-                                          [0]  reg_txb_phase_sign
-                                        */
-#define CA_6        ((uint8_t)0xA6 )     /*[7:4] reg_txa_ofs_q
-                                           [3:0] reg_txa_ofs_i
-                                        */
-#define CA_7        ((uint8_t)0xA7 )    /*[7:4] reg_txa_alph
-                                          [3:0] reg_txa_cos_ofs
-                                        */
-#define CA_8        ((uint8_t)0xA8 )    /*[7:0] reg_txa_sin_ofs
-
-                                        */
-#define CA_9        ((uint8_t)0xA9 )    /*[7:4] reg_txb_ofs_q
-                                          [3:0] reg_txb_ofs_i
-                                        */
-#define CA_A        ((uint8_t)0xAA )    /*[7:4] reg_txb_alph
-                                          [3:0] reg_txb_cos_ofs
-                                        */
-#define CA_B        ((uint8_t)0xAB )     // [7:0]reg_txb_sin_ofs
-#define CA_C        ((uint8_t)0xAC )     // [7:0]reg_tx_gain_cali
-#define CA_D        ((uint8_t)0xAD )     // [7:0]reg_txgain_for_rxcali
-#define CA_E        ((uint8_t)0xAE )     // [7:0]reg_tssi_dc_code
-
-#define CA_C        ((uint8_t)0xAC )      // [7:0]reg_tx_gain_cali
-#define AGC4_e      ((uint8_t)0xCE )
 
 // ************                    Page2                ***************
 
@@ -358,8 +282,11 @@
 #define     TX_CALI_ENABLE      (0x61)
 
 
-#define  POWER_GATE         (0x45)        //Reg[c5/c6] power #define  POWER_Thresholds.
-#define  AAGC_GAIN_FAR      (0x12)
-#define  AAGC_GAIN_NEAR     (0x3F)
+#define     POWER_GATE         (0x45)        //Reg[c5/c6] power #define  POWER_Thresholds.
+#define     AAGC_GAIN_FAR      (0x12)
+#define     AAGC_GAIN_NEAR     (0x3F)
+
+#define     SDRAM_BLOCK_SIZE   (0xcc)
+#define     USB_BYPASS_MODE    (0x56)
 
 #endif

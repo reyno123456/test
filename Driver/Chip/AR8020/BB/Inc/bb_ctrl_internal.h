@@ -34,7 +34,6 @@ typedef struct _STRU_FRQ_CHANNEL           //  Remote Controller Freq Channnel
     uint8_t frq2;
     uint8_t frq3;
     uint8_t frq4;
-    uint8_t frq5;
 }STRU_FRQ_CHANNEL;
 
 

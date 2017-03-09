@@ -12,7 +12,9 @@
 #include "bb_sys_param.h"
 #include "debuglog.h"
 #include "sys_event.h"
+#include "bb_snr_service.h"
 #include "gpio.h"
+#include "bb_uart_com.h"
 
 
 #define MAX_SEARCH_ID_NUM  (5)
@@ -72,11 +74,11 @@ void BB_SKY_start(void)
     GPIO_SetPin(BLUE_LED_GPIO, 1);  //BLUE LED OFF
 
     sky_Timer2_6_Init();
-    sky_Timer2_7_Init();    
+    sky_Timer2_7_Init();
     sky_search_id_timeout_irq_enable(); //enabole TIM1 timeout
 
     reg_IrqHandle(BB_RX_ENABLE_VECTOR_NUM, wimax_vsoc_rx_isr, NULL);
-    INTR_NVIC_SetIRQPriority(BB_RX_ENABLE_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_BB_RX,0));
+    INTR_NVIC_SetIRQPriority(BB_RX_ENABLE_VECTOR_NUM, INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_BB_RX,0));
     INTR_NVIC_EnableIRQ(BB_RX_ENABLE_VECTOR_NUM);
 
     context.qam_ldpc = 0;
@@ -85,7 +87,7 @@ void BB_SKY_start(void)
     BB_GetDevInfo();
 }
 
-
+uint8_t pre_lockcnt = 0;
 uint8_t sky_id_match(void)
 {
     static int total_count = 0;
@@ -95,9 +97,10 @@ uint8_t sky_id_match(void)
     total_count ++;
     lock_count += ((data == 0x03) ? 1 : 0);
 
-    if(total_count > 500)
+    if(total_count > 250)
     {
-        dlog_info("-L:%d-", lock_count);    
+        dlog_info("-L:%d-", lock_count);
+        pre_lockcnt = lock_count;
         total_count = 0;
         lock_count = 0;
     }
@@ -124,26 +127,16 @@ void sky_notify_encoder_brc(uint8_t u8_ch, uint8_t br)
 
 void sky_set_McsByIndex(uint8_t idx)
 {
-    uint8_t mcs_idx_bitrate_map[] = 
-    {
-        1,      //0.6Mbps
-        2,      //1.2
-        3,      //2.4
-        6,      //5.0
-        9,      //7.5
-        11,     //10
-    };
-
     uint8_t mcs_idx_reg0x0f_map[] = 
     {
-        0x47,
-        0x87,
-        0x57,
-        0x37,
-        0x37,
-        0x27
+        0x4f,
+        0x8f,
+        0x5f,
+        0x3f,
+        0x3f,
+        0x2f
     };
-
+    
     uint8_t map_idx_to_mode[] = 
     {
         ((MOD_BPSK<<6)  | (BW_10M <<3)  | LDPC_1_2), //
@@ -156,15 +149,15 @@ void sky_set_McsByIndex(uint8_t idx)
         ((MOD_64QAM<<6) | (BW_10M <<3)  | LDPC_2_3),
     };
 
-    dlog_info("MCS=> %d\n", map_idx_to_mode[idx]);
+    dlog_info("MCS Idx=>0x%x 0x%x", map_idx_to_mode[idx], BB_get_bitrateByMcs(idx));
 
     BB_WriteReg( PAGE2, 0x0f, mcs_idx_reg0x0f_map[idx] );
     BB_WriteReg( PAGE2, TX_2, map_idx_to_mode[idx]);
     
 	if ( context.brc_mode == AUTO )
 	{
-        sky_notify_encoder_brc(0, mcs_idx_bitrate_map[idx] );
-        sky_notify_encoder_brc(1, mcs_idx_bitrate_map[idx] );
+        sky_notify_encoder_brc(0, BB_get_bitrateByMcs(idx) );
+        sky_notify_encoder_brc(1, BB_get_bitrateByMcs(idx) );
 	}
 }
 
@@ -223,11 +216,14 @@ void wimax_vsoc_rx_isr(uint32_t u32_vectorNum)
 {
     INTR_NVIC_DisableIRQ(BB_RX_ENABLE_VECTOR_NUM);   
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
-
+    STRU_DEVICE_INFO *pst_devInfo = (STRU_DEVICE_INFO *)(DEVICE_INFO_SHM_ADDR);
+        
     if( context.u8_flagdebugRequest & 0x80)
     {
         context.u8_debugMode = (context.u8_flagdebugRequest & 0x01);
         osdptr->in_debug = context.u8_debugMode;
+        pst_devInfo->isDebug = context.u8_debugMode;
+        
         if( context.u8_debugMode )
         {
             osdptr->head = 0x00;
@@ -396,7 +392,7 @@ void sky_physical_link_process(void)
             // sky_soft_reset();
         }
 
-        if(40 <= context.rc_unlock_cnt)
+        if( 60 <= context.rc_unlock_cnt )
         {            
             GPIO_SetPin(BLUE_LED_GPIO, 1);  //BLUE LED OFF
             GPIO_SetPin(RED_LED_GPIO, 0);   //RED LED ON
@@ -608,41 +604,46 @@ void sky_Timer2_6_Init(void)
 /*
  * read spi and handle it. interanal call in the intr.
 */
-static void sky_handle_IT_CH_cmd(void)
-{
-    uint8_t data0, data1;
-
-    data0 = BB_ReadReg(PAGE2, IT_FREQ_TX_0);
-    data1 = BB_ReadReg(PAGE2, IT_FREQ_TX_1);
-    uint8_t req_ch = data0 & 0x1f;
-
-    if((data0+1 == data1) && ((data0&0xE0) == 0xE0) && (context.cur_IT_ch != req_ch))
-    {
-        sky_set_it_freq(context.freq_band, req_ch);
-        context.cur_IT_ch = req_ch;
-    }
-}
 
 
 static void sky_handle_RC_cmd(void)
 {
+    uint8_t data0, data1, data2, data3, data4;
+    data0 = BB_ReadReg(PAGE2, RC_CH_MODE_0);
+    context.rc_skip_freq_mode = (ENUM_RUN_MODE)data0;
+
+    if( context.rc_skip_freq_mode == (ENUM_RUN_MODE)MANUAL)
+    {
+        data1 = BB_ReadReg(PAGE2, RC_FRQ_0);
+        data2 = BB_ReadReg(PAGE2, RC_FRQ_1);
+        data3 = BB_ReadReg(PAGE2, RC_FRQ_2);
+        data4 = BB_ReadReg(PAGE2, RC_FRQ_3);
+
+        if ( context.stru_rcRegs.frq1 != data1 || context.stru_rcRegs.frq2 != data2 || 
+             context.stru_rcRegs.frq3 != data3 || context.stru_rcRegs.frq4 != data4 )
+        {
+            uint32_t u32_rc = ( data1 << 24 ) | ( data2 << 16 ) | ( data3 << 8 ) | ( data4 );
+            BB_write_RcRegs( u32_rc );
+            dlog_info("--Write RC 0x%x", u32_rc);
+        }
+    }
+}
+
+static void sky_handle_IT_cmd(void)
+{
     uint8_t data0, data1, data2, data3;
 
-    data0 = BB_ReadReg(PAGE2, RC_CH_MODE_0);      //(AUTO, MANUAL)
-    data1 = BB_ReadReg(PAGE2, RC_CH_MODE_1);      //(AUTO, MANUAL)
+    data0 = BB_ReadReg(PAGE2, IT_FRQ_0);
+    data1 = BB_ReadReg(PAGE2, IT_FRQ_1);
+    data2 = BB_ReadReg(PAGE2, IT_FRQ_2);
+    data3 = BB_ReadReg(PAGE2, IT_FRQ_3);
 
-    data2 = BB_ReadReg(PAGE2, RC_CH_CHANGE_0);
-    data3 = BB_ReadReg(PAGE2, RC_CH_CHANGE_1);
-
-    if(data0+1 == data1 && data2+1==data3)
+    if ( context.stru_itRegs.frq1 != data0 || context.stru_itRegs.frq2 != data1 || 
+         context.stru_itRegs.frq3 != data2 || context.stru_itRegs.frq4 != data3 )
     {
-        context.rc_skip_freq_mode = (ENUM_RUN_MODE)(data0 & 0x7F);
-        if((ENUM_RUN_MODE)data0 == MANUAL && data0!= 0xFE)
-        {
-            sky_rc_channel = (data0 & 0x7f);
-            BB_set_Rcfrq(context.freq_band, sky_rc_channel);
-            dlog_info("rc_channel: %d \r\n", sky_rc_channel);
-        }
+        uint32_t u32_rc = ( data0 << 24 ) | ( data1 << 16 ) | ( data2 << 8 ) | ( data3 );
+        BB_write_ItRegs( u32_rc );
+        dlog_info("--write IT frq: 0x%x", u32_rc);
     }
 }
 
@@ -794,12 +795,11 @@ static void sky_handle_MCS_cmd(void)
 }
 
 
-
 void sky_handle_all_spi_cmds(void)
 {
     sky_handle_RC_cmd();
 
-    sky_handle_IT_CH_cmd();
+    sky_handle_IT_cmd();
 
     //sky_handle_QAM_cmd();
     
@@ -946,7 +946,6 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 dlog_info("MCS_RC_CODE_RATE_SELECT %x\r\n", value); 
                 break;               
             }
-            
             default:
                 dlog_error("%s\r\n", "unknown WIRELESS_MCS_CHANGE command");
                 break;
@@ -1040,11 +1039,13 @@ static void BB_sky_GatherOSDInfo(void)
     uint8_t u8_data;
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
 
+
     if (osdptr->osd_enable == 0)
     {
         return;
     }
 
+    
     osdptr->messageId = 0x33;
     osdptr->head = 0xff; //starting writing
     osdptr->tail = 0x00;
@@ -1057,8 +1058,12 @@ static void BB_sky_GatherOSDInfo(void)
     osdptr->agc_value[2] = get_rc_status();
     osdptr->agc_value[3] = BB_ReadReg(PAGE2, 0xd7);
     
+    arlink_snr_daq();
     //osdptr->agc_value[2] = BB_ReadReg(PAGE2, RX3_GAIN_ALL_R);
     //osdptr->agc_value[3] = BB_ReadReg(PAGE2, RX4_GAIN_ALL_R);
+    osdptr->snr_vlaue[0] = (((uint16_t)BB_ReadReg(PAGE2, SNR_REG_0)) << 8) | BB_ReadReg(PAGE2, SNR_REG_1);
+    osdptr->snr_vlaue[1] = get_snr_average();
+    
     u8_data = BB_ReadReg(PAGE2, TX_2);
     osdptr->modulation_mode = (u8_data >> 6) & 0x03;
     osdptr->code_rate       = (u8_data >> 0) & 0x07;
@@ -1070,14 +1075,22 @@ static void BB_sky_GatherOSDInfo(void)
     osdptr->lock_status  = get_rc_status();
     osdptr->in_debug     = context.u8_debugMode;
 
+    #if 0
+    {
+        uint8_t buf[8] = {0xaa, 0x55, osdptr->agc_value[3], pre_lockcnt, osdptr->lock_status};
+        BB_UARTComSendMsg(BB_UART_COM_SESSION_0, buf, 8);
+    }
+    #endif
+	
     osdptr->head = 0x00;
     osdptr->tail = 0xff;    //end of the writing
 }
 
+
 void sky_set_auto_search_rc_id(void)
 {
     context.u8_idSrcSel = RC_ID_AUTO_SEARCH;
-    context.dev_state = SEARCH_ID;
+    context.dev_state   = SEARCH_ID;
     search_id_list.count = 0; // completely re-search.
 }
 

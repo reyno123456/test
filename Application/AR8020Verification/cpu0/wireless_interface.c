@@ -559,7 +559,7 @@ uint8_t WIRELESS_INTERFACE_GET_DEV_INFO_Handler(void *param)
     stDeviceInfo            = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)DEVICE_INFO_SHM_ADDR;
 
     stDeviceInfo->messageId = WIRELESS_INTERFACE_GET_DEV_INFO;
-    stDeviceInfo->paramLen  = 9;
+    stDeviceInfo->paramLen  = 28;
 
     dlog_info("WIRELESS_INTERFACE_GET_DEV_INFO_Handler\n");
 
@@ -1487,7 +1487,7 @@ static void Wireless_InsertMsgIntoReplyBuff(STRU_WIRELESS_PARAM_CONFIG_MESSAGE *
     {
         dlog_error("reply buff is full");
         g_stWirelessReply.u8_buffHead = 0;
-        g_stWirelessReply.u8_buffHead = 0;
+        g_stWirelessReply.u8_buffTail = 0;
     }
 
     return;

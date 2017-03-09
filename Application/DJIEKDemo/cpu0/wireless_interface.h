@@ -154,7 +154,7 @@ typedef struct
 {
     uint8_t                     messageId;
     uint8_t                     paramLen;
-    uint8_t                     paramData[18];
+    uint8_t                     paramData[30];
 } STRU_WIRELESS_PARAM_CONFIG_MESSAGE;
 
 
