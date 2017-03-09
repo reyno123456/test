@@ -47,6 +47,8 @@ typedef struct
     unsigned char bitrate;
     unsigned char brc_enable;
     unsigned char src;
+    unsigned char over_flow;
+    unsigned int  bu_cnt;
 } STRU_EncoderStatus;
 
 #endif

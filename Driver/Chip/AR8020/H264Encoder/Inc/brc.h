@@ -58,6 +58,8 @@ struct my_rc{
   int    v0_RCEnableAutoConfigGOP;// @lhu
   int    v0_RCEnableAutoConfigIOPRatio;// @lhu
   int    v0_prev_ac_br_index;// @lhu
+  int    v0_wireless_screen;// @lhu
+  int    v0_PrevRCMinQP;// lhupsnr
 //
   int    v0_gop_cnt;
   int    v0_frame_cnt;
@@ -211,6 +213,8 @@ struct my_rc{
   int    v1_RCEnableAutoConfigGOP;// @lhu
   int    v1_RCEnableAutoConfigIOPRatio;// @lhu
   int    v1_prev_ac_br_index;// @lhu
+  int    v1_wireless_screen;// @lhu
+  int    v1_PrevRCMinQP;// lhupsnr
 //
   int    v1_gop_cnt;
   int    v1_frame_cnt;
@@ -336,8 +340,8 @@ int v0_tbits_tmp,v0_hbits_tmp,v0_fbits_tmp,v0_mad_tmp;
 int v1_tbits_tmp,v1_hbits_tmp,v1_fbits_tmp,v1_mad_tmp;
 int qp;
 int ymsel_tmp, ymseh_tmp; // @lhu
-int64 v0_ymse_iframe,v0_ymse_last_p;
-int64 v1_ymse_iframe,v1_ymse_last_p;
+long long v0_ymse_frame,v0_ymse_iframe,v0_ymse_pframe,v0_ymse_last_p;
+long long v1_ymse_frame,v1_ymse_iframe,v1_ymse_pframe,v1_ymse_last_p;
 Boolean v0_last_p_gop_change;
 Boolean v1_last_p_gop_change;
 int v0_last_p_prev_gop;
@@ -347,38 +351,41 @@ int v0_poweron_rc_params_set,v1_poweron_rc_params_set; //lhuemu
 int aof_v0_frame;
 int aof_v1_frame;
 
-int  my_imin( );
-int  my_iequmin( );
-int  my_imax( );
-int  my_iClip3( );
-int  my_sqrt( );
-int  Qstep2QP_8p( );
-int  QP2Qstep_8p( );
-int  RCAutoConfig_GOP( ); // @lhu
-int  RCAutoConfig_IOverPRatio( ); // @lhu
-void my_rc_ac_br(int); // @lhu
+int  my_imin(int a, int b);
+int  my_iequmin(int a, int b);
+int  my_imax(int a, int b);
+int  my_iClip3(int low, int high, int x);
+int  my_sqrt(int x);
+int  my_sqrt64(int64 x);
+int  Qstep2QP_8p(int Qstep_8p);
+int  QP2Qstep_8p(int QP);
+//int  RCAutoConfig_GOP( ); // @lhu
+//int  RCAutoConfig_IOverPRatio( ); // @lhu
+int RCRaiseMinQP_PSPNBig39(int view, int prev_RCMinQP); //lhupsnr
+void my_rc_ac_br(int view); // @lhu
 
 void my_v0_rc_params( );
-void my_v0_rc_params_ac_gop( ); // @lhu
-void my_v0_rc_params_ac_iopratio( ); // @lhu
+//void my_v0_rc_params_ac_gop( ); // @lhu
+//void my_v0_rc_params_ac_iopratio( ); // @lhu
+void my_v0_rc_raiseminqp_psnrbig39( ); //lhupsnr
 void my_v0_rc_init_seq( );
-void my_v0_rc_init_GOP( );
-void my_v0_rc_init_pict( );
-void my_v0_rc_update_pict( );
+void my_v0_rc_init_GOP(int np);
+void my_v0_rc_init_pict(int mult);
+void my_v0_rc_update_pict(int nbits);
 void my_v0_updatePparams( );
 void my_v0_rc_update_pict_frame( );
 void my_v0_updateRCModel( );
-void my_v0_RCModelEstimator( );
+void my_v0_RCModelEstimator(int n_realSize, int n_windowSize, char *rc_rgRejected);
 void my_v0_updateMADModel( );
-void my_v0_MADModelEstimator( );
+void my_v0_MADModelEstimator(int n_realSize, int n_windowSize, char *mad_rgRejected);
 void my_v0_updateQPNonPicAFF( );
 int  my_v0_updateFirstP( );
-int  my_v0_updateNegativeTarget( );
+int  my_v0_updateNegativeTarget(int m_Qp);
 int  my_v0_updateFirstBU( );
 void my_v0_updateLastBU( );
 void my_v0_predictCurrPicMAD( );
-void my_v0_updateModelQPBU( );
-void my_v0_updateModelQPFrame( );
+void my_v0_updateModelQPBU(int m_Qp);
+void my_v0_updateModelQPFrame(int m_Bits);
 int  my_v0_rc_handle_mb( );
 void my_v0_rc_update_bu_stats( );
 void my_v0_rc_update_frame_stats( );
@@ -396,25 +403,26 @@ int  (*my_v0_updateQP)( );
 // second view sub-function
 void my_v1_rc_params( );
 void my_v1_rc_init_seq( );
-void my_v1_rc_params_ac_gop( ); // @lhu
-void my_v1_rc_params_ac_iopratio( ); // @lhu
-void my_v1_rc_init_GOP( );
-void my_v1_rc_init_pict( );
-void my_v1_rc_update_pict( );
+//void my_v1_rc_params_ac_gop( ); // @lhu
+//void my_v1_rc_params_ac_iopratio( ); // @lhu
+void my_v1_rc_raiseminqp_psnrbig39( ); //lhupsnr
+void my_v1_rc_init_GOP(int np);
+void my_v1_rc_init_pict(int mult);
+void my_v1_rc_update_pict(int nbits);
 void my_v1_updatePparams( );
 void my_v1_rc_update_pict_frame( );
 void my_v1_updateRCModel( );
-void my_v1_RCModelEstimator( );
+void my_v1_RCModelEstimator(int n_realSize, int n_windowSize, char *rc_rgRejected);
 void my_v1_updateMADModel( );
-void my_v1_MADModelEstimator( );
+void my_v1_MADModelEstimator(int n_realSize, int n_windowSize, char *mad_rgRejected);
 void my_v1_updateQPNonPicAFF( );
 int  my_v1_updateFirstP( );
-int  my_v1_updateNegativeTarget( );
+int  my_v1_updateNegativeTarget(int m_Qp);
 int  my_v1_updateFirstBU( );
 void my_v1_updateLastBU( );
 void my_v1_predictCurrPicMAD( );
-void my_v1_updateModelQPBU( );
-void my_v1_updateModelQPFrame( );
+void my_v1_updateModelQPBU(int m_Qp);
+void my_v1_updateModelQPFrame(int m_Bits);
 int  my_v1_rc_handle_mb( );
 void my_v1_rc_update_bu_stats( );
 void my_v1_rc_update_frame_stats( );

@@ -218,17 +218,21 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
                 READ_WORD(V0_TBITS_ADDR,v0_tbits_tmp); //read tbits
                 if(rca.v0_fd_last_row==1) {
                     READ_WORD(V0_ABITS_ADDR,v0_fbits_tmp); //read abits
+                    READ_WORD(V0_YMSEL_ADDR,ymsel_tmp); // read frame's y-mse
+                    READ_WORD(V0_YMSEH_ADDR,ymseh_tmp);
+                    v0_ymse_frame = (((long long)((ymseh_tmp>>24)&0xff)<<32) + ymsel_tmp);
+                    if ((ymseh_tmp>>2)&0x1) rca.v0_wireless_screen=1;
+                    if ((ymseh_tmp>>3)&0x1) my_v0_rc_raiseminqp_psnrbig39();
                     if(rca.v0_fd_iframe==1) {
-                        READ_WORD(V0_YMSEL_ADDR,ymsel_tmp); // read i frame's y-mse
-                        READ_WORD(V0_YMSEH_ADDR,ymseh_tmp);
-                        v0_ymse_iframe = (((int64)((ymseh_tmp>>24)&0xff)<<32) + ymsel_tmp);
+                        v0_ymse_iframe = v0_ymse_frame;
                     }
-                    if(rca.v0_fd_last_p==1) {
-                        READ_WORD(V0_YMSEL_ADDR,ymsel_tmp); //read y-mse
-                        READ_WORD(V0_YMSEH_ADDR,ymseh_tmp);
-                        v0_ymse_last_p = (((int64)((ymseh_tmp>>24)&0xff)<<32) + ymsel_tmp);
-                        //if (ymseh_tmp&0x1) my_v0_rc_params_ac_gop( ); // @lhu, write ac_gop start symbol
-                        //if ((ymseh_tmp>>1)&0x1) my_v0_rc_params_ac_iopratio( ); // @lhu, write ac_iopratio start symbol
+                    else {
+                        v0_ymse_pframe = v0_ymse_frame; //lhuqu2
+                        if (rca.v0_fd_last_p==1) {
+                            v0_ymse_last_p = v0_ymse_frame;
+                            //if (ymseh_tmp&0x1) my_v0_rc_params_ac_gop( ); // @lhu, write ac_gop start symbol
+                            //if ((ymseh_tmp>>1)&0x1) my_v0_rc_params_ac_iopratio( ); // @lhu, write ac_iopratio start symbol
+                        }
                     }
                 }
                 qp = my_v0_rc_handle_mb( ); // update QP once
@@ -266,17 +270,21 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
                 READ_WORD(V1_TBITS_ADDR,v1_tbits_tmp); //read tbits
                 if(rca.v1_fd_last_row==1) {
                     READ_WORD(V1_ABITS_ADDR,v1_fbits_tmp); //read abits
+                    READ_WORD(V1_YMSEL_ADDR,ymsel_tmp); // read frame's y-mse
+                    READ_WORD(V1_YMSEH_ADDR,ymseh_tmp);
+                    v1_ymse_frame = (((long long)((ymseh_tmp>>24)&0xff)<<32) + ymsel_tmp);
+                    if ((ymseh_tmp>>2)&0x1) rca.v1_wireless_screen=1;
+                    if ((ymseh_tmp>>3)&0x1) my_v1_rc_raiseminqp_psnrbig39();
                     if(rca.v1_fd_iframe==1) {
-                        READ_WORD(V1_YMSEL_ADDR,ymsel_tmp); // read i frame's y-mse
-                        READ_WORD(V1_YMSEH_ADDR,ymseh_tmp);
-                        v1_ymse_iframe = (((int64)((ymseh_tmp>>24)&0xff)<<32) + ymsel_tmp);
+                        v1_ymse_iframe = v1_ymse_frame;
                     }
-                    if(rca.v1_fd_last_p==1) {
-                        READ_WORD(V1_YMSEL_ADDR,ymsel_tmp); //read y-mse
-                        READ_WORD(V1_YMSEH_ADDR,ymseh_tmp);
-                        v1_ymse_last_p = (((int64)((ymseh_tmp>>24)&0xff)<<32) + ymsel_tmp);
-                        //if (ymseh_tmp&0x1) my_v1_rc_params_ac_gop( ); // @lhu, write ac_gop start symbol
-                        //if ((ymseh_tmp>>1)&0x1) my_v1_rc_params_ac_iopratio( ); //@ lhu, write ac_iopratio start symbol
+                    else {
+                        v1_ymse_pframe = v1_ymse_frame; //lhuqu2
+                        if(rca.v1_fd_last_p==1) {
+                            v1_ymse_last_p = v1_ymse_frame;
+                            //if (ymseh_tmp&0x1) my_v1_rc_params_ac_gop( ); // @lhu, write ac_gop start symbol
+                            //if ((ymseh_tmp>>1)&0x1) my_v1_rc_params_ac_iopratio( ); //@ lhu, write ac_iopratio start symbol
+                        }
                     }
                 }
                 qp = my_v1_rc_handle_mb( ); // update QP once
@@ -314,17 +322,21 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
                 READ_WORD(V0_TBITS_ADDR,v1_tbits_tmp); //read tbits
                 if(rca.v1_fd_last_row==1) {
                     READ_WORD(V0_ABITS_ADDR,v1_fbits_tmp); //read abits
+                    READ_WORD(V0_YMSEL_ADDR,ymsel_tmp); // read frame's y-mse
+                    READ_WORD(V0_YMSEH_ADDR,ymseh_tmp);
+                    v1_ymse_frame = (((long long)((ymseh_tmp>>24)&0xff)<<32) + ymsel_tmp);
+                    if ((ymseh_tmp>>2)&0x1) rca.v1_wireless_screen=1;
+                    if ((ymseh_tmp>>3)&0x1) my_v1_rc_raiseminqp_psnrbig39();
                     if(rca.v1_fd_iframe==1) {
-                        READ_WORD(V0_YMSEL_ADDR,ymsel_tmp); // read i frame's y-mse
-                        READ_WORD(V0_YMSEH_ADDR,ymseh_tmp);
-                        v1_ymse_iframe = (((int64)((ymseh_tmp>>24)&0xff)<<32) + ymsel_tmp);
+                        v1_ymse_iframe = v1_ymse_frame;
                     }
-                    if(rca.v1_fd_last_p==1) {
-                        READ_WORD(V0_YMSEL_ADDR,ymsel_tmp); //read y-mse
-                        READ_WORD(V0_YMSEH_ADDR,ymseh_tmp);
-                        v1_ymse_last_p = (((int64)((ymseh_tmp>>24)&0xff)<<32) + ymsel_tmp);
-                        //if (ymseh_tmp&0x1) my_v1_rc_params_ac_gop( ); // @lhu, write ac_gop start symbol
-                        //if ((ymseh_tmp>>1)&0x1) my_v1_rc_params_ac_iopratio( ); //@ lhu, write ac_iopratio start symbol
+                    else {
+                        v1_ymse_pframe = v1_ymse_frame; //lhuqu2
+                        if(rca.v1_fd_last_p==1) {
+                            v1_ymse_last_p = v1_ymse_frame;
+                            //if (ymseh_tmp&0x1) my_v1_rc_params_ac_gop( ); // @lhu, write ac_gop start symbol
+                            //if ((ymseh_tmp>>1)&0x1) my_v1_rc_params_ac_iopratio( ); //@ lhu, write ac_iopratio start symbol
+                        }
                     }
                 }
                 qp = my_v1_rc_handle_mb( ); // update QP once
@@ -488,6 +500,7 @@ void my_v0_rc_params( ) {
     rca.v0_fd_iframe  = 0;
     rca.v0_re_bitrate = 0;
     rca.v0_prev_ac_br_index = 0;
+    rca.v0_wireless_screen = 0; // lhu, 2017/02/27
     v0_last_p_gop_change = FALSE; // @lhu, initial value
 
     READ_WORD(V0_FRAME_XY_ADDR,m); //read frame-x & frame-y
@@ -551,118 +564,66 @@ void my_rc_params( ) {
 #ifdef ARMCM7_RC //###########
 //===== Auto-config Bit-Rate =====
 void my_rc_ac_br(int view) {
-    int m;
+    int m, ac_br_index, ac_br;
     int v0_ac_br_index,v0_ac_br;
     int v1_ac_br_index,v1_ac_br;
     if (view==0) {
-      READ_WORD(V0_RC_ACBR_ADDR,m);
-      v0_ac_br_index = (m>>26)&0x3f;
-
-      switch(v0_ac_br_index) {
-        case 0 : v0_ac_br = 8000000 ; break; // 8Mbps
-        case 1 : v0_ac_br = 600000  ; break; // 600kps
-        case 2 : v0_ac_br = 1200000 ; break; // 1.2Mbps
-        case 3 : v0_ac_br = 2400000 ; break; // 2.4Mbps
-        case 4 : v0_ac_br = 3400000 ; break; // 3.4Mbps
-        case 5 : v0_ac_br = 4800000 ; break; // 4.8Mbps
-        case 6 : v0_ac_br = 5000000 ; break; // 5Mbps
-        case 7 : v0_ac_br = 6000000 ; break; // 6Mbps
-        case 8 : v0_ac_br = 7000000 ; break; // 7Mbps
-        case 9 : v0_ac_br = 7500000 ; break; // 7.5Mbps
-        case 10: v0_ac_br = 9000000 ; break; // 9Mbps
-        case 11: v0_ac_br = 10000000; break; // 10Mbps
-        case 12: v0_ac_br = 11000000; break; // 11Mbps
-        case 13: v0_ac_br = 12000000; break; // 12Mbps
-        case 14: v0_ac_br = 13000000; break; // 13Mbps
-        case 15: v0_ac_br = 14000000; break; // 14Mbps
-        case 16: v0_ac_br = 15000000; break; // 15Mbps
-        case 17: v0_ac_br = 16000000; break; // 16Mbps
-        case 18: v0_ac_br = 17000000; break; // 17Mbps
-        case 19: v0_ac_br = 18000000; break; // 18Mbps
-        case 20: v0_ac_br = 19000000; break; // 19Mbps
-        case 21: v0_ac_br = 20000000; break; // 20Mbps
-        case 22: v0_ac_br = 21000000; break; // 21Mbps
-        case 23: v0_ac_br = 22000000; break; // 22Mbps
-        case 24: v0_ac_br = 23000000; break; // 23Mbps
-        case 25: v0_ac_br = 24000000; break; // 24Mbps
-        case 26: v0_ac_br = 25000000; break; // 25Mbps
-        case 27: v0_ac_br = 26000000; break; // 26Mbps
-        case 28: v0_ac_br = 27000000; break; // 27Mbps
-        case 29: v0_ac_br = 28000000; break; // 28Mbps
-        case 30: v0_ac_br = 29000000; break; // 29Mbps
-        case 31: v0_ac_br = 30000000; break; // 30Mbps
-        case 32: v0_ac_br = 31000000; break; // 31Mbps
-        case 33: v0_ac_br = 32000000; break; // 32Mbps
-        case 34: v0_ac_br = 33000000; break; // 32Mbps
-        case 35: v0_ac_br = 34000000; break; // 34Mbps
-        case 36: v0_ac_br = 35000000; break; // 35Mbps
-        case 37: v0_ac_br = 36000000; break; // 36Mbps
-        case 38: v0_ac_br = 37000000; break; // 37Mbps
-        case 39: v0_ac_br = 38000000; break; // 38Mbps
-        case 40: v0_ac_br = 39000000; break; // 39Mbps
-        default: v0_ac_br = 8000000 ; break; // 8Mbps
-      }
-      if (v0_ac_br_index != rca.v0_prev_ac_br_index)
-        WRITE_WORD(V0_BR_ADDR, v0_ac_br);
-      rca.v0_prev_ac_br_index = v0_ac_br_index;
+        READ_WORD(V0_RC_ACBR_ADDR,m);
+        v0_ac_br_index = (m>>26)&0x3f;
+    } else {
+        READ_WORD(V1_RC_ACBR_ADDR,m);
+        v1_ac_br_index = (m>>26)&0x3f;
     }
-    else {
-      READ_WORD(V1_RC_ACBR_ADDR,m);
-      v1_ac_br_index = (m>>26)&0x3f;
+    ac_br_index = (view==0)? v0_ac_br_index: v1_ac_br_index;
 
-      switch(v1_ac_br_index) {
-        case 0 : v1_ac_br = 8000000 ; break; // 8Mbps
-        case 1 : v1_ac_br = 600000  ; break; // 600Kbps
-        case 2 : v1_ac_br = 1200000 ; break; // 1.2Mbps
-        case 3 : v1_ac_br = 2400000 ; break; // 2.4Mbps
-        case 4 : v1_ac_br = 3400000 ; break; // 3.4Mbps
-        case 5 : v1_ac_br = 4800000 ; break; // 4.8Mbps
-        case 6 : v1_ac_br = 5000000 ; break; // 5Mbps
-        case 7 : v1_ac_br = 6000000 ; break; // 6Mbps
-        case 8 : v1_ac_br = 7000000 ; break; // 7Mbps
-        case 9 : v1_ac_br = 7500000 ; break; // 7.5Mbps
-        case 10: v1_ac_br = 9000000 ; break; // 9Mbps
-        case 11: v1_ac_br = 10000000; break; // 10Mbps
-        case 12: v1_ac_br = 11000000; break; // 11Mbps
-        case 13: v1_ac_br = 12000000; break; // 12Mbps
-        case 14: v1_ac_br = 13000000; break; // 13Mbps
-        case 15: v1_ac_br = 14000000; break; // 14Mbps
-        case 16: v1_ac_br = 15000000; break; // 15Mbps
-        case 17: v1_ac_br = 16000000; break; // 16Mbps
-        case 18: v1_ac_br = 17000000; break; // 17Mbps
-        case 19: v1_ac_br = 18000000; break; // 18Mbps
-        case 20: v1_ac_br = 19000000; break; // 19Mbps
-        case 21: v1_ac_br = 20000000; break; // 20Mbps
-        case 22: v1_ac_br = 21000000; break; // 21Mbps
-        case 23: v1_ac_br = 22000000; break; // 22Mbps
-        case 24: v1_ac_br = 23000000; break; // 23Mbps
-        case 25: v1_ac_br = 24000000; break; // 24Mbps
-        case 26: v1_ac_br = 25000000; break; // 25Mbps
-        case 27: v1_ac_br = 26000000; break; // 26Mbps
-        case 28: v1_ac_br = 27000000; break; // 27Mbps
-        case 29: v1_ac_br = 28000000; break; // 28Mbps
-        case 30: v1_ac_br = 29000000; break; // 29Mbps
-        case 31: v1_ac_br = 30000000; break; // 30Mbps
-        case 32: v1_ac_br = 31000000; break; // 31Mbps
-        case 33: v1_ac_br = 32000000; break; // 32Mbps
-        case 34: v1_ac_br = 33000000; break; // 32Mbps
-        case 35: v1_ac_br = 34000000; break; // 34Mbps
-        case 36: v1_ac_br = 35000000; break; // 35Mbps
-        case 37: v1_ac_br = 36000000; break; // 36Mbps
-        case 38: v1_ac_br = 37000000; break; // 37Mbps
-        case 39: v1_ac_br = 38000000; break; // 38Mbps
-        case 40: v1_ac_br = 39000000; break; // 39Mbps
-        default: v1_ac_br = 8000000 ; break; // 8Mbps
-      }
-      if (v1_ac_br_index != rca.v1_prev_ac_br_index)
-        WRITE_WORD(V1_BR_ADDR, v1_ac_br);
-      rca.v1_prev_ac_br_index = v1_ac_br_index;
+    switch(ac_br_index) {
+        case 0 : ac_br = 8000000 ; break; // 8Mbps
+        case 1 : ac_br = 600000  ; break; // 600kps
+        case 2 : ac_br = 1200000 ; break; // 1.2Mbps
+        case 3 : ac_br = 2400000 ; break; // 2.4Mbps
+        case 4 : ac_br = 3000000 ; break; // 3Mbps
+        case 5 : ac_br = 3500000 ; break; // 3.5Mbps
+        case 6 : ac_br = 4000000 ; break; // 4Mbps
+        case 7 : ac_br = 4800000 ; break; // 4.8Mbps
+        case 8 : ac_br = 5000000 ; break; // 5Mbps
+        case 9 : ac_br = 6000000 ; break; // 6Mbps
+        case 10: ac_br = 7000000 ; break; // 7Mbps
+        case 11: ac_br = 7500000 ; break; // 7.5Mbps
+        case 12: ac_br = 9000000 ; break; // 9Mbps
+        case 13: ac_br = 10000000; break; // 10Mbps
+        case 14: ac_br = 11000000; break; // 11Mbps
+        case 15: ac_br = 12000000; break; // 12Mbps
+        case 16: ac_br = 13000000; break; // 13Mbps
+        case 17: ac_br = 14000000; break; // 14Mbps
+        case 18: ac_br = 15000000; break; // 15Mbps
+        case 19: ac_br = 16000000; break; // 16Mbps
+        case 20: ac_br = 17000000; break; // 17Mbps
+        case 21: ac_br = 18000000; break; // 18Mbps
+        case 22: ac_br = 19000000; break; // 19Mbps
+        case 23: ac_br = 20000000; break; // 20Mbps
+        case 24: ac_br = 21000000; break; // 21Mbps
+        case 25: ac_br = 22000000; break; // 22Mbps
+        case 26: ac_br = 23000000; break; // 23Mbps
+        case 27: ac_br = 24000000; break; // 24Mbps
+        case 28: ac_br = 25000000; break; // 25Mbps
+        case 29: ac_br = 26000000; break; // 26Mbps
+        case 30: ac_br = 27000000; break; // 27Mbps
+        case 31: ac_br = 28000000; break; // 28Mbps
+        case 32: ac_br = 29000000; break; // 29Mbps
+        case 33: ac_br = 30000000; break; // 30Mbps
+        default: ac_br = 8000000 ; break; // 8Mbps
+    }
+    if (view==0) {
+        if (v0_ac_br_index != rca.v0_prev_ac_br_index)
+            WRITE_WORD(V0_BR_ADDR, ac_br);
+        rca.v0_prev_ac_br_index = v0_ac_br_index;
+    } else {
+        if (v1_ac_br_index != rca.v1_prev_ac_br_index)
+            WRITE_WORD(V1_BR_ADDR, ac_br);
+        rca.v1_prev_ac_br_index = v1_ac_br_index;
     }
 }
-
-
-//===== Auto-config GOP based on sub-function of RCAutoConfig_GOP =====
-#if 0
+/*===== Auto-config GOP based on sub-function of RCAutoConfig_GOP =====
 void my_v0_rc_params_ac_gop( ) {
     int i,j,m,v0_autoconfig_gop;
 
@@ -797,7 +758,7 @@ void my_v0_rc_params_ac_iopratio( ) {
 
     if (rca.v0_rc_enable==1 && rca.v0_RCUpdateMode==RC_MODE_3) {
         v0_ac_iopratio = RCAutoConfig_IOverPRatio(rca.v0_width, rca.v0_height, rca.v0_bit_rate, rca.v0_RCIoverPRatio, v0_ymse_iframe, v0_ymse_last_p);
-    rca.v0_RCIoverPRatio = v0_ac_iopratio;
+        rca.v0_RCIoverPRatio = v0_ac_iopratio;
         READ_WORD(V0_QP_ADDR, i);
         WRITE_WORD(V0_QP_ADDR, (((i>>16)<<16)+(v0_ac_iopratio<<8)+(i&0xff)));
     }
@@ -887,8 +848,43 @@ int RCAutoConfig_IOverPRatio (int w, int h, int bit_rate, int iopratio, int64 im
     }
 
     return rc_ac_iopratio;
+}*/
+
+//===== raise the MinQP value when psnr >=39db =====
+void my_v0_rc_raiseminqp_psnrbig39( ) { // lhupsnr
+    int i,j,m;
+
+    READ_WORD(V0_FRAME_XY_ADDR,m); //read frame-x & frame-y
+        i=(m>>16)&0xffff;
+        j=m&0xffff;
+        rca.v0_width = i;
+        rca.v0_height = j;
+
+    READ_WORD(V0_RCEN_BU_ADDR,i); //read rc_en, rc_mode & bu
+        rca.v0_rc_enable = (i>>24)&0x1;
+        rca.v0_RCUpdateMode = (i>>16)&0x3;
+
+    if (rca.v0_rc_enable==1 && rca.v0_RCUpdateMode==RC_MODE_3) {
+        rca.v0_RCMinQP = RCRaiseMinQP_PSPNBig39(0, rca.v0_PrevRCMinQP);
+    }
 }
-#endif
+int RCRaiseMinQP_PSPNBig39(int view, int prev_RCMinQP) {
+    long long whm255square,m;
+    int frame_divider, RC_tuneMinQP, RC_MinQP;
+    if (view==0) {
+        whm255square = (long long)(rca.v0_width*255)*(long long)(rca.v0_height*255);
+        frame_divider = (int)(whm255square/v0_ymse_frame);
+    } else {
+        whm255square = (long long)(rca.v1_width*255)*(long long)(rca.v1_height*255);
+        frame_divider = (int)(whm255square/v1_ymse_frame);
+    }
+    if (view==0) {READ_WORD(V0_RCSET1_ADDR,m); RC_MinQP = (m>>8)&0x3f;}
+    else         {READ_WORD(V1_RCSET1_ADDR,m); RC_MinQP = (m>>8)&0x3f;}
+    //psnr=40.0db, divider=10^4.00=10000
+    if (frame_divider>=10000) RC_tuneMinQP = my_imin((prev_RCMinQP+3), (RC_MinQP+3));
+    else                      RC_tuneMinQP = RC_MinQP;
+    return RC_tuneMinQP;
+}
 #endif  //###########
 
 void my_v0_rc_init_seq( )
@@ -987,6 +983,7 @@ void my_v0_rc_init_seq( )
   {
     rca.v0_m_rgQp_8p[i] = 0;
     rca.v0_m_rgRp_8p[i] = 0;
+    rca.v0_m_rgRp_8prr8[i] = 0;
     rca.v0_rc_tmp0[i] = 0;
     rca.v0_rc_tmp1[i] = 0;
     rca.v0_rc_tmp2[i] = 0;
@@ -1037,6 +1034,7 @@ void my_v0_rc_init_GOP(int np)
   int OverBits,denom;
   int GOPDquant;
   int gop_bits;
+  int v0_RCISliceTargetBits,v0_RCISliceBitsLow,v0_RCISliceBitsHigh,v0_RCISliceBitsLow2,v0_RCISliceBitsHigh2,v0_RCISliceBitsLow4,v0_RCISliceBitsHigh4,v0_RCISliceBitsLow8,v0_RCISliceBitsHigh8; // lhuqu1
 
     //if(rca.v0_RCUpdateMode != RC_MODE_0) {// lhugop
     //  my_v0_rc_init_seq( );
@@ -1045,23 +1043,24 @@ void my_v0_rc_init_GOP(int np)
     if(rca.v0_RCUpdateMode == RC_MODE_3) // running this only once !!!
     {
         // calculate allocated bits for each type of frame
-        gop_bits = (!rca.v0_intra_period? 1:rca.v0_intra_period) * (rca.v0_bit_rate/rca.v0_framerate);
-        denom = 1;
-        
-        if(rca.v0_intra_period>=1)
-        {
-            denom *= rca.v0_intra_period;
-            denom += rca.v0_RCISliceBitRatio - 1;
-        }
+        //69 gop_bits = rca.v0_no_frm_base * rca.v0_frame_bs;
+        gop_bits = (!rca.v0_intra_period? 1:rca.v0_intra_period)*(rca.v0_bit_rate/rca.v0_framerate);
+        //69 denom = 1;
+        //69
+        //69 if(rca.intra_period>=1)
+        //69 {
+        //69     denom *= rca.intra_period;
+        //69     denom += rca.RCISliceBitRatio - 1;
+        //69 }
+        denom = (!rca.v0_intra_period? 1:rca.v0_intra_period) + rca.v0_RCISliceBitRatio - 1;
+
         // set bit targets for each type of frame
 //18      rca.RCPSliceBits = (int)floor(gop_bits/denom + 0.5F);
         rca.v0_RCPSliceBits = gop_bits/denom ;
         rca.v0_RCISliceBits = (rca.v0_intra_period)? (rca.v0_RCISliceBitRatio * rca.v0_RCPSliceBits) : 0;
 
-        //rca.v0_NISlice = (rca.v0_intra_period)? (rca.v0_no_frm_base/rca.v0_intra_period):0; // totoal I-frame number
-        //rca.v0_NPSlice = rca.v0_no_frm_base - rca.v0_NISlice;
-        rca.v0_NISlice = 1;//lhugop, only one I frame in one GOP
-        rca.v0_NPSlice = rca.v0_intra_period - rca.v0_NISlice;//lhugop
+        rca.v0_NISlice = (rca.v0_intra_period)? (rca.v0_intra_period/rca.v0_intra_period):0; // totoal I-frame number
+        rca.v0_NPSlice = rca.v0_intra_period - rca.v0_NISlice;
     }
 
     // check if the last GOP over uses its budget. If yes, the initial QP of the I frame in
@@ -1076,7 +1075,7 @@ void my_v0_rc_init_GOP(int np)
 
     //compute the total number of bits for the current GOP
     gop_bits = (1+np)*(rca.v0_bit_rate/rca.v0_framerate);
-    rca.v0_RemainingBits += gop_bits;
+    rca.v0_RemainingBits = gop_bits;//+= gop_bits; // set remainingbits as gop_bits at beginning of gop, lhu, 2017/02/08
     rca.v0_Np = np;
 
     //  OverDuantQp=(int)(8 * OverBits/gop_bits+0.5);
@@ -1114,8 +1113,30 @@ void my_v0_rc_init_GOP(int np)
         if(rca.v0_PAverageQp > (rca.v0_QPLastPFrame-2))
             rca.v0_PAverageQp--;
 
-        // QP is constrained by QP of previous QP
-        rca.v0_PAverageQp = my_iClip3(rca.v0_QPLastGOP-2, rca.v0_QPLastGOP+2, rca.v0_PAverageQp);
+        if(rca.v0_RCUpdateMode == RC_MODE_3) {
+            // lhuqu1, Determine the threshold windows for ISliceBits based on RCISliceBitRatio value
+            v0_RCISliceTargetBits = gop_bits * rca.v0_RCISliceBitRatio/(rca.v0_RCISliceBitRatio+(rca.v0_intra_period-1));
+            v0_RCISliceBitsLow    = v0_RCISliceTargetBits*9/10;
+            v0_RCISliceBitsHigh   = v0_RCISliceTargetBits*11/10;
+            v0_RCISliceBitsLow2   = v0_RCISliceTargetBits*8/10;
+            v0_RCISliceBitsHigh2  = v0_RCISliceTargetBits*12/10;
+            v0_RCISliceBitsLow4   = v0_RCISliceTargetBits*6/10;
+            v0_RCISliceBitsHigh4  = v0_RCISliceTargetBits*14/10;
+            v0_RCISliceBitsLow8   = v0_RCISliceTargetBits*2/10;
+            v0_RCISliceBitsHigh8  = v0_RCISliceTargetBits*18/10;
+            if(rca.v0_RCISliceActualBits  <= v0_RCISliceBitsLow8)                                                              rca.v0_PAverageQp = rca.v0_QPLastGOP-6;
+            else if((v0_RCISliceBitsLow8  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsLow4))  rca.v0_PAverageQp = rca.v0_QPLastGOP-4;
+            else if((v0_RCISliceBitsLow4  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsLow2))  rca.v0_PAverageQp = rca.v0_QPLastGOP-2;
+            else if((v0_RCISliceBitsLow2  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsLow))   rca.v0_PAverageQp = rca.v0_QPLastGOP-1;
+            else if((v0_RCISliceBitsLow   < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsHigh))  rca.v0_PAverageQp = rca.v0_QPLastGOP;
+            else if((v0_RCISliceBitsHigh  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsHigh2)) rca.v0_PAverageQp = rca.v0_QPLastGOP+1;
+            else if((v0_RCISliceBitsHigh2 < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsHigh4)) rca.v0_PAverageQp = rca.v0_QPLastGOP+2;
+            else if((v0_RCISliceBitsHigh4 < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsHigh8)) rca.v0_PAverageQp = rca.v0_QPLastGOP+4;
+            else if(rca.v0_RCISliceActualBits > v0_RCISliceBitsHigh8)                                                          rca.v0_PAverageQp = rca.v0_QPLastGOP+6;
+        } else {
+            // QP is constrained by QP of previous QP
+            rca.v0_PAverageQp = my_iClip3(rca.v0_QPLastGOP-2, rca.v0_QPLastGOP+2, rca.v0_PAverageQp);
+        }
         #ifdef JM_RC_DUMP
         #ifdef USE_MY_RC
         // rc-related debugging info dump, lhulhu
@@ -1144,7 +1165,7 @@ void my_v0_rc_init_pict(int mult)
   int i,tmp_T;
 
     //if ( rca.v0_type==P_SLICE ) //g1|| (rca.RCUpdateMode==RC_MODE_1 &&(rca.gop_cnt!=0 || rca.frame_cnt!=0)) ) // (rca.number !=0)
-    if ( rca.v0_type==P_SLICE || ((rca.v0_RCUpdateMode==RC_MODE_1 || (rca.v0_type==I_SLICE&&rca.v0_RCUpdateMode==RC_MODE_3)) && (!(rca.v0_gop_cnt==0 && rca.v0_frame_cnt==0))) ) // lhulhu
+    if ( rca.v0_type==P_SLICE || ((rca.v0_RCUpdateMode==RC_MODE_1 || (rca.v0_type==I_SLICE&&rca.v0_RCUpdateMode==RC_MODE_3)) && (!(rca.v0_gop_cnt==0 && rca.v0_frame_cnt==0))) ) // lhuitune
     {
       //// for CBR ...
       if(rca.v0_PrevBitRate!=rca.v0_bit_rate)
@@ -1208,11 +1229,9 @@ void my_v0_rc_init_pict(int mult)
     // Compute the target bit for each frame
     if(rca.v0_type==P_SLICE || ((rca.v0_gop_cnt!=0 || rca.v0_frame_cnt!=0) && (rca.v0_RCUpdateMode==RC_MODE_1 || rca.v0_RCUpdateMode==RC_MODE_3)))
     {
-       // frame layer rate control
-       if(rca.v0_BasicUnit==rca.v0_FrameSizeInMbs || (rca.v0_RCUpdateMode==RC_MODE_3) )
-       {
-          if(rca.v0_NumberofCodedPFrame>0)
-          {
+        // frame layer rate control
+        if((rca.v0_BasicUnit>=rca.v0_FrameSizeInMbs || (rca.v0_RCUpdateMode==RC_MODE_3)) && (rca.v0_NumberofCodedPFrame>0))
+        {
             if(rca.v0_RCUpdateMode == RC_MODE_3)
             {
                 int bitrate = (rca.v0_type==P_SLICE)? rca.v0_RCPSliceBits:rca.v0_RCISliceBits;
@@ -1227,7 +1246,7 @@ void my_v0_rc_init_pict(int mult)
                 tmp_T = my_imax(0, (bitrate-((rca.v0_CurrentBufferFullness-rca.v0_TargetBufferLevel)>>1)));
 
                 if(rca.v0_type == I_SLICE) {
-                    //rca.v0_Target = rca.v0_Target/(rca.v0_RCIoverPRatio<<2); //lhulhu
+                    //rca.v0_Target = rca.v0_Target/(rca.v0_RCIoverPRatio); //lhulhu
                 }
             }
             else
@@ -1238,8 +1257,7 @@ void my_v0_rc_init_pict(int mult)
 //s              rca.Target = ((rca.Target-tmp_T)/rca.BETAP) + tmp_T;
                 rca.v0_Target = (rca.v0_Target+tmp_T)>>1;
             }
-          }
-      }
+        }
       // basic unit layer rate control
       else
       {
@@ -1254,6 +1272,7 @@ void my_v0_rc_init_pict(int mult)
         }
       }
       rca.v0_Target = mult * rca.v0_Target;
+      //rca.v0_Target = (mult * rca.v0_Target * 95)/100; // discount the pict target, lhutar
 
       // HRD consideration
       if(rca.v0_RCUpdateMode!=RC_MODE_3 || rca.v0_type==P_SLICE)
@@ -1283,6 +1302,7 @@ void my_v0_rc_init_pict(int mult)
       rca.v0_TotalMADBasicUnit = 0;
     }
     rca.v0_PrevBitRate = rca.v0_bit_rate; // lhumod
+    rca.v0_PrevRCMinQP = rca.v0_RCMinQP; // lhupsnr
 }
 
 
@@ -1308,6 +1328,9 @@ void my_v0_rc_update_pict(int nbits) // after frame running once
     }
   }
 /////////////////////////////////////////////////////
+  if (rca.v0_RCUpdateMode==RC_MODE_3 && rca.v0_type==I_SLICE) { // lhugop, save bits number for I_SLICE every gop
+    rca.v0_RCISliceActualBits = nbits;
+  }
 
   delta_bits=nbits - (rca.v0_bit_rate/rca.v0_framerate);
   // remaining # of bits in GOP
@@ -1354,7 +1377,7 @@ void my_v0_updateRCModel ( )
     rca.v0_codedbu_cnt = rca.v0_bu_cnt;
 
   //if(rca.v0_type==P_SLICE)//g1 || (rca.v0_RCUpdateMode==RC_MODE_1 && (rca.v0_gop_cnt!=0 || rca.v0_frame_cnt!=0)) ) //(rca.v0_number != 0)
-  if( rca.v0_type==P_SLICE || ((rca.v0_RCUpdateMode==RC_MODE_1 || (rca.v0_type==I_SLICE&&rca.v0_RCUpdateMode==RC_MODE_3)) && (!(rca.v0_gop_cnt==0&&rca.v0_frame_cnt==0))) ) //lhulhu
+  if( rca.v0_type==P_SLICE || ((rca.v0_RCUpdateMode==RC_MODE_1 || (rca.v0_type==I_SLICE&&rca.v0_RCUpdateMode==RC_MODE_3)) && (!(rca.v0_gop_cnt==0&&rca.v0_frame_cnt==0))) ) //lhuitune
   {
     //frame layer rate control
     if(rca.v0_BasicUnit >= rca.v0_FrameSizeInMbs)
@@ -1424,7 +1447,8 @@ void my_v0_updateRCModel ( )
     rca.v0_rc_tmp1[0] = (1<<24)/(rca.v0_m_rgQp_8p[0]>>4);
     rca.v0_rc_tmp4[0] = (rca.v0_m_rgQp_8p[0]>>4)*(rca.v0_m_rgQp_8p[0]>>4);
     rca.v0_rc_tmp2[0] = (1<<28)/rca.v0_rc_tmp4[0];
-    rca.v0_rc_tmp3[0] = (rca.v0_m_rgQp_8p[0]>>8)*(rca.v0_m_rgRp_8p[0]>>8);
+    rca.v0_m_rgRp_8prr8[0] = rca.v0_m_rgRp_8p[0]>>8;
+    rca.v0_rc_tmp3[0] = (rca.v0_m_rgQp_8p[0]>>8)*rca.v0_m_rgRp_8prr8[0];;
     rca.v0_m_X1_8p = rca.v0_Pm_X1_8p;
     rca.v0_m_X2_8p = rca.v0_Pm_X2_8p;
 
@@ -1451,7 +1475,7 @@ void my_v0_updateRCModel ( )
     for(i=0; i<n_windowSize; i++)
     {
 //a     error_4p[i] = rca.v0_m_X1_8p/rca.v0_m_rgQp_8p[i] + (rca.v0_m_X2_8p)/((rca.v0_m_rgQp_8p[i]>>4)*(rca.v0_m_rgQp_8p[i]>>4)) - (rca.v0_m_rgRp_8p[i]>>8);
-        error_0p[i] = rca.v0_m_X1_8p/rca.v0_m_rgQp_8p[i] + (rca.v0_m_X2_8p/rca.v0_rc_tmp4[i]) - (rca.v0_m_rgRp_8p[i]>>8);
+        error_0p[i] = rca.v0_m_X1_8p/rca.v0_m_rgQp_8p[i] + (rca.v0_m_X2_8p/rca.v0_rc_tmp4[i]) - rca.v0_m_rgRp_8prr8[i];
         std_0p += error_0p[i]*error_0p[i];
     }
 
@@ -1479,31 +1503,36 @@ void my_v0_updateRCModel ( )
 }
 
 
-
 void my_v0_RCModelEstimator (int n_realSize, int n_windowSize, char *rc_rgRejected)
 {
   int i;
   Boolean estimateX2 = FALSE;
   unsigned int  a00_20p=0,a01_20p=0,a11_20p=0,b0_0p=0,b1_0p=0;
   long long  MatrixValue_20p;
+  int sum_rc_tmp0=0;
 
-  // default RD model estimation results
-  rca.v0_m_X1_8p = 0;
-  rca.v0_m_X2_8p = 0;
+    // default RD model estimation results
+    rca.v0_m_X1_8p = 0;
+    rca.v0_m_X2_8p = 0;
 
-  for(i=0;i<n_windowSize;i++) {// if all non-rejected Q are the same, take 1st order model
-    if((rca.v0_m_rgQp_8p[i]!=rca.v0_m_rgQp_8p[0]) && !rc_rgRejected[i]) {
-      estimateX2 = TRUE;
-      if(n_realSize>=1)
-        break;
+    for(i=0;i<n_windowSize;i++) // if all non-rejected Q are the same, take 1st order model
+    {
+        if(!rc_rgRejected[i])
+        {
+            if((rca.v0_m_rgQp_8p[i]!=rca.v0_m_rgQp_8p[0]))
+            {
+                estimateX2 = TRUE;
+                break;
+            }
+            sum_rc_tmp0 += rca.v0_rc_tmp0[i]; // ((rca.v0_m_rgQp_8p[i]>>4) * (rca.v0_m_rgRp_8p[i]>>4));
+        }
     }
-    if(!rc_rgRejected[i])
-//a      rca.m_X1_8p += ((rca.m_rgQp_8p[i]>>4) * (rca.m_rgRp_8p[i]>>4)) / n_realSize;
-      rca.v0_m_X1_8p += rca.v0_rc_tmp0[i] / n_realSize;
-  }
+    if(estimateX2==FALSE)
+        rca.v0_m_X1_8p = sum_rc_tmp0/n_realSize;
+
 
   // take 2nd order model to estimate X1 and X2
-  if ((n_realSize >= 1) && estimateX2)
+  if(estimateX2)
   {
     a00_20p = n_realSize<<20;
     for (i = 0; i < n_windowSize; i++)
@@ -1513,7 +1542,7 @@ void my_v0_RCModelEstimator (int n_realSize, int n_windowSize, char *rc_rgReject
         a01_20p += rca.v0_rc_tmp1[i];
         a11_20p += rca.v0_rc_tmp2[i];
         b0_0p   += rca.v0_rc_tmp3[i];
-        b1_0p   += rca.v0_m_rgRp_8p[i]>>8;
+        b1_0p   += rca.v0_m_rgRp_8prr8[i];
       }
     }
     MatrixValue_20p = (((long long)a00_20p*(long long)a11_20p)-((long long)a01_20p*(long long)a01_20p)+(1<<19))>>20;
@@ -1530,7 +1559,7 @@ void my_v0_RCModelEstimator (int n_realSize, int n_windowSize, char *rc_rgReject
   }
 
   //if(rca.v0_type==P_SLICE)//g1 || (rca.v0_RCUpdateMode==RC_MODE_1 && (rca.v0_gop_cnt!=0 || rca.v0_frame_cnt!=0))) //(rca.v0_number != 0)
-  if( rca.v0_type==P_SLICE || ((rca.v0_RCUpdateMode==RC_MODE_1 || (rca.v0_type==I_SLICE&&rca.v0_RCUpdateMode==RC_MODE_3)) && (!(rca.v0_gop_cnt==0&&rca.v0_frame_cnt==0))) ) //lhulhu
+  if( rca.v0_type==P_SLICE || ((rca.v0_RCUpdateMode==RC_MODE_1 || (rca.v0_type==I_SLICE&&rca.v0_RCUpdateMode==RC_MODE_3)) && (!(rca.v0_gop_cnt==0&&rca.v0_frame_cnt==0))) ) //lhuitune
   {
     rca.v0_Pm_X1_8p = rca.v0_m_X1_8p;
     rca.v0_Pm_X2_8p = rca.v0_m_X2_8p;
@@ -1546,6 +1575,7 @@ void my_v0_updateMADModel( )
   static int error_8p[RC_MODEL_HISTORY];
   long long std_16p=0;
   int threshold_8p;
+  int MADPictureC2_12prr4;
 
   if(rca.v0_NumberofCodedPFrame>0)
   {
@@ -1599,19 +1629,20 @@ void my_v0_updateMADModel( )
 
     //update the MAD for the previous frame
     //if(rca.v0_type==P_SLICE) {//g1 || (rca.v0_RCUpdateMode==RC_MODE_1 && (rca.v0_gop_cnt!=0 || rca.v0_frame_cnt!=0)))//(rca.v0_number != 0)
-    if( rca.v0_type==P_SLICE || ((rca.v0_RCUpdateMode==RC_MODE_1 || (rca.v0_type==I_SLICE&&rca.v0_RCUpdateMode==RC_MODE_3)) && (!(rca.v0_gop_cnt==0&&rca.v0_frame_cnt==0))) ) {//lhulhu
-      if (rca.v0_CurrentMAD_8p==0) rca.v0_PreviousMAD_8p=(1<<8);// lhumad, make fake for dividing by zero when PreviousMAD equal to 0
+    if( rca.v0_type==P_SLICE || ((rca.v0_RCUpdateMode==RC_MODE_1 || (rca.v0_type==I_SLICE&&rca.v0_RCUpdateMode==RC_MODE_3)) && (!(rca.v0_gop_cnt==0&&rca.v0_frame_cnt==0))) ) {//lhuitune
+      if (rca.v0_CurrentMAD_8p==0) rca.v0_PreviousMAD_8p=1;// lhumad, make fake for dividing by zero when PreviousMAD equal to 0
       else                         rca.v0_PreviousMAD_8p = rca.v0_CurrentMAD_8p;
     }
 
     // initial MAD model estimator
     my_v0_MADModelEstimator (n_windowSize, n_windowSize, rca.v0_mad_rgRejected);
 
+    MADPictureC2_12prr4 = rca.v0_MADPictureC2_12p>>4;
     // remove outlier
     for (i = 0; i < n_windowSize; i++)
     {
       //error[i] = rca.v0_MADPictureC1 * rca.v0_ReferenceMAD[i] + rca.v0_MADPictureC2 - rca.v0_PictureMAD[i];
-      error_8p[i] = ((rca.v0_MADPictureC1_12p*rca.v0_ReferenceMAD_8p[i])>>12) + (rca.v0_MADPictureC2_12p>>4) - rca.v0_PictureMAD_8p[i];
+      error_8p[i] = ((rca.v0_MADPictureC1_12p*rca.v0_ReferenceMAD_8p[i])>>12) + MADPictureC2_12prr4 - rca.v0_PictureMAD_8p[i];
       std_16p += error_8p[i]*error_8p[i];
     }
 
@@ -1621,8 +1652,10 @@ void my_v0_updateMADModel( )
     for(i=1; i<n_windowSize; i++)
     {
       if(abs(error_8p[i]) > threshold_8p)
+      {
         rca.v0_mad_rgRejected[i] = TRUE;
         n_realSize--;
+      }
     }
 
     // second MAD model estimator
@@ -1634,57 +1667,63 @@ void my_v0_updateMADModel( )
 void my_v0_MADModelEstimator(int n_realSize, int n_windowSize, char *mad_rgRejected)
 {
   int     i;
-//2  int     oneSampleQ_8p=0;
-  int     MatrixValue_4p;
+  long long MatrixValue_20p; // change 4p to 20p, lhu, 2017/02/23
   Boolean estimateX2=FALSE;
-  unsigned int a00_8p=0,a01_8p=0,a11_8p=0,b0_8p=0,b1_8p=0; //b
+  unsigned int a00_20p=0,a01_20p=0,a11_20p=0,b0_8p=0,b1_8p=0; // change 8p to 20p, lhu, 2017/02/23
 
     // default MAD model estimation results
     rca.v0_MADPictureC1_12p = 0;
     rca.v0_MADPictureC2_12p = 0;
     rca.v0_c1_over = 0;
 
-    for(i=0;i<n_windowSize;i++) {// if all non-rejected MAD are the same, take 1st order model
-        if((rca.v0_PictureMAD_8p[i]!=rca.v0_PictureMAD_8p[0]) && !mad_rgRejected[i])
+    for(i=0;i<n_windowSize;i++) // if all non-rejected MAD are the same, take 1st order model
+    {
+        if(!mad_rgRejected[i])
         {
-            estimateX2 = TRUE;
-            if(n_realSize>=1)
-                break;
-        }
-        if(!mad_rgRejected[i]) {
-//b            rca.MADPictureC1_12p += ((rca.PictureMAD_8p[i]<<12) / rca.ReferenceMAD_8p[i]) /n_realSize;
-            rca.v0_MADPictureC1_12p += rca.v0_mad_tmp0[i]/n_realSize;
+            if(rca.v0_PictureMAD_8p[i]!=rca.v0_PictureMAD_8p[0])
+            {
+                estimateX2 = TRUE;
+                    break;
+            }
+            rca.v0_MADPictureC1_12p += rca.v0_mad_tmp0[i]; // ((rca.v0_PictureMAD_8p[i]<<12) / rca.v0_ReferenceMAD_8p[i]) /n_realSize;
             if(rca.v0_mad_tmp0_valid[i] == 0)
                 rca.v0_c1_over = 1;
         }
     }
+    if(estimateX2==FALSE)
+        rca.v0_MADPictureC1_12p = rca.v0_MADPictureC1_12p/n_realSize;
 
     // take 2nd order model to estimate X1 and X2
-    if((n_realSize>=1) && estimateX2) {
-
-        a00_8p = n_realSize<<8;
-        for(i=0;i<n_windowSize;i++) {
-            if(!mad_rgRejected[i]) {
-                a01_8p += rca.v0_ReferenceMAD_8p[i];
-                a11_8p += rca.v0_mad_tmp1[i];
+    if(estimateX2)
+    {
+        a00_20p = n_realSize<<20; // change 8 to 20, lhu, 2017/02/23
+        for(i=0;i<n_windowSize;i++)
+        {
+            if(!mad_rgRejected[i])
+            {
+                a01_20p += (rca.v0_ReferenceMAD_8p[i]<<12); // change 8p to 20p, lhu, 2017/02/23
+                a11_20p += (rca.v0_mad_tmp1[i]<<12); // change 8p to 20p, lhu, 2017/02/23
                 b0_8p  += rca.v0_PictureMAD_8p[i];
-                b1_8p  += rca.v0_mad_tmp2[i];
-           }
+                b1_8p  += rca.v0_mad_tmp2[i]; // (rca.v0_PictureMAD_8p[i]>>4)*(rca.v0_ReferenceMAD_8p[i]>>4);
+            }
         }
         // solve the equation of AX = B
-        MatrixValue_4p = ((long long)a00_8p*(long long)a11_8p - (long long)a01_8p*(long long)a01_8p + (1<<11))>>12;
+        MatrixValue_20p = ((long long)a00_20p*(long long)a11_20p - (long long)a01_20p*(long long)a01_20p + (1<<19))>>20; // change 4p to 20p, lhu, 2017/02/23
 
-        if(MatrixValue_4p != 0) { //if(fabs(MatrixValue) > 0.000001)
-            rca.v0_MADPictureC2_12p = ((long long)b0_8p*(long long)a11_8p - (long long)b1_8p*(long long)a01_8p)/MatrixValue_4p;
-            rca.v0_MADPictureC1_12p = ((long long)b1_8p*(long long)a00_8p - (long long)b0_8p*(long long)a01_8p)/MatrixValue_4p;
+        //if(MatrixValue_4p != 0)  //if(fabs(MatrixValue) > 0.000001)
+        if(abs(MatrixValue_20p) > 1)  // change 4p to 20p, lhu, 2017/02/23
+        {
+            rca.v0_MADPictureC2_12p = (((long long)b0_8p*(long long)a11_20p - (long long)b1_8p*(long long)a01_20p)<<4)/MatrixValue_20p;
+            rca.v0_MADPictureC1_12p = (((long long)b1_8p*(long long)a00_20p - (long long)b0_8p*(long long)a01_20p)<<4)/MatrixValue_20p;
         }
-        else {
-            if (a01_8p==0) {// lhumad, make fake for dividing by zero when a01_8p equal to 0
-                rca.v0_MADPictureC1_12p = (long long)b0_8p<<12;
+        else
+        {
+            if (a01_20p==0) {// lhumad, make fake for dividing by zero when a01_20p equal to 0
+                rca.v0_MADPictureC1_12p = ((long long)b0_8p)<<4;
                 rca.v0_cmadequ0 = 1;
             }
             else {
-                rca.v0_MADPictureC1_12p = ((long long)b0_8p<<12)/a01_8p;
+                rca.v0_MADPictureC1_12p = (((long long)b0_8p)<<24)/(long long)a01_20p; // lhu, 2017/02/23
                 rca.v0_cmadequ0 = 0;
             }
             rca.v0_MADPictureC2_12p = 0;
@@ -1692,7 +1731,7 @@ void my_v0_MADModelEstimator(int n_realSize, int n_windowSize, char *mad_rgRejec
         rca.v0_c1_over = 0;
     }
     //if(rca.v0_type==P_SLICE)//g1 || (rca.v0_RCUpdateMode==RC_MODE_1 && (rca.v0_gop_cnt!=0 || rca.v0_frame_cnt!=0)))  //(rca.v0_number != 0)
-    if( rca.v0_type==P_SLICE || ((rca.v0_RCUpdateMode==RC_MODE_1 || (rca.v0_type==I_SLICE&&rca.v0_RCUpdateMode==RC_MODE_3)) && (!(rca.v0_gop_cnt==0&&rca.v0_frame_cnt==0))) ) //lhulhu
+    if( rca.v0_type==P_SLICE || ((rca.v0_RCUpdateMode==RC_MODE_1 || (rca.v0_type==I_SLICE&&rca.v0_RCUpdateMode==RC_MODE_3)) && (!(rca.v0_gop_cnt==0&&rca.v0_frame_cnt==0))) ) //lhuitune
     {
         rca.v0_PMADPictureC1_12p = rca.v0_MADPictureC1_12p;
         rca.v0_PMADPictureC2_12p = rca.v0_MADPictureC2_12p;
@@ -1714,6 +1753,7 @@ void my_v0_hold( )
             rca.v0_rc_tmp2[i] = rca.v0_rc_tmp2[i-1];
             rca.v0_rc_tmp3[i] = rca.v0_rc_tmp3[i-1];
             rca.v0_rc_tmp4[i] = rca.v0_rc_tmp4[i-1];
+            rca.v0_m_rgRp_8prr8[i] = rca.v0_m_rgRp_8prr8[i-1];
         }
         for(i=0; i<(RC_MODEL_HISTORY-1); i++)
             rca.v0_rc_rgRejected[i] = FALSE;
@@ -1856,7 +1896,6 @@ int my_v0_updateQPRC0( )
 //////////////////////////////////////////////////////////////////////////////////////
 // \brief
 //    compute a  quantization parameter for each frame
-//
 //////////////////////////////////////////////////////////////////////////////////////
 int my_v0_updateQPRC1( )
 {
@@ -1992,7 +2031,7 @@ int my_v0_updateQPRC3( )
 
   /* frame layer rate control */
   //if(rca.v0_BasicUnit == rca.v0_FrameSizeInMbs || rca.v0_type != P_SLICE )
-  if( rca.v0_BasicUnit == rca.v0_FrameSizeInMbs ) //lhulhu
+  if( rca.v0_BasicUnit == rca.v0_FrameSizeInMbs ) //lhuitune
   {
       if(rca.v0_gop_cnt==0 && rca.v0_frame_cnt==0) // (rca.v0_number == 0)
       {
@@ -2030,7 +2069,8 @@ int my_v0_updateQPRC3( )
 
         /* predict the MAD of current picture*/
 //20        rca.v0_CurrentMAD=rca.v0_MADPictureC1*rca.v0_PreviousPictureMAD + rca.v0_MADPictureC2;
-        rca.v0_CurrentMAD_8p=(rca.v0_MADPictureC1_12p*rca.v0_PreviousPictureMAD_8p)/(1<<12) + rca.v0_MADPictureC2_12p/(1<<4);
+//30        rca.v0_CurrentMAD_8p=(rca.v0_MADPictureC1_12p*rca.v0_PreviousPictureMAD_8p)/(1<<12) + rca.v0_MADPictureC2_12p/(1<<4);
+        rca.v0_CurrentMAD_8p=(rca.v0_MADPictureC1_12p>>8)*(rca.v0_PreviousPictureMAD_8p>>4) + (rca.v0_MADPictureC2_12p>>4);
 
         /*compute the number of bits for the texture*/
         if(rca.v0_Target < 0)
@@ -2052,7 +2092,6 @@ int my_v0_updateQPRC3( )
             m_Bits = my_imax(m_Bits, (int)(rca.v0_bit_rate/(MINVALUE*rca.v0_framerate)));
           }
           my_v0_updateModelQPFrame( m_Bits );
-
           rca.v0_m_Qc = my_iClip3(rca.v0_RCMinQP, rca.v0_RCMaxQP, rca.v0_m_Qc); // clipping
           if (rca.v0_type == P_SLICE )
             rca.v0_m_Qc = my_iClip3(m_Qp-MaxQpChange, m_Qp+MaxQpChange, rca.v0_m_Qc); // control variation
@@ -2073,7 +2112,7 @@ int my_v0_updateQPRC3( )
       return rca.v0_m_Qc;
     }
     //else if( rca.v0_type == P_SLICE )
-    else if( rca.v0_type == P_SLICE || rca.v0_type == I_SLICE ) //lhulhu
+    else if( rca.v0_type == P_SLICE || rca.v0_type == I_SLICE ) //lhuitune
     {
       if(rca.v0_gop_cnt==0 && rca.v0_frame_cnt==1) // ((rca.v0_NumberofGOP==1)&&(rca.v0_NumberofPPicture==0)) // gop==0; frameP==0
       {
@@ -2121,7 +2160,7 @@ int my_v0_updateQPRC3( )
             rca.v0_TotalFrameQP +=rca.v0_m_Qc;
             rca.v0_Pm_Qp=rca.v0_m_Qc;
             //if((rca.v0_bu_cnt==(rca.v0_TotalNumberofBasicUnit-1)) && rca.v0_type==P_SLICE)
-            if((rca.v0_bu_cnt==(rca.v0_TotalNumberofBasicUnit-1)) && (rca.v0_type==P_SLICE || rca.v0_type==I_SLICE) ) //lhulhu
+            if((rca.v0_bu_cnt==(rca.v0_TotalNumberofBasicUnit-1)) && (rca.v0_type==P_SLICE || rca.v0_type==I_SLICE) ) //lhuitune
               my_v0_updateLastBU( );
 
             return rca.v0_m_Qc;
@@ -2170,9 +2209,14 @@ int my_v0_updateNegativeTarget( int m_Qp )
     rca.v0_m_Qc=m_Qp+rca.v0_DDquant;//2
 
   rca.v0_m_Qc = my_imin(rca.v0_m_Qc, rca.v0_RCMaxQP);  // clipping
-  if(rca.v0_basicunit>=rca.v0_MBPerRow)
-    rca.v0_m_Qc = my_imin(rca.v0_m_Qc, rca.v0_PAveFrameQP+6);
-  else
+  if(rca.v0_basicunit>=rca.v0_MBPerRow) {
+    if (rca.v0_wireless_screen!=1) { // added by lhu, 2017/02/27
+      if (rca.v0_type == P_SLICE) rca.v0_m_Qc = my_imin(rca.v0_m_Qc, rca.v0_PAveFrameQP+10); // change +6 to +10, lhu, 2017/01/26
+      else                        rca.v0_m_Qc = my_imin(rca.v0_m_Qc, rca.v0_PAveFrameQP+6); // lower QP change range for I slice, lhu, 2017/02/07
+    } else { // added by lhu, 2017/02/27
+      rca.v0_m_Qc = my_imin(rca.v0_m_Qc, rca.v0_PAveFrameQP+6);
+    }
+  } else
     rca.v0_m_Qc = my_imin(rca.v0_m_Qc, rca.v0_PAveFrameQP+3);
 
   rca.v0_TotalFrameQP +=rca.v0_m_Qc;
@@ -2182,7 +2226,7 @@ int my_v0_updateNegativeTarget( int m_Qp )
     PAverageQP=(rca.v0_TotalFrameQP+(rca.v0_TotalNumberofBasicUnit>>1))/rca.v0_TotalNumberofBasicUnit;
     if(rca.v0_frame_cnt==(rca.v0_intra_period-1)) //(rca.v0_NumberofPPicture == (rca.v0_intra_period - 2))
       rca.v0_QPLastPFrame = PAverageQP;
-    if (rca.v0_type == P_SLICE) // not increase TotalQpforPPicture for I_SLICE, lhulhu
+    if (rca.v0_type == P_SLICE) // not increase TotalQpforPPicture for I_SLICE, lhuitune
       rca.v0_TotalQpforPPicture +=PAverageQP;
     rca.v0_PAveFrameQP=PAverageQP;
     rca.v0_PAveHeaderBits3=rca.v0_PAveHeaderBits2;
@@ -2225,28 +2269,59 @@ void my_v0_updateLastBU( )
   PAverageQP=(rca.v0_TotalFrameQP+(rca.v0_TotalNumberofBasicUnit>>1))/rca.v0_TotalNumberofBasicUnit;
   if(rca.v0_frame_cnt==(rca.v0_intra_period-1)) // (rca.v0_NumberofPPicture == (rca.v0_intra_period - 2))  last P_FRAME in gop
     rca.v0_QPLastPFrame = PAverageQP;
-  if (rca.v0_type == P_SLICE) // not increase TotalQpforPPicture for I_SLICE, lhulhu
+  if (rca.v0_type == P_SLICE) // not increase TotalQpforPPicture for I_SLICE, lhuitune
     rca.v0_TotalQpforPPicture +=PAverageQP;
   rca.v0_PAveFrameQP=PAverageQP;
   rca.v0_PAveHeaderBits3=rca.v0_PAveHeaderBits2;
 }
 
 
+void my_v0_updateModelQPFrame( int m_Bits )
+{
+  long long dtmp_8p, qstep_tmp;
+  int tmp_4p=0;
+  int m_Qstep_8p;
+
+  //dtmp_8p = (rca.v0_CurrentMAD_8p>>6)*(rca.v0_m_X1_8p>>6)*(rca.v0_CurrentMAD_8p>>6)*(rca.v0_m_X1_8p>>6) + \
+  //    4*(rca.v0_m_X2_8p>>4)*(rca.v0_CurrentMAD_8p>>4)*m_Bits;
+  dtmp_8p = ((long long)rca.v0_CurrentMAD_8p>>6)*((long long)rca.v0_CurrentMAD_8p>>6)*((long long)rca.v0_m_X1_8p>>6)*((long long)rca.v0_m_X1_8p>>6) + \
+      4*((long long)rca.v0_m_X2_8p>>4)*((long long)rca.v0_CurrentMAD_8p>>4)*m_Bits;
+
+  if(dtmp_8p>0)
+      tmp_4p = my_sqrt64(dtmp_8p);
+
+  if((rca.v0_m_X2_8p==0) || (dtmp_8p<0) || ((tmp_4p-((rca.v0_m_X1_8p>>6)*(rca.v0_CurrentMAD_8p>>6)))<=0))
+  {
+    //m_Qstep = (float)((rca.v0_m_X1*rca.v0_CurrentMAD) / (double) m_Bits);
+    m_Qstep_8p = ((rca.v0_m_X1_8p>>4)*(rca.v0_CurrentMAD_8p>>4)) / m_Bits;
+  }
+  else // 2nd order mode
+  {
+    //m_Qstep = (float)((2*rca.v0_m_X2_8p*rca.v0_CurrentMAD_8p)/(sqrt(dtmp)*(1<<16) - rca.v0_m_X1_8p*rca.v0_CurrentMAD_8p));
+    qstep_tmp = (2*((long long)rca.v0_m_X2_8p)*((long long)rca.v0_CurrentMAD_8p)) / ((tmp_4p<<4) - (rca.v0_m_X1_8p>>4)*(rca.v0_CurrentMAD_8p>>4));
+    m_Qstep_8p = qstep_tmp;
+  }
+
+  rca.v0_m_Qc = Qstep2QP_8p(m_Qstep_8p);
+}
+
+
 void my_v0_predictCurrPicMAD( )
 {
-    int i,CurrentBUMAD_8p;
+    int i,CurrentBUMAD_8p,MADPictureC1_12prr4,MADPictureC2_12prr4;
 
-    //rca.CurrentMAD=rca.MADPictureC1*rca.BUPFMAD[rca.bu_cnt]+rca.MADPictureC2;
-//s    rca.CurrentMAD_8p=((rca.MADPictureC1_12p>>4)*((*(pp_BUPFMAD_8p+rca.bu_cnt))>>8)) + (rca.MADPictureC2_12p>>4);
-	rca.v0_CurrentMAD_8p=((rca.v0_MADPictureC1_12p>>4)*(rca.v0_BUPFMAD_8p[rca.v0_bu_cnt]>>8)) + (rca.v0_MADPictureC2_12p>>4);
+    MADPictureC1_12prr4 = rca.v0_MADPictureC1_12p>>4;
+    MADPictureC2_12prr4 = rca.v0_MADPictureC2_12p>>4;
+
+    //rca.v0_CurrentMAD=rca.v0_MADPictureC1*rca.v0_BUPFMAD[rca.v0_bu_cnt]+rca.v0_MADPictureC2;
+    rca.v0_CurrentMAD_8p=(MADPictureC1_12prr4*(rca.v0_BUPFMAD_8p[rca.v0_bu_cnt]>>8)) + MADPictureC2_12prr4;
     rca.v0_TotalBUMAD_12p=0;
 
     for(i=rca.v0_TotalNumberofBasicUnit-1; i>=rca.v0_bu_cnt; i--)
     {
-      //CurrentBUMAD = rca.MADPictureC1*rca.BUPFMAD[i]+rca.MADPictureC2;
-//s      CurrentBUMAD_8p = ((rca.MADPictureC1_12p>>4)*((*(pp_BUPFMAD_8p+i))>>8)) + (rca.MADPictureC2_12p>>4);
-	  CurrentBUMAD_8p = ((rca.v0_MADPictureC1_12p>>4)*(rca.v0_BUPFMAD_8p[i]>>8)) + (rca.v0_MADPictureC2_12p>>4);
-      rca.v0_TotalBUMAD_12p += (CurrentBUMAD_8p*CurrentBUMAD_8p)>>4;
+        //CurrentBUMAD = rca.v0_MADPictureC1*rca.v0_BUPFMAD[i]+rca.v0_MADPictureC2;
+        CurrentBUMAD_8p = (MADPictureC1_12prr4*(rca.v0_BUPFMAD_8p[i]>>8)) + MADPictureC2_12prr4;
+        rca.v0_TotalBUMAD_12p += (CurrentBUMAD_8p*CurrentBUMAD_8p)>>4;
     }
 }
 
@@ -2291,15 +2366,23 @@ void my_v0_updateModelQPBU( int m_Qp )
   }
 
   rca.v0_m_Qc = Qstep2QP_8p(m_Qstep_8p);
-  rca.v0_m_Qc = my_imin(m_Qp+rca.v0_DDquant,  rca.v0_m_Qc); // control variation
-
-  if(rca.v0_basicunit>=rca.v0_MBPerRow)
-    rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+6, rca.v0_m_Qc);
-  else
+  //use the Qc by R-D model when non-wireless-screen application, lhu, 2017/02/27
+  if (rca.v0_wireless_screen==1) // added by lhu, 2017/02/27
+    rca.v0_m_Qc = my_imin(m_Qp+rca.v0_DDquant,  rca.v0_m_Qc); // control variation
+  
+  if(rca.v0_basicunit>=rca.v0_MBPerRow) {
+  	if (rca.v0_wireless_screen!=1) { // added by lhu, 2017/02/27
+      if (rca.v0_type == P_SLICE) rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+10, rca.v0_m_Qc); // change +6 to +10, lhu, 2017/01/24
+      else                        rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+6, rca.v0_m_Qc); // lower QP change range for I slice, lhu, 2017/02/07
+    } else { // added by lhu, 2017/02/27
+      rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+6, rca.v0_m_Qc);
+    }
+  } else
     rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+3, rca.v0_m_Qc);
 
-  if(rca.v0_c1_over==1 || rca.v0_cmadequ0==1) // lhumad
-    rca.v0_m_Qc = my_imin(m_Qp-rca.v0_DDquant, rca.v0_RCMaxQP); // clipping
+  if(rca.v0_c1_over==1)
+    //rca.v0_m_Qc = my_imin(m_Qp-rca.v0_DDquant, rca.v0_RCMaxQP); // clipping
+    rca.v0_m_Qc = my_imin(m_Qp+rca.v0_DDquant, rca.v0_RCMaxQP-10); // not letting QP decrease when MAD equal 0, 2017/02/21
   else
     rca.v0_m_Qc = my_iClip3(m_Qp-rca.v0_DDquant, rca.v0_RCMaxQP, rca.v0_m_Qc); // clipping
 
@@ -2311,32 +2394,6 @@ void my_v0_updateModelQPBU( int m_Qp )
   rca.v0_m_Qc = my_imax(rca.v0_RCMinQP, rca.v0_m_Qc);
 }
 
-
-void my_v0_updateModelQPFrame( int m_Bits )
-{
-  long long dtmp_8p;
-  int tmp_4p=0;
-  int m_Qstep_8p;
-
-  dtmp_8p = ((long long)rca.v0_CurrentMAD_8p>>6)*((long long)rca.v0_CurrentMAD_8p>>6)*((long long)rca.v0_m_X1_8p>>6)*((long long)rca.v0_m_X1_8p>>6) + \
-      4*((long long)rca.v0_m_X2_8p>>4)*((long long)rca.v0_CurrentMAD_8p>>4)*m_Bits;
-
-  if(dtmp_8p>0)
-      tmp_4p = my_sqrt64(dtmp_8p);
-
-  if((rca.v0_m_X2_8p==0) || (dtmp_8p<0) || ((tmp_4p-((rca.v0_m_X1_8p>>6)*(rca.v0_CurrentMAD_8p>>6)))<=0))
-  {
-    //m_Qstep = (float)((rca.v0_m_X1*rca.v0_CurrentMAD) / (double) m_Bits);
-    m_Qstep_8p = ((rca.v0_m_X1_8p>>4)*(rca.v0_CurrentMAD_8p>>4)) / m_Bits;
-  }
-  else // 2nd order mode
-  {
-    //m_Qstep = (float)((2*rca.v0_m_X2_8p*rca.v0_CurrentMAD_8p)/(sqrt(dtmp)*(1<<16) - rca.v0_m_X1_8p*rca.v0_CurrentMAD_8p));
-    m_Qstep_8p = (2*((long long)rca.v0_m_X2_8p)*((long long)rca.v0_CurrentMAD_8p)) / ((tmp_4p<<4) - (rca.v0_m_X1_8p>>4)*(rca.v0_CurrentMAD_8p>>4));
-  }
-
-  rca.v0_m_Qc = Qstep2QP_8p(m_Qstep_8p);
-}
 
 #ifdef ARMCM7_RC //#########
 void my_v0_rc_update_bu_stats( ) {
@@ -2401,23 +2458,16 @@ void my_rc_update_frame_stats( )
 
 void my_v0_rc_init_gop_params( )
 {
-    int np;
-
-    if(rca.v0_RCUpdateMode==RC_MODE_1 || rca.v0_RCUpdateMode==RC_MODE_3)
+    if(rca.v0_RCUpdateMode==RC_MODE_1)
     {
-        if(rca.v0_frame_cnt==0 && rca.v0_bu_cnt==0) //
-        {
-            np = rca.v0_intra_period - 1;
-            my_v0_rc_init_GOP( np );
-        }
+        //if((rca.gop_cnt==0 && rca.frame_cnt==0) || ((rca.gop_cnt*rca.intra_period)==rca.no_frm_base))
+        if(rca.v0_frame_cnt==0 && rca.v0_bu_cnt==0)
+            my_v0_rc_init_GOP( rca.v0_no_frm_base - 1 );
     }
-    else if((rca.v0_RCUpdateMode==RC_MODE_0)|(rca.v0_RCUpdateMode==RC_MODE_2))
+    else if((rca.v0_RCUpdateMode==RC_MODE_0)|(rca.v0_RCUpdateMode==RC_MODE_2)|(rca.v0_RCUpdateMode==RC_MODE_3))
     {
         if(rca.v0_frame_cnt==0 && rca.v0_bu_cnt==0) // && rca.mb_cnt==0)
-        {
-            np = rca.v0_intra_period - 1;
-            my_v0_rc_init_GOP( np );
-        }
+            my_v0_rc_init_GOP( rca.v0_intra_period - 1 );
     }
 }
 
@@ -2480,12 +2530,12 @@ int my_v0_rc_handle_mb( )
     {
         // each I or B frame has only one QP
         //if(rca.v0_type==I_SLICE)//g1 && rca.RCUpdateMode!=RC_MODE_1) || (rca.gop_cnt==0 && rca.frame_cnt==0)) //!(rca.number)
-        if(rca.v0_gop_cnt==0 && rca.v0_frame_cnt==0) //lhulhu, let non RC_MODE_1 can handle I_SLICE
+        if(rca.v0_gop_cnt==0 && rca.v0_frame_cnt==0) //lhuitune
         {
             rca.v0_qp = rca.v0_MyInitialQp;
         }
         //else if (rca.v0_type == P_SLICE) //g1 || rca.RCUpdateMode == RC_MODE_1 )
-        else if (rca.v0_type == P_SLICE || rca.v0_RCUpdateMode==RC_MODE_1 || (rca.v0_type==I_SLICE && rca.v0_RCUpdateMode==RC_MODE_3)) //lhulhu
+        else if (rca.v0_type == P_SLICE || rca.v0_RCUpdateMode==RC_MODE_1 || (rca.v0_type==I_SLICE && rca.v0_RCUpdateMode==RC_MODE_3)) //lhuitune
         {
             // compute the quantization parameter for each basic unit of P frame
             if(rca.v0_bu_cnt!=0) // && rca.mb_cnt==0)
@@ -2507,8 +2557,8 @@ int my_v0_rc_handle_mb( )
             if(rca.v0_frame_cnt==(rca.v0_intra_period-1))
             {
                 rca.v0_frame_cnt=0;
-                if(rca.v0_gop_cnt<=1000)
-                    rca.v0_gop_cnt++;
+                //if(rca.v0_gop_cnt<=1000)
+                rca.v0_gop_cnt++;
             }
             else
                 rca.v0_frame_cnt++;
@@ -2521,8 +2571,8 @@ int my_v0_rc_handle_mb( )
         if(rca.v0_frame_cnt==(rca.v0_intra_period-1))
         {
             rca.v0_frame_cnt=0;
-            if(rca.v0_gop_cnt<=1000)
-                rca.v0_gop_cnt++;
+            //if(rca.v0_gop_cnt<=1000)
+            rca.v0_gop_cnt++;
         }
         else
             rca.v0_frame_cnt++;
@@ -2568,6 +2618,7 @@ void my_v1_rc_params( ) {
     rca.v1_fd_iframe    = 0;
     rca.v1_re_bitrate = 0;
     rca.v1_prev_ac_br_index = 0;
+    rca.v1_wireless_screen = 0; // lhu, 2017/02/27
     v1_last_p_gop_change = FALSE; //@lhu, initial value
 
     READ_WORD(V1_FRAME_XY_ADDR,m); //read frame-x & frame-y
@@ -2629,8 +2680,7 @@ void my_rc_params( ) {
 #endif //###########
 
 #ifdef ARMCM7_RC  //###########
-#if 0
-//===== Auto-config GOP based on sub-function of RCAutoConfig_GOP =====
+/*===== Auto-config GOP based on sub-function of RCAutoConfig_GOP =====
 void my_v1_rc_params_ac_gop( ) {
     int i,j,m,v1_autoconfig_gop;
 
@@ -2674,12 +2724,30 @@ void my_v1_rc_params_ac_iopratio( ) {
 
     if (rca.v1_rc_enable==1 && rca.v1_RCUpdateMode==RC_MODE_3) {
         v1_ac_iopratio = RCAutoConfig_IOverPRatio(rca.v1_width, rca.v1_height, rca.v1_bit_rate, rca.v1_RCIoverPRatio, v1_ymse_iframe, v1_ymse_last_p);
-    rca.v1_RCIoverPRatio = v1_ac_iopratio;
+        rca.v1_RCIoverPRatio = v1_ac_iopratio;
         READ_WORD(V1_QP_ADDR, i);
         WRITE_WORD(V1_QP_ADDR, (((i>>16)<<16)+(v1_ac_iopratio<<8)+(i&0xff)));
     }
+}*/
+
+//===== raise the MinQP value when psnr >=39db =====
+void my_v1_rc_raiseminqp_psnrbig39( ) { // lhupsnr
+    int i,j,m;
+
+    READ_WORD(V1_FRAME_XY_ADDR,m); //read frame-x & frame-y
+        i=(m>>16)&0xffff;
+        j=m&0xffff;
+        rca.v1_width = i;
+        rca.v1_height = j;
+
+    READ_WORD(V1_RCEN_BU_ADDR,i); //read rc_en, rc_mode & bu
+        rca.v1_rc_enable = (i>>24)&0x1;
+        rca.v1_RCUpdateMode = (i>>16)&0x3;
+
+    if (rca.v1_rc_enable==1 && rca.v1_RCUpdateMode==RC_MODE_3) {
+        rca.v1_RCMinQP = RCRaiseMinQP_PSPNBig39(1, rca.v1_PrevRCMinQP);
+    }
 }
-#endif
 #endif //###########
 
 
@@ -2779,6 +2847,7 @@ void my_v1_rc_init_seq( )
   {
     rca.v1_m_rgQp_8p[i] = 0;
     rca.v1_m_rgRp_8p[i] = 0;
+    rca.v1_m_rgRp_8prr8[i] = 0;
     rca.v1_rc_tmp0[i] = 0;
     rca.v1_rc_tmp1[i] = 0;
     rca.v1_rc_tmp2[i] = 0;
@@ -2829,6 +2898,7 @@ void my_v1_rc_init_GOP(int np)
   int OverBits,denom;
   int GOPDquant;
   int gop_bits;
+  int v1_RCISliceTargetBits,v1_RCISliceBitsLow,v1_RCISliceBitsHigh,v1_RCISliceBitsLow2,v1_RCISliceBitsHigh2,v1_RCISliceBitsLow4,v1_RCISliceBitsHigh4,v1_RCISliceBitsLow8,v1_RCISliceBitsHigh8; // lhuqu1
 
     //if(rca.v1_RCUpdateMode != RC_MODE_0) {// lhugop
     //  my_v1_rc_init_seq( );
@@ -2837,23 +2907,24 @@ void my_v1_rc_init_GOP(int np)
     if(rca.v1_RCUpdateMode == RC_MODE_3) // running this only once !!!
     {
         // calculate allocated bits for each type of frame
-        gop_bits = (!rca.v1_intra_period? 1:rca.v1_intra_period)* (rca.v1_bit_rate/rca.v1_framerate);
-        denom = 1;
-        
-        if(rca.v1_intra_period>=1)
-        {
-            denom *= rca.v1_intra_period;
-            denom += rca.v1_RCISliceBitRatio - 1;
-        }
+        //69 gop_bits = rca.v1_no_frm_base * rca.v1_frame_bs;
+        gop_bits = (!rca.v1_intra_period? 1:rca.v1_intra_period)*(rca.v1_bit_rate/rca.v1_framerate);
+        //69 denom = 1;
+        //69
+        //69 if(rca.intra_period>=1)
+        //69 {
+        //69     denom *= rca.intra_period;
+        //69     denom += rca.RCISliceBitRatio - 1;
+        //69 }
+        denom = (!rca.v1_intra_period? 1:rca.v1_intra_period) + rca.v1_RCISliceBitRatio - 1;
+
         // set bit targets for each type of frame
 //18      rca.RCPSliceBits = (int)floor(gop_bits/denom + 0.5F);
         rca.v1_RCPSliceBits = gop_bits/denom ;
         rca.v1_RCISliceBits = (rca.v1_intra_period)? (rca.v1_RCISliceBitRatio * rca.v1_RCPSliceBits) : 0;
 
-        //rca.v1_NISlice = (rca.v1_intra_period)? (rca.v1_no_frm_base/rca.v1_intra_period):0; // totoal I-frame number
-        //rca.v1_NPSlice = rca.v1_no_frm_base - rca.v1_NISlice;
-        rca.v1_NISlice = 1;//lhugop, only one I frame in one GOP
-        rca.v1_NPSlice = rca.v1_intra_period - rca.v1_NISlice;//lhugop
+        rca.v1_NISlice = (rca.v1_intra_period)? (rca.v1_intra_period/rca.v1_intra_period):0; // totoal I-frame number
+        rca.v1_NPSlice = rca.v1_intra_period - rca.v1_NISlice;
     }
 
     // check if the last GOP over uses its budget. If yes, the initial QP of the I frame in
@@ -2868,7 +2939,7 @@ void my_v1_rc_init_GOP(int np)
 
     //compute the total number of bits for the current GOP
     gop_bits = (1+np)*(rca.v1_bit_rate/rca.v1_framerate);
-    rca.v1_RemainingBits += gop_bits;
+    rca.v1_RemainingBits = gop_bits; //+= gop_bits; // set remainingbits as gop_bits at beginning of gop, lhu, 2017/02/08
     rca.v1_Np = np;
 
     //  OverDuantQp=(int)(8 * OverBits/gop_bits+0.5);
@@ -2905,8 +2976,31 @@ void my_v1_rc_init_GOP(int np)
 
         if(rca.v1_PAverageQp > (rca.v1_QPLastPFrame-2))
             rca.v1_PAverageQp--;
-        // QP is constrained by QP of previous QP
-        rca.v1_PAverageQp = my_iClip3(rca.v1_QPLastGOP-2, rca.v1_QPLastGOP+2, rca.v1_PAverageQp);
+
+        if(rca.v1_RCUpdateMode == RC_MODE_3) {
+            // lhuqu1, Determine the threshold windows for ISliceBits based on RCISliceBitRatio value
+            v1_RCISliceTargetBits = gop_bits * rca.v1_RCISliceBitRatio/(rca.v1_RCISliceBitRatio+(rca.v1_intra_period-1));
+            v1_RCISliceBitsLow    = v1_RCISliceTargetBits*9/10;
+            v1_RCISliceBitsHigh   = v1_RCISliceTargetBits*11/10;
+            v1_RCISliceBitsLow2   = v1_RCISliceTargetBits*8/10;
+            v1_RCISliceBitsHigh2  = v1_RCISliceTargetBits*12/10;
+            v1_RCISliceBitsLow4   = v1_RCISliceTargetBits*6/10;
+            v1_RCISliceBitsHigh4  = v1_RCISliceTargetBits*14/10;
+            v1_RCISliceBitsLow8   = v1_RCISliceTargetBits*2/10;
+            v1_RCISliceBitsHigh8  = v1_RCISliceTargetBits*18/10;
+            if(rca.v1_RCISliceActualBits  <= v1_RCISliceBitsLow8)                                                              rca.v1_PAverageQp = rca.v1_QPLastGOP-6;
+            else if((v1_RCISliceBitsLow8  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsLow4))  rca.v1_PAverageQp = rca.v1_QPLastGOP-4;
+            else if((v1_RCISliceBitsLow4  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsLow2))  rca.v1_PAverageQp = rca.v1_QPLastGOP-2;
+            else if((v1_RCISliceBitsLow2  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsLow))   rca.v1_PAverageQp = rca.v1_QPLastGOP-1;
+            else if((v1_RCISliceBitsLow   < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsHigh))  rca.v1_PAverageQp = rca.v1_QPLastGOP;
+            else if((v1_RCISliceBitsHigh  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsHigh2)) rca.v1_PAverageQp = rca.v1_QPLastGOP+1;
+            else if((v1_RCISliceBitsHigh2 < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsHigh4)) rca.v1_PAverageQp = rca.v1_QPLastGOP+2;
+            else if((v1_RCISliceBitsHigh4 < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsHigh8)) rca.v1_PAverageQp = rca.v1_QPLastGOP+4;
+            else if(rca.v1_RCISliceActualBits > v1_RCISliceBitsHigh8)                                                          rca.v1_PAverageQp = rca.v1_QPLastGOP+6;
+        } else {
+            // QP is constrained by QP of previous QP
+            rca.v1_PAverageQp = my_iClip3(rca.v1_QPLastGOP-2, rca.v1_QPLastGOP+2, rca.v1_PAverageQp);
+        }
         #ifdef JM_RC_DUMP
         #ifdef USE_MY_RC
         // rc-related debugging info dump, lhulhu
@@ -2935,7 +3029,7 @@ void my_v1_rc_init_pict(int mult)
   int i,tmp_T;
 
     //if ( rca.v1_type==P_SLICE ) //g1|| (rca.RCUpdateMode==RC_MODE_1 &&(rca.gop_cnt!=0 || rca.frame_cnt!=0)) ) // (rca.number !=0)
-    if ( rca.v1_type==P_SLICE || ((rca.v1_RCUpdateMode==RC_MODE_1 || (rca.v1_type==I_SLICE&&rca.v1_RCUpdateMode==RC_MODE_3)) && (!(rca.v1_gop_cnt==0 && rca.v1_frame_cnt==0))) ) // lhulhu
+    if ( rca.v1_type==P_SLICE || ((rca.v1_RCUpdateMode==RC_MODE_1 || (rca.v1_type==I_SLICE&&rca.v1_RCUpdateMode==RC_MODE_3)) && (!(rca.v1_gop_cnt==0 && rca.v1_frame_cnt==0))) ) // lhuitune
     {
       //// for CBR ...
       if(rca.v1_PrevBitRate!=rca.v1_bit_rate)
@@ -3000,10 +3094,8 @@ void my_v1_rc_init_pict(int mult)
     if(rca.v1_type==P_SLICE || ((rca.v1_gop_cnt!=0 || rca.v1_frame_cnt!=0) && (rca.v1_RCUpdateMode==RC_MODE_1 || rca.v1_RCUpdateMode==RC_MODE_3))) //(rca.number != 0)
     {
         // frame layer rate control
-        if(rca.v1_BasicUnit==rca.v1_FrameSizeInMbs || (rca.v1_RCUpdateMode==RC_MODE_3) )
+        if((rca.v1_BasicUnit>=rca.v1_FrameSizeInMbs || (rca.v1_RCUpdateMode==RC_MODE_3)) && (rca.v1_NumberofCodedPFrame>0))
         {
-          if(rca.v1_NumberofCodedPFrame>0)
-          {
             if(rca.v1_RCUpdateMode == RC_MODE_3)
             {
                 int bitrate = (rca.v1_type==P_SLICE)? rca.v1_RCPSliceBits:rca.v1_RCISliceBits;
@@ -3018,7 +3110,7 @@ void my_v1_rc_init_pict(int mult)
                 tmp_T = my_imax(0, (bitrate-((rca.v1_CurrentBufferFullness-rca.v1_TargetBufferLevel)>>1)));
 
                 if(rca.v1_type == I_SLICE) {
-                    //rca.v1_Target = rca.v1_Target/(rca.v1_RCIoverPRatio<<2);// lhulhu
+                    //rca.v1_Target = rca.v1_Target/(rca.v1_RCIoverPRatio);// lhulhu
                 }
             }
             else
@@ -3029,8 +3121,7 @@ void my_v1_rc_init_pict(int mult)
 //s              rca.Target = ((rca.Target-tmp_T)/rca.BETAP) + tmp_T;
                 rca.v1_Target = (rca.v1_Target+tmp_T)>>1;
             }
-         }
-      }
+        }
       // basic unit layer rate control
       else
       {
@@ -3045,6 +3136,7 @@ void my_v1_rc_init_pict(int mult)
         }
       }
       rca.v1_Target = mult * rca.v1_Target;
+      //rca.v1_Target = (mult * rca.v1_Target * 95)/100; // discount the pict target, lhutar
 
       // HRD consideration
       if(rca.v1_RCUpdateMode!=RC_MODE_3 || rca.v1_type==P_SLICE)
@@ -3074,6 +3166,7 @@ void my_v1_rc_init_pict(int mult)
       rca.v1_TotalMADBasicUnit = 0;
     }
     rca.v1_PrevBitRate = rca.v1_bit_rate; //lhumod
+    rca.v1_PrevRCMinQP = rca.v1_RCMinQP; // lhupsnr
 }
 
 
@@ -3099,6 +3192,9 @@ void my_v1_rc_update_pict(int nbits) // after frame running once
     }
   }
 /////////////////////////////////////////////////////
+  if (rca.v1_RCUpdateMode==RC_MODE_3 && rca.v1_type==I_SLICE) { // lhugop, save bits number for I_SLICE every gop
+    rca.v1_RCISliceActualBits = nbits;
+  }
 
   delta_bits=nbits - (rca.v1_bit_rate/rca.v1_framerate);
   // remaining # of bits in GOP
@@ -3145,7 +3241,7 @@ void my_v1_updateRCModel ( )
     rca.v1_codedbu_cnt = rca.v1_bu_cnt;
 
   //if(rca.v1_type==P_SLICE)//g1 || (rca.v1_RCUpdateMode==RC_MODE_1 && (rca.v1_gop_cnt!=0 || rca.v1_frame_cnt!=0)) ) //(rca.v1_number != 0)
-  if( rca.v1_type==P_SLICE || ((rca.v1_RCUpdateMode==RC_MODE_1 || (rca.v1_type==I_SLICE&&rca.v1_RCUpdateMode==RC_MODE_3)) && (!(rca.v1_gop_cnt==0&&rca.v1_frame_cnt==0))) ) //lhulhu
+  if( rca.v1_type==P_SLICE || ((rca.v1_RCUpdateMode==RC_MODE_1 || (rca.v1_type==I_SLICE&&rca.v1_RCUpdateMode==RC_MODE_3)) && (!(rca.v1_gop_cnt==0&&rca.v1_frame_cnt==0))) ) //lhuitune
   {
     //frame layer rate control
     if(rca.v1_BasicUnit >= rca.v1_FrameSizeInMbs)
@@ -3215,7 +3311,8 @@ void my_v1_updateRCModel ( )
     rca.v1_rc_tmp1[0] = (1<<24)/(rca.v1_m_rgQp_8p[0]>>4);
     rca.v1_rc_tmp4[0] = (rca.v1_m_rgQp_8p[0]>>4)*(rca.v1_m_rgQp_8p[0]>>4);
     rca.v1_rc_tmp2[0] = (1<<28)/rca.v1_rc_tmp4[0];
-    rca.v1_rc_tmp3[0] = (rca.v1_m_rgQp_8p[0]>>8)*(rca.v1_m_rgRp_8p[0]>>8);
+    rca.v1_m_rgRp_8prr8[0] = rca.v1_m_rgRp_8p[0]>>8;
+    rca.v1_rc_tmp3[0] = (rca.v1_m_rgQp_8p[0]>>8)*rca.v1_m_rgRp_8prr8[0];;
     rca.v1_m_X1_8p = rca.v1_Pm_X1_8p;
     rca.v1_m_X2_8p = rca.v1_Pm_X2_8p;
 
@@ -3242,7 +3339,7 @@ void my_v1_updateRCModel ( )
     for(i=0; i<n_windowSize; i++)
     {
 //a     error_4p[i] = rca.v1_m_X1_8p/rca.v1_m_rgQp_8p[i] + (rca.v1_m_X2_8p)/((rca.v1_m_rgQp_8p[i]>>4)*(rca.v1_m_rgQp_8p[i]>>4)) - (rca.v1_m_rgRp_8p[i]>>8);
-        error_0p[i] = rca.v1_m_X1_8p/rca.v1_m_rgQp_8p[i] + (rca.v1_m_X2_8p/rca.v1_rc_tmp4[i]) - (rca.v1_m_rgRp_8p[0]>>8);
+        error_0p[i] = rca.v1_m_X1_8p/rca.v1_m_rgQp_8p[i] + (rca.v1_m_X2_8p/rca.v1_rc_tmp4[i]) - rca.v1_m_rgRp_8prr8[i];
         std_0p += error_0p[i]*error_0p[i];
     }
 
@@ -3270,31 +3367,36 @@ void my_v1_updateRCModel ( )
 }
 
 
-
 void my_v1_RCModelEstimator (int n_realSize, int n_windowSize, char *rc_rgRejected)
 {
   int i;
   Boolean estimateX2 = FALSE;
   unsigned int  a00_20p=0,a01_20p=0,a11_20p=0,b0_0p=0,b1_0p=0;
   long long  MatrixValue_20p;
+  int sum_rc_tmp0=0;
 
-  // default RD model estimation results
-  rca.v1_m_X1_8p = 0;
-  rca.v1_m_X2_8p = 0;
+    // default RD model estimation results
+    rca.v1_m_X1_8p = 0;
+    rca.v1_m_X2_8p = 0;
 
-  for(i=0;i<n_windowSize;i++) {// if all non-rejected Q are the same, take 1st order model
-    if((rca.v1_m_rgQp_8p[i]!=rca.v1_m_rgQp_8p[0]) && !rc_rgRejected[i]) {
-      estimateX2 = TRUE;
-      if(n_realSize>=1)
-        break;
+    for(i=0;i<n_windowSize;i++) // if all non-rejected Q are the same, take 1st order model
+    {
+        if(!rc_rgRejected[i])
+        {
+            if((rca.v1_m_rgQp_8p[i]!=rca.v1_m_rgQp_8p[0]))
+            {
+                estimateX2 = TRUE;
+                break;
+            }
+            sum_rc_tmp0 += rca.v1_rc_tmp0[i]; // ((rca.v1_m_rgQp_8p[i]>>4) * (rca.v1_m_rgRp_8p[i]>>4));
+        }
     }
-    if(!rc_rgRejected[i])
-//a      rca.m_X1_8p += ((rca.m_rgQp_8p[i]>>4) * (rca.m_rgRp_8p[i]>>4)) / n_realSize;
-      rca.v1_m_X1_8p += rca.v1_rc_tmp0[i] / n_realSize;
-  }
+    if(estimateX2==FALSE)
+        rca.v1_m_X1_8p = sum_rc_tmp0/n_realSize;
+
 
   // take 2nd order model to estimate X1 and X2
-  if ((n_realSize >= 1) && estimateX2)
+  if(estimateX2)
   {
     a00_20p = n_realSize<<20;
     for (i = 0; i < n_windowSize; i++)
@@ -3304,7 +3406,7 @@ void my_v1_RCModelEstimator (int n_realSize, int n_windowSize, char *rc_rgReject
         a01_20p += rca.v1_rc_tmp1[i];
         a11_20p += rca.v1_rc_tmp2[i];
         b0_0p   += rca.v1_rc_tmp3[i];
-        b1_0p   += rca.v1_m_rgRp_8p[i]>>8;
+        b1_0p   += rca.v1_m_rgRp_8prr8[i];
       }
     }
     MatrixValue_20p = (((long long)a00_20p*(long long)a11_20p)-((long long)a01_20p*(long long)a01_20p)+(1<<19))>>20;
@@ -3321,7 +3423,7 @@ void my_v1_RCModelEstimator (int n_realSize, int n_windowSize, char *rc_rgReject
   }
 
   //if(rca.v1_type==P_SLICE)//g1 || (rca.v1_RCUpdateMode==RC_MODE_1 && (rca.v1_gop_cnt!=0 || rca.v1_frame_cnt!=0))) //(rca.v1_number != 0)
-  if( rca.v1_type==P_SLICE || ((rca.v1_RCUpdateMode==RC_MODE_1 || (rca.v1_type==I_SLICE&&rca.v1_RCUpdateMode==RC_MODE_3)) && (!(rca.v1_gop_cnt==0&&rca.v1_frame_cnt==0))) ) //lhulhu
+  if( rca.v1_type==P_SLICE || ((rca.v1_RCUpdateMode==RC_MODE_1 || (rca.v1_type==I_SLICE&&rca.v1_RCUpdateMode==RC_MODE_3)) && (!(rca.v1_gop_cnt==0&&rca.v1_frame_cnt==0))) ) //lhuitune
   {
     rca.v1_Pm_X1_8p = rca.v1_m_X1_8p;
     rca.v1_Pm_X2_8p = rca.v1_m_X2_8p;
@@ -3337,6 +3439,7 @@ void my_v1_updateMADModel( )
   static int error_8p[RC_MODEL_HISTORY];
   long long std_16p=0;
   int threshold_8p;
+  int MADPictureC2_12prr4;
 
   if(rca.v1_NumberofCodedPFrame>0)
   {
@@ -3390,19 +3493,20 @@ void my_v1_updateMADModel( )
 
     //update the MAD for the previous frame
     //if(rca.v1_type==P_SLICE) {//g1 || (rca.v1_RCUpdateMode==RC_MODE_1 && (rca.v1_gop_cnt!=0 || rca.v1_frame_cnt!=0)))//(rca.v1_number != 0)
-    if( rca.v1_type==P_SLICE || ((rca.v1_RCUpdateMode==RC_MODE_1 || (rca.v1_type==I_SLICE&&rca.v1_RCUpdateMode==RC_MODE_3)) && (!(rca.v1_gop_cnt==0&&rca.v1_frame_cnt==0))) ) {//lhulhu
-      if (rca.v1_CurrentMAD_8p==0) rca.v1_PreviousMAD_8p=(1<<8);// lhumad, make fake for dividing by zero when PreviousMAD equal to 0
+    if( rca.v1_type==P_SLICE || ((rca.v1_RCUpdateMode==RC_MODE_1 || (rca.v1_type==I_SLICE&&rca.v1_RCUpdateMode==RC_MODE_3)) && (!(rca.v1_gop_cnt==0&&rca.v1_frame_cnt==0))) ) {//lhuitune
+      if (rca.v1_CurrentMAD_8p==0) rca.v1_PreviousMAD_8p=1;// lhumad, make fake for dividing by zero when PreviousMAD equal to 0
       else                         rca.v1_PreviousMAD_8p = rca.v1_CurrentMAD_8p;
     }
 
     // initial MAD model estimator
     my_v1_MADModelEstimator (n_windowSize, n_windowSize, rca.v1_mad_rgRejected);
 
+    MADPictureC2_12prr4 = rca.v1_MADPictureC2_12p>>4;
     // remove outlier
     for (i = 0; i < n_windowSize; i++)
     {
       //error[i] = rca.v1_MADPictureC1 * rca.v1_ReferenceMAD[i] + rca.v1_MADPictureC2 - rca.v1_PictureMAD[i];
-      error_8p[i] = ((rca.v1_MADPictureC1_12p*rca.v1_ReferenceMAD_8p[i])>>12) + (rca.v1_MADPictureC2_12p>>4) - rca.v1_PictureMAD_8p[i];
+      error_8p[i] = ((rca.v1_MADPictureC1_12p*rca.v1_ReferenceMAD_8p[i])>>12) + MADPictureC2_12prr4 - rca.v1_PictureMAD_8p[i];
       std_16p += error_8p[i]*error_8p[i];
     }
 
@@ -3412,8 +3516,10 @@ void my_v1_updateMADModel( )
     for(i=1; i<n_windowSize; i++)
     {
       if(abs(error_8p[i]) > threshold_8p)
+      {
         rca.v1_mad_rgRejected[i] = TRUE;
         n_realSize--;
+      }
     }
 
     // second MAD model estimator
@@ -3425,57 +3531,63 @@ void my_v1_updateMADModel( )
 void my_v1_MADModelEstimator(int n_realSize, int n_windowSize, char *mad_rgRejected)
 {
   int     i;
-  long long MatrixValue_4p;
+  long long MatrixValue_20p; // change 4p to 20p, lhu, 2017/02/23
   Boolean estimateX2=FALSE;
-  unsigned int a00_8p=0,a01_8p=0,a11_8p=0,b0_8p=0,b1_8p=0; //b
+  unsigned int a00_20p=0,a01_20p=0,a11_20p=0,b0_8p=0,b1_8p=0; // change 8p to 20p, lhu, 2017/02/23
 
     // default MAD model estimation results
     rca.v1_MADPictureC1_12p = 0;
     rca.v1_MADPictureC2_12p = 0;
     rca.v1_c1_over = 0;
 
-    for(i=0;i<n_windowSize;i++) {// if all non-rejected MAD are the same, take 1st order model
-        if((rca.v1_PictureMAD_8p[i]!=rca.v1_PictureMAD_8p[0]) && !mad_rgRejected[i])
+    for(i=0;i<n_windowSize;i++) // if all non-rejected MAD are the same, take 1st order model
+    {
+        if(!mad_rgRejected[i])
         {
-            estimateX2 = TRUE;
-            if(n_realSize>=1)
-                break;
-        }
-        if(!mad_rgRejected[i]) {
-//b            rca.MADPictureC1_12p += ((rca.PictureMAD_8p[i]<<12) / rca.ReferenceMAD_8p[i]) /n_realSize;
-            rca.v1_MADPictureC1_12p += rca.v1_mad_tmp0[i]/n_realSize;
+            if(rca.v1_PictureMAD_8p[i]!=rca.v1_PictureMAD_8p[0])
+            {
+                estimateX2 = TRUE;
+                    break;
+            }
+            rca.v1_MADPictureC1_12p += rca.v1_mad_tmp0[i]; // ((rca.v1_PictureMAD_8p[i]<<12) / rca.v1_ReferenceMAD_8p[i]) /n_realSize;
             if(rca.v1_mad_tmp0_valid[i] == 0)
                 rca.v1_c1_over = 1;
         }
     }
+    if(estimateX2==FALSE)
+        rca.v1_MADPictureC1_12p = rca.v1_MADPictureC1_12p/n_realSize;
 
     // take 2nd order model to estimate X1 and X2
-    if((n_realSize>=1) && estimateX2) {
-
-        a00_8p = n_realSize<<8;
-        for(i=0;i<n_windowSize;i++) {
-            if(!mad_rgRejected[i]) {
-                a01_8p += rca.v1_ReferenceMAD_8p[i];
-                a11_8p += rca.v1_mad_tmp1[i];
+    if(estimateX2)
+    {
+        a00_20p = n_realSize<<20; // change 8 to 20, lhu, 2017/02/23
+        for(i=0;i<n_windowSize;i++)
+        {
+            if(!mad_rgRejected[i])
+            {
+                a01_20p += (rca.v1_ReferenceMAD_8p[i]<<12); // change 8p to 20p, lhu, 2017/02/23
+                a11_20p += (rca.v1_mad_tmp1[i]<<12); // change 8p to 20p, lhu, 2017/02/23
                 b0_8p  += rca.v1_PictureMAD_8p[i];
-                b1_8p  += rca.v1_mad_tmp2[i];
-           }
+                b1_8p  += rca.v1_mad_tmp2[i]; // (rca.v1_PictureMAD_8p[i]>>4)*(rca.v1_ReferenceMAD_8p[i]>>4);
+            }
         }
         // solve the equation of AX = B
-        MatrixValue_4p = ((long long)a00_8p*(long long)a11_8p - (long long)a01_8p*(long long)a01_8p + (1<<11))>>12;
+        MatrixValue_20p = ((long long)a00_20p*(long long)a11_20p - (long long)a01_20p*(long long)a01_20p + (1<<19))>>20; // change 8p to 20p, lhu, 2017/02/23
 
-        if(MatrixValue_4p != 0) { //if(fabs(MatrixValue) > 0.000001)
-            rca.v1_MADPictureC2_12p = ((long long)b0_8p*(long long)a11_8p - (long long)b1_8p*(long long)a01_8p)/MatrixValue_4p;
-            rca.v1_MADPictureC1_12p = ((long long)b1_8p*(long long)a00_8p - (long long)b0_8p*(long long)a01_8p)/MatrixValue_4p;
-
+        //if(MatrixValue_4p != 0)  //if(fabs(MatrixValue) > 0.000001)
+        if(abs(MatrixValue_20p) > 1) // change 4p to 20p, lhu, 2017/02/23
+        {
+            rca.v1_MADPictureC2_12p = (((long long)b0_8p*(long long)a11_20p - (long long)b1_8p*(long long)a01_20p)<<4)/MatrixValue_20p;
+            rca.v1_MADPictureC1_12p = (((long long)b1_8p*(long long)a00_20p - (long long)b0_8p*(long long)a01_20p)<<4)/MatrixValue_20p;
         }
-        else {
-            if (a01_8p==0) {// lhumad, make fake for dividing by zero when a01_8p equal to 0
-                rca.v1_MADPictureC1_12p = (long long)b0_8p<<12;
+        else
+        {
+            if (a01_20p==0) {// lhumad, make fake for dividing by zero when a01_20p equal to 0
+                rca.v1_MADPictureC1_12p = ((long long)b0_8p)<<4;
                 rca.v1_cmadequ0 = 1;
             }
             else {
-                rca.v1_MADPictureC1_12p = (int)(((long long)b0_8p<<12)/(long long)a01_8p);
+                rca.v1_MADPictureC1_12p = (((long long)b0_8p)<<24)/(long long)a01_20p; // lhu, 2017/02/23
                 rca.v1_cmadequ0 = 0;
             }
             rca.v1_MADPictureC2_12p = 0;
@@ -3483,7 +3595,7 @@ void my_v1_MADModelEstimator(int n_realSize, int n_windowSize, char *mad_rgRejec
         rca.v1_c1_over = 0;
     }
     //if(rca.v1_type==P_SLICE)//g1 || (rca.v1_RCUpdateMode==RC_MODE_1 && (rca.v1_gop_cnt!=0 || rca.v1_frame_cnt!=0)))  //(rca.v1_number != 0)
-    if( rca.v1_type==P_SLICE || ((rca.v1_RCUpdateMode==RC_MODE_1 || (rca.v1_type==I_SLICE&&rca.v1_RCUpdateMode==RC_MODE_3)) && (!(rca.v1_gop_cnt==0&&rca.v1_frame_cnt==0))) ) //lhulhu
+    if( rca.v1_type==P_SLICE || ((rca.v1_RCUpdateMode==RC_MODE_1 || (rca.v1_type==I_SLICE&&rca.v1_RCUpdateMode==RC_MODE_3)) && (!(rca.v1_gop_cnt==0&&rca.v1_frame_cnt==0))) ) //lhuitune
     {
         rca.v1_PMADPictureC1_12p = rca.v1_MADPictureC1_12p;
         rca.v1_PMADPictureC2_12p = rca.v1_MADPictureC2_12p;
@@ -3505,6 +3617,7 @@ void my_v1_hold( )
             rca.v1_rc_tmp2[i] = rca.v1_rc_tmp2[i-1];
             rca.v1_rc_tmp3[i] = rca.v1_rc_tmp3[i-1];
             rca.v1_rc_tmp4[i] = rca.v1_rc_tmp4[i-1];
+            rca.v1_m_rgRp_8prr8[i] = rca.v1_m_rgRp_8prr8[i-1];
         }
         for(i=0; i<(RC_MODEL_HISTORY-1); i++)
             rca.v1_rc_rgRejected[i] = FALSE;
@@ -3782,7 +3895,7 @@ int my_v1_updateQPRC3( )
 
   /* frame layer rate control */
   //if(rca.v1_BasicUnit == rca.v1_FrameSizeInMbs || rca.v1_type != P_SLICE )
-  if( rca.v1_BasicUnit == rca.v1_FrameSizeInMbs ) //lhulhu
+  if( rca.v1_BasicUnit == rca.v1_FrameSizeInMbs ) //lhuitune
   {
       if(rca.v1_gop_cnt==0 && rca.v1_frame_cnt==0) // (rca.v1_number == 0)
       {
@@ -3820,7 +3933,8 @@ int my_v1_updateQPRC3( )
 
         /* predict the MAD of current picture*/
 //20        rca.v1_CurrentMAD=rca.v1_MADPictureC1*rca.v1_PreviousPictureMAD + rca.v1_MADPictureC2;
-        rca.v1_CurrentMAD_8p=(rca.v1_MADPictureC1_12p*rca.v1_PreviousPictureMAD_8p)/(1<<12) + rca.v1_MADPictureC2_12p/(1<<4);
+//30        rca.v1_CurrentMAD_8p=(rca.v1_MADPictureC1_12p*rca.v1_PreviousPictureMAD_8p)/(1<<12) + rca.v1_MADPictureC2_12p/(1<<4);
+        rca.v1_CurrentMAD_8p=(rca.v1_MADPictureC1_12p>>8)*(rca.v1_PreviousPictureMAD_8p>>4) + (rca.v1_MADPictureC2_12p>>4);
 
         /*compute the number of bits for the texture*/
         if(rca.v1_Target < 0)
@@ -3863,7 +3977,7 @@ int my_v1_updateQPRC3( )
       return rca.v1_m_Qc;
     }
     //else if( rca.v1_type == P_SLICE )
-    else if( rca.v1_type == P_SLICE || rca.v1_type == I_SLICE ) //lhulhu
+    else if( rca.v1_type == P_SLICE || rca.v1_type == I_SLICE ) //lhuitune
     {
       if(rca.v1_gop_cnt==0 && rca.v1_frame_cnt==1) // ((rca.v1_NumberofGOP==1)&&(rca.v1_NumberofPPicture==0)) // gop==0; frameP==0
       {
@@ -3911,7 +4025,7 @@ int my_v1_updateQPRC3( )
             rca.v1_TotalFrameQP +=rca.v1_m_Qc;
             rca.v1_Pm_Qp=rca.v1_m_Qc;
             //if((rca.v1_bu_cnt==(rca.v1_TotalNumberofBasicUnit-1)) && rca.v1_type==P_SLICE)
-            if((rca.v1_bu_cnt==(rca.v1_TotalNumberofBasicUnit-1)) && (rca.v1_type==P_SLICE || rca.v1_type==I_SLICE) ) //lhulhu
+            if((rca.v1_bu_cnt==(rca.v1_TotalNumberofBasicUnit-1)) && (rca.v1_type==P_SLICE || rca.v1_type==I_SLICE) ) //lhuitune
               my_v1_updateLastBU( );
 
             return rca.v1_m_Qc;
@@ -3960,9 +4074,14 @@ int my_v1_updateNegativeTarget( int m_Qp )
     rca.v1_m_Qc=m_Qp+rca.v1_DDquant;//2
 
   rca.v1_m_Qc = my_imin(rca.v1_m_Qc, rca.v1_RCMaxQP);  // clipping
-  if(rca.v1_basicunit>=rca.v1_MBPerRow)
-    rca.v1_m_Qc = my_imin(rca.v1_m_Qc, rca.v1_PAveFrameQP+6);
-  else
+  if(rca.v1_basicunit>=rca.v1_MBPerRow) {
+  	if (rca.v1_wireless_screen!=1) { // added by lhu, 2017/02/27
+      if (rca.v1_type == P_SLICE) rca.v1_m_Qc = my_imin(rca.v1_m_Qc, rca.v1_PAveFrameQP+10); // change +6 to +10, lhu, 2017/01/26
+      else                        rca.v1_m_Qc = my_imin(rca.v1_m_Qc, rca.v1_PAveFrameQP+6); // lower QP change range for I slice, lhu, 2017/02/07
+    } else { // added by lhu, 2017/02/27
+      rca.v1_m_Qc = my_imin(rca.v1_m_Qc, rca.v1_PAveFrameQP+6);
+    }
+  } else
     rca.v1_m_Qc = my_imin(rca.v1_m_Qc, rca.v1_PAveFrameQP+3);
 
   rca.v1_TotalFrameQP +=rca.v1_m_Qc;
@@ -3972,7 +4091,7 @@ int my_v1_updateNegativeTarget( int m_Qp )
     PAverageQP=(rca.v1_TotalFrameQP+(rca.v1_TotalNumberofBasicUnit>>1))/rca.v1_TotalNumberofBasicUnit;
     if(rca.v1_frame_cnt==(rca.v1_intra_period-1)) //(rca.v1_NumberofPPicture == (rca.v1_intra_period - 2))
       rca.v1_QPLastPFrame = PAverageQP;
-    if (rca.v1_type == P_SLICE) // not increase TotalQpforPPicture for I_SLICE, lhulhu
+    if (rca.v1_type == P_SLICE) // not increase TotalQpforPPicture for I_SLICE, lhuitune
       rca.v1_TotalQpforPPicture +=PAverageQP;
     rca.v1_PAveFrameQP=PAverageQP;
     rca.v1_PAveHeaderBits3=rca.v1_PAveHeaderBits2;
@@ -4015,30 +4134,59 @@ void my_v1_updateLastBU( )
   PAverageQP=(rca.v1_TotalFrameQP+(rca.v1_TotalNumberofBasicUnit>>1))/rca.v1_TotalNumberofBasicUnit;
   if(rca.v1_frame_cnt==(rca.v1_intra_period-1)) // (rca.v1_NumberofPPicture == (rca.v1_intra_period - 2))  last P_FRAME in gop
     rca.v1_QPLastPFrame = PAverageQP;
-  if (rca.v1_type == P_SLICE) // not increase TotalQpforPPicture for I_SLICE, lhulhu
+  if (rca.v1_type == P_SLICE) // not increase TotalQpforPPicture for I_SLICE, lhuitune
     rca.v1_TotalQpforPPicture +=PAverageQP;
   rca.v1_PAveFrameQP=PAverageQP;
   rca.v1_PAveHeaderBits3=rca.v1_PAveHeaderBits2;
 }
 
 
+void my_v1_updateModelQPFrame( int m_Bits )
+{
+  long long dtmp_8p, qstep_tmp;
+  int tmp_4p=0;
+  int m_Qstep_8p;
+
+  //dtmp_8p = (rca.v1_CurrentMAD_8p>>6)*(rca.v1_m_X1_8p>>6)*(rca.v1_CurrentMAD_8p>>6)*(rca.v1_m_X1_8p>>6) + \
+  //    4*(rca.v1_m_X2_8p>>4)*(rca.v1_CurrentMAD_8p>>4)*m_Bits;
+  dtmp_8p = ((long long)rca.v1_CurrentMAD_8p>>6)*((long long)rca.v1_CurrentMAD_8p>>6)*((long long)rca.v1_m_X1_8p>>6)*((long long)rca.v1_m_X1_8p>>6) + \
+      4*((long long)rca.v1_m_X2_8p>>4)*((long long)rca.v1_CurrentMAD_8p>>4)*m_Bits;
+
+  if(dtmp_8p>0)
+      tmp_4p = my_sqrt64(dtmp_8p);
+
+  if((rca.v1_m_X2_8p==0) || (dtmp_8p<0) || ((tmp_4p-((rca.v1_m_X1_8p>>6)*(rca.v1_CurrentMAD_8p>>6)))<=0))
+  {
+    //m_Qstep = (float)((rca.v1_m_X1*rca.v1_CurrentMAD) / (double) m_Bits);
+    m_Qstep_8p = ((rca.v1_m_X1_8p>>4)*(rca.v1_CurrentMAD_8p>>4)) / m_Bits;
+  }
+  else // 2nd order mode
+  {
+    //m_Qstep = (float)((2*rca.v1_m_X2_8p*rca.v1_CurrentMAD_8p)/(sqrt(dtmp)*(1<<16) - rca.v1_m_X1_8p*rca.v1_CurrentMAD_8p));
+    qstep_tmp = (2*((long long)rca.v1_m_X2_8p)*((long long)rca.v1_CurrentMAD_8p)) / ((tmp_4p<<4) - (rca.v1_m_X1_8p>>4)*(rca.v1_CurrentMAD_8p>>4));
+    m_Qstep_8p = qstep_tmp;
+  }
+
+  rca.v1_m_Qc = Qstep2QP_8p(m_Qstep_8p);
+}
+
 
 void my_v1_predictCurrPicMAD( )
 {
-    int i,CurrentBUMAD_8p;
+    int i,CurrentBUMAD_8p,MADPictureC1_12prr4,MADPictureC2_12prr4;
 
-    //rca.CurrentMAD=rca.MADPictureC1*rca.BUPFMAD[rca.bu_cnt]+rca.MADPictureC2;
-//s    rca.CurrentMAD_8p=((rca.MADPictureC1_12p>>4)*((*(pp_BUPFMAD_8p+rca.bu_cnt))>>8)) + (rca.MADPictureC2_12p>>4);
-	rca.v1_CurrentMAD_8p=((rca.v1_MADPictureC1_12p>>4)*(rca.v1_BUPFMAD_8p[rca.v1_bu_cnt]>>8)) + (rca.v1_MADPictureC2_12p>>4);
+    MADPictureC1_12prr4 = rca.v1_MADPictureC1_12p>>4;
+    MADPictureC2_12prr4 = rca.v1_MADPictureC2_12p>>4;
 
+    //rca.v1_CurrentMAD=rca.v1_MADPictureC1*rca.v1_BUPFMAD[rca.v1_bu_cnt]+rca.v1_MADPictureC2;
+    rca.v1_CurrentMAD_8p=(MADPictureC1_12prr4*(rca.v1_BUPFMAD_8p[rca.v1_bu_cnt]>>8)) + MADPictureC2_12prr4;
     rca.v1_TotalBUMAD_12p=0;
 
     for(i=rca.v1_TotalNumberofBasicUnit-1; i>=rca.v1_bu_cnt; i--)
     {
-      //CurrentBUMAD = rca.MADPictureC1*rca.BUPFMAD[i]+rca.MADPictureC2;
-//s      CurrentBUMAD_8p = ((rca.MADPictureC1_12p>>4)*((*(pp_BUPFMAD_8p+i))>>8)) + (rca.MADPictureC2_12p>>4);
-	  CurrentBUMAD_8p = ((rca.v1_MADPictureC1_12p>>4)*(rca.v1_BUPFMAD_8p[i]>>8)) + (rca.v1_MADPictureC2_12p>>4);
-      rca.v1_TotalBUMAD_12p += (CurrentBUMAD_8p*CurrentBUMAD_8p)>>4;
+        //CurrentBUMAD = rca.v1_MADPictureC1*rca.v1_BUPFMAD[i]+rca.v1_MADPictureC2;
+        CurrentBUMAD_8p = (MADPictureC1_12prr4*(rca.v1_BUPFMAD_8p[i]>>8)) + MADPictureC2_12prr4;
+        rca.v1_TotalBUMAD_12p += (CurrentBUMAD_8p*CurrentBUMAD_8p)>>4;
     }
 }
 
@@ -4083,15 +4231,23 @@ void my_v1_updateModelQPBU( int m_Qp )
   }
 
   rca.v1_m_Qc = Qstep2QP_8p(m_Qstep_8p);
-  rca.v1_m_Qc = my_imin(m_Qp+rca.v1_DDquant,  rca.v1_m_Qc); // control variation
+  //use the Qc by R-D model when non-wireless-screen application, lhu, 2017/02/27
+  if (rca.v1_wireless_screen==1) // added by lhu, 2017/02/27
+    rca.v1_m_Qc = my_imin(m_Qp+rca.v1_DDquant,  rca.v1_m_Qc); // control variation
 
-  if(rca.v1_basicunit>=rca.v1_MBPerRow)
-    rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+6, rca.v1_m_Qc);
-  else
+  if(rca.v1_basicunit>=rca.v1_MBPerRow) {
+  	if (rca.v1_wireless_screen!=1) {// added by lhu, 2017/02/27
+      if (rca.v1_type == P_SLICE) rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+10, rca.v1_m_Qc); // change +6 to +10, lhu, 2017/01/24
+      else                        rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+6, rca.v1_m_Qc); // lower QP change range for I slice, lhu, 2017/02/07
+    } else { // added by lhu, 2017/02/27
+      rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+6, rca.v1_m_Qc);
+    }
+  } else
     rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+3, rca.v1_m_Qc);
 
-  if(rca.v1_c1_over==1 || rca.v1_cmadequ0==1) // lhumad
-    rca.v1_m_Qc = my_imin(m_Qp-rca.v1_DDquant, rca.v1_RCMaxQP); // clipping
+  if(rca.v1_c1_over==1)
+    //rca.v1_m_Qc = my_imin(m_Qp-rca.v1_DDquant, rca.v1_RCMaxQP); // clipping
+    rca.v1_m_Qc = my_imin(m_Qp+rca.v1_DDquant, rca.v1_RCMaxQP-10); // not letting QP decrease when MAD equal 0, 2017/02/21
   else
     rca.v1_m_Qc = my_iClip3(m_Qp-rca.v1_DDquant, rca.v1_RCMaxQP, rca.v1_m_Qc); // clipping
 
@@ -4103,32 +4259,6 @@ void my_v1_updateModelQPBU( int m_Qp )
   rca.v1_m_Qc = my_imax(rca.v1_RCMinQP, rca.v1_m_Qc);
 }
 
-
-void my_v1_updateModelQPFrame( int m_Bits )
-{
-  long long dtmp_8p;
-  int tmp_4p=0;
-  int m_Qstep_8p;
-
-  dtmp_8p = ((long long)rca.v1_CurrentMAD_8p>>6)*((long long)rca.v1_CurrentMAD_8p>>6)*((long long)rca.v1_m_X1_8p>>6)*((long long)rca.v1_m_X1_8p>>6) + \
-      4*((long long)rca.v1_m_X2_8p>>4)*((long long)rca.v1_CurrentMAD_8p>>4)*m_Bits;
-
-  if(dtmp_8p>0)
-      tmp_4p = my_sqrt64(dtmp_8p);
-
-  if((rca.v1_m_X2_8p==0) || (dtmp_8p<0) || ((tmp_4p-((rca.v1_m_X1_8p>>6)*(rca.v1_CurrentMAD_8p>>6)))<=0))
-  {
-    //m_Qstep = (float)((rca.v1_m_X1*rca.v1_CurrentMAD) / (double) m_Bits);
-    m_Qstep_8p = ((rca.v1_m_X1_8p>>4)*(rca.v1_CurrentMAD_8p>>4)) / m_Bits;
-  }
-  else // 2nd order mode
-  {
-    //m_Qstep = (float)((2*rca.v1_m_X2_8p*rca.v1_CurrentMAD_8p)/(sqrt(dtmp)*(1<<16) - rca.v1_m_X1_8p*rca.v1_CurrentMAD_8p));
-    m_Qstep_8p = (2*((long long)rca.v1_m_X2_8p)*((long long)rca.v1_CurrentMAD_8p)) / ((tmp_4p<<4) - (rca.v1_m_X1_8p>>4)*(rca.v1_CurrentMAD_8p>>4));
-  }
-
-  rca.v1_m_Qc = Qstep2QP_8p(m_Qstep_8p);
-}
 
 #ifdef ARMCM7_RC //#########
 void my_v1_rc_update_bu_stats( ) {
@@ -4161,16 +4291,16 @@ void my_rc_update_bu_stats( ) {
         rca.NumberofBasicUnitHeaderBits  = global_bu_hbits;  // add slice_header
         rca.NumberofBasicUnitTextureBits = global_bu_tbits;
     }
-    #ifdef JM_RC_DUMP
-    #ifdef USE_MY_RC
-    // jm rc-related debugging info dump, lhulhu
-    {
-      jm_rc_info_dump=fopen("jm_rc_info_dump.txt","a+");
-      fprintf(jm_rc_info_dump, "BUHBits:%-d BUTBits:%-d\n", global_bu_hbits, global_bu_tbits);
-      fclose(jm_rc_info_dump);
-    }
-    #endif
-    #endif
+  #ifdef JM_RC_DUMP
+  #ifdef USE_MY_RC
+  // jm rc-related debugging info dump, lhulhu
+  {
+    jm_rc_info_dump=fopen("jm_rc_info_dump.txt","a+");
+    fprintf(jm_rc_info_dump, "BUHBits:%-d BUTBits:%-d\n", global_bu_hbits, global_bu_tbits);
+    fclose(jm_rc_info_dump);
+  }
+  #endif
+  #endif
 }
 void my_rc_update_frame_stats( )
 {
@@ -4192,23 +4322,16 @@ void my_rc_update_frame_stats( )
 
 void my_v1_rc_init_gop_params( )
 {
-    int np;
-
-    if(rca.v1_RCUpdateMode==RC_MODE_1 || rca.v1_RCUpdateMode==RC_MODE_3)
+    if(rca.v1_RCUpdateMode==RC_MODE_1)
     {
-        if(rca.v1_frame_cnt==0 && rca.v1_bu_cnt==0) //
-        {
-            np = rca.v1_intra_period - 1;
-            my_v1_rc_init_GOP( np );
-        }
+        //if((rca.gop_cnt==0 && rca.frame_cnt==0) || ((rca.gop_cnt*rca.intra_period)==rca.no_frm_base))
+        if(rca.v1_frame_cnt==0 && rca.v1_bu_cnt==0)
+            my_v1_rc_init_GOP( rca.v1_no_frm_base - 1 );
     }
-    else if((rca.v1_RCUpdateMode==RC_MODE_0)|(rca.v1_RCUpdateMode==RC_MODE_2))
+    else if((rca.v1_RCUpdateMode==RC_MODE_0)|(rca.v1_RCUpdateMode==RC_MODE_2)|(rca.v1_RCUpdateMode==RC_MODE_3))
     {
         if(rca.v1_frame_cnt==0 && rca.v1_bu_cnt==0) // && rca.mb_cnt==0)
-        {
-            np = rca.v1_intra_period - 1;
-            my_v1_rc_init_GOP( np );
-        }
+            my_v1_rc_init_GOP( rca.v1_intra_period - 1 );
     }
 }
 
@@ -4271,12 +4394,12 @@ int my_v1_rc_handle_mb( )
     {
         // each I or B frame has only one QP
         //if(rca.v1_type==I_SLICE)//g1 && rca.RCUpdateMode!=RC_MODE_1) || (rca.gop_cnt==0 && rca.frame_cnt==0)) //!(rca.number)
-        if(rca.v1_gop_cnt==0 && rca.v1_frame_cnt==0) //lhulhu, let non RC_MODE_1 can handle I_SLICE
+        if(rca.v1_gop_cnt==0 && rca.v1_frame_cnt==0) //lhuitune
         {
             rca.v1_qp = rca.v1_MyInitialQp;
         }
         //else if (rca.v1_type == P_SLICE) //g1 || rca.RCUpdateMode == RC_MODE_1 )
-        else if (rca.v1_type == P_SLICE || rca.v1_RCUpdateMode==RC_MODE_1 || (rca.v1_type==I_SLICE && rca.v1_RCUpdateMode==RC_MODE_3)) //lhulhu
+        else if (rca.v1_type == P_SLICE || rca.v1_RCUpdateMode==RC_MODE_1 || (rca.v1_type==I_SLICE && rca.v1_RCUpdateMode==RC_MODE_3)) //lhuitune
         {
             // compute the quantization parameter for each basic unit of P frame
             if(rca.v1_bu_cnt!=0) // && rca.mb_cnt==0)
@@ -4298,8 +4421,8 @@ int my_v1_rc_handle_mb( )
             if(rca.v1_frame_cnt==(rca.v1_intra_period-1))
             {
                 rca.v1_frame_cnt=0;
-                if(rca.v1_gop_cnt<=1000)
-                    rca.v1_gop_cnt++;
+                //if(rca.v1_gop_cnt<=1000)
+                rca.v1_gop_cnt++;
             }
             else
                 rca.v1_frame_cnt++;
@@ -4312,8 +4435,8 @@ int my_v1_rc_handle_mb( )
         if(rca.v1_frame_cnt==(rca.v1_intra_period-1))
         {
             rca.v1_frame_cnt=0;
-            if(rca.v1_gop_cnt<=1000)
-                rca.v1_gop_cnt++;
+            //if(rca.v1_gop_cnt<=1000)
+            rca.v1_gop_cnt++;
         }
         else
             rca.v1_frame_cnt++;

@@ -337,6 +337,11 @@ void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsig
 #else
     WRITE_WORD((ENC_REG_ADDR+(0x33<<2)),0x39414A80);
 #endif
+    // Patch: view0 settings must be same as view1 when 1080P input. 
+    if (height > 720)
+    {
+        init_view0(width, height, gop, fps, br, src);
+    }
 }
 void open_view0( unsigned int rc_en ){ // hold until SDRAM initial done
     unsigned int i,t0,t1;
