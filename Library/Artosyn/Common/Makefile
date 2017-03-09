@@ -37,7 +37,8 @@ SRC_C   := Src/sys_event.c \
            Src/printf.c \
            Src/string.c \
            Src/abs.c \
-           Src/errno.c
+           Src/errno.c \
+           Src/md5.c
 
 INCDIRS :=  -IInc \
             -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc \
@@ -66,10 +67,11 @@ install:
 	@cp -f Inc/debuglog.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/sys_event.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/memory.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/md5.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."
-	@$(RM) $(LIB) $(OBJ_C) $(OBJ_CPP) .depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB) $(OUTPUT_HEADER_STAGING_DIR)/debuglog.h
+	@$(RM) $(LIB) $(OBJ_C) $(OBJ_CPP) .depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB) $(OUTPUT_HEADER_STAGING_DIR)/debuglog.h $(OUTPUT_HEADER_STAGING_DIR)/md5.h
 
 .PHONY: all clean install
 #########################################################################
