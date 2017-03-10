@@ -57,7 +57,11 @@ SRC_C := Src/hal.c \
          Src/hal_can.c \
          Src/hal_camera.c \
          Src/hal_mipi.c \
-         Src/hal_dvp.c
+         Src/hal_dvp.c \
+         Src/hal_encodemp3.c\
+         Src/hal_softi2s.c \
+		 Src/hal_softi2s_leftinterrupt.c \
+		 Src/hal_softi2s_rightinterrupt.c
 
 INCDIRS := -IInc \
            -I$(TOP_DIR)/Configure/Include \
@@ -82,7 +86,8 @@ INCDIRS := -IInc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/DMA/Inc \
            -I$(TOP_DIR)/Driver/Board/AR8020TEST/NORFlash/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/MIPI/Inc \
-           -I$(TOP_DIR)/Driver/HAL/Inc
+           -I$(TOP_DIR)/Driver/HAL/Inc \
+           -I$(OUTPUT_HEADER_STAGING_DIR)
 
 
 # object file(s)
@@ -125,7 +130,9 @@ install:
 	@cp -f Inc/hal_can.h $(OUTPUT_HEADER_STAGING_DIR) 
 	@cp -f Inc/hal_camera.h $(OUTPUT_HEADER_STAGING_DIR) 
 	@cp -f Inc/hal_mipi.h $(OUTPUT_HEADER_STAGING_DIR) 
-	@cp -f Inc/hal_dvp.h $(OUTPUT_HEADER_STAGING_DIR) 
+	@cp -f Inc/hal_dvp.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/hal_softi2s.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/hal_encodemp3.h $(OUTPUT_HEADER_STAGING_DIR) 
 clean:
 	@echo "Cleaning..."
 	@$(RM) $(LIB) $(OBJ_C) .depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB)
@@ -147,6 +154,8 @@ clean:
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_camera.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_mipi.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_dvp.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_softi2s.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_encodemp3.h
 
 .PHONY: all clean install
 #########################################################################

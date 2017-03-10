@@ -35,19 +35,6 @@
 
 #define SRAM_DEBUG_BUF_INIT_FLAG         0x30A5A503
 
-// SRAM DCache disable
-#define SRAM_DEBUG_MEMORY_MPU_REGION_NUMBER    3
-#define SRAM_DEBUG_MEMORY_MPU_REGION_ST_ADDR   SRAM_DEBUG_LOG_BUFFER_ST_ADDR
-#define SRAM_DEBUG_MEMORY_MPU_REGION_ATTR      (0  << 28) | \
-                                               (3  << 24) | \
-                                               (1  << 19) | \
-                                               (0  << 18) | \
-                                               (0  << 17) | \
-                                               (0  << 16) | \
-                                               (0  <<  8) | \
-                                               (12 <<  1) | \
-                                               (1  <<  0)
-
 typedef struct
 {
     volatile uint32_t input_buf_wr_pos;
@@ -100,16 +87,6 @@ __attribute__((weak)) void uart_puts(unsigned char index, const char *s)
 
 __attribute__((weak)) void serial_puts(const char *s)
 {
-}
-
-static void DLOG_SramBufInit(void)
-{
-    MPU->RNR  = SRAM_DEBUG_MEMORY_MPU_REGION_NUMBER;
-    MPU->RBAR = SRAM_DEBUG_MEMORY_MPU_REGION_ST_ADDR | (1 << 4) | (SRAM_DEBUG_MEMORY_MPU_REGION_NUMBER << 0);
-    MPU->RASR = SRAM_DEBUG_MEMORY_MPU_REGION_ATTR;
-    MPU->CTRL = MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_HFNMIENA_Msk | MPU_CTRL_ENABLE_Msk;
-    __asm volatile ("dsb");
-    __asm volatile ("isb");
 }
 
 static unsigned char DLOG_CheckDebugBufInitStatus(void)
@@ -372,7 +349,6 @@ void DLOG_Process(void* p)
 
 void DLOG_Init(FUNC_CommandRun func)
 {
-    DLOG_SramBufInit();
     
     if (CPUINFO_GetLocalCpuId() == ENUM_CPU0_ID)
     {

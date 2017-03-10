@@ -17,19 +17,7 @@ include $(BUILD_DIR)/config.mk
 ###############################################################################
 # static library name
 LIB = libmp3.a
-
-ifeq ($(CPU_NUMBER), cpu0)
-    CFLAGS += $(CPU0_CFLAGS)
-endif
-
-ifeq ($(CPU_NUMBER), cpu1)
-    CFLAGS += $(CPU1_CFLAGS)
-endif
-
-ifeq ($(CPU_NUMBER), cpu2)
-    CFLAGS += $(CPU2_CFLAGS)
-endif
-
+CFLAGS += -O3
 # source file(s), including c file(s)
 SRC_C   := ./shine-3.1.0/bitstream.c \
            ./shine-3.1.0/formatbits.c \

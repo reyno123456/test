@@ -256,7 +256,7 @@ typedef struct {
 
 } STRU_transStatus;
 
-extern STRU_DmaRegs *g_st_dmaRegs;
+volatile extern STRU_DmaRegs *g_st_dmaRegs;
 
 #define IS_CHANNAL_PRIORITY(x) ((x) >= 0 && (x) <= 7)
 #define assert_param(expr) ((expr) ? (void)0 : assert_failed((uint8_t *)__FILE__, __LINE__))

@@ -78,41 +78,53 @@ static void InterCore_TriggerIRQ1(void)
     *((volatile uint32_t *)(INTER_CORE_TRIGGER_REG_ADDR)) |= INTER_CORE_TRIGGER_IRQ1_BITMAP;
 }
 
-static void InterCore_SRAMDCacheDisable(uint8_t type)
+static void InterCore_SRAMDCacheDisable(void)
 {
-    switch (type)
+    uint8_t i=0;
+    __asm volatile ("dmb 0xF":::"memory");   
+    MPU->CTRL = 0;
+
+    MPU->RNR  = SRAM_MEMORY_MPU_REGION_NUMBER;
+    MPU->RBAR = SRAM_MEMORY_MPU_REGION_ST_ADDR_0 | (1 << 4) | (SRAM_MEMORY_MPU_REGION_NUMBER << 0);
+    MPU->RASR = SRAM_MEMORY_MPU_REGION_ATTR_0;
+
+    MPU->RNR  = SRAM_CONFIGURE_MEMORY_MPU_REGION_NUMBER;
+    MPU->RBAR = SRAM_CONFIGURE_MEMORY_MPU_REGION_ST_ADDR_1 | (1 << 4) | (SRAM_CONFIGURE_MEMORY_MPU_REGION_NUMBER << 0);
+    MPU->RASR = SRAM_CONFIGURE_MEMORY_MPU_REGION_ATTR_1;
+
+    MPU->RNR  = SRAM_DEBUG_MEMORY_MPU_REGION_NUMBER;
+    MPU->RBAR = SRAM_DEBUG_MEMORY_MPU_REGION_ST_ADDR_2 | (1 << 4) | (SRAM_DEBUG_MEMORY_MPU_REGION_NUMBER << 0);
+    MPU->RASR = SRAM_DEBUG_MEMORY_MPU_REGION_ATTR_2;
+
+    MPU->RNR  = SDRAM_AUDIO_RAWDATA_MEMORY_MPU_REGION_NUMBER;
+    MPU->RBAR = SDRAM_AUDIO_RAWDATA_MEMORY_MPU_REGION_ST_ADDR_3 | (1 << 4) | (SDRAM_AUDIO_RAWDATA_MEMORY_MPU_REGION_NUMBER << 0);
+    MPU->RASR = SDRAM_AUDIO_RAWDATA_MEMORY_MPU_REGION_ATTR_3;
+
+
+    for (i = 4; i < 8; i++)
     {
-        case 0:
-            {
-                MPU->RNR  = SRAM_MEMORY_MPU_REGION_NUMBER;
-                MPU->RBAR = SRAM_MEMORY_MPU_REGION_ST_ADDR_0 | (1 << 4) | (SRAM_MEMORY_MPU_REGION_NUMBER << 0);
-                MPU->RASR = SRAM_MEMORY_MPU_REGION_ATTR_0;
-                MPU->CTRL = MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_HFNMIENA_Msk | MPU_CTRL_ENABLE_Msk;
-                __asm volatile ("dsb");
-                __asm volatile ("isb");
-                break;
-            }
-        case 1:
-            {
-                MPU->RNR  = SRAM_CONFIGURE_MEMORY_MPU_REGION_NUMBER;
-                MPU->RBAR = SRAM_CONFIGURE_MEMORY_ST_ADDR | (1 << 4) | (SRAM_CONFIGURE_MEMORY_MPU_REGION_NUMBER << 0);
-                MPU->RASR = SRAM_CONFIGURE_MEMORY_MPU_REGION_ATTR_1;
-                MPU->CTRL = MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_HFNMIENA_Msk | MPU_CTRL_ENABLE_Msk;
-                __asm volatile ("dsb");
-                __asm volatile ("isb");
-                break;
-            }
+        MPU->RNR  = i;
+        MPU->RBAR = 0;
+        MPU->RASR = 0;
     }
+
+    MPU->CTRL = MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_HFNMIENA_Msk | MPU_CTRL_ENABLE_Msk;
+
+    __asm volatile ("dsb 0xF":::"memory");
+    __asm volatile ("isb 0xF":::"memory");
+
+
+
 }
 
 
 static void InterCore_CopyConfigureFormFlashToSRAM(void)
 {
-
     if (CPUINFO_GetLocalCpuId() != ENUM_CPU0_ID)
     {
         return;
     }
+
     uint8_t* cpu0_app_size_addr = (uint8_t*)0x10020022;
     uint32_t cpu0_app_size = GET_WORD_FROM_ANY_ADDR(cpu0_app_size_addr);
     uint32_t cpu0_app_start_addr = 0x10020022 + 4;
@@ -126,7 +138,7 @@ static void InterCore_CopyConfigureFormFlashToSRAM(void)
     uint32_t *sram_configure_start_addr = (uint32_t *)(SRAM_CONFIGURE_MEMORY_ST_ADDR);
     while(CONFIGURE_INIT_FLAG_VALUE != (*sram_configure_start_addr))
     {
-        InterCore_SRAMDCacheDisable(1);
+        
         memcpy((uint8_t *)(SRAM_CONFIGURE_MEMORY_ST_ADDR+4),(uint8_t *)(configure_start_addr),(1024*4));
         (*sram_configure_start_addr) = CONFIGURE_INIT_FLAG_VALUE;
     }
@@ -135,7 +147,8 @@ static void InterCore_CopyConfigureFormFlashToSRAM(void)
 void InterCore_Init(void)
 {
     // Init the SRAM data share buffer
-    InterCore_SRAMDCacheDisable(0);
+    InterCore_SRAMDCacheDisable();
+
     volatile INTER_CORE_MSG_TYPE* msgPtr = (INTER_CORE_MSG_TYPE*)INTER_CORE_MSG_SHARE_MEMORY_BASE_ADDR;
     memset((void*)msgPtr, 0, sizeof(INTER_CORE_MSG_TYPE)*INTER_CORE_MSG_SHARE_MEMORY_NUMBER);
     InterCore_CopyConfigureFormFlashToSRAM();

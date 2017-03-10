@@ -1,15 +1,16 @@
 #include "debuglog.h"
-#include "serial.h"
 #include "command.h"
+#include "serial.h"
 #include "hal_sram.h"
 #include "cmsis_os.h"
 #include "sys_event.h"
+#include "upgrade.h"
 #include "hal.h"
 #include "hal_bb.h"
+#include "test_usbh.h"
 #include "hal_usb_otg.h"
 #include "hal_sys_ctl.h"
 #include "wireless_interface.h"
-#include "stm32f746xx.h"
 #include "hal_nv.h"
 
 /**
@@ -83,8 +84,8 @@ int main(void)
 
     HAL_NV_Init();
 
-    //osThreadDef(USBHStatus_Task, USBH_USBHostStatus, osPriorityNormal, 0, 4 * 128);
-    //osThreadCreate(osThread(USBHStatus_Task), NULL);
+    osThreadDef(USBHStatus_Task, USBH_USBHostStatus, osPriorityNormal, 0, 4 * 128);
+    osThreadCreate(osThread(USBHStatus_Task), NULL);
 
     osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 4 * 128);
     osThreadCreate(osThread(IOTask), NULL);

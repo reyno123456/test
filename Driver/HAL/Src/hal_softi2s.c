@@ -25,7 +25,6 @@ History:
 #include "hal_nvic.h"
 #include "hal_gpio.h"
 #include "hal_softi2s.h"
-//#include "hal_dma.h"
 #include "dma.h"
 #include "hal_usb_device.h"
 #include "hal_sram.h"
@@ -57,7 +56,7 @@ HAL_RET_T HAL_SOFTI2S_Init(STRU_HAL_SOFTI2S_INIT *st_i2sInit)
       HAL_NVIC_DisableIrq(i);
     }
 
-    //HAL_SRAM_EnableSkyBypassVideo(HAL_SRAM_VIDEO_CHANNEL_1);
+    
 
     g_u8_audioDataOffset=(st_i2sInit->e_audioDataGpioNum%32)%8;
     g_u32_audioDataAddr= ((st_i2sInit->e_audioDataGpioNum%32)>>3)*0x04 + 0x50 + (st_i2sInit->e_audioDataGpioNum>>5)*0x40000 + 0x40400000;
@@ -73,37 +72,34 @@ HAL_RET_T HAL_SOFTI2S_Init(STRU_HAL_SOFTI2S_INIT *st_i2sInit)
 
     HAL_GPIO_RegisterInterrupt(st_i2sInit->e_audioLeftGpioNum, HAL_GPIO_EDGE_SENUMSITIVE, HAL_GPIO_ACTIVE_LOW, NULL);
 
-    //right    
+    //right   
     HAL_GPIO_RegisterInterrupt(st_i2sInit->e_audioRightGpioNum, HAL_GPIO_EDGE_SENUMSITIVE, HAL_GPIO_ACTIVE_HIGH, NULL);
 
-/*    HAL_NVIC_EnableIrq(HAL_NVIC_GPIO_INTR_N0_VECTOR_NUM + (st_i2sInit->e_audioLeftGpioNum>>5));
-    HAL_NVIC_EnableIrq(HAL_NVIC_GPIO_INTR_N0_VECTOR_NUM + (st_i2sInit->e_audioRightGpioNum>>5));*/
-        
+
     return  HAL_OK;
 }
 
 void HAL_SOFTI2S_Funct(void)
 {
-//    volatile uint32_t *pu32_newPcmDataFlagAddr=(uint32_t *)(0x21004FFC);
-//    uint32_t i=0;
+    volatile uint32_t *pu32_newPcmDataFlagAddr=(uint32_t *)(0x21004FFC);
+    uint32_t i=0;
     while(1)
     {
-       /* i++;
-        if (i==0x1ff)
-        {
-            i=0;
-            HAL_DMA_Start((uint32_t)g_u16_audioDataArray+DTCM_CPU1_DMA_ADDR_OFFSET, g_u32_dstAddress, (ADUIO_DATA_BUFF_LENGHT*sizeof(uint16_t)), AUTO, LINK_LIST_ITEM);
-            dlog_info("OK %x\n",g_u32_dstAddress);
-        }*/
         if (0 == g_u32_audioDataReady)
         {                      
             DMA_transfer((uint32_t)g_u16_audioDataArray+DTCM_CPU1_DMA_ADDR_OFFSET, g_u32_dstAddress, (ADUIO_DATA_BUFF_LENGHT*sizeof(uint16_t)), CHAN0, LINK_LIST_ITEM);
             g_u32_audioDataReady=1;            
-            g_u32_dstAddress+=(ADUIO_DATA_BUFF_LENGHT*sizeof(uint16_t));     
+            g_u32_dstAddress+=(ADUIO_DATA_BUFF_LENGHT*sizeof(uint16_t));
+            if (AUDIO_SDRAM_BUFF_SIZE == g_u32_dstAddress-AUDIO_SDRAM_START)
+            {
+                *pu32_newPcmDataFlagAddr = 1;
+                dlog_info("OK %x %d %p\n",g_u32_dstAddress,*pu32_newPcmDataFlagAddr,pu32_newPcmDataFlagAddr); 
+            }
             if (AUDIO_SDRAM_END == g_u32_dstAddress)
             {
-                g_u32_dstAddress = AUDIO_SDRAM_START;              
-                dlog_info("OK %x\n",g_u32_dstAddress);  
+                g_u32_dstAddress = AUDIO_SDRAM_START;
+                *pu32_newPcmDataFlagAddr = 2;
+                dlog_info("OK %x %d %p\n",g_u32_dstAddress,*pu32_newPcmDataFlagAddr,pu32_newPcmDataFlagAddr);                          
             } 
         }
     }

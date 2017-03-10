@@ -25,6 +25,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
          BB/Src/bb_spi_com.c \
          BB/Src/bb_uart_com.c \
          SRAM/Src/sram.c \
+         DMA/Src/dma.c \
          USB/USB_Host/Class/UVC/Src/usbh_uvc.c \
          USB/USB_Host/Class/MSC/Src/usbh_msc_bot.c \
          USB/USB_Host/Class/MSC/Src/usbh_msc.c \
@@ -60,6 +61,7 @@ INCDIRS := -ISysCtl/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Class/MSC/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Device/Core/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Device/Class/HID/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/DMA/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/BB/Inc \
            -I$(TOP_DIR)/Driver/HAL/Inc \
            -I$(TOP_DIR)/Configure/Include

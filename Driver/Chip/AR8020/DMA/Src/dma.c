@@ -16,9 +16,9 @@ History:
 #include "memory_config.h"
 
 
-STRU_DmaRegs *g_st_dmaRegs = (STRU_DmaRegs *)DMA_BASE;
+volatile STRU_DmaRegs *g_st_dmaRegs = (STRU_DmaRegs *)DMA_BASE;
 
-STRU_transStatus g_st_transStatus[8] = {0};
+volatile STRU_transStatus g_st_transStatus[8] = {0};
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.

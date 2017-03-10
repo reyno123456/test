@@ -68,11 +68,11 @@ typedef uint8_t HAL_BOOL_T;
 #define HAL_UART_ERR_WRITE_DATA                     (HAL_UART_ERR_MASK | 0x3)
 #define HAL_UART_ERR_READ_DATA                      (HAL_UART_ERR_MASK | 0x4)
 
-#define HAL_NVIC_ERR_MASK                           (0xC000)
+#define HAL_NVIC_ERR_MASK                           (0xC0000)
 
 
 
-#define HAL_BB_ERR_MASK                             (0xB000)
+#define HAL_BB_ERR_MASK                             (0xF0000)
 #define HAL_BB_ERR_INIT                             (HAL_BB_ERR_MASK | 0x1)
 #define HAL_BB_ERR_EVENT_NOTIFY                     (HAL_BB_ERR_MASK | 0x2)
 #define HAL_BB_ERR_INIT_SESSION                     (HAL_BB_ERR_MASK | 0x3)
@@ -108,6 +108,8 @@ typedef uint8_t HAL_BOOL_T;
 #define HAL_DVP_ERR_MASK                            (0x10400)
 #define HAL_DVP_ERR                                 (HAL_DVP_ERR_MASK | 0x1)
 
+#define HAL_SOFTI2S_ERR_MASK                        (0xE0000)
+#define HAL_SOFTI2S_ERR_INIT                        (HAL_SOFTI2S_ERR_MASK | 0x1)
 
 #endif
 

@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+#define asm            __asm volatile 
+
 /* Fractional multiply */
 #if __ARM_ARCH >= 6
 #define mul(x,y) \
@@ -102,8 +104,8 @@ do { \
 #if __ARM_ARCH >= 6
 static inline uint32_t SWAB32(uint32_t x)
 {
-	asm ("rev %0, %1" : "=r" (x) : "r" (x));
-	return x;
+    asm ("rev %0, %1" : "=r" (x) : "r" (x));
+    return x;
 }
 #define SWAB32 SWAB32
 #endif

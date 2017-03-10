@@ -17,15 +17,14 @@ History:
 #include "hal_gpio.h"
 
 #define AUDIO_SDRAM_START                (0x81F00000)
-#define AUDIO_SDRAM_END                  (0x82000000) //SDRAM 0x81000000 - 0x81FFFFFF
-//#define AUDIO_SDRAM_END                  (0x81FFE400) //SDRAM 0x81000000 - 0x81FFFFFF
+#define AUDIO_SDRAM_END                  (0x81FFE400) 
+#define AUDIO_SDRAM_BUFF_SIZE            (0x7F200) 
 #define AUDIO_BYPASS_START               (0xB1800000)
-#define ADUIO_DATA_BUFF_LENGHT           (1024*4/sizeof(uint16_t)) 
+#define ADUIO_DATA_BUFF_LENGHT           (4608/sizeof(uint16_t)) 
 //#define PLL_CLK_200M_48K                 (20048000)
 //#define PLL_CLK_200M_44p1K               (10044100)
-//#define PLL_CLK_100M_48K                 (10048000)
-#define PLL_CLK_100M_44p1K               (10044100)
-
+#define PLL_CLK_100M_48K                 (10048000)
+//#define PLL_CLK_100M_44p1K               (10044100)
 
 typedef struct
 {

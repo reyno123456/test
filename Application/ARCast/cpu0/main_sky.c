@@ -1,6 +1,7 @@
 #include "debuglog.h"
 #include "serial.h"
 #include "command.h"
+#include "test_usbh.h"
 #include "cmsis_os.h"
 #include "sys_event.h"
 #include "bb_spi.h"
@@ -11,8 +12,9 @@
 #include "hal_usb_otg.h"
 #include "hal_sys_ctl.h"
 #include "wireless_interface.h"
-#include "stm32f746xx.h"
 #include "hal_nv.h"
+#include "hal_usb_host.h"
+#include "hal_encodemp3.h"
 
 /**
  * @brief  CPU L1-Cache enable.
@@ -51,7 +53,6 @@ int main(void)
     HAL_SYS_CTL_GetConfig( &pst_cfg);
     pst_cfg->u8_workMode = 0;
     HAL_SYS_CTL_Init(pst_cfg);
-
     /* initialize the uart */
     console_init(0,115200);
     dlog_info("cpu0 start!!! \n");
@@ -73,18 +74,29 @@ int main(void)
     st_configure.u8_hdmiToEncoderCh = 0;
     HAL_HDMI_RX_Init(HAL_HDMI_RX_1, &st_configure);
 
+    STRU_MP3_ENCODE_CONFIGURE_WAVE st_audioConfig;
+    st_audioConfig.e_samplerate = HAL_MP3_ENCODE_48000;
+    st_audioConfig.e_modes = HAL_MP3_ENCODE_STEREO;
+    st_audioConfig.u32_rawDataAddr = 0x81F00000;
+    st_audioConfig.u32_rawDataLenght = 0xFE400;
+    st_audioConfig.u32_encodeDataAddr = 0x81E00000;
+    st_audioConfig.u32_newPcmDataFlagAddr = 0x21004FFC;
+    st_audioConfig.u8_channel = 2;
+
     HAL_USB_InitOTG(HAL_USB_PORT_0);
 
     HAL_NV_Init();
 
+    USBH_MountUSBDisk();
+    HAL_MP3EncodePcmInit(&st_audioConfig);
+
     /* We should never get here as control is now taken by the scheduler */
     for( ;; )
     {
+        HAL_USB_HostProcess();
+        HAL_MP3EncodePcm();
         SYS_EVENT_Process();
-
         DLOG_Process(NULL);
-
-        HAL_Delay(20);
     }
 } 
 

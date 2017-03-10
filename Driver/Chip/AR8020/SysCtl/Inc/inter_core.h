@@ -27,7 +27,7 @@ typedef struct
 }INTER_CORE_MSG_TYPE;
 
 // SRAM DCache disable
-#define SRAM_MEMORY_MPU_REGION_NUMBER  1
+#define SRAM_MEMORY_MPU_REGION_NUMBER  0
 #define SRAM_MEMORY_MPU_REGION_ST_ADDR_0 0x21004000
 #define SRAM_MEMORY_MPU_REGION_ATTR_0    (0  << 28) | \
                                          (3  << 24) | \
@@ -39,8 +39,8 @@ typedef struct
                                          (11 <<  1) | \
                                          (1  <<  0)
 
-#define SRAM_CONFIGURE_MEMORY_MPU_REGION_NUMBER  2
-#define SRAM_CONFIGURE_MEMORY_MPU_REGION_ST_ADDR_0 SRAM_CONFIGURE_MEMORY_ST_ADDR
+#define SRAM_CONFIGURE_MEMORY_MPU_REGION_NUMBER  1
+#define SRAM_CONFIGURE_MEMORY_MPU_REGION_ST_ADDR_1 SRAM_CONFIGURE_MEMORY_ST_ADDR
 #define SRAM_CONFIGURE_MEMORY_MPU_REGION_ATTR_1     (0  << 28) | \
                                                     (3  << 24) | \
                                                     (1  << 19) | \
@@ -50,6 +50,30 @@ typedef struct
                                                     (0  <<  8) | \
                                                     (11 <<  1) | \
                                                     (1  <<  0)
+
+#define SDRAM_AUDIO_RAWDATA_MEMORY_MPU_REGION_NUMBER  3
+#define SDRAM_AUDIO_RAWDATA_MEMORY_MPU_REGION_ST_ADDR_3 0x81F00000
+#define SDRAM_AUDIO_RAWDATA_MEMORY_MPU_REGION_ATTR_3     (0  << 28) | \
+                                                         (3  << 24) | \
+                                                         (1  << 19) | \
+                                                         (0  << 18) | \
+                                                         (0  << 17) | \
+                                                         (0  << 16) | \
+                                                         (0  <<  8) | \
+                                                         (19 <<  1) | \
+                                                         (1  <<  0)
+// SRAM DCache disable
+#define SRAM_DEBUG_MEMORY_MPU_REGION_NUMBER    2
+#define SRAM_DEBUG_MEMORY_MPU_REGION_ST_ADDR_2   SRAM_DEBUG_LOG_BUFFER_ST_ADDR
+#define SRAM_DEBUG_MEMORY_MPU_REGION_ATTR_2      (0  << 28) | \
+                                                 (3  << 24) | \
+                                                 (1  << 19) | \
+                                                 (0  << 18) | \
+                                                 (0  << 17) | \
+                                                 (0  << 16) | \
+                                                 (0  <<  8) | \
+                                                 (12 <<  1) | \
+                                                 (1  <<  0)
 
 void SRAM_SKY_BypassVideoConfig(uint32_t channel);
 

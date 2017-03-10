@@ -8,6 +8,7 @@
   */
 #include "debuglog.h"
 #include "interrupt.h"
+#include "hal_softi2s.h"
 
 .equ  DTCM1_DATA,   0x20000000
 .equ  Local_CPUID,  0x1
@@ -165,8 +166,8 @@ Infinite_Loop:
   .word     IRQHandler_65
   .word     IRQHandler_66
   .word     IRQHandler_67
-  .word     IRQHandler_68
-  .word     IRQHandler_69
+  .word     LeftAudio
+  .word     RightAudio
   .word     IRQHandler_70
   .word     IRQHandler_71
   .word     IRQHandler_72
