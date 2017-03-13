@@ -89,6 +89,10 @@ __attribute__((weak)) void serial_puts(const char *s)
 {
 }
 
+__attribute__((weak)) int32_t UART_ClearTflCnt(uint8_t u8_uartCh)
+{
+}
+
 static unsigned char DLOG_CheckDebugBufInitStatus(void)
 {
     // Check input SRAM buffer init flag 
@@ -162,10 +166,12 @@ static void DLOG_Uart_IrqHandler(uint32_t u32_vectorNum)
     char                  c;
     unsigned int          status;
     unsigned int          isrType;
+    unsigned int          isrType2;
     volatile uart_type   *uart_regs = (uart_type *)UART0_BASE;
 
     status     = uart_regs->LSR;
     isrType    = uart_regs->IIR_FCR;
+    isrType2   = isrType;
 
     /* receive data irq, try to get the data */
     if (UART_IIR_RECEIVEDATA == (isrType & UART_IIR_RECEIVEDATA))
@@ -205,6 +211,12 @@ static void DLOG_Uart_IrqHandler(uint32_t u32_vectorNum)
                 s_u8_commandLine[s_u8_commandPos++] = c;
             }
         }
+    }
+
+    // TX empty interrupt.
+    if (UART_IIR_THR_EMPTY == (isrType2 & UART_IIR_THR_EMPTY))
+    {
+        UART_ClearTflCnt(0);
     }
 }
 

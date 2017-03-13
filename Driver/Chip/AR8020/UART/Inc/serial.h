@@ -30,9 +30,11 @@
 #define UART_LSR_THRE            (0x20)
 #define UART_LSR_DATAREADY       (0x01)
 #define UART_IIR_RECEIVEDATA     (0x04)
+#define UART_IIR_THR_EMPTY       (0x02)
 #define UART_LSR_DR              (0x01)
 
 #define UART_TOTAL_CHANNEL       (11)
+#define UART_TFL_MAX             (16)
 
 //user CallBack for uart data receive.
 typedef uint32_t (*UART_RxHandler)(uint8_t *pu8_rxBuf, uint8_t u8_len);
@@ -115,5 +117,14 @@ int32_t UART_RegisterUserRxHandler(uint8_t u8_uartCh, UART_RxHandler userHandle)
 */
 int32_t UART_UnRegisterUserRxHandler(uint8_t u8_uartCh);
 
+/**
+* @brief  clear uart fifo count.
+* @param  u8_uartCh           uart channel, 0 ~ 10.
+* @retval 
+*         -1                  unregister user function failed.
+*         0                   unregister user function sucessed.
+* @note   None.
+*/
+int32_t UART_ClearTflCnt(uint8_t u8_uartCh);
 
 #endif
