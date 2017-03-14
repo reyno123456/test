@@ -49,11 +49,17 @@ enum
 #define DEBUG_LOG_OUTPUT_CPU_AFTER_CPU
 //#define USE_SYS_EVENT_TRIGGER_DEBUG_LOG_PROCESS
 
-/* 2.5K * 3 SRAM output space and 0.5K SRAM input space */
+#define DEBUG_LOG_UART_PORT        0
+
+typedef enum
+{
+    DLOG_SERVER_PROCESSOR = 0,
+    DLOG_CLIENT_PROCESSOR,
+} ENUM_DLOG_PROCESSOR;
 
 typedef void (*FUNC_CommandRun)(char *cmdArray[], uint32_t cmdNum);
 
-void DLOG_Init(FUNC_CommandRun func);
+void DLOG_Init(FUNC_CommandRun func, ENUM_DLOG_PROCESSOR e_dlogProcessor);
 unsigned int DLOG_Output(unsigned int byte_num);
 void DLOG_Process(void* p);
 

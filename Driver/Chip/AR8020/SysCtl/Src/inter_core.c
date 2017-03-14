@@ -81,7 +81,7 @@ static void InterCore_TriggerIRQ1(void)
 static void InterCore_SRAMDCacheDisable(void)
 {
     uint8_t i=0;
-    __asm volatile ("dmb 0xF":::"memory");   
+    __asm volatile ("dmb 0xF":::"memory");
     MPU->CTRL = 0;
 
     MPU->RNR  = SRAM_MEMORY_MPU_REGION_NUMBER;
@@ -112,9 +112,6 @@ static void InterCore_SRAMDCacheDisable(void)
 
     __asm volatile ("dsb 0xF":::"memory");
     __asm volatile ("isb 0xF":::"memory");
-
-
-
 }
 
 

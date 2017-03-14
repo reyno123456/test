@@ -7,7 +7,7 @@
 #include "reg_map.h"
 #include "cpu_info.h"
 
-#define DEBUG_UART_PORT    0
+static uint8_t s_u8_dlogServerCpuId = 0xFF;
 
 #define DEBUG_LOG_OUTPUT_BUF_HEAD_0      ((char*)(((STRU_DebugLogOutputBuffer*)SRAM_DEBUG_LOG_OUTPUT_BUFFER_ST_ADDR_0)->buf))
 #define DEBUG_LOG_OUTPUT_BUF_TAIL_0      ((char*)(SRAM_DEBUG_LOG_OUTPUT_BUFFER_END_ADDR_0))
@@ -16,7 +16,7 @@
 #define DEBUG_LOG_OUTPUT_BUF_HEAD_2      ((char*)(((STRU_DebugLogOutputBuffer*)SRAM_DEBUG_LOG_OUTPUT_BUFFER_ST_ADDR_2)->buf))
 #define DEBUG_LOG_OUTPUT_BUF_TAIL_2      ((char*)(SRAM_DEBUG_LOG_OUTPUT_BUFFER_END_ADDR_2))
 
-#define DEBUG_LOG_OUTPUT_BUF_WR_POS_0    (s_debug_log_output_buf_wr_pos_0)
+#define DEBUG_LOG_OUTPUT_BUF_WR_POS_0    (((STRU_DebugLogOutputBuffer*)SRAM_DEBUG_LOG_OUTPUT_BUFFER_ST_ADDR_0)->header.output_buf_wr_pos)
 #define DEBUG_LOG_OUTPUT_BUF_RD_POS_0    (s_debug_log_output_buf_rd_pos_0)
 #define DEBUG_LOG_OUTPUT_BUF_WR_POS_1    (((STRU_DebugLogOutputBuffer*)SRAM_DEBUG_LOG_OUTPUT_BUFFER_ST_ADDR_1)->header.output_buf_wr_pos)
 #define DEBUG_LOG_OUTPUT_BUF_RD_POS_1    (s_debug_log_output_buf_rd_pos_1)
@@ -59,7 +59,6 @@ typedef struct
     volatile char buf[1];
 } STRU_DebugLogOutputBuffer;
 
-static char *s_debug_log_output_buf_wr_pos_0 = DEBUG_LOG_OUTPUT_BUF_HEAD_0;
 static char *s_debug_log_output_buf_rd_pos_0 = DEBUG_LOG_OUTPUT_BUF_HEAD_0;
 static char *s_debug_log_output_buf_rd_pos_1 = DEBUG_LOG_OUTPUT_BUF_HEAD_1;
 static char *s_debug_log_output_buf_rd_pos_2 = DEBUG_LOG_OUTPUT_BUF_HEAD_2;
@@ -130,7 +129,7 @@ static unsigned int DLOG_Input(char* buf, unsigned int byte_num)
 {
     CHECK_DEBUG_BUF_INIT_STATUS();
 
-    if (CPUINFO_GetLocalCpuId() != ENUM_CPU0_ID)
+    if (CPUINFO_GetLocalCpuId() != s_u8_dlogServerCpuId)
     {
         return 0;
     }
@@ -182,7 +181,7 @@ static void DLOG_Uart_IrqHandler(uint32_t u32_vectorNum)
             /* receive "enter" key */
             if (c == '\r')
             {
-                uart_putc(DEBUG_UART_PORT, '\n');
+                uart_putc(DEBUG_LOG_UART_PORT, '\n');
                 s_u8_commandLine[s_u8_commandPos++] = c;
 
                 /* if s_u8_commandLine is not empty, go to parse command */
@@ -200,14 +199,14 @@ static void DLOG_Uart_IrqHandler(uint32_t u32_vectorNum)
                 {
                     s_u8_commandLine[--s_u8_commandPos] = '\0';
                 }
-                uart_putc(DEBUG_UART_PORT, '\b');
-                uart_putc(DEBUG_UART_PORT, ' ');
-                uart_putc(DEBUG_UART_PORT, '\b');
+                uart_putc(DEBUG_LOG_UART_PORT, '\b');
+                uart_putc(DEBUG_LOG_UART_PORT, ' ');
+                uart_putc(DEBUG_LOG_UART_PORT, '\b');
             }
             /* receive normal data */
             else if (s_u8_commandPos < (sizeof(s_u8_commandLine) - 1))
             {
-                uart_putc(DEBUG_UART_PORT, c);
+                uart_putc(DEBUG_LOG_UART_PORT, c);
                 s_u8_commandLine[s_u8_commandPos++] = c;
             }
         }
@@ -222,14 +221,11 @@ static void DLOG_Uart_IrqHandler(uint32_t u32_vectorNum)
 
 static void DLOG_InputCommandInit(void)
 {
-    if (CPUINFO_GetLocalCpuId() == ENUM_CPU0_ID)
-    {
-        s_u8_commandPos = 0;
-        memset(s_u8_commandLine, 0, sizeof(s_u8_commandLine));
-        reg_IrqHandle(UART_INTR0_VECTOR_NUM, DLOG_Uart_IrqHandler, NULL);
-        INTR_NVIC_SetIRQPriority(UART_INTR0_VECTOR_NUM, INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5, INTR_NVIC_PRIORITY_UART0, 0));
-        INTR_NVIC_EnableIRQ(UART_INTR0_VECTOR_NUM);
-    }
+    s_u8_commandPos = 0;
+    memset(s_u8_commandLine, 0, sizeof(s_u8_commandLine));
+    reg_IrqHandle(UART_INTR0_VECTOR_NUM, DLOG_Uart_IrqHandler, NULL);
+    INTR_NVIC_SetIRQPriority(UART_INTR0_VECTOR_NUM, INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5, INTR_NVIC_PRIORITY_UART0, 0));
+    INTR_NVIC_EnableIRQ(UART_INTR0_VECTOR_NUM);
 }
 
 unsigned int DLOG_InputParse(char *buf, unsigned int byte_max)
@@ -298,10 +294,10 @@ unsigned int DLOG_InputParse(char *buf, unsigned int byte_max)
 static void DLOG_InputCommandParse(char *cmd)
 {
     unsigned char cmdIndex;
-    char *tempCommand[5];
+    char *tempCommand[6];
 
     cmdIndex = 0;
-    memset(tempCommand, 0, 5);
+    memset(tempCommand, 0, sizeof(tempCommand));
 
     while (cmdIndex < 6)
     {
@@ -359,11 +355,14 @@ void DLOG_Process(void* p)
     }
 }
 
-void DLOG_Init(FUNC_CommandRun func)
+void DLOG_Init(FUNC_CommandRun func, ENUM_DLOG_PROCESSOR e_dlogProcessor)
 {
-    
-    if (CPUINFO_GetLocalCpuId() == ENUM_CPU0_ID)
+    s_func_commandRun = func;
+
+    if (e_dlogProcessor == DLOG_SERVER_PROCESSOR)
     {
+        s_u8_dlogServerCpuId = CPUINFO_GetLocalCpuId();
+        
         ((STRU_DebugLogInputBufferHeader*)SRAM_DEBUG_LOG_INPUT_BUFFER_ST_ADDR)->input_buf_wr_pos = (uint32_t)DEBUG_LOG_INPUT_BUF_HEAD;
         ((STRU_DebugLogInputBufferHeader*)SRAM_DEBUG_LOG_INPUT_BUFFER_ST_ADDR)->input_buf_init_flag = SRAM_DEBUG_BUF_INIT_FLAG;
 
@@ -375,14 +374,14 @@ void DLOG_Init(FUNC_CommandRun func)
         
         ((STRU_DebugLogOutputBufferHeader*)SRAM_DEBUG_LOG_OUTPUT_BUFFER_ST_ADDR_2)->output_buf_wr_pos = (uint32_t)DEBUG_LOG_OUTPUT_BUF_HEAD_2;
         ((STRU_DebugLogOutputBufferHeader*)SRAM_DEBUG_LOG_OUTPUT_BUFFER_ST_ADDR_2)->output_buf_init_flag = SRAM_DEBUG_BUF_INIT_FLAG;
+
+        DLOG_InputCommandInit();
     }
     else
     {
         while (DLOG_CheckDebugBufInitStatus() == 0 ) ;
     }
 
-    s_func_commandRun = func;
-    DLOG_InputCommandInit();
 #ifdef USE_SYS_EVENT_TRIGGER_DEBUG_LOG_PROCESS
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_IDLE, DLOG_Process);
 #endif
@@ -436,7 +435,7 @@ static unsigned int DLOG_StrCpyToDebugOutputLogBuf(const char *src)
     switch(CPUINFO_GetLocalCpuId())
     {
     case ENUM_CPU0_ID:
-        DEBUG_LOG_OUTPUT_BUF_WR_POS_0 = dst;
+        DEBUG_LOG_OUTPUT_BUF_WR_POS_0 = (uint32_t)dst;
         break;
     case ENUM_CPU1_ID:
         DEBUG_LOG_OUTPUT_BUF_WR_POS_1 = (uint32_t)dst;
@@ -469,7 +468,7 @@ unsigned int DLOG_Output(unsigned int byte_num)
 
     CHECK_DEBUG_BUF_INIT_STATUS();
 
-    if (CPUINFO_GetLocalCpuId() != ENUM_CPU0_ID)
+    if (CPUINFO_GetLocalCpuId() != s_u8_dlogServerCpuId)
     {
         return 0;
     }
@@ -530,8 +529,8 @@ unsigned int DLOG_Output(unsigned int byte_num)
 
             if (enter_detected == 1)
             {
-                uart_puts(DEBUG_UART_PORT, tmp_buf);
-                uart_putc(DEBUG_UART_PORT, '\r');
+                uart_puts(DEBUG_LOG_UART_PORT, tmp_buf);
+                uart_putc(DEBUG_LOG_UART_PORT, '\r');
                 
                 iByte += tmp_buf_index;
                 
@@ -577,7 +576,7 @@ int puts(const char * s)
 
     CHECK_DEBUG_BUF_INIT_STATUS();
 
-    if (CPUINFO_GetLocalCpuId() == ENUM_CPU0_ID)
+    if (CPUINFO_GetLocalCpuId() == s_u8_dlogServerCpuId)
     {
         while (*s)
         {
@@ -585,10 +584,10 @@ int puts(const char * s)
 
             if (c == '\n')
             {
-                uart_putc(DEBUG_UART_PORT, '\r');
+                uart_putc(DEBUG_LOG_UART_PORT, '\r');
             }
             
-            uart_putc(DEBUG_UART_PORT, c);
+            uart_putc(DEBUG_LOG_UART_PORT, c);
         }
     }
     

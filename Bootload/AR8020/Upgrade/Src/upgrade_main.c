@@ -12,7 +12,7 @@
 static void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
     serial_init(uart_num, baut_rate);
-    dlog_init(UPGRADE_CommandRun);
+    dlog_init(UPGRADE_CommandRun, DLOG_SERVER_PROCESSOR);
 }
 
 /**
