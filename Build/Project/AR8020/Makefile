@@ -103,7 +103,6 @@ sdk:
 	$(UTILITY_DIR)/modifyMKpath.sh
 	@cp -r ../../*.mk $(SDK_DIR)/Build
 	@tar -cvf  $(SDK_DIR_VERSION).tar.gz $(SDK_DIR)
-	@rm -rf $(SDK_DIR)
 
 ground:
 	@echo "make ground ..."
@@ -116,6 +115,9 @@ sky:
 	@echo $(APPLICATION_DIR)
 	@$(MAKE) sky -C $(APPLICATION_DIR)
 	@cp $(APPLICATION_DIR)/*.bin $(OUTPUT_DIR)
+appclean: 
+	@echo "make app cleaning..."
+	@$(MAKE) clean -C $(APPLICATION_DIR)
 
 clean0: MKARGS := clean
 clean0: $(LIB0)
