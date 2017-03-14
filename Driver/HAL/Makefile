@@ -60,12 +60,13 @@ SRC_C := Src/hal.c \
          Src/hal_dvp.c \
          Src/hal_encodemp3.c\
          Src/hal_softi2s.c \
-		 Src/hal_softi2s_leftinterrupt.c \
-		 Src/hal_softi2s_rightinterrupt.c
+         Src/hal_softi2s_leftinterrupt.c \
+         Src/hal_softi2s_rightinterrupt.c
 
 INCDIRS := -IInc \
            -I$(TOP_DIR)/Configure/Include \
            -I$(TOP_DIR)/Library/Artosyn/Common/Inc \
+           -I$(TOP_DIR)/Library/ThirdParty/MP3Encoder/shine-3.1.0 \
            -I$(TOP_DIR)/Driver/Chip/AR8020/I2C/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/BB/Inc \

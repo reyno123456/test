@@ -21,10 +21,11 @@ static void CPU_CACHE_Enable(void)
   SCB_EnableDCache();
 }
 
-void console_init(uint32_t uart_num, uint32_t baut_rate)
+void CONSOLE_Init(void)
 {
-    dlog_init(command_run);
+    DLOG_Init(command_run, DLOG_CLIENT_PROCESSOR);
 }
+
 /**
   * @brief  Main program
   * @param  None
@@ -35,7 +36,7 @@ int main(void)
     HAL_SYS_CTL_Init(NULL);
 
     /* initialize the uart */
-    console_init(1,115200);
+    CONSOLE_Init();
     CPU_CACHE_Enable();
     STRU_HAL_SOFTI2S_INIT st_audioConfig = {AUDIO_SDRAM_START,HAL_GPIO_NUM64,HAL_GPIO_NUM96,HAL_GPIO_NUM100};  
     dlog_info("cpu1 start!!! %d \n",HAL_SOFTI2S_Init(&st_audioConfig)); 

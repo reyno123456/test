@@ -20,10 +20,12 @@ static void CPU_CACHE_Enable(void)
   SCB_EnableDCache();
 }
 
-void console_init(uint32_t uart_num, uint32_t baut_rate)
+void CONSOLE_Init(void)
 {
-    dlog_init(command_run);
+    HAL_UART_Init(DEBUG_LOG_UART_PORT, HAL_UART_BAUDR_115200, NULL);
+    DLOG_Init(command_run, DLOG_SERVER_PROCESSOR);
 }
+
 /**
   * @brief  Main program
   * @param  None
@@ -34,7 +36,7 @@ int main(void)
     HAL_SYS_CTL_Init(NULL);
 
     /* initialize the uart */
-    console_init(1,115200);
+    CONSOLE_Init();
     dlog_info("cpu1 start!!! \n");
 
     CPU_CACHE_Enable();
