@@ -39,6 +39,7 @@
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
+void command_writeMemory_array(char *addr, char *value, char *len);
 void command_readSdcard(char *Dstaddr, char *BlockNum);
 void command_writeSdcard(char *Dstaddr, char *BlockNum, char *SrcAddr);
 void command_eraseSdcard(char *startBlock, char *blockNum);
@@ -62,6 +63,11 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     else if ((memcmp(cmdArray[0], "write", 5) == 0) && (cmdNum == 3))
     {
         command_writeMemory(cmdArray[1], cmdArray[2]);
+    }
+    /* write memory array: "write $(address) $(data) $(len)" */
+    else if ((memcmp(cmdArray[0], "write_array", 11) == 0) && (cmdNum == 4))
+    {
+        command_writeMemory_array(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
     /* initialize sdcard: "initsd" */
     else if (memcmp(cmdArray[0], "initsd", 6) == 0)
@@ -412,6 +418,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("Please use the commands like:");
         dlog_error("read <address>");
         dlog_error("write <address> <data>");
+        dlog_error("write_array <address> <data><len>");
         dlog_error("initsd");
         dlog_error("readsd <SrcAddr:0x> <SectorNum:0x>");
         dlog_error("writesd <DstAddr:0x> <SectorNum:0x> <Srcaddr:0x>");
@@ -548,6 +555,36 @@ void command_writeMemory(char *addr, char *value)
 
     *((unsigned int *)(writeAddress)) = writeValue;
 }
+
+void command_writeMemory_array(char *addr, char *value, char *len)
+{
+    unsigned int writeAddress;
+    unsigned int writeValue;
+    unsigned int writeLen;
+    unsigned int i;
+    unsigned writeAddressIncrease;
+
+    writeAddress = command_str2uint(addr);
+
+    if (writeAddress == 0xFFFFFFFF)
+    {
+
+        dlog_error("write address is illegal\n");
+
+        return;
+    }
+
+    writeValue   = command_str2uint(value);
+    writeLen = command_str2uint(len);
+
+    for (i = 0; i < writeLen; i++)
+    {
+        writeAddressIncrease = writeAddress + i*sizeof(unsigned int);
+        *((unsigned int *)(writeAddressIncrease)) = writeValue;
+        dlog_info("writeAddress = 0x%08x, writeValue = 0x%08x\n", writeAddressIncrease, writeValue);
+    }    
+}
+
 
 void command_readSdcard(char *Dstaddr, char *BlockNum)
 {
