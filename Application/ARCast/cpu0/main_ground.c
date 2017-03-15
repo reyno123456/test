@@ -1,6 +1,5 @@
 #include "debuglog.h"
 #include "command.h"
-#include "serial.h"
 #include "hal_sram.h"
 #include "cmsis_os.h"
 #include "sys_event.h"
@@ -12,6 +11,7 @@
 #include "hal_sys_ctl.h"
 #include "wireless_interface.h"
 #include "hal_nv.h"
+#include "hal_uart.h"
 
 /**
  * @brief  CPU L1-Cache enable.

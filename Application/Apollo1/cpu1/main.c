@@ -1,12 +1,12 @@
 #include "debuglog.h"
 #include "command.h"
 #include "sys_event.h"
-#include "serial.h"
 #include "stm32f746xx.h"
 #include "test_usbh.h"
 #include "hal.h"
 #include "hal_usb_host.h"
 #include "hal_sys_ctl.h"
+#include "hal_uart.h"
 
 /**
  * @brief  CPU L1-Cache enable.

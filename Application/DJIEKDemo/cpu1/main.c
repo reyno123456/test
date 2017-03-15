@@ -2,9 +2,9 @@
 #include "command.h"
 #include "sys_event.h"
 #include "stm32f746xx.h"
-#include "serial.h"
 #include "hal.h"
 #include "hal_sys_ctl.h"
+#include "hal_uart.h"
 
 /**
  * @brief  CPU L1-Cache enable.
