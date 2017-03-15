@@ -16,21 +16,19 @@ include $(BUILD_DIR)/config.mk
 
 ###############################################################################
 # static library name
-LIB = libmp3enc.a
-CFLAGS += -O3
-# source file(s), including c file(s)
-SRC_C   := ./shine-3.1.0/bitstream.c \
-           ./shine-3.1.0/formatbits.c \
-           ./shine-3.1.0/huffman.c \
-           ./shine-3.1.0/l3bitstream.c \
-           ./shine-3.1.0/l3loop.c \
-           ./shine-3.1.0/l3mdct.c \
-           ./shine-3.1.0/l3subband.c \
-           ./shine-3.1.0/layer3.c \
-           ./shine-3.1.0/reservoir.c \
-           ./shine-3.1.0/tables.c
+LIB = libmp3dec.a
 
-INCDIRS :=  -I./shine-3.1.0
+CFLAGS = -Os
+CFLAGS += -ffast-math
+CFLAGS += -finline-functions-called-once
+CFLAGS += -fno-loop-optimize
+CFLAGS += -fexpensive-optimizations
+CFLAGS += -fpeephole2
+
+# source file(s), including c file(s)
+SRC_C   := ./minimp3/minimp3.c
+
+INCDIRS :=  -I./minimp3
 
 # object file(s)
 OBJ_C   := $(patsubst %.c,%.o,$(SRC_C))
@@ -45,11 +43,11 @@ install:
 	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
-	@cp -f ./shine-3.1.0/layer3.h $(OUTPUT_HEADER_STAGING_DIR)/
+	@cp -f ./minimp3/minimp3.h $(OUTPUT_HEADER_STAGING_DIR)/
 
 clean:
 	@echo "Cleaning..."
-	@$(RM) $(LIB) $(OBJ_C) $(OBJ_CPP) .depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB) $(OUTPUT_HEADER_STAGING_DIR)/layer3.h
+	@$(RM) $(LIB) $(OBJ_C) $(OBJ_CPP) .depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB) $(OUTPUT_HEADER_STAGING_DIR)/minimp3.h
 
 .PHONY: all clean install
 #########################################################################
