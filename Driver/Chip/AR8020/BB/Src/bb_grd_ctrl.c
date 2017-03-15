@@ -703,31 +703,34 @@ static void grd_handle_MCS_mode_cmd(ENUM_RUN_MODE mode)
 	context.qam_skip_mode = mode;
     dlog_info("qam_skip_mode = %d\n", context.qam_skip_mode);
     
-    ENUM_BB_QAM qam = grd_get_IT_QAM();
-    ENUM_BB_LDPC ldpc = grd_get_IT_LDPC();
+    if ( mode == AUTO )
+    {
+	    ENUM_BB_QAM qam = grd_get_IT_QAM();
+	    ENUM_BB_LDPC ldpc = grd_get_IT_LDPC();
     
-    if( qam == MOD_BPSK )
-    {
-        context.qam_ldpc = 1;
-    }
-    else if( qam == MOD_4QAM )
-    {
-        context.qam_ldpc = 2;
-    }
-    else if( qam == MOD_16QAM )
-    {
-        context.qam_ldpc = 3;
-    }
-    else if( qam == MOD_64QAM && ldpc == LDPC_1_2)
-    {
-        context.qam_ldpc = 4;
-    }
-    else if( qam == MOD_64QAM && ldpc == LDPC_1_2)
-    {
-        context.qam_ldpc = 5;
-    }
+	    if( qam == MOD_BPSK )
+	    {
+	        context.qam_ldpc = 1;
+	    }
+	    else if( qam == MOD_4QAM )
+	    {
+	        context.qam_ldpc = 2;
+	    }
+	    else if( qam == MOD_16QAM )
+	    {
+	        context.qam_ldpc = 3;
+	    }
+	    else if( qam == MOD_64QAM && ldpc == LDPC_1_2)
+	    {
+	        context.qam_ldpc = 4;
+	    }
+	    else if( qam == MOD_64QAM)
+	    {
+	        context.qam_ldpc = 5;
+	    }
     
-    grd_set_txmsg_mcs_change( context.qam_ldpc );
+        grd_set_txmsg_mcs_change( context.qam_ldpc );        
+    }
 }
 
 
@@ -878,12 +881,15 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
         switch(item)
         {
             case MCS_MODE_SELECT:
-                grd_handle_MCS_mode_cmd( (ENUM_RUN_MODE)value);
                 grd_handle_brc_mode_cmd( (ENUM_RUN_MODE)value);
+                grd_handle_MCS_mode_cmd( (ENUM_RUN_MODE)value);
 
                 //For osd information
-                context.brc_bps[0] = BB_get_bitrateByMcs(context.qam_ldpc);
-                context.brc_bps[1] = BB_get_bitrateByMcs(context.qam_ldpc);
+                if ( context.brc_mode == MANUAL)
+                {
+                    context.brc_bps[0] = BB_get_bitrateByMcs(context.qam_ldpc);
+                    context.brc_bps[1] = BB_get_bitrateByMcs(context.qam_ldpc);                
+                }
         
                 break;
 
@@ -1048,14 +1054,14 @@ static void BB_grd_GatherOSDInfo(void)
         uint8_t n = BB_UARTComReceiveMsg(BB_UART_COM_SESSION_0, buf, 16);
         if ( n >= 4 && buf[0] == 0xaa && buf[1] == 0x55)
         {
-            osdptr->snr_vlaue[3] = ( (uint16_t)buf[2] << 8 ) | buf[4];
-            osdptr->reserved[0]  = buf[4];
+            osdptr->snr_vlaue[3] = ( (uint16_t)buf[2] << 8 ) | buf[3];
+            //osdptr->reserved[0]  = buf[4];
 
             {
                 static int loop = 0;
                 if( loop ++ >= 250)
                 {
-                    dlog_info("RCLock %d", buf[3]);
+                    dlog_info("RCLock %d %d", buf[2], buf[3]);
                     loop = 0;
                 }
             }
@@ -1065,16 +1071,16 @@ static void BB_grd_GatherOSDInfo(void)
     
     osdptr->snr_vlaue[0] = grd_get_it_snr();
     osdptr->snr_vlaue[1] = get_snr_average();
-    osdptr->snr_vlaue[2] = 0;
+    //osdptr->snr_vlaue[2] = 0x12aa;
 
     osdptr->ldpc_error = (((uint16_t)BB_ReadReg(PAGE2, LDPC_ERR_HIGH_8)) << 8) | BB_ReadReg(PAGE2, LDPC_ERR_LOW_8);
     osdptr->harq_count = (BB_ReadReg(PAGE2, FEC_5_RD) >> 4);
     uint8_t tmp = BB_ReadReg(PAGE2, 0xdd);
-    if(osdptr->harq_count > 1 )
-    {
-        dlog_info("err:0x%x harq:0x%x lost:0x%x SNR:0x%x 0x%x\n", osdptr->ldpc_error, osdptr->harq_count, tmp, grd_get_it_snr(),
-                                                                  (((uint16_t)BB_ReadReg(PAGE2, 0xc2)) << 8) | BB_ReadReg(PAGE2, 0xc3));
-    }
+    //if(osdptr->harq_count > 1 )
+    //{
+    //    dlog_info("err:0x%x harq:0x%x lost:0x%x SNR:0x%x 0x%x\n", osdptr->ldpc_error, osdptr->harq_count, tmp, grd_get_it_snr(),
+    //                                                              (((uint16_t)BB_ReadReg(PAGE2, 0xc2)) << 8) | BB_ReadReg(PAGE2, 0xc3));
+    //}
     
     #if 0
     osdptr->modulation_mode = grd_get_IT_QAM();

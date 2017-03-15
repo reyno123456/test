@@ -12,8 +12,8 @@
 #include "reg_rw.h"
 #include "bb_types.h"
 
-#define H264_ENCODER_BUFFER_HIGH_LEVEL    (1<<17)
-#define H264_ENCODER_BUFFER_LOW_LEVEL     (1<<10)
+#define H264_ENCODER_BUFFER_HIGH_LEVEL    (1<<19)
+#define H264_ENCODER_BUFFER_LOW_LEVEL     (1<<17)
 
 static STRU_EncoderStatus g_stEncoderStatus[2] = { 0 };
 

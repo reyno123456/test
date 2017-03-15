@@ -145,9 +145,12 @@ static void BB_UARTComUART10IRQHandler(uint32_t u32_vectorNum)
     char                 c;
     unsigned int         status;
     unsigned int         isrType;
+    unsigned int         isrType2;
+		
     volatile uart_type   *uart_regs = (uart_type *)UART10_BASE;
     status     = uart_regs->LSR;
     isrType    = uart_regs->IIR_FCR;
+    isrType2   = isrType;	
 
     /* receive data irq, try to get the data */
     if (UART_IIR_RECEIVEDATA == (isrType & UART_IIR_RECEIVEDATA))
@@ -159,6 +162,11 @@ static void BB_UARTComUART10IRQHandler(uint32_t u32_vectorNum)
             BB_UARTComPacketDataAnalyze(c);
         }
     }
+    // TX empty interrupt.
+    if (UART_IIR_THR_EMPTY == (isrType2 & UART_IIR_THR_EMPTY))
+    {
+        UART_ClearTflCnt(10);
+    }  	
 }
 
 void BB_UARTComInit(void)

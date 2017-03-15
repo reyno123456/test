@@ -357,9 +357,9 @@ const uint8_t mcs_idx_bitrate_map[] =
     1,      //0.6Mbps BPSK 1/2
     2,      //1.2     BPSK 1/2
     3,      //2.4     QPSK 1/2
-    6,      //5.0     16QAM 1/2
-    9,      //7.5     64QAM 1/2
-    11,     //10      64QAM 2/3
+    8,      //5.0     16QAM 1/2
+    11,     //7.5     64QAM 1/2
+    13,     //10      64QAM 2/3
 };
 
 
@@ -499,7 +499,7 @@ void BB_set_RF_Band(ENUM_BB_MODE sky_ground, ENUM_RF_BAND rf_band)
 
     //calibration and reset
     BB_RF_2G_5G_switch(rf_band);
-    dlog_info("Set Band %d %d\r\n", sky_ground, rf_band);
+    //dlog_info("Set Band %d %d\r\n", sky_ground, rf_band);
 }
 
 
@@ -1043,28 +1043,28 @@ void BB_handle_misc_cmds(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
             {
                 uint8_t v;
                 RF8003s_SPI_ReadReg(value, &v);
-                dlog_info("RF read addr=0x%0.2x value=0x%0.2x", value, v);
+                //dlog_info("RF read addr=0x%0.2x value=0x%0.2x", value, v);
                 break;
             }
 
             case MISC_WRITE_RF_REG:
             {
                 RF8003s_SPI_WriteReg(value, value1);
-                dlog_info("RF write addr=0x%0.2x value=0x%0.2x", value, value1);
+                //dlog_info("RF write addr=0x%0.2x value=0x%0.2x", value, value1);
                 break;
             }
 
             case MISC_READ_BB_REG:
             {
                 uint8_t v = BB_ReadReg( (ENUM_REG_PAGES)value, (uint8_t)value1);
-                dlog_info("BB read PAGE=0x%0.2x addr=0x%0.2x value=0x%0.2x", value, value1, v);
+                //dlog_info("BB read PAGE=0x%0.2x addr=0x%0.2x value=0x%0.2x", value, value1, v);
                 break;
             }
 
             case MISC_WRITE_BB_REG:
             {
                 BB_WriteReg((ENUM_REG_PAGES)value, (uint8_t)value1, (uint8_t)value2);
-                dlog_info("BB write PAGE=0x%0.2x addr=0x%0.2x value=0x%0.2x", value, value1, value2);
+                //dlog_info("BB write PAGE=0x%0.2x addr=0x%0.2x value=0x%0.2x", value, value1, value2);
                 break;
             }
 

@@ -119,7 +119,13 @@ void uart_putc(unsigned char index, char c)
 
     if (uart_regs != NULL)
     {
-        while (s_u8_uartTflArray[index] >= UART_TFL_MAX);
+        while (s_u8_uartTflArray[index] >= UART_TFL_MAX)
+        {
+            if (UART_IIR_THR_EMPTY == (uart_regs->IIR_FCR & UART_IIR_THR_EMPTY))
+            {
+                s_u8_uartTflArray[index] = 0;
+            }
+        }
         
         uart_regs->RBR_THR_DLL = c;
         s_u8_uartTflArray[index] += 1;

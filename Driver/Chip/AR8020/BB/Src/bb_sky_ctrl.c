@@ -87,25 +87,35 @@ void BB_SKY_start(void)
     BB_GetDevInfo();
 }
 
+uint8_t pre_nrlockcnt = 0;
 uint8_t pre_lockcnt = 0;
+
 uint8_t sky_id_match(void)
 {
     static int total_count = 0;
     static int lock_count = 0;
-    uint8_t data = BB_ReadReg(PAGE2, FEC_4_RD) & 0x03;
+    static int nr_lock = 0;
+    uint8_t data = BB_ReadReg(PAGE2, FEC_4_RD);
 
     total_count ++;
-    lock_count += ((data == 0x03) ? 1 : 0);
+    lock_count += (( (data  & 0x03 )== 0x03) ? 1 : 0);
+    nr_lock    += (  (data & 0x04) ? 1 : 0);
 
-    if(total_count > 250)
+#if 0
+    if(total_count > 100)
     {
-        dlog_info("-L:%d-", lock_count);
+        dlog_info("-L:%d-%d-", lock_count, nr_lock);
+        pre_nrlockcnt = nr_lock;
         pre_lockcnt = lock_count;
         total_count = 0;
         lock_count = 0;
+        nr_lock = 0;
+
+        uint8_t buf[4] = {0xaa, 0x55, pre_nrlockcnt, pre_lockcnt};
+        BB_UARTComSendMsg(BB_UART_COM_SESSION_0, buf, 4);
     }
-    
-    return (data==0x03) ? 1 : 0;
+#endif
+    return ( (data & 0x03)==0x03) ? 1 : 0;
 }
 
 
@@ -149,12 +159,12 @@ void sky_set_McsByIndex(uint8_t idx)
         ((MOD_64QAM<<6) | (BW_10M <<3)  | LDPC_2_3),
     };
 
-    dlog_info("MCS Idx=>0x%x 0x%x", map_idx_to_mode[idx], BB_get_bitrateByMcs(idx));
+    //dlog_info("MCS Idx=>0x%x 0x%x", map_idx_to_mode[idx], BB_get_bitrateByMcs(idx));
 
     BB_WriteReg( PAGE2, 0x0f, mcs_idx_reg0x0f_map[idx] );
     BB_WriteReg( PAGE2, TX_2, map_idx_to_mode[idx]);
     
-	if ( context.brc_mode == AUTO )
+	//if ( context.brc_mode == AUTO )
 	{
         sky_notify_encoder_brc(0, BB_get_bitrateByMcs(idx) );
         sky_notify_encoder_brc(1, BB_get_bitrateByMcs(idx) );
@@ -392,7 +402,7 @@ void sky_physical_link_process(void)
             // sky_soft_reset();
         }
 
-        if( 60 <= context.rc_unlock_cnt )
+        if( 80 <= context.rc_unlock_cnt )
         {            
             GPIO_SetPin(BLUE_LED_GPIO, 1);  //BLUE LED OFF
             GPIO_SetPin(RED_LED_GPIO, 0);   //RED LED ON
@@ -552,7 +562,7 @@ void Sky_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
 
 
 
-    dlog_info("sky_search_id_timeout_irq_enable \r\n");
+    //dlog_info("sky_search_id_timeout_irq_enable \r\n");
     INTR_NVIC_ClearPendingIRQ(TIMER_INTR27_VECTOR_NUM);
 	
 	if(TRUE == context.u8_debugMode) 
@@ -708,7 +718,7 @@ static void sky_handle_CH_qam_cmd(void)
             //set and soft-rest
             BB_set_QAM(qam);
             context.qam_mode = qam;
-            dlog_info("CH_QAM =%d\r\n", context.qam_mode);
+            //dlog_info("CH_QAM =%d\r\n", context.qam_mode);
         }
     }
 }
@@ -722,7 +732,7 @@ static void sky_handle_CH_ldpc_cmd(void)
     {
         context.ldpc = data0;
         BB_set_LDPC(context.ldpc);
-        dlog_info("CH_ldpc=>%d\n", context.ldpc);
+        //dlog_info("CH_ldpc=>%d\n", context.ldpc);
     }
 }
 static void sky_handle_brc_mode_cmd(void)
@@ -733,8 +743,13 @@ static void sky_handle_brc_mode_cmd(void)
 
     if( (data1==data0+1) && ((data0&0xe0)==0xe0) && (context.brc_mode != mode))
     {
-        dlog_info("brc_mode = %d \r\n", mode);
+        //dlog_info("brc_mode = %d \r\n", mode);
     	context.brc_mode = mode;
+        
+        if ( mode == AUTO) //MANUAL - > AUTO
+        {
+            sky_set_McsByIndex( context.qam_ldpc );
+        }
     }
 }
 
@@ -787,7 +802,7 @@ static void sky_handle_MCS_cmd(void)
     uint8_t data0 = BB_ReadReg(PAGE2, MCS_INDEX_MODE_0);
     uint8_t data1 = BB_ReadReg(PAGE2, MCS_INDEX_MODE_1);
 
-    if(data0+1==data1 && context.qam_ldpc != data0)
+    if( data0+1==data1 && context.qam_ldpc != data0)
     {
         sky_set_McsByIndex(data0);
         context.qam_ldpc = data0;
@@ -803,9 +818,9 @@ void sky_handle_all_spi_cmds(void)
 
     //sky_handle_QAM_cmd();
     
-    sky_handle_MCS_cmd();
-
     sky_handle_brc_mode_cmd();
+
+    sky_handle_MCS_cmd();
 
     sky_handle_CH_bandwitdh_cmd();
 

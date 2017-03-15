@@ -9,10 +9,27 @@
 #include "debuglog.h"
 #include "bb_sys_param.h"
 
-#define WORK_FREQ_SNR_BLOCK_ROWS    (4)
-#define WORK_FREQ_SNR_DAQ_CNT       (16)
-#define WORK_FREQ_SNR_BLOCK_COLS    (WORK_FREQ_SNR_DAQ_CNT + 1) 
-#define FAIL_TIMES_THLD             (3)
+#define     WORK_FREQ_SNR_BLOCK_ROWS        (4)
+#define     WORK_FREQ_SNR_DAQ_CNT           (16)
+#define     WORK_FREQ_SNR_BLOCK_COLS        (WORK_FREQ_SNR_DAQ_CNT + 1) 
+#define     FAIL_TIMES_THLD                 (3)
+
+
+#define     HARQ_STATUS_CNT                 (200)   //14ms cycle count, 2.8s
+#define     MCS0_UP_HARQ_CNT_MAX            (60)
+#define     OTHER_MCS_UP_HARQ_CNT_MAX       (70)
+
+#define     MCS_SNR_BLOCK_ROWS              (8)
+#define     IT_SKIP_SNR_WINDOW_SIZE         (4)
+#define     SNR_CMP_CNT                     (100)
+
+
+#define     MCS1_DOWN_CONT_SNR              (5)
+#define     MCS1_DOWN_SNR                   (20)
+#define     MCS2_DOWN_CONT_SNR              (4)
+#define     MCS3_DOWN_CONT_SNR              (3)
+#define     MCS4_DOWN_CONT_SNR              (2)
+#define     MCS5_DOWN_CONT_SNR              (1)
 
 
 typedef struct
@@ -42,7 +59,7 @@ int grd_check_piecewiseSnrPass(uint8_t u8_flag_start, uint16_t u16_thld)
     }
 
     uint8_t loc = BB_ReadReg(PAGE2, 0xc4) & 0x0F;
-    uint8_t startaddr = 0xE0 + stru_snr.u8_idx * 2;
+    uint8_t startaddr = (0xE0 + stru_snr.u8_idx * 2);
 	uint8_t i = stru_snr.u8_idx;
 
     if(loc == WORK_FREQ_SNR_DAQ_CNT -2) //fix: the last one snr can't get at this time, get the snr in past 14ms
@@ -117,30 +134,20 @@ int grd_check_piecewiseSnrPass(uint8_t u8_flag_start, uint16_t u16_thld)
 //////////////////////////////////////////////////////
 //// SNR use for the mcs.
 
-#define MCS_SNR_BLOCK_ROWS              (8)
-#define IT_SKIP_SNR_WINDOW_SIZE         (4)
-#define SNR_CMP_CNT                     (200)
-
 typedef struct
 {
-    uint16_t snr[MCS_SNR_BLOCK_ROWS];   
-    uint8_t  snr_cmpResult[SNR_CMP_CNT];       //
+    uint16_t snr[MCS_SNR_BLOCK_ROWS];           //for average SNR  
+    uint8_t  snr_cmpResult[SNR_CMP_CNT];        //the compare result between threshhold
     uint8_t  row_index;
     uint16_t u16_cmpCnt;
-    uint8_t  isFull;
+    uint8_t  u8_isFull;
     uint16_t snr_avg;
-    uint8_t  cur_index;
-    uint16_t u16_upCount;
-    uint16_t u16_downCount;
+    uint16_t u16_upCount;                       //continuous snr > threshhold count number
+    uint16_t u16_downCount;                     //continuous snr < threshhold count number
 }STRU_MCS_WORK_CH_SNR;
 
-
-uint8_t snr_cnt = 0;
-uint8_t newest_4pack[IT_SKIP_SNR_WINDOW_SIZE];
-uint8_t newest_4pack_index;
-
-
 static STRU_MCS_WORK_CH_SNR work_ch_snr;
+
 
 uint16_t calu_average(uint16_t *p_data, uint8_t len)
 {
@@ -177,28 +184,59 @@ uint16_t get_snr_average(void)
 }
 
 
-#define MCS1_DOWN_CONT_SNR          (10)
-#define MCS1_DOWN_SNR               (50)
-#define OTHER_MCS_DOWN_CONT_SNR     (10)
-
-uint8_t count_num_inbuf(uint8_t *buf, uint16_t len, uint8_t data)
+uint16_t count_num_inbuf(uint8_t *buf, uint16_t len, uint8_t data)
 {
-    uint8_t cnt = 0;
-    uint8_t i = 0;
+    uint16_t cnt = 0;
+    uint8_t  i;
     for ( i = 0 ;i < len; i++ )
     {
-        cnt += (( buf[i] == data) ? 1 : 0);
+        cnt += buf[i];
     }
-    
+
     return cnt;
 }
+
+
+uint32_t count_num_inbuf_1(uint8_t *buf, uint16_t len, uint8_t data, uint8_t cnt, uint8_t idx)
+{
+    if ( len == cnt )
+    {
+        return count_num_inbuf( buf, len, data );
+    }
+    else
+    {
+        uint32_t errcnt = 0;
+        uint8_t i = 0;
+
+        if ( idx >= cnt )
+        {
+            for ( i = 0 ;i < cnt; i++ )
+            {
+                errcnt += buf[idx-cnt + i];
+            }
+        }
+        else
+        {
+            for ( i = 0 ;i < idx; i++ )
+            {
+                errcnt += buf[i];
+            }
+            for ( i = 0 ;i < (cnt - idx); i++ )
+            {
+                errcnt += buf[len - 1 - i];
+            }
+        }
+        return errcnt;
+    }
+}
+
 
 QAMUPDONW snr_static_for_qam_change(uint16_t threshod_left_section, uint16_t threshold_right_section)
 {
     uint16_t aver;
     uint8_t ret;
 
-    if ( !work_ch_snr.isFull )
+    if ( !work_ch_snr.u8_isFull )
     {
         return QAMKEEP;
     }
@@ -214,13 +252,11 @@ QAMUPDONW snr_static_for_qam_change(uint16_t threshod_left_section, uint16_t thr
         work_ch_snr.u16_upCount ++;
         work_ch_snr.u16_downCount = 0;
 
-        //dlog_info("Up: %d %d %x %x ", context.qam_ldpc, work_ch_snr.u16_upCount, aver, threshold_right_section);
-
         work_ch_snr.snr_cmpResult[ work_ch_snr.u16_cmpCnt ] = QAMUP;
         if( ( context.qam_ldpc == 0 && work_ch_snr.u16_upCount > 500 ) || 
-            ( context.qam_ldpc != 0 && work_ch_snr.u16_upCount > 200 ) )
+            ( context.qam_ldpc != 0 && work_ch_snr.u16_upCount > 300 ) )
         {
-            work_ch_snr.u16_upCount = 0;
+            work_ch_snr.u16_upCount = 0;            
             ret = QAMUP;        //up
         }
         else
@@ -237,13 +273,15 @@ QAMUPDONW snr_static_for_qam_change(uint16_t threshod_left_section, uint16_t thr
         cnt = count_num_inbuf(work_ch_snr.snr_cmpResult, SNR_CMP_CNT, QAMDOWN);
 
         if (  ( context.qam_ldpc == 1 && work_ch_snr.u16_downCount >= MCS1_DOWN_CONT_SNR ) || 
-              ( context.qam_ldpc == 1 && cnt >= MCS1_DOWN_SNR ) ||
-              ( context.qam_ldpc != 1 && work_ch_snr.u16_downCount >= OTHER_MCS_DOWN_CONT_SNR ) )
+              /*( context.qam_ldpc == 1 && cnt >= MCS1_DOWN_SNR ) ||*/
+              ( context.qam_ldpc == 2 && work_ch_snr.u16_downCount >= MCS2_DOWN_CONT_SNR ) ||
+              ( context.qam_ldpc == 3 && work_ch_snr.u16_downCount >= MCS3_DOWN_CONT_SNR ) ||
+              ( context.qam_ldpc == 4 && work_ch_snr.u16_downCount >= MCS4_DOWN_CONT_SNR ) ||
+              ( context.qam_ldpc == 5 && work_ch_snr.u16_downCount >= MCS5_DOWN_CONT_SNR )
+              )
         {
-            memset( work_ch_snr.snr_cmpResult, QAMKEEP, SNR_CMP_CNT );
             work_ch_snr.u16_downCount = 0;
             ret = QAMDOWN;
-            //dlog_info("Down: %d %d %d %x %x %d", context.qam_ldpc, work_ch_snr.u16_downCount, cnt, aver, threshod_left_section, ret);            
         }
         else
         {
@@ -257,7 +295,7 @@ QAMUPDONW snr_static_for_qam_change(uint16_t threshod_left_section, uint16_t thr
         work_ch_snr.snr_cmpResult[ work_ch_snr.u16_cmpCnt ] = QAMKEEP;
         ret = QAMKEEP;
     }
-    
+
     work_ch_snr.u16_cmpCnt ++;
     return ret;
 }
@@ -274,99 +312,47 @@ void arlink_snr_daq(void)
 
     if( work_ch_snr.row_index == MCS_SNR_BLOCK_ROWS )
     {
-        work_ch_snr.isFull = 1;
+        work_ch_snr.u8_isFull = 1;
         work_ch_snr.row_index = 0;
     }
 }
 
 
-#define MOVE_AVERAGE_LEN (1000)
+//////////////////////////////////////////////////////////////////////////////////////
+//Harq statistic for mcs 
+
 typedef struct
 {
-    uint8_t buffer[MOVE_AVERAGE_LEN];
-    uint16_t index;
-    uint32_t down_qam_retrans_cnt;
-    uint32_t up_qam64_retrans_cnt;
-    uint32_t up_otherqam_retrans_cnt;
-    uint8_t down_qam_flag;
-    uint8_t up_qam64_flag;
-    uint8_t up_otherqam_flag;
-    uint8_t last_value;
-}MOVE_AVERAGE_BUF;
+    uint8_t  u8_flagharq[HARQ_STATUS_CNT];  //1: means harq happen.  0: not happen
+    uint8_t  u8_isFull;                     //
+    uint8_t  u8_idx;
+}STRU_HARQ_STATUS;
 
+STRU_HARQ_STATUS stru_harqStatus;
 
-#define DOWN_QAM_WINDOW_SIZE        (16)
-#define UP_OTHER_QAM_WINDOW_SIZE    (70)
-
-void reset_move_avg_buf(MOVE_AVERAGE_BUF *p_move_avg_buf)
+uint8_t grd_get_harqCnt( void )
 {
-    p_move_avg_buf->index = 0;
-    p_move_avg_buf->down_qam_retrans_cnt = 0;
-    p_move_avg_buf->up_otherqam_retrans_cnt = 0;
-    p_move_avg_buf->up_qam64_retrans_cnt = 0;
-    p_move_avg_buf->down_qam_flag = 0;
-    p_move_avg_buf->up_otherqam_flag = 0;
-    p_move_avg_buf->up_qam64_flag = 0;
+    uint8_t u8_harqCnt = ((BB_ReadReg(PAGE2, FEC_5_RD)& 0xF0) >> 4);
+
+    if ( stru_harqStatus.u8_idx >= HARQ_STATUS_CNT )
+    {
+        stru_harqStatus.u8_idx = 0;
+        stru_harqStatus.u8_isFull = 1;
+    }
+
+    stru_harqStatus.u8_flagharq[ stru_harqStatus.u8_idx ] = ( u8_harqCnt > 0 );
+    stru_harqStatus.u8_idx ++;
+
+    if ( stru_harqStatus.u8_isFull )
+    {
+        uint8_t cnt = count_num_inbuf( stru_harqStatus.u8_flagharq, HARQ_STATUS_CNT, 1 ); //count the harq times
+        //dlog_info("Harq: %d", cnt);
+        return QAMUP;
+    }
+
+    return 0xff;
 }
 
-
-void update_move_avg_buf(MOVE_AVERAGE_BUF *p_move_avg_buf,uint8_t new_value)
-{
-    uint16_t tmp;
-
-    if(p_move_avg_buf->down_qam_flag)
-    {
-        tmp = p_move_avg_buf->index >= DOWN_QAM_WINDOW_SIZE ? (p_move_avg_buf->index - DOWN_QAM_WINDOW_SIZE) : (MOVE_AVERAGE_LEN + p_move_avg_buf->index - DOWN_QAM_WINDOW_SIZE);
-        p_move_avg_buf->down_qam_retrans_cnt -= p_move_avg_buf->buffer[tmp];
-    }
-
-    if(p_move_avg_buf->up_otherqam_flag)
-    {
-        tmp = p_move_avg_buf->index >= UP_OTHER_QAM_WINDOW_SIZE ? (p_move_avg_buf->index - UP_OTHER_QAM_WINDOW_SIZE) : (MOVE_AVERAGE_LEN + p_move_avg_buf->index - UP_OTHER_QAM_WINDOW_SIZE);
-        p_move_avg_buf->up_otherqam_retrans_cnt -= p_move_avg_buf->buffer[tmp];
-    }
-
-    if(p_move_avg_buf->up_qam64_flag)
-    {
-        p_move_avg_buf->up_qam64_retrans_cnt -= p_move_avg_buf->buffer[p_move_avg_buf->index];
-    }
-
-    if(new_value > p_move_avg_buf->last_value)
-    {
-        p_move_avg_buf->buffer[p_move_avg_buf->index] = 1;//new_value - p_move_avg_buf->last_value;
-    }
-    else
-    {
-       p_move_avg_buf->buffer[p_move_avg_buf->index] = 0;
-       new_value = 0;
-    }
-
-    p_move_avg_buf->down_qam_retrans_cnt += p_move_avg_buf->buffer[p_move_avg_buf->index];
-    p_move_avg_buf->up_otherqam_retrans_cnt += p_move_avg_buf->buffer[p_move_avg_buf->index];
-    p_move_avg_buf->up_qam64_retrans_cnt += p_move_avg_buf->buffer[p_move_avg_buf->index];
-
-    p_move_avg_buf->last_value = new_value;
-    p_move_avg_buf->index++;
-
-    if(!p_move_avg_buf->down_qam_flag && p_move_avg_buf->index >= DOWN_QAM_WINDOW_SIZE )
-    {
-        p_move_avg_buf->down_qam_flag = TRUE;
-    }
-
-    if(!p_move_avg_buf->up_otherqam_flag && p_move_avg_buf->index >= UP_OTHER_QAM_WINDOW_SIZE )
-    {
-        p_move_avg_buf->up_otherqam_flag = TRUE;
-    }
-
-    if(!p_move_avg_buf->up_qam64_flag && p_move_avg_buf->index >= MOVE_AVERAGE_LEN )
-    {
-        p_move_avg_buf->up_qam64_flag = TRUE;
-    }
-
-    p_move_avg_buf->index %= MOVE_AVERAGE_LEN;
-
-}
-MOVE_AVERAGE_BUF retrans_buf;
 
 void grd_set_txmsg_mcs_change(uint8_t index )
 {
@@ -377,120 +363,167 @@ void grd_set_txmsg_mcs_change(uint8_t index )
 }
 
 
-void up_down_qamldpc(QAMUPDONW up_down)
+QAMUPDONW harq_static_for_qam_up( void )
 {
-    if (context.qam_skip_mode == MANUAL)
+    QAMUPDONW qamupdown = QAMKEEP;
+    uint8_t u8_harqCnt = grd_get_harqCnt();
+
+    if ( context.qam_ldpc == 0 && u8_harqCnt <= MCS0_UP_HARQ_CNT_MAX )
     {
-        dlog_info("-BRC MANUAL-");
-        return;
+        qamupdown = QAMUP;
     }
 
-    if(QAMUP == up_down)
-    {
-        if(context.qam_ldpc == QAM_CHANGE_THRESHOLD_COUNT - 1)  //highest QAM ENUM_BB_LDPC mode
-        {
-            return;
-        }
-        context.qam_ldpc++;
-    }
-    else
-    {
-        if(context.qam_ldpc > 0)
-        {
-            context.qam_ldpc--;
-        }
-    }
+    //dlog_info(" qamupdown %d", qamupdown);
 
-    grd_set_txmsg_mcs_change( context.qam_ldpc );
+    return qamupdown;
 }
 
 
-uint8_t is_timeout(uint32_t start_value, uint32_t threshold)
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+//LDPC error for MCS.
+
+#define TOTAL_LDPC_ERR_CNT     (200)
+#define MCS1_UP_ERR_THLD       (960)     //(BPSK, 1/2)        32 * 200 * 15% = 960;
+#define MCS2_UP_ERR_THLD       (1280)    //10%  (QPSK, 1/2)   64 * 200 * 10% = 1280;
+#define MCS3_UP_ERR_THLD       (1280)    //5%   (16QAM, 1/2)  128* 200 * 5%  = 1280
+#define MCS4_UP_ERR_THLD       (5)       //2.5% (64QAM, 1/2)  192* 200 * 2.5%= 960
+
+
+#define MCS_DOWN_CNT             (100)
+#define MCS1_DOWN_ERR_THLD       (2240)     //70%  (BPSK,  1/2) -> (QPSK, 1/2):    32  * 100 * 70% = 2240
+#define MCS2_DOWN_ERR_THLD       (2880)     //45%  (QPSK,  1/2) -> (BPSK, 1/2):    64  * 100 * 45% = 2880
+#define MCS3_DOWN_ERR_THLD       (5120)     //40%  (16QAM, 1/2) -> (QPSK, 1/2):    128 * 100 * 40% = 5120
+#define MCS4_DOWN_ERR_THLD       (5760)     //30%  (64QAM, 1/2) -> (16QAM, 1/2)    192 * 100 * 30% = 5760
+#define MCS5_DOWN_ERR_THLD       (4800)     //25%  (64QAM, 2/3) -> (64QAM, 1/2)    192 * 100 * 25% = 4800
+
+typedef struct
+{   
+    uint8_t  u8_flagErr[TOTAL_LDPC_ERR_CNT];  //1: means err happen.  0: not happen
+    uint8_t  u8_isFull;                       //
+    uint8_t  u8_idx;    
+}STRU_LDPC_ERROR;
+
+
+STRU_LDPC_ERROR stru_ldpcErr;
+
+uint16_t ldpc_total[] = 
 {
-    uint32_t cur = SysTicks_GetTickCount();
-    if( cur >= start_value)
+    32 * 200,
+    32 * 200,
+    64 * 200,
+    128 * 200,
+    192 * 200,
+    192 * 200,
+};
+
+QAMUPDONW ldpc_static_for_qam_change( void )
+{
+    QAMUPDONW updown = QAMKEEP;
+    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
+
+    if ( stru_ldpcErr.u8_idx >= TOTAL_LDPC_ERR_CNT)
     {
-        if( cur - start_value > threshold)
-        {
-            return TRUE;
-        }
+        stru_ldpcErr.u8_idx = 0;
+        stru_ldpcErr.u8_isFull = 1;
     }
-    else
+
+    uint8_t err = /*(((uint16_t)BB_ReadReg(PAGE2, LDPC_ERR_HIGH_8)) << 8) | */BB_ReadReg(PAGE2, LDPC_ERR_LOW_8);
+    stru_ldpcErr.u8_flagErr[ stru_ldpcErr.u8_idx ] = err;
+    stru_ldpcErr.u8_idx ++;
+
+    if ( stru_ldpcErr.u8_isFull )
     {
-        if(0xffffffff - (start_value - cur) > threshold)
+        uint32_t cnt  = count_num_inbuf( stru_ldpcErr.u8_flagErr, TOTAL_LDPC_ERR_CNT, 1 );                                      //count the err times
+        uint32_t cnt1 = count_num_inbuf_1(stru_ldpcErr.u8_flagErr, TOTAL_LDPC_ERR_CNT, 1, MCS_DOWN_CNT, stru_ldpcErr.u8_idx);   //count the err times
+
+        osdptr->snr_vlaue[2] =   ( (uint32_t)cnt  * 100 / ldpc_total[context.qam_ldpc] ) << 8;
+        osdptr->snr_vlaue[2] |=  ( (uint32_t)cnt1 * 100 * 2 / ldpc_total[context.qam_ldpc] );
+
+        //dlog_info( "%d %d %d", context.qam_ldpc, cnt, cnt1 );
+
+        if ( (context.qam_ldpc == 1 && cnt <= MCS1_UP_ERR_THLD ) ||
+             (context.qam_ldpc == 2 && cnt <= MCS2_UP_ERR_THLD ) ||
+             (context.qam_ldpc == 3 && cnt <= MCS3_UP_ERR_THLD ) ||
+             (context.qam_ldpc == 4 && cnt <= MCS4_UP_ERR_THLD ))
         {
-            return TRUE;
+            updown = QAMUP;
+            //dlog_info( "LDPC UP %d %d", context.qam_ldpc, cnt );
+        }
+
+        if ( (context.qam_ldpc == 1 && cnt1 >= MCS1_DOWN_ERR_THLD ) ||
+             (context.qam_ldpc == 2 && cnt1 >= MCS2_DOWN_ERR_THLD ) ||
+             (context.qam_ldpc == 3 && cnt1 >= MCS3_DOWN_ERR_THLD ) ||
+             (context.qam_ldpc == 4 && cnt1 >= MCS4_DOWN_ERR_THLD ) || 
+             (context.qam_ldpc == 5 && cnt1 >= MCS5_DOWN_ERR_THLD ) )
+        {
+            updown = QAMDOWN;
+            //dlog_info( "LDPC DOWN: %d %d", context.qam_ldpc, cnt1 );
         }
     }
 
-    return FALSE;
+    return updown;
 }
+
+
+
+
+//call after channel change, and qam change
+void grd_start_SnrHarqCnt( void )
+{
+    work_ch_snr.u8_isFull = 0;
+    work_ch_snr.row_index = 0;
+
+    stru_harqStatus.u8_isFull = 0;   
+    stru_harqStatus.u8_idx  = 0;
+    
+    stru_ldpcErr.u8_isFull = 0;
+    stru_ldpcErr.u8_idx = 0;   
+}
+
+
 
 void grd_judge_qam_mode(void)
 {
-    QAMUPDONW qamupdown;
-    uint16_t ldpc_err_num = (((uint16_t)BB_ReadReg(PAGE2, LDPC_ERR_HIGH_8)) << 8) | BB_ReadReg(PAGE2, LDPC_ERR_LOW_8);
+    QAMUPDONW snr_qamupdown  = QAMKEEP;
+    QAMUPDONW harq_qamupdown = QAMKEEP;
+    QAMUPDONW ldpc_qamupdown = QAMKEEP;
 
     arlink_snr_daq();
-    if( ldpc_err_num > 0 )
+    snr_qamupdown = snr_static_for_qam_change( context.qam_threshold_range[context.qam_ldpc][0], 
+                                               context.qam_threshold_range[context.qam_ldpc][1]);
+    if ( context.qam_ldpc == 0)
     {
-        context.ldpc_error_move_cnt = 0;
+        harq_qamupdown = harq_static_for_qam_up();
+    }
+
+    ldpc_qamupdown = ldpc_static_for_qam_change();
+    if (context.qam_skip_mode == MANUAL)
+    {
+        static int loop = 0;
+        if ( loop ++ > 100)
+        {
+            dlog_info("-BRC MANUAL-");
+            loop = 0;
+        }
+
+        return;
+    }
+    
+    if( (snr_qamupdown == QAMUP ) && ( context.qam_ldpc < QAM_CHANGE_THRESHOLD_COUNT - 1) && ( ( harq_qamupdown == QAMUP) || (ldpc_qamupdown == QAMUP) ) )
+    {
+        context.qam_ldpc++;
+    }
+    else if ( ( QAMDOWN == snr_qamupdown || QAMDOWN == ldpc_qamupdown )  //SNR or LDPC error 
+               && context.qam_ldpc > 0 )
+    {
+        context.qam_ldpc--;
     }
     else
     {
-        if( context.ldpc_error_move_cnt < 100 )
-        {
-            context.ldpc_error_move_cnt++;
-        }
-    }
-    uint8_t retrans_num = ((BB_ReadReg(PAGE2, FEC_5_RD)& 0xF0) >> 4);
-
-    if(context.dev_state != FEC_LOCK)
-    {
-        reset_move_avg_buf(&retrans_buf);
         return;
     }
-
-    update_move_avg_buf(&retrans_buf, retrans_num);
-    qamupdown = snr_static_for_qam_change(context.qam_threshold_range[context.qam_ldpc][0], context.qam_threshold_range[context.qam_ldpc][1]);
     
-    if(qamupdown == QAMKEEP)
-    {
-        return;
-    }
-
-    if(qamupdown == QAMUP)
-    {
-        if(context.qam_ldpc == 0)
-        {
-            if( retrans_buf.up_otherqam_retrans_cnt >= 35 )
-            {
-                dlog_info("MCS %d %d", context.qam_ldpc, retrans_buf.up_otherqam_retrans_cnt);
-                return;
-            }
-        }
-        else
-        {
-            if(context.ldpc_error_move_cnt < 70)
-            {
-                return;
-            }
-
-            #if 0
-            //remove the harq reference
-            if(retrans_buf.up_otherqam_retrans_cnt > 6 || (!retrans_buf.up_otherqam_flag))
-            {
-                return;
-            }
-            #endif
-
-            if(!is_timeout(context.qam_switch_time, 2000))
-            {
-                return;
-            }
-        } 
-    }
-
-    context.qam_switch_time = SysTicks_GetTickCount();
-    up_down_qamldpc(qamupdown);
+    grd_set_txmsg_mcs_change( context.qam_ldpc );
+    grd_start_SnrHarqCnt( );
 }
