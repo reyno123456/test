@@ -52,13 +52,16 @@
 #define HID_EPIN_VIDEO_ADDR           0x86
 #define HID_EPIN_VIDEO_SIZE           512
 
+#define HID_EPIN_AUDIO_ADDR           0x85
+#define HID_EPIN_AUDIO_SIZE           512
+
 #define HID_EPIN_CTRL_ADDR            0x84
 #define HID_EPIN_CTRL_SIZE            512
 
 #define HID_EPOUT_ADDR                0x01
 #define HID_EPOUT_SIZE                64
 
-#define USB_HID_CONFIG_DESC_SIZ       66
+#define USB_HID_CONFIG_DESC_SIZ       91
 #define USB_HID_DESC_SIZ              9
 #define HID_MOUSE_REPORT_DESC_SIZE    40
 
@@ -77,6 +80,11 @@
 
 #define HID_REQ_SET_REPORT            0x09
 #define HID_REQ_GET_REPORT            0x01
+
+#define HID_COMM_STRING_INTERFACE     0x06
+#define HID_VIDEO0_STRING_INTERFACE   0x07
+#define HID_AUDIO_STRING_INTERFACE    0x08
+
 /**
   * @}
   */ 

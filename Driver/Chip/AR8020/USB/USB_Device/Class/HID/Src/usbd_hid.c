@@ -114,6 +114,7 @@ static uint8_t  *USBD_HID_GetDeviceQualifierDesc (uint16_t *length);
 
 static uint8_t  USBD_HID_DataIn (USBD_HandleTypeDef *pdev, uint8_t epnum);
 static uint8_t  USBD_HID_DataOut (USBD_HandleTypeDef *pdev, uint8_t epnum);
+static uint8_t  *USBD_HID_GetUsrStrDescriptor(USBD_HandleTypeDef *pdev, uint8_t index, uint16_t *length);
 
 /**
   * @}
@@ -139,6 +140,9 @@ USBD_ClassTypeDef  USBD_HID =
   USBD_HID_GetCfgDesc, 
   USBD_HID_GetCfgDesc,
   USBD_HID_GetDeviceQualifierDesc,
+#if (USBD_SUPPORT_USER_STRING == 1)
+  USBD_HID_GetUsrStrDescriptor,
+#endif  
 };
 
 /* USB HID device Configuration Descriptor */
@@ -149,7 +153,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ]  __ALIGN_
   USB_HID_CONFIG_DESC_SIZ,
   /* wTotalLength: Bytes returned */
   0x00,
-  0x02,         /*bNumInterfaces: 2 interface*/
+  0x03,         /*bNumInterfaces: 3 interface*/
   0x01,         /*bConfigurationValue: Configuration value*/
   0x00,         /*iConfiguration: Index of string descriptor describing
   the configuration*/
@@ -166,7 +170,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ]  __ALIGN_
   0x03,         /*bInterfaceClass: HID*/
   0x00,         /*bInterfaceSubClass : 1=BOOT, 0=no boot*/
   0x00,         /*nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse*/
-  0,            /*iInterface: Index of string descriptor*/
+  HID_COMM_STRING_INTERFACE,            /*iInterface: Index of string descriptor*/
   /******************** Descriptor of Joystick Mouse HID ********************/
   /* 18 */
   0x09,         /*bLength: HID Descriptor size*/
@@ -206,7 +210,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ]  __ALIGN_
   0x03,         /*bInterfaceClass: HID*/
   0x00,         /*bInterfaceSubClass : 1=BOOT, 0=no boot*/
   0x00,         /*nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse*/
-  0,            /*iInterface: Index of string descriptor*/
+  HID_VIDEO0_STRING_INTERFACE,            /*iInterface: Index of string descriptor*/
 
   0x09,         /*bLength: HID Descriptor size*/
   HID_DESCRIPTOR_TYPE, /*bDescriptorType: HID*/
@@ -221,6 +225,34 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ]  __ALIGN_
   0x07,          /*bLength: Endpoint Descriptor size*/
   USB_DESC_TYPE_ENDPOINT, /*bDescriptorType:*/
   HID_EPIN_VIDEO_ADDR,     /*bEndpointAddress: Endpoint Address (IN)*/
+  USBD_EP_TYPE_BULK,          /*bmAttributes: BULK endpoint*/
+  LOBYTE(HID_EPIN_VIDEO_SIZE), /*wMaxPacketSize: 4 Byte max */
+  HIBYTE(HID_EPIN_VIDEO_SIZE),
+  HID_HS_BINTERVAL,          /*bInterval: Polling Interval (10 ms)*/
+
+  0x09,         /*bLength: Interface Descriptor size*/
+  USB_DESC_TYPE_INTERFACE,/*bDescriptorType: Interface descriptor type*/
+  0x02,         /*bInterfaceNumber: Number of Interface*/
+  0x00,         /*bAlternateSetting: Alternate setting*/
+  0x01,         /*bNumEndpoints*/
+  0x03,         /*bInterfaceClass: HID*/
+  0x00,         /*bInterfaceSubClass : 1=BOOT, 0=no boot*/
+  0x00,         /*nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse*/
+  HID_AUDIO_STRING_INTERFACE,            /*iInterface: Index of string descriptor*/
+
+  0x09,         /*bLength: HID Descriptor size*/
+  HID_DESCRIPTOR_TYPE, /*bDescriptorType: HID*/
+  0x11,         /*bcdHID: HID Class Spec release number*/
+  0x01,
+  0x00,         /*bCountryCode: Hardware target country*/
+  0x01,         /*bNumDescriptors: Number of HID class descriptors to follow*/
+  0x22,         /*bDescriptorType*/
+  HID_MOUSE_REPORT_DESC_SIZE,/*wItemLength: Total length of Report descriptor*/
+  0x00,
+
+  0x07,          /*bLength: Endpoint Descriptor size*/
+  USB_DESC_TYPE_ENDPOINT, /*bDescriptorType:*/
+  HID_EPIN_AUDIO_ADDR,     /*bEndpointAddress: Endpoint Address (IN)*/
   USBD_EP_TYPE_BULK,          /*bmAttributes: BULK endpoint*/
   LOBYTE(HID_EPIN_VIDEO_SIZE), /*wMaxPacketSize: 4 Byte max */
   HIBYTE(HID_EPIN_VIDEO_SIZE),
@@ -285,6 +317,14 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE]  _
   0x00,   0xC0,
 }; 
 
+#define HID_COMM_STRING_DESC        "ArtosynComm"
+#define HID_VIDEO0_STRING_DESC      "ArtosynVideo0"
+#define HID_VIDEO1_STRING_DESC      "ArtosynVideo1"
+#define HID_AUDIO_STRING_DESC       "ArtosynAudio"
+
+__ALIGN_BEGIN uint8_t HID_USER_INTERFACE_DESC[48]  __ALIGN_END;
+
+
 USBD_HID_HandleTypeDef        g_usbdHidData;
 uint8_t                       g_u32USBDeviceRecv[512];
 volatile uint32_t             g_u32USBConnState = 0;  //0: disconnect 1: connect 2:normal
@@ -316,6 +356,11 @@ static uint8_t  USBD_HID_Init (USBD_HandleTypeDef *pdev,
                  HID_EPIN_VIDEO_ADDR,
                  USBD_EP_TYPE_INTR,
                  HID_EPIN_VIDEO_SIZE);
+
+    USBD_LL_OpenEP(pdev,
+                 HID_EPIN_AUDIO_ADDR,
+                 USBD_EP_TYPE_INTR,
+                 HID_EPIN_AUDIO_SIZE);
 
     USBD_LL_OpenEP(pdev,
                  HID_EPIN_CTRL_ADDR,
@@ -677,6 +722,32 @@ uint8_t USBD_HID_RegisterInterface(USBD_HandleTypeDef *pdev,
     }
 
     return ret;
+}
+
+
+
+static uint8_t  *USBD_HID_GetUsrStrDescriptor(USBD_HandleTypeDef *pdev, uint8_t index, uint16_t *length)
+{
+    switch(index)
+    {
+    case HID_COMM_STRING_INTERFACE:
+        USBD_GetString((uint8_t *)HID_COMM_STRING_DESC, HID_USER_INTERFACE_DESC, length);
+        break;
+
+    case HID_VIDEO0_STRING_INTERFACE:
+        USBD_GetString((uint8_t *)HID_VIDEO0_STRING_DESC, HID_USER_INTERFACE_DESC, length);
+        break;
+
+    case HID_AUDIO_STRING_INTERFACE:
+        USBD_GetString((uint8_t *)HID_AUDIO_STRING_DESC, HID_USER_INTERFACE_DESC, length);
+        break;
+
+    default:
+        USBD_GetString((uint8_t *)HID_COMM_STRING_DESC, HID_USER_INTERFACE_DESC, length);
+        break;
+    }
+
+    return HID_USER_INTERFACE_DESC;
 }
 
 
