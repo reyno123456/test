@@ -109,7 +109,7 @@ void grd_fec_judge(void)
         context.locked = grd_is_bb_fec_lock();
         if( !context.locked )
         {
-            if (context.fec_unlock_cnt ++ > 10 )
+            if (context.fec_unlock_cnt ++ > 20 )
             {
                 uint8_t bestch, optch;
                 if( BB_selectBestCh(SELECT_MAIN_OPT, &bestch, &optch, 0) )
@@ -160,7 +160,7 @@ void grd_fec_judge(void)
                 if(context.it_skip_freq_mode == AUTO)
                 {
                     uint8_t bestch = context.cur_IT_ch, optch;
-                    BB_selectBestCh(CHANGE_MAIN, &bestch, &optch, 1);
+                    BB_selectBestCh(CHANGE_MAIN, &bestch, &optch, 0);
                     
                     context.cur_IT_ch = bestch;
                     BB_set_ITfrq(context.freq_band, context.cur_IT_ch);
@@ -227,31 +227,10 @@ void grd_fec_judge(void)
 
 
 
-/*
- * return 1:  need to check in next 14ms.
- *        0:  not need to check in next 14ms.
-*/
-uint8_t is_retrans_cnt_pass(void)
-{
-    uint8_t Harqcnt  = ((BB_ReadReg(PAGE2, FEC_5_RD)& 0xF0) >> 4);
-    uint8_t Harqcnt1 = ((BB_ReadReg(PAGE2, 0xd1)& 0xF0) >> 4);
-    int8_t  ret = 0;
-
-    ret = ( Harqcnt >= 2 && Harqcnt1 >= 2) ? 0 : 1;
-    if(Harqcnt > 0)
-    {
-        dlog_info("Harq %d:%d %d snr:%x %x %d ret=%d", Harqcnt, Harqcnt1, context.cycle_count, grd_get_it_snr(), 
-                                            (((uint16_t)BB_ReadReg(PAGE2, 0xc2)) << 8) | BB_ReadReg(PAGE2, 0xc3),
-                                            (((uint16_t)BB_ReadReg(PAGE2, 0xd7)) << 8) | BB_ReadReg(PAGE2, 0xd8),
-                                            ret
-                                            );
-    }
-
-    return ret;
-}
 
 
-const uint16_t snr_skip_threshold[] = {0x23,    //bpsk 1/2
+
+const uint16_t snr_skip_threshold[] = { 0x23,    //bpsk 1/2
                                         0x2d,    //bpsk 1/2
                                         0x6c,    //qpsk 1/2
                                         0x181,   //16QAM 1/2
@@ -275,13 +254,29 @@ int grd_freq_skip_pre_judge(void)
         return 0;
     }
 
-    if ( is_retrans_cnt_pass() )
-    {
-        return 0;
-    }
+    uint8_t Harqcnt  = ((BB_ReadReg(PAGE2, FEC_5_RD)& 0xF0) >> 4);
+    uint8_t Harqcnt1 = ((BB_ReadReg(PAGE2, 0xd1)& 0xF0) >> 4);
+    //if(Harqcnt > 0)
+    //{
+    //    dlog_info("Harq %d:%d %d snr:%x %x %d ret=%d", Harqcnt, Harqcnt1, context.cycle_count, grd_get_it_snr(), 
+    //                                        (((uint16_t)BB_ReadReg(PAGE2, 0xc2)) << 8) | BB_ReadReg(PAGE2, 0xc3),
+    //                                        (((uint16_t)BB_ReadReg(PAGE2, 0xd7)) << 8) | BB_ReadReg(PAGE2, 0xd8));
+    //}
 
-    flag = grd_check_piecewiseSnrPass(1, snr_skip_threshold[context.qam_ldpc]);
-    if ( 1 == flag ) //snr pass
+    if (Harqcnt >= 7 && Harqcnt1 >= 7)      //check LDPC error
+    {
+        dlog_info("Harq>7");
+        flag = 0;
+    }
+    else if (Harqcnt >= 2 && Harqcnt1 >= 2) //check snr.
+    {
+        flag = grd_check_piecewiseSnrPass(1, snr_skip_threshold[context.qam_ldpc]);
+        if ( 1 == flag ) //snr pass
+        {
+            return 0;
+        }
+    }
+    else
     {
         return 0;
     }
@@ -290,7 +285,7 @@ int grd_freq_skip_pre_judge(void)
     bestch = context.cur_IT_ch;
     BB_selectBestCh(CHANGE_MAIN, &bestch, &optch, 1);
     int16_t cmp = compare_chNoisePower(context.cur_IT_ch, bestch, &aver, &fluct );
-    dlog_info("ch Noise cmp: %d %d\n", cmp, aver);
+    //dlog_info("ch Noise cmp: %d %d\n", cmp, aver);
     
     if( aver >= 2 ) //next channel is better than current channel
     {
@@ -453,14 +448,7 @@ void Grd_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
     switch (Timer1_Delay1_Cnt)
     {
         case 0:
-            {
-                uint8_t Harqcnt = ((BB_ReadReg(PAGE2, FEC_5_RD)& 0xF0) >> 4);
-                BB_DoSweep();
-                if ( Harqcnt > 0 )
-                {
-                    BB_forceSweep( (Harqcnt-1) % 3);
-                }
-            }
+            BB_DoSweep();
             Timer1_Delay1_Cnt++;
             break;
 
@@ -1074,7 +1062,8 @@ static void BB_grd_GatherOSDInfo(void)
     //osdptr->snr_vlaue[2] = 0x12aa;
 
     osdptr->ldpc_error = (((uint16_t)BB_ReadReg(PAGE2, LDPC_ERR_HIGH_8)) << 8) | BB_ReadReg(PAGE2, LDPC_ERR_LOW_8);
-    osdptr->harq_count = (BB_ReadReg(PAGE2, FEC_5_RD) >> 4);
+    osdptr->harq_count = (BB_ReadReg(PAGE2, FEC_5_RD) & 0xF0) | ((BB_ReadReg(PAGE2, 0xd1)& 0xF0) >> 4);
+    
     uint8_t tmp = BB_ReadReg(PAGE2, 0xdd);
     //if(osdptr->harq_count > 1 )
     //{
