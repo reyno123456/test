@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include "cmsis_os.h"
 #include "hal_sd.h"
-#include "test_spi.h"
 #include "test_timer.h"
 #include "test_gpio.h"
 #include "test_i2c_adv7611.h"
@@ -74,18 +73,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
        command_TestPwm(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4]);
     }    
-    else if (memcmp(cmdArray[0], "test_spi_id", strlen("test_spi_id")) == 0)
-    {
-       command_WbFlashID(cmdArray[1]);
-    }
-    else if (memcmp(cmdArray[0], "test_spi_write_read", strlen("test_spi_write_read")) == 0)
-    {        
-        command_TestWbFlash(cmdArray[1]);                
-    }
-    else if (memcmp(cmdArray[0], "test_spi_erase", strlen("test_spi_erase")) == 0)
-    {
-       command_TestWbBlockErase(cmdArray[1], cmdArray[2], cmdArray[3]);
-    }
     else if (memcmp(cmdArray[0], "test24c256write", strlen("test24c256write")) == 0)
     {
         command_Test24C256Write(cmdArray[1], cmdArray[1]);
@@ -126,9 +113,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_timerused");
         dlog_error("test_pwm <PWM Group> <PWM Num> <PWM low> <PWM high>");
         dlog_error("test_pwmall");
-        dlog_error("test_spi_id <spi_port>");
-        dlog_error("test_spi_write_read <spi_port>");
-        dlog_error("test_spi_erase <spi_port>");
         dlog_error("test_nor_flash_all <flash start address> <size> <value>");
         dlog_error("test_TestGpioNormal <gpionum> <highorlow>");
         dlog_error("test_TestGpioNormalRange <gpionum1> <gpionum2> <highorlow>");
