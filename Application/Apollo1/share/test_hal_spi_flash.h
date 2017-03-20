@@ -32,6 +32,8 @@
 void command_WbFlashID(char *SPI_BASE_ADDR);
 void command_TestWbBlockErase(char *SPI_BASE_ADDR, char *cmd, char *addr);
 void command_TestWbFlash(char *SPI_BASE_ADDR);
+void command_TestWbFlashWrite(char *spi_base, char *addr, char *len);
+void command_TestWbFlashRead(char *spi_base, char *addr, char *len);
 
 
 #endif

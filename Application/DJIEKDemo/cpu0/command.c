@@ -15,6 +15,7 @@
 #include "test_usbh.h"
 #include "test_hal_nv.h"
 #include "test_hal_uart.h"
+#include "test_hal_spi_flash.h"
 
 
 
@@ -127,6 +128,26 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestHalUartRx(cmdArray[1]);
     }
+	else if (memcmp(cmdArray[0], "test_hal_spi_flash_id", strlen("test_hal_spi_flash_id")) == 0)
+    {
+       command_WbFlashID(cmdArray[1]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_spi_flash_write_read", strlen("test_hal_spi_flash_write_read")) == 0)
+    { 
+        command_TestWbFlash(cmdArray[1]);                
+    }
+    else if (memcmp(cmdArray[0], "test_hal_spi_flash_erase", strlen("test_hal_spi_flash_erase")) == 0)
+    {
+       command_TestWbBlockErase(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_spi_flash_write", strlen("test_hal_spi_flash_write")) == 0)
+    { 
+        command_TestWbFlashWrite(cmdArray[1], cmdArray[2], cmdArray[3]);                
+    }
+    else if (memcmp(cmdArray[0], "test_hal_spi_flash_read", strlen("test_hal_spi_flash_read")) == 0)
+    {  
+        command_TestWbFlashRead(cmdArray[1], cmdArray[2], cmdArray[3]);                
+    }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
         dlog_error("Please use the commands like:");
@@ -151,6 +172,11 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_hal_uart_set_int <ch> <flag>");
         dlog_error("test_hal_uart_tx <ch> <len>");
         dlog_error("test_hal_uart_rx <ch>");
+		dlog_error("test_hal_spi_flash_id <spi_port>");
+        dlog_error("test_hal_spi_flash_write_read <spi_port>");
+        dlog_error("test_hal_spi_flash_erase <spi_port>");
+        dlog_error("test_hal_spi_flash_write <spi_port> <start_addr> <data_len>");
+        dlog_error("test_hal_spi_flash_read <spi_port> <start_addr> <data_len>");
     }
 }
 

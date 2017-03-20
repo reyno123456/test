@@ -50,16 +50,16 @@ static int RF8003s_SPI_WriteReg_internal(uint8_t u8_addr, uint8_t u8_data, uint8
 
 static int RF8003s_SPI_ReadReg_internal(uint8_t u8_addr, uint8_t u8_flag)
 {
-    uint8_t wdata[3] = {0x00, (u8_addr<<1), u8_addr};      //RF_8003S_SPI:  rd: 0x00
-    uint8_t rdata[3] = {0};
+    uint8_t wdata[2] = {0x00, (u8_addr<<1)};      //RF_8003S_SPI:  rd: 0x00
+    uint8_t rdata;
     
     //use low speed for the RF8003 read, from test, read fail if use the same clockrate as baseband
     STRU_SPI_InitTypes init = {
-        .ctrl0   = 0x47,
+        .ctrl0   = SPI_CTRL0_DEF_VALUE,
         .clk_Mhz = RF8003S_RF_CLOCKRATE,
-        .Tx_Fthr = 0x03,
-        .Rx_Ftlr = 0x6,
-        .SER     = 0x01
+        .Tx_Fthr = SPI_TXFTLR_DEF_VALUE,
+        .Rx_Ftlr = SPI_RXFTLR_DEF_VALUE,
+        .SER     = SPI_SSIENR_DEF_VALUE
     };
     if(u8_flag)
     {
@@ -67,8 +67,8 @@ static int RF8003s_SPI_ReadReg_internal(uint8_t u8_addr, uint8_t u8_flag)
     }
 
     SPI_master_init(BB_SPI_BASE_IDX, &init);
-
-    SPI_write_read(BB_SPI_BASE_IDX, wdata, sizeof(wdata), rdata, 3); 
+ 
+    SPI_write_read(BB_SPI_BASE_IDX, wdata, sizeof(wdata), &rdata, 1);
 
     BB_SPI_init();
     SPI_master_init(BB_SPI_BASE_IDX, &init);
@@ -77,7 +77,8 @@ static int RF8003s_SPI_ReadReg_internal(uint8_t u8_addr, uint8_t u8_flag)
     {
         BB_SPI_curPageWriteByte(0x01,0x02);     //SPI change into 8003
     }
-    return rdata[2];
+    
+    return rdata;
 }
 
 /**

@@ -12,7 +12,6 @@
 #include "test_sd.h"
 #include "hal_sd.h"
 #include "hal_adc.h"
-#include "test_spi.h"
 #include "test_quadspi.h"
 #include "test_gpio.h"
 #include "test_usbh.h"
@@ -35,6 +34,8 @@
 #include "test_hal_mipi.h"
 #include "test_mp3.h"
 #include "test_hal_nv.h"
+#include "test_hal_spi_flash.h"
+
 
 
 void command_readMemory(char *addr);
@@ -173,17 +174,25 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
        command_TestPwm(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4]);
     }    
-    else if (memcmp(cmdArray[0], "test_spi_id", strlen("test_spi_id")) == 0)
+    else if (memcmp(cmdArray[0], "test_hal_spi_flash_id", strlen("test_hal_spi_flash_id")) == 0)
     {
        command_WbFlashID(cmdArray[1]);
     }
-    else if (memcmp(cmdArray[0], "test_spi_write_read", strlen("test_spi_write_read")) == 0)
-    {        
+    else if (memcmp(cmdArray[0], "test_hal_spi_flash_write_read", strlen("test_hal_spi_flash_write_read")) == 0)
+    { 
         command_TestWbFlash(cmdArray[1]);                
     }
-    else if (memcmp(cmdArray[0], "test_spi_erase", strlen("test_spi_erase")) == 0)
+    else if (memcmp(cmdArray[0], "test_hal_spi_flash_erase", strlen("test_hal_spi_flash_erase")) == 0)
     {
        command_TestWbBlockErase(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_spi_flash_write", strlen("test_hal_spi_flash_write")) == 0)
+    { 
+        command_TestWbFlashWrite(cmdArray[1], cmdArray[2], cmdArray[3]);                
+    }
+    else if (memcmp(cmdArray[0], "test_hal_spi_flash_read", strlen("test_hal_spi_flash_read")) == 0)
+    {  
+        command_TestWbFlashRead(cmdArray[1], cmdArray[2], cmdArray[3]);                
     }
     else if (memcmp(cmdArray[0], "test_quadspi_speed", strlen("test_quadspi_speed")) == 0)
     {
@@ -438,9 +447,11 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_timerall");
         dlog_error("test_pwm <PWM Group> <PWM Num> <PWM low> <PWM high>");
         dlog_error("test_pwmall");
-        dlog_error("test_spi_id <spi_port>");
-        dlog_error("test_spi_write_read <spi_port>");
-        dlog_error("test_spi_erase <spi_port>");
+        dlog_error("test_hal_spi_flash_id <spi_port>");
+        dlog_error("test_hal_spi_flash_write_read <spi_port>");
+        dlog_error("test_hal_spi_flash_erase <spi_port>");
+        dlog_error("test_hal_spi_flash_write <spi_port> <start_addr> <data_len>");
+        dlog_error("test_hal_spi_flash_read <spi_port> <start_addr> <data_len>");
         dlog_error("test_quadspi_speed <speed enum>");
         dlog_error("test_quadspi_data"); 
         dlog_error("test_init_flash");
