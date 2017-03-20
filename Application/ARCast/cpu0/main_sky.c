@@ -15,6 +15,9 @@
 #include "hal_nv.h"
 #include "hal_usb_host.h"
 #include "hal_encodemp3.h"
+#include "hal_softi2s.h"
+#include "systicks.h"
+
 
 /**
  * @brief  CPU L1-Cache enable.
@@ -47,6 +50,7 @@ void HDMI_powerOn(void)
   * @param  None
   * @retval None
   */
+
 int main(void)
 {
     STRU_HAL_SYS_CTL_CONFIG *pst_cfg;
@@ -63,24 +67,24 @@ int main(void)
     HAL_USB_ConfigPHY();
 
     HDMI_powerOn();
-    
+
     STRU_HDMI_CONFIGURE        st_configure;
     st_configure.e_getFormatMethod = HAL_HDMI_POLLING;
     st_configure.u8_interruptGpio = HAL_GPIO_NUM64;
     st_configure.u8_hdmiToEncoderCh = 1;
     HAL_HDMI_RX_Init(HAL_HDMI_RX_0, &st_configure);
 
-    st_configure.u8_interruptGpio = HAL_GPIO_NUM65;
+    st_configure.u8_interruptGpio = HAL_GPIO_NUM64;
     st_configure.u8_hdmiToEncoderCh = 0;
     HAL_HDMI_RX_Init(HAL_HDMI_RX_1, &st_configure);
 
     STRU_MP3_ENCODE_CONFIGURE_WAVE st_audioConfig;
     st_audioConfig.e_samplerate = HAL_MP3_ENCODE_48000;
     st_audioConfig.e_modes = HAL_MP3_ENCODE_STEREO;
-    st_audioConfig.u32_rawDataAddr = 0x81F00000;
-    st_audioConfig.u32_rawDataLenght = 0xFE400;
-    st_audioConfig.u32_encodeDataAddr = 0x81E00000;
-    st_audioConfig.u32_newPcmDataFlagAddr = 0x21004FFC;
+    st_audioConfig.u32_rawDataAddr = AUDIO_DATA_START;
+    st_audioConfig.u32_rawDataLenght = AUDIO_DATA_BUFF_SIZE;
+    st_audioConfig.u32_encodeDataAddr = MPE3_ENCODER_DATA_ADDR;
+    st_audioConfig.u32_newPcmDataFlagAddr = AUDIO_DATA_READY_ADDR;
     st_audioConfig.u8_channel = 2;
 
     HAL_USB_InitOTG(HAL_USB_PORT_0);
@@ -89,13 +93,13 @@ int main(void)
 
     USBH_MountUSBDisk();
     HAL_MP3EncodePcmInit(&st_audioConfig);
-
     /* We should never get here as control is now taken by the scheduler */
     for( ;; )
     {
+        
         HAL_USB_HostProcess();
-        HAL_MP3EncodePcm();
-        SYS_EVENT_Process();
+		HAL_MP3EncodePcm();
+		SYS_EVENT_Process();
         DLOG_Process(NULL);
     }
 } 

@@ -83,11 +83,11 @@ int main(void)
     HAL_SRAM_ReceiveVideoConfig();
 
     HAL_NV_Init();
-
+    
     osThreadDef(USBHStatus_Task, USBH_USBHostStatus, osPriorityNormal, 0, 4 * 128);
     osThreadCreate(osThread(USBHStatus_Task), NULL);
 
-    osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 4 * 128);
+    osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 15 * 128);
     osThreadCreate(osThread(IOTask), NULL);
 
     Wireless_TaskInit();

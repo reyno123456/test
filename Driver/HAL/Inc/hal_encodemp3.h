@@ -1,6 +1,9 @@
 #ifndef __HAL_MP3_ENCODER__H__
 #define __HAL_MP3_ENCODER__H__
 
+
+#define MPE3_ENCODER_DATA_ADDR        (0x81E00000)
+#define AUDIO_BYPASS_START            (0xB1800000)
 typedef enum
 {
     HAL_MP3_ENCODE_STEREO = 0,

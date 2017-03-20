@@ -4,6 +4,7 @@
 
 #include "hal_ret_type.h"
 #include "hal_encodemp3.h"
+#include "hal_softi2s.h"
 #include "debuglog.h"
 #include "systicks.h"
 #include "cpu_info.h"
@@ -20,6 +21,7 @@ uint32_t u32_encodeDataAddr;
 int32_t s32_samples_per_pass;
 uint32_t u32_frameSize;
 volatile uint32_t *pu32_newPcmDataFlagAddr;
+volatile uint32_t g_u32_dstAddress=MPE3_ENCODER_DATA_ADDR;
 
 HAL_BOOL_T HAL_MP3EncodePcmInit(const STRU_MP3_ENCODE_CONFIGURE_WAVE *st_mp3EncodeConfg)
 {          
@@ -35,7 +37,7 @@ HAL_BOOL_T HAL_MP3EncodePcmInit(const STRU_MP3_ENCODE_CONFIGURE_WAVE *st_mp3Enco
     st_config.wave.channels = st_mp3EncodeConfg->u8_channel;
     st_config.wave.samplerate = st_mp3EncodeConfg->e_samplerate;
     st_config.mpeg.mode = st_mp3EncodeConfg->e_modes;
-    st_config.mpeg.bitr = 64;
+    //st_config.mpeg.bitr = 64;
     st_s = shine_initialise(&st_config);
     if (NULL == st_s)
     {
@@ -46,7 +48,7 @@ HAL_BOOL_T HAL_MP3EncodePcmInit(const STRU_MP3_ENCODE_CONFIGURE_WAVE *st_mp3Enco
     u32_frameSize = sizeof(short int) * s32_samples_per_pass * st_config.wave.channels; 
 
     HAL_SRAM_EnableSkyBypassVideo(HAL_SRAM_VIDEO_CHANNEL_1);
-
+    dlog_info("encode mp3 init  %x %x %x %d\n", u32_rawDataLenght,u32_rawDataAddr,u32_encodeDataAddr,u32_frameSize);
     return  HAL_TRUE;
 }
 
@@ -54,28 +56,40 @@ void HAL_MP3EncodePcm(void)
 {   
     if (0 != (*pu32_newPcmDataFlagAddr))
     {
-        uint32_t u32_tmpRawDataLenght = u32_rawDataLenght/2;
-        uint32_t u32_tmpEncodeDataAddr = u32_encodeDataAddr+(113*u32_frameSize)*(*pu32_newPcmDataFlagAddr-1);
-        uint32_t u32_tmpRawDataAddr = u32_rawDataAddr+0x7F200*(*pu32_newPcmDataFlagAddr-1);
+        uint32_t u32_tmpRawDataLenght = u32_rawDataLenght;
+        uint32_t u32_tmpEncodeDataAddr = u32_encodeDataAddr+(AUDIO_DATA_BUFF_COUNT*u32_frameSize)*(*pu32_newPcmDataFlagAddr-1);
+        uint32_t u32_tmpRawDataAddr = u32_rawDataAddr+AUDIO_DATA_BUFF_SIZE*(*pu32_newPcmDataFlagAddr-1);
         int s32_encodeLenght = 0;
         uint8_t  *pu8_data = NULL;
         uint16_t *pu16_rawDataAddr = (uint16_t *)(u32_tmpRawDataAddr);
         uint8_t  *pu8_encodeDataAddr = (uint8_t *)(u32_tmpEncodeDataAddr);
         uint32_t tick=0;
-        tick = SysTicks_GetTickCount();
+        uint8_t i=0;
+        uint8_t ch[AUDIO_DATA_BUFF_COUNT][384]={0};
+
+        if ((MPE3_ENCODER_DATA_ADDR+192*5418) <= g_u32_dstAddress)
+        {
+            g_u32_dstAddress=MPE3_ENCODER_DATA_ADDR;
+        }
+        
+		tick = SysTicks_GetTickCount();
         while (u32_tmpRawDataLenght)
         {
             
-            pu8_data = shine_encode_buffer_interleaved(st_s, pu16_rawDataAddr, &s32_encodeLenght);         
-            memcpy((uint8_t *)0xB1800000,pu8_data,s32_encodeLenght);
-            
+            pu8_data = shine_encode_buffer_interleaved(st_s, pu16_rawDataAddr, &s32_encodeLenght);                   
             u32_tmpRawDataLenght -= u32_frameSize;                     
             u32_tmpRawDataAddr+= u32_frameSize;            
             pu16_rawDataAddr = (uint16_t *)(u32_tmpRawDataAddr);
+            memcpy((uint8_t *)ch[i],pu8_data,s32_encodeLenght);
+            i++;
         }
-        dlog_info("encode mp3 ok %d %d \n", SysTicks_GetTickCount()-tick,(*pu32_newPcmDataFlagAddr));
-        (*pu32_newPcmDataFlagAddr) = 0;
+        memcpy((uint8_t *)AUDIO_BYPASS_START,ch,384*i);            
+        memcpy((uint8_t *)g_u32_dstAddress,ch,384*i);
+        g_u32_dstAddress+=384*i;            
+        dlog_info("encode mp3 ok %d %d %x\n", SysTicks_GetTickCount()-tick,(*pu32_newPcmDataFlagAddr),g_u32_dstAddress);
         
+        (*pu32_newPcmDataFlagAddr) = 0;
 
     }    
+
 }

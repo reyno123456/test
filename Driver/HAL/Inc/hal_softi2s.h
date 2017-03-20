@@ -1,4 +1,4 @@
-/*****************************************************************************
+/****************************************************************************
 Copyright: 2016-2020, Artosyn. Co., Ltd.
 File name: hal_softi2s.h
 Description: this module contains the helper fucntions necessary to control the general
@@ -16,15 +16,31 @@ History:
 
 #include "hal_gpio.h"
 
-#define AUDIO_SDRAM_START                (0x81F00000)
-#define AUDIO_SDRAM_END                  (0x81FFE400) 
-#define AUDIO_SDRAM_BUFF_SIZE            (0x7F200) 
-#define AUDIO_BYPASS_START               (0xB1800000)
+#define AUDIO_DATA_READY_ADDR            (0x21004FFC)
 #define ADUIO_DATA_BUFF_LENGHT           (4608/sizeof(uint16_t)) 
-//#define PLL_CLK_200M_48K                 (20048000)
+#define PLL_CLK_200M_48K                 (20048000)
 //#define PLL_CLK_200M_44p1K               (10044100)
-#define PLL_CLK_100M_48K                 (10048000)
+//#define PLL_CLK_100M_48K                 (10048000)
 //#define PLL_CLK_100M_44p1K               (10044100)
+
+#define AUDIO_SDRAM                     (1)
+
+
+#ifdef AUDIO_SDRAM
+#define AUDIO_DATA_BUFF_COUNT           (113)         
+#define AUDIO_DATA_START                (0x81F00000)
+#define AUDIO_DATA_BUFF_SIZE            (ADUIO_DATA_BUFF_LENGHT*AUDIO_DATA_BUFF_COUNT*2)    
+#define AUDIO_DATA_TOTILE_BUFF_SIZE     (AUDIO_DATA_BUFF_SIZE*2)
+#define AUDIO_DATA_END                  (AUDIO_DATA_START+AUDIO_DATA_TOTILE_BUFF_SIZE)
+#else
+#define AUDIO_DATA_BUFF_COUNT           (14) 
+#define AUDIO_DATA_START                (0x20060000)
+#define AUDIO_DATA_BUFF_SIZE            (ADUIO_DATA_BUFF_LENGHT*AUDIO_DATA_BUFF_COUNT*2)    
+#define AUDIO_DATA_TOTILE_BUFF_SIZE     (AUDIO_DATA_BUFF_SIZE*2)
+#define AUDIO_DATA_END                  (AUDIO_DATA_START+AUDIO_DATA_TOTILE_BUFF_SIZE)
+#endif
+
+
 
 typedef struct
 {

@@ -320,7 +320,7 @@ void RightAudio(void)
     "add  r6, r2\n"      
     "str  r3, [r6]\n"
     "add  r4, #1\n"
-    "cmp  r4, #0x800\n"
+    "cmp  r4, #0x900\n"
     "bne  CountGpioInterruptRightZero\n"
     "mov  r4, #0\n"
     "ldr  r0, =g_u32_audioDataReady\n"    
@@ -329,7 +329,7 @@ void RightAudio(void)
     "str  r4, [r5]\n"
     );
 /*    g_u32_audioDataConut++;
-    if (0x800 == g_u32_audioDataConut) 
+    if (0x900 == g_u32_audioDataConut) 
     {
         g_u32_audioDataConut=0;
         g_u32_audioDataReady=0;
@@ -671,7 +671,7 @@ void RightAudio(void)
     "add  r6, r2\n"      
     "str  r3, [r6]\n"
     "add  r4, #1\n"
-    "cmp  r4, #0x800\n"
+    "cmp  r4, #0x900\n"
     "bne  CountGpioInterruptRightZero\n"
     "mov  r4, #0\n"
     "ldr  r0, =g_u32_audioDataReady\n"    
@@ -868,7 +868,7 @@ void RightAudio(void)
     "add  r6, r2\n"      
     "str  r3, [r6]\n"
     "add  r4, #1\n"
-    "cmp  r4, #0x800\n"
+    "cmp  r4, #0x900\n"
     "bne  CountGpioInterruptRightZero\n"
     "mov  r4, #0\n"
     "ldr  r0, =g_u32_audioDataReady\n"    
@@ -1084,7 +1084,7 @@ void RightAudio(void)
     "add  r6, r2\n"      
     "str  r3, [r6]\n"
     "add  r4, #1\n"
-    "cmp  r4, #0x800\n"
+    "cmp  r4, #0x900\n"
     "bne  CountGpioInterruptRightZero\n"
     "mov  r4, #0\n"
     "ldr  r0, =g_u32_audioDataReady\n"    

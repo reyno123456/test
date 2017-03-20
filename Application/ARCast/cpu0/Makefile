@@ -33,12 +33,14 @@ LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 SRC_S   := start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
-SRC_C   := main_sky.c command.c test_usbh.c wireless_interface.c upgrade.c md5.c
+SRC_C   := main_sky.c command.c test_usbh.c wireless_interface.c upgrade.c md5.c test_hal_nv.c test_storagedatausb.c \
+		   test_i2c_adv7611.c
 
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
-SRC_C   := main_ground.c command.c  test_usbh.c wireless_interface.c upgrade.c md5.c
+SRC_C   := main_ground.c command.c  test_usbh.c wireless_interface.c upgrade.c md5.c test_hal_nv.c test_storagedatausb.c \
+		   test_i2c_adv7611.c
 endif
 
 CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share

@@ -2,10 +2,9 @@
 #include "command.h"
 #include "sys_event.h"
 #include "stm32f746xx.h"
-#include "serial.h"
 #include "hal.h"
 #include "hal_sys_ctl.h"
-#include "hal_softi2s.h"
+#include "hal_uart.h"
 
 /**
  * @brief  CPU L1-Cache enable.
@@ -23,6 +22,7 @@ static void CPU_CACHE_Enable(void)
 
 void CONSOLE_Init(void)
 {
+    //HAL_UART_Init(DEBUG_LOG_UART_PORT, HAL_UART_BAUDR_115200, NULL);
     DLOG_Init(command_run, DLOG_CLIENT_PROCESSOR);
 }
 
@@ -37,11 +37,14 @@ int main(void)
 
     /* initialize the uart */
     CONSOLE_Init();
+    DLOG_Info("cpu1 start!!! \n");
+
     CPU_CACHE_Enable();
-    STRU_HAL_SOFTI2S_INIT st_audioConfig = {AUDIO_SDRAM_START,HAL_GPIO_NUM64,HAL_GPIO_NUM96,HAL_GPIO_NUM100};  
-    dlog_info("cpu1 start!!! %d \n",HAL_SOFTI2S_Init(&st_audioConfig)); 
 
     /* We should never get here as control is now taken by the scheduler */
-    HAL_SOFTI2S_Funct();
+    for( ;; )
+    {
+       ;
+    }
 } 
 
