@@ -581,7 +581,6 @@ void command_writeMemory_array(char *addr, char *value, char *len)
     {
         writeAddressIncrease = writeAddress + i*sizeof(unsigned int);
         *((unsigned int *)(writeAddressIncrease)) = writeValue;
-        dlog_info("writeAddress = 0x%08x, writeValue = 0x%08x\n", writeAddressIncrease, writeValue);
     }    
 }
 
