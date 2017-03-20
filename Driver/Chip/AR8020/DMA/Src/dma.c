@@ -55,15 +55,15 @@ void DMA_irqISR(uint32_t vectorNum)
 				case LINK_LIST_ITEM:
 				{
 					// dlog_info("LINK_LIST_ITEM\n");
-					if ((g_st_dmaRegs->CH_EN & (1 << u8_chanIndex)) == 0)
-					{	
+					// if ((g_st_dmaRegs->CH_EN & (1 << u8_chanIndex)) == 0)
+					// {	
 						/* disable the channel */
 						g_st_dmaRegs->CHAN[u8_chanIndex].CFG_HI = 0x0;
 						g_st_dmaRegs->CHAN[u8_chanIndex].CFG_LO = DWC_CFGL_HS_SRC | DWC_CFGL_HS_DST;
 						
 						/* clear interrupt */
 					    DMA_clearIRQ(u8_chanIndex);
-					}
+					// }
 					break;
 				}
 				case AUTO_RELOAD:
@@ -311,13 +311,15 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
 			if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId())
 		    {
 		        //SRAM: llp_loc[31:2], store the LLP entry        
-		        u32_llpBaseAddr = (((uint32_t)pst_LinkListItem + DTCM_CPU0_DMA_ADDR_OFFSET) >> 2); 
+		        // u32_llpBaseAddr = (((uint32_t)pst_LinkListItem + DTCM_CPU0_DMA_ADDR_OFFSET) >> 2);
+				u32_llpBaseAddr = (((uint32_t)pst_LinkListItem + DTCM_CPU0_DMA_ADDR_OFFSET) );  
 		    }
 		    else if (ENUM_CPU1_ID == CPUINFO_GetLocalCpuId())
 		    {
 		        //SRAM: llp_loc[31:2], store the LLP entry        
-		        u32_llpBaseAddr = (((uint32_t)pst_LinkListItem + DTCM_CPU1_DMA_ADDR_OFFSET) >> 2); 
-		    }
+		        // u32_llpBaseAddr = (((uint32_t)pst_LinkListItem + DTCM_CPU1_DMA_ADDR_OFFSET) >> 2); 
+		    	u32_llpBaseAddr = (((uint32_t)pst_LinkListItem + DTCM_CPU1_DMA_ADDR_OFFSET) ); 
+			}
 
 		    u32_llpLOC = u32_llpBaseAddr;
 
@@ -360,7 +362,8 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
 		        pst_LinkListItem[u32_blkIndex - 1].ctlhi = u32_dataCtlHI;
 
 		        /* setup the initial LLP */										 
-		    	g_st_dmaRegs->CHAN[u8_chanIndex].LLP = u32_llpLOC << 2;
+		    	// g_st_dmaRegs->CHAN[u8_chanIndex].LLP = u32_llpLOC << 2;
+				g_st_dmaRegs->CHAN[u8_chanIndex].LLP = u32_llpLOC & 0xFFFFFFFC;
 
                 if(u32_blkIndex < (u32_totalBlkNum -1)) // belong to block 1st
 		        {
@@ -382,8 +385,8 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
 		        }
 
 				/* setup the next llp baseaddr */
-		        pst_LinkListItem[u32_blkIndex - 1].llp   = (u32_llpLOC << 2);
-
+		        // pst_LinkListItem[u32_blkIndex - 1].llp   = (u32_llpLOC << 2);
+				pst_LinkListItem[u32_blkIndex - 1].llp   = u32_llpLOC & 0xFFFFFFFC;
 		    }
 
 		    /* setup the initial CTL */
@@ -394,8 +397,8 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
 		    										  DWC_CTLL_LLP_D_EN | DWC_CTLL_LLP_S_EN;;
 		    g_st_dmaRegs->CHAN[u8_chanIndex].CTL_HI = DW_CH_MAX_BLK_SIZE & DWC_CTLH_BLOCK_TS_MASK |\
 		    										  DWC_CTLH_DONE;
-		    g_st_dmaRegs->CHAN[u8_chanIndex].LLP    =  (u32_llpBaseAddr << 2);
-
+		    // g_st_dmaRegs->CHAN[u8_chanIndex].LLP    =  (u32_llpBaseAddr << 2);
+			g_st_dmaRegs->CHAN[u8_chanIndex].LLP    =  u32_llpBaseAddr  & 0xFFFFFFFC;
 
 		    /* setup the DmaCfgReg */
 		    g_st_dmaRegs->DMA_CFG = DW_CFG_DMA_EN;
