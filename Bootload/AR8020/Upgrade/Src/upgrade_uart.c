@@ -80,10 +80,12 @@ static int8_t UPGRADE_MD5SUM(uint32_t u32_addr)
 static void UPGRADE_IRQHandler(uint32_t vectorNum)
 {
     uint32_t          u32_isrType;
+    uint32_t          u32_isrType2;
     uint32_t          u32_status;
     volatile uart_type   *uart_regs =(uart_type *)UART0_BASE;
     u32_status     = uart_regs->LSR;
     u32_isrType    = uart_regs->IIR_FCR;
+    u32_isrType2       = u32_isrType;
 
     if (UART_IIR_RECEIVEDATA == (u32_isrType & UART_IIR_RECEIVEDATA))
     {
@@ -92,6 +94,12 @@ static void UPGRADE_IRQHandler(uint32_t vectorNum)
             *(g_pDst +g_u32RecCount) = uart_regs->RBR_THR_DLL;        
             g_u32RecCount++;
         }
+    }
+
+    // TX empty interrupt.
+    if (UART_IIR_THR_EMPTY == (u32_isrType2 & UART_IIR_THR_EMPTY))
+    {
+        UART_ClearTflCnt(vectorNum - UART_INTR0_VECTOR_NUM);
     }
 }
 

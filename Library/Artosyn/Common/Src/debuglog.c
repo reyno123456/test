@@ -215,7 +215,7 @@ static void DLOG_Uart_IrqHandler(uint32_t u32_vectorNum)
     // TX empty interrupt.
     if (UART_IIR_THR_EMPTY == (isrType2 & UART_IIR_THR_EMPTY))
     {
-        UART_ClearTflCnt(0);
+        UART_ClearTflCnt(u32_vectorNum - UART_INTR0_VECTOR_NUM);
     }
 }
 
