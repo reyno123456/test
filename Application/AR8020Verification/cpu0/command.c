@@ -35,6 +35,7 @@
 #include "test_mp3.h"
 #include "test_hal_nv.h"
 #include "test_hal_spi_flash.h"
+#include "md5.h"
 
 
 
@@ -729,6 +730,63 @@ void command_dma(char * u32_src, char *u32_dst, char *u32_byteNum)
 
 
     HAL_DMA_Start(iSrcAddr, iDstAddr, iNum, AUTO, LINK_LIST_ITEM);
+	
+	/* use to fake the dst data */
+#if 0
+    unsigned char *p_reg;
+    p_reg = (unsigned char *)0x81800000;
+    *p_reg = 0xAA;
+#endif
+    /***********************/
+    
+    #define MD5_SIZE 16
+    uint8_t    md5_value[MD5_SIZE];
+    int i = 0;
+    MD5_CTX md5;
+    MD5Init(&md5);
+    MD5Update(&md5, (uint8_t *)iSrcAddr, iNum);
+    MD5Final(&md5, md5_value);
+    dlog_info("src MD5 = 0x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", 
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++]);
+
+    memset(&md5, 0, sizeof(MD5_CTX));
+    MD5Init(&md5);
+    MD5Update(&md5, (uint8_t *)iDstAddr, iNum);
+    memset(&md5_value, 0, sizeof(md5_value));
+    MD5Final(&md5, md5_value);
+    i = 0;
+    dlog_info("dst MD5 = 0x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", 
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++]);
 }
 
 void command_adc(char * channel)
