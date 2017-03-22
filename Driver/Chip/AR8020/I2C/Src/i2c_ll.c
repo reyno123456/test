@@ -76,7 +76,7 @@ static void I2C_LL_RefreshConfigRegisters(STRU_I2C_Controller* ptr_i2cController
 {
     if (ptr_i2cController != NULL)
     {
-        STRU_I2C_Type* i2c_reg = (STRU_I2C_Type*)ptr_i2cController->u32_i2cRegBaseAddr;
+        volatile STRU_I2C_Type* i2c_reg = (volatile STRU_I2C_Type*)ptr_i2cController->u32_i2cRegBaseAddr;
 
         uint32_t i2c_clock = I2C_LL_GetInputClockByRegBaseAddr(ptr_i2cController->u32_i2cRegBaseAddr);
         
@@ -142,7 +142,7 @@ STRU_I2C_Controller* I2C_LL_GetI2CController(EN_I2C_COMPONENT en_i2cComponent)
 
     if (en_i2cComponent < sizeof(stru_i2cControllerArray)/sizeof(stru_i2cControllerArray[0]))
     {
-    	ptr_i2cController = &stru_i2cControllerArray[en_i2cComponent];
+        ptr_i2cController = &stru_i2cControllerArray[en_i2cComponent];
     }
     
     return ptr_i2cController;
@@ -158,11 +158,11 @@ uint8_t I2C_LL_IOCtl(STRU_I2C_Controller* ptr_i2cController, ENUM_I2C_CMD_ID en_
 
     if (ptr_i2cCommandVal == NULL)
     {
-    	dlog_error("ptr_i2cCommandVal = %p\n", ptr_i2cCommandVal);
+        dlog_error("ptr_i2cCommandVal = %p\n", ptr_i2cCommandVal);
         return FALSE;
     }
     
-    STRU_I2C_Type* i2c_reg = (STRU_I2C_Type*)ptr_i2cController->u32_i2cRegBaseAddr;
+    volatile STRU_I2C_Type* i2c_reg = (volatile STRU_I2C_Type*)ptr_i2cController->u32_i2cRegBaseAddr;
 
     if (i2c_reg == NULL)
     {
@@ -177,29 +177,29 @@ uint8_t I2C_LL_IOCtl(STRU_I2C_Controller* ptr_i2cController, ENUM_I2C_CMD_ID en_
         I2C_LL_RefreshConfigRegisters(ptr_i2cController);
         break;
     case I2C_CMD_SET_M_SPEED:
-    	ptr_i2cController->parameter.master.speed = (ENUM_I2C_Speed)(*ptr_i2cCommandVal);
+        ptr_i2cController->parameter.master.speed = (ENUM_I2C_Speed)(*ptr_i2cCommandVal);
         break;
     case I2C_CMD_SET_M_TARGET_ADDRESS:
-    	if (ptr_i2cController->parameter.master.addr != (uint16_t)(*ptr_i2cCommandVal))
-    	{
-    	    uint16_t u16_tmpCommandVal = (uint16_t)(*ptr_i2cCommandVal);
-    	    if (ptr_i2cController->parameter.master.addr != 0)    // Run-time target address change
-    	    {
-    	        ptr_i2cController->parameter.master.addr = u16_tmpCommandVal;
-    	        I2C_LL_RefreshConfigRegisters(ptr_i2cController);
-    	    }
-    	    else    // Initial target address change
-    	    {
-    	        ptr_i2cController->parameter.master.addr = u16_tmpCommandVal;
-    	    }
-    	}
+        if (ptr_i2cController->parameter.master.addr != (uint16_t)(*ptr_i2cCommandVal))
+        {
+            uint16_t u16_tmpCommandVal = (uint16_t)(*ptr_i2cCommandVal);
+            if (ptr_i2cController->parameter.master.addr != 0)    // Run-time target address change
+            {
+                ptr_i2cController->parameter.master.addr = u16_tmpCommandVal;
+                I2C_LL_RefreshConfigRegisters(ptr_i2cController);
+            }
+            else    // Initial target address change
+            {
+                ptr_i2cController->parameter.master.addr = u16_tmpCommandVal;
+            }
+        }
         break;
     case I2C_CMD_SET_M_WRITE_DATA:
         if (ptr_i2cController->en_i2cMode == I2C_Master_Mode)
         {
             unsigned int pre_rd;
             unsigned int data = (*ptr_i2cCommandVal) & 0xFF;
-            pre_rd = Reg_Read32((unsigned int)i2c_reg + 0x10);
+            pre_rd = i2c_reg->IC_DATA_CMD;
             pre_rd = pre_rd & 0xfe000;              // Write enable, IC_DATA_CMD[8]=0x0
             data |= pre_rd;
             i2c_reg->IC_DATA_CMD = data;
@@ -210,20 +210,47 @@ uint8_t I2C_LL_IOCtl(STRU_I2C_Controller* ptr_i2cController, ENUM_I2C_CMD_ID en_
             return FALSE;
         }
         break;
-    case I2C_CMD_GET_M_READ_DATA:
+    case I2C_CMD_SET_M_READ_LAUNCH:
         if (ptr_i2cController->en_i2cMode == I2C_Master_Mode)
         {
             uint32_t data_tmp;
             i2c_reg->IC_DATA_CMD |= (1<<8);         // Read enable, IC_DATA_CMD[8]=0x1
-            
-            /* Wait till data is ready */
-            do
-            {
-                I2C_LL_Delay(1000);
-            } while(Reg_Read32((unsigned int)i2c_reg + 0x70) & (1 << 5)); //i2c_reg->IC_STATUS
-
+        }
+        else
+        {
+            dlog_error("Error: Read data in slave I2C mode!");
+            return FALSE;
+        }
+        break;
+    case I2C_CMD_GET_M_TX_FIFO_LENGTH:
+        if (ptr_i2cController->en_i2cMode == I2C_Master_Mode)
+        {
             /* Read data */
-            *ptr_i2cCommandVal = Reg_Read32((unsigned int)i2c_reg + 0x10) & 0xFF; //i2c_reg->IC_DATA_CMD;
+            *ptr_i2cCommandVal = i2c_reg->IC_TXFLR;
+        }
+        else
+        {
+            dlog_error("Error: Read TX fifo length in slave I2C mode!");
+            return FALSE;
+        }
+        break;
+    case I2C_CMD_GET_M_RX_FIFO_LENGTH:
+        if (ptr_i2cController->en_i2cMode == I2C_Master_Mode)
+        {
+            /* Read data */
+            *ptr_i2cCommandVal = i2c_reg->IC_RXFLR;
+        }
+        else
+        {
+            dlog_error("Error: Read RX fifo length in slave I2C mode!");
+            return FALSE;
+        }
+        break;
+    case I2C_CMD_GET_M_RX_FIFO_DATA:
+        if (ptr_i2cController->en_i2cMode == I2C_Master_Mode)
+        {
+            /* Read data */
+            *ptr_i2cCommandVal = i2c_reg->IC_DATA_CMD & 0xFF;
         }
         else
         {
@@ -232,11 +259,8 @@ uint8_t I2C_LL_IOCtl(STRU_I2C_Controller* ptr_i2cController, ENUM_I2C_CMD_ID en_
         }
         break;
     case I2C_CMD_GET_M_IDLE:
-    	*ptr_i2cCommandVal =  Reg_Read32((unsigned int)i2c_reg + 0x70) & (1 << 5) ? 0 : 1; //i2c_reg->IC_STATUS;
+        *ptr_i2cCommandVal =  i2c_reg->IC_STATUS & (1 << 5) ? I2C_MASTER_ACTIVE : I2C_MASTER_IDLE; 
         break;
-    case I2C_CMD_GET_M_TXFIFO_EMPTY:
-    	*ptr_i2cCommandVal =  Reg_Read32((unsigned int)i2c_reg + 0x70) & (1 << 2) ? 1 : 0; //i2c_reg->IC_STATUS;
-    	break;
     case I2C_CMD_SET_S_SLAVE_ADDRESS:
         ptr_i2cController->parameter.slave.addr = (uint16_t)(*ptr_i2cCommandVal);
         break;

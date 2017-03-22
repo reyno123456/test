@@ -118,7 +118,7 @@ HAL_RET_T HAL_I2C_MasterWriteData(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
         return HAL_I2C_ERR_WRITE_DATA;
     }
 
-    I2C_Master_Write_Data(en_component, u16_i2cAddr, NULL, 0, pu8_wrData, u32_wrSize);
+    I2C_Master_WriteData(en_component, u16_i2cAddr, pu8_wrData, u32_wrSize);
     
     return HAL_OK;
 }
@@ -168,7 +168,7 @@ HAL_RET_T HAL_I2C_MasterReadData(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
         return HAL_I2C_ERR_READ_DATA;
     }
 
-    I2C_Master_Read_Data(en_component, u16_i2cAddr, pu8_wrData, u8_wrSize, pu8_rdData, u32_rdSize);
+    I2C_Master_ReadData(en_component, u16_i2cAddr, pu8_wrData, u8_wrSize, pu8_rdData, u32_rdSize);
 
     return HAL_OK;
 }

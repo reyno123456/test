@@ -73,14 +73,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
        command_TestPwm(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4]);
     }    
-    else if (memcmp(cmdArray[0], "test24c256write", strlen("test24c256write")) == 0)
-    {
-        command_Test24C256Write(cmdArray[1], cmdArray[1]);
-    }
-    else if (memcmp(cmdArray[0], "test24c256read", strlen("test24c256read")) == 0)
-    {
-        command_Test24C256Read(cmdArray[1]);
-    }
     else if (memcmp(cmdArray[0], "test_TestGpioNormalRange", strlen("test_TestGpioNormalRange")) == 0)
     {
         command_TestGpioNormalRange(cmdArray[1], cmdArray[2], cmdArray[3]);
@@ -117,8 +109,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_TestGpioNormal <gpionum> <highorlow>");
         dlog_error("test_TestGpioNormalRange <gpionum1> <gpionum2> <highorlow>");
         dlog_error("test_TestGpioInterrupt <gpionum> <inttype> <polarity>");
-        dlog_error("test24c256write <i2c port> <i2c_value>");
-        dlog_error("test24c256read <i2c port>");
     }
 }
 

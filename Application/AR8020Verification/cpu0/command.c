@@ -24,7 +24,8 @@
 #include "testhal_timer.h"
 #include "testhal_pwm.h"
 #include "testhal_softpwm.h"
-#include "testhal_i2c.h"
+#include "test_hal_i2c_24c256.h"
+#include "test_hal_i2c.h"
 #include "test_hal_uart.h"
 #include "test_hal_spi.h"
 #include "memory_config.h"
@@ -146,14 +147,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     else if (memcmp(cmdArray[0], "freertos_taskquit", strlen("freertos_taskquit")) == 0)
     {
         command_TestTaskQuit();
-    }
-    else if (memcmp(cmdArray[0], "test24c256write", strlen("test24c256write")) == 0)
-    {
-        command_Test24C256Write(cmdArray[1], cmdArray[1]);
-    }
-    else if (memcmp(cmdArray[0], "test24c256read", strlen("test24c256read")) == 0)
-    {
-        command_Test24C256Read(cmdArray[1]);
     }
     else if (memcmp(cmdArray[0], "test_timerall", strlen("test_timerall")) == 0)
     {
@@ -304,13 +297,21 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         commandhal_TestSimulatePwm();
     }
-     else if (memcmp(cmdArray[0], "testhal24c256write", strlen("testhal24c256write")) == 0)
+    else if (memcmp(cmdArray[0], "testhal24c256", strlen("testhal24c256")) == 0)
     {
-        commandhal_Test24C256Write(cmdArray[1], cmdArray[2]);
+        commandhal_Test24C256(cmdArray[1], cmdArray[2]);
     }
-    else if (memcmp(cmdArray[0], "testhal24c256read", strlen("testhal24c256read")) == 0)
+    else if (memcmp(cmdArray[0], "test_hal_i2c_init", strlen("test_hal_i2c_init")) == 0)
     {
-        commandhal_Test24C256Read(cmdArray[1]);
+        command_TestHalI2cInit(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_i2c_write", strlen("test_hal_i2c_write")) == 0)
+    {
+        command_TestHalI2cWrite(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_i2c_read", strlen("test_hal_i2c_read")) == 0)
+    {
+        command_TestHalI2cRead(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4]);
     }
     else if (memcmp(cmdArray[0], "test_hal_uart_init", strlen("test_hal_uart_init")) == 0)
     {
@@ -441,8 +442,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("hdmiwrite <slv address> <reg address> <reg value>");
         dlog_error("freertos_task");
         dlog_error("freertos_taskquit");
-        dlog_error("test24c256write <i2c port> <i2c_value>");
-        dlog_error("test24c256read <i2c port>");
         dlog_error("test_timer <TIM Group> <TIM Num> <TIM Count>");
         dlog_error("test_timerused");
         dlog_error("test_timerall");
@@ -481,8 +480,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("testhal_Testpwm <PWM Num> <PWM low> <PWM high>");
         dlog_error("testhal_pwmall");
         dlog_error("testhal_simulatepwm");
-        dlog_error("testhal24c256write <i2c port> <i2c_value>");
-        dlog_error("testhal24c256read <i2c port>");
+        dlog_error("testhal24c256 <i2c port> <i2c_value>");
+        dlog_error("test_hal_i2c_init <ch> <i2c_addr> <speed>");
+        dlog_error("test_hal_i2c_write <ch> <subAddr> <subAddrLen> <data> <dataLen>");
+        dlog_error("test_hal_i2c_read <ch> <subAddr> <subAddrLen> <dataLen>");
         dlog_error("test_hal_uart_init <ch> <baudr>");
         dlog_error("test_hal_uart_set_int <ch> <flag>");
         dlog_error("test_hal_uart_tx <ch> <len>");

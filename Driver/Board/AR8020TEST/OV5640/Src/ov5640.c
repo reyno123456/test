@@ -789,12 +789,11 @@ int32_t OV5640_WriteReg(uint16_t u16_ov5640Reg, uint8_t u8_ov5640Val)
     uint8_t u8_buf[3] = {0};
     int32_t s32_result = 0;
 
-    u8_buf[0] = u16_ov5640Reg & 0xff;
-    u8_buf[1] = u16_ov5640Reg >> 8;
+    u8_buf[0] = u16_ov5640Reg >> 8;
+    u8_buf[1] = u16_ov5640Reg & 0xff;
     u8_buf[2] = u8_ov5640Val;
 
-    if(I2C_Master_Write_Data(OV5640_COMPONENT, OV5640_I2C_ADDR, 
-                            u8_buf, 2, &u8_buf[2], 1) == FALSE)
+    if(I2C_Master_WriteData(OV5640_COMPONENT, OV5640_I2C_ADDR, u8_buf, 3) == FALSE)
     {
         dlog_info("write reg error:reg=%x,val=%x", u16_ov5640Reg, u8_ov5640Val);
         s32_result = -1;
@@ -823,7 +822,7 @@ int32_t OV5640_ReadReg(uint16_t u16_ov5640Reg, uint8_t *pu8_ov5640Val)
     u8_regBuf[0] = u16_ov5640Reg & 0xff;
     u8_regBuf[1] = u16_ov5640Reg >> 8;
 
-    if(I2C_Master_Read_Data(OV5640_COMPONENT, OV5640_I2C_ADDR, 
+    if(I2C_Master_ReadData(OV5640_COMPONENT, OV5640_I2C_ADDR, 
                             u8_regBuf,2, &u8_rdVal, 1) == FALSE) 
     {
         dlog_info("read reg error:reg=%x", u16_ov5640Reg);

@@ -16,6 +16,8 @@
 #include "test_hal_nv.h"
 #include "test_hal_uart.h"
 #include "test_hal_spi_flash.h"
+#include "test_hal_i2c_24c256.h"
+#include "test_hal_i2c.h"
 
 
 
@@ -148,6 +150,22 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {  
         command_TestWbFlashRead(cmdArray[1], cmdArray[2], cmdArray[3]);                
     }
+	else if (memcmp(cmdArray[0], "testhal24c256", strlen("testhal24c256")) == 0)
+    {
+        commandhal_Test24C256(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_i2c_init", strlen("test_hal_i2c_init")) == 0)
+    {
+        command_TestHalI2cInit(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_i2c_write", strlen("test_hal_i2c_write")) == 0)
+    {
+        command_TestHalI2cWrite(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5]);
+    }
+    else if (memcmp(cmdArray[0], "test_hal_i2c_read", strlen("test_hal_i2c_read")) == 0)
+    {
+        command_TestHalI2cRead(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4]);
+    }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
         dlog_error("Please use the commands like:");
@@ -177,6 +195,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_hal_spi_flash_erase <spi_port>");
         dlog_error("test_hal_spi_flash_write <spi_port> <start_addr> <data_len>");
         dlog_error("test_hal_spi_flash_read <spi_port> <start_addr> <data_len>");
+		dlog_error("testhal24c256 <i2c port> <i2c_value>");
+        dlog_error("test_hal_i2c_init <ch> <i2c_addr> <speed>");
+        dlog_error("test_hal_i2c_write <ch> <subAddr> <subAddrLen> <data> <dataLen>");
+        dlog_error("test_hal_i2c_read <ch> <subAddr> <subAddrLen> <dataLen>");
     }
 }
 

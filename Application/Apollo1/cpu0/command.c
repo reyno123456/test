@@ -9,6 +9,7 @@
 #include "testhal_pwm.h"
 #include "test_hal_uart.h"
 #include "test_hal_spi.h"
+#include "test_hal_i2c_24c256.h"
 #include "test_hal_i2c.h"
 #include "test_hal_spi_flash.h"
 #include "testhal_gpio.h"
@@ -80,17 +81,21 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestHalSpiRx(cmdArray[1], cmdArray[2]);
     }
+    else if (memcmp(cmdArray[0], "testhal24c256", strlen("testhal24c256")) == 0)
+    {
+        commandhal_Test24C256(cmdArray[1], cmdArray[2]);
+    }
     else if (memcmp(cmdArray[0], "test_hal_i2c_init", strlen("test_hal_i2c_init")) == 0)
     {
         command_TestHalI2cInit(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
     else if (memcmp(cmdArray[0], "test_hal_i2c_write", strlen("test_hal_i2c_write")) == 0)
     {
-        command_TestHalI2cWrite(cmdArray[1]);
+        command_TestHalI2cWrite(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5]);
     }
     else if (memcmp(cmdArray[0], "test_hal_i2c_read", strlen("test_hal_i2c_read")) == 0)
     {
-        command_TestHalI2cRead(cmdArray[1]);
+        command_TestHalI2cRead(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4]);
     }    
     else if (memcmp(cmdArray[0], "test_hal_spi_flash_id", strlen("test_hal_spi_flash_id")) == 0)
     {
@@ -155,9 +160,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_hal_spi_init <ch> <baudr> <polarity> <phase>");
         dlog_error("test_hal_spi_write <ch> <addr> <wdata>");
         dlog_error("test_hal_spi_read <ch> <addr>");
+        dlog_error("testhal24c256 <i2c port> <i2c_value>");
         dlog_error("test_hal_i2c_init <ch> <i2c_addr> <speed>");
-        dlog_error("test_hal_i2c_write <subAddr + data>");
-        dlog_error("test_hal_i2c_read <sub_addr>");
+        dlog_error("test_hal_i2c_write <ch> <subAddr> <subAddrLen> <data> <dataLen>");
+        dlog_error("test_hal_i2c_read <ch> <subAddr> <subAddrLen> <dataLen>");
         dlog_error("test_hal_spi_flash_id <spi_port>");
         dlog_error("test_hal_spi_flash_write_read <spi_port>");
         dlog_error("test_hal_spi_flash_erase <spi_port>");

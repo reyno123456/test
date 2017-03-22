@@ -79,16 +79,15 @@ static void ADV_7611_Delay(unsigned int count)
 
 static void ADV_7611_WriteByte(uint8_t slv_addr, uint8_t sub_addr, uint8_t val)
 {
-    unsigned char sub_addr_tmp = sub_addr;
-    unsigned char val_tmp = val;
-    I2C_Master_Write_Data(ADV_7611_I2C_COMPONENT_NUM, slv_addr >> 1, &sub_addr_tmp, 1, &val_tmp, 1);
+    unsigned char data[2] = {sub_addr, val};
+    I2C_Master_WriteData(ADV_7611_I2C_COMPONENT_NUM, slv_addr >> 1, data, 2);
 }
 
 static uint8_t ADV_7611_ReadByte(uint8_t slv_addr, uint8_t sub_addr)
 {
     unsigned char sub_addr_tmp = sub_addr;
     unsigned char val = 0;
-    I2C_Master_Read_Data(ADV_7611_I2C_COMPONENT_NUM, slv_addr >> 1, &sub_addr_tmp, 1, &val, 1);
+    I2C_Master_ReadData(ADV_7611_I2C_COMPONENT_NUM, slv_addr >> 1, &sub_addr_tmp, 1, &val, 1);
     return val;
 }
 
