@@ -40,6 +40,14 @@ typedef struct
 HAL_BOOL_T HAL_MP3EncodePcmInit(const STRU_MP3_ENCODE_CONFIGURE_WAVE *st_mp3EncodeConfg);
 
 /**
+* @brief    mp3 encoder un-initialization
+* @param    none
+* @retval   HAL_TRUE    means the un-initialization is well done.
+* @note     none
+*/
+HAL_BOOL_T HAL_MP3EncodePcmUnInit(void);
+
+/**
 * @brief    mp3 encoder
 * @param    none.
 * @retval   none.

@@ -83,5 +83,18 @@ HAL_RET_T HAL_HDMI_RX_GetVideoFormat(ENUM_HAL_HDMI_RX e_hdmiIndex,
                                      uint16_t *pu16_hight, 
                                      uint8_t  *pu8_framterate);
 
+/**
+* @brief  The HDMI RX init function.
+* @param  e_hdmiIndex         The HDMI RX index number, the right number should be 0-1 and totally
+*                             2 HDMI RX can be supported.
+* @param  pu8_sampleRate      The pointer to the audio sample rate.
+* @retval HAL_OK                            means the HDMI RX init is well done.
+*         HAL_HDMI_RX_ERR_GET_AUDIO_RATE    means some error happens in the HDMI RX audio sample rate.
+* @note   None.
+*/
+
+HAL_RET_T HAL_HDMI_RX_GetAudioSampleRate(ENUM_HAL_HDMI_RX e_hdmiIndex, uint32_t *pu32_sampleRate);
+
+
 #endif
 

@@ -25,9 +25,10 @@ History:
 #include "hal_nvic.h"
 #include "hal_gpio.h"
 #include "hal_softi2s.h"
-#include "dma.h"
+#include "hal_dma.h"
 #include "hal_usb_device.h"
 #include "hal_sram.h"
+#include "memory_config.h"
 
 volatile uint16_t g_u16_audioDataArray[ADUIO_DATA_BUFF_LENGHT]={0};
 volatile uint32_t g_u32_audioDataConut=0;
@@ -38,7 +39,7 @@ volatile uint32_t g_u32_audioLeftInterruptAddr=0;
 volatile uint32_t g_u32_audioRightInterruptAddr=0;
 volatile uint32_t g_u32_audioFlage=1;
 
-volatile uint32_t g_u32_dstAddress = AUDIO_DATA_START;
+static volatile uint32_t g_u32_dstAddress = AUDIO_DATA_START;
 
 HAL_RET_T HAL_SOFTI2S_Init(STRU_HAL_SOFTI2S_INIT *st_i2sInit)
 {
@@ -73,26 +74,26 @@ HAL_RET_T HAL_SOFTI2S_Init(STRU_HAL_SOFTI2S_INIT *st_i2sInit)
 
     //right   
     HAL_GPIO_RegisterInterrupt(st_i2sInit->e_audioRightGpioNum, HAL_GPIO_EDGE_SENUMSITIVE, HAL_GPIO_ACTIVE_HIGH, NULL);
-    dlog_info("i2s init %x %x %x\n",AUDIO_DATA_START,AUDIO_DATA_END,AUDIO_DATA_BUFF_SIZE);
+    dlog_info("i2s init %p %p %p %p\n",LeftAudio_48K,RightAudio_48K,LeftAudio_44p1K,RightAudio_44p1K);
 
     return  HAL_OK;
 }
 
 void HAL_SOFTI2S_Funct(void)
 {
-    volatile uint32_t *pu32_newPcmDataFlagAddr=(uint32_t *)(AUDIO_DATA_READY_ADDR);
-    uint32_t i=0;
+    volatile uint32_t *pu32_newPcmDataFlagAddr=(uint32_t *)(SRAM_MODULE_SHARE_AUDIO_PCM);
+    volatile uint32_t *pu8_newAudioSampleRate=(uint32_t *)(SRAM_MODULE_SHARE_AUDIO_RATE);
+    uint32_t u8_audioSampleRateTmp=0xf;
     while(1)
     {
         if (0 == g_u32_audioDataReady)
         {                      
             #ifdef AUDIO_SDRAM
-            DMA_transfer((uint32_t)g_u16_audioDataArray+DTCM_CPU1_DMA_ADDR_OFFSET, g_u32_dstAddress, \
-                        (ADUIO_DATA_BUFF_LENGHT*sizeof(uint16_t)), CHAN0, LINK_LIST_ITEM);
-            //memcpy((uint8_t *)g_u32_dstAddress,(uint8_t *)g_u16_audioDataArray,(ADUIO_DATA_BUFF_LENGHT*sizeof(uint16_t)));
+            HAL_DMA_Start((uint32_t)g_u16_audioDataArray+DTCM_CPU1_DMA_ADDR_OFFSET, g_u32_dstAddress, \
+                        (ADUIO_DATA_BUFF_LENGHT*sizeof(uint16_t)), AUTO, LINK_LIST_ITEM);
             #else
-            DMA_transfer((uint32_t)g_u16_audioDataArray+DTCM_CPU1_DMA_ADDR_OFFSET, g_u32_dstAddress+DTCM_CPU0_DMA_ADDR_OFFSET, \
-                        (ADUIO_DATA_BUFF_LENGHT*sizeof(uint16_t)), CHAN0, LINK_LIST_ITEM);
+            HAL_DMA_Start((uint32_t)g_u16_audioDataArray+DTCM_CPU1_DMA_ADDR_OFFSET, g_u32_dstAddress+DTCM_CPU0_DMA_ADDR_OFFSET, \
+                        (ADUIO_DATA_BUFF_LENGHT*sizeof(uint16_t)), AUTO, LINK_LIST_ITEM);
             #endif            
             g_u32_audioDataReady=1;            
             g_u32_dstAddress+=(ADUIO_DATA_BUFF_LENGHT*sizeof(uint16_t));
@@ -107,6 +108,21 @@ void HAL_SOFTI2S_Funct(void)
                 *pu32_newPcmDataFlagAddr = 2;
                 //dlog_info("OK %x %d %p\n",g_u32_dstAddress,*pu32_newPcmDataFlagAddr,pu32_newPcmDataFlagAddr);                          
             } 
+        }
+        if (u8_audioSampleRateTmp != *pu8_newAudioSampleRate)
+        {
+            if (0 == *pu8_newAudioSampleRate)
+            {
+                *((uint32_t *)(AUDIO_LEFT_INTERRUPT_ADDR)) = (uint32_t)&LeftAudio_44p1K;
+                *((uint32_t *)(AUDIO_RIGHT_INTERRUPT_ADDR)) = (uint32_t)&RightAudio_44p1K;
+            }
+            else if (2 == *pu8_newAudioSampleRate)
+            {
+                *((uint32_t *)(AUDIO_LEFT_INTERRUPT_ADDR)) = (uint32_t)&LeftAudio_48K;
+                *((uint32_t *)(AUDIO_RIGHT_INTERRUPT_ADDR)) = (uint32_t)&RightAudio_48K;
+            }
+            u8_audioSampleRateTmp = *pu8_newAudioSampleRate;
+            //dlog_info("OK %x %x %p %p\n",u8_audioSampleRateTmp,*pu8_newAudioSampleRate,*((uint32_t *)(AUDIO_RIGHT_INTERRUPT_ADDR)),*((uint32_t *)(AUDIO_LEFT_INTERRUPT_ADDR)));             
         }
     }
     

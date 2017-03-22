@@ -16,18 +16,17 @@ History:
 
 #include "hal_gpio.h"
 
-#define AUDIO_DATA_READY_ADDR            (0x21004FFC)
+#define AUDIO_LEFT_INTERRUPT_ADDR        (68*4)
+#define AUDIO_RIGHT_INTERRUPT_ADDR       (69*4)
+
 #define ADUIO_DATA_BUFF_LENGHT           (4608/sizeof(uint16_t)) 
-#define PLL_CLK_200M_48K                 (20048000)
-//#define PLL_CLK_200M_44p1K               (10044100)
-//#define PLL_CLK_100M_48K                 (10048000)
-//#define PLL_CLK_100M_44p1K               (10044100)
+
 
 #define AUDIO_SDRAM                     (1)
 
 
 #ifdef AUDIO_SDRAM
-#define AUDIO_DATA_BUFF_COUNT           (113)         
+#define AUDIO_DATA_BUFF_COUNT           (1)         
 #define AUDIO_DATA_START                (0x81F00000)
 #define AUDIO_DATA_BUFF_SIZE            (ADUIO_DATA_BUFF_LENGHT*AUDIO_DATA_BUFF_COUNT*2)    
 #define AUDIO_DATA_TOTILE_BUFF_SIZE     (AUDIO_DATA_BUFF_SIZE*2)
@@ -66,7 +65,9 @@ HAL_RET_T HAL_SOFTI2S_Init(STRU_HAL_SOFTI2S_INIT *st_i2sInit);
 * @note     none
 */
 void HAL_SOFTI2S_Funct(void);
-void IRQHandlerLeftAudio(void);
-void IRQHandlerRightAudio(void);
+void LeftAudio_44p1K(void);
+void RightAudio_44p1K(void);
+void LeftAudio_48K(void);
+void RightAudio_48K(void);
 
 #endif /*__HAL_SOFTI2S_H__END*/

@@ -203,6 +203,14 @@ void ADV_7611_GetVideoFormat(uint8_t index, uint16_t* widthPtr, uint16_t* hightP
      *framteratePtr = frame_rate;
 }
 
+void ADV_7611_GetAudioSampleRate(uint8_t index, uint32_t* sampleRate)
+{
+
+    uint8_t hdmi_i2c_addr = (index == 0) ? RX_I2C_HDMI_MAP_ADDR : (RX_I2C_HDMI_MAP_ADDR + 2);
+
+    *sampleRate = ADV_7611_ReadByte(hdmi_i2c_addr, 0x39) & 0xF;
+}
+
 void ADV_7611_DumpOutEdidData(uint8_t index)
 {
     dlog_info("Edid Data:");

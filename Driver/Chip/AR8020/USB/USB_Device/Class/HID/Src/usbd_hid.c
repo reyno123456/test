@@ -650,7 +650,8 @@ static uint8_t  USBD_HID_DataIn (USBD_HandleTypeDef *pdev,
 
     g_u32UsbdErrorCount = 0;
 
-    if ((epnum | 0x80) == HID_EPIN_VIDEO_ADDR)
+    if (((epnum | 0x80) == HID_EPIN_VIDEO_ADDR) ||
+        ((epnum | 0x80) == HID_EPIN_AUDIO_ADDR))
     {
         if (g_u32USBConnState == 1)
         {

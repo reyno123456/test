@@ -60,8 +60,10 @@ SRC_C := Src/hal.c \
          Src/hal_dvp.c \
          Src/hal_encodemp3.c\
          Src/hal_softi2s.c \
-         Src/hal_softi2s_leftinterrupt.c \
-         Src/hal_softi2s_rightinterrupt.c
+         Src/hal_softi2s_left44.c \
+         Src/hal_softi2s_right44.c \
+         Src/hal_softi2s_left48.c \
+         Src/hal_softi2s_right48.c 
 
 INCDIRS := -IInc \
            -I$(TOP_DIR)/Configure/Include \
