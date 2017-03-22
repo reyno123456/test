@@ -819,8 +819,8 @@ int32_t OV5640_ReadReg(uint16_t u16_ov5640Reg, uint8_t *pu8_ov5640Val)
     uint8_t u8_rdVal = 0;
     int32_t s32_result = 0;
     
-    u8_regBuf[0] = u16_ov5640Reg & 0xff;
-    u8_regBuf[1] = u16_ov5640Reg >> 8;
+    u8_regBuf[0] = u16_ov5640Reg >> 8;
+    u8_regBuf[1] = u16_ov5640Reg & 0xff;
 
     if(I2C_Master_ReadData(OV5640_COMPONENT, OV5640_I2C_ADDR, 
                             u8_regBuf,2, &u8_rdVal, 1) == FALSE) 

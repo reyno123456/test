@@ -82,7 +82,7 @@ void command_TestHalI2cRead(uint8_t *ch, uint8_t *subAddr, uint8_t *subAddrLen, 
 
     while(i < u32_addrLen)
     {
-        u8_addr_data[i] = (u32_addr >> (i * 8)) & 0xFF;
+        u8_addr_data[i] = (u32_addr >> ((u32_addrLen - i -1) * 8)) & 0xFF;
         i++;
     }
 

@@ -229,15 +229,16 @@ uint8_t I2C_Master_WriteData(EN_I2C_COMPONENT en_component, uint16_t u16_i2cAddr
 
 uint8_t I2C_Master_ReadData(EN_I2C_COMPONENT en_component, uint16_t u16_i2cAddr, uint8_t* ptr_subAddr, uint8_t u8_subAddrSize, uint8_t* ptr_data, uint32_t u32_dataSize)
 {
+    uint8_t u8_i = 0;
+    
     I2C_Master_UpdateTargetAddress(en_component, u16_i2cAddr);
     
     if (ptr_subAddr)
     {
-        while (u8_subAddrSize)
+        while (u8_i < u8_subAddrSize)
         {
             // The sub address size should be less than I2C_TX_FIFO_BUFFER_DEPTH, so no check here.
-            I2C_Master_WriteByte(en_component, ptr_subAddr[u8_subAddrSize-1]); // High address first
-            u8_subAddrSize--;
+            I2C_Master_WriteByte(en_component, ptr_subAddr[u8_i++]); // High address first
         }
     }
     
