@@ -188,6 +188,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {  
         command_TestWbFlashRead(cmdArray[1], cmdArray[2], cmdArray[3]);                
     }
+    else if (memcmp(cmdArray[0], "test_hal_spi_set_flash_clk", strlen("test_hal_spi_set_flash_clk")) == 0)
+    {  
+        command_TestSetWbFlashClk(cmdArray[1]);                
+    }
     else if (memcmp(cmdArray[0], "test_quadspi_speed", strlen("test_quadspi_speed")) == 0)
     {
         command_setQuadSPISpeed(cmdArray[1]);
@@ -452,6 +456,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_hal_spi_flash_erase <spi_port>");
         dlog_error("test_hal_spi_flash_write <spi_port> <start_addr> <data_len>");
         dlog_error("test_hal_spi_flash_read <spi_port> <start_addr> <data_len>");
+        dlog_error("test_hal_spi_set_flash_clk <clk Mhz>");
         dlog_error("test_quadspi_speed <speed enum>");
         dlog_error("test_quadspi_data"); 
         dlog_error("test_init_flash");

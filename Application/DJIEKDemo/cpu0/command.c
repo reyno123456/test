@@ -14,11 +14,6 @@
 #include "test_hal_mipi.h"
 #include "test_usbh.h"
 #include "test_hal_nv.h"
-#include "test_hal_uart.h"
-#include "test_hal_spi_flash.h"
-#include "test_hal_i2c_24c256.h"
-#include "test_hal_i2c.h"
-
 
 
 void command_readMemory(char *addr);
@@ -114,58 +109,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestNvSetBbRcId(cmdArray[1],cmdArray[2],cmdArray[3],cmdArray[4],cmdArray[5]);
     }
-    else if (memcmp(cmdArray[0], "test_hal_uart_init", strlen("test_hal_uart_init")) == 0)
-    {
-        command_TestHalUartInit(cmdArray[1], cmdArray[2]);
-    }
-    else if (memcmp(cmdArray[0], "test_hal_uart_set_int", strlen("test_hal_uart_set_int")) == 0)
-    {
-        command_TestHalUartIntSet(cmdArray[1], cmdArray[2]);
-    }
-    else if (memcmp(cmdArray[0], "test_hal_uart_tx", strlen("test_hal_uart_tx")) == 0)
-    {
-        command_TestHalUartTx(cmdArray[1], cmdArray[2]);
-    }
-    else if (memcmp(cmdArray[0], "test_hal_uart_rx", strlen("test_hal_uart_rx")) == 0)
-    {
-        command_TestHalUartRx(cmdArray[1]);
-    }
-	else if (memcmp(cmdArray[0], "test_hal_spi_flash_id", strlen("test_hal_spi_flash_id")) == 0)
-    {
-       command_WbFlashID(cmdArray[1]);
-    }
-    else if (memcmp(cmdArray[0], "test_hal_spi_flash_write_read", strlen("test_hal_spi_flash_write_read")) == 0)
-    { 
-        command_TestWbFlash(cmdArray[1]);                
-    }
-    else if (memcmp(cmdArray[0], "test_hal_spi_flash_erase", strlen("test_hal_spi_flash_erase")) == 0)
-    {
-       command_TestWbBlockErase(cmdArray[1], cmdArray[2], cmdArray[3]);
-    }
-    else if (memcmp(cmdArray[0], "test_hal_spi_flash_write", strlen("test_hal_spi_flash_write")) == 0)
-    { 
-        command_TestWbFlashWrite(cmdArray[1], cmdArray[2], cmdArray[3]);                
-    }
-    else if (memcmp(cmdArray[0], "test_hal_spi_flash_read", strlen("test_hal_spi_flash_read")) == 0)
-    {  
-        command_TestWbFlashRead(cmdArray[1], cmdArray[2], cmdArray[3]);                
-    }
-	else if (memcmp(cmdArray[0], "testhal24c256", strlen("testhal24c256")) == 0)
-    {
-        commandhal_Test24C256(cmdArray[1], cmdArray[2]);
-    }
-    else if (memcmp(cmdArray[0], "test_hal_i2c_init", strlen("test_hal_i2c_init")) == 0)
-    {
-        command_TestHalI2cInit(cmdArray[1], cmdArray[2], cmdArray[3]);
-    }
-    else if (memcmp(cmdArray[0], "test_hal_i2c_write", strlen("test_hal_i2c_write")) == 0)
-    {
-        command_TestHalI2cWrite(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5]);
-    }
-    else if (memcmp(cmdArray[0], "test_hal_i2c_read", strlen("test_hal_i2c_read")) == 0)
-    {
-        command_TestHalI2cRead(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4]);
-    }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
         dlog_error("Please use the commands like:");
@@ -186,19 +129,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("sky_auto_search_rc_id");
         dlog_error("NvResetBbRcId");
         dlog_error("NvSetBbRcId <id1> <id2> <id3> <id4> <id5>");
-        dlog_error("test_hal_uart_init <ch> <baudr>");
-        dlog_error("test_hal_uart_set_int <ch> <flag>");
-        dlog_error("test_hal_uart_tx <ch> <len>");
-        dlog_error("test_hal_uart_rx <ch>");
-		dlog_error("test_hal_spi_flash_id <spi_port>");
-        dlog_error("test_hal_spi_flash_write_read <spi_port>");
-        dlog_error("test_hal_spi_flash_erase <spi_port>");
-        dlog_error("test_hal_spi_flash_write <spi_port> <start_addr> <data_len>");
-        dlog_error("test_hal_spi_flash_read <spi_port> <start_addr> <data_len>");
-		dlog_error("testhal24c256 <i2c port> <i2c_value>");
-        dlog_error("test_hal_i2c_init <ch> <i2c_addr> <speed>");
-        dlog_error("test_hal_i2c_write <ch> <subAddr> <subAddrLen> <data> <dataLen>");
-        dlog_error("test_hal_i2c_read <ch> <subAddr> <subAddrLen> <dataLen>");
     }
 }
 

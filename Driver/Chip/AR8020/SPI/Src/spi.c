@@ -5,7 +5,7 @@
 #include "spi.h"
 #include "debuglog.h"
 #include "interrupt.h"
-
+#include "pll_ctrl.h"
 
 
 /* Private variables ---------------------------------------------------------*/
@@ -54,6 +54,11 @@ static int32_t SPI_EnableInt(ENUM_SPI_COMPONENT en_id, uint32_t data);
 
 static int32_t SPI_DisEnableInt(ENUM_SPI_COMPONENT en_id, uint32_t data);
 
+static uint32_t SPI_GetInputClockByIndex(ENUM_SPI_COMPONENT en_id);
+
+static uint32_t SPI_CalcClkDiv(ENUM_SPI_COMPONENT en_id, uint32_t u32_rateMhz);
+
+
 
 
 /* Private function prototypes -----------------------------------------------*/
@@ -74,7 +79,7 @@ static void SPI_disable(ENUM_SPI_COMPONENT en_id)
   */
 void SPI_master_init(ENUM_SPI_COMPONENT en_id, STRU_SPI_InitTypes *st_settings)
 {
-    uint32_t divider = (SPI_BASE_CLK_MHZ + st_settings->clk_Mhz-1)/st_settings->clk_Mhz; 
+    uint32_t divider = SPI_CalcClkDiv(en_id, st_settings->clk_Mhz);
 
     SPI_DisEnableInt(en_id, SPI_IMR_MASK);
     
@@ -332,5 +337,46 @@ static int32_t SPI_DisEnableInt(ENUM_SPI_COMPONENT en_id, uint32_t data)
         return -1;
     }
 }
+
+static uint32_t SPI_GetInputClockByIndex(ENUM_SPI_COMPONENT en_id)
+{
+    uint16_t u16_pllClk = 64;
+
+    switch (en_id)
+    {
+    case SPI_0:
+    case SPI_1:
+    case SPI_2:
+    case SPI_3:
+    case SPI_4:
+    case SPI_5:
+    case SPI_6:
+        PLLCTRL_GetCoreClk(&u16_pllClk, ENUM_CPU0_ID);
+        u16_pllClk = u16_pllClk >> 1;
+        break;
+    case SPI_7:
+        PLLCTRL_GetCoreClk(&u16_pllClk, ENUM_CPU2_ID);
+        break;
+    default:
+        break;
+    }
+
+    return (uint32_t)u16_pllClk;
+}
+
+static uint32_t SPI_CalcClkDiv(ENUM_SPI_COMPONENT en_id, uint32_t u32_rateMhz)
+{
+    uint32_t u32_clk = SPI_GetInputClockByIndex(en_id); // M -> K
+
+    if ((u32_rateMhz >= 1) && (u32_rateMhz <= u32_clk))
+    {
+        return (u32_clk / u32_rateMhz);
+    }
+    else
+    {
+        return (u32_clk);
+    }
+}
+
 
 

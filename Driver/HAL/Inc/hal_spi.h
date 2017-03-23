@@ -50,7 +50,7 @@ typedef enum
 // spi init info
 typedef struct
 {
-    uint16_t                   u16_halSpiBaudr; // range 1~165
+    uint16_t                   u16_halSpiBaudr; // range 1~50 Mhz
     ENUM_HAL_SPI_POLARITY      e_halSpiPolarity;
     ENUM_HAL_SPI_PHASE         e_halSpiPhase;
 } STRU_HAL_SPI_INIT;

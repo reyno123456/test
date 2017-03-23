@@ -4,7 +4,7 @@
 #include "test_hal_spi_flash.h" 
 #include "debuglog.h" 
 
-#define     CLKRATE_MHZ         (12)
+uint16_t CLKRATE_MHZ = 6;
 /*====================================================*/
 /*             WinBond SPI_FLASH Test FUNC            */
 /*====================================================*/ 
@@ -240,6 +240,8 @@ void command_TestWbFlashWrite(char *spi_base, char *addr, char *len)
        *(uint32_t *)(0x40B00088) = u32_data;
     }
 
+    dlog_info("CLKRATE_MHZ:%d",CLKRATE_MHZ);
+
     TEST_SPI_init(SPI_BASE_ADDR);
     //Device_ID Check 
     u8wb_flash_id = Test_WbFlashID(SPI_BASE_ADDR) ;
@@ -362,6 +364,15 @@ void command_TestWbFlashWrite(char *spi_base, char *addr, char *len)
     {
         dlog_info("%d",u8_rdData[u32_lenAlign*10+i]);
     }
+
+    for(i=0;i<u32_len;i++)
+    {
+        if (u8_rdData[i] != u8_wrData[i+4])
+        {
+            dlog_info("data[%d] error, write:%d, read:%d", i, u8_wrData[i+4], u8_rdData[i]);
+            dlog_output(1000);
+        }
+    }
 #endif
 
     Test_WbFlashCommand(SPI_BASE_ADDR,0x04); //write disable
@@ -395,6 +406,8 @@ void command_TestWbFlashRead(char *spi_base, char *addr, char *len)
        u32_data |= 0x00000550; // bit11~4 = 01010101B
        *(uint32_t *)(0x40B00088) = u32_data;
     }
+
+    dlog_info("CLKRATE_MHZ:%d",CLKRATE_MHZ);
 
     TEST_SPI_init(SPI_BASE_ADDR);
     //Device_ID Check 
@@ -475,3 +488,9 @@ void command_TestWbFlashRead(char *spi_base, char *addr, char *len)
     Test_WbFlashCommand(SPI_BASE_ADDR,0x04); //write disable
 }
 
+void command_TestSetWbFlashClk(char *clk)
+{
+    CLKRATE_MHZ = strtoul(clk, NULL, 0);
+
+    dlog_info("CLKRATE_MHZ:%d",CLKRATE_MHZ);
+}
