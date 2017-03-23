@@ -122,6 +122,8 @@ typedef enum
 
 #define INTR_NVIC_PRIORITY_VIDEO_VSOC0          (8)
 #define INTR_NVIC_PRIORITY_VIDEO_VSOC1          (8)
+#define INTR_NVIC_PRIORITY_UART_DEFAULT         (5)
+#define INTR_NVIC_PRIORITY_SPI_DEFAULT          (10)
 //cpu0 interrupt priority use 5-10,
 #define INTR_NVIC_PRIORITY_UART0                (5)
 #define INTR_NVIC_PRIORITY_OTG_INITR0           (6)

@@ -72,12 +72,14 @@ HAL_RET_T HAL_UART_Init(ENUM_HAL_UART_COMPONENT e_uartComponent,
     
     // uart hadrware init.
     u32_uartBaudr = s_u32_uartBaudrTbl[(uint8_t)(e_uartBaudr)];
-    uart_init(u8_uartCh, u32_uartBaudr);
-
+    
+    // set uart interrupt Priority
+    HAL_NVIC_SetPriority(u8_uartVecNum, INTR_NVIC_PRIORITY_UART_DEFAULT, 0);
     //connect uart interrupt service function
     HAL_NVIC_RegisterHandler(u8_uartVecNum, 
                              UART_IntrSrvc, 
                              NULL);
+    uart_init(u8_uartCh, u32_uartBaudr);
    
     if (NULL != pfun_rxFun) // enable uart_x interrupt.
     {
