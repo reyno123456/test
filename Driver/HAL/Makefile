@@ -63,7 +63,8 @@ SRC_C := Src/hal.c \
          Src/hal_softi2s_left44.c \
          Src/hal_softi2s_right44.c \
          Src/hal_softi2s_left48.c \
-         Src/hal_softi2s_right48.c 
+         Src/hal_softi2s_right48.c \
+         Src/hal_norflash.c
 
 INCDIRS := -IInc \
            -I$(TOP_DIR)/Configure/Include \
@@ -136,6 +137,7 @@ install:
 	@cp -f Inc/hal_dvp.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_softi2s.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_encodemp3.h $(OUTPUT_HEADER_STAGING_DIR) 
+	@cp -f Inc/hal_norflash.h $(OUTPUT_HEADER_STAGING_DIR)
 clean:
 	@echo "Cleaning..."
 	@$(RM) $(LIB) $(OBJ_C) .depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB)

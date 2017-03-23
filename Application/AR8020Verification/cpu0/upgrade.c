@@ -9,6 +9,7 @@
 #include "systicks.h"
 #include <string.h>
 #include "hal_usb_host.h"
+#include "hal_norflash.h"
 
 static uint8_t g_u8arrayRecData[RDWR_SECTOR_SIZE]={0};
 
@@ -16,7 +17,7 @@ static uint8_t g_u8arrayRecData[RDWR_SECTOR_SIZE]={0};
 static uint8_t  g_u8upgradeFlage;
 static uint8_t  g_u8Amd5Sum[16];
 static uint32_t g_u32address=0;
-static uint32_t   g_u32recDataSum = 0;
+static uint32_t g_u32recDataSum = 0;
 
 #define READ_DATA_SIZE  1024*4  
 #define MD5_SIZE        16  
@@ -34,13 +35,13 @@ static uint8_t UPGRADE_MD5SUM(void)
 
     for(i=0;i<((u32_RecCountTmp)/RDWR_SECTOR_SIZE);i++)
     {
-        NOR_FLASH_ReadByteBuffer((u32_AddressTmp+RDWR_SECTOR_SIZE*i),g_u8arrayRecData,RDWR_SECTOR_SIZE);
+        HAL_NORFLASH_ReadByteBuffer((u32_AddressTmp+RDWR_SECTOR_SIZE*i),g_u8arrayRecData,RDWR_SECTOR_SIZE);
         MD5Update(&md5, g_u8arrayRecData, RDWR_SECTOR_SIZE);        
         u32_Count+=RDWR_SECTOR_SIZE;
     }
     if(0 != ((u32_RecCountTmp)%RDWR_SECTOR_SIZE))
     {
-        NOR_FLASH_ReadByteBuffer((u32_AddressTmp+RDWR_SECTOR_SIZE*i),g_u8arrayRecData,(u32_RecCountTmp%RDWR_SECTOR_SIZE));
+        HAL_NORFLASH_ReadByteBuffer((u32_AddressTmp+RDWR_SECTOR_SIZE*i),g_u8arrayRecData,(u32_RecCountTmp%RDWR_SECTOR_SIZE));
         MD5Update(&md5, g_u8arrayRecData, (u32_RecCountTmp%RDWR_SECTOR_SIZE));
         u32_Count+=(u32_RecCountTmp%RDWR_SECTOR_SIZE);
     }
@@ -78,12 +79,12 @@ static void UPGRADE_ModifyBootInfo()
     uint8_t i=0;
     Boot_Info st_bootInfo;
     memset((void *)&st_bootInfo,0xff,sizeof(st_bootInfo)); 
-    NOR_FLASH_ReadByteBuffer(0x1000,(uint8_t *)(&st_bootInfo),sizeof(st_bootInfo));
-    NOR_FLASH_EraseSector(0x1000);
+    HAL_NORFLASH_WriteByteBuffer(0x1000,(uint8_t *)(&st_bootInfo),sizeof(st_bootInfo));
+    HAL_NORFLASH_Erase(HAL_NORFLASH_Sector, 0x1000);
 
     st_bootInfo.apploadaddress=g_u32address + 0x10000000;
     
-    NOR_FLASH_WriteByteBuffer(0x1000,(uint8_t *)(&st_bootInfo),sizeof(st_bootInfo)); 
+    HAL_NORFLASH_WriteByteBuffer(0x1000,(uint8_t *)(&st_bootInfo),sizeof(st_bootInfo)); 
 }
 
 void UPGRADE_Upgrade(void const *argument)
@@ -185,8 +186,8 @@ void UPGRADE_Upgrade(void const *argument)
             f_close(&MyFile);
         }
         dlog_info("fread %d\n",u32_bytesRead);
-        NOR_FLASH_EraseSector(u32_norAddr);
-        NOR_FLASH_WriteByteBuffer(u32_norAddr,g_u8arrayRecData,RDWR_SECTOR_SIZE); 
+        HAL_NORFLASH_Erase(HAL_NORFLASH_Sector, u32_norAddr);
+        HAL_NORFLASH_WriteByteBuffer(u32_norAddr,g_u8arrayRecData,RDWR_SECTOR_SIZE); 
         dlog_info("write flash %d%%\n",(u32_recDataSumTmp*100/g_u32recDataSum));
         dlog_output(100);          
         u32_recDataSumTmp+=u32_bytesRead; 
@@ -198,10 +199,6 @@ void UPGRADE_Upgrade(void const *argument)
     dlog_info("upgrade ok %x\n",g_u32recDataSum);
     dlog_info("start checksum nor_flash .......\n");
     
-    /*if(-1 != UPGRADE_MD5SUM())
-    {
-        UPGRADE_ModifyBootInfo();
-    }*/
     UPGRADE_MD5SUM();
     dlog_output(100);
     vTaskDelete(NULL);
