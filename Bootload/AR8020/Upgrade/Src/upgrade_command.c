@@ -1,9 +1,8 @@
 #include <stdint.h>
 #include <string.h>
+
 #include "upgrade_command.h"
-#include "serial.h"
 #include "debuglog.h"
-#include "interrupt.h"
 #include "upgrade_sd.h"
 #include "upgrade_uart.h"
 
@@ -38,8 +37,3 @@ void UPGRADE_CommandRun(char *cmdArray[], uint32_t cmdNum)
     }
 }
 
-void delay_ms(uint32_t num)
-{
-    volatile int i;
-    for (i = 0; i < num * 100; i++);
-}

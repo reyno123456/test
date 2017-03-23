@@ -2,10 +2,10 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "quad_spi_ctrl.h"
-#include "nor_flash.h"
+#include "hal_ret_type.h"
+#include "hal_norflash.h"
+
 #include "debuglog.h"
-#include "systicks.h"
 #include "upgrade_core.h"
 #include "upgrade_command.h"
 
@@ -21,8 +21,6 @@
 #define DLOG_ERROR(...)
 #endif
 
-volatile static uint8_t g_u8CheckSum = 0;
-
 int8_t UPGRADE_CopyDataToNor(FIL *MyFile,uint32_t u32_addrOffset)
 {
     FRESULT           fileResult;
@@ -32,7 +30,7 @@ int8_t UPGRADE_CopyDataToNor(FIL *MyFile,uint32_t u32_addrOffset)
     uint32_t          u32_norAddr = u32_addrOffset;
     int i=0;
     DLOG_INFO("Nor flash init start ...");
-    NOR_FLASH_Init();
+    HAL_NORFLASH_Init();
     DLOG_INFO("Nor flash init end   ...");
     while(RDWR_SECTOR_SIZE == u32_bytesRead)
     {
@@ -50,32 +48,14 @@ int8_t UPGRADE_CopyDataToNor(FIL *MyFile,uint32_t u32_addrOffset)
             DLOG_INFO("f_read success %d!",u32_bytesRead);
             u32_recDataSum+=u32_bytesRead;            
             DLOG_INFO("EraseSector start %x!",u32_norAddr);
-            NOR_FLASH_EraseSector(u32_norAddr);          
-            NOR_FLASH_WriteByteBuffer(u32_norAddr, u8_arrayRecData, u32_bytesRead);  
-            
-            if(0 != g_u8CheckSum)
-            {
-                uint32_t u32_checkSumArray = 0;
-                uint32_t u32_checkSumNor =0;
-                uint8_t  u8_val =0;
-                uint32_t  i =0;
-                for(i=0;i<u32_bytesRead;i++)
-                {
-                    u32_checkSumArray+=u8_arrayRecData[i];
-                }
-                for(i=0;i<u32_bytesRead;i++)
-                {
-                    QUAD_SPI_ReadByte(u32_norAddr+i, &u8_val);
-                    u32_checkSumNor +=u8_val;
-                }
-                DLOG_INFO("number of rec data %d  u32_checkSumArray %d u32_checkSumNor %d\n ", u32_bytesRead,u32_checkSumArray,u32_checkSumNor);
-            }
-            
+            HAL_NORFLASH_Erase(HAL_NORFLASH_Sector,u32_norAddr);          
+            HAL_NORFLASH_WriteByteBuffer(u32_norAddr, u8_arrayRecData, u32_bytesRead);  
+                        
             u32_norAddr += RDWR_SECTOR_SIZE;            
         }        
     }
     DLOG_INFO(" number of totol data %d\n ", u32_recDataSum);
-    g_u8CheckSum = 0;
+
     return UPGRADE_SUCCESS;
 }
 #if 0

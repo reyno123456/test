@@ -34,15 +34,11 @@ SRC_S   :=  Src/upgrade_start.s
 SRC_C   :=  Src/upgrade_main.c \
             Src/upgrade_command.c \
             Src/upgrade_uart.c \
-            Src/upgrade_core.c \
-            Src/upgrade_md5.c
+            Src/upgrade_core.c 
 
 CFLAGS += -I./Inc \
           -I$(OUTPUT_HEADER_STAGING_DIR) \
-          -I$(TOP_DIR)/Configure/Include \
-          -I$(TOP_DIR)/Driver/Chip/AR8020/BB/Inc \
-          -I$(SRC_C_DIR)/SD/Inc \
-          -I$(SRC_C_DIR)/SysCtl/Inc \
+          -I$(TOP_DIR)/Configure/Include 
 
 # object file(s)
 OBJ_C   := $(patsubst %.s,%.o,$(SRC_S)) $(patsubst %.c,%.o,$(SRC_C)) 

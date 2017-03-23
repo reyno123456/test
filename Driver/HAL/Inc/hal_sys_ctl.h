@@ -73,5 +73,15 @@ HAL_RET_T HAL_SYS_CTL_GetConfig(STRU_HAL_SYS_CTL_CONFIG **ppst_halSysCtlCfg);
 
 HAL_RET_T HAL_SYS_CTL_Init(STRU_HAL_SYS_CTL_CONFIG *pst_halSysCtlCfg);
 
+/**
+* @brief  The system tick init function.
+* @param  u32_sysTick                System tick count to create tick interrupt.
+* @retval HAL_OK                         means the FPU is enabled.
+*         HAL_SYS_CTL_ERR_SYS_TICK_INIT  means some error happens in the init period.
+* @note   The tick interrupt interval is set to 1ms by HAL_SYS_CTL_Init.
+*/
+
+HAL_RET_T HAL_SYS_CTL_SysTickInit(uint32_t u32_sysTickCount);
+
 #endif
 

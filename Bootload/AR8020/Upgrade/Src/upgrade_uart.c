@@ -1,15 +1,18 @@
 #include <stdint.h>
 #include <string.h>
-#include "upgrade_command.h"
+
+
 #include "serial.h"
 #include "debuglog.h"
-#include "interrupt.h"
-#include "quad_spi_ctrl.h"
+
+#include "hal_ret_type.h"
+#include "hal_nvic.h"
+#include "hal_norflash.h"
+
+#include "upgrade_command.h"
 #include "upgrade_core.h"
 #include "upgrade_uart.h"
-#include "nor_flash.h"
-#include "systicks.h"
-#include "upgrade_md5.h"
+#include "md5.h"
 
 #define UPGRADE_UART_DEBUGE
 
@@ -46,10 +49,12 @@ static int8_t UPGRADE_MD5SUM(uint32_t u32_addr)
     uint32_t j=0;
     uint32_t u32_RecCountTmp=g_u32RecCount-34;
     uint32_t u32_Count=0;
-    uint8_t md5_value[MD5_SIZE];
-    uint8_t    *p8_data = (uint8_t *)(u32_addr+34);
+    uint8_t  md5_value[MD5_SIZE];
+    uint8_t  *p8_data = (uint8_t *)(u32_addr+34);
+
     MD5_CTX md5;
     MD5Init(&md5);
+
     for(i=0;i<((u32_RecCountTmp)/RDWR_SECTOR_SIZE);i++)
     {
         MD5Update(&md5, (p8_data+RDWR_SECTOR_SIZE*i), RDWR_SECTOR_SIZE);
@@ -77,6 +82,7 @@ static int8_t UPGRADE_MD5SUM(uint32_t u32_addr)
     DLOG_INFO("checksum......ok\n");
     return 0; 
 }
+
 static void UPGRADE_IRQHandler(uint32_t vectorNum)
 {
     uint32_t          u32_isrType;
@@ -110,7 +116,7 @@ static void UPGRADE_RollbackIsrHandler(void)
 static void UPGRADE_UartReceive(void)
 {
     DLOG_INFO("Nor flash init start ...\n");
-    NOR_FLASH_Init();
+    HAL_NORFLASH_Init();
     DLOG_INFO("Nor flash end\n");
     dlog_output(100);
     uint32_t i=0;
@@ -119,7 +125,7 @@ static void UPGRADE_UartReceive(void)
     {
         ;
     }
-    reg_IrqHandle(UART_INTR0_VECTOR_NUM, UPGRADE_IRQHandler, NULL);
+    HAL_NVIC_RegisterHandler(HAL_NVIC_UART_INTR0_VECTOR_NUM, UPGRADE_IRQHandler, NULL);
     DLOG_INFO("interrupt\n");
     dlog_output(100);
     while((g_u32ImageSize!=g_u32RecCount))
@@ -156,7 +162,7 @@ static void UPGRADE_ModifyBootInfo(void)
     uint8_t i=0;
     Boot_Info st_bootInfo;
     memset(&st_bootInfo,0xff,sizeof(st_bootInfo)); 
-    NOR_FLASH_ReadByteBuffer(0x1000,(uint8_t *)(&st_bootInfo),sizeof(st_bootInfo));
+    HAL_NORFLASH_ReadByteBuffer(0x1000,(uint8_t *)(&st_bootInfo),sizeof(st_bootInfo));
     DLOG_INFO("start checksum upgrade nor flash\n");
     if(0==st_bootInfo.present_boot)
     {
@@ -176,9 +182,9 @@ static void UPGRADE_ModifyBootInfo(void)
             return;    
         }                
     }
-    NOR_FLASH_EraseSector(0x1000);
+    HAL_NORFLASH_Erase(HAL_NORFLASH_Sector, 0x1000);
     
-    NOR_FLASH_WriteByteBuffer(0x1000,(uint8_t *)(&st_bootInfo),sizeof(st_bootInfo));
+    HAL_NORFLASH_WriteByteBuffer(0x1000,(uint8_t *)(&st_bootInfo),sizeof(st_bootInfo));
      
 }
 
@@ -188,14 +194,14 @@ static void UPGRADE_EraseWriteFlash(uint32_t u32_addr)
     for(i=0;i<(g_u32RecCount/RDWR_SECTOR_SIZE);i++)
     {
         DLOG_INFO("upgrade  %p %d%%\n",u32_addr+RDWR_SECTOR_SIZE*i,(i*RDWR_SECTOR_SIZE)*100/g_u32RecCount);
-        NOR_FLASH_EraseSector(u32_addr+RDWR_SECTOR_SIZE*i);
-        NOR_FLASH_WriteByteBuffer((u32_addr+RDWR_SECTOR_SIZE*i),(g_pDst+RDWR_SECTOR_SIZE*i),RDWR_SECTOR_SIZE);
+        HAL_NORFLASH_Erase(HAL_NORFLASH_Sector, u32_addr+RDWR_SECTOR_SIZE*i);
+        HAL_NORFLASH_WriteByteBuffer((u32_addr+RDWR_SECTOR_SIZE*i),(g_pDst+RDWR_SECTOR_SIZE*i),RDWR_SECTOR_SIZE);
         dlog_output(100);
     }
     if(0 != g_u32RecCount%RDWR_SECTOR_SIZE)
     {
-        NOR_FLASH_EraseSector(u32_addr+RDWR_SECTOR_SIZE*i);
-        NOR_FLASH_WriteByteBuffer((u32_addr+RDWR_SECTOR_SIZE*i),(g_pDst+RDWR_SECTOR_SIZE*i),RDWR_SECTOR_SIZE);
+        HAL_NORFLASH_Erase(HAL_NORFLASH_Sector, u32_addr+RDWR_SECTOR_SIZE*i);
+        HAL_NORFLASH_WriteByteBuffer((u32_addr+RDWR_SECTOR_SIZE*i),(g_pDst+RDWR_SECTOR_SIZE*i),RDWR_SECTOR_SIZE);
     }
     dlog_output(100);
     DLOG_INFO("upgrade  finish\n");
