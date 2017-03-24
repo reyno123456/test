@@ -92,9 +92,9 @@ int main(void)
     osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 4 * 128);
     osThreadCreate(osThread(IOTask), NULL);
 
-    COMTASK_Init();
-
     Wireless_TaskInit();
+
+    COMTASK_Init();
 
     osKernelStart();
 

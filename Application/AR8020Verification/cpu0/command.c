@@ -254,11 +254,11 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     else if(memcmp(cmdArray[0], "test_camera_init", strlen("test_camera_init")) == 0)
     {
         command_TestHalCameraInit(cmdArray[1], cmdArray[2]);
+        command_TestHalMipiInit(cmdArray[3]);
     }
     else if(memcmp(cmdArray[0], "test_write_camera", strlen("test_write_camera")) == 0)
     {
         command_TestCameraWrite(cmdArray[1], cmdArray[2]);
-        command_TestHalMipiInit(cmdArray[3]);
     }
     else if(memcmp(cmdArray[0], "test_read_camera", strlen("test_camera_read")) == 0)
     {
