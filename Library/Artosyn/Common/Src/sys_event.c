@@ -5,6 +5,7 @@
 #include <string.h>
 #include "sys_event.h"
 #include "debuglog.h"
+#include "local_irq.h"
 #include "memory.h"
 #include "cpu_info.h"
 
@@ -15,6 +16,8 @@ static STRU_RegisteredSysEvent_List  g_registeredSysEventList      = NULL;
 static STRU_RegisteredSysEvent_Node* g_registeredSysEventList_tail = NULL;
 static STRU_NotifiedSysEvent_List    g_notifiedSysEventList        = NULL;
 static STRU_NotifiedSysEvent_Node*   g_notifiedSysEventList_tail   = NULL;
+
+static unsigned long s_ul_primask = 0;
 
 /**
  * Internal functions to be used in external APIs -------------------------------------
@@ -36,12 +39,12 @@ static uint8_t releaseSysEventList(void)
 
 static inline void enableInterrupts(void)
 {
-    __asm volatile ("cpsie i");
+    local_irq_restore(s_ul_primask);
 }
 
 static inline void disableInterrupts(void)
 {
-    __asm volatile ("cpsid i");
+    s_ul_primask = local_irq_disable_save_flags();
 }
 
 /**
@@ -118,6 +121,8 @@ static uint8_t removeRegisteredSysEventNode(STRU_RegisteredSysEvent_Node* pNode)
     {
         return FALSE;
     }
+
+    disableInterrupts();
     
     if(pNode == *ppFirstNode)
     {
@@ -149,7 +154,9 @@ static uint8_t removeRegisteredSysEventNode(STRU_RegisteredSysEvent_Node* pNode)
             *ppLastNode = pNode->prev;
         }
         pNode->prev->next = pNode->next;  
-    }  
+    }
+
+    enableInterrupts();
   
     free_simple(pNode);  
     return TRUE; 

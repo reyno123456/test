@@ -37,8 +37,7 @@
 #include "test_hal_nv.h"
 #include "test_hal_spi_flash.h"
 #include "md5.h"
-
-
+#include "test_localirq.h"
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
@@ -428,6 +427,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestNvSetBbRcId(cmdArray[1],cmdArray[2],cmdArray[3],cmdArray[4],cmdArray[5]);
     }
+    else if (memcmp(cmdArray[0], "test_local_irq", strlen("test_local_irq")) == 0)
+    {
+        command_TestLocalIrq();
+    }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
         dlog_error("Please use the commands like:");
@@ -507,6 +510,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("sky_auto_search_rc_id");
         dlog_error("NvResetBbRcId");
         dlog_error("NvSetBbRcId <id1> <id2> <id3> <id4> <id5>");
+        dlog_error("test_local_irq");
         dlog_output(1000);
     }
 }

@@ -68,6 +68,7 @@ install:
 	@cp -f Inc/sys_event.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/memory.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/md5.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/local_irq.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."

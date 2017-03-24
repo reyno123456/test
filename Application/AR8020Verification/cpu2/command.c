@@ -22,19 +22,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
 {
     extern int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2);
     
-    if (memcmp(cmdArray[0], "encoder_dump_brc", strlen("encoder_dump_brc")) == 0)
-    {
-        command_encoder_dump_brc();
-    }
-    else if (memcmp(cmdArray[0], "encoder_update_brc", strlen("encoder_update_brc")) == 0)
-    {
-        command_encoder_update_brc(cmdArray[1]);
-    }
-    else if (memcmp(cmdArray[0], "encoder_update_video_format", strlen("encoder_update_video_format")) == 0)
-    {
-        command_encoder_update_video(cmdArray[1], cmdArray[2], cmdArray[3]);
-    }
-    else if (memcmp(cmdArray[0], "BB_data_buf_full", strlen("BB_data_buf_full")) == 0)
+    if (memcmp(cmdArray[0], "BB_data_buf_full", strlen("BB_data_buf_full")) == 0)
     {
         command_TestSysEventInterCore(cmdArray[1]);
     }
@@ -115,9 +103,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0) 
     {
         dlog_error("Please use commands like:");
-        dlog_error("encoder_dump_brc");
-        dlog_error("encoder_update_brc <br>");
-        dlog_error("encoder_update_video_format <W> <H> <F>");
         dlog_error("BB_data_buf_full <R>");
         dlog_error("BB_debug_print_init_sky");
         dlog_error("BB_debug_print_init_grd");
