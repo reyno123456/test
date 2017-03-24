@@ -104,7 +104,7 @@ sdk:
 	@cp -r $(OUTPUT_BIN_STAGING_DIR) $(SDK_DIR)/
 	$(UTILITY_DIR)/modifyMKpath.sh
 	@cp -r ../../*.mk $(SDK_DIR)/Build
-	@tar -cvf  $(SDK_DIR_VERSION).tar.gz $(SDK_DIR)
+	@tar -zcvf  $(SDK_DIR_VERSION).tar.gz $(SDK_DIR)
 
 ground:
 	@echo "make ground ..."
