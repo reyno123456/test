@@ -14,6 +14,7 @@
 #include "test_simulatepwm.h"
 #include "hal_ret_type.h"
 #include "hal_nvic.h"
+#include "testhal_dma.h"
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
@@ -85,6 +86,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestGpioInterrupt(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
+    else if (memcmp(cmdArray[0], "test_dma_cpu1", strlen("test_dma_cpu1")) == 0)
+    {
+        command_dma(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
     /* error command */
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
@@ -109,6 +114,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_TestGpioNormal <gpionum> <highorlow>");
         dlog_error("test_TestGpioNormalRange <gpionum1> <gpionum2> <highorlow>");
         dlog_error("test_TestGpioInterrupt <gpionum> <inttype> <polarity>");
+        dlog_error("test_dma_cpu1 <src> <dst> <byte_num>");
     }
 }
 

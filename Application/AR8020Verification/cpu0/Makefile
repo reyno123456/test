@@ -38,7 +38,7 @@ SRC_C   := main_sky.c command.c test_freertos.c test_hal_can.c test_hal_camera.c
            ../share/test_timer.c ../share/test_hal_spi_flash.c test_quadspi.c ../share/test_float.c ../share/test_gpio.c \
            upgrade.c ../share/testhal_gpio.c ../share/testhal_timer.c ../share/testhal_pwm.c \
            ../share/testhal_softpwm.c ../share/test_hal_i2c_24c256.c test_hal_uart.c test_hal_spi.c \
-           test_hal_mipi.c ../share/test_mp3.c test_hal_nv.c test_hal_i2c.c test_localirq.c
+           test_hal_mipi.c ../share/test_mp3.c test_hal_nv.c test_hal_i2c.c test_localirq.c ../share/testhal_dma.c
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
@@ -47,7 +47,7 @@ SRC_C   := main_ground.c command.c test_freertos.c test_hal_can.c test_hal_camer
            ../share/test_timer.c ../share/test_hal_spi_flash.c test_quadspi.c ../share/test_float.c ../share/test_gpio.c \
            upgrade.c ../share/testhal_gpio.c ../share/testhal_timer.c ../share/testhal_pwm.c\
            ../share/testhal_softpwm.c ../share/test_hal_i2c_24c256.c test_hal_uart.c test_hal_spi.c \
-           test_hal_mipi.c ../share/test_mp3.c test_hal_nv.c test_hal_i2c.c test_localirq.c
+           test_hal_mipi.c ../share/test_mp3.c test_hal_nv.c test_hal_i2c.c test_localirq.c ../share/testhal_dma.c
 endif
 
 CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
