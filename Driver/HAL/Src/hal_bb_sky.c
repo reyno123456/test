@@ -17,7 +17,7 @@ History:
 #include "bb_ctrl.h"
 #include "bb_sky_ctrl.h"
 #include "hal_bb.h"
-
+#include "boardParameters.h"
 
 /** 
  * @brief   init baseband to sky mode
@@ -27,7 +27,7 @@ History:
  */
 HAL_RET_T HAL_BB_InitSky( void )
 {
-    BB_init( BB_SKY_MODE );
+    BB_init( BB_SKY_MODE , &stru_boardCfg);
     BB_SKY_start();
 
     return HAL_OK;

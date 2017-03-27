@@ -14,6 +14,7 @@
 #include "sys_event.h"
 #include "rf_8003s.h"
 #include "memory_config.h"
+#include "boardParameters.h"
 
 #define     BB_SPI_TEST         (0)
 #define     RF_SPI_TEST         (0)
@@ -125,15 +126,16 @@ const STRU_FRQ_CHANNEL It_5G_frq[MAX_5G_IT_FRQ_SIZE] = {     //5G
 /*
   * cali_reg: Store the calibration registers value
  */
-static uint8_t cali_reg[2][10] = {{0}, {0}};
-static uint8_t *BB_sky_regs = NULL;
-static uint8_t *BB_grd_regs = NULL;
-static uint8_t *RF_8003s_regs;
+static uint8_t cali_reg[2][10];
+static uint8_t *BB_sky_regs;
+static uint8_t *BB_grd_regs;
+static uint8_t *RF1_8003s_regs;
+static uint8_t *RF2_8003s_regs;
 
 static void BB_GetNv(void);
 
 
-static void BB_regs_init(ENUM_BB_MODE en_mode)
+static void BB_regs_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *pstru_boardCfg)
 {
     uint32_t page_cnt=0;    
     uint8_t *regs = (en_mode == BB_SKY_MODE) ? BB_sky_regs : BB_grd_regs;
@@ -149,6 +151,17 @@ static void BB_regs_init(ENUM_BB_MODE en_mode)
          * PAGE setting included in the regs array.
          */
         en_curPage = page;
+        //update the board registers
+        {
+            uint8_t num;
+            uint8_t cfgRegNum = ((en_mode == BB_SKY_MODE ) ? pstru_boardCfg->u8_bbSkyRegsCnt : pstru_boardCfg->u8_bbGrdRegsCnt);
+            const STRU_BB_REG *bbBoardReg  = ((en_mode == BB_SKY_MODE ) ? pstru_boardCfg->pstru_bbSkyRegs : pstru_boardCfg->pstru_bbGrdRegs);
+
+            for(num = 0; num < cfgRegNum; num++ )
+            {
+                regs[((uint16_t)bbBoardReg[num].page << 8) + bbBoardReg[num].addr] = bbBoardReg[num].value;
+            }
+        }
 
         for(addr_cnt = 0; addr_cnt < 256; addr_cnt++)
         {
@@ -236,15 +249,13 @@ void BB_use_param_setting(PARAM *user_setting)
     context.trx_ctrl      = IT_RC_MODE;
 }
 
-
 void BB_SetBoardMode(ENUM_BB_MODE en_mode)
 {
     SFR_TRX_MODE_SEL = (en_mode == BB_SKY_MODE) ? 0x01: 0x03;
 }
 
-
-void BB_init(ENUM_BB_MODE en_mode)
-{    
+void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
+{
     PARAM *user_setting = BB_get_sys_param();
     BB_use_param_setting(user_setting);
     
@@ -253,7 +264,8 @@ void BB_init(ENUM_BB_MODE en_mode)
 
     BB_sky_regs   = &(cfg_addr->bb_sky_configure[0][0]);
     BB_grd_regs   = &(cfg_addr->bb_grd_configure[0][0]);
-    RF_8003s_regs = &(cfg_addr->rf_configure[0]);
+    RF1_8003s_regs = &(cfg_addr->rf1_configure[0]);
+    RF2_8003s_regs = &(cfg_addr->rf2_configure[0]);
 
     BB_GetNv();
 
@@ -263,8 +275,8 @@ void BB_init(ENUM_BB_MODE en_mode)
     BB_uart10_spi_sel(0x00000003);
     BB_SPI_init();
 
-    BB_regs_init(en_mode);
-    RF8003s_init(RF_8003s_regs);
+    BB_regs_init(en_mode, boardCfg);
+    RF8003s_init(RF1_8003s_regs, RF2_8003s_regs, boardCfg);
 
     BB_softReset(en_mode);
 

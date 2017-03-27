@@ -1,6 +1,7 @@
 #ifndef __RF8003_H__
 #define __RF8003_H__
 
+#include "boardParameters.h"
 
 /**
   * @brief : Write 8003 RF register by SPI 
@@ -24,7 +25,7 @@ int RF8003s_SPI_ReadReg(uint8_t u8_addr, uint8_t *pu8_rxValue);
   * @param : addr: 8003 SPI address
   * @retval  None
   */
-void RF8003s_init(uint8_t *pu8_regs);
+void RF8003s_init(uint8_t *pu8_regs1, uint8_t *pu8_regs2, STRU_BoardCfg *boardCfg);
 
 /**
   * @brief : 

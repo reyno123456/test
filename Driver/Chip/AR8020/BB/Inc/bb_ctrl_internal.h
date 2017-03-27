@@ -51,7 +51,6 @@ typedef enum
 #define SFR_TRX_MODE_SKY            0x01
 
 
-
 #define MAX_2G_RC_FRQ_SIZE (34)
 #define MAX_2G_IT_FRQ_SIZE (8)
 
@@ -60,8 +59,6 @@ typedef enum
 
 #define MAX(a,b) (((a) > (b)) ?  (a) :  (b) )
 
-
-void BB_init(ENUM_BB_MODE en_mode);
 
 void BB_uart10_spi_sel(uint32_t sel_dat);
 

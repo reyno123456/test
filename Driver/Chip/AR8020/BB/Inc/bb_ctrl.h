@@ -2,14 +2,15 @@
 #define __BB_API_
 
 #include "bb_types.h"
-
+#include "boardParameters.h"
 
 
 /** 
  * @brief       API for Baseband initialize.
  * @param[in]   en_mode: brief @ENUM_BB_MODE
  */
-void BB_init(ENUM_BB_MODE en_mode);
+
+void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg);
 
 
 /** 

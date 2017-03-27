@@ -12,6 +12,7 @@ History:
 
 #include <stdio.h>
 #include <stdint.h>
+#include "boardParameters.h"
 
 #include "bb_ctrl.h"
 #include "bb_grd_ctrl.h"
@@ -26,7 +27,7 @@ History:
  */
 HAL_RET_T HAL_BB_InitGround( void )
 {
-    BB_init( BB_GRD_MODE );
+    BB_init(BB_GRD_MODE, &stru_boardCfg);
 	BB_GRD_start();
 
     return HAL_OK;

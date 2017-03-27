@@ -37,12 +37,15 @@ CFG_BIN = $(HDMI_EDID_CFG_BIN_FILE_NAME)
 SRC_C := ../Common/ADV7611/Src/adv_7611.c \
          ../Common/NORFlash/Src/nor_flash.c \
          ../Common/NORFlash/Src/w25q128.c \
-         ../Common/OV5640/Src/ov5640.c
+         ../Common/OV5640/Src/ov5640.c \
+         ./Src/board_bbrf.c
 
 
-INCDIRS := -I../Common/ADV7611/Inc \
+INCDIRS := -I../ \
+           -I../Common/ADV7611/Inc \
            -I../Common/NORFlash/Inc \
            -I../Common/OV5640/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/BB/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/I2C/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/QuadSPI/Inc \
            -I$(TOP_DIR)/Configure \
@@ -65,6 +68,7 @@ install:
 	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@mkdir -p $(OUTPUT_BIN_STAGING_DIR)
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
+	@cp -f ../boardParameters.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f ../Common/ADV7611/Inc/adv_7611.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f ../Common/NORFlash/Inc/nor_flash.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f ../Common/OV5640/Inc/ov5640.h $(OUTPUT_HEADER_STAGING_DIR)

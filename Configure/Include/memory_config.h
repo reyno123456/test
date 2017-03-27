@@ -204,8 +204,8 @@ typedef struct
 #ifdef USE_BB_REG_CONFIG_BIN
     unsigned char bb_sky_configure[4][256];
     unsigned char bb_grd_configure[4][256];
-    unsigned char rf_configure[128];
-    
+    unsigned char rf1_configure[128];
+    unsigned char rf2_configure[128];
 #endif
 #ifdef USE_ADV7611_EDID_CONFIG_BIN
     unsigned char hdmi_configure[264][3];

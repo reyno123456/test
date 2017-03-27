@@ -89,6 +89,7 @@ INCDIRS := -IInc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/CAN/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/DMA/Inc \
            -I$(TOP_DIR)/Driver/Board/Common/NORFlash/Inc \
+           -I$(TOP_DIR)/Driver/Board \
            -I$(TOP_DIR)/Driver/Chip/AR8020/MIPI/Inc \
            -I$(TOP_DIR)/Driver/HAL/Inc \
            -I$(OUTPUT_HEADER_STAGING_DIR)
