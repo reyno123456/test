@@ -24,14 +24,14 @@ CPU_NUMBER = cpu1
 CFLAGS += $(CPU1_CFLAGS)
 
 # libs
-LD_LIBS := -lhal -lboard -lAR8020drv -lcommon -lgcc
+LD_LIBS := -lhal -lboard -lAR8020drv -lcommon -lsimplec -lgcc
 
 LDFLAGS += -Bstatic
 LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) -L$(CROSS_COMPILE_LIB_PATH) $(LD_LIBS)
 
 # source file(s), including *.s *.c file(s)
 SRC_S   := start.s
-SRC_C   := main.c command.c ../share/test_timer.c ../share/test_i2c_adv7611.c ../share/test_gpio.c
+SRC_C   := main.c command.c ../share/test_timer.c ../share/test_i2c_adv7611.c ../share/test_gpio.c ../share/testhal_dma.c
 
 CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
 

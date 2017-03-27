@@ -31,6 +31,8 @@ LIBALL := $(TOP_DIR)/Driver/Chip \
           $(TOP_DIR)/Driver/HAL \
           $(TOP_DIR)/Kernel/FreeRTOS \
           $(TOP_DIR)/Library/Artosyn/Common \
+          $(TOP_DIR)/Library/Artosyn/SimpleC \
+          $(TOP_DIR)/Library/Artosyn/Utility \
           $(TOP_DIR)/Library/ThirdParty/CMSIS \
           $(TOP_DIR)/Library/ThirdParty/MP3Encoder \
           $(TOP_DIR)/Library/ThirdParty/MP3Decoder \
@@ -43,18 +45,22 @@ LIB0 := $(TOP_DIR)/Driver/Chip \
         $(TOP_DIR)/Driver/HAL \
         $(TOP_DIR)/Kernel/FreeRTOS \
         $(TOP_DIR)/Library/Artosyn/Common \
+        $(TOP_DIR)/Library/Artosyn/SimpleC \
+        $(TOP_DIR)/Library/Artosyn/Utility \
         $(TOP_DIR)/Library/ThirdParty/CMSIS \
         $(TOP_DIR)/Bootload
 
 LIB1 := $(TOP_DIR)/Driver/Chip \
         $(TOP_DIR)/Driver/Board \
         $(TOP_DIR)/Driver/HAL \
-        $(TOP_DIR)/Library/Artosyn/Common
+        $(TOP_DIR)/Library/Artosyn/Common \
+        $(TOP_DIR)/Library/Artosyn/SimpleC
 
 LIB2 := $(TOP_DIR)/Driver/Chip \
         $(TOP_DIR)/Driver/Board \
         $(TOP_DIR)/Driver/HAL \
-        $(TOP_DIR)/Library/Artosyn/Common
+        $(TOP_DIR)/Library/Artosyn/Common \
+        $(TOP_DIR)/Library/Artosyn/SimpleC
 
 default: $(DEFAULT_DEPENDENCE)
 

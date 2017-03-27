@@ -24,7 +24,7 @@ CPU_NUMBER = cpu0
 CFLAGS += $(CPU0_CFLAGS)
 
 # libs
-LD_LIBS := -lhal -lfreertos -lboard -lAR8020drv -lm -lcommon -lgcc
+LD_LIBS := -lutility -lhal -lfreertos -lboard -lAR8020drv -lm -lcommon -lsimplec -lgcc
 
 LDFLAGS += -Bstatic
 LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) -L$(CROSS_COMPILE_LIB_PATH) $(LD_LIBS)
@@ -34,13 +34,13 @@ SRC_S   := start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
 SRC_C   := main_sky.c command.c test_hal_camera.c ../share/test_i2c_adv7611.c \
-           upgrade.c md5.c test_hal_mipi.c wireless_interface.c test_usbh.c \
+           upgrade.c test_hal_mipi.c test_usbh.c \
 		   test_hal_nv.c
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
 SRC_C   := main_ground.c command.c test_hal_camera.c ../share/test_i2c_adv7611.c \
-           upgrade.c md5.c test_hal_mipi.c wireless_interface.c test_usbh.c \
+           upgrade.c test_hal_mipi.c test_usbh.c \
 		   test_hal_nv.c
 endif
 
