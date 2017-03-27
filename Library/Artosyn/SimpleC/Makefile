@@ -38,7 +38,7 @@ SRC_C   := Src/memory.c \
            Src/errno.c
 
 INCDIRS :=  -IInc \
-            -I../Common/Inc/
+            -I$(TOP_DIR)/Library/Artosyn/Common/Inc
 
 # object file(s)
 OBJ_C   := $(patsubst %.c,%.o,$(SRC_C))

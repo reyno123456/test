@@ -36,6 +36,7 @@ SRC_C   := Src/sys_event.c \
            Src/md5.c
 
 INCDIRS :=  -IInc \
+            -I$(TOP_DIR)/Library/Artosyn/SimpleC/Inc \
             -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc \
             -I$(TOP_DIR)/Configure/Include \
             -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc
