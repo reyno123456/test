@@ -34,13 +34,13 @@ SRC_S   := start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
 SRC_C   := main_sky.c command.c test_hal_camera.c ../share/test_i2c_adv7611.c \
-           upgrade.c md5.c test_hal_mipi.c test_usbh.c \
+           upgrade.c test_hal_mipi.c test_usbh.c \
 		   test_hal_nv.c
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
 SRC_C   := main_ground.c command.c test_hal_camera.c ../share/test_i2c_adv7611.c \
-           upgrade.c md5.c test_hal_mipi.c test_usbh.c \
+           upgrade.c test_hal_mipi.c test_usbh.c \
 		   test_hal_nv.c
 endif
 
