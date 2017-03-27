@@ -24,7 +24,7 @@ CPU_NUMBER = cpu0
 CFLAGS += $(CPU0_CFLAGS)
 
 # libs
-LD_LIBS := -lfreertos -lhal -lboard  -lAR8020drv -lcommon -lgcc
+LD_LIBS := -lutility -lfreertos -lhal -lboard  -lAR8020drv -lcommon -lgcc
 
 LDFLAGS += -Bstatic
 LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) -L$(CROSS_COMPILE_LIB_PATH) $(LD_LIBS)
@@ -33,14 +33,14 @@ LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 SRC_S   := start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
-SRC_C   := main_sky.c command.c test_usbh.c upgrade.c md5.c com_task.c wireless_interface.c \
+SRC_C   := main_sky.c command.c test_usbh.c upgrade.c md5.c com_task.c \
            test_hal_uart.c test_hal_spi.c test_hal_i2c.c ../share/testhal_pwm.c \
            ../share/test_hal_spi_flash.c ../share/testhal_gpio.c test_hal_nv.c \
 	   ../share/test_hal_i2c_24c256.c
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
-SRC_C   := main_ground.c command.c test_usbh.c upgrade.c md5.c com_task.c wireless_interface.c \
+SRC_C   := main_ground.c command.c test_usbh.c upgrade.c md5.c com_task.c \
            test_hal_uart.c test_hal_spi.c test_hal_i2c.c ../share/testhal_pwm.c \
            ../share/test_hal_spi_flash.c ../share/testhal_gpio.c test_hal_nv.c \
 	   ../share/test_hal_i2c_24c256.c

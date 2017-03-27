@@ -24,7 +24,7 @@ CPU_NUMBER = cpu0
 CFLAGS += $(CPU0_CFLAGS)
 
 # libs
-LD_LIBS := -lhal -lfreertos -lboard -lAR8020drv -lmp3enc -lm -lcommon -lgcc
+LD_LIBS := -lutility -lhal -lfreertos -lboard -lAR8020drv -lmp3enc -lm -lcommon -lgcc
 
 LDFLAGS += -Bstatic
 LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) -L$(CROSS_COMPILE_LIB_PATH) $(LD_LIBS)
@@ -37,7 +37,7 @@ SRC_C   := main_sky.c command.c test_freertos.c test_hal_can.c test_hal_camera.c
            test_usbh.c test_sd.c test_bbuartcom.c\
            ../share/test_timer.c ../share/test_hal_spi_flash.c test_quadspi.c ../share/test_float.c ../share/test_gpio.c \
            upgrade.c md5.c ../share/testhal_gpio.c ../share/testhal_timer.c ../share/testhal_pwm.c \
-           ../share/testhal_softpwm.c ../share/test_hal_i2c_24c256.c test_hal_uart.c test_hal_spi.c wireless_interface.c \
+           ../share/testhal_softpwm.c ../share/test_hal_i2c_24c256.c test_hal_uart.c test_hal_spi.c \
            test_hal_mipi.c ../share/test_mp3.c test_hal_nv.c test_hal_i2c.c test_localirq.c
 endif
 
@@ -46,7 +46,7 @@ SRC_C   := main_ground.c command.c test_freertos.c test_hal_can.c test_hal_camer
            test_usbh.c test_sd.c test_bbuartcom.c\
            ../share/test_timer.c ../share/test_hal_spi_flash.c test_quadspi.c ../share/test_float.c ../share/test_gpio.c \
            upgrade.c md5.c ../share/testhal_gpio.c ../share/testhal_timer.c ../share/testhal_pwm.c\
-           ../share/testhal_softpwm.c ../share/test_hal_i2c_24c256.c test_hal_uart.c test_hal_spi.c wireless_interface.c \
+           ../share/testhal_softpwm.c ../share/test_hal_i2c_24c256.c test_hal_uart.c test_hal_spi.c \
            test_hal_mipi.c ../share/test_mp3.c test_hal_nv.c test_hal_i2c.c test_localirq.c
 endif
 
