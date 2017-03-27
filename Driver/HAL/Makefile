@@ -75,8 +75,8 @@ INCDIRS := -IInc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/BB/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SRAM/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SD/Inc \
-           -I$(TOP_DIR)/Driver/Board/AR8020TEST/ADV7611/Inc \
-           -I$(TOP_DIR)/Driver/Board/AR8020TEST/OV5640/Inc \
+           -I$(TOP_DIR)/Driver/Board/Common/ADV7611/Inc \
+           -I$(TOP_DIR)/Driver/Board/Common/OV5640/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/H264Encoder/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Device/Core/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Device/Class/HID/Inc \
@@ -88,7 +88,7 @@ INCDIRS := -IInc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/CAN/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/DMA/Inc \
-           -I$(TOP_DIR)/Driver/Board/AR8020TEST/NORFlash/Inc \
+           -I$(TOP_DIR)/Driver/Board/Common/NORFlash/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/MIPI/Inc \
            -I$(TOP_DIR)/Driver/HAL/Inc \
            -I$(OUTPUT_HEADER_STAGING_DIR)

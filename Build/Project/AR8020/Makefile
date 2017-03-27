@@ -17,6 +17,13 @@ SDK_DIR_VERSION ?= $(OUTPUT_DIR)/"AR8020SDK_""`sed -n '1,1p' ../../../Document/v
 # current directory
 CURDIR ?= $(shell pwd)
 
+sinclude ../../config.mk
+ifeq ($(APPLICATION_DIR), )
+DEFAULT_DEPENDENCE := needconfig
+else
+DEFAULT_DEPENDENCE := all
+endif
+
 ###############################################################################
 
 LIBALL := $(TOP_DIR)/Driver/Chip \
@@ -49,6 +56,8 @@ LIB2 := $(TOP_DIR)/Driver/Chip \
         $(TOP_DIR)/Driver/HAL \
         $(TOP_DIR)/Library/Artosyn/Common
 
+default: $(DEFAULT_DEPENDENCE)
+
 all:
 	$(MAKE) clean0 CPU_NUMBER=cpu0
 	$(MAKE) all0   CPU_NUMBER=cpu0
@@ -72,23 +81,21 @@ all1: $(LIB1)
 all2: MKARGS := all
 all2: $(LIB2)
 
-PROJS ?= verification
--include ../../config.mk
-
-MKCONFIG ?= ../../ConfigureFiles/$(addprefix config,$(addsuffix .mk,$(PROJS)))
-
+needconfig:
+	@echo "Please configure the PROJS firstly as following ..."
+	@echo "make configure PROJS=<OPTION>"
+	@echo "<OPTION>: $(subst config,,$(subst .mk,,$(notdir $(wildcard ../../ConfigureFiles/*.mk))))"
+	
 help:
-	@printf "make configure PROJS=<OPTION>  --configure project-related config.mk\n\
-	If not input PROJS=<option>, it will configure verification.mk\n\
-	                     <OPTION>: $(subst config,,$(subst .mk,,$(notdir $(wildcard ../../ConfigureFiles/*.mk))))\n\
-	make                           --build the static library\n\
-	make <OPTION>                  --build the application\n\
-	                     <OPTION>: sky ground\n\
-	make sdk                       --create a tar archive of the sdk directory, called AR8020SDK_<version>.tar.gz\n"
-configure:
+	@printf "make configure PROJS=<OPTION>  --configure project-related config.mk, <OPTION>: $(subst config,,$(subst .mk,,$(notdir $(wildcard ../../ConfigureFiles/*.mk)))).\nmake                           --build the static library\nmake <OPTION>                  --build the application, <OPTION>: sky ground.\nmake sdk                       --create a tar archive of the sdk directory, called AR8020SDK_<version>.tar.gz\n"
+
+configure: MKCONFIG = ConfigureFiles/$(addprefix config,$(addsuffix .mk,$(PROJS)))
+configure: cfg_exist = $(shell if [ ! -f ../../$(MKCONFIG) ]; then echo "The $(PROJS) config file does not exist!"; fi;)
+configure: 
 	@echo "configure makefile for $(PROJS) ..."
-	@$(RM) -rf ../../config.mk
-	@cp  $(MKCONFIG) ../../config.mk
+	@$(RM) -f ../../config.mk
+	@ln -s  $(MKCONFIG) ../../config.mk
+	@echo $(cfg_exist)
 
 $(LIBALL):
 	@echo "make $(MKARGS) ..."
