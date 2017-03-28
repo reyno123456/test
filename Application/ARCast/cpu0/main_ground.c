@@ -13,20 +13,6 @@
 #include "hal_nv.h"
 #include "hal_uart.h"
 
-/**
- * @brief  CPU L1-Cache enable.
- * @param  None
- * @retval None
- */
-static void CPU_CACHE_Enable(void)
-{
-    /* Enable I-Cache */
-    SCB_EnableICache();
-
-    /* Enable D-Cache */
-    SCB_EnableDCache();
-}
-
 void CONSOLE_Init(void)
 {
     HAL_UART_Init(DEBUG_LOG_UART_PORT, HAL_UART_BAUDR_115200, NULL);
@@ -72,9 +58,6 @@ int main(void)
     /* initialize the uart */
     CONSOLE_Init();
     dlog_info("cpu0 start!!! \n");
-
-    /* Enable the CPU Cache */
-    CPU_CACHE_Enable();
 
     HAL_USB_ConfigPHY();
 

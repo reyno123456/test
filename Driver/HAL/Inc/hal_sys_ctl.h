@@ -20,6 +20,8 @@ typedef struct
     uint16_t u16_cpu0cpu1Clk;
     uint16_t u16_cpu2Clk;
     uint8_t  u8_fpuEnable;
+    uint8_t  u8_icacheEnable;
+    uint8_t  u8_dcacheEnable;
     uint16_t u16_sysTickIntervalUs;
     uint8_t  u8_workMode;
 } STRU_HAL_SYS_CTL_CONFIG;

@@ -18,7 +18,11 @@ void console_init(uint32_t uart_num, uint32_t baut_rate)
   */
 int main(void)
 { 
-    HAL_SYS_CTL_Init(NULL);
+    STRU_HAL_SYS_CTL_CONFIG *pst_cfg;
+    HAL_SYS_CTL_GetConfig(&pst_cfg);
+    pst_cfg->u8_icacheEnable = 0;
+    pst_cfg->u8_dcacheEnable = 0;
+    HAL_SYS_CTL_Init(pst_cfg);
    
     console_init(2, 115200);
     dlog_info("main ground function start \n");

@@ -15,20 +15,6 @@
 #include "wireless_interface.h"
 #include "hal_nv.h"
 
-/**
- * @brief  CPU L1-Cache enable.
- * @param  None
- * @retval None
- */
-static void CPU_CACHE_Enable(void)
-{
-    /* Enable I-Cache */
-    SCB_EnableICache();
-
-    /* Enable D-Cache */
-    SCB_EnableDCache();
-}
-
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
     dlog_init(command_run, DLOG_CLIENT_PROCESSOR);
@@ -67,9 +53,6 @@ int main(void)
     /* initialize the uart */
     console_init(0,115200);
     dlog_info("cpu0 start!!! \n");
-
-    /* Enable the CPU Cache */
-    CPU_CACHE_Enable();
 
     HAL_USB_ConfigPHY();
 

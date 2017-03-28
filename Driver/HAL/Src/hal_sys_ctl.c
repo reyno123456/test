@@ -28,6 +28,8 @@ static STRU_HAL_SYS_CTL_CONFIG s_st_defHalSysCtlCfg =
     .u16_cpu0cpu1Clk       = CPU0_CPU1_CORE_PLL_CLK,
     .u16_cpu2Clk           = CPU2_CORE_PLL_CLK,
     .u8_fpuEnable          = 1,
+    .u8_icacheEnable       = 1,
+    .u8_dcacheEnable       = 1,
     .u16_sysTickIntervalUs = 1000,
     .u8_workMode           = 2,
 };
@@ -112,7 +114,6 @@ HAL_RET_T HAL_SYS_CTL_GetConfig(STRU_HAL_SYS_CTL_CONFIG **ppst_halSysCtlCfg)
     return HAL_OK;
 }
 
-
 /**
 * @brief  The system controller initial function.
 * @param  None                
@@ -171,6 +172,9 @@ HAL_RET_T HAL_SYS_CTL_Init(STRU_HAL_SYS_CTL_CONFIG *pst_usrHalSysCtlCfg)
     // Delay to PLL stable
     SysTicks_DelayMS(10);
 
+    CPUINFO_ICacheEnable(pst_halSysCtlCfg->u8_icacheEnable);
+    CPUINFO_DCacheEnable(pst_halSysCtlCfg->u8_dcacheEnable);
+    
     dlog_info("HAL System controller init done \n");
     
     return HAL_OK;

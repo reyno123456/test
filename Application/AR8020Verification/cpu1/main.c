@@ -1,24 +1,9 @@
 #include "debuglog.h"
 #include "command.h"
 #include "sys_event.h"
-#include "stm32f746xx.h"
 #include "hal.h"
 #include "hal_sys_ctl.h"
 #include "hal_uart.h"
-
-/**
- * @brief  CPU L1-Cache enable.
- * @param  None
- * @retval None
- */
-static void CPU_CACHE_Enable(void)
-{
-  /* Enable I-Cache */
-  SCB_EnableICache();
-
-  /* Enable D-Cache */
-  SCB_EnableDCache();
-}
 
 void CONSOLE_Init(void)
 {
@@ -38,8 +23,6 @@ int main(void)
     /* initialize the uart */
     CONSOLE_Init();
     DLOG_Info("cpu1 start!!! \n");
-
-    CPU_CACHE_Enable();
 
     /* We should never get here as control is now taken by the scheduler */
     for( ;; )

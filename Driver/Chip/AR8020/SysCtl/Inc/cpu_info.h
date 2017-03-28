@@ -1,6 +1,8 @@
 #ifndef CPU_ID_H
 #define CPU_ID_H
 
+#include <stdint.h>
+
 #define CPU_ID_INFO_ADDRESS 0x0000018C
 
 typedef enum
@@ -11,7 +13,8 @@ typedef enum
 }ENUM_CPU_ID;
 
 ENUM_CPU_ID CPUINFO_GetLocalCpuId(void);
-
+void CPUINFO_ICacheEnable(uint8_t u8_icacheEnable);
+void CPUINFO_DCacheEnable(uint8_t u8_dcacheEnable);
 
 /* add for dma address and dtcm address convert */
 #define DTCM_START_ADDR                 0x20000000

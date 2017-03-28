@@ -1,25 +1,10 @@
 #include "debuglog.h"
 #include "command.h"
 #include "sys_event.h"
-#include "stm32f746xx.h"
 #include "serial.h"
 #include "hal.h"
 #include "hal_sys_ctl.h"
 #include "hal_softi2s.h"
-
-/**
- * @brief  CPU L1-Cache enable.
- * @param  None
- * @retval None
- */
-static void CPU_CACHE_Enable(void)
-{
-  /* Enable I-Cache */
-  SCB_EnableICache();
-
-  /* Enable D-Cache */
-  SCB_EnableDCache();
-}
 
 void CONSOLE_Init(void)
 {
@@ -37,7 +22,6 @@ int main(void)
 
     /* initialize the uart */
     CONSOLE_Init();
-    CPU_CACHE_Enable();
     STRU_HAL_SOFTI2S_INIT st_audioConfig = {AUDIO_DATA_START,HAL_GPIO_NUM64,HAL_GPIO_NUM96,HAL_GPIO_NUM100};  
     dlog_info("cpu1 start!!! %d \n",HAL_SOFTI2S_Init(&st_audioConfig)); 
 
