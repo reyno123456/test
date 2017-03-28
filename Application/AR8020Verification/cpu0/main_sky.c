@@ -48,7 +48,7 @@ static void IO_Task(void const *argument)
         
         DLOG_Process(NULL);
         
-        HAL_Delay(20);
+        osDelay(20);
     }
 }
 
@@ -89,6 +89,8 @@ int main(void)
 
     HAL_NV_Init();
 
+    portDISABLE_INTERRUPTS();
+
     /* Create Main Task */
     osThreadDef(USBMAIN_Task, USB_MainTask, osPriorityBelowNormal, 0, 4 * 128);
     osThreadCreate(osThread(USBMAIN_Task), NULL);
@@ -103,6 +105,8 @@ int main(void)
     g_usbhAppCtrl.usbhAppEvent  = osMessageCreate(osMessageQ(osqueue),NULL);
 
     Wireless_TaskInit();
+
+    portENABLE_INTERRUPTS();
 
     osKernelStart();
 

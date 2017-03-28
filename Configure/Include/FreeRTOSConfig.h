@@ -113,10 +113,10 @@
 #define configMAX_CO_ROUTINE_PRIORITIES        ( 2 )
 
 /* Software timer definitions. */
-#define configUSE_TIMERS			0
+#define configUSE_TIMERS			1
 #define configTIMER_TASK_PRIORITY		( 2 )
 #define configTIMER_QUEUE_LENGTH		10
-#define configTIMER_TASK_STACK_DEPTH	        ( configMINIMAL_STACK_SIZE * 2 )
+#define configTIMER_TASK_STACK_DEPTH	        ( configMINIMAL_STACK_SIZE * 8 )
 
 /* Set the following definitions to 1 to include the API function, or zero
 to exclude the API function. */
@@ -129,7 +129,10 @@ to exclude the API function. */
 #define INCLUDE_vTaskDelay			1
 #define INCLUDE_xTaskGetSchedulerState          1
 
-/* Cortex-M specific definitions. */
+ /* for timer related system monitoring functions*/
+#define INCLUDE_xTimerGetTimerDaemonTaskHandle      1
+
+ /* Cortex-M specific definitions. */
 #ifdef __NVIC_PRIO_BITS
 	/* __BVIC_PRIO_BITS will be specified when CMSIS is being used. */
 	#define configPRIO_BITS       		__NVIC_PRIO_BITS
