@@ -85,7 +85,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_info("*********        rf           **************");
         for(i=0;i<8;i++)
         {
-            dlog_info("%02x",configure->rf_configure[i*16]);
+            dlog_info("%02x",configure->rf1_configure[i*16]);
             dlog_output(100);
         }
         /*for(i=0;i<263;i++)
