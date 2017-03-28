@@ -38,6 +38,7 @@ INCDIRS :=  -IInc \
             -I$(TOP_DIR)/Driver/HAL/Inc \
             -I$(TOP_DIR)/Library/Artosyn/Common/Inc \
             -I$(TOP_DIR)/Driver/Chip/AR8020/BB/Inc \
+            -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc \
             -I$(TOP_DIR)/Kernel/FreeRTOS/CMSIS_RTOS \
             -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \
             -I$(TOP_DIR)/Kernel/FreeRTOS/include \

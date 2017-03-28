@@ -50,23 +50,18 @@ SRC_C   := croutine.c \
 INCDIRS := -Iinclude \
            -Iportable/GCC/ARM_CM7/r0p1 \
            -ICMSIS_RTOS \
+           -IFatFs/Inc \
+           -IFatFs/Port \
            -I$(TOP_DIR)/Configure/Include \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_LL_Driver/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Class/MSC/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Core/Inc \
-           -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include
+           -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/SD/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc \
+           -I$(TOP_DIR)/Driver/HAL/Inc/ \
+           -I$(TOP_DIR)/Library/Artosyn/Common/Inc
 
-
-INCDIRS +=  -IFatFs/Inc \
-            -IFatFs/Port \
-            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Device/ST/STM32F7xx/Include \
-            -I$(TOP_DIR)/Library/ThirdParty/CMSIS/Include \
-            -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
-            -I$(TOP_DIR)/Driver/Chip/AR8020/SD/Inc \
-            -I$(TOP_DIR)/Driver/HAL/Inc/ \
-            -I$(TOP_DIR)/Library/Artosyn/Common/Inc
-
- 
 # object file(s)
 OBJ_C   := $(patsubst %.c,%.o,$(SRC_C))
 

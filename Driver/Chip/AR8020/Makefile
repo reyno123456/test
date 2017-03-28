@@ -83,14 +83,22 @@ install:
 	@cp -f SysCtl/Inc/timer.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/rf_8003s.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Src/$(CFG_BIN) $(OUTPUT_BIN_STAGING_DIR)/
-
-
+	@cp -f SysCtl/Inc/stm32f746xx.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f SysCtl/Inc/core_cm7.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f SysCtl/Inc/core_cmInstr.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f SysCtl/Inc/core_cmFunc.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f SysCtl/Inc/core_cmSimd.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."
 	@$(RM) $(LIB) $(OBJ_C) $(obj).depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB)
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/serial.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/sd_*
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/stm32f746xx.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/core_cm7.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/core_cmInstr.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/core_cmFunc.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/core_cmSimd.h
 
 .PHONY: all clean install
 #########################################################################

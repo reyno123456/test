@@ -33,7 +33,6 @@ LIBALL := $(TOP_DIR)/Driver/Chip \
           $(TOP_DIR)/Library/Artosyn/Common \
           $(TOP_DIR)/Library/Artosyn/SimpleC \
           $(TOP_DIR)/Library/Artosyn/Utility \
-          $(TOP_DIR)/Library/ThirdParty/CMSIS \
           $(TOP_DIR)/Library/ThirdParty/MP3Encoder \
           $(TOP_DIR)/Library/ThirdParty/MP3Decoder \
           $(TOP_DIR)/Bootload
@@ -47,7 +46,6 @@ LIB0 := $(TOP_DIR)/Driver/Chip \
         $(TOP_DIR)/Library/Artosyn/Common \
         $(TOP_DIR)/Library/Artosyn/SimpleC \
         $(TOP_DIR)/Library/Artosyn/Utility \
-        $(TOP_DIR)/Library/ThirdParty/CMSIS \
         $(TOP_DIR)/Bootload
 
 LIB1 := $(TOP_DIR)/Driver/Chip \
