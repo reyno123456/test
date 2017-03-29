@@ -29,6 +29,21 @@ static uint8_t flag_itFreqskip = 0;
 static uint8_t flag_snrPostCheck;
 
 static void BB_grd_uartDataHandler(void *p);
+static void grd_calc_dist(void);
+static uint32_t grd_calc_dist_get_avg_value(uint32_t *u32_dist);
+
+
+
+STRU_CALC_DIST_DATA s_st_calcDistData = 
+{
+    .e_status = INVALID,
+    //u8_rawData[CALC_DIST_RAW_DATA_MAX_RECORD][3],
+    .u32_calcDistValue = 0,
+    .u32_calcDistZero = 0,
+    .u32_cnt = 0,
+    .u32_lockCnt = 0
+};
+
 
 void BB_GRD_start(void)
 {
@@ -509,6 +524,20 @@ void Grd_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
 
         case 4:
             Timer1_Delay1_Cnt++;
+            if ((context.dev_state == FEC_LOCK) && (context.locked))
+            {
+                s_st_calcDistData.u32_lockCnt += 1;
+                if (s_st_calcDistData.u32_lockCnt >= 3)
+                {
+                    s_st_calcDistData.u32_lockCnt = 3;
+                    grd_calc_dist();
+                }
+                
+            }
+            else
+            {
+                s_st_calcDistData.u32_lockCnt = 0;
+            }
             break;
 
         case 5:
@@ -945,7 +974,7 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 break;               
             }
             default:
-                dlog_error("%s", "unknown WIRELESS_MCS_CHANGE command");
+                //dlog_error("%s", "unknown WIRELESS_MCS_CHANGE command");
                 break;
         }        
     }
@@ -969,7 +998,7 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 break;
 
             default:
-                dlog_error("%s", "unknown WIRELESS_ENCODER_CHANGE command");
+                //dlog_error("%s", "unknown WIRELESS_ENCODER_CHANGE command");
                 break;                
         }
     }
@@ -1005,6 +1034,20 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
             {
                 dlog_info("grd bb reset.");
                 BB_softReset(BB_GRD_MODE);
+                break;
+            }
+
+            case CALC_DIST_ZERO_CALI:
+            {
+                //dlog_info("calculation distance zero calibration.");
+                grd_calc_dist_zero_calibration();
+                break;
+            }
+
+            case SET_CALC_DIST_ZERO_POINT:
+            {
+                //dlog_info("set distance zero point.");
+                grd_set_calc_dist_zero_point(value);
                 break;
             }
             default:
@@ -1119,4 +1162,135 @@ static void BB_grd_GatherOSDInfo(void)
     osdptr->head = 0x00;
     osdptr->tail = 0xff;    //end of the writing
 }
+
+static void grd_calc_dist(void)
+{
+    uint8_t u8_data2[3];
+    uint32_t u32_data2 = 0;
+    uint32_t u32_i;
+    //static uint32_t u32_cnt = 1;
+    uint32_t cmpData;
+    static uint32_t cmpCnt = 0;
+
+    u8_data2[2] = BB_ReadReg(PAGE3, 0xA7);
+    u8_data2[1] = BB_ReadReg(PAGE3, 0xA6);
+    u8_data2[0] = BB_ReadReg(PAGE3, 0xA5);
+
+    cmpData = (u8_data2[0] << 16) | (u8_data2[1] << 8) | (u8_data2[2] << 0);
+
+    switch(s_st_calcDistData.e_status)
+    {
+        case INVALID:
+        {
+            s_st_calcDistData.e_status = CALI_ZERO;
+            s_st_calcDistData.u32_cnt = 0;
+            break;
+        }
+        case CALI_ZERO:
+        {
+            memcpy(s_st_calcDistData.u8_rawData[s_st_calcDistData.u32_cnt % CALC_DIST_RAW_DATA_MAX_RECORD], u8_data2, 3);
+            s_st_calcDistData.u32_cnt += 1;
+            if (s_st_calcDistData.u32_cnt >= (CALC_DIST_RAW_DATA_MAX_RECORD))
+            {
+                s_st_calcDistData.u32_calcDistZero = grd_calc_dist_get_avg_value(&u32_data2);
+                s_st_calcDistData.u32_cnt = 0;
+                s_st_calcDistData.e_status = CALC_DIST_PREPARE;
+                //dlog_info("CALI_ZERO");
+                //dlog_info("Zero:%d", s_st_calcDistData.u32_calcDistZero);
+            }
+            break;
+        }
+        case CALC_DIST_PREPARE:
+        {
+            memcpy(s_st_calcDistData.u8_rawData[s_st_calcDistData.u32_cnt % CALC_DIST_RAW_DATA_MAX_RECORD], u8_data2, 3);
+            s_st_calcDistData.u32_cnt += 1;
+            if (s_st_calcDistData.u32_cnt >= CALC_DIST_RAW_DATA_MAX_RECORD)
+            {
+                grd_calc_dist_get_avg_value(&(s_st_calcDistData.u32_calcDistValue));
+
+                s_st_calcDistData.u32_cnt = 0;
+                s_st_calcDistData.e_status = CALC_DIST;
+                //dlog_info("CALC_DIST_PREPARE");
+                //dlog_info("value:%d", s_st_calcDistData.u32_calcDistValue);
+            }
+            break;
+        }
+        case CALC_DIST:
+        {
+            cmpData = abs(cmpData - s_st_calcDistData.u32_calcDistZero) * 3 / 2;
+            if (abs(cmpData - s_st_calcDistData.u32_calcDistValue) < 50)
+            {
+                cmpCnt = 0;
+                memcpy(s_st_calcDistData.u8_rawData[s_st_calcDistData.u32_cnt % CALC_DIST_RAW_DATA_MAX_RECORD], u8_data2, 3);
+                s_st_calcDistData.u32_cnt += 1;
+                
+                grd_calc_dist_get_avg_value(&(s_st_calcDistData.u32_calcDistValue));
+
+                /*u32_cnt += 1;
+                if (0 == (u32_cnt % 1000))
+                {
+                    dlog_info("Zero:%d value:%d", s_st_calcDistData.u32_calcDistZero, s_st_calcDistData.u32_calcDistValue);
+                }*/ 
+            }
+            else
+            {
+                cmpCnt++;
+                if (cmpCnt > 5)
+                {
+                    cmpCnt = 0;
+                    s_st_calcDistData.u32_cnt = 0;
+                    s_st_calcDistData.e_status = CALC_DIST_PREPARE;
+                }
+            }
+            break;
+        }
+        default:
+        {
+            s_st_calcDistData.e_status = CALI_ZERO;
+            s_st_calcDistData.u32_cnt = 0;
+            break;
+        }     
+    }
+}
+
+void grd_calc_dist_zero_calibration(void)
+{
+    s_st_calcDistData.e_status = INVALID;
+    s_st_calcDistData.u32_calcDistValue = 0;
+    s_st_calcDistData.u32_calcDistZero = 0;
+    s_st_calcDistData.u32_cnt = 0;
+    s_st_calcDistData.u32_lockCnt = 0;
+}
+
+void grd_set_calc_dist_zero_point(uint32_t value)
+{
+    s_st_calcDistData.u32_calcDistZero = value;
+}
+
+
+static uint32_t grd_calc_dist_get_avg_value(uint32_t *u32_dist)
+{
+    uint32_t u32_data2 = 0;
+    uint32_t u32_i;
+    
+    for(u32_i = 0; u32_i < CALC_DIST_RAW_DATA_MAX_RECORD; u32_i++)
+    {
+        u32_data2 += ((s_st_calcDistData.u8_rawData[u32_i][0] << 16) | 
+                     (s_st_calcDistData.u8_rawData[u32_i][1] << 8) | 
+                     (s_st_calcDistData.u8_rawData[u32_i][2] << 0));
+    }
+    u32_data2 = u32_data2 / CALC_DIST_RAW_DATA_MAX_RECORD;
+
+    if (u32_data2 > s_st_calcDistData.u32_calcDistZero)
+    {
+        *u32_dist = (u32_data2 - s_st_calcDistData.u32_calcDistZero) * 3 / 2;
+    }
+    else
+    {
+        *u32_dist = 0;
+    }
+
+    return u32_data2;
+}
+
 

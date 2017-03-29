@@ -121,6 +121,26 @@ typedef struct param
     SYS_PARAM user_param;
 }PARAM;
 
+#define CALC_DIST_RAW_DATA_MAX_RECORD    (100)
+
+typedef enum
+{
+    INVALID,
+    CALI_ZERO,
+    CALC_DIST_PREPARE,
+    CALC_DIST
+}ENUM_CALC_DIST_STATUS;
+
+typedef struct
+{
+    ENUM_CALC_DIST_STATUS e_status;
+    uint8_t u8_rawData[CALC_DIST_RAW_DATA_MAX_RECORD][3];
+    uint32_t u32_calcDistValue;
+    uint32_t u32_calcDistZero;
+    uint32_t u32_cnt;
+    uint32_t u32_lockCnt;
+} STRU_CALC_DIST_DATA;
+
 
 extern CONTEXT context;
 extern volatile DEVICE_STATE dev_state;

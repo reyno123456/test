@@ -993,7 +993,23 @@ int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
             cmd.u8_configItem   = MCS_RC_CODE_RATE_SELECT;
             cmd.u32_configValue  = (param0);
             break;
-        }        
+        }
+        
+        case 21:
+        {
+            cmd.u8_configClass  = WIRELESS_OTHER;
+            cmd.u8_configItem   = CALC_DIST_ZERO_CALI;
+            cmd.u32_configValue  = (param0);
+            break;
+        }
+
+        case 22:
+        {
+            cmd.u8_configClass  = WIRELESS_OTHER;
+            cmd.u8_configItem   = SET_CALC_DIST_ZERO_POINT;
+            cmd.u32_configValue  = (param0);
+            break;
+        }
         default:
         {
             ret = 0;

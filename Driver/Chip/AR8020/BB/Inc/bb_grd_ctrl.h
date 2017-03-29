@@ -68,4 +68,10 @@ static void grd_handle_RC_mode_cmd(ENUM_RUN_MODE mode);
 
 void grd_handle_IT_mode_cmd(ENUM_RUN_MODE mode);
 
+void grd_calc_dist_zero_calibration(void);
+
+void grd_set_calc_dist_zero_point(uint32_t value);
+
+
+
 #endif

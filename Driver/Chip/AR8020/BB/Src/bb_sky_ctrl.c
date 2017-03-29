@@ -53,6 +53,7 @@ static int32_t cal_chk_sum(uint8_t *pu8_data, uint32_t u32_len, uint8_t *u8_chec
 extern int BB_WriteRegMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t data, uint8_t mask);
 
 static void BB_sky_SendStatus(void *p);
+static void sky_calc_dist(void);
 
 
 void BB_SKY_start(void)
@@ -269,6 +270,8 @@ void wimax_vsoc_rx_isr(uint32_t u32_vectorNum)
 
     INTR_NVIC_EnableIRQ(TIMER_INTR26_VECTOR_NUM);
     TIM_StartTimer(sky_timer2_6);
+
+    sky_calc_dist();
 }
 
 
@@ -1188,3 +1191,19 @@ static int32_t cal_chk_sum(uint8_t *pu8_data, uint32_t u32_len, uint8_t *u8_chec
 
     return 0;
 }
+
+static void sky_calc_dist(void)
+{
+    uint8_t u8_data[3];
+    uint32_t u32_data = 0;
+    static uint32_t u32_cnt = 1;
+
+    u8_data[0] = BB_ReadReg(PAGE3, 0xA4);
+    u8_data[1] = BB_ReadReg(PAGE3, 0xA3);
+    u8_data[2] = BB_ReadReg(PAGE3, 0xA2);
+
+    BB_WriteReg(PAGE0, 0x1D, u8_data[0]);
+    BB_WriteReg(PAGE0, 0x1C, u8_data[1]);
+    BB_WriteReg(PAGE0, 0x1B, u8_data[2]);
+}
+
