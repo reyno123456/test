@@ -46,6 +46,14 @@ typedef enum
 } ENUM_WIRELESS_MISC_ITEM;
 
 
+typedef struct _SysEvent_SkyStatus
+{
+    uint8_t pid;
+    uint8_t u8_rcNrLockCnt;
+    uint8_t u8_rcCrcLockCnt;
+} STRU_SysEventSkyStatus;
+
+
 #define SFR_TRX_MODE_SEL            (*(volatile uint32_t *)0x40B00068)
 #define SFR_TRX_MODE_GROUND         0x03
 #define SFR_TRX_MODE_SKY            0x01

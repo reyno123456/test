@@ -1,6 +1,7 @@
 #ifndef BB_UARTCOM_H
 #define BB_UARTCOM_H
 
+#include "sys_event.h"
 #include "bb_types.h"
 
 #define BBCOM_UART_INDEX                    10
@@ -36,7 +37,8 @@ typedef struct
     uint32_t data_max_size;
 } STRU_BBUartComSession;
 
-void BB_UARTComInit(void);
+void BB_UARTComInit(SYS_Event_Handler session0RcvDataHandler);
+
 void BB_UARTComRemoteSessionInit(void);
 uint8_t BB_UARTComRegisterSession(ENUM_BBUARTCOMSESSIONID session_id);
 void BB_UARTComUnRegisterSession(ENUM_BBUARTCOMSESSIONID session_id);

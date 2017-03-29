@@ -50,6 +50,16 @@ static void BB_UARTComWriteSessionRxBuffer(ENUM_BBUARTCOMSESSIONID session_id, u
         }
 
         g_BBUARTComSessionArray[session_id].rx_buf->header.rx_buf_wr_pos = wr_pos;
+
+        //notify the session
+        {
+            uint32_t u32_event = ( session_id == 0) ? SYS_EVENT_ID_UART_DATA_RCV_SESSION0 : 
+                                 ((session_id == 1) ? SYS_EVENT_ID_UART_DATA_RCV_SESSION1 : 
+                                 ((session_id == 2) ? SYS_EVENT_ID_UART_DATA_RCV_SESSION2 : SYS_EVENT_ID_UART_DATA_RCV_SESSION3));
+            SYS_EVENT_Notify_From_ISR(u32_event, NULL);
+            
+            //dlog_info("Notify Event %d", u32_event);
+        }
     }
 }
 
@@ -169,7 +179,7 @@ static void BB_UARTComUART10IRQHandler(uint32_t u32_vectorNum)
     }  	
 }
 
-void BB_UARTComInit(void)
+void BB_UARTComInit(SYS_Event_Handler session0RcvDataHandler)
 {
     *((lock_type*)(SRAM_MODULE_LOCK_BB_UART_MUTEX_FLAG)) = UNLOCK_STATE;
     *((volatile uint32_t*)(SRAM_MODULE_LOCK_BB_UART_INIT_FLAG)) = 0;
@@ -185,6 +195,10 @@ void BB_UARTComInit(void)
     g_BBUARTComSessionArray[0].rx_buf->header.rx_buf_wr_pos = 0;
     g_BBUARTComSessionArray[0].rx_buf->header.rx_buf_rd_pos = 0;
     g_BBUARTComSessionArray[0].data_max_size = sizeof(g_BBUARTComSession0RxBuffer) - sizeof(STRU_BBUartComSessionRxBufferHeader);
+    if ( session0RcvDataHandler )
+    {
+        SYS_EVENT_RegisterHandler(SYS_EVENT_ID_UART_DATA_RCV_SESSION0, session0RcvDataHandler);
+    }
 
     // Sessions 1-4 are registered dynamicly
     g_BBUARTComSessionArray[1].rx_buf = (STRU_BBUartComSessionRxBuffer*)SRAM_BB_UART_COM_SESSION_1_SHARE_MEMORY_ST_ADDR;

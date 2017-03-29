@@ -52,6 +52,9 @@ static int32_t sky_write_id(uint8_t *u8_idArray);
 static int32_t cal_chk_sum(uint8_t *pu8_data, uint32_t u32_len, uint8_t *u8_check);
 extern int BB_WriteRegMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t data, uint8_t mask);
 
+static void BB_sky_SendStatus(void *p);
+
+
 void BB_SKY_start(void)
 {   
     context.rc_skip_freq_mode = AUTO;
@@ -84,26 +87,40 @@ void BB_SKY_start(void)
     context.qam_ldpc = 0;
     sky_set_McsByIndex(context.qam_ldpc);
 
+    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_UART_DATA_SND_SESSION0, BB_sky_SendStatus);
+    BB_UARTComInit( NULL ); 
+
     BB_GetDevInfo();
 }
 
-uint8_t pre_nrlockcnt = 0;
-uint8_t pre_lockcnt = 0;
+
+static void BB_sky_SendStatus(void *p)
+{
+    STRU_SysEventSkyStatus *p_sndData = (STRU_SysEventSkyStatus *)p;
+
+    BB_UARTComSendMsg( BB_UART_COM_SESSION_0, 
+                       (uint8_t *)p_sndData, 
+                       sizeof(STRU_SysEventSkyStatus));
+}
+
 
 uint8_t sky_id_match(void)
 {
     static int total_count = 0;
     static int lock_count = 0;
-    static int nr_lock = 0;
+    static int nr_lock    = 0;
+
+    static uint8_t pre_nrlockcnt = 0;
+    static uint8_t pre_lockcnt = 0;
+
     uint8_t data = BB_ReadReg(PAGE2, FEC_4_RD);
 
     total_count ++;
     lock_count += (( (data  & 0x03 )== 0x03) ? 1 : 0);
     nr_lock    += (  (data & 0x04) ? 1 : 0);
 
-#if 0
     if(total_count > 100)
-    {
+    {   
         dlog_info("-L:%d-%d-", lock_count, nr_lock);
         pre_nrlockcnt = nr_lock;
         pre_lockcnt = lock_count;
@@ -111,10 +128,17 @@ uint8_t sky_id_match(void)
         lock_count = 0;
         nr_lock = 0;
 
-        uint8_t buf[4] = {0xaa, 0x55, pre_nrlockcnt, pre_lockcnt};
-        BB_UARTComSendMsg(BB_UART_COM_SESSION_0, buf, 4);
+        {
+            STRU_SysEventSkyStatus stru_skycStatus = {
+                .pid             = 0,
+                .u8_rcCrcLockCnt = pre_lockcnt,
+                .u8_rcNrLockCnt  = pre_nrlockcnt
+            };
+
+            //SYS_EVENT_Notify_From_ISR(SYS_EVENT_ID_UART_DATA_SND_SESSION0, &stru_skycStatus);
+        }
     }
-#endif
+
     return ( (data & 0x03)==0x03) ? 1 : 0;
 }
 

@@ -28,6 +28,8 @@ static uint8_t hop_count = 0;
 static uint8_t flag_itFreqskip = 0;
 static uint8_t flag_snrPostCheck;
 
+static void BB_grd_uartDataHandler(void *p);
+
 void BB_GRD_start(void)
 {
     context.dev_state = INIT_DATA;
@@ -61,7 +63,23 @@ void BB_GRD_start(void)
     INTR_NVIC_SetIRQPriority(BB_TX_ENABLE_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_BB_TX,0));
     INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);
 
+    BB_UARTComInit( BB_grd_uartDataHandler ); 
     BB_GetDevInfo();
+}
+
+
+static void BB_grd_uartDataHandler(void *p)
+{
+    STRU_SysEventSkyStatus  status;
+
+    uint32_t u32_rcvLen = BB_UARTComReceiveMsg(BB_UART_COM_SESSION_0,
+                          (uint8_t *)&status,
+                          sizeof(STRU_SysEventSkyStatus));
+
+    if ( u32_rcvLen  >= sizeof(STRU_SysEventSkyStatus))
+    {
+        dlog_info("rclock:%d  nrlock:%d", status.u8_rcCrcLockCnt, status.u8_rcNrLockCnt);
+    }
 }
 
 

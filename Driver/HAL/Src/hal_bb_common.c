@@ -12,12 +12,28 @@ History:
 
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
+
 #include "sys_event.h"
 #include "bb_spi.h"
 #include "bb_ctrl.h"
 #include "rf_8003s.h"
 #include "hal_bb.h"
+#include "debuglog.h"
 
+
+#define UART_SESSION_BUFFER_SIZE    (SYS_EVENT_HANDLER_PARAMETER_LENGTH - 5)
+typedef struct _SysEvent_UART_Data
+{
+    uint32_t datalen;
+    ENUM_BBUARTCOMSESSIONID  e_id;  //sessionID
+    union
+    {
+        uint8_t  *pu8_data;
+        uint8_t  databuf[UART_SESSION_BUFFER_SIZE];
+    }u_session_payload;
+} STRU_SysEvent_Uart_SessionData;
 
 /** 
  * @brief       set channel Bandwidth 10M/20M
@@ -402,25 +418,93 @@ HAL_RET_T HAL_BB_UartComRemoteSessionInit(void)
 }
 
 
-/** 
- * @brief   register one uart session for send or receive message
- * @param   e_sessionId:                    the session id to request
- * @return  HAL_OK:                         means register session OK
- *          HAL_BB_ERR_SESSION_OCCUPIED:    session ID is already occupied
- */
-HAL_RET_T HAL_BB_UartComRegisterSession(ENUM_BBUARTCOMSESSIONID e_sessionId)
+static void BB_uart_SendData(void *p)
 {
-    uint8_t u8_ret;
+    STRU_SysEvent_Uart_SessionData *pstru_data = (STRU_SysEvent_Uart_SessionData *)p;
 
-    u8_ret = BB_UARTComRegisterSession( e_sessionId );
-    if ( u8_ret == 1 )
+    if ( pstru_data->datalen > sizeof(pstru_data->u_session_payload.databuf) && pstru_data->u_session_payload.pu8_data )
     {
-        return HAL_OK;
+        BB_UARTComSendMsg(pstru_data->e_id, pstru_data->u_session_payload.pu8_data, pstru_data->datalen);    
+        free( (void *)pstru_data->u_session_payload.pu8_data );
+        //dlog_info("send id free %d %x %d", pstru_data->e_id, pstru_data->u_session_payload.pu8_data, pstru_data->datalen);
     }
     else
     {
-        return HAL_BB_ERR_SESSION_OCCUPIED;
+        BB_UARTComSendMsg(pstru_data->e_id, pstru_data->u_session_payload.databuf, pstru_data->datalen);
+        //dlog_info("send id %d %x %d", pstru_data->e_id, pstru_data->u_session_payload.databuf, pstru_data->datalen);        
     }
+}
+
+static uint8_t get_session_eventid(uint8_t id, uint32_t *pu32_rcv_event, uint32_t *pu32_snd_event)
+{
+    uint8_t ret = 0;
+    uint32_t u32_rcv_event;
+    uint32_t u32_snd_event;
+
+    if ( id == 1 )
+    {
+        u32_rcv_event = SYS_EVENT_ID_UART_DATA_RCV_SESSION1;
+        u32_snd_event = SYS_EVENT_ID_UART_DATA_SND_SESSION1;
+        ret = 1;
+    }
+    else if ( id == 2)
+    {
+        u32_rcv_event = SYS_EVENT_ID_UART_DATA_RCV_SESSION2;
+        u32_snd_event = SYS_EVENT_ID_UART_DATA_SND_SESSION2;
+        ret = 1;
+    }
+    else if ( id == 3)
+    {
+        u32_rcv_event = SYS_EVENT_ID_UART_DATA_RCV_SESSION3;
+        u32_snd_event = SYS_EVENT_ID_UART_DATA_SND_SESSION3;    
+        ret = 1;
+    }
+    
+    if ( pu32_rcv_event )
+    {
+        *pu32_rcv_event = u32_rcv_event;
+    }
+    
+    if ( pu32_snd_event )
+    {
+        *pu32_snd_event = u32_snd_event;
+    }
+
+    return ret;
+}
+
+/** 
+ * @brief   register one uart session for send or receive message
+ * @param   e_sessionId:                    the session id to request
+ * @param   sessionEventHandler             the handler for uart session
+ * @return  HAL_OK:                         means register session OK
+ *          HAL_BB_ERR_SESSION_OCCUPIED:    session ID is already occupied
+ */
+HAL_RET_T HAL_BB_UartComRegisterSession(ENUM_BBUARTCOMSESSIONID e_sessionId, SYS_Event_Handler rcvDataEventHandler)
+{
+    uint8_t u8_ret;
+
+    u8_ret = BB_UARTComRegisterSession(e_sessionId);
+    if ( u8_ret == 1 )
+    {
+        uint32_t u32_rcv_event;
+        uint32_t u32_snd_event;
+
+        if ( get_session_eventid(e_sessionId, &u32_rcv_event, &u32_snd_event))
+        {
+            if ( rcvDataEventHandler )
+            {
+                //dlog_info("register: %d %x", u32_event, rcvDataEventHandler);
+                SYS_EVENT_RegisterHandler(u32_rcv_event, rcvDataEventHandler);
+            }
+
+            SYS_EVENT_RegisterHandler(u32_snd_event, BB_uart_SendData);
+
+            return HAL_OK;        
+        }
+    }
+
+    return HAL_BB_ERR_SESSION_OCCUPIED;
 }
 
 
@@ -430,11 +514,25 @@ HAL_RET_T HAL_BB_UartComRegisterSession(ENUM_BBUARTCOMSESSIONID e_sessionId)
  * @return  HAL_OK:                         means unrequest session OK 
  *          HAL_BB_ERR_UNREGISTER_SESSION:  means some error happens in unregister session
  */
-HAL_RET_T HAL_BB_UartComUnRegisterSession(ENUM_BBUARTCOMSESSIONID e_sessionId)
+HAL_RET_T HAL_BB_UartComUnRegisterSession(ENUM_BBUARTCOMSESSIONID e_sessionId, SYS_Event_Handler rcvDataEventHandler)
 {
+    uint32_t u32_rcv_event;
+    uint32_t u32_snd_event;
+
     BB_UARTComUnRegisterSession( e_sessionId );
 
-    return HAL_OK;
+    if ( get_session_eventid(e_sessionId, &u32_rcv_event, &u32_snd_event))
+    {
+        if ( rcvDataEventHandler )
+        {
+            SYS_EVENT_UnRegisterHandler(u32_rcv_event, rcvDataEventHandler);
+        }
+        SYS_EVENT_UnRegisterHandler(u32_snd_event, BB_uart_SendData);  
+        
+        return HAL_OK;        
+    }
+
+    return HAL_BB_ERR_UNREGISTER_SESSION;
 }
 
 
@@ -451,9 +549,35 @@ HAL_RET_T HAL_BB_UartComSendMsg(ENUM_BBUARTCOMSESSIONID e_sessionId,
                                 uint8_t  *pu8_dataBuf, 
                                 uint32_t u32_length)
 {
-    uint8_t u8_ret;
-    
-    u8_ret = BB_UARTComSendMsg(e_sessionId, pu8_dataBuf, u32_length);
+    uint8_t  u8_ret;
+    uint32_t u32_event;
+
+    STRU_SysEvent_Uart_SessionData stru_data;
+
+    stru_data.datalen = u32_length;
+    stru_data.e_id    = e_sessionId;
+    if ( u32_length > sizeof(stru_data.u_session_payload.databuf))
+    {
+        stru_data.u_session_payload.pu8_data = (uint8_t *)malloc(u32_length);
+        if ( stru_data.u_session_payload.pu8_data == NULL )
+        {
+            dlog_error("Out of memory!!");
+            return HAL_BB_ERR_SESSION_SEND;
+        }
+        memcpy(stru_data.u_session_payload.pu8_data, pu8_dataBuf, u32_length);
+        //dlog_info("id len %d %d %x", e_sessionId, u32_length, stru_data.u_session_payload.pu8_data);
+    }
+    else
+    {
+        //dlog_info("id len %d %d %x", e_sessionId, u32_length, stru_data.u_session_payload.databuf);
+        memcpy(stru_data.u_session_payload.databuf, pu8_dataBuf, u32_length);    
+    }
+
+    u32_event = ( e_sessionId == 1) ? SYS_EVENT_ID_UART_DATA_SND_SESSION1 : 
+                ((e_sessionId == 2) ? SYS_EVENT_ID_UART_DATA_SND_SESSION2 : SYS_EVENT_ID_UART_DATA_SND_SESSION3);
+
+    u8_ret = SYS_EVENT_Notify(u32_event, (void * )&stru_data);
+
     if ( u8_ret )
     {
         return HAL_OK;
@@ -464,6 +588,51 @@ HAL_RET_T HAL_BB_UartComSendMsg(ENUM_BBUARTCOMSESSIONID e_sessionId,
     }
 }
 
+
+/** 
+ * @brief   send out messages from uart session
+ * @param   e_sessionId:                    the session id has already requested.
+ *          pu8_dataBuf:                    buffer pointer to the data to be sent
+ *          u32_length:                     data size to be sent
+ *
+ * @return  HAL_OK:                         means ungister session OK 
+ *          HAL_BB_ERR_UNREGISTER_SESSION:  means some error happens in unregister session 
+ */
+HAL_RET_T HAL_BB_UartComSendMsgFromIsr(ENUM_BBUARTCOMSESSIONID e_sessionId, 
+                                uint8_t  *pu8_dataBuf, 
+                                uint32_t u32_length)
+{
+    uint8_t  u8_ret;
+    uint32_t u32_event;
+
+    STRU_SysEvent_Uart_SessionData stru_data = {
+        .datalen = u32_length
+    };
+
+    if ( u32_length > sizeof(stru_data.u_session_payload.databuf))
+    {
+        stru_data.u_session_payload.pu8_data = (uint8_t *)malloc(u32_length);
+        memcpy(stru_data.u_session_payload.pu8_data, pu8_dataBuf, u32_length);
+    }
+    else
+    {
+        memcpy(stru_data.u_session_payload.databuf, pu8_dataBuf, u32_length);    
+    }
+
+    u32_event = ( e_sessionId == 1) ? SYS_EVENT_ID_UART_DATA_SND_SESSION1 : 
+                ((e_sessionId == 2) ? SYS_EVENT_ID_UART_DATA_SND_SESSION2 : SYS_EVENT_ID_UART_DATA_SND_SESSION3);
+
+    u8_ret = SYS_EVENT_Notify_From_ISR(u32_event, (void * )&stru_data);
+
+    if ( u8_ret )
+    {
+        return HAL_OK;
+    }
+    else
+    {
+        return HAL_BB_ERR_SESSION_SEND;
+    }
+}
 
 
 /** 
