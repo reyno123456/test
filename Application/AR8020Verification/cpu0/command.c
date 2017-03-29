@@ -53,6 +53,8 @@ void command_sendCtrl(void);
 void command_sendVideo(void);
 void command_adc(char * channel);
 void command_usbHostEnterTestMode(void);
+void command_malloc(char *size);
+
 
 void command_run(char *cmdArray[], uint32_t cmdNum)
 {
@@ -60,6 +62,11 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     if ((memcmp(cmdArray[0], "read", 4) == 0) && (cmdNum == 2))
     {
         command_readMemory(cmdArray[1]);
+    }
+	/* read memory: "read $(address)" */
+    if ((memcmp(cmdArray[0], "malloc", strlen("malloc")) == 0) && (cmdNum == 2))
+    {
+        command_malloc(cmdArray[1]);
     }
     /* write memory: "write $(address) $(data)" */
     else if ((memcmp(cmdArray[0], "write", 5) == 0) && (cmdNum == 3))
@@ -511,6 +518,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("NvResetBbRcId");
         dlog_error("NvSetBbRcId <id1> <id2> <id3> <id4> <id5>");
         dlog_error("test_local_irq");
+		dlog_error("malloc <size>");
         dlog_output(1000);
     }
 }
@@ -749,6 +757,21 @@ void command_usbHostEnterTestMode(void)
     HAL_USB_EnterUSBHostTestMode();
 }
 
+void command_malloc(char *size)
+{
+    unsigned int mallocSize;
+	char *malloc_addr;
+	
+    mallocSize = command_str2uint(size);
+	malloc_addr = malloc(mallocSize);
+
+	if (malloc_addr != 0)
+	{
+		dlog_info("0x%08x\n", malloc_addr);
+	}
+
+	return;
+}
 
 
 
