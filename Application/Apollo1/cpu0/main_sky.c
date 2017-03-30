@@ -1,15 +1,14 @@
 #include "debuglog.h"
 #include "serial.h"
 #include "command.h"
+#include "test_usbh.h"
 #include "cmsis_os.h"
 #include "sys_event.h"
 #include "bb_spi.h"
-#include "test_usbh.h"
-#include "com_task.h"
 #include "hal.h"
+#include "hal_gpio.h"
 #include "hal_bb.h"
 #include "hal_hdmi_rx.h"
-#include "hal_gpio.h"
 #include "hal_usb_otg.h"
 #include "hal_sys_ctl.h"
 #include "wireless_interface.h"
@@ -20,16 +19,21 @@ void console_init(uint32_t uart_num, uint32_t baut_rate)
     dlog_init(command_run, DLOG_CLIENT_PROCESSOR);
 }
 
+void HDMI_powerOn(void)
+{
+    HAL_GPIO_OutPut(90);
+    HAL_GPIO_SetPin(90, HAL_GPIO_PIN_SET);
+}
 
 static void IO_Task(void const *argument)
 {
     while (1)
     {
         SYS_EVENT_Process();
-
+        
         DLOG_Process(NULL);
-      
-        HAL_Delay(20);
+        
+        osDelay(20);
     }
 }
 
@@ -51,16 +55,20 @@ int main(void)
 
     HAL_USB_ConfigPHY();
 
+    HDMI_powerOn();
+    
     STRU_HDMI_CONFIGURE        st_configure;
     st_configure.e_getFormatMethod = HAL_HDMI_INTERRUPT;
+    
     st_configure.u8_interruptGpio = HAL_GPIO_NUM98;
-
-    HAL_HDMI_RX_Init(HAL_HDMI_RX_0, &st_configure);
+    st_configure.u8_hdmiToEncoderCh = 0;
     HAL_HDMI_RX_Init(HAL_HDMI_RX_1, &st_configure);
 
     HAL_USB_InitOTG(HAL_USB_PORT_0);
 
     HAL_NV_Init();
+
+    portDISABLE_INTERRUPTS();
 
     /* Create Main Task */
     osThreadDef(USBMAIN_Task, USB_MainTask, osPriorityBelowNormal, 0, 4 * 128);
@@ -69,7 +77,7 @@ int main(void)
     osThreadDef(USBHStatus_Task, USBH_USBHostStatus, osPriorityNormal, 0, 4 * 128);
     osThreadCreate(osThread(USBHStatus_Task), NULL);
 
-    osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 4 * 128);
+    osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 16 * 128);
     osThreadCreate(osThread(IOTask), NULL);
 
     osMessageQDef(osqueue, 1, uint16_t);
@@ -77,7 +85,7 @@ int main(void)
 
     Wireless_TaskInit();
 
-    COMTASK_Init();
+    portENABLE_INTERRUPTS();
 
     osKernelStart();
 
