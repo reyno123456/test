@@ -65,5 +65,8 @@ INCDIRS := -ISysCtl/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/BB/Inc \
            -I$(TOP_DIR)/Driver/HAL/Inc \
            -I$(TOP_DIR)/Configure/Include \
-           -I$(TOP_DIR)/Driver/Board
+           -I$(TOP_DIR)/Driver/Board \
+           -I$(TOP_DIR)/Kernel/FreeRTOS/CMSIS_RTOS \
+           -I$(TOP_DIR)/Kernel/FreeRTOS/include \
+           -I$(TOP_DIR)/Kernel/FreeRTOS/portable/GCC/ARM_CM7/r0p1
 

@@ -356,6 +356,11 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_dma(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
+	/* dma transfer endless: "transdma $(startBlock) $(blockNum)" */
+    if ((memcmp(cmdArray[0], "test_dma_loop", strlen("test_dma_loop")) == 0) && (cmdNum == 4))
+    {
+        command_test_dma_loop(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
     else if (memcmp(cmdArray[0], "test_adc", 8) == 0)
     {
         command_adc(cmdArray[1]);
@@ -509,6 +514,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("configure");
         dlog_error("test_adc <channel>");
         dlog_error("test_dma_cpu0 <src> <dst> <byte_num>");
+		dlog_error("test_dma_loop <src> <dst> <byte_num>");
         dlog_error("test_camera_init <rate 0~1> <mode 0~8> <toEncoderCh 0~1>");
         dlog_error("test_write_camera <subAddr(hex)> <value>(hex)");
         dlog_error("test_read_camera <subAddr(hex)>");

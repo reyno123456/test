@@ -14,7 +14,8 @@ History:
 #include "cpu_info.h"
 #include "interrupt.h"
 #include "memory_config.h"
-
+#include "cmsis_os.h"
+#include "systicks.h"
 
 volatile STRU_DmaRegs *g_st_dmaRegs = (STRU_DmaRegs *)DMA_BASE;
 
@@ -298,15 +299,23 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
 		        u32_3rdHSize = 0;
 		    }
 			
-			#ifdef USE_MALLOC_DESC
+#ifdef USE_MALLOC_DESC
+#ifdef DMA_DEBUG
 			/* malloc the space for LLI */
+				dlog_info("before malloc, malloc size = %d\n", sizeof(STRU_LinkListItem) * u32_totalBlkNum);
+				dlog_output(100);
 				STRU_LinkListItem *pst_LinkListItem = (STRU_LinkListItem *)malloc(sizeof(STRU_LinkListItem) * u32_totalBlkNum);
-				if (!pst_LinkListItem)
+				if (pst_LinkListItem)
+				{
+					dlog_info("addr pst_LinkListItem = 0x%08x\n", pst_LinkListItem);
+				}
+				else
 				{
 					dlog_info("Malloc Failed! Exit DMA Transfer\n");
 					return -1;
 				}
-			#endif
+#endif /* DMA_DEBUG */
+#endif
 
 			if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId())
 		    {
@@ -389,6 +398,19 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
 				pst_LinkListItem[u32_blkIndex - 1].llp   = u32_llpLOC & 0xFFFFFFFC;
 		    }
 
+			int i = 0;
+#ifdef DMA_DEBUG
+			for (i = 0; i < u32_totalBlkNum; i++)
+			{
+				dlog_info("item %d, sar = 0x%08x\n", i, pst_LinkListItem[i].sar);
+				dlog_info("item %d, dar = 0x%08x\n", i, pst_LinkListItem[i].dar);
+				dlog_info("item %d, llp = 0x%08x\n", i, pst_LinkListItem[i].llp);
+				dlog_info("item %d, ctllo = 0x%08x\n", i, pst_LinkListItem[i].ctllo);
+				dlog_info("item %d, ctlhi = 0x%08x\n", i, pst_LinkListItem[i].ctlhi);
+			}
+			dlog_output(1000);
+#endif /* DMA_DEBUG */
+
 		    /* setup the initial CTL */
 		    g_st_dmaRegs->CHAN[u8_chanIndex].CTL_LO = DWC_CTLL_DMS(0x1) | \
 		    										  DWC_CTLL_INT_EN | \
@@ -407,17 +429,39 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
 		    g_st_transStatus[u8_chanIndex].e_transferType = LINK_LIST_ITEM;
 		    g_st_transStatus[u8_chanIndex].u32_transNum = u32_totalBlkNum;
 
+#ifdef DMA_DEBUG
+			i = 0;
+			uint32_t tick_count_old = SysTicks_GetTickCount();
+			uint32_t tick_count_new = 0;
+#endif /* DMA_DEBUG */
 		    while(1)
 		    {
 			    if ((g_st_dmaRegs->CH_EN & (1 << u8_chanIndex)) == 0)
 				{
-		#ifdef USE_MALLOC_DESC
+#ifdef USE_MALLOC_DESC
+#ifdef DMA_DEBUG
+					dlog_info("before free addr pst_LinkListItem = 0x%08x\n", pst_LinkListItem);
 	  				free(pst_LinkListItem);				
-		#endif
+#endif /* DMA_DEBUG */
+#endif
 					break;
 				}
-		    	
+				if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId()) osDelay(1);
+				i++;
 		    }
+
+#ifdef DMA_DEBUG
+			tick_count_new = SysTicks_GetTickCount();
+
+			if (tick_count_new >= tick_count_old){
+				dlog_info("dma delayed %d ticks, line = %d\n", tick_count_new - tick_count_old, __LINE__);
+			} else {
+				dlog_info("dma delayed out of range, line = %d\n", __LINE__);
+			}
+			
+		    dlog_info("dma delayed %d times, line = %d\n", i, __LINE__);
+			dlog_output(100);
+#endif /* DMA_DEBUG */
 
   			break;
 		}

@@ -88,7 +88,9 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     }
     else if (memcmp(cmdArray[0], "test_dma_cpu1", strlen("test_dma_cpu1")) == 0)
     {
+#ifdef WITH_RTOS
         command_dma(cmdArray[1], cmdArray[2], cmdArray[3]);
+#endif /* WITH_RTOS */
     }
     /* error command */
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)

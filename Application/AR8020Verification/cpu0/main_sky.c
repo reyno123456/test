@@ -81,7 +81,7 @@ int main(void)
     osThreadDef(USBHStatus_Task, USBH_USBHostStatus, osPriorityNormal, 0, 4 * 128);
     osThreadCreate(osThread(USBHStatus_Task), NULL);
 
-    osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 4 * 128);
+    osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 16 * 128);
     osThreadCreate(osThread(IOTask), NULL);
 
     osMessageQDef(osqueue, 1, uint16_t);

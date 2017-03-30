@@ -16,6 +16,7 @@ History:
 #include <stdint.h>
 #define DW_DMA_MAX_NR_CHANNELS	8
 
+#define DMA_DEBUG 1
 
 /* flow controller */
 typedef enum {

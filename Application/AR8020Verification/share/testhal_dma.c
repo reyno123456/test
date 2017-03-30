@@ -19,6 +19,8 @@ History:
 #include "hal_dma.h"
 #include "md5.h"
 #include "data_type.h"
+#include "cmsis_os.h"
+
 
 extern unsigned int command_str2uint(char *str);
 
@@ -92,3 +94,18 @@ void command_dma(char * u32_src, char *u32_dst, char *u32_byteNum)
                                     md5_value[i++],
                                     md5_value[i++]);
 }
+
+void command_test_dma_loop(char * u32_src, char *u32_dst, char *u32_byteNum)
+{
+	unsigned int i = 0;
+	
+	while(1)
+	{
+		dlog_info("output\n");
+		command_dma(u32_src, u32_dst, u32_byteNum);
+		osDelay(500);
+		dlog_info("i = %d\n", i++);
+	}
+}
+
+
