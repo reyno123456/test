@@ -98,7 +98,7 @@ configure: cfg_exist = $(shell if [ ! -f ../../$(MKCONFIG) ]; then echo "The $(P
 configure: 
 	@echo "configure makefile for $(PROJS) ..."
 	@$(RM) -f ../../config.mk
-	@ln -s  $(MKCONFIG) ../../config.mk
+	@cp ../../$(MKCONFIG) ../../config.mk
 	@echo $(cfg_exist)
 
 $(LIBALL):
