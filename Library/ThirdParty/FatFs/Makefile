@@ -1,4 +1,4 @@
-TOP_DIR ?= ../..
+TOP_DIR ?= ../../..
 
 # build file directory
 BUILD_DIR ?= $(TOP_DIR)/Build
@@ -15,7 +15,7 @@ include $(BUILD_DIR)/config.mk
 
 ###############################################################################
 # static library name
-LIB = libfreertos.a
+LIB = libfatfs.a
 
 ifeq ($(CPU_NUMBER), cpu0)
     CFLAGS += $(CPU0_CFLAGS)
@@ -31,20 +31,15 @@ endif
 
 
 # source file(s), including c file(s)
-SRC_C   := croutine.c \
-           event_groups.c \
-           list.c \
-           queue.c \
-           tasks.c \
-           timers.c \
-           portable/GCC/ARM_CM7/r0p1/port.c \
-           portable/MemMang/heap_4.c \
-           CMSIS_RTOS/cmsis_os.c
+SRC_C   := Src/ff.c \
+           Src/ff_gen_drv.c \
+           Src/diskio.c \
+           Port/sd_diskio.c \
+           Port/usbh_diskio.c
 
 
-INCDIRS := -Iinclude \
-           -Iportable/GCC/ARM_CM7/r0p1 \
-           -ICMSIS_RTOS \
+INCDIRS := -IInc \
+           -IPort \
            -I$(TOP_DIR)/Configure/Include \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_LL_Driver/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Host/Class/MSC/Inc \
@@ -70,36 +65,22 @@ install:
 	@mkdir -p $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
 	@mkdir -p $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f $(LIB) $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)
-	@cp -f include/FreeRTOS.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f include/projdefs.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f include/portable.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f include/deprecated_definitions.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f portable/GCC/ARM_CM7/r0p1/portmacro.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f include/mpu_wrappers.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f include/task.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f include/list.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f CMSIS_RTOS/cmsis_os.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f include/timers.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f include/queue.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f include/semphr.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f include/event_groups.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/ff.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/ffconf.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/ff_gen_drv.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/diskio.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/integer.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Port/usbh_diskio.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."
 	@$(RM) $(LIB) $(OBJ_C) $(OBJ_CPP) .depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB)
-	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/FreeRTOS.h
-	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/projdefs.h
-	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/portable.h
-	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/deprecated_definitions.h
-	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/portmacro.h
-	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/mpu_wrappers.h
-	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/task.h
-	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/list.h
-	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/cmsis_os.h
-	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/timers.h
-	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/queue.h
-	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/semphr.h
-	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/event_groups.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/ff.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/ffconf.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/ff_gen_drv.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/diskio.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/integer.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/usbh_diskio.h
 
 .PHONY: all clean install
 #########################################################################

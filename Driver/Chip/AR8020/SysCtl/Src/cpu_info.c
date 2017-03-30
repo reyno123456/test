@@ -9,29 +9,43 @@ ENUM_CPU_ID CPUINFO_GetLocalCpuId(void)
 
 void CPUINFO_ICacheEnable(uint8_t u8_icacheEnable)
 {
+    static uint8_t s_u8_icacheEnable = 0;
+    
     if (u8_icacheEnable != 0)
     {
         /* Enable I-Cache */
         SCB_EnableICache();
+        s_u8_icacheEnable = 1;
     }
     else
     {
-        /* Disable I-Cache */
-        SCB_DisableICache();
+        if (s_u8_icacheEnable != 0)
+        {
+            /* Disable I-Cache */
+            SCB_DisableICache();
+            s_u8_icacheEnable = 0;
+        }
     }
 }
 
 void CPUINFO_DCacheEnable(uint8_t u8_dcacheEnable)
 {
+    static uint8_t s_u8_dcacheEnable = 0;
+    
     if (u8_dcacheEnable != 0)
     {
         /* Enable D-Cache */
         SCB_EnableDCache();
+        s_u8_dcacheEnable = 1;
     }
     else
     {
-        /* Disable D-Cache */
-        SCB_DisableDCache();
+        if (s_u8_dcacheEnable != 0)
+        {
+            /* Disable D-Cache */
+            SCB_DisableDCache();
+            s_u8_dcacheEnable = 0;
+        }
     }
 }
 
