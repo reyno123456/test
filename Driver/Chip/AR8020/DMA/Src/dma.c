@@ -446,7 +446,7 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
 #endif
 					break;
 				}
-				if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId()) osDelay(1);
+				if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId()) osDelay(u32_totalBlkNum);
 				i++;
 		    }
 
