@@ -441,8 +441,8 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
 #ifdef USE_MALLOC_DESC
 #ifdef DMA_DEBUG
 					dlog_info("before free addr pst_LinkListItem = 0x%08x\n", pst_LinkListItem);
-	  				free(pst_LinkListItem);				
 #endif /* DMA_DEBUG */
+	  				free(pst_LinkListItem);				
 #endif
 					break;
 				}
