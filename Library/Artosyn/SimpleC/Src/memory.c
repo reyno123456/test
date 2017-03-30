@@ -83,7 +83,7 @@ static unsigned int errno = 0 ;
 /* as well as the minimal allocation size
  * to hold a free pointer */
 #define MALLOC_MINSIZE (sizeof(void *))
-#define MAX_ALLOC_SIZE (0x10000U)
+#define MAX_ALLOC_SIZE (0x80000U)
 
 #define ENOMEM    12
 
