@@ -369,7 +369,7 @@ void RightAudio_44p1K(void)
 #endif /*CPU0_CPU1_CORE_PLL_CLK*/
 
 #if (CPU0_CPU1_CORE_PLL_CLK == 100)
-void RightAudio(void) 
+void RightAudio_44p1K(void) 
 {      
     __asm volatile (      
     "ldr  r0, =g_u32_audioRightInterruptAddr\n"

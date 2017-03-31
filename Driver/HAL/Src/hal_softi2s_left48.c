@@ -333,7 +333,7 @@ void LeftAudio_48K(void)
 #endif /*CPU0_CPU1_CORE_PLL_CLK*/
 
 #if (CPU0_CPU1_CORE_PLL_CLK == 100)
-void LeftAudio_44p1K(void) 
+void LeftAudio_48K(void) 
 {      
     __asm volatile (      
     "ldr  r0, =g_u32_audioLeftInterruptAddr\n"
@@ -348,8 +348,7 @@ void LeftAudio_44p1K(void)
     "ldr  r6, [r0]\n"     
 
     //sample1
-    "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
-    "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"    
+    "NOP;NOP;NOP;NOP;\n"    
     "mov  r4, r4\n"
     "mov  r4, #15\n"
     "ldr  r1, [r5]\n"
@@ -359,8 +358,6 @@ void LeftAudio_44p1K(void)
     
     //sample2 
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
-    "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
-    "NOP;NOP;NOP;NOP;NOP;NOP;\n"
     "mov  r4, r4\n"          
     "mov  r4, #14\n"
     "ldr  r1, [r5]\n"
@@ -370,8 +367,7 @@ void LeftAudio_44p1K(void)
 
     //sample3
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
-    "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
-    "NOP;NOP;NOP;NOP;NOP;NOP;\n"
+    "NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
     "mov  r4, r4\n" 
     "mov  r4, #13\n"
     "ldr  r1, [r5]\n"
@@ -381,9 +377,8 @@ void LeftAudio_44p1K(void)
 
     //sample4     
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n" 
-    "NOP;\n"
+    "NOP;NOP;NOP;\n"
     "NOP;NOP;NOP;NOP;NOP;NOP;\n"
-    "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
     "mov  r4, r4\n"     
     "mov  r4, #12\n"
     "ldr  r1, [r5]\n"
@@ -395,7 +390,6 @@ void LeftAudio_44p1K(void)
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
     "NOP;NOP;NOP;NOP;NOP;NOP;\n"
     "NOP;NOP;NOP;NOP;NOP;NOP;\n"
-    "NOP;NOP;NOP;NOP;\n"
     "mov  r4, r4\n"       
     "mov  r4, #11\n"
     "ldr  r1, [r5]\n"
@@ -405,8 +399,7 @@ void LeftAudio_44p1K(void)
 
     //sample6
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
-    "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
-    "NOP;NOP;NOP;NOP;NOP;NOP;\n"
+    "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
     "mov  r4, r4\n"
     "mov  r4, #10\n"
     "ldr  r1, [r5]\n"
@@ -417,7 +410,6 @@ void LeftAudio_44p1K(void)
     //sample7  
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
-    "NOP;NOP;NOP;NOP;\n"
     "mov  r4, r4\n"
     "mov  r4, #9\n"
     "ldr  r1, [r5]\n"
@@ -428,8 +420,6 @@ void LeftAudio_44p1K(void)
     //sample8
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
-    "NOP;\n"
-    "NOP;NOP;NOP;NOP;NOP;NOP;\n"
     "mov  r4, r4\n"
     "mov  r4, #8\n"
     "ldr  r1, [r5]\n"
@@ -440,7 +430,6 @@ void LeftAudio_44p1K(void)
     //sample9
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
-    "NOP;NOP;NOP;NOP;\n"
     "NOP;NOP;\n"
     "mov  r4, r4\n"
     "mov  r4, #7\n"
@@ -452,8 +441,6 @@ void LeftAudio_44p1K(void)
     //sample10
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"     
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"   
-    "NOP;NOP;\n"
-    "NOP;NOP;NOP;NOP;NOP;NOP;\n"
     "mov  r4, r4\n"   
     "mov  r4, #6\n"
     "ldr  r1, [r5]\n"
@@ -464,7 +451,6 @@ void LeftAudio_44p1K(void)
     //sample11
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
-    "NOP;NOP;NOP;NOP;NOP;\n"
     "mov  r4, r4\n"
     "mov  r4, #5\n"
     "ldr  r1, [r5]\n"
@@ -475,7 +461,6 @@ void LeftAudio_44p1K(void)
     //sample12
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
-    "NOP;NOP;NOP;NOP;NOP;\n"
     "NOP;\n"      
     "mov  r4, r4\n"
     "mov  r4, #4\n"
@@ -487,7 +472,6 @@ void LeftAudio_44p1K(void)
     //sample13
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"    
-    "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
     "mov  r4, r4\n"  
     "mov  r4, #3\n"
     "ldr  r1, [r5]\n"
@@ -497,8 +481,7 @@ void LeftAudio_44p1K(void)
 
     //sample14
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
-    "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"  
-    "NOP;NOP;NOP;NOP;NOP;\n"    
+    "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"      
     "mov  r4, r4\n"
     "mov  r4, #2\n"
     "ldr  r1, [r5]\n"
@@ -509,7 +492,6 @@ void LeftAudio_44p1K(void)
     //sample15
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
-    "NOP;NOP;NOP;NOP;NOP;NOP;\n"
     "mov  r4, r4\n"    
     "mov  r4, #1\n"
     "ldr  r1, [r5]\n"
@@ -520,7 +502,6 @@ void LeftAudio_44p1K(void)
     //sample16
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
     "NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;\n"
-    "NOP;NOP;NOP;NOP;\n"
     "NOP;NOP;\n"  
     "mov  r4, r4\n"    
     "mov  r4, #0\n"

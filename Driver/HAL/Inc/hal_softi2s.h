@@ -22,18 +22,18 @@ History:
 #define ADUIO_DATA_BUFF_LENGHT           (4608/sizeof(uint16_t)) 
 
 
-#define AUDIO_SDRAM                     (1)
+//#define AUDIO_SDRAM                     (1)
 
 
-#ifdef AUDIO_SDRAM
+#ifdef  AUDIO_SDRAM
 #define AUDIO_DATA_BUFF_COUNT           (1)         
 #define AUDIO_DATA_START                (0x81F00000)
 #define AUDIO_DATA_BUFF_SIZE            (ADUIO_DATA_BUFF_LENGHT*AUDIO_DATA_BUFF_COUNT*2)    
 #define AUDIO_DATA_TOTILE_BUFF_SIZE     (AUDIO_DATA_BUFF_SIZE*2)
 #define AUDIO_DATA_END                  (AUDIO_DATA_START+AUDIO_DATA_TOTILE_BUFF_SIZE)
 #else
-#define AUDIO_DATA_BUFF_COUNT           (14) 
-#define AUDIO_DATA_START                (0x20060000)
+#define AUDIO_DATA_BUFF_COUNT           (3) 
+#define AUDIO_DATA_START                (0x20078000)
 #define AUDIO_DATA_BUFF_SIZE            (ADUIO_DATA_BUFF_LENGHT*AUDIO_DATA_BUFF_COUNT*2)    
 #define AUDIO_DATA_TOTILE_BUFF_SIZE     (AUDIO_DATA_BUFF_SIZE*2)
 #define AUDIO_DATA_END                  (AUDIO_DATA_START+AUDIO_DATA_TOTILE_BUFF_SIZE)

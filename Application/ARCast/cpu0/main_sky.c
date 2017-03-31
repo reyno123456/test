@@ -27,8 +27,8 @@ void console_init(uint32_t uart_num, uint32_t baut_rate)
 
 void HDMI_powerOn(void)
 {
-    HAL_GPIO_OutPut(63);
-    HAL_GPIO_SetPin(63, HAL_GPIO_PIN_SET);
+    HAL_GPIO_OutPut(HAL_GPIO_NUM59);
+    HAL_GPIO_SetPin(HAL_GPIO_NUM59, HAL_GPIO_PIN_SET);
 }
 
 /**
@@ -47,15 +47,14 @@ int main(void)
     console_init(0,115200);
     dlog_info("cpu0 start!!! \n");
 
+    HAL_GPIO_InPut(HAL_GPIO_NUM99);
+
     HAL_USB_ConfigPHY();
 
     HDMI_powerOn();
 
     STRU_HDMI_CONFIGURE        st_configure;
     st_configure.e_getFormatMethod = HAL_HDMI_POLLING;
-    st_configure.u8_interruptGpio = HAL_GPIO_NUM64;
-    st_configure.u8_hdmiToEncoderCh = 1;
-    HAL_HDMI_RX_Init(HAL_HDMI_RX_0, &st_configure);
 
     st_configure.u8_interruptGpio = HAL_GPIO_NUM64;
     st_configure.u8_hdmiToEncoderCh = 0;
@@ -75,6 +74,7 @@ int main(void)
     HAL_NV_Init();
 
     USBH_MountUSBDisk();
+    
     HAL_MP3EncodePcmInit(&st_audioConfig);
 
     uint32_t u32_audioSampleRate=0xf;
@@ -94,12 +94,12 @@ int main(void)
                 u32_audioSampleRateTmp=0;
                 *pu32_newAudioSampleRate = u32_audioSampleRate;
                 HAL_MP3EncodePcmUnInit();
-                if (2 == u32_audioSampleRateTmp)
+                if (2 == u32_audioSampleRate)
                 {                    
                     st_audioConfig.e_samplerate = HAL_MP3_ENCODE_48000;
                     dlog_info("Audio Sample Rate 48000");
                 }
-                else if (0 == u32_audioSampleRateTmp)
+                else if (0 == u32_audioSampleRate)
                 {
                     st_audioConfig.e_samplerate = HAL_MP3_ENCODE_44100;   
                     dlog_info("Audio Sample Rate 44100");                 
@@ -111,7 +111,7 @@ int main(void)
         {
             u32_audioSampleRateTmp=0;
         }
-        HAL_USB_HostProcess();
+        //HAL_USB_HostProcess();
 		HAL_MP3EncodePcm();
 		SYS_EVENT_Process();
         DLOG_Process(NULL);

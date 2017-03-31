@@ -11,7 +11,6 @@
 #include "dma.h"
 #include "hal_sram.h"
 #include "layer3.h"
-
         
    
 shine_t        st_s;
@@ -37,7 +36,6 @@ HAL_BOOL_T HAL_MP3EncodePcmInit(const STRU_MP3_ENCODE_CONFIGURE_WAVE *st_mp3Enco
     st_config.wave.channels = st_mp3EncodeConfg->u8_channel;
     st_config.wave.samplerate = st_mp3EncodeConfg->e_samplerate;
     st_config.mpeg.mode = st_mp3EncodeConfg->e_modes;
-    //st_config.mpeg.bitr = 64;
     st_s = shine_initialise(&st_config);
     if (NULL == st_s)
     {
@@ -74,12 +72,12 @@ void HAL_MP3EncodePcm(void)
         uint32_t i=0;
         uint8_t ch[AUDIO_DATA_BUFF_COUNT*420]={0};
 
-        if ((MPE3_ENCODER_DATA_ADDR+192*5418) <= g_u32_dstAddress)
+        /*if ((MPE3_ENCODER_DATA_ADDR+192*5418) <= g_u32_dstAddress)
         {
             g_u32_dstAddress=MPE3_ENCODER_DATA_ADDR;
-        }
+        }*/
         
-		tick = SysTicks_GetTickCount();
+		//tick = SysTicks_GetTickCount();
         while (u32_tmpRawDataLenght)
         {
             
@@ -90,11 +88,14 @@ void HAL_MP3EncodePcm(void)
             memcpy(&ch[i],pu8_data,s32_encodeLenght);
             i+=s32_encodeLenght;
         }
-        memcpy((uint8_t *)AUDIO_BYPASS_START,ch,i);            
-        memcpy((uint8_t *)g_u32_dstAddress,ch,i);
-        g_u32_dstAddress+=i;            
-        dlog_info("encode mp3 ok %d %d %x\n", SysTicks_GetTickCount()-tick,(*pu32_newPcmDataFlagAddr),g_u32_dstAddress);
         
+        //DMA_transfer((uint32_t)ch+DTCM_CPU0_DMA_ADDR_OFFSET, AUDIO_BYPASS_START,i, CHAN0, LINK_LIST_ITEM); 
+
+        memcpy((uint8_t *)AUDIO_BYPASS_START,ch,i);                   
+        //memcpy((uint8_t *)g_u32_dstAddress,ch,i);                    
+        //dlog_info("encode mp3 ok %d %d %x\n", SysTicks_GetTickCount()-tick,(*pu32_newPcmDataFlagAddr),g_u32_dstAddress);
+        
+        g_u32_dstAddress+=i;
         (*pu32_newPcmDataFlagAddr) = 0;
 
     }    
