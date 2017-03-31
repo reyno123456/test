@@ -270,8 +270,6 @@ void wimax_vsoc_rx_isr(uint32_t u32_vectorNum)
 
     INTR_NVIC_EnableIRQ(TIMER_INTR26_VECTOR_NUM);
     TIM_StartTimer(sky_timer2_6);
-
-    sky_calc_dist();
 }
 
 
@@ -291,6 +289,8 @@ void Sky_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
     {
         return;
     }
+
+    sky_calc_dist();
     
     sky_handle_all_cmds();
 
