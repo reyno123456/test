@@ -11,7 +11,6 @@
 #include "test_hal_spi.h"
 #include "test_hal_i2c_24c256.h"
 #include "test_hal_i2c.h"
-#include "test_hal_spi_flash.h"
 #include "testhal_gpio.h"
 #include "test_usbh.h"
 #include "test_hal_nv.h"
@@ -97,26 +96,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestHalI2cRead(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4]);
     }    
-    else if (memcmp(cmdArray[0], "test_hal_spi_flash_id", strlen("test_hal_spi_flash_id")) == 0)
-    {
-       command_WbFlashID(cmdArray[1]);
-    }
-    else if (memcmp(cmdArray[0], "test_hal_spi_flash_write_read", strlen("test_hal_spi_flash_write_read")) == 0)
-    { 
-        command_TestWbFlash(cmdArray[1]);                
-    }
-    else if (memcmp(cmdArray[0], "test_hal_spi_flash_erase", strlen("test_hal_spi_flash_erase")) == 0)
-    {
-       command_TestWbBlockErase(cmdArray[1], cmdArray[2], cmdArray[3]);
-    }
-    else if (memcmp(cmdArray[0], "test_hal_spi_flash_write", strlen("test_hal_spi_flash_write")) == 0)
-    { 
-        command_TestWbFlashWrite(cmdArray[1], cmdArray[2], cmdArray[3]);                
-    }
-    else if (memcmp(cmdArray[0], "test_hal_spi_flash_read", strlen("test_hal_spi_flash_read")) == 0)
-    {  
-        command_TestWbFlashRead(cmdArray[1], cmdArray[2], cmdArray[3]);                
-    }
     else if (memcmp(cmdArray[0], "testhal_TestGpioNormal", strlen("testhal_TestGpioNormal")) == 0)
     {
         commandhal_TestGpioNormal(cmdArray[1], cmdArray[2]);
@@ -164,11 +143,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_hal_i2c_init <ch> <i2c_addr> <speed>");
         dlog_error("test_hal_i2c_write <ch> <subAddr> <subAddrLen> <data> <dataLen>");
         dlog_error("test_hal_i2c_read <ch> <subAddr> <subAddrLen> <dataLen>");
-        dlog_error("test_hal_spi_flash_id <spi_port>");
-        dlog_error("test_hal_spi_flash_write_read <spi_port>");
-        dlog_error("test_hal_spi_flash_erase <spi_port>");
-        dlog_error("test_hal_spi_flash_write <spi_port> <start_addr> <data_len>");
-        dlog_error("test_hal_spi_flash_read <spi_port> <start_addr> <data_len>");
         dlog_error("testhal_TestGpioNormal <gpionum> <highorlow>");
         dlog_error("testhal_TestGpioInterrupt <gpionum> <inttype> <polarity>");
         dlog_error("startbypassvideo");
