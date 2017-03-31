@@ -12,6 +12,7 @@
 #include "wireless_interface.h"
 #include "hal_nv.h"
 #include "hal_uart.h"
+#include "hal_gpio.h"
 
 void CONSOLE_Init(void)
 {
@@ -58,6 +59,8 @@ int main(void)
     /* initialize the uart */
     CONSOLE_Init();
     dlog_info("cpu0 start!!! \n");
+
+    HAL_GPIO_InPut(HAL_GPIO_NUM99);
 
     HAL_USB_ConfigPHY();
 
