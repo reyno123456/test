@@ -119,7 +119,6 @@ typedef struct
     uint32_t rxLen;     //
     uint32_t rxAlrLen;  //
     uint8_t *rxBuf;     //
-    uint32_t rxOverTimeCnt;  //
 } STRU_SPI_INT_DATA;
 
 
