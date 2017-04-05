@@ -47,7 +47,13 @@ void DMA_irqISR(uint32_t vectorNum)
 	uint8_t u8_chanIndex = 0;
 	uint32_t index = 0;
     // dlog_info("single block transfer completed!\n");
-
+    
+	g_st_dmaRegs->CHAN[u8_chanIndex].CFG_HI = 0x0;
+	g_st_dmaRegs->CHAN[u8_chanIndex].CFG_LO = DWC_CFGL_HS_SRC | DWC_CFGL_HS_DST;
+						
+	/* clear interrupt */
+	DMA_clearIRQ(u8_chanIndex);
+#if 0
 	for (u8_chanIndex = 0; u8_chanIndex < DW_DMA_MAX_NR_CHANNELS; ++u8_chanIndex)
 	{
 		if (g_st_transStatus[u8_chanIndex].e_transActive == ACTIVE)
@@ -96,7 +102,7 @@ void DMA_irqISR(uint32_t vectorNum)
 		}
 
 	}
-
+#endif
     return;
 }
 
