@@ -39,7 +39,8 @@ SRC_C   := croutine.c \
            timers.c \
            portable/GCC/ARM_CM7/r0p1/port.c \
            portable/MemMang/heap_4.c \
-           CMSIS_RTOS/cmsis_os.c
+           CMSIS_RTOS/cmsis_os.c \
+           ar_freertos_specific.c
 
 
 INCDIRS := -Iinclude \
@@ -83,6 +84,7 @@ install:
 	@cp -f include/queue.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f include/semphr.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f include/event_groups.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f include/ar_freertos_specific.h $(OUTPUT_HEADER_STAGING_DIR)
 
 clean:
 	@echo "Cleaning..."
@@ -100,6 +102,7 @@ clean:
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/queue.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/semphr.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/event_groups.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/ar_freertos_specific.h
 
 .PHONY: all clean install
 #########################################################################

@@ -1,6 +1,8 @@
 #ifndef __HAL_RET_TYPE_H__
 #define __HAL_RET_TYPE_H__
 
+#include <stdint.h>
+
 typedef uint32_t HAL_RET_T;
 
 typedef uint8_t HAL_BOOL_T;

@@ -39,6 +39,8 @@
 #include "md5.h"
 #include "test_localirq.h"
 #include "testhal_dma.h"
+#include "ar_freertos_specific.h"
+
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
@@ -64,7 +66,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         command_readMemory(cmdArray[1]);
     }
 	/* read memory: "read $(address)" */
-    if ((memcmp(cmdArray[0], "malloc", strlen("malloc")) == 0) && (cmdNum == 2))
+    else if ((memcmp(cmdArray[0], "malloc", strlen("malloc")) == 0) && (cmdNum == 2))
     {
         command_malloc(cmdArray[1]);
     }
@@ -443,6 +445,11 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestLocalIrq();
     }
+	if ((memcmp(cmdArray[0], "top", strlen("top")) == 0))
+    {
+		/* like linux busybox top system call */
+        ar_top();
+    }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
         dlog_error("Please use the commands like:");
@@ -525,6 +532,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("NvSetBbRcId <id1> <id2> <id3> <id4> <id5>");
         dlog_error("test_local_irq");
 		dlog_error("malloc <size>");
+		dlog_error("top");
         dlog_output(1000);
     }
 }
