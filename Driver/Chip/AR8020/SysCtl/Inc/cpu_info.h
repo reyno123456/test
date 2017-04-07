@@ -15,6 +15,14 @@ typedef enum
 ENUM_CPU_ID CPUINFO_GetLocalCpuId(void);
 void CPUINFO_ICacheEnable(uint8_t u8_icacheEnable);
 void CPUINFO_DCacheEnable(uint8_t u8_dcacheEnable);
+void CPUINFO_ICacheInvalidate(void);
+void CPUINFO_DCacheInvalidate(void);
+void CPUINFO_DCacheClean(void);
+void CPUINFO_DCacheCleanInvalidate(void);
+void CPUINFO_DCacheInvalidateByAddr(uint32_t *addr, int32_t dsize);
+void CPUINFO_DCacheCleanByAddr(uint32_t *addr, int32_t dsize);
+void CPUINFO_DCacheCleanInvalidateByAddr(uint32_t *addr, int32_t dsize);
+
 
 /* add for dma address and dtcm address convert */
 #define DTCM_START_ADDR                 0x20000000

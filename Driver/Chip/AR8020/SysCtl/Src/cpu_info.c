@@ -49,3 +49,40 @@ void CPUINFO_DCacheEnable(uint8_t u8_dcacheEnable)
     }
 }
 
+void CPUINFO_ICacheInvalidate(void)
+{
+    SCB_InvalidateICache();
+}
+
+void CPUINFO_DCacheInvalidate(void)
+{
+    SCB_InvalidateDCache();
+}
+
+void CPUINFO_DCacheClean(void)
+{
+    SCB_CleanDCache();
+}
+
+void CPUINFO_DCacheCleanInvalidate(void)
+{
+    SCB_CleanInvalidateDCache();
+}
+
+void CPUINFO_DCacheInvalidateByAddr(uint32_t *addr, int32_t dsize)
+{
+    SCB_InvalidateDCache_by_Addr(addr, dsize);
+}
+
+void CPUINFO_DCacheCleanByAddr(uint32_t *addr, int32_t dsize)
+{
+    SCB_CleanDCache_by_Addr(addr, dsize);
+}
+
+void CPUINFO_DCacheCleanInvalidateByAddr(uint32_t *addr, int32_t dsize)
+{
+    SCB_CleanInvalidateDCache_by_Addr(addr, dsize);
+}
+
+
+
