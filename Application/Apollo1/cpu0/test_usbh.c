@@ -1,3 +1,5 @@
+#include <string.h>
+#include <stdlib.h>
 #include "test_usbh.h"
 #include "debuglog.h"
 #include "hal_usb_host.h"
@@ -12,6 +14,7 @@
 /* USB Host Global Variables */
 USBH_BypassVideoCtrl            g_usbhBypassVideoCtrl;
 USBH_AppCtrl                    g_usbhAppCtrl;
+uint8_t                         g_u8ViewUVC = 0;
 
 
 void USBH_USBHostStatus(void const *argument)
@@ -21,6 +24,8 @@ void USBH_USBHostStatus(void const *argument)
     while (1)
     {
         HAL_USB_HostProcess();
+
+        USBH_ProcUVC();
 
         osDelay(10);
     }
@@ -189,5 +194,81 @@ void USB_MainTask(void const *argument)
         }
     }
 }
+
+
+uint8_t  u8_FrameBuff[38400];
+void USBH_ProcUVC(void)
+{
+    STRU_UVC_VIDEO_FRAME_FORMAT     stVideoFrameFormat;
+    uint32_t                        u32_uvcFrameNum;
+    uint16_t                        u16_width;
+    uint16_t                        u16_height;
+    uint32_t                        u32_frameSize;
+    static uint8_t                  s_usbhUVCStarted = 0;
+
+    // if UVC is started
+    if ((HAL_USB_HOST_STATE_READY == HAL_USB_GetHostAppState())&&
+        (HAL_USB_HOST_CLASS_UVC == HAL_USB_CurUsbClassType()))
+    {
+        if (0 == s_usbhUVCStarted)
+        {
+            // get supported formats first
+            HAL_USB_GetVideoFormats(&stVideoFrameFormat);
+
+            // set frame width and height
+            u16_width               = 160;
+            u16_height              = 120;
+
+            // start uvc
+            if (HAL_OK == HAL_USB_StartUVC(u16_width, u16_height, &u32_frameSize))
+            {
+                s_usbhUVCStarted = 1;
+            }
+            else
+            {
+                dlog_error("app start UVC fail");
+            }
+        }
+        else
+        {
+            //get a YUV frame, size should be u16_width * u16_height * 2
+            if (HAL_OK == HAL_USB_GetVideoFrame(u8_FrameBuff, &u32_uvcFrameNum, &u32_frameSize))
+            {
+                #if 1
+                dlog_info("frameNum: %d, frameSize: %d, data: %02x, %02x, %02x, %02x",
+                                            u32_uvcFrameNum,
+                                            u32_frameSize,
+                                            u8_FrameBuff[0],
+                                            u8_FrameBuff[1],
+                                            u8_FrameBuff[2],
+                                            u8_FrameBuff[3]);
+                #endif
+
+                if (g_u8ViewUVC == 1)
+                {
+                    HAL_USB_TransferUVCToGrd(u8_FrameBuff, u32_frameSize);
+                }
+            }
+            else
+            {
+                dlog_error("get video buffer error");
+            }
+        }
+    }
+    else if (HAL_USB_HOST_STATE_DISCONNECT == HAL_USB_GetHostAppState())
+    {
+        s_usbhUVCStarted = 0;
+    }
+}
+
+
+void command_ViewUVC(void)
+{
+    HAL_SRAM_EnableSkyBypassVideo(HAL_SRAM_VIDEO_CHANNEL_1);
+
+    g_u8ViewUVC = 1;
+}
+
+
 
 

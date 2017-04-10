@@ -36,14 +36,14 @@ void SRAM_Ready0IRQHandler(uint32_t u32_vectorNum)
     if (g_u32VideoDisplay == 0)
     {
         SRAM_Ready0Confirm();
-    
+
         return;
     }
-    
+
     if (USBD_OK != USBD_HID_SendReport(&USBD_Device, buff, dataLen, HID_EPIN_VIDEO_ADDR))
     {
         dlog_error("HID0 Send Error!\n");
-    
+
         SRAM_Ready0Confirm();
     }
     else

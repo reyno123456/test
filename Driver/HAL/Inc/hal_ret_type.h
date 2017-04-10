@@ -56,6 +56,11 @@ typedef uint8_t HAL_BOOL_T;
 #define HAL_USB_ERR_BUFF_IS_EMPTY                   (HAL_USB_ERR_MASK | 0x2)
 #define HAL_USB_ERR_DEVICE_BUSY                     (HAL_USB_ERR_MASK | 0x3)
 #define HAL_USB_ERR_DEVICE_NOT_CONGIURED            (HAL_USB_ERR_MASK | 0x4)
+#define HAL_USB_ERR_USBH_UVC_FORMAT_ERROR           (HAL_USB_ERR_MASK | 0x5)
+#define HAL_USB_ERR_USBH_UVC_INVALID_PARAM          (HAL_USB_ERR_MASK | 0x6)
+#define HAL_USB_ERR_USBH_UVC_START_ERROR            (HAL_USB_ERR_MASK | 0x7)
+
+
 
 #define HAL_SPI_ERR_MASK                            (0xA0000)
 #define HAL_SPI_ERR_UNKNOWN                         (HAL_SPI_ERR_MASK | 0x1)

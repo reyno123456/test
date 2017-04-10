@@ -1,9 +1,7 @@
 #include "debuglog.h"
 #include "command.h"
 #include "sys_event.h"
-#include "test_usbh.h"
 #include "hal.h"
-#include "hal_usb_host.h"
 #include "hal_sys_ctl.h"
 #include "hal_uart.h"
 
@@ -21,24 +19,18 @@ void CONSOLE_Init(void)
 int main(void)
 {
     HAL_SYS_CTL_Init(NULL);
-    
+
     /* initialize the uart */
     CONSOLE_Init();
     dlog_info("cpu1 start!!! \n");
-
-    HAL_USB_InitHost(HAL_USB_PORT_1, HAL_USB_HOST_CLASS_UVC);
 
     /* We should never get here as control is now taken by the scheduler */
     for( ;; )
     {
         SYS_EVENT_Process();
 
-        HAL_USB_HostProcess();
-
-        USBH_ProcUVC();
-
         DLOG_Process(NULL);
-      
+
         HAL_Delay(20);
     }
 } 

@@ -23,8 +23,7 @@ static void HAL_USB_SwitchOTGCallback(void* p)
     {
         dlog_info("switch to host");
 
-        HAL_USB_InitHost((ENUM_HAL_USB_PORT)stOTGHostDevSwitch->otg_port_id,
-                          HAL_USB_HOST_CLASS_MSC);
+        HAL_USB_InitHost((ENUM_HAL_USB_PORT)stOTGHostDevSwitch->otg_port_id);
     }
     /* switch to device */
     else if (stOTGHostDevSwitch->otg_state == 0)
@@ -58,8 +57,7 @@ void HAL_USB_InitOTG(ENUM_HAL_USB_PORT e_usbPort)
         }
         else
         {
-            HAL_USB_InitHost(HAL_USB_PORT_0,
-                             HAL_USB_HOST_CLASS_MSC);
+            HAL_USB_InitHost(HAL_USB_PORT_0);
         }
     }
     else
@@ -70,8 +68,7 @@ void HAL_USB_InitOTG(ENUM_HAL_USB_PORT e_usbPort)
         }
         else
         {
-            HAL_USB_InitHost(HAL_USB_PORT_1,
-                             HAL_USB_HOST_CLASS_MSC);
+            HAL_USB_InitHost(HAL_USB_PORT_1);
         }
     }
     

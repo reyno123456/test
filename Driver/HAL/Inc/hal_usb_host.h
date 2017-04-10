@@ -18,6 +18,7 @@ History:
 #include "hal_usb_otg.h"
 
 
+#define HAL_USB_UVC_MAX_FRAME_FORMATS_NUM     20
 
 typedef enum
 {
@@ -31,7 +32,28 @@ typedef enum
 {
     HAL_USB_HOST_CLASS_MSC = 0,
     HAL_USB_HOST_CLASS_UVC,
+    HAL_USB_HOST_CLASS_NONE,
 } ENUM_HAL_USB_HOST_CLASS;
+
+
+typedef enum
+{
+    HAL_UVC_GET_LEN = 0,
+    HAL_UVC_GET_INFO,
+    HAL_UVC_GET_MIN,
+    HAL_UVC_GET_MAX,
+    HAL_UVC_GET_RES,
+    HAL_UVC_GET_DEF,
+} ENUM_HAL_UVC_GET_PARAM_TYPE;
+
+
+typedef struct
+{
+    uint16_t    u16_width[HAL_USB_UVC_MAX_FRAME_FORMATS_NUM];
+    uint16_t    u16_height[HAL_USB_UVC_MAX_FRAME_FORMATS_NUM];
+    uint32_t    u32_sizePerFrame[HAL_USB_UVC_MAX_FRAME_FORMATS_NUM];
+    uint8_t     u8_frameIndex[HAL_USB_UVC_MAX_FRAME_FORMATS_NUM];
+} STRU_UVC_VIDEO_FRAME_FORMAT;
 
 
 /**
@@ -67,15 +89,19 @@ void HAL_USB_HostProcess(void);
 * @retval   void
 * @note  
 */
-void HAL_USB_InitHost(ENUM_HAL_USB_PORT e_usbPort, ENUM_HAL_USB_HOST_CLASS e_usbHostClass);
+void HAL_USB_InitHost(ENUM_HAL_USB_PORT e_usbPort);
 
 /**
 * @brief  start the USB Video for Application use
-* @param  void
+* @param  uint16_t u16_width                  user input frame width
+*               uint16_t u16_height                 user input frame height
+*               uint32_t *u32_frameSize          return the frame size
 * @retval   void
 * @note  
 */
-void HAL_USB_StartUVC(void);
+HAL_RET_T HAL_USB_StartUVC(uint16_t u16_width,
+                           uint16_t u16_height,
+                           uint32_t *u32_frameSize);
 
 /**
 * @brief  get the latest frame buffer
@@ -84,7 +110,27 @@ void HAL_USB_StartUVC(void);
 *               HAL_OK                                      : means successfully get one video frame
 * @note  
 */
-HAL_RET_T HAL_USB_GetVideoFrame(uint8_t *u8_buff);
+HAL_RET_T HAL_USB_GetVideoFrame(uint8_t *u8_buff, uint32_t *u32_frameNum, uint32_t *u32_frameSize);
+
+/**
+* @brief  get the formats this camera support
+* @param  
+* @retval   STRU_UVC_VIDEO_FRAME_FORMAT *stVideoFrameFormat
+* @note  
+*/
+void HAL_USB_GetVideoFormats(STRU_UVC_VIDEO_FRAME_FORMAT *stVideoFrameFormat);
+
+
+/**
+* @brief  get the UVC Porc Unit Control Mask, such as HUE,Backlight, white balance and so on
+* @param  void
+* @retval  void
+* @note  
+*/
+uint32_t HAL_USB_GetUVCProcUnitControls(void);
+
+
+uint32_t HAL_USB_GetUVCExtUnitControls(void);
 
 
 /**
@@ -94,6 +140,11 @@ HAL_RET_T HAL_USB_GetVideoFrame(uint8_t *u8_buff);
 * @note  
 */
 void HAL_USB_EnterUSBHostTestMode(void);
+
+void HAL_USB_TransferUVCToGrd(uint8_t *buff, uint32_t dataLen);
+
+ENUM_HAL_USB_HOST_CLASS HAL_USB_CurUsbClassType(void);
+
 
 
 #endif
