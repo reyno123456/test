@@ -6,6 +6,8 @@
 #include "serial.h"
 #include "reg_map.h"
 #include "cpu_info.h"
+#include "interrupt.h"
+#include "hal_uart.h"
 
 static uint8_t s_u8_dlogServerCpuId = 0xFF;
 
@@ -69,6 +71,7 @@ static char *s_debug_log_input_buf_rd_pos_2 = DEBUG_LOG_INPUT_BUF_HEAD;
 
 static unsigned char s_u8_commandPos;
 static unsigned char s_u8_commandLine[50];
+
 static FUNC_CommandRun s_func_commandRun = NULL;
 
 __attribute__((weak)) ENUM_CPU_ID CPUINFO_GetLocalCpuId(void) 
@@ -84,11 +87,14 @@ __attribute__((weak)) void uart_puts(unsigned char index, const char *s)
 {
 }
 
-__attribute__((weak)) void serial_puts(const char *s)
+__attribute__((weak)) void uart_putFifo(unsigned char index)
 {
 }
 
-__attribute__((weak)) int32_t UART_ClearTflCnt(uint8_t u8_uartCh)
+
+__attribute__((weak)) HAL_RET_T HAL_UART_Init(ENUM_HAL_UART_COMPONENT e_uartComponent, 
+                        ENUM_HAL_UART_BAUDR e_uartBaudr, 
+                        HAL_UART_RxHandle pfun_rxFun)
 {
 }
 
@@ -160,72 +166,61 @@ static unsigned int DLOG_Input(char* buf, unsigned int byte_num)
     return iByte;
 }
 
-static void DLOG_Uart_IrqHandler(uint32_t u32_vectorNum)
+uint32_t DLOG_GetChar(uint8_t *u8_uartRxBuf, uint8_t u8_uartRxLen)
 {
-    char                  c;
-    unsigned int          status;
-    unsigned int          isrType;
-    unsigned int          isrType2;
-    volatile uart_type   *uart_regs = (uart_type *)UART0_BASE;
-
-    status     = uart_regs->LSR;
-    isrType    = uart_regs->IIR_FCR;
-    isrType2   = isrType;
-
-    /* receive data irq, try to get the data */
-    if (UART_IIR_RECEIVEDATA == (isrType & UART_IIR_RECEIVEDATA))
+    uint8_t i = 0;
+    char c = '\r';
+    char u8_commandLine[64] = {0};
+    uint16_t u8_commandPos = 0;
+    while (u8_uartRxLen)
     {
-        if ((status & UART_LSR_DATAREADY) == UART_LSR_DATAREADY)
+        c = *(u8_uartRxBuf + i);
+        /* receive "enter" key */
+        if (c == '\r')
         {
-            c = uart_regs->RBR_THR_DLL;
-            /* receive "enter" key */
-            if (c == '\r')
+            s_u8_commandLine[s_u8_commandPos++] = c;
+            u8_commandLine[u8_commandPos++] = '\n';
+            printf("\r\n");
+            /* if s_u8_commandLine is not empty, go to parse command */
+            if (s_u8_commandPos > 0)
             {
-                uart_putc(DEBUG_LOG_UART_PORT, '\n');
-                s_u8_commandLine[s_u8_commandPos++] = c;
-
-                /* if s_u8_commandLine is not empty, go to parse command */
-                if (s_u8_commandPos > 0)
-                {
-                    DLOG_Input(s_u8_commandLine, s_u8_commandPos);
-                    s_u8_commandPos = 0;
-                    memset(s_u8_commandLine, 0, sizeof(s_u8_commandLine));
-                }
-            }
-            /* receive "backspace" key */
-            else if (c == '\b')
-            {
-                if (s_u8_commandPos > 1)
-                {
-                    s_u8_commandLine[--s_u8_commandPos] = '\0';
-                }
-                uart_putc(DEBUG_LOG_UART_PORT, '\b');
-                uart_putc(DEBUG_LOG_UART_PORT, ' ');
-                uart_putc(DEBUG_LOG_UART_PORT, '\b');
-            }
-            /* receive normal data */
-            else if (s_u8_commandPos < (sizeof(s_u8_commandLine) - 1))
-            {
-                uart_putc(DEBUG_LOG_UART_PORT, c);
-                s_u8_commandLine[s_u8_commandPos++] = c;
+                DLOG_Input(s_u8_commandLine, s_u8_commandPos);
+                s_u8_commandPos = 0;
+                memset(s_u8_commandLine, 0, sizeof(s_u8_commandLine));
             }
         }
+        /* receive "backspace" key */
+        else if (c == '\b')
+        {
+            if (s_u8_commandPos > 1)
+            {
+                s_u8_commandLine[--s_u8_commandPos] = '\0';
+            }
+            u8_commandLine[u8_commandPos++] = '\b';
+            u8_commandLine[u8_commandPos++] = ' ';
+            u8_commandLine[u8_commandPos++] = '\b';
+        }
+        /* receive normal data */
+        else if (s_u8_commandPos < (sizeof(s_u8_commandLine) - 1))
+        {
+            s_u8_commandLine[s_u8_commandPos++] = c;
+            u8_commandLine[u8_commandPos++] = c;
+        }
+
+        i++;
+        u8_uartRxLen--;  
     }
 
-    // TX empty interrupt.
-    if (UART_IIR_THR_EMPTY == (isrType2 & UART_IIR_THR_EMPTY))
-    {
-        UART_ClearTflCnt(u32_vectorNum - UART_INTR0_VECTOR_NUM);
-    }
+    u8_commandLine[i]='\n';
+    printf("%s",u8_commandLine);
 }
 
 static void DLOG_InputCommandInit(void)
 {
     s_u8_commandPos = 0;
     memset(s_u8_commandLine, 0, sizeof(s_u8_commandLine));
-    reg_IrqHandle(UART_INTR0_VECTOR_NUM, DLOG_Uart_IrqHandler, NULL);
-    INTR_NVIC_SetIRQPriority(UART_INTR0_VECTOR_NUM, INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5, INTR_NVIC_PRIORITY_UART0, 0));
-    INTR_NVIC_EnableIRQ(UART_INTR0_VECTOR_NUM);
+    
+    HAL_UART_Init(DEBUG_LOG_UART_PORT, HAL_UART_BAUDR_115200, DLOG_GetChar);
 }
 
 unsigned int DLOG_InputParse(char *buf, unsigned int byte_max)
@@ -531,7 +526,7 @@ unsigned int DLOG_Output(unsigned int byte_num)
             {
                 uart_puts(DEBUG_LOG_UART_PORT, tmp_buf);
                 uart_putc(DEBUG_LOG_UART_PORT, '\r');
-                
+               
                 iByte += tmp_buf_index;
                 
                 *p_src = src;

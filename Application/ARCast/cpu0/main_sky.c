@@ -21,7 +21,7 @@
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
-    serial_init(uart_num, baut_rate);
+    HAL_UART_Init(DEBUG_LOG_UART_PORT, HAL_UART_BAUDR_115200, NULL);
     dlog_init(command_run, DLOG_SERVER_PROCESSOR);
 }
 
@@ -112,8 +112,8 @@ int main(void)
             u32_audioSampleRateTmp=0;
         }
         //HAL_USB_HostProcess();
-		HAL_MP3EncodePcm();
-		SYS_EVENT_Process();
+        HAL_MP3EncodePcm();
+        SYS_EVENT_Process();
         DLOG_Process(NULL);
     }
 } 

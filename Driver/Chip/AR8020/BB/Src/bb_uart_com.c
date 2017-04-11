@@ -7,6 +7,7 @@
 #include "memory_config.h"
 #include "lock.h"
 
+
 static uint8_t header[] = {0xFF, 0x5A, 0xA5};
 static STRU_BBUartComSession g_BBUARTComSessionArray[BB_UART_COM_SESSION_MAX] = {0};
 static uint8_t g_BBUARTComSession0RxBuffer[128] = {0};
@@ -63,130 +64,150 @@ static void BB_UARTComWriteSessionRxBuffer(ENUM_BBUARTCOMSESSIONID session_id, u
     }
 }
 
-static void BB_UARTComPacketDataAnalyze(uint8_t chData)
+uint32_t BB_UARTComPacketDataAnalyze(uint8_t *u8_uartRxBuf, uint8_t u8_uartRxLen)
 {
-    static uint8_t rx_state = BB_UART_COM_RX_HEADER;
-    static uint8_t header_buf[4];
-    static uint8_t header_buf_index = 0;
-    static ENUM_BBUARTCOMSESSIONID session_id = 0;
-    static uint8_t data_length = 0;
-    static uint8_t data_buf[BBCOM_UART_RX_BUF_SIZE];
-    static uint8_t data_buf_index = 0;
-    static uint8_t check_sum = 0;
-
-    //dlog_info("rx_state: %d, chData: 0x%x", rx_state, chData);
-
-    switch (rx_state)
+    uint8_t i = 0;
+    char chData = '\0';
+    uint8_t u8_commandPos = 0;
+    while (u8_uartRxLen)
     {
-    case BB_UART_COM_RX_HEADER:
-        if (chData == header[0])    // Reset flag
-        {
-            header_buf_index = 0;
-            header_buf[header_buf_index++] = chData;
-        }
-        else if (header_buf_index < sizeof(header))    // Get header
-        {
-            header_buf[header_buf_index++] = chData;
+        chData = *(u8_uartRxBuf + i);
 
-            if ((header_buf_index == sizeof(header)) && (memcmp((void *)header, (void *)header_buf, sizeof(header)) == 0))
+        static uint8_t rx_state = BB_UART_COM_RX_HEADER;
+        static uint8_t header_buf[4];
+        static uint8_t header_buf_index = 0;
+        static ENUM_BBUARTCOMSESSIONID session_id = 0;
+        static uint8_t data_length = 0;
+        static uint8_t data_buf[BBCOM_UART_RX_BUF_SIZE];
+        static uint8_t data_buf_index = 0;
+        static uint8_t check_sum = 0;
+
+        //dlog_info("rx_state: %d, chData: 0x%x", rx_state, chData);
+
+        switch (rx_state)
+        {
+        case BB_UART_COM_RX_HEADER:
+            if (chData == header[0])    // Reset flag
             {
-                rx_state = BB_UART_COM_RX_SESSION_ID;
+                header_buf_index = 0;
+                header_buf[header_buf_index++] = chData;
             }
-        }
-        break;
-    case BB_UART_COM_RX_SESSION_ID:
-        session_id = chData;
-        rx_state = BB_UART_COM_RX_DATALENGTH;
-        break;
-    case BB_UART_COM_RX_DATALENGTH:
-        if (chData <= sizeof(data_buf))
-        {
-            data_length = chData;
-            rx_state = BB_UART_COM_RX_DATABUFFER;
-            data_buf_index = 0;
-        }
-        else
-        {
+            else if (header_buf_index < sizeof(header))    // Get header
+            {
+                header_buf[header_buf_index++] = chData;
+
+                if ((header_buf_index == sizeof(header)) && (memcmp((void *)header, (void *)header_buf, sizeof(header)) == 0))
+                {
+                    rx_state = BB_UART_COM_RX_SESSION_ID;
+                }
+            }
+            break;
+        case BB_UART_COM_RX_SESSION_ID:
+            session_id = chData;
+            rx_state = BB_UART_COM_RX_DATALENGTH;
+            break;
+        case BB_UART_COM_RX_DATALENGTH:
+            if (chData <= sizeof(data_buf))
+            {
+                data_length = chData;
+                rx_state = BB_UART_COM_RX_DATABUFFER;
+                data_buf_index = 0;
+            }
+            else
+            {
+                header_buf_index = 0;
+                rx_state = BB_UART_COM_RX_HEADER;
+                dlog_error("BBCom RX data length is too long > %d !", sizeof(data_buf));
+            }
+            break;
+        case BB_UART_COM_RX_DATABUFFER:
+            if (data_buf_index < data_length)
+            {
+                data_buf[data_buf_index++] = chData;
+
+                if (data_buf_index == data_length)
+                {
+                    uint8_t i = 0;
+                    check_sum = 0;
+                    for (i = 0; i < data_length; i++)
+                    {
+                        check_sum += data_buf[i];
+                    }
+
+                    rx_state = BB_UART_COM_RX_CHECKSUM;
+                }
+            }
+            break;
+        case BB_UART_COM_RX_CHECKSUM:
+            if (check_sum == chData)
+            {
+                //dlog_info("Get BB UARTCom session %d data.", session_id);
+                if (session_id < BB_UART_COM_SESSION_MAX)
+                {
+                    BB_UARTComWriteSessionRxBuffer(session_id, data_buf, data_length);
+                }
+            }
+
             header_buf_index = 0;
             rx_state = BB_UART_COM_RX_HEADER;
-            dlog_error("BBCom RX data length is too long > %d !", sizeof(data_buf));
-        }
-        break;
-    case BB_UART_COM_RX_DATABUFFER:
-        if (data_buf_index < data_length)
-        {
-            data_buf[data_buf_index++] = chData;
-
-            if (data_buf_index == data_length)
-            {
-                uint8_t i = 0;
-                check_sum = 0;
-                for (i = 0; i < data_length; i++)
-                {
-                    check_sum += data_buf[i];
-                }
-
-                rx_state = BB_UART_COM_RX_CHECKSUM;
-            }
-        }
-        break;
-    case BB_UART_COM_RX_CHECKSUM:
-        if (check_sum == chData)
-        {
-            //dlog_info("Get BB UARTCom session %d data.", session_id);
-            if (session_id < BB_UART_COM_SESSION_MAX)
-            {
-                BB_UARTComWriteSessionRxBuffer(session_id, data_buf, data_length);
-            }
+            break;
+        default:
+            header_buf_index = 0;
+            rx_state = BB_UART_COM_RX_HEADER;
+            break;
         }
 
-        header_buf_index = 0;
-        rx_state = BB_UART_COM_RX_HEADER;
-        break;
-    default:
-        header_buf_index = 0;
-        rx_state = BB_UART_COM_RX_HEADER;
-        break;
+        i++;
+        u8_uartRxLen--;
     }
 }
-
+#if 0
 static void BB_UARTComUART10IRQHandler(uint32_t u32_vectorNum)
 {
     char                 c;
-    unsigned int         status;
     unsigned int         isrType;
-    unsigned int         isrType2;
 		
     volatile uart_type   *uart_regs = (uart_type *)UART10_BASE;
-    status     = uart_regs->LSR;
     isrType    = uart_regs->IIR_FCR;
-    isrType2   = isrType;	
+
 
     /* receive data irq, try to get the data */
-    if (UART_IIR_RECEIVEDATA == (isrType & UART_IIR_RECEIVEDATA))
+    if (UART_IIR_RECEIVEDATA == (isrType & 0xf))
     {
-        if ((status & UART_LSR_DATAREADY) == UART_LSR_DATAREADY)
+        
+        int i = 14;
+        while (i--)
         {
             c = uart_regs->RBR_THR_DLL;
-            /* receive normal data */
-            BB_UARTComPacketDataAnalyze(c);
+            BB_UARTComPacketDataAnalyze(&c,1);
         }
-    }
-    // TX empty interrupt.
-    if (UART_IIR_THR_EMPTY == (isrType2 & UART_IIR_THR_EMPTY))
-    {
-        UART_ClearTflCnt(10);
-    }  	
-}
 
+    }
+
+    if (UART_IIR_DATATIMEOUT == (isrType & 0xf))
+    {        
+        c = uart_regs->RBR_THR_DLL;
+        BB_UARTComPacketDataAnalyze(&c,1);           
+
+    }
+
+    // TX empty interrupt.
+    if (UART_IIR_THR_EMPTY == (isrType & 0xf))
+    {       
+        uart_putFifo(10);        
+    }
+
+}
+#endif
 void BB_UARTComInit(SYS_Event_Handler session0RcvDataHandler)
 {
     *((lock_type*)(SRAM_MODULE_LOCK_BB_UART_MUTEX_FLAG)) = UNLOCK_STATE;
     *((volatile uint32_t*)(SRAM_MODULE_LOCK_BB_UART_INIT_FLAG)) = 0;
 
     uart_init(BBCOM_UART_INDEX, BBCOM_UART_BAUDRATE);
-    reg_IrqHandle(VIDEO_UART10_INTR_VECTOR_NUM, BB_UARTComUART10IRQHandler, NULL);
-	INTR_NVIC_SetIRQPriority(VIDEO_UART10_INTR_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_VIDEO_UART10,0));
+    reg_IrqHandle(VIDEO_UART10_INTR_VECTOR_NUM, UART_IntrSrvc, NULL);
+    UART_RegisterUserRxHandler(BBCOM_UART_INDEX, BB_UARTComPacketDataAnalyze);
+    INTR_NVIC_SetIRQPriority(VIDEO_UART10_INTR_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_VIDEO_UART10,0));
     INTR_NVIC_EnableIRQ(VIDEO_UART10_INTR_VECTOR_NUM);
 
     // Session 0 is registered by default
@@ -279,7 +300,6 @@ uint8_t BB_UARTComSendMsg(ENUM_BBUARTCOMSESSIONID session_id, uint8_t* data_buf,
     uint8_t iCnt = 0;
     uint8_t check_sum = 0;
     uint8_t iTotalCnt = 0;
-
     if (data_buf == NULL)
     {
         return 0;

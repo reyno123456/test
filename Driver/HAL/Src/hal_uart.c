@@ -9,11 +9,13 @@ History:
         0.0.1    2016/12/20    The initial version of hal_uart.c
 *****************************************************************************/
 
-
-#include "hal_uart.h"
+#include "interrupt.h"
 #include "serial.h"
-#include "debuglog.h"
+
 #include "hal_nvic.h"
+#include "hal_uart.h"
+
+#include "debuglog.h"
 
 
 static const uint32_t s_u32_uartBaudrTbl[] = 
@@ -24,8 +26,9 @@ static const uint32_t s_u32_uartBaudrTbl[] =
                           57600,       // 3
                           115200,      // 4
                           230400,      // 5
-                          380400,      // 6
-                          460800       // 7
+                          256000,      // 6
+                          380400,      // 7
+                          460800       // 8                          
                       };
 
 /**

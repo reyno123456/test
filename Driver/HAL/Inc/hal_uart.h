@@ -41,8 +41,9 @@ typedef enum
     HAL_UART_BAUDR_57600,       // 3
     HAL_UART_BAUDR_115200,      // 4
     HAL_UART_BAUDR_230400,      // 5
-    HAL_UART_BAUDR_380400,      // 6
-    HAL_UART_BAUDR_460800       // 7
+    HAL_UART_BAUDR_256000,      // 6
+    HAL_UART_BAUDR_380400,      // 7
+    HAL_UART_BAUDR_460800       // 8
 } ENUM_HAL_UART_BAUDR;
 
 /**

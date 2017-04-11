@@ -39,7 +39,8 @@ INCDIRS :=  -IInc \
             -I$(TOP_DIR)/Library/Artosyn/SimpleC/Inc \
             -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc \
             -I$(TOP_DIR)/Configure/Include \
-            -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc
+            -I$(TOP_DIR)/Driver/Chip/AR8020/UART/Inc \
+            -I$(OUTPUT_HEADER_STAGING_DIR)
 
 # object file(s)
 OBJ_C   := $(patsubst %.c,%.o,$(SRC_C))

@@ -34,7 +34,6 @@ SRC_S   := start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
     SRC_C   := main_sky.c command.c test_BB.c
-
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)

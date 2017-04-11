@@ -7,8 +7,6 @@
 #include "cmsis_os.h"
 #include "bb_ctrl.h"
 #include "test_BB.h"
-#include "test_h264_encoder.h"
-#include "test_i2c_adv7611.h"
 #include "hal_ret_type.h"
 #include "hal_nvic.h"
 #include "memory_config.h"

@@ -1,16 +1,24 @@
-#include "stddef.h"
-#include "serial.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
 #include "pll_ctrl.h"
 #include "cpu_info.h"
-#include <stdint.h>
+#include "interrupt.h"
+#include "serial.h"
+
+#include "hal_uart.h"
+
+#include "debuglog.h"
+
+
 
 
 //the user CallBack for uart receive data.
 static UART_RxHandler s_pfun_uartUserHandlerTbl[UART_TOTAL_CHANNEL] =  
        { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
-volatile static uint8_t s_u8_uartTflArray[UART_TOTAL_CHANNEL] = 
-                                          {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+volatile static uart_tx s_st_uartTxArray[UART_TOTAL_CHANNEL];
 /*********************************************************
  * Generic UART APIs
  *********************************************************/
@@ -108,37 +116,120 @@ void uart_init(unsigned char index, unsigned int baud_rate)
         uart_regs->DLH_IER = (devisor >> 8) & 0x000000ff;
         uart_regs->RBR_THR_DLL = devisor & 0x000000ff;
         uart_regs->LCR &= ~UART_LCR_DLAB;
-        uart_regs->DLH_IER = 0x3;
+        uart_regs->DLH_IER |= UART_DLH_IER_RX_INT;
     }
+
+    s_st_uartTxArray[index].ps8_uartSendBuff = NULL;
+    s_st_uartTxArray[index].u16_uartSendBuffLentmp = 0;
+    s_st_uartTxArray[index].u16_uartSendBuffLen = 0;
 }
 
-void uart_putc(unsigned char index, char c)
+uint8_t uart_checkoutFifoStatus(unsigned char index)
+{
+    if ((0 == s_st_uartTxArray[index].u16_uartSendBuffLen) && (0 == s_st_uartTxArray[index].u16_uartSendBuffLentmp))
+    {
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
+}
+void uart_putFifo(unsigned char index)
 {
     volatile uart_type *uart_regs;
-    uart_regs = get_uart_type_by_index(index);
+    uart_regs = get_uart_type_by_index(index);   
 
     if (uart_regs != NULL)
     {
-        while (s_u8_uartTflArray[index] >= UART_TFL_MAX)
+        uint16_t u16_sendDataLen = 0;
+        uint32_t u32_clearInterrupt = 0;
+
+        if (s_st_uartTxArray[index].u16_uartSendBuffLen > UART_TFL_MAX)
         {
-            if ((uart_regs->LSR & UART_LSR_THRE) == UART_LSR_THRE)
-            {
-                s_u8_uartTflArray[index] = 0;
+            for (u16_sendDataLen=0; u16_sendDataLen < UART_TFL_MAX; u16_sendDataLen++)
+            {                      
+                uart_regs->RBR_THR_DLL = *(s_st_uartTxArray[index].ps8_uartSendBuff + s_st_uartTxArray[index].u16_uartSendBuffLentmp + u16_sendDataLen);            
             }
+
+            s_st_uartTxArray[index].u16_uartSendBuffLen -= UART_TFL_MAX;
+            s_st_uartTxArray[index].u16_uartSendBuffLentmp += UART_TFL_MAX;
+
         }
-        
-        uart_regs->RBR_THR_DLL = c;
-        s_u8_uartTflArray[index] += 1;
+        else if ((s_st_uartTxArray[index].u16_uartSendBuffLen <= UART_TFL_MAX) && (s_st_uartTxArray[index].u16_uartSendBuffLen > 0))
+        {
+            for (u16_sendDataLen=0; u16_sendDataLen<s_st_uartTxArray[index].u16_uartSendBuffLen; u16_sendDataLen++)
+            {                      
+                uart_regs->RBR_THR_DLL = *(s_st_uartTxArray[index].ps8_uartSendBuff + s_st_uartTxArray[index].u16_uartSendBuffLentmp + u16_sendDataLen);            
+            }
+            s_st_uartTxArray[index].u16_uartSendBuffLentmp += s_st_uartTxArray[index].u16_uartSendBuffLen;
+            s_st_uartTxArray[index].u16_uartSendBuffLen = 0;
+            s_st_uartTxArray[index].ps8_uartSendBuff = NULL;                  
+        }
+        else
+        {            
+            s_st_uartTxArray[index].u16_uartSendBuffLentmp = 0;
+            u32_clearInterrupt = uart_regs->IIR_FCR;
+            uart_regs->DLH_IER &= ~(UART_DLH_IER_TX_INT);
+        }        
+    }
+    else
+    {
+         dlog_error("uart_regs == NULL uart index=%d \n",index);
+    }
+}
+
+static char s_s8_uartchartmp = '\0';
+void uart_putc(unsigned char index, char c)
+{
+
+    
+    while (uart_checkoutFifoStatus(index))
+    {
+        ;
     }
 
+    volatile uart_type *uart_regs;
+    uart_regs = get_uart_type_by_index(index);
+    
+    s_s8_uartchartmp = c;
+
+    if (NULL == uart_regs)
+    {
+        dlog_error("uart_regs == NULL uart index=%d \n",index);
+        return ;        
+    }
+
+    //uart_regs->RBR_THR_DLL = c;
+
+    s_st_uartTxArray[index].u16_uartSendBuffLen = 1;
+    s_st_uartTxArray[index].u16_uartSendBuffLentmp = 0;
+    s_st_uartTxArray[index].ps8_uartSendBuff = &s_s8_uartchartmp;
+
+    uart_regs->DLH_IER |= UART_DLH_IER_TX_INT;
 }
 
 void uart_puts(unsigned char index, const char *s)
 {
-    while (*s)
+    while (uart_checkoutFifoStatus(index))
     {
-        uart_putc(index, *s++);
+        ;
     }
+
+    volatile uart_type *uart_regs;
+    uart_regs = get_uart_type_by_index(index);
+
+    s_st_uartTxArray[index].u16_uartSendBuffLen = strlen(s);
+    s_st_uartTxArray[index].u16_uartSendBuffLentmp = 0;
+    s_st_uartTxArray[index].ps8_uartSendBuff = s;
+
+    if (NULL == uart_regs || (0 == s_st_uartTxArray[index].u16_uartSendBuffLen))
+    {
+        dlog_error("uart_regs = NULL uart index=%d || u16_uartSendBuffLen ==0 \n",index);
+        return ;        
+    }
+
+    uart_regs->DLH_IER |= UART_DLH_IER_TX_INT;
 }
 
 char uart_getc(unsigned char index)
@@ -161,14 +252,13 @@ char uart_getc(unsigned char index)
 * @retval None.
 * @note   None.
 */
+
 void UART_IntrSrvc(uint32_t u32_vectorNum)
 {
-    uint8_t u8_uartRxBuf[64];
+    uint8_t u8_uartRxBuf[50];
     uint8_t u8_uartRxLen = 0;
     uint8_t u8_uartCh;
-    uint32_t u32_uartStatus;
     uint32_t u32_uartIsrType;
-    uint32_t u32_uartIsrType2;
     volatile uart_type   *pst_uartRegs;
 
     if (VIDEO_UART9_INTR_VECTOR_NUM == u32_vectorNum)
@@ -186,24 +276,32 @@ void UART_IntrSrvc(uint32_t u32_vectorNum)
  
     pst_uartRegs = get_uart_type_by_index(u8_uartCh);
 
-    u32_uartStatus = pst_uartRegs->LSR;
     u32_uartIsrType = pst_uartRegs->IIR_FCR;
-    u32_uartIsrType2 = u32_uartIsrType;
 
-    /* receive data irq, try to get the data */
+     /* receive data irq, try to get the data */
     while (UART_IIR_RECEIVEDATA == (u32_uartIsrType & UART_IIR_RECEIVEDATA))
     {
-        if ((u32_uartStatus & UART_LSR_DATAREADY) == UART_LSR_DATAREADY)
+        
+        if (UART_IIR_RECEIVEDATA == (u32_uartIsrType & 0xf))
         {
-            u8_uartRxBuf[u8_uartRxLen] = pst_uartRegs->RBR_THR_DLL;
-            u8_uartRxLen += 1;
+            uint8_t i = UART_RX_FIFOLEN;
+            while (i--)
+            {
+                u8_uartRxBuf[u8_uartRxLen++] = pst_uartRegs->RBR_THR_DLL;
+            }
         }
-        if(u8_uartRxLen >= 64)
+
+        if (UART_IIR_DATATIMEOUT == (u32_uartIsrType & 0xf))
+        {
+
+            u8_uartRxBuf[u8_uartRxLen++] = pst_uartRegs->RBR_THR_DLL;
+        }
+            
+        if(u8_uartRxLen >= 50)
         {
             break;
         }
 
-        u32_uartStatus = pst_uartRegs->LSR;
         u32_uartIsrType = pst_uartRegs->IIR_FCR;
     }
 
@@ -216,11 +314,13 @@ void UART_IntrSrvc(uint32_t u32_vectorNum)
     }
 
     // TX empty interrupt.
-    if (UART_IIR_THR_EMPTY == (u32_uartIsrType2 & UART_IIR_THR_EMPTY))
+    if (UART_IIR_THR_EMPTY == (u32_uartIsrType & 0xf))
     {
-        s_u8_uartTflArray[u8_uartCh] = 0;
+        uart_putFifo(u8_uartCh);                
     }
 }
+
+
 
 /**
 * @brief  register user function for uart recevie data.called in interrupt
@@ -264,60 +364,5 @@ int32_t UART_UnRegisterUserRxHandler(uint8_t u8_uartCh)
     return 0;
 }
 
-/**
-* @brief  clear uart fifo count.
-* @param  u8_uartCh           uart channel, 0 ~ 10.
-* @retval 
-*         -1                  unregister user function failed.
-*         0                   unregister user function sucessed.
-* @note   None.
-*/
-int32_t UART_ClearTflCnt(uint8_t u8_uartCh)
-{
-    if(u8_uartCh < UART_TOTAL_CHANNEL)
-    {
-        s_u8_uartTflArray[u8_uartCh] = 0;
-        return 0;
-    }
-    else
-    {
-        return -1;
-    }
-}
-
-
-
-/*********************************************************
- * Serial(UART0) APIs
- *********************************************************/
-
-static unsigned char g_u8SerialUartIndex = 0xFF;
-void serial_init(unsigned char index, unsigned int baud_rate)
-{
-    uart_init(index, baud_rate);
-    g_u8SerialUartIndex = index;
-}
-
-void serial_putc(char c)
-{
-    if (c == '\n')
-    {
-        uart_putc(g_u8SerialUartIndex, '\r');
-    }
-    uart_putc(g_u8SerialUartIndex, c);
-}
-
-void serial_puts(const char *s)
-{
-    while (*s)
-    {
-        serial_putc(*s++);
-    }
-}
-
-char serial_getc(void)
-{
-    return uart_getc(g_u8SerialUartIndex);
-}
 
 

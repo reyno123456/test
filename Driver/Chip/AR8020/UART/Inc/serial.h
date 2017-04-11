@@ -2,19 +2,19 @@
 #define __UART_H__
 
 #include <stdint.h>
-#include "interrupt.h"
+
 
 /* Private define ------------------------------------------------------------*/
 
 #define UART0_BASE               (0x40500000)
-#define	UART1_BASE               (0x40510000)
-#define	UART2_BASE               (0x40520000)
-#define	UART3_BASE               (0x40530000)
-#define	UART4_BASE               (0x40540000)
-#define	UART5_BASE               (0x40550000)
-#define	UART6_BASE               (0x40560000)
-#define	UART7_BASE               (0x40570000)
-#define	UART8_BASE               (0x40580000)
+#define UART1_BASE               (0x40510000)
+#define UART2_BASE               (0x40520000)
+#define UART3_BASE               (0x40530000)
+#define UART4_BASE               (0x40540000)
+#define UART5_BASE               (0x40550000)
+#define UART6_BASE               (0x40560000)
+#define UART7_BASE               (0x40570000)
+#define UART8_BASE               (0x40580000)
 #define UART9_BASE               (0xA0000000)
 #define UART10_BASE              (0xA0060000) 
 
@@ -28,17 +28,30 @@
 #define UART_LCR_PARITY          (0x08)
 #define UART_LCR_DLAB            (0x80)
 #define UART_LSR_THRE            (0x20)
+#define UART_LSR_TEMT            (0x40)
 #define UART_LSR_DATAREADY       (0x01)
 #define UART_IIR_RECEIVEDATA     (0x04)
+#define UART_IIR_DATATIMEOUT     (0x0C)
 #define UART_IIR_THR_EMPTY       (0x02)
 #define UART_LSR_DR              (0x01)
+#define UART_DLH_IER_TX_INT      (0x02)
+#define UART_DLH_IER_RX_INT      (0x01)
 
 #define UART_TOTAL_CHANNEL       (11)
 #define UART_TFL_MAX             (16)
+#define UART_RX_FIFOLEN          (14)
 
 //user CallBack for uart data receive.
 typedef uint32_t (*UART_RxHandler)(uint8_t *pu8_rxBuf, uint8_t u8_len);
 
+
+
+typedef struct 
+{  
+  uint16_t u16_uartSendBuffLen;  
+  uint16_t u16_uartSendBuffLentmp;
+  const char *ps8_uartSendBuff;
+}uart_tx;
 
 typedef struct 
 {
@@ -78,14 +91,9 @@ typedef struct
 
 void uart_init(unsigned char index, unsigned int baud_rate);
 void uart_putc(unsigned char index, char c);
+void uart_putFifo(unsigned char index);
 void uart_puts(unsigned char index, const char *s);
 char uart_getc(unsigned char index);
-
-void serial_init(unsigned char index, unsigned int baud_rate);
-void serial_putc(char c);
-void serial_puts(const char *s);
-char serial_getc(void);
-void Drv_UART0_IRQHandler(void);
 
 /**
 * @brief  uart interrupt servive function.just handled data reception.  
@@ -117,14 +125,5 @@ int32_t UART_RegisterUserRxHandler(uint8_t u8_uartCh, UART_RxHandler userHandle)
 */
 int32_t UART_UnRegisterUserRxHandler(uint8_t u8_uartCh);
 
-/**
-* @brief  clear uart fifo count.
-* @param  u8_uartCh           uart channel, 0 ~ 10.
-* @retval 
-*         -1                  unregister user function failed.
-*         0                   unregister user function sucessed.
-* @note   None.
-*/
-int32_t UART_ClearTflCnt(uint8_t u8_uartCh);
 
 #endif

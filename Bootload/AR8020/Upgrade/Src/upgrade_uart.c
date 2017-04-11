@@ -1,13 +1,14 @@
 #include <stdint.h>
 #include <string.h>
 
-
+#include "interrupt.h"
 #include "serial.h"
 #include "debuglog.h"
 
 #include "hal_ret_type.h"
 #include "hal_nvic.h"
 #include "hal_norflash.h"
+#include "hal_uart.h"
 
 #include "upgrade_command.h"
 #include "upgrade_core.h"
@@ -83,31 +84,13 @@ static int8_t UPGRADE_MD5SUM(uint32_t u32_addr)
     return 0; 
 }
 
-static void UPGRADE_IRQHandler(uint32_t vectorNum)
+uint32_t Upgrade_GetChar(uint8_t *u8_uartRxBuf, uint8_t u8_uartRxLen)
 {
-    uint32_t          u32_isrType;
-    uint32_t          u32_isrType2;
-    uint32_t          u32_status;
-    volatile uart_type   *uart_regs =(uart_type *)UART0_BASE;
-    u32_status     = uart_regs->LSR;
-    u32_isrType    = uart_regs->IIR_FCR;
-    u32_isrType2       = u32_isrType;
-
-    if (UART_IIR_RECEIVEDATA == (u32_isrType & UART_IIR_RECEIVEDATA))
-    {
-        if ((u32_status & UART_LSR_DATAREADY) == UART_LSR_DATAREADY)
-        {
-            *(g_pDst +g_u32RecCount) = uart_regs->RBR_THR_DLL;        
-            g_u32RecCount++;
-        }
-    }
-
-    // TX empty interrupt.
-    if (UART_IIR_THR_EMPTY == (u32_isrType2 & UART_IIR_THR_EMPTY))
-    {
-        UART_ClearTflCnt(vectorNum - UART_INTR0_VECTOR_NUM);
-    }
+    memcpy(g_pDst,u8_uartRxBuf,u8_uartRxLen);
+    g_u32RecCount += u8_uartRxLen;
+    g_pDst = (char *)(RECEIVE_ADDR+g_u32RecCount);
 }
+
 
 static void UPGRADE_RollbackIsrHandler(void)
 {
@@ -115,22 +98,24 @@ static void UPGRADE_RollbackIsrHandler(void)
 
 static void UPGRADE_UartReceive(void)
 {
-    DLOG_INFO("Nor flash init start ...\n");
-    HAL_NORFLASH_Init();
-    DLOG_INFO("Nor flash end\n");
-    dlog_output(100);
-    uint32_t i=0;
     //sdram init Done
     while(!(SDRAM_INIT_DONE & 0x01))
     {
         ;
     }
-    HAL_NVIC_RegisterHandler(HAL_NVIC_UART_INTR0_VECTOR_NUM, UPGRADE_IRQHandler, NULL);
-    DLOG_INFO("interrupt\n");
     dlog_output(100);
+    UART_RegisterUserRxHandler(DEBUG_LOG_UART_PORT, Upgrade_GetChar);
+    DLOG_INFO("Nor flash init start ...\n");
+    HAL_NORFLASH_Init();
+    DLOG_INFO("Nor flash end\n");    
+    DLOG_INFO("interrupt\n");    
+    uint32_t i=0;
+    uint32_t rec=1024*10;
+    dlog_output(100);
+    
     while((g_u32ImageSize!=g_u32RecCount))
     {
-        if((1 == g_u32RecFlage)&&(g_u32RecCount>100))
+        if((1 == g_u32RecFlage)&&(g_u32RecCount>40))
         {
             uint8_t* p8_sizeAddr = (uint8_t*)(RECEIVE_ADDR+14);
             uint8_t* p8_loadAddr = (uint8_t*)(RECEIVE_ADDR+8);
@@ -142,18 +127,18 @@ static void UPGRADE_UartReceive(void)
             {
                 g_u8Amd5Sum[i]=*(p8_md5Addr+i);
             } 
-            DLOG_INFO("image size %x",g_u32ImageSize);
+            DLOG_INFO("imagesize %x",g_u32ImageSize);
             dlog_output(100);
         }
-        if((0 !=g_u32RecCount) && (0 == g_u32RecCount%10000))
+
+        if(rec < g_u32RecCount)
         {
-            DLOG_INFO("receive data %d\n",g_u32RecCount);
+            DLOG_INFO("rec data %d\n",g_u32RecCount);
+            rec += 1024*10;
             dlog_output(100);
         }
-    }    
-    DLOG_INFO("receive finish %d\n",g_u32RecCount);
-    dlog_output(100);
-    
+    } 
+    g_pDst = (char *)RECEIVE_ADDR;
     UPGRADE_RollbackIsrHandler();
 }
 

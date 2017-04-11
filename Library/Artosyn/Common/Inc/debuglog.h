@@ -1,7 +1,7 @@
 #ifndef DEBUGLOG_H
 #define DEBUGLOG_H
 
-#include<stdio.h>
+#include <stdio.h>
 
 enum
 {
