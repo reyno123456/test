@@ -254,17 +254,17 @@ typedef struct {
 	STRU_LinkListItem *pst_lliMalloc; 
 	ENUM_TransferType e_transferType;
 	ENUM_ChanActive e_transActive;
-
+	uint8_t trans_complete;
 } STRU_transStatus;
-
-volatile extern STRU_DmaRegs *g_st_dmaRegs;
 
 #define IS_CHANNAL_PRIORITY(x) ((x) >= 0 && (x) <= 7)
 #define assert_param(expr) ((expr) ? (void)0 : assert_failed((uint8_t *)__FILE__, __LINE__))
 void assert_failed(uint8_t* file, uint32_t line);
-// int32_t DMA_Init(uint8_t u8_chanPriority);
+
+
+void DMA_initIRQ();
 int32_t DMA_Init(ENUM_Chan u8_channel, uint8_t u8_chanPriority);
 uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_transByteNum, uint8_t u8_chanIndex, ENUM_TransferType e_transType);
-
+uint32_t DMA_getStatus(uint8_t u8_chanIndex);
 
 #endif

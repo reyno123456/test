@@ -20,8 +20,12 @@ History:
 * @retval HAL_OK    means the delay function is well done.
 * @note   This function must be called when the system starts.
 */
+__attribute__((weak)) HAL_RET_T HAL_Delay(uint32_t u32_ms);
 
-HAL_RET_T HAL_Delay(uint32_t u32_ms);
+/**
+* ar_osDelay will be called only linked with os.lib
+*/
+__attribute__((weak)) void ar_osDelay(uint32_t u32_ms);
 
 #endif
 

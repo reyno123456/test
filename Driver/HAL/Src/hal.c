@@ -13,6 +13,7 @@ History:
 #include "systicks.h"
 #include "hal_ret_type.h"
 #include "hal.h"
+#include "dma.h"
 
 /**
 * @brief  The hal delay function.
@@ -22,6 +23,11 @@ History:
 */
 
 HAL_RET_T HAL_Delay(uint32_t u32_ms)
+{
+    ar_osDelay(u32_ms);
+}
+
+__attribute__((weak)) void ar_osDelay(uint32_t u32_ms)
 {
     SysTicks_DelayMS(u32_ms);
 }

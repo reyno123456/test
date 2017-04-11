@@ -1,6 +1,6 @@
 /*****************************************************************************
 Copyright: 2016-2020, Artosyn. Co., Ltd.
-File name: hal_sd.h
+File name: dma.c
 Description: The external HAL APIs to use the SDMMC controller.
 Author: Artosyn Software Team
 Version: 0.0.1
@@ -17,102 +17,88 @@ History:
 #include "memory_config.h"
 #include "cmsis_os.h"
 #include "systicks.h"
+#include <string.h>
+#include "data_type.h"
 
-volatile STRU_DmaRegs *g_st_dmaRegs = (STRU_DmaRegs *)DMA_BASE;
+static volatile STRU_DmaRegs *s_st_dmaRegs = (STRU_DmaRegs *)DMA_BASE;
+static volatile STRU_transStatus s_st_transStatus[8] = {0};
 
-volatile STRU_transStatus g_st_transStatus[8] = {0};
-/**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
+static uint8_t DMA_getChannel(uint32_t data)
+{
+	uint8_t u8_chanIndex;
+	
+	for (u8_chanIndex = 0; u8_chanIndex< DW_DMA_MAX_NR_CHANNELS; u8_chanIndex++)
+	{
+		if (READ_BIT(data, BIT(u8_chanIndex)))
+		{
+			return u8_chanIndex;
+		}
+	}
+
+	return u8_chanIndex;
+}
+
+static void DMA_clearIRQ(uint8_t u8_index)
+{
+	s_st_dmaRegs->CLEAR.TFR = (1 << u8_index);
+}
+
+static void DMA_irqISR(uint32_t vectorNum)
+{
+	uint8_t u8_chanIndex = 0;
+	uint32_t index = 0;
+
+	u8_chanIndex = DMA_getChannel(s_st_dmaRegs->STATUS.TFR);
+	if (u8_chanIndex >= 8)
+	{
+		dlog_error("%d. error\n", __LINE__);
+		return;
+	}
+	
+	switch(s_st_transStatus[u8_chanIndex].e_transferType)
+	{
+		case LINK_LIST_ITEM:
+		{
+			s_st_transStatus[u8_chanIndex].e_transActive = NON_ACTIVE;
+			
+			#ifdef USE_MALLOC_DESC
+				free(s_st_transStatus[u8_chanIndex].pst_lliMalloc);
+			#endif
+			
+			s_st_transStatus[u8_chanIndex].trans_complete = 1;
+			DMA_clearIRQ(u8_chanIndex);
+			s_st_dmaRegs->CH_EN &=~ ((1 << (u8_chanIndex)) | (1 << (u8_chanIndex +8)));
+
+			break;
+		}
+		case AUTO_RELOAD:
+		{
+			s_st_transStatus[u8_chanIndex].u32_transNum--;
+			if (s_st_transStatus[u8_chanIndex].u32_transNum <= 1)
+			{
+				/* disable the channel auto-reload */
+				s_st_dmaRegs->CHAN[u8_chanIndex].CFG_HI = 0x0;
+				s_st_dmaRegs->CHAN[u8_chanIndex].CFG_LO = DWC_CFGL_HS_SRC | DWC_CFGL_HS_DST;
+			}
+			/* clear interrupt */
+			DMA_clearIRQ(u8_chanIndex);
+			break;
+		}
+		default: break;
+	}
+}
+
 void assert_failed(uint8_t* file, uint32_t line)
 {
 	dlog_info("wrong paraments\n");
 }
-
-void DMA_clearIRQ(uint8_t u8_index)
-{
-	g_st_dmaRegs->CLEAR.TFR = (1 << u8_index);
-	g_st_dmaRegs->CLEAR.BLOCK = (1 << u8_index);
-	g_st_dmaRegs->CLEAR.SRCTRAN = (1 << u8_index);
-	g_st_dmaRegs->CLEAR.DSTTRAN = (1 << u8_index);
-	g_st_dmaRegs->CLEAR.ERROR = (1 << u8_index);
-}
-
-void DMA_irqISR(uint32_t vectorNum)
-{
-	uint8_t u8_chanIndex = 0;
-	uint32_t index = 0;
-    // dlog_info("single block transfer completed!\n");
-    
-	g_st_dmaRegs->CHAN[u8_chanIndex].CFG_HI = 0x0;
-	g_st_dmaRegs->CHAN[u8_chanIndex].CFG_LO = DWC_CFGL_HS_SRC | DWC_CFGL_HS_DST;
-						
-	/* clear interrupt */
-	DMA_clearIRQ(u8_chanIndex);
-#if 0
-	for (u8_chanIndex = 0; u8_chanIndex < DW_DMA_MAX_NR_CHANNELS; ++u8_chanIndex)
-	{
-		if (g_st_transStatus[u8_chanIndex].e_transActive == ACTIVE)
-		{
-			switch(g_st_transStatus[u8_chanIndex].e_transferType)
-			{
-				case LINK_LIST_ITEM:
-				{
-					// dlog_info("LINK_LIST_ITEM\n");
-					// if ((g_st_dmaRegs->CH_EN & (1 << u8_chanIndex)) == 0)
-					// {	
-						/* disable the channel */
-						g_st_dmaRegs->CHAN[u8_chanIndex].CFG_HI = 0x0;
-						g_st_dmaRegs->CHAN[u8_chanIndex].CFG_LO = DWC_CFGL_HS_SRC | DWC_CFGL_HS_DST;
-						
-						/* clear interrupt */
-					    DMA_clearIRQ(u8_chanIndex);
-					// }
-					break;
-				}
-				case AUTO_RELOAD:
-				{
-					// dlog_info("AUTO_RELOAD\n");
-					g_st_transStatus[u8_chanIndex].u32_transNum--;
-					if (g_st_transStatus[u8_chanIndex].u32_transNum <= 1)
-					{
-						/* disable the channel auto-reload */
-						// dlog_info("u32_transNum-1 = %d\n", g_st_transStatus[u8_chanIndex].u32_transNum);
-						g_st_dmaRegs->CHAN[u8_chanIndex].CFG_HI = 0x0;
-						g_st_dmaRegs->CHAN[u8_chanIndex].CFG_LO = DWC_CFGL_HS_SRC | DWC_CFGL_HS_DST;
-					}
-					/* clear interrupt */
-					DMA_clearIRQ(u8_chanIndex);
-					break;
-				}
-				default:
-					break;
-			}
-
-			if ((g_st_dmaRegs->CH_EN & (1 << u8_chanIndex)) == 0)
-			{
-				// dlog_info("transfered completed!\n");
-				g_st_transStatus[u8_chanIndex].e_transActive = NON_ACTIVE;
-				break;
-			}
-		}
-
-	}
-#endif
-    return;
-}
-
 
 void DMA_initIRQ()
 {
     /* register the irq handler */
     reg_IrqHandle(DMA_INTR_N_VECTOR_NUM, DMA_irqISR, NULL);
     INTR_NVIC_EnableIRQ(DMA_INTR_N_VECTOR_NUM);
-    INTR_NVIC_SetIRQPriority(DMA_INTR_N_VECTOR_NUM, 1);
+    INTR_NVIC_SetIRQPriority(DMA_INTR_N_VECTOR_NUM, 7);
 }
 
 int32_t DMA_Init(ENUM_Chan u8_channel, uint8_t u8_chanPriority)
@@ -121,30 +107,31 @@ int32_t DMA_Init(ENUM_Chan u8_channel, uint8_t u8_chanPriority)
 	uint8_t u8_inited = 1;
 
 	assert_param(IS_CHANNAL_PRIORITY(u8_chanPriority));
-	DMA_initIRQ();
+	memset((void*)s_st_transStatus, 0, sizeof(s_st_transStatus));
 
 	if (u8_channel == AUTO)
 	{
 		/* find out which channel is idle */
 		for (u8_chanIndex = 0; u8_chanIndex < DW_DMA_MAX_NR_CHANNELS; ++u8_chanIndex)
 		{
-			if ((g_st_dmaRegs->CH_EN & (1 << u8_chanIndex)) == 0)
+			if ((s_st_dmaRegs->CH_EN & (1 << u8_chanIndex)) == 0)
 			{
 				 /* disable the channel */
-				g_st_dmaRegs->CHAN[u8_chanIndex].CFG_HI = 0x0;
-				g_st_dmaRegs->CHAN[u8_chanIndex].CFG_LO = DWC_CFGL_HS_SRC | DWC_CFGL_HS_DST | \
+				s_st_dmaRegs->CHAN[u8_chanIndex].CFG_HI = 0x0;
+				s_st_dmaRegs->CHAN[u8_chanIndex].CFG_LO = DWC_CFGL_HS_SRC | DWC_CFGL_HS_DST | \
 														  (u8_chanPriority << 5);
+
 				/* clear interrupt */
 				DMA_clearIRQ(u8_chanIndex);
 
 				/* set interrupt mask */
-				g_st_dmaRegs->MASK.TFR = ((1 << u8_chanIndex) | (1 << (u8_chanIndex + 8)));
-				g_st_dmaRegs->MASK.BLOCK = ((1 << u8_chanIndex) | (1 << (u8_chanIndex + 8)));
-				g_st_dmaRegs->MASK.ERROR = ((1 << u8_chanIndex) | (1 << (u8_chanIndex + 8)));
-				g_st_dmaRegs->MASK.SRCTRAN = 0x0;
-				g_st_dmaRegs->MASK.DSTTRAN = 0x0;
-
-				g_st_transStatus[u8_chanIndex].e_transActive = ACTIVE;
+				s_st_dmaRegs->MASK.TFR = ((1 << u8_chanIndex) | (1 << (u8_chanIndex + 8)));
+				s_st_dmaRegs->MASK.BLOCK = 0;
+				s_st_dmaRegs->MASK.SRCTRAN = 0;
+				s_st_dmaRegs->MASK.DSTTRAN = 0;
+				s_st_dmaRegs->MASK.ERROR = 0;
+				
+				s_st_transStatus[u8_chanIndex].e_transActive = ACTIVE;
 				u8_inited = 0;
 				break;
 			}
@@ -155,49 +142,43 @@ int32_t DMA_Init(ENUM_Chan u8_channel, uint8_t u8_chanPriority)
 			dlog_error("No channel left for DMA!\n");
 			return -1;
 		}
-		
-		dlog_info("AUTOchan = %d\n", u8_chanIndex);
+
+		s_st_transStatus[u8_chanIndex].trans_complete = 0;
+/* 		dlog_info("AUTOchan = %d\n", u8_chanIndex); */
 		return u8_chanIndex;
 	}
 	else 
 	{
-		if ((g_st_dmaRegs->CH_EN & (1 << u8_channel)) == 0)
+		if ((s_st_dmaRegs->CH_EN & (1 << u8_channel)) == 0)
 		{
 			 /* disable the channel */
-			g_st_dmaRegs->CHAN[u8_channel].CFG_HI = 0x0;
-			g_st_dmaRegs->CHAN[u8_channel].CFG_LO = DWC_CFGL_HS_SRC | DWC_CFGL_HS_DST | \
+			s_st_dmaRegs->CHAN[u8_channel].CFG_HI = 0x0;
+			s_st_dmaRegs->CHAN[u8_channel].CFG_LO = DWC_CFGL_HS_SRC | DWC_CFGL_HS_DST | \
 													  (u8_chanPriority << 5);
 			/* clear interrupt */
 			DMA_clearIRQ(u8_channel);
 
 			/* set interrupt mask */
-			g_st_dmaRegs->MASK.TFR = ((1 << u8_channel) | (1 << (u8_channel + 8)));
-			g_st_dmaRegs->MASK.BLOCK = ((1 << u8_channel) | (1 << (u8_channel + 8)));
-			g_st_dmaRegs->MASK.ERROR = ((1 << u8_channel) | (1 << (u8_channel + 8)));
-			g_st_dmaRegs->MASK.SRCTRAN = 0x0;
-			g_st_dmaRegs->MASK.DSTTRAN = 0x0;
+			s_st_dmaRegs->MASK.TFR = ((1 << u8_channel) | (1 << (u8_channel + 8)));
+			s_st_dmaRegs->MASK.BLOCK = 0;
+			s_st_dmaRegs->MASK.ERROR = 0;
+			s_st_dmaRegs->MASK.SRCTRAN = 0;
+			s_st_dmaRegs->MASK.DSTTRAN = 0;
 
-			g_st_transStatus[u8_channel].e_transActive = ACTIVE;
+			s_st_transStatus[u8_channel].e_transActive = ACTIVE;
 			u8_inited = 0;
 		}
 
 		if ((u8_inited != 0) && (u8_channel >= DW_DMA_MAX_NR_CHANNELS) )
 		{
-			dlog_error("No channel left for DMA!\n");
+			dlog_error("channel %d occupied!\n", u8_channel);
 			return -1;
 		}
 
-		dlog_info("chan = %d\n", u8_channel);
+		s_st_transStatus[u8_chanIndex].trans_complete = 0;
+/* 		dlog_info("selected chanel = %d\n", u8_channel); */
 		return u8_channel;
 	}
-
-	// if ((u8_inited != 0) && (u8_chanIndex >= DW_DMA_MAX_NR_CHANNELS) )
-	// {
-	// 	dlog_error("No channel left for DMA!\n");
-	// 	return -1;
-	// }
-	// dlog_info("chan = %d\n", u8_chanIndex);
-	// return u8_chanIndex;
 }
 
 uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_transByteNum, uint8_t u8_chanIndex, ENUM_TransferType e_transType)
@@ -311,8 +292,9 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
 			#ifdef DMA_DEBUG
 				dlog_info("before malloc, malloc size = %d\n", sizeof(STRU_LinkListItem) * u32_totalBlkNum);
 			#endif
-			STRU_LinkListItem *pst_LinkListItem = (STRU_LinkListItem *)malloc(sizeof(STRU_LinkListItem) * u32_totalBlkNum);
-			if (!pst_LinkListItem)
+			//pst_LinkListItem = (STRU_LinkListItem *)malloc(sizeof(STRU_LinkListItem) * u32_totalBlkNum);
+			s_st_transStatus[u8_chanIndex].pst_lliMalloc = (STRU_LinkListItem *)malloc(sizeof(STRU_LinkListItem) * u32_totalBlkNum);
+			if (!s_st_transStatus[u8_chanIndex].pst_lliMalloc)
 			{
 				dlog_info("Malloc Failed! Exit DMA Transfer\n");
 				return -1;
@@ -320,7 +302,7 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
 			else
 			{
 				#ifdef DMA_DEBUG
-					dlog_info("addr pst_LinkListItem = 0x%08x\n", pst_LinkListItem);
+					dlog_info("addr pst_LinkListItem = 0x%08x\n", s_st_transStatus[u8_chanIndex].pst_lliMalloc);
 				#endif
 			}
 #endif
@@ -328,12 +310,12 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
 			if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId())
 		    {
 		        //SRAM: llp_loc[31:2], store the LLP entry        
-				u32_llpBaseAddr = (((uint32_t)pst_LinkListItem + DTCM_CPU0_DMA_ADDR_OFFSET) );  
+				u32_llpBaseAddr = (((uint32_t)s_st_transStatus[u8_chanIndex].pst_lliMalloc + DTCM_CPU0_DMA_ADDR_OFFSET) );  
 		    }
 		    else if (ENUM_CPU1_ID == CPUINFO_GetLocalCpuId())
 		    {
 		        //SRAM: llp_loc[31:2], store the LLP entry        
-		    	u32_llpBaseAddr = (((uint32_t)pst_LinkListItem + DTCM_CPU1_DMA_ADDR_OFFSET) ); 
+		    	u32_llpBaseAddr = (((uint32_t)s_st_transStatus[u8_chanIndex].pst_lliMalloc + DTCM_CPU1_DMA_ADDR_OFFSET) ); 
 			}
 
 		    u32_llpLOC = u32_llpBaseAddr;
@@ -371,13 +353,13 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
 		                            DWC_CTLH_DONE;
 		        }
 
-		        pst_LinkListItem[u32_blkIndex - 1].sar   = u32_srcAddr;
-		        pst_LinkListItem[u32_blkIndex - 1].dar   = u32_dstAddr;
-		        pst_LinkListItem[u32_blkIndex - 1].ctllo = u32_dataCtlLO;
-		        pst_LinkListItem[u32_blkIndex - 1].ctlhi = u32_dataCtlHI;
+			s_st_transStatus[u8_chanIndex].pst_lliMalloc[u32_blkIndex - 1].sar   = u32_srcAddr;
+			s_st_transStatus[u8_chanIndex].pst_lliMalloc[u32_blkIndex - 1].dar   = u32_dstAddr;
+			s_st_transStatus[u8_chanIndex].pst_lliMalloc[u32_blkIndex - 1].ctllo = u32_dataCtlLO;
+			s_st_transStatus[u8_chanIndex].pst_lliMalloc[u32_blkIndex - 1].ctlhi = u32_dataCtlHI;
 
 		        /* setup the initial LLP */										 
-				g_st_dmaRegs->CHAN[u8_chanIndex].LLP = u32_llpLOC & 0xFFFFFFFC;
+				s_st_dmaRegs->CHAN[u8_chanIndex].LLP = u32_llpLOC & 0xFFFFFFFC;
 
                 if(u32_blkIndex < (u32_totalBlkNum -1)) // belong to block 1st
 		        {
@@ -399,68 +381,39 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
 		        }
 
 				/* setup the next llp baseaddr */
-				pst_LinkListItem[u32_blkIndex - 1].llp   = u32_llpLOC & 0xFFFFFFFC;
+				s_st_transStatus[u8_chanIndex].pst_lliMalloc[u32_blkIndex - 1].llp   = u32_llpLOC & 0xFFFFFFFC;
 		    }
 
-			int i;
 #ifdef DMA_DEBUG
-			for (i = 0; i < u32_totalBlkNum; i++)
+			for (int i = 0; i < u32_totalBlkNum; i++)
 			{
-				dlog_info("item %d, sar = 0x%08x\n", i, pst_LinkListItem[i].sar);
-				dlog_info("item %d, dar = 0x%08x\n", i, pst_LinkListItem[i].dar);
-				dlog_info("item %d, llp = 0x%08x\n", i, pst_LinkListItem[i].llp);
-				dlog_info("item %d, ctllo = 0x%08x\n", i, pst_LinkListItem[i].ctllo);
-				dlog_info("item %d, ctlhi = 0x%08x\n", i, pst_LinkListItem[i].ctlhi);
+				dlog_info("item %d, sar = 0x%08x\n", i, s_st_transStatus[u8_chanIndex].pst_lliMalloc[i].sar);
+				dlog_info("item %d, dar = 0x%08x\n", i, s_st_transStatus[u8_chanIndex].pst_lliMalloc[i].dar);
+				dlog_info("item %d, llp = 0x%08x\n", i, s_st_transStatus[u8_chanIndex].pst_lliMalloc[i].llp);
+				dlog_info("item %d, ctllo = 0x%08x\n", i, s_st_transStatus[u8_chanIndex].pst_lliMalloc[i].ctllo);
+				dlog_info("item %d, ctlhi = 0x%08x\n", i, s_st_transStatus[u8_chanIndex].pst_lliMalloc[i].ctlhi);
 			}
 #endif /* DMA_DEBUG */
 
 		    /* setup the initial CTL */
-		    g_st_dmaRegs->CHAN[u8_chanIndex].CTL_LO = DWC_CTLL_DMS(0x1) | \
+		    s_st_dmaRegs->CHAN[u8_chanIndex].CTL_LO = DWC_CTLL_DMS(0x1) | \
 		    										  DWC_CTLL_INT_EN | \
 		    										  DWC_CTLL_DST_WIDTH(0x2) | DWC_CTLL_SRC_WIDTH(0x2) | \
 		    										  DWC_CTLL_DST_MSIZE(0x1) | DWC_CTLL_SRC_MSIZE(0x1) | \
 		    										  DWC_CTLL_LLP_D_EN | DWC_CTLL_LLP_S_EN;;
-		    g_st_dmaRegs->CHAN[u8_chanIndex].CTL_HI = DW_CH_MAX_BLK_SIZE & DWC_CTLH_BLOCK_TS_MASK |\
+		    s_st_dmaRegs->CHAN[u8_chanIndex].CTL_HI = DW_CH_MAX_BLK_SIZE & DWC_CTLH_BLOCK_TS_MASK |\
 		    										  DWC_CTLH_DONE;
-		    // g_st_dmaRegs->CHAN[u8_chanIndex].LLP    =  (u32_llpBaseAddr << 2);
-			g_st_dmaRegs->CHAN[u8_chanIndex].LLP    =  u32_llpBaseAddr  & 0xFFFFFFFC;
+		    s_st_dmaRegs->CHAN[u8_chanIndex].LLP    =  u32_llpBaseAddr  & 0xFFFFFFFC;
 
-		    /* setup the DmaCfgReg */
-		    g_st_dmaRegs->DMA_CFG = DW_CFG_DMA_EN;
-		    g_st_dmaRegs->CH_EN   = DWC_CH_EN(u8_chanIndex) | DWC_CH_EN_WE(u8_chanIndex);
 
-		    g_st_transStatus[u8_chanIndex].e_transferType = LINK_LIST_ITEM;
-		    g_st_transStatus[u8_chanIndex].u32_transNum = u32_totalBlkNum;
+		    s_st_transStatus[u8_chanIndex].e_transferType = LINK_LIST_ITEM;
+		    s_st_transStatus[u8_chanIndex].u32_transNum = u32_totalBlkNum;
 
-#ifdef DMA_DEBUG
-			i = 0;
-			uint32_t tick_count_old = SysTicks_GetTickCount();
-			uint32_t tick_count_new = 0;
-#endif /* DMA_DEBUG */
-		    while(1)
-		    {
-			    if ((g_st_dmaRegs->CH_EN & (1 << u8_chanIndex)) == 0)
-				{
-#ifdef USE_MALLOC_DESC
-	  				free(pst_LinkListItem);				
-#endif
-					break;
-				}
-				// if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId()) 
-				osDelay(u32_totalBlkNum);
-				i++;
-		    }
+			/* setup the DmaCfgReg */
+			s_st_dmaRegs->DMA_CFG = DW_CFG_DMA_EN;
+			s_st_dmaRegs->CH_EN   = DWC_CH_EN(u8_chanIndex) | DWC_CH_EN_WE(u8_chanIndex);
 
-#ifdef DMA_DEBUG
-			tick_count_new = SysTicks_GetTickCount();
-			if (tick_count_new >= tick_count_old){
-				dlog_info("dma delayed %d ticks\n", tick_count_new - tick_count_old);
-			} else {
-				dlog_info("dma delayed out of range\n");
-			}
-#endif /* DMA_DEBUG */
-
-  			break;
+			break;
 		}
 		case AUTO_RELOAD:
 		{
@@ -468,41 +421,41 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
 			uint32_t u32_reloadNum = u32_transByteNum / u32_blkSize; /* res1 means the block less than 4095*4 */
 		
 		    /* setup the initial CTL */
-		    g_st_dmaRegs->CHAN[u8_chanIndex].CTL_LO = DWC_CTLL_DMS(0x1) | \
+		    s_st_dmaRegs->CHAN[u8_chanIndex].CTL_LO = DWC_CTLL_DMS(0x1) | \
 		    										  DWC_CTLL_INT_EN | \
 		    										  DWC_CTLL_DST_WIDTH(0x2) | DWC_CTLL_SRC_WIDTH(0x2) | \
 		    										  DWC_CTLL_DST_MSIZE(0x1) | DWC_CTLL_SRC_MSIZE(0x1) | \
 		    										  DWC_CTLL_DST_INC | DWC_CTLL_SRC_INC;
-		    g_st_dmaRegs->CHAN[u8_chanIndex].CTL_HI = DW_CH_RELOAD_BLK_SIZE & DWC_CTLH_BLOCK_TS_MASK |\
+		    s_st_dmaRegs->CHAN[u8_chanIndex].CTL_HI = DW_CH_RELOAD_BLK_SIZE & DWC_CTLH_BLOCK_TS_MASK |\
 		    										  DWC_CTLH_DONE;
-		    g_st_dmaRegs->CHAN[u8_chanIndex].SAR    = u32_srcAddr;
-		    g_st_dmaRegs->CHAN[u8_chanIndex].DAR    = u32_dstAddr;
+		    s_st_dmaRegs->CHAN[u8_chanIndex].SAR    = u32_srcAddr;
+		    s_st_dmaRegs->CHAN[u8_chanIndex].DAR    = u32_dstAddr;
 
-		    g_st_dmaRegs->CHAN[u8_chanIndex].LLP    = 0x0;
+		    s_st_dmaRegs->CHAN[u8_chanIndex].LLP    = 0x0;
 
-		    g_st_dmaRegs->CHAN[u8_chanIndex].CFG_HI = 0x0;
+		    s_st_dmaRegs->CHAN[u8_chanIndex].CFG_HI = 0x0;
 
-		    g_st_transStatus[u8_chanIndex].u32_srcTranAddr = u32_srcAddr;
-		    g_st_transStatus[u8_chanIndex].u32_dstTranAddr = u32_dstAddr;
-		    g_st_transStatus[u8_chanIndex].u32_blkSize = u32_blkSize;
+		    s_st_transStatus[u8_chanIndex].u32_srcTranAddr = u32_srcAddr;
+		    s_st_transStatus[u8_chanIndex].u32_dstTranAddr = u32_dstAddr;
+		    s_st_transStatus[u8_chanIndex].u32_blkSize = u32_blkSize;
 
 
 		    if (u32_reloadNum == 1)
 		    {
-				g_st_dmaRegs->CHAN[u8_chanIndex].CFG_LO = DWC_CFGL_HS_SRC | DWC_CFGL_HS_DST;
+				s_st_dmaRegs->CHAN[u8_chanIndex].CFG_LO = DWC_CFGL_HS_SRC | DWC_CFGL_HS_DST;
 		    }
 		    else
 		    {
-				g_st_dmaRegs->CHAN[u8_chanIndex].CFG_LO = DWC_CFGL_RELOAD_SAR | DWC_CFGL_RELOAD_DAR | \
+				s_st_dmaRegs->CHAN[u8_chanIndex].CFG_LO = DWC_CFGL_RELOAD_SAR | DWC_CFGL_RELOAD_DAR | \
 										                  DWC_CFGL_HS_SRC | DWC_CFGL_HS_DST;
 		    }
-		    // g_st_dmaRegs->CHAN[u8_chanIndex].CFG_HI = DWC_CFGH_FCMODE | DWC_CFGH_FIFO_MODE;
-		    g_st_transStatus[u8_chanIndex].e_transferType = AUTO_RELOAD;
-			g_st_transStatus[u8_chanIndex].u32_transNum = u32_reloadNum;
+		    // s_st_dmaRegs->CHAN[u8_chanIndex].CFG_HI = DWC_CFGH_FCMODE | DWC_CFGH_FIFO_MODE;
+		    s_st_transStatus[u8_chanIndex].e_transferType = AUTO_RELOAD;
+			s_st_transStatus[u8_chanIndex].u32_transNum = u32_reloadNum;
 
 		    /* setup the DmaCfgReg */
-		    g_st_dmaRegs->DMA_CFG = DW_CFG_DMA_EN;
-		    g_st_dmaRegs->CH_EN   = DWC_CH_EN(u8_chanIndex) | DWC_CH_EN_WE(u8_chanIndex);
+		    s_st_dmaRegs->DMA_CFG = DW_CFG_DMA_EN;
+		    s_st_dmaRegs->CH_EN   = DWC_CH_EN(u8_chanIndex) | DWC_CH_EN_WE(u8_chanIndex);
 			break;
 		}
 		default:
@@ -511,4 +464,9 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
 		}
 	}
 	return 0;
+}
+
+uint32_t DMA_getStatus(uint8_t u8_chanIndex)
+{
+	return s_st_transStatus[u8_chanIndex].trans_complete;
 }

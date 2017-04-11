@@ -35,7 +35,7 @@ void command_dma(char * u32_src, char *u32_dst, char *u32_byteNum)
     iNum        = command_str2uint(u32_byteNum);
 
 
-    HAL_DMA_Start(iSrcAddr, iDstAddr, iNum, AUTO, LINK_LIST_ITEM);
+    HAL_DMA_Start(iSrcAddr, iDstAddr, iNum, DMA_AUTO, DMA_LINK_LIST_ITEM);
 	
 	/* use to fake the dst data */
 #if 0
@@ -101,9 +101,7 @@ void command_test_dma_loop(char * u32_src, char *u32_dst, char *u32_byteNum)
 	
 	while(1)
 	{
-		dlog_info("output\n");
 		command_dma(u32_src, u32_dst, u32_byteNum);
-		osDelay(500);
 		dlog_info("i = %d\n", i++);
 	}
 }

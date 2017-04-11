@@ -92,6 +92,9 @@ INCDIRS := -IInc \
            -I$(TOP_DIR)/Driver/Board \
            -I$(TOP_DIR)/Driver/Chip/AR8020/MIPI/Inc \
            -I$(TOP_DIR)/Driver/HAL/Inc \
+           -I$(TOP_DIR)/Kernel/FreeRTOS/CMSIS_RTOS \
+           -I$(TOP_DIR)/Kernel/FreeRTOS/include \
+           -I$(TOP_DIR)/Kernel/FreeRTOS/portable/GCC/ARM_CM7/r0p1 \
            -I$(OUTPUT_HEADER_STAGING_DIR)
 
 

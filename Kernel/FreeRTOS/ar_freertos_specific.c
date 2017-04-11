@@ -19,6 +19,9 @@ History:
 #include "FreeRTOS.h"
 #include "task.h"
 #include "debuglog.h"
+#include "hal_ret_type.h"
+#include "cmsis_os.h"
+
 
 #define LOCAL_MAX_TASK_NUM 20
 #define LOCAL_HAL_TIMER 21
@@ -91,3 +94,7 @@ void ar_top(void)
 	return;
 }
 
+void ar_osDelay(uint32_t u32_ms)
+{
+    osDelay(u32_ms);
+}

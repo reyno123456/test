@@ -24,5 +24,6 @@ void rtos_feature_task_traceability_init(void);
 
 /* public for user application */
 void ar_top(void);
+void ar_osDelay(uint32_t u32_ms);
 
 #endif

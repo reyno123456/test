@@ -15,6 +15,8 @@ History:
 #include "hal.h"
 #include "dma.h"
 #include "debuglog.h"
+#include "cmsis_os.h"
+#include "hal_dma.h"
 
 /** 
  * @brief   Start the DMA Transfer
@@ -23,15 +25,32 @@ History:
  * @param   u32_dataLength: The length of data to be transferred from source to destination
  * @return  none
  */
-void HAL_DMA_Start(uint32_t u32_srcAddress, uint32_t u32_dstAddress, uint32_t u32_dataLength, ENUM_Chan u8_channel, ENUM_TransferType e_transType)
+HAL_RET_T HAL_DMA_Start(uint32_t u32_srcAddress, uint32_t u32_dstAddress, uint32_t u32_dataLength, 
+					ENUM_DMA_chan u8_channel, ENUM_DMA_TransferType e_transType)
 {
-    int32_t u32_ret = 0;
-    u32_ret = DMA_Init(u8_channel,7);
-    if (u32_ret < 0)
-    {
-    	dlog_info("No enough Channel for transfer!\n");
-    }
-    DMA_transfer(u32_srcAddress, u32_dstAddress, u32_dataLength, u32_ret, e_transType);
+	static uint32_t flag = 0;
+	if (flag == 0){
+		DMA_initIRQ();
+		flag = 1;
+	}
+	
+	int32_t channel = 0;
+	channel = DMA_Init(u8_channel,7);
+	if (channel < 0)
+	{
+		dlog_info("No enough Channel for transfer!\n");
+		return HAL_FALSE;
+	}  
+	else 
+	{
+		dlog_info("channel = %d\n", channel);
+	}
+
+	DMA_transfer(u32_srcAddress, u32_dstAddress, u32_dataLength, channel, e_transType);
+
+	while( DMA_getStatus(channel)  ==  0)
+	{
+		HAL_Delay(1);
+	}
+	return HAL_TRUE;
 }
-
-

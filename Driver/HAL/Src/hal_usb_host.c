@@ -228,8 +228,8 @@ HAL_RET_T HAL_USB_GetVideoFrame(uint8_t *u8_buff, uint32_t *u32_frameNum, uint32
         HAL_DMA_Start(u32_srcAddr,
                       u32_destAddr,
                       *u32_frameSize,
-                      AUTO,
-                      LINK_LIST_ITEM);
+                      DMA_AUTO,
+                      DMA_LINK_LIST_ITEM);
 
         CPUINFO_DCacheInvalidateByAddr((uint32_t *)u8_buff, *u32_frameSize);
 

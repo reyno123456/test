@@ -19,22 +19,22 @@ History:
 
 /* Flag to identify which channel to be used */
 typedef enum {
-	CHAN0 = 0,
-	CHAN1,
-	CHAN2,
-	CHAN3,
-	CHAN4,
-	CHAN5,
-	CHAN6,
-	CHAN7,
-	AUTO
-} ENUM_Chan;
+	DMA_CHAN0 = 0,
+	DMA_CHAN1,
+	DMA_CHAN2,
+	DMA_CHAN3,
+	DMA_CHAN4,
+	DMA_CHAN5,
+	DMA_CHAN6,
+	DMA_CHAN7,
+	DMA_AUTO
+} ENUM_DMA_chan;
 
 /* Transfer types */
 typedef enum {
-	LINK_LIST_ITEM,
-	AUTO_RELOAD
-} ENUM_TransferType;
+	DMA_LINK_LIST_ITEM,
+	DMA_AUTO_RELOAD
+} ENUM_DMA_TransferType;
 
 /** 
  * @brief   Start the DMA Transfer
@@ -44,7 +44,8 @@ typedef enum {
  * @param   u8_channel: The channel index from 0 to 7
  * @return  none
  */
-void HAL_DMA_Start(uint32_t u32_srcAddress, uint32_t u32_dstAddress, uint32_t u32_dataLength, ENUM_Chan e_channel, ENUM_TransferType e_transType);
-
+HAL_RET_T HAL_DMA_Start(uint32_t u32_srcAddress, uint32_t u32_dstAddress, 
+					uint32_t u32_dataLength,ENUM_DMA_chan e_channel, 
+					ENUM_DMA_TransferType e_transType);
 
 #endif
