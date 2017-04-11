@@ -12,6 +12,10 @@ typedef uint8_t HAL_BOOL_T;
 #define HAL_TRUE                                    (1)
 #define HAL_FALSE                                   (0)
 
+#define HAL_TIME_OUT                                (0xFF)
+#define HAL_BUSY                                    (0xFE)
+
+
 #define HAL_I2C_ERR_MASK                            (0x10000)
 #define HAL_I2C_ERR_UNKNOWN                         (HAL_I2C_ERR_MASK | 0x1)
 #define HAL_I2C_ERR_INIT                            (HAL_I2C_ERR_MASK | 0x2)

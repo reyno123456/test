@@ -42,7 +42,6 @@
 
 
 #define SPI_BASE_CLK_MHZ        (166)
-#define SPI_DEF_TIMEOUT_TICKS   (50)
 #define SPI_TXFLR_MAX           (8)
 #define SPI_RXFLR_MAX           (8)
 #define SPI_MAX_CHANNEL         (8) 
@@ -129,5 +128,10 @@ int32_t SPI_write_read(ENUM_SPI_COMPONENT en_id,
                        uint8_t *ptr_rbuf, uint32_t u32_rsize);
 
 void SPI_IntrSrvc(uint32_t u32_vectorNum);
+
+int SPI_GetBusyStatus(ENUM_SPI_COMPONENT en_id);
+
+int SPI_WaitIdle(ENUM_SPI_COMPONENT en_id, uint32_t timeOut);
+
 
 #endif

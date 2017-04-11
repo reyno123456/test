@@ -38,7 +38,8 @@ static int RF8003s_SPI_WriteReg_internal(uint8_t u8_addr, uint8_t u8_data, uint8
     }
 
     //SPI_master_init(BB_SPI_BASE_IDX, &init);
-    ret = SPI_write_read(BB_SPI_BASE_IDX, wdata, sizeof(wdata), 0, 0); 
+    SPI_write_read(BB_SPI_BASE_IDX, wdata, sizeof(wdata), 0, 0); 
+    ret =  SPI_WaitIdle(BB_SPI_BASE_IDX, BB_SPI_MAX_DELAY);
 
     if(u8_flag)
     {
@@ -70,6 +71,7 @@ static int RF8003s_SPI_ReadReg_internal(uint8_t u8_addr, uint8_t u8_flag)
     SPI_master_init(BB_SPI_BASE_IDX, &init);
  
     SPI_write_read(BB_SPI_BASE_IDX, wdata, sizeof(wdata), &rdata, 1);
+    SPI_WaitIdle(BB_SPI_BASE_IDX, BB_SPI_MAX_DELAY);
 
     BB_SPI_init();
     SPI_master_init(BB_SPI_BASE_IDX, &init);

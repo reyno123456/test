@@ -83,6 +83,7 @@ HAL_RET_T HAL_SPI_MasterInit(ENUM_HAL_SPI_COMPONENT e_spiComponent,
 *         pu8_rdData              The receive buffer pointer to hold the data 
 *                                 in read operation.
 *         u32_rdSize              The receive buffer size in byte.
+*         u32_timeOut             timeout threshold, unit:ms
 * @retval HAL_OK                  means the SPI data write is well done.
 *         HAL_SPI_ERR_WRITE_DATA  means some error happens in the SPI data write.
 *         HAL_SPI_ERR_READ_DATA   means some error happens in the data read.
@@ -94,7 +95,8 @@ HAL_RET_T HAL_SPI_MasterWriteRead(ENUM_HAL_SPI_COMPONENT e_spiComponent,
                                   uint8_t *pu8_wrData,
                                   uint32_t u32_wrSize,
                                   uint8_t *pu8_rdData,
-                                  uint32_t u32_rdSize);
+                                  uint32_t u32_rdSize,
+                                  uint32_t u32_timeOut);
 
 #endif
 

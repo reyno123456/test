@@ -8,7 +8,6 @@
 #include "cmsis_os.h"
 #include "testhal_pwm.h"
 #include "test_hal_uart.h"
-#include "test_hal_spi.h"
 #include "test_hal_i2c_24c256.h"
 #include "test_hal_i2c.h"
 #include "testhal_gpio.h"
@@ -67,18 +66,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     else if (memcmp(cmdArray[0], "test_hal_uart_rx", strlen("test_hal_uart_rx")) == 0)
     {
         command_TestHalUartRx(cmdArray[1]);
-    }
-    else if (memcmp(cmdArray[0], "test_hal_spi_init", strlen("test_hal_spi_init")) == 0)
-    {
-        command_TestHalSpiInit(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4]);
-    }
-    else if (memcmp(cmdArray[0], "test_hal_spi_write", strlen("test_hal_spi_write")) == 0)
-    {
-        command_TestHalSpiTx(cmdArray[1], cmdArray[2], cmdArray[3]);
-    }
-    else if (memcmp(cmdArray[0], "test_hal_spi_read", strlen("test_hal_spi_read")) == 0)
-    {
-        command_TestHalSpiRx(cmdArray[1], cmdArray[2]);
     }
     else if (memcmp(cmdArray[0], "testhal24c256", strlen("testhal24c256")) == 0)
     {
@@ -140,9 +127,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_hal_uart_set_int <ch> <flag>");
         dlog_error("test_hal_uart_tx <ch> <len>");
         dlog_error("test_hal_uart_rx <ch>");
-        dlog_error("test_hal_spi_init <ch> <baudr> <polarity> <phase>");
-        dlog_error("test_hal_spi_write <ch> <addr> <wdata>");
-        dlog_error("test_hal_spi_read <ch> <addr>");
         dlog_error("testhal24c256 <i2c port> <i2c_value>");
         dlog_error("test_hal_i2c_init <ch> <i2c_addr> <speed>");
         dlog_error("test_hal_i2c_write <ch> <subAddr> <subAddrLen> <data> <dataLen>");

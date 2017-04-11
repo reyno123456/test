@@ -42,7 +42,8 @@ void command_TestHalSpiTx(unsigned char *ch,  unsigned char *addr, unsigned char
                              u8_txData,
                              3,
                              NULL,
-                             0);
+                             0,
+                             2);
 }
 
 void command_TestHalSpiRx(unsigned char *ch, unsigned char *addr)
@@ -58,7 +59,8 @@ void command_TestHalSpiRx(unsigned char *ch, unsigned char *addr)
                              u8_txData,
                              3,
                              u8_rxData,
-                             3);
+                             3,
+                             2);
    
     dlog_info("u8_rxData:0x%x 0x%x 0x%x",u8_rxData[0],u8_rxData[1],u8_rxData[2]);
  

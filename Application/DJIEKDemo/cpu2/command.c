@@ -19,19 +19,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
 {
     extern int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2);
     
-    if (memcmp(cmdArray[0], "encoder_dump_brc", strlen("encoder_dump_brc")) == 0)
-    {
-        command_encoder_dump_brc();
-    }
-    else if (memcmp(cmdArray[0], "encoder_update_brc", strlen("encoder_update_brc")) == 0)
-    {
-        command_encoder_update_brc(cmdArray[1]);
-    }
-    else if (memcmp(cmdArray[0], "encoder_update_video_format", strlen("encoder_update_video_format")) == 0)
-    {
-        command_encoder_update_video(cmdArray[1], cmdArray[2], cmdArray[3]);
-    }
-    else if (memcmp(cmdArray[0], "BB_uart10_spi_sel", strlen("BB_uart10_spi_sel")) == 0)
+    if (memcmp(cmdArray[0], "BB_uart10_spi_sel", strlen("BB_uart10_spi_sel")) == 0)
     {
         BB_uart10_spi_sel( strtoul(cmdArray[1], NULL, 0) );
     }
@@ -50,9 +38,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0) 
     {
         dlog_error("Please use commands like:");
-        dlog_error("encoder_dump_brc");
-        dlog_error("encoder_update_brc <br>");
-        dlog_error("encoder_update_video_format <W> <H> <F>");
         dlog_error("BB_uart10_spi_sel <value>");
         dlog_error("command_test_BB_uart");
         dlog_error("BB_add_cmds <type> <param0> <param1> <param2>");

@@ -13,6 +13,8 @@ History:
 #include "debuglog.h"
 #include "hal_nvic.h"
 #include "interrupt.h"
+#include "systicks.h"
+#include "hal.h"
 
 
 /**
@@ -88,6 +90,7 @@ HAL_RET_T HAL_SPI_MasterInit(ENUM_HAL_SPI_COMPONENT e_spiComponent,
 *         pu8_rdData              The receive buffer pointer to hold the data 
 *                                 in read operation.
 *         u32_rdSize              The receive buffer size in byte.
+*         u32_timeOut             timeout threshold, unit:ms
 * @retval HAL_OK                  means the SPI data write is well done.
 *         HAL_SPI_ERR_WRITE_DATA  means some error happens in the SPI data write.
 *         HAL_SPI_ERR_READ_DATA   means some error happens in the data read.
@@ -99,8 +102,12 @@ HAL_RET_T HAL_SPI_MasterWriteRead(ENUM_HAL_SPI_COMPONENT e_spiComponent,
                                   uint8_t *pu8_wrData,
                                   uint32_t u32_wrSize,
                                   uint8_t *pu8_rdData,
-                                  uint32_t u32_rdSize)
+                                  uint32_t u32_rdSize,
+                                  uint32_t u32_timeOut)
+
 {
+    uint32_t start;
+    
     if (e_spiComponent > HAL_SPI_COMPONENT_7)
     {
         return HAL_SPI_ERR_COMPONENT;
@@ -113,12 +120,32 @@ HAL_RET_T HAL_SPI_MasterWriteRead(ENUM_HAL_SPI_COMPONENT e_spiComponent,
     {
         return HAL_SPI_ERR_READ_DATA;
     }
+
+    if (SPI_GetBusyStatus(e_spiComponent))
+    {
+        return HAL_BUSY;
+    }
     
     SPI_write_read((ENUM_SPI_COMPONENT)(e_spiComponent),
                     pu8_wrData,
                     u32_wrSize,
                     pu8_rdData,
                     u32_rdSize);
+
+    if (0 != u32_timeOut)
+    {
+        start = SysTicks_GetTickCount();
+        while (SPI_GetBusyStatus(e_spiComponent))
+        {
+            if ((SysTicks_GetDiff(start, SysTicks_GetTickCount())) >= u32_timeOut)
+            {
+                 return HAL_TIME_OUT;
+            }
+
+            HAL_Delay(1);
+        }
+    }
+    
     return HAL_OK;
 }
 

@@ -27,7 +27,7 @@ uint16_t Test_WbFlashID(uint8_t SPI_BASE_ADDR)
     uint8_t u8Rbuf[6]; 
    // while(1)
     {
-    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8Wdate, 4,u8Rbuf, 2);  
+    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8Wdate, 4,u8Rbuf, 2, MAX_TIEM_MS);  
     }
     device_id |= u8Rbuf[0]<< 8;     //DeviceID: 16bits
     device_id |= u8Rbuf[1];
@@ -47,14 +47,14 @@ void command_WbFlashID(char *SPI_BASE_ADDR)
 void Test_WbFlashCommand (ENUM_SPI_COMPONENT SPI_BASE_ADDR, uint8_t cmd)
 {
     uint8_t u8Wdate = cmd;
-    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR, &u8Wdate, 1, NULL, 0);
+    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR, &u8Wdate, 1, NULL, 0, MAX_TIEM_MS);
 }
 
 uint8_t Test_WbFlashReadReg (ENUM_SPI_COMPONENT SPI_BASE_ADDR, uint8_t cmd)
 {
     uint8_t u8Wdate[] = {cmd, 0};
     uint8_t u8Rbuf[2];
-    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8Wdate, 1,u8Rbuf, 1);
+    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8Wdate, 1,u8Rbuf, 1, MAX_TIEM_MS);
     
     return u8Rbuf[0];
 }
@@ -62,14 +62,14 @@ uint8_t Test_WbFlashReadReg (ENUM_SPI_COMPONENT SPI_BASE_ADDR, uint8_t cmd)
 void Test_WbFlashWriteData (ENUM_SPI_COMPONENT SPI_BASE_ADDR,uint8_t wr_instruc, uint32_t addr, uint8_t data)
 {
     uint8_t u8Wdate[] = {wr_instruc, (addr >>16) & 0x000000FF, (addr >> 8) & 0x000000FF, (addr & 0x000000FF),data};    
-    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8Wdate, sizeof(u8Wdate),NULL, 0);
+    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8Wdate, sizeof(u8Wdate),NULL, 0, MAX_TIEM_MS);
 }
 
 uint8_t Test_WbFlashReadData (ENUM_SPI_COMPONENT SPI_BASE_ADDR,uint8_t rd_instruc, uint32_t addr)
 {
     uint8_t u8Wdate[] = {rd_instruc,  (addr >>16) & 0x000000FF, (addr >> 8) & 0x000000FF,(addr & 0x000000FF), 0x00};
     uint8_t u8Rbuf[5]; 
-    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8Wdate, 4,u8Rbuf, 1);
+    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8Wdate, 4,u8Rbuf, 1, MAX_TIEM_MS);
 
     return u8Rbuf[0] ;
 }
@@ -78,7 +78,7 @@ uint8_t Test_WbBlockErase(ENUM_SPI_COMPONENT SPI_BASE_ADDR, uint8_t cmd, uint32_
 { 
     uint8_t u8Wdate[] = {cmd, (addr >>16) & 0x000000FF, (addr >> 8) & 0x000000FF, (addr & 0x000000FF)}; 
 
-    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8Wdate, sizeof(u8Wdate),NULL, 0);
+    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8Wdate, sizeof(u8Wdate),NULL, 0, MAX_TIEM_MS);
 
 }
 void command_TestWbBlockErase(char *SPI_BASE_ADDR, char *cmd, char *addr)
@@ -313,7 +313,7 @@ void command_TestWbFlashWrite(char *spi_base, char *addr, char *len)
 
     dlog_info("start write data.\n");  
     
-    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR, u8_wrData, u32_len+4, NULL, 0);
+    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR, u8_wrData, u32_len+4, NULL, 0, MAX_TIEM_MS*4);
     
     do{
         u8S1 = Test_WbFlashReadReg(SPI_BASE_ADDR,0x05);   //read status reg1; [0] u8BUSY; [1] u8WEL;
@@ -339,7 +339,7 @@ void command_TestWbFlashWrite(char *spi_base, char *addr, char *len)
     u8_wrData[2] = (u32_addr >> 8) & 0xFF;
     u8_wrData[3] = (u32_addr >> 0) & 0xFF;
 
-    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8_wrData, 4,u8_rdData, u32_len);
+    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8_wrData, 4,u8_rdData, u32_len, MAX_TIEM_MS*4);
 
     do{
         u8S1 = Test_WbFlashReadReg(SPI_BASE_ADDR,0x05);   //read status reg1; [0] u8BUSY; [1] u8WEL;
@@ -460,7 +460,7 @@ void command_TestWbFlashRead(char *spi_base, char *addr, char *len)
     u8_wrData[2] = (u32_addr >> 8) & 0xFF;
     u8_wrData[3] = (u32_addr >> 0) & 0xFF;
 
-    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8_wrData, 4,u8_rdData, u32_len);
+    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8_wrData, 4,u8_rdData, u32_len, MAX_TIEM_MS*4);
     do{
         u8S1 = Test_WbFlashReadReg(SPI_BASE_ADDR,0x05);   //read status reg1; [0] u8BUSY; [1] u8WEL;
         u8BUSY= u8S1 & 0x01;

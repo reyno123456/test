@@ -50,6 +50,7 @@ HAL_RET_T HAL_SYS_CTL_SetCpuClk(uint16_t u16_cpu0cpu1Clk, uint16_t u16_cpu2Clk)
         BB_SPI_init();
         PLLCTRL_SetCoreClk(u16_cpu0cpu1Clk, ENUM_CPU0_ID);
         PLLCTRL_SetCoreClk(u16_cpu2Clk, ENUM_CPU2_ID);
+        HAL_NVIC_DisableIrq(HAL_NVIC_VIDEO_SPI_INTR_BB_VECTOR_NUM);
         return HAL_OK;
     }
     else

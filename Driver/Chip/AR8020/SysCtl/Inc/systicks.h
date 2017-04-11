@@ -14,4 +14,7 @@ void SysTicks_DelayMS(uint32_t msDelay);
 void msleep(uint32_t millisecs);
 void ssleep(uint32_t seconds);
 
+uint32_t SysTicks_GetDiff(uint32_t u32_start, uint32_t u32_end);
+
+
 #endif

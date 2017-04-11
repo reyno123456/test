@@ -110,3 +110,21 @@ void ssleep(uint32_t seconds)
     SysTicks_DelayMS(seconds * 1000);
 }
 
+/**
+  * @brief get time difference.
+  * @note
+  * @retval time difference
+  */
+uint32_t SysTicks_GetDiff(uint32_t u32_start, uint32_t u32_end)
+{
+    if (u32_end >= u32_start)
+    {
+        return (u32_end - u32_start);
+    }
+    else
+    {
+       return ((MAX_SYS_TICK_COUNT - u32_start) + u32_end);
+    }
+}
+
+
