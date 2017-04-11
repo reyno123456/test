@@ -14,7 +14,7 @@ History:
 #include "rf_8003s.h"
 
 
-#define  RF8003S_RF_CLOCKRATE    (2)    //2MHz clockrate
+#define  RF8003S_RF_CLOCKRATE    (1)    //2MHz clockrate
 
 static int RF8003s_SPI_WriteReg_internal(uint8_t u8_addr, uint8_t u8_data, uint8_t u8_flag)
 {
@@ -117,11 +117,14 @@ void RF8003s_init(uint8_t *pu8_regs1, uint8_t *pu8_regs2, STRU_BoardCfg *boardCf
     uint8_t cnt;
 
     BB_SPI_curPageWriteByte(0x01,0x01);             //bypass: SPI change into 8003
-    
-    for (cnt = 0; cnt < boardCfg->u8_rf1RegsCnt; cnt++)
+
+    if ( boardCfg != NULL )
     {
-        const STRU_RF_REG rfReg1 = boardCfg->pstru_rf1Regs[cnt];
-        pu8_regs1[rfReg1.addr] = rfReg1.value;
+        for (cnt = 0; cnt < boardCfg->u8_rf1RegsCnt; cnt++)
+        {
+            STRU_RF_REG rfReg1 = boardCfg->pstru_rf1Regs[cnt];
+            pu8_regs1[rfReg1.addr] = rfReg1.value;
+        }    
     }
 
     for(idx = 0; idx < 128; idx++)
@@ -137,13 +140,13 @@ void RF8003s_init(uint8_t *pu8_regs1, uint8_t *pu8_regs2, STRU_BoardCfg *boardCf
 
     BB_SPI_curPageWriteByte(0x01,0x02);             //SPI change into 8020
     
-    if (boardCfg->u8_rf8003Cnt > 1)
+    if (boardCfg != NULL && boardCfg->u8_rf8003Cnt > 1)
     {
         BB_SPI_curPageWriteByte(0x01,0x03);             //bypass: SPI change into 2rd 8003s
         
         for (cnt = 0; cnt < boardCfg->u8_rf2RegsCnt; cnt++)
         {
-            const STRU_RF_REG rfReg2 = boardCfg->pstru_rf2Regs[cnt];
+            STRU_RF_REG rfReg2 = boardCfg->pstru_rf2Regs[cnt];
             pu8_regs2[rfReg2.addr] = rfReg2.value;
         }
         for(idx = 0; idx < 128; idx++)
@@ -155,7 +158,9 @@ void RF8003s_init(uint8_t *pu8_regs1, uint8_t *pu8_regs2, STRU_BoardCfg *boardCf
             //add patch, reset 8003
             RF8003s_SPI_WriteReg_internal(0x15, 0x51, 0);
             RF8003s_SPI_WriteReg_internal(0x15, 0x50, 0);
-        }   
+        } 
+        
+        BB_SPI_curPageWriteByte(0x01,0x02);             //SPI change into 8020
     }
 }
 

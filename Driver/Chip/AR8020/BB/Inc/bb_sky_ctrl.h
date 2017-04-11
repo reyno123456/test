@@ -50,7 +50,7 @@ void sky_handle_all_spi_cmds(void);
 
 void sky_soft_reset(void);
 
-void sky_search_id_timeout(void);
+void sky_search_id_timeout(uint8_t flag_agc);
 
 static void BB_sky_GatherOSDInfo(void);
 

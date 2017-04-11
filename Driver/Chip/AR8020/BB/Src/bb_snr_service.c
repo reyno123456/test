@@ -354,10 +354,70 @@ uint8_t grd_get_harqCnt( void )
 }
 
 
-void grd_set_txmsg_mcs_change(uint8_t index )
+static uint8_t mcs_registers[][12] = 
 {
+    {0xff, 0xff, 0xff, 0x4c, 0x71, 0x60, 0xff, 0xff, 0xff, 0x29, 0x00, 0x20},  //For mcs 0(BP 1/2),1(BP 1/2),2(QP 1/2), 3(16QAM 1/2)
+    {0xff, 0xf5, 0x00, 0x38, 0x00, 0xC0, 0xff, 0xf1, 0x20, 0x0C, 0x00, 0x20},  //For (BP 2/3), (QP 2/3)
+    {0xff, 0xf5, 0x00, 0x20, 0x00, 0xc0, 0xff, 0xf1, 0x20, 0x06, 0x00, 0x20},  //For mcs 4(64qam, 1/2) AND (16QAM, 2/3)
+    {0x50, 0x02, 0x00, 0x0c, 0x00, 0x00, 0x12, 0x00, 0x60, 0x02, 0x00, 0x00},  //For mcs 5(64qam, 2/3)
+};
+
+
+void grd_set_mcs_registers(ENUM_BB_QAM e_qam, ENUM_BB_LDPC e_ldpc, ENUM_CH_BW e_bw)
+{
+    uint8_t addr = 0x66;
+    uint8_t *regdata;
+    uint8_t cnt;
+
+    if ( e_qam == MOD_64QAM && e_ldpc == LDPC_2_3)
+    {
+        regdata = mcs_registers[3];
+    }
+    else if ( (e_qam == MOD_64QAM && e_ldpc == LDPC_1_2)  || (e_qam == MOD_16QAM && e_ldpc == LDPC_2_3))
+    {
+        regdata = mcs_registers[2];
+    }
+    else if ( (e_qam == MOD_BPSK && e_ldpc == LDPC_2_3)  || (e_qam == MOD_4QAM && e_ldpc == LDPC_2_3))
+    {
+        regdata = mcs_registers[1];
+    }
+    else
+    {
+        regdata = mcs_registers[0];
+    }
+
+    for (cnt = 0; cnt < sizeof(mcs_registers[0]); cnt++)
+    {
+        BB_WriteReg(PAGE1, (addr + cnt), regdata[cnt]);
+    } 
+}
+
+void grd_set_txmsg_mcs_change(uint8_t index)
+{
+    uint8_t addr = 0x66;
+    uint8_t *regdata;
+    uint8_t cnt;
+
     BB_WriteReg(PAGE2, MCS_INDEX_MODE_0, index);
     BB_WriteReg(PAGE2, MCS_INDEX_MODE_1, index +1);
+    
+    if ( index <= 3 )
+    {
+        regdata = mcs_registers[0];
+    }
+    else if( index == 4 )
+    {
+        regdata = mcs_registers[2];
+    }    
+    else if( index == 5 )
+    {
+        regdata = mcs_registers[3];
+    }
+
+    for (cnt = 0; cnt < sizeof(mcs_registers[0]); cnt++)
+    {
+        BB_WriteReg(PAGE1, (addr + cnt), regdata[cnt]);
+    }
 
     dlog_info("MCS2=> 0x%x\n", index);
 }

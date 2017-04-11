@@ -221,17 +221,61 @@ void sky_agc_gain_toggle(void)
 }
 
 
+uint8_t agc_value1[50];
+uint8_t agc_value2[50];
+uint8_t agc_idx = 0;
 void sky_auto_adjust_agc_gain(void)
 {
     uint8_t rx1_gain = BB_ReadReg(PAGE2, AAGC_2_RD);
     uint8_t rx2_gain = BB_ReadReg(PAGE2, AAGC_3_RD);
+    uint8_t i = 0;
 
+    {
+        static int count = 0;
+        if ( count ++ > 500)
+        {
+            count = 0;
+            dlog_info("%x %x", rx1_gain, rx2_gain);
+        }
+    }
+    
+    //average 50 times AGC
+    {
+        if ( agc_idx >= 50)
+        {
+            agc_idx = 0;
+        }
+        agc_value1[agc_idx] = rx1_gain;
+        agc_value2[agc_idx] = rx2_gain;
+        agc_idx ++;
+    }
+
+    {
+        uint16_t sum_1 = 0, sum_2 = 0;
+        for( i = 0 ; i < 50 ; i++)
+        {
+            sum_1 += agc_value1[i];
+            sum_2 += agc_value2[i];
+        }
+        
+        rx1_gain = sum_1 / 50;
+        rx2_gain = sum_2 / 50;
+        
+        {
+            static int count1 = 0;
+            if ( count1 ++ > 500)
+            {
+                count1 = 0;
+                dlog_info("aver: %d %d %x %x", sum_1, sum_2, rx1_gain, rx2_gain);
+            }
+        }        
+    }
     if((rx1_gain >= POWER_GATE)&&(rx2_gain >= POWER_GATE) && en_agcmode != FAR_AGC)
     {
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_FAR);
         BB_WriteReg(PAGE0, AGC_3, AAGC_GAIN_FAR);
         en_agcmode = FAR_AGC;
-        dlog_info("=>F", rx1_gain, rx2_gain);
+        dlog_info("AGC switch =>F 0x%x 0x%x %d", rx1_gain, rx2_gain, en_agcmode);
     }
      
     if( ((rx1_gain < POWER_GATE)&&(rx2_gain < POWER_GATE)) \
@@ -241,7 +285,7 @@ void sky_auto_adjust_agc_gain(void)
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_NEAR);
         BB_WriteReg(PAGE0, AGC_3, AAGC_GAIN_NEAR);
         en_agcmode = NEAR_AGC;
-        dlog_info("=>N", rx1_gain, rx2_gain);
+        dlog_info("AGC switch =>N 0x%x 0x%x %d", rx1_gain, rx2_gain, en_agcmode);
     }
 }
 
@@ -378,19 +422,19 @@ void sky_physical_link_process(void)
                 sky_write_id(p_id);
 
                 context.dev_state = CHECK_ID_MATCH;
-                sky_soft_reset();
                 dlog_info("use auto search id");
             }
             else
             {
                 context.rc_unlock_cnt ++;
+                sky_soft_reset();                
             }
         }
         else if(RC_ID_USE_FLASH_SAVE == (context.u8_idSrcSel)) // read flash 
         {
             if(0 == sky_chk_flash_id_validity()) // flash id ok
             {
-                sky_set_RC_id(context.u8_flashId);
+                sky_set_RC_id((uint8_t *)context.u8_flashId);
                 context.dev_state = CHECK_ID_MATCH;
                 sky_soft_reset();
                 dlog_info("use fixed id");
@@ -422,6 +466,7 @@ void sky_physical_link_process(void)
             sky_handle_all_spi_cmds();            
             GPIO_SetPin(BLUE_LED_GPIO, 0);  //BLUE LED ON
             GPIO_SetPin(RED_LED_GPIO, 1);   //RED LED OFF
+            sky_auto_adjust_agc_gain();     //agc is valid value only when locked
         }
         else
         {
@@ -444,41 +489,38 @@ void sky_physical_link_process(void)
             context.rc_unlock_cnt = 0;
         }
 
-        sky_auto_adjust_agc_gain(); //
     }
     else if(context.dev_state == CHECK_ID_MATCH)
     {
-        /*if( context.freq_band == RF_5G)
+        context.locked = sky_id_match();
+        if(context.locked)
         {
-            //For test, do nothing when 5G
-        }
-        else*/
-        {
-            context.locked = sky_id_match();
-            if(context.locked)
+            if(context.rc_skip_freq_mode == AUTO)
             {
-                if(context.rc_skip_freq_mode == AUTO)
-                {
-                    sky_rc_hopfreq();
-                }
+                sky_rc_hopfreq();
+            }
 
-                context.rc_unlock_cnt = 0;
-                context.dev_state = ID_MATCH_LOCK;
-            }
-            else
-            {
-                context.rc_unlock_cnt++;
-                sky_soft_reset();
-            }
+            context.rc_unlock_cnt = 0;
+            context.dev_state = ID_MATCH_LOCK;
+            sky_auto_adjust_agc_gain();     //agc is valid value only when locked            
+        }
+        else
+        {
+            context.rc_unlock_cnt++;
+            sky_soft_reset();
         }
     }
-    
-    if(context.rc_unlock_cnt > 40 //560ms unlock
-       && (context.dev_state == SEARCH_ID || context.dev_state == CHECK_ID_MATCH))  
+
+    if( context.rc_unlock_cnt > 40 && context.dev_state == SEARCH_ID )
     {
         context.rc_unlock_cnt = 0;
-        sky_search_id_timeout();
-    }    
+        sky_search_id_timeout( 1 );
+    }
+    else if( context.rc_unlock_cnt > 40 && context.dev_state == CHECK_ID_MATCH )
+    {
+        context.rc_unlock_cnt = 0;
+        sky_search_id_timeout( 0 );
+    }
 }
 
 void sky_id_search_init(void)
@@ -572,14 +614,17 @@ int sky_search_id_timeout_irq_disable()
 }
 
 
-void sky_search_id_timeout(void)
+void sky_search_id_timeout(uint8_t flag_agc)
 {
     if(context.rc_skip_freq_mode == AUTO)
     {
         sky_rc_hopfreq();
     }
 
-    sky_agc_gain_toggle();
+    if ( flag_agc )
+    {
+        sky_agc_gain_toggle();
+    }
     sky_soft_reset();
 }
 
@@ -603,7 +648,7 @@ void Sky_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
     }
     else
     {
-        sky_search_id_timeout();
+        sky_search_id_timeout( 1 );
         Timer1_Delay2_Cnt = 0;
     }
 
@@ -1140,7 +1185,7 @@ static int32_t sky_chk_flash_id_validity(void)
 {
     uint8_t u8_chk = 0;
    
-    cal_chk_sum(&(context.u8_flashId[0]), 5, &u8_chk);
+    cal_chk_sum((uint8_t *)&(context.u8_flashId[0]), 5, &u8_chk);
     
     if (u8_chk == (context.u8_flashId[5])) // data is valid,use flash save id
     {

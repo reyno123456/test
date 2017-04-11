@@ -62,7 +62,7 @@ void BB_GRD_start(void)
     GPIO_SetPin(RED_LED_GPIO, 0);   //RED LED ON
     GPIO_SetPin(BLUE_LED_GPIO, 1);  //BLUE LED OFF
     
-    BB_Grd_SetRCId(context.u8_flashId);
+    BB_Grd_SetRCId((uint8_t*)(context.u8_flashId));
     Grd_Timer2_6_Init();
     Grd_Timer2_7_Init();
 
@@ -71,6 +71,7 @@ void BB_GRD_start(void)
     //do not notify sky until sweep end and get the best channel from sweep result
     context.cur_IT_ch = 0;
     BB_set_ITfrq(context.freq_band, 0);
+    BB_grd_notify_it_skip_freq(context.freq_band, 1); 
 
     BB_SweepStart(context.freq_band, context.CH_bandwidth);
 
@@ -144,16 +145,17 @@ void grd_fec_judge(void)
         {
             if (context.fec_unlock_cnt ++ > 20 )
             {
-                uint8_t bestch, optch;
-                if( BB_selectBestCh(SELECT_MAIN_OPT, &bestch, &optch, 0) )
+                if( context.it_skip_freq_mode == AUTO )
                 {
-                    if( context.it_skip_freq_mode == AUTO )
+                    uint8_t mainch, optch;
+                    if (BB_selectBestCh(SELECT_MAIN_OPT, &mainch, &optch, (uint8_t *)NULL, 0))
                     {
-                        context.cur_IT_ch = bestch;
-                        BB_set_ITfrq(context.freq_band, context.cur_IT_ch);
+                        context.cur_IT_ch  = mainch;
+                        BB_Sweep_updateCh(mainch);
+                        BB_set_ITfrq(context.freq_band, mainch);
+                        //dlog_info("Select %d %d", mainch, optch);
                         BB_grd_notify_it_skip_freq(context.freq_band, context.cur_IT_ch);                    
                     }
-                    dlog_info("BestCh %d %d \n", bestch, optch);
                 }
                 context.fec_unlock_cnt = 0;
             }
@@ -192,13 +194,14 @@ void grd_fec_judge(void)
                 context.fec_unlock_cnt = 0;
                 if(context.it_skip_freq_mode == AUTO)
                 {
-                    uint8_t bestch = context.cur_IT_ch, optch;
-                    BB_selectBestCh(CHANGE_MAIN, &bestch, &optch, 0);
-                    
-                    context.cur_IT_ch = bestch;
-                    BB_set_ITfrq(context.freq_band, context.cur_IT_ch);
+                    uint8_t mainch, optch;
+                    BB_selectBestCh(SELECT_MAIN_OPT, &mainch, &optch, NULL, 0);
+
+                    context.cur_IT_ch  = mainch;
+                    BB_Sweep_updateCh(mainch);
+                    BB_set_ITfrq(context.freq_band, mainch);
                     BB_grd_notify_it_skip_freq(context.freq_band, context.cur_IT_ch);
-                    dlog_info("unlock: select channel %d %d", bestch, optch);
+                    dlog_info("unlock: select channel %d %d", mainch, optch);
                 }
 
                 if(context.qam_skip_mode == AUTO)
@@ -298,10 +301,10 @@ int grd_freq_skip_pre_judge(void)
 
     if (Harqcnt >= 7 && Harqcnt1 >= 7)      //check LDPC error
     {
-        dlog_info("Harq>7");
+        dlog_info("Harq: %d %d", Harqcnt, Harqcnt1);
         flag = 0;
     }
-    else if (Harqcnt >= 2 && Harqcnt1 >= 2) //check snr.
+    else if (Harqcnt >= 3 && Harqcnt1 >= 3) //check snr.
     {
         flag = grd_check_piecewiseSnrPass(1, snr_skip_threshold[context.qam_ldpc]);
         if ( 1 == flag ) //snr pass
@@ -314,28 +317,27 @@ int grd_freq_skip_pre_judge(void)
         return 0;
     }
 
-    //reselect the main and opt channel excluding current VT channel
-    bestch = context.cur_IT_ch;
-    BB_selectBestCh(CHANGE_MAIN, &bestch, &optch, 1);
-    int16_t cmp = compare_chNoisePower(context.cur_IT_ch, bestch, &aver, &fluct );
-    //dlog_info("ch Noise cmp: %d %d\n", cmp, aver);
-    
-    if( aver >= 2 ) //next channel is better than current channel
+    optch = get_opt_channel();
+    int16_t cmp = compare_chNoisePower(context.cur_IT_ch, optch, &aver, &fluct, 1);
+    dlog_info("cmp:(%d:%d) rst:(%d %d) \n", context.cur_IT_ch, optch, aver, fluct);
+    if( (aver >= 20) || ( aver > 15 && fluct > 10 ) ) //next channel is better than current channel
     {
         if( 0 == flag ) //already Fail
         {
             reset_it_span_cnt( );
-            context.cur_IT_ch  = bestch;
-            context.next_IT_ch = optch;
+            context.cur_IT_ch  = optch;
+            BB_Sweep_updateCh( context.cur_IT_ch );
+
             BB_grd_notify_it_skip_freq(context.freq_band, context.cur_IT_ch);
-            dlog_info("Set Ch:%d %d %d %x\n", 
+            
+            dlog_info("Set Ch0:%d %d %d %x\n", 
                        context.cur_IT_ch, context.cycle_count, ((BB_ReadReg(PAGE2, FEC_5_RD)& 0xF0) >> 4), grd_get_it_snr());
             context.dev_state = DELAY_14MS;
 			return 0;
         }
         else
         {
-            context.next_IT_ch = bestch;
+            context.next_IT_ch = optch;
             return 1;  //need to check in the next 1.25ms
         }
     }
@@ -359,8 +361,9 @@ void grd_freq_skip_post_judge(void)
         {
             reset_it_span_cnt( );
             context.cur_IT_ch = context.next_IT_ch;
+            BB_Sweep_updateCh( context.cur_IT_ch );
             BB_grd_notify_it_skip_freq(context.freq_band, context.cur_IT_ch);
-            dlog_info("Set Ch:%d %d %d %x\n", context.cur_IT_ch, context.cycle_count, 
+            dlog_info("Set Ch1:%d %d %d %x\n", context.cur_IT_ch, context.cycle_count, 
                                              ((BB_ReadReg(PAGE2, FEC_5_RD)& 0xF0) >> 4), grd_get_it_snr());
         }
 
@@ -440,6 +443,7 @@ void wimax_vsoc_tx_isr(uint32_t u32_vectorNum)
         TIM_StartTimer(grd_timer2_6);
         INTR_NVIC_EnableIRQ(TIMER_INTR26_VECTOR_NUM);
     }
+    context.cycle_count ++;
 }
 
 void Grd_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
@@ -466,6 +470,8 @@ void Grd_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
 	Timer1_Delay1_Cnt = 0;
 }
 
+uint8_t agc_level_max[50];
+uint8_t agc_idx = 0;
 void Grd_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
 {
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
@@ -481,7 +487,7 @@ void Grd_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
     switch (Timer1_Delay1_Cnt)
     {
         case 0:
-            BB_DoSweep();
+            BB_GetSweepResult( 0 );            
             Timer1_Delay1_Cnt++;
             break;
 
@@ -494,6 +500,27 @@ void Grd_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
             if(context.rc_skip_freq_mode == AUTO)
             {
                 grd_rc_hopfreq();
+            }
+            if ( context.locked )
+            {
+                uint8_t  agc1, agc2;
+                uint8_t  cnt = 0;
+                uint16_t agcsum = 0;
+                if ( agc_idx > sizeof(agc_level_max) )
+                {
+                    agc_idx = 0;
+                }                
+
+                agc1 = BB_ReadReg(PAGE2, AAGC_2_RD);
+                agc2 = BB_ReadReg(PAGE2, AAGC_3_RD);
+                agc_level_max[agc_idx] = (agc1 > agc2) ? agc1 : agc2;
+                agc_idx ++;
+                for(; cnt < sizeof(agc_level_max); cnt++ )
+                {
+                    agcsum += agc_level_max[cnt];
+                }
+
+                context.agclevel = agcsum / sizeof(agc_level_max);
             }
 
             if ( context.flag_updateRc > 0 )
@@ -716,6 +743,8 @@ static void grd_handle_CH_qam_cmd(ENUM_BB_QAM qam)
         BB_WriteReg(PAGE2, RF_CH_QAM_CHANGE_1, 0xc0 | (uint8_t)qam + 1);       
 
         context.qam_mode = qam; 
+        context.ldpc = grd_get_IT_LDPC();   
+        grd_set_mcs_registers(context.qam_mode, context.ldpc, context.CH_bandwidth);
     }
 
     dlog_info("CH_QAM =%d", context.qam_mode);    
@@ -728,6 +757,9 @@ void grd_handle_CH_ldpc_cmd(ENUM_BB_LDPC e_ldpc)
         BB_WriteReg(PAGE2, RF_CH_LDPC_CHANGE_0, e_ldpc);
         BB_WriteReg(PAGE2, RF_CH_LDPC_CHANGE_1, e_ldpc +1);
         context.ldpc = e_ldpc;
+        context.qam_mode = grd_get_IT_QAM();
+
+        grd_set_mcs_registers(context.qam_mode, context.ldpc, context.CH_bandwidth);
     }
     dlog_info("CH_LDPC =%d", context.ldpc);
 }
@@ -916,34 +948,31 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
         switch(item)
         {
             case MCS_MODE_SELECT:
+            {
                 grd_handle_brc_mode_cmd( (ENUM_RUN_MODE)value);
                 grd_handle_MCS_mode_cmd( (ENUM_RUN_MODE)value);
-
+                
                 //For osd information
                 if ( context.brc_mode == MANUAL)
                 {
                     context.brc_bps[0] = BB_get_bitrateByMcs(context.qam_ldpc);
                     context.brc_bps[1] = BB_get_bitrateByMcs(context.qam_ldpc);                
                 }
-        
-                break;
+            }
+    
+            break;
 
             case MCS_MODULATION_SELECT:
-                {
-                    #if 0
-                    ENUM_BB_LDPC ldpc = (ENUM_BB_LDPC)(value&0x0f);
-                    ENUM_BB_QAM  qam  = (ENUM_BB_QAM)((value >> 4)&0x0f);
-                    grd_handle_MCS_cmd(qam, ldpc);
-                    #endif
-                    grd_set_txmsg_mcs_change(value);
-                }
-                break;
+            {
+                grd_set_txmsg_mcs_change(value);
+            }
+            break;
 
             case MCS_CODE_RATE_SELECT:
-                {
-                    //grd_set_txmsg_ldpc(value);
-                    break;
-                }
+            {
+                //grd_set_txmsg_ldpc(value);
+                break;
+            }
             case MCS_IT_QAM_SELECT:
             {
                 grd_handle_CH_qam_cmd((ENUM_BB_QAM)value);
@@ -1085,7 +1114,7 @@ static void BB_grd_GatherOSDInfo(void)
     osdptr->head = 0xff; //starting writing
     osdptr->tail = 0x00;
 
-    osdptr->IT_channel = context.cur_IT_ch;
+    //osdptr->IT_channel = context.cur_IT_ch;
 
     osdptr->agc_value[0] = BB_ReadReg(PAGE2, AAGC_2_RD);
     osdptr->agc_value[1] = BB_ReadReg(PAGE2, AAGC_3_RD);
@@ -1144,7 +1173,7 @@ static void BB_grd_GatherOSDInfo(void)
     osdptr->rc_code_rate       = (u8_data >> 0) & 0x01;
     osdptr->ch_bandwidth    = context.CH_bandwidth;         
     osdptr->in_debug        = context.u8_debugMode;
-    osdptr->lock_status     = BB_ReadReg(PAGE2, FEC_5_RD);
+    osdptr->lock_status     = ( osdptr->lock_status & 0xf0) | (BB_ReadReg(PAGE2, FEC_5_RD) & 0x0f);
     memset(osdptr->sweep_energy, 0, sizeof(osdptr->sweep_energy));
     BB_GetSweepNoise(0, osdptr->sweep_energy);
 

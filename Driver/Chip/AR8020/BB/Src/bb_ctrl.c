@@ -22,8 +22,8 @@
 #define     VSOC_GLOBAL2_BASE   (0xA0030000)
 #define     BB_SPI_UART_SEL     (0x9c)
 
-CONTEXT context;
-static ENUM_REG_PAGES en_curPage;
+volatile CONTEXT context;
+static volatile ENUM_REG_PAGES en_curPage;
 
 const STRU_FRQ_CHANNEL Rc_frq[MAX_2G_RC_FRQ_SIZE] =     // 2.4G
 {
@@ -82,32 +82,22 @@ const STRU_FRQ_CHANNEL Sweep_frq[ MAX_2G_IT_FRQ_SIZE ] = {
 };
 
 
-const STRU_FRQ_CHANNEL It_frq[MAX_2G_IT_FRQ_SIZE * 2 -1] = {     //2.4G
-#if 1
+const STRU_FRQ_CHANNEL It_frq[MAX_2G_IT_FRQ_SIZE ] = {     //2.4G
     {0x33, 0x33, 0x33, 0x50},   //2406
-    {0xDD, 0xDD, 0x5D, 0x50},   //2411
+    //{0xDD, 0xDD, 0x5D, 0x50},   //2411
     {0x88, 0x88, 0x88, 0x50},   //2416
-    {0x33, 0x33, 0xB3, 0x50},   //2421
+    //{0x33, 0x33, 0xB3, 0x50},   //2421
     {0xDD, 0xDD, 0xDD, 0x50},   //2426
-    {0x88, 0x88, 0x08, 0x51},   //2431
+    //{0x88, 0x88, 0x08, 0x51},   //2431
     {0x33, 0x33, 0x33, 0x51},   //2436
-    {0xDD, 0xDD, 0x5D, 0x51},   //2441
+    //{0xDD, 0xDD, 0x5D, 0x51},   //2441
     {0x88, 0x88, 0x88, 0x51},   //2446
-    {0x33, 0x33, 0xB3, 0x51},   //2451
+    //{0x33, 0x33, 0xB3, 0x51},   //2451
     {0xDD, 0xDD, 0xDD, 0x51},   //2456
-    {0x88, 0x88, 0x08, 0x52},   //2461
+    //{0x88, 0x88, 0x08, 0x52},   //2461
     {0x33, 0x33, 0x33, 0x52},   //2466
-    {0xDD, 0xDD, 0x5D, 0x52},   //2471
+    //{0xDD, 0xDD, 0x5D, 0x52},   //2471
     {0x88, 0x88, 0x88, 0x52}    //2476
-#else
-    {0x55, 0x55, 0x55, 0x53},
-    {0x00, 0x00, 0x80, 0x53},
-    {0xAA, 0xAA, 0xAA, 0x53},
-    {0x55, 0x55, 0xD5, 0x53},
-    {0x00, 0x00, 0x00, 0x54},
-    {0xAA, 0xAA, 0x2A, 0x54},
-    {0x55, 0x55, 0x55, 0x54}
-#endif
 };
 
 
@@ -218,9 +208,9 @@ int BB_softReset(ENUM_BB_MODE en_mode)
 
 void BB_use_param_setting(PARAM *user_setting)
 {
-    memcpy(context.id, user_setting->rc_id.id1, 5);
-    memcpy(context.rc_mask, user_setting->user_param.rc_mask, sizeof(context.rc_mask));
-    memcpy(context.it_mask, user_setting->user_param.it_mask, sizeof(context.it_mask));
+    memcpy((uint8_t*)(context.id), user_setting->rc_id.id1, 5);
+    memcpy((uint8_t*)(context.rc_mask), user_setting->user_param.rc_mask, sizeof(context.rc_mask));
+    memcpy((uint8_t*)(context.it_mask), user_setting->user_param.it_mask, sizeof(context.it_mask));
     
     memcpy( (uint8_t *)((void *)(context.qam_threshold_range)),
             (uint8_t *)((void *)(user_setting->user_param.qam_change_threshold)),
@@ -1314,7 +1304,7 @@ static void BB_GetNv(void)
         while((tmpCnt++) < 200);
     }
     
-    memcpy(context.u8_flashId, (void *)(pst_nv->st_nvDataUpd.u8_nvBbRcId), 5);
+    memcpy((uint8_t*)(context.u8_flashId), (void *)(pst_nv->st_nvDataUpd.u8_nvBbRcId), 5);
     context.u8_flashId[5] = pst_nv->st_nvDataUpd.u8_nvChk;
 
     if(TRUE != (pst_nv->st_nvMng.u8_nvVld)) // 

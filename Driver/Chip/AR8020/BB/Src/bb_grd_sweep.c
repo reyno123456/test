@@ -14,49 +14,48 @@
 
 #define BW_20M_VALID_1_5M_CH_START      (8)
 
-#define SWEEP_FREQ_BLOCK_ROWS           (9)
+#define SWEEP_FREQ_BLOCK_ROWS           (6)
 
 #define BW_10M_VALID_CH_CNT             (MAX_1_5M_CH - BW_10M_VALID_1_5M_CH_START + 1)
 #define BW_20M_VALID_CH_CNT             (MAX_1_5M_CH - BW_20M_VALID_1_5M_CH_START + 1)
 
 #define NEXT_NUM(cur, max) ( ((cur + 1) >= max) ? 0: (cur + 1) )
 
+#define AGC_LEVEL_0     (0x5f)  //-90dmb
+#define AGC_LEVEL_1     (0x64)  //-96dmb
 #define MAX(a,b) (((a) > (b)) ?  (a) :  (b) )
 #define MIN(a,b) (((a) < (b)) ?  (a) :  (b) )
 
+#define CLEAR_MAIN_CNT  (1000)
 static int flaglog = 0;
-
-#define  STATISTIC_OPT_CH    (1)
-#define  STATISTIC_CNT       (60)
 
 typedef struct
 {
     int16_t s16_slicePower[SWEEP_FREQ_BLOCK_ROWS][MAX_2G_IT_FRQ_SIZE*8];            //1.5M bandwidth noise in channels.
-    int16_t s16_power_average[SWEEP_FREQ_BLOCK_ROWS][MAX_2G_IT_FRQ_SIZE * 2- 1];    //channel power
+    int16_t s16_power_average[SWEEP_FREQ_BLOCK_ROWS][MAX_2G_IT_FRQ_SIZE];           //channel power: 10M bandwidth
 
-#if STATISTIC_OPT_CH
-    uint8_t     u8_statisOptCh[MAX_2G_IT_FRQ_SIZE * 2- 1];
-    uint16_t    u8_statisCnt;
-#endif
     //int16_t s16_power_flucate[SWEEP_FREQ_BLOCK_ROWS][MAX_2G_IT_FRQ_SIZE * 2- 1];   //
     ENUM_RF_BAND e_curBand;
     ENUM_CH_BW   e_bw;
-    uint8_t     u8_mainCh;          //current VT channel
-    uint8_t     u8_curMainRow;
-    uint8_t     u8_mainSweepCh;
+    uint8_t      u8_mainCh;          //current VT channel
+    uint8_t      u8_curMainRow;
+    uint8_t      u8_mainSweepCh;
     
-    uint8_t     u8_optCh;           //optional VT channel
-    uint8_t     u8_curOptRow;
-    uint8_t     u8_optSweepCh;
+    uint8_t      u8_optCh;           //optional VT channel
+    uint8_t      u8_curOptRow;
+    uint8_t      u8_optSweepCh;
+    uint8_t      u8_bestChCnt[MAX_2G_IT_FRQ_SIZE];
     
-    uint8_t     u8_otherSweepCh;    //channel number
-    uint8_t     u8_curRow;
+    uint8_t      u8_otherSweepCh;    //channel number
+    uint8_t      u8_curRow;
 
-    uint8_t     u8_prevSweepCh;     //previous sweep channel, main channel and optional channel may change
+    uint8_t      u8_prevSweepCh;     //previous sweep channel, main channel and optional channel may change
 
-    uint8_t     u8_cycleCnt;
-    uint8_t     u8_preMainCh;
-    uint8_t     u8_isFull;
+    uint8_t      u8_cycleCnt;
+    uint8_t      u8_preMainCh;
+    uint16_t     u16_preMainCount;   //if cycle >= u16_preMainCount, clear the u8_preMainCh
+
+    uint8_t      u8_isFull;
 } STRU_SWEEP_NOISE_POWER;
 
 STRU_SWEEP_NOISE_POWER stru_sweepPower;
@@ -70,7 +69,7 @@ static void calc_average_and_fluct( uint8_t u8_bw , uint8_t u8_ItCh);
  */
 void BB_SweepStart( ENUM_RF_BAND e_rfBand , ENUM_CH_BW e_bw)
 {
-    stru_sweepPower.u8_otherSweepCh      =  0;
+    stru_sweepPower.u8_otherSweepCh =  0;
     stru_sweepPower.u8_curRow     =  0;
     stru_sweepPower.u8_isFull     =  0;
     stru_sweepPower.u8_cycleCnt   =  0;
@@ -80,8 +79,9 @@ void BB_SweepStart( ENUM_RF_BAND e_rfBand , ENUM_CH_BW e_bw)
     stru_sweepPower.u8_mainCh     =  0xff;
     stru_sweepPower.e_bw        =  e_bw;
     stru_sweepPower.e_curBand   =  e_rfBand;
-    stru_sweepPower.u8_prevSweepCh = 0;
-
+    stru_sweepPower.u8_prevSweepCh  = 0x0;
+    stru_sweepPower.u16_preMainCount= 0x0;
+    
     BB_set_sweepfrq( e_rfBand, 0 );
 }
 
@@ -141,7 +141,7 @@ void BB_GetSweepNoise(uint8_t row, int16_t *ptr_noise_power)
  * return 0: sweep fail. Do not switch to next sweep channel
  * return 1: sweep OK.
 */
-static uint8_t BB_GetSweepPower(uint8_t bw, uint8_t row, uint8_t ch)
+static uint8_t BB_GetSweepPower(uint8_t bw, uint8_t row, uint8_t ch, uint8_t flag)
 {
     uint8_t  num = 0;
     uint8_t  i   = 0;
@@ -183,9 +183,9 @@ static uint8_t BB_GetSweepPower(uint8_t bw, uint8_t row, uint8_t ch)
     {
         static int loop = 0;
         static int prech = 0;
-        if ( 0 /*!stru_sweepPower.u8_isFull */)
+        if ( 0 )
         {
-            dlog_info("ch:%d %.4x %.4x %.4x %.4x %.4x %.4x %.4x %.4x %.6x", ch, ch_fd_power[0], ch_fd_power[1], ch_fd_power[2],
+            dlog_info("ch:%d %d %.4x %.4x %.4x %.4x %.4x %.4x %.4x %.4x %.6x", ch, row, ch_fd_power[0], ch_fd_power[1], ch_fd_power[2],
                       ch_fd_power[3], ch_fd_power[4], ch_fd_power[5],
                       ch_fd_power[6], ch_fd_power[7], power_td);
             loop = 0;
@@ -197,7 +197,7 @@ static uint8_t BB_GetSweepPower(uint8_t bw, uint8_t row, uint8_t ch)
     uint16_t idx = (uint16_t)ch * 8;
     ret = calc_power_db(bw, power_td, ch_fd_power,
                         &(stru_sweepPower.s16_slicePower[row][ idx + 1]),
-                        flaglog
+                        flag
                         );
     uint32_t spend = SysTicks_GetTickCount() - start;
     if( spend >= 1 )
@@ -208,11 +208,30 @@ static uint8_t BB_GetSweepPower(uint8_t bw, uint8_t row, uint8_t ch)
     return ret;
 }
 
+int BB_Sweep_updateCh(uint8_t mainch)
+{
+    uint8_t opt;
+    stru_sweepPower.u8_preMainCh = stru_sweepPower.u8_mainCh;
+    stru_sweepPower.u16_preMainCount = 0; //clear after 1000 cycles
+
+    stru_sweepPower.u8_mainSweepCh = mainch;
+    stru_sweepPower.u8_mainCh      = mainch;
+
+    //re-select the option channel
+    BB_selectBestCh(SELECT_OPT, NULL, &opt, NULL, 1);
+
+    stru_sweepPower.u8_optCh = opt;
+    stru_sweepPower.u8_optSweepCh = opt;
+
+    memset(stru_sweepPower.u8_bestChCnt, 0, sizeof(stru_sweepPower.u8_bestChCnt));
+    //dlog_info("update main opt: %d %d", mainch, opt);    
+}
+
 
 static int BB_SweepBeforeFull( void )
 {
     uint8_t u8_maxCh = BAND_MAX_SWEEP_CH( stru_sweepPower.e_curBand );
-    uint8_t result   = BB_GetSweepPower( stru_sweepPower.e_bw, stru_sweepPower.u8_curRow, stru_sweepPower.u8_prevSweepCh);
+    uint8_t result   = BB_GetSweepPower( stru_sweepPower.e_bw, stru_sweepPower.u8_curRow, stru_sweepPower.u8_prevSweepCh, 0);
     //dlog_info("u8_prevSweepCh = %d row=%d %d", stru_sweepPower.u8_prevSweepCh, stru_sweepPower.u8_curRow, SWEEP_FREQ_BLOCK_ROWS);
     if( result )
     {
@@ -222,11 +241,32 @@ static int BB_SweepBeforeFull( void )
             stru_sweepPower.u8_curRow = NEXT_NUM(stru_sweepPower.u8_curRow, SWEEP_FREQ_BLOCK_ROWS);
             if( stru_sweepPower.u8_curRow == 0 )
             {
-                uint8_t main = 0, opt = 0;
+                uint8_t mainch = 0, opt = 0;
                 stru_sweepPower.u8_isFull = 1;
-                BB_selectBestCh(SELECT_MAIN_OPT, &main, &opt, 1);
+                BB_selectBestCh(SELECT_MAIN_OPT, &mainch, &opt, NULL, 1);
+
+                stru_sweepPower.u8_mainSweepCh = mainch;
+                stru_sweepPower.u8_mainCh      = mainch;
+    
+                stru_sweepPower.u8_prevSweepCh = mainch;
+
+                #if 1
+                stru_sweepPower.u8_optCh = opt;
+                stru_sweepPower.u8_optSweepCh = opt;
+                #else
+                if ( mainch + 1 >= MAX_2G_IT_FRQ_SIZE )
+                {
+                    stru_sweepPower.u8_optCh = stru_sweepPower.u8_optSweepCh = 0;
+                }
+                else
+                {
+                    stru_sweepPower.u8_optCh = stru_sweepPower.u8_optSweepCh = mainch + 1;
+                }
+
+                #endif
                 stru_sweepPower.u8_cycleCnt = MAIN_CH_CYCLE;
-                stru_sweepPower.u8_prevSweepCh = stru_sweepPower.u8_mainSweepCh;
+                
+                return result;
             }
             else
             {
@@ -245,78 +285,105 @@ static int BB_SweepBeforeFull( void )
 }
 
 
-static int BB_SweepAfterFull( void )
+int BB_set_sweepChannel( void )
+{
+    uint8_t cycle = (stru_sweepPower.u8_cycleCnt % 0x03);
+    uint8_t u8_maxCh = BAND_MAX_SWEEP_CH( stru_sweepPower.e_curBand );
+
+    if( cycle == OTHER_CH_CYCLE )
+    {
+        uint8_t u8_nextch = 0;
+        do
+        {
+            u8_nextch = NEXT_NUM(stru_sweepPower.u8_otherSweepCh, u8_maxCh);
+            if( u8_nextch < stru_sweepPower.u8_otherSweepCh )
+            {
+                stru_sweepPower.u8_curRow = NEXT_NUM(stru_sweepPower.u8_curRow, SWEEP_FREQ_BLOCK_ROWS);
+            }
+            stru_sweepPower.u8_otherSweepCh = u8_nextch;
+        } while( u8_nextch == stru_sweepPower.u8_mainSweepCh || u8_nextch == stru_sweepPower.u8_optSweepCh );
+        
+        stru_sweepPower.u8_prevSweepCh = stru_sweepPower.u8_otherSweepCh;
+    }
+    else if( cycle == MAIN_CH_CYCLE )
+    {
+        stru_sweepPower.u8_prevSweepCh = stru_sweepPower.u8_mainSweepCh;
+    }
+    else if( cycle == OPT_CH_CYCLE )
+    {
+        stru_sweepPower.u8_prevSweepCh = stru_sweepPower.u8_optSweepCh;
+    }
+
+    BB_set_sweepfrq( stru_sweepPower.e_curBand, stru_sweepPower.u8_prevSweepCh );
+
+    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
+    osdptr->IT_channel  = ( stru_sweepPower.u8_mainCh << 4 ) | (stru_sweepPower.u8_optCh);
+    osdptr->lock_status = ( osdptr->lock_status & 0x0f) | (stru_sweepPower.u8_prevSweepCh << 4);
+}
+
+static int BB_SweepAfterFull( uint8_t flag )
 {
     uint8_t result = 0;
 
     uint8_t u8_maxCh = BAND_MAX_SWEEP_CH( stru_sweepPower.e_curBand );
-    uint8_t cycle  = (stru_sweepPower.u8_cycleCnt & 0x03);
+    uint8_t cycle  = (stru_sweepPower.u8_cycleCnt % 0x03);
 
-    //get sweep result.
-    if( cycle == MAIN_CH_CYCLE )
-    {
+    if( stru_sweepPower.u8_prevSweepCh == stru_sweepPower.u8_mainCh )
+    { 
+        stru_sweepPower.u8_curMainRow  = NEXT_NUM(stru_sweepPower.u8_curMainRow, SWEEP_FREQ_BLOCK_ROWS);    
         result = BB_GetSweepPower( stru_sweepPower.e_bw, 
-                                   stru_sweepPower.u8_curMainRow, 
-                                   stru_sweepPower.u8_prevSweepCh);
+                                   stru_sweepPower.u8_curMainRow,
+                                   stru_sweepPower.u8_prevSweepCh,
+                                   flag);
     }
-    else if ( cycle == OPT_CH_CYCLE )
-    {
+    else if ( stru_sweepPower.u8_prevSweepCh == stru_sweepPower.u8_optCh)
+    {    
+        stru_sweepPower.u8_curOptRow  = NEXT_NUM(stru_sweepPower.u8_curOptRow, SWEEP_FREQ_BLOCK_ROWS);
         result = BB_GetSweepPower( stru_sweepPower.e_bw, 
                                    stru_sweepPower.u8_curOptRow, 
-                                   stru_sweepPower.u8_prevSweepCh); //IT channel 5M to 10M sweep channel
+                                   stru_sweepPower.u8_prevSweepCh,
+                                   flag); //
     }
     else
-    {
+    {  
+        stru_sweepPower.u8_curRow  = NEXT_NUM(stru_sweepPower.u8_curRow, SWEEP_FREQ_BLOCK_ROWS);
         result = BB_GetSweepPower( stru_sweepPower.e_bw, 
                                    stru_sweepPower.u8_curRow, 
-                                   stru_sweepPower.u8_prevSweepCh );
+                                   stru_sweepPower.u8_prevSweepCh,
+                                   flag);
+
+        {
+            //compare the other channel and current opt channel
+            int16_t diff, fluct;
+            compare_chNoisePower(stru_sweepPower.u8_prevSweepCh, stru_sweepPower.u8_optCh, &diff, &fluct, 0);
+            if ( (diff <= -20) || (diff <= -15 && fluct <= -10) )
+            {
+                //dlog_info("ch: %d %d %d", stru_sweepPower.u8_prevSweepCh, diff, fluct);
+                stru_sweepPower.u8_bestChCnt[stru_sweepPower.u8_prevSweepCh] += 1;
+    
+                //if the channel is the 8 times better than the current opt channel
+                if ( stru_sweepPower.u8_bestChCnt[stru_sweepPower.u8_prevSweepCh] > 10 )
+                {
+                    stru_sweepPower.u8_optCh = stru_sweepPower.u8_prevSweepCh;
+                    memset(stru_sweepPower.u8_bestChCnt, 0, sizeof(stru_sweepPower.u8_bestChCnt));
+                }
+            }
+        }
     }
+
+    stru_sweepPower.u8_cycleCnt ++;
 
     //set next channel to sweep
     if( result )
     {
-        stru_sweepPower.u8_cycleCnt ++;
-        cycle = (stru_sweepPower.u8_cycleCnt % 0x03);
-
-        if( cycle == OTHER_CH_CYCLE )
-        {
-            uint8_t u8_nextch;
-            do
-            {
-                u8_nextch = NEXT_NUM(stru_sweepPower.u8_otherSweepCh, u8_maxCh);
-                if( u8_nextch < stru_sweepPower.u8_otherSweepCh )
-                {
-                    stru_sweepPower.u8_curRow = NEXT_NUM(stru_sweepPower.u8_curRow, SWEEP_FREQ_BLOCK_ROWS);
-                }
-                stru_sweepPower.u8_otherSweepCh = u8_nextch;
-            } while( u8_nextch == stru_sweepPower.u8_mainSweepCh || u8_nextch == stru_sweepPower.u8_optSweepCh );
-            stru_sweepPower.u8_prevSweepCh = stru_sweepPower.u8_otherSweepCh;
-
-            //dlog_info("other: %d", stru_sweepPower.u8_prevSweepCh);
-        }
-        else if( cycle == MAIN_CH_CYCLE )
-        {
-            stru_sweepPower.u8_curMainRow = NEXT_NUM(stru_sweepPower.u8_curMainRow, SWEEP_FREQ_BLOCK_ROWS);
-            stru_sweepPower.u8_prevSweepCh = stru_sweepPower.u8_mainSweepCh;
-            //dlog_info("main: %d", stru_sweepPower.u8_prevSweepCh);
-        }
-        else if( cycle == OPT_CH_CYCLE )
-        {
-            stru_sweepPower.u8_curOptRow = NEXT_NUM(stru_sweepPower.u8_curOptRow, SWEEP_FREQ_BLOCK_ROWS);
-            stru_sweepPower.u8_prevSweepCh = stru_sweepPower.u8_optSweepCh;
-            //dlog_info("opt: %d", stru_sweepPower.u8_prevSweepCh);
-        }
-
-        BB_set_sweepfrq( stru_sweepPower.e_curBand, stru_sweepPower.u8_prevSweepCh );
+        BB_set_sweepChannel();
     }
-
-    BB_selectBestCh(SELECT_OPT, NULL, NULL, 0);
 
     return result;
 }
 
 
-uint8_t BB_DoSweep( void )
+uint8_t BB_GetSweepResult( uint8_t flag )
 {
     uint8_t ret = 0;
     uint32_t start = SysTicks_GetTickCount();
@@ -326,9 +393,16 @@ uint8_t BB_DoSweep( void )
     }
     else
     {
-        ret = BB_SweepAfterFull( );
+        ret = BB_SweepAfterFull( flag );
     }
-
+    
+    if ( stru_sweepPower.u8_preMainCh != 0xFF && stru_sweepPower.u16_preMainCount++ >= CLEAR_MAIN_CNT )
+    {
+        //clear the premain;
+        stru_sweepPower.u16_preMainCount = 0;
+        stru_sweepPower.u8_preMainCh     = 0xFF;
+    }
+    
     uint32_t spend = SysTicks_GetTickCount() - start;
     if( spend >= 1)
     {
@@ -351,7 +425,7 @@ uint8_t BB_forceSweep( uint8_t opt )
         stru_sweepPower.u8_cycleCnt    = opt;
         stru_sweepPower.u8_prevSweepCh = (opt == MAIN_CH_CYCLE) ? stru_sweepPower.u8_mainSweepCh : 
                                                                   stru_sweepPower.u8_optSweepCh;
-        
+
         return BB_set_sweepfrq( stru_sweepPower.e_curBand, stru_sweepPower.u8_prevSweepCh );
     }
 
@@ -360,36 +434,44 @@ uint8_t BB_forceSweep( uint8_t opt )
 
 
 /*
- *  return:
+ *          ps16_averdiff   the average dbm * 10
+ *          ps16_fluctdiff: the fluct dbm * 10
+ *  return: the average dbm * 10
 */
 int16_t compare_chNoisePower(uint8_t u8_itCh1, uint8_t u8_itCh2, 
-                             int16_t *ps16_averdiff, int16_t *ps16_fluctdiff)
+                             int16_t *ps16_averdiff, int16_t *ps16_fluctdiff, uint8_t log)
 {
     uint8_t i;
 
-    int16_t s16_ch1Aver = stru_sweepPower.s16_power_average[0][u8_itCh1];
-    int16_t s16_ch2Aver = stru_sweepPower.s16_power_average[0][u8_itCh2];
+    int16_t s16_ch1Aver = 0;
+    int16_t s16_ch2Aver = 0;
 
     int16_t s16_ch1Fluct = 0;
     int16_t s16_ch2Fluct = 0;
 
     int16_t diff = 0, fluct = 0;
-    for(i = 1 ; i < SWEEP_FREQ_BLOCK_ROWS; i++)
+    
+    calc_average_and_fluct(stru_sweepPower.e_bw, u8_itCh1);
+    calc_average_and_fluct(stru_sweepPower.e_bw, u8_itCh2);
+            
+    for(i = 0 ; i < SWEEP_FREQ_BLOCK_ROWS; i++)
     {
         s16_ch1Aver += stru_sweepPower.s16_power_average[i][u8_itCh1];
         s16_ch2Aver += stru_sweepPower.s16_power_average[i][u8_itCh2];
     }
 
-    diff  = (s16_ch1Aver - s16_ch2Aver) / SWEEP_FREQ_BLOCK_ROWS;
+    s16_ch1Aver = s16_ch1Aver * 10 / SWEEP_FREQ_BLOCK_ROWS;
+    s16_ch2Aver = s16_ch2Aver * 10 / SWEEP_FREQ_BLOCK_ROWS;
+    diff  = s16_ch1Aver - s16_ch2Aver;
 
     //check the fluct
     for(i = 0 ; i < SWEEP_FREQ_BLOCK_ROWS; i++)
     {
-        int16_t tmp1  = stru_sweepPower.s16_power_average[i][u8_itCh1] - s16_ch1Aver;
-        int16_t tmp2  = stru_sweepPower.s16_power_average[i][u8_itCh2] - s16_ch2Aver;
+        int16_t tmp1  = stru_sweepPower.s16_power_average[i][u8_itCh1] * 10 - s16_ch1Aver;
+        int16_t tmp2  = stru_sweepPower.s16_power_average[i][u8_itCh2] * 10 - s16_ch2Aver;
 
-        s16_ch1Fluct += ( tmp1 * tmp1 );
-        s16_ch2Fluct += ( tmp2 * tmp2 );
+        s16_ch1Fluct += (( tmp1 < 0) ? ( -tmp1 ) : tmp1 );
+        s16_ch2Fluct += (( tmp2 < 0) ? ( -tmp2 ) : tmp2 );
     }
 
     if( ps16_averdiff )
@@ -400,7 +482,7 @@ int16_t compare_chNoisePower(uint8_t u8_itCh1, uint8_t u8_itCh2,
     {
         *ps16_fluctdiff = (s16_ch1Fluct - s16_ch2Fluct) / SWEEP_FREQ_BLOCK_ROWS;
     }
-
+    
     return diff;
 }
 
@@ -416,24 +498,25 @@ static uint8_t is_inlist(uint8_t item, uint8_t *pu8_exlude, uint8_t u8_cnt)
     return flag;
 }
 
-static uint8_t find_best(uint8_t *pu8_exlude, uint8_t u8_cnt, uint8_t log)
+static uint8_t find_best(uint8_t *pu8_exlude, uint8_t u8_exclude_cnt, uint8_t log)
 {
     uint8_t u8_start;
     int16_t aver, fluct;
-    uint8_t num = 2 * MAX_2G_IT_FRQ_SIZE -1;
+    uint8_t num = MAX_2G_IT_FRQ_SIZE;
 
     for ( u8_start = 0; 
-          u8_start < num && is_inlist( u8_start, pu8_exlude, u8_cnt );  //channel in the excluding list
+          u8_start < num && is_inlist( u8_start, pu8_exlude, u8_exclude_cnt );  //channel in the excluding list
           u8_start++) 
     {}
 
     uint8_t ch;
     for( ch = 0; ch < num; ch++)
     {
-        if ( !is_inlist( ch, pu8_exlude, u8_cnt ) )
+        if ( !is_inlist( ch, pu8_exlude, u8_exclude_cnt ) )
         {
-            compare_chNoisePower(u8_start, ch, &aver, &fluct);
-            if( aver >= 3 /*|| (aver >= 1 && fluct >= 0)*/)
+            compare_chNoisePower(u8_start, ch, &aver, &fluct, 0);
+            //if( aver >= 30 || ( aver >= 15 && fluct >= 10) )
+            if( aver +  (fluct / 5) > 0)
             {
                 u8_start = ch;
             }
@@ -441,7 +524,9 @@ static uint8_t find_best(uint8_t *pu8_exlude, uint8_t u8_cnt, uint8_t log)
     }
 
     return u8_start;
-} 
+}
+
+
 
 /*
  * u8_opt: 
@@ -452,21 +537,20 @@ static uint8_t find_best(uint8_t *pu8_exlude, uint8_t u8_cnt, uint8_t log)
  *         0: no suggest main and opt channel
  *         1: get main and opt channel
 */
-uint8_t BB_selectBestCh(ENUM_CH_SEL_OPT e_opt, uint8_t *u8_mainCh, uint8_t *u8_optCh, uint8_t log)
+uint8_t BB_selectBestCh(ENUM_CH_SEL_OPT e_opt, uint8_t *u8_mainCh, uint8_t *u8_optCh, uint8_t *u8_other, uint8_t log)
 {
-    uint8_t ch = 0;
-    uint8_t num ;
-    int16_t aver, fluct;
+    uint8_t  ch = 0;
+    uint8_t  num ;
+    int16_t  aver, fluct;
     uint32_t start = SysTicks_GetTickCount() - start;
-    uint8_t exclude[6];
-    uint8_t cnt = 0;
+    uint8_t  exclude[6];
 
     if( !stru_sweepPower.u8_isFull )
     {
         return 0;
     }
 
-    num = 2 * MAX_2G_IT_FRQ_SIZE -1;
+    num = MAX_2G_IT_FRQ_SIZE;
     for(ch = 0; ch < num; ch++)
     {
         calc_average_and_fluct(stru_sweepPower.e_bw, ch);
@@ -477,128 +561,56 @@ uint8_t BB_selectBestCh(ENUM_CH_SEL_OPT e_opt, uint8_t *u8_mainCh, uint8_t *u8_o
         }
     }
 
+    uint8_t bestCh  = 0xff;         //select one from all the channels
+    uint8_t betterCh= 0xff;
+    uint8_t other   = 0xff;
     //select main channel
-    if( e_opt == CHANGE_MAIN || e_opt == SELECT_MAIN_OPT )
+    if( e_opt == SELECT_MAIN_OPT )
     {
-        uint8_t bestCh = 0;         //select one from all the channels
-        if( e_opt == CHANGE_MAIN )  //exclude the current main channel 
+        bestCh = find_best(exclude, 0, log);
+        if ( u8_mainCh)
         {
-#if STATISTIC_OPT_CH
-            stru_sweepPower.u8_mainCh = stru_sweepPower.u8_optCh;
-            if (u8_mainCh)
-            {
-                *u8_mainCh = stru_sweepPower.u8_optCh;
-            }            
-#else
-            exclude[0] = stru_sweepPower.u8_preMainCh;
-            exclude[1] = stru_sweepPower.u8_mainCh;
-            exclude[2] = stru_sweepPower.u8_mainCh + 1;
-            exclude[3] = stru_sweepPower.u8_mainCh - 1;
-            cnt = 4;
-
-            if( log )
-            {
-                dlog_info("exclude: %d %d %d %d", exclude[0], exclude[1], exclude[2], exclude[3]);
-            } 
-            bestCh = find_best(exclude, cnt, log);
-            stru_sweepPower.u8_mainCh = bestCh; //change main channel  
-#endif
-        }
-        else //SELECT_MAIN_OPT:
-        {
-            bestCh = find_best(exclude, cnt, log);        
-            stru_sweepPower.u8_preMainCh = stru_sweepPower.u8_mainCh; //record previous main channel
-
-            if ( u8_mainCh)
-            {
-                *u8_mainCh = bestCh;
-            }
-            stru_sweepPower.u8_mainCh = bestCh;             //change main channel
+            *u8_mainCh = bestCh;
         }
     }
 
     //select optional channel
+    if ( e_opt == SELECT_MAIN_OPT || e_opt == SELECT_OPT )
     {
         exclude[0] = stru_sweepPower.u8_preMainCh;
         exclude[1] = stru_sweepPower.u8_mainCh;
-        exclude[2] = stru_sweepPower.u8_mainCh + 1;
-        exclude[3] = stru_sweepPower.u8_mainCh - 1;
-        cnt = 4;
+        exclude[2] = bestCh;
 
-        uint8_t betterCh = find_best(exclude, cnt, log);
-
-#if STATISTIC_OPT_CH
+        if ( log )
         {
-            stru_sweepPower.u8_statisOptCh[betterCh] += 1;
-            stru_sweepPower.u8_statisCnt ++;
-
-            if (e_opt == SELECT_MAIN_OPT || e_opt == CHANGE_MAIN)   //select one better channel from average and flucate
-            {
-                stru_sweepPower.u8_optCh = betterCh;            
-            }
-            else    //only select the option channel. select one better channel from statistic, 
-            {
-                if ( stru_sweepPower.u8_statisCnt >= STATISTIC_CNT )
-                {
-                    volatile uint8_t k;
-                    uint8_t cnt = stru_sweepPower.u8_statisOptCh[0];
-                    for( k = 0; k < (MAX_2G_IT_FRQ_SIZE * 2- 1); k++ )
-                    {
-                        uint8_t cnt1 = stru_sweepPower.u8_statisOptCh[k];
-                        if ( cnt < cnt1)
-                        {
-                            cnt = cnt1;
-                            betterCh = k;
-                        }
-                    }
-                    stru_sweepPower.u8_statisCnt = 0;
-                    stru_sweepPower.u8_optCh = betterCh;
-                    memset(stru_sweepPower.u8_statisOptCh, 0x00, (MAX_2G_IT_FRQ_SIZE * 2- 1));
-                }            
-            }
-            if ( u8_optCh )
-            {
-                *u8_optCh= stru_sweepPower.u8_optCh;
-            }
-
-            {
-                static uint8_t pre_opch = 0;
-                if (stru_sweepPower.u8_optCh != pre_opch)
-                {
-                    pre_opch = stru_sweepPower.u8_optCh;
-                    if (log)
-                    {
-                        dlog_info("u8_optCh = %d %d", stru_sweepPower.u8_optCh, e_opt);
-                    }
-                }
-            }
+            dlog_info("exclude: %d %d %d", exclude[0], exclude[1], exclude[2]);
         }
-#else
-        stru_sweepPower.u8_optCh = betterCh;
-	if ( u8_optCh )
-	{
-	    *u8_optCh= betterCh;
-        }        
-#endif
-    }
-    
-    stru_sweepPower.u8_mainSweepCh = stru_sweepPower.u8_mainCh / 2;
-    stru_sweepPower.u8_optSweepCh  = stru_sweepPower.u8_optCh  / 2;
-    
-    if(stru_sweepPower.u8_mainSweepCh == stru_sweepPower.u8_optSweepCh)
-    {
-        stru_sweepPower.u8_optSweepCh += 1;
+
+        betterCh = find_best(exclude, 3, log);
+	    if ( u8_optCh )
+	    {
+	        *u8_optCh= betterCh;
+        }
     }
 
-    //{
-    //    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
-    //    osdptr->IT_channel = ( stru_sweepPower.u8_mainCh << 4 ) | (stru_sweepPower.u8_optCh);
-    //}
+    if ( e_opt == SELECT_OTHER )
+    {
+        exclude[0] = stru_sweepPower.u8_preMainCh;
+        exclude[1] = stru_sweepPower.u8_mainCh;
+        exclude[2] = stru_sweepPower.u8_optCh;   
+
+        other = find_best(exclude, 3, log);
+
+        if (u8_other)
+        {
+            *u8_other = other;
+        }
+    }
 
     if ( log )
     {
-        dlog_info("--ch--: %d %d %d %d", stru_sweepPower.u8_mainCh, stru_sweepPower.u8_optCh, stru_sweepPower.u8_mainSweepCh, stru_sweepPower.u8_optSweepCh);
-    }
+        dlog_info("--ch--: %d %d %d", bestCh, betterCh, e_opt);
+    }    
 
     uint32_t spend = SysTicks_GetTickCount() - start;
     if( spend >= 1 )
@@ -608,6 +620,64 @@ uint8_t BB_selectBestCh(ENUM_CH_SEL_OPT e_opt, uint8_t *u8_mainCh, uint8_t *u8_o
 
     return 1;
 }
+
+
+
+uint8_t get_opt_channel( void )
+{
+    uint8_t other, i;
+    int16_t s16_cur_mainPower;
+    int16_t s16_cur_power, s16_aver_power, s16_sum;
+    uint8_t level;
+    BB_selectBestCh(SELECT_OTHER, NULL, NULL, &other, 1);
+
+    {
+        s16_sum = 0;
+        for(i = 0 ; i < SWEEP_FREQ_BLOCK_ROWS; i++)
+        {
+            s16_sum += stru_sweepPower.s16_slicePower[stru_sweepPower.u8_curMainRow][stru_sweepPower.u8_mainCh * 8 + i];
+        }
+        s16_cur_mainPower = s16_sum / SWEEP_FREQ_BLOCK_ROWS;
+    }
+
+    {
+        s16_sum = 0;
+        for(i = 0 ; i < SWEEP_FREQ_BLOCK_ROWS; i++)
+        {
+            s16_sum += stru_sweepPower.s16_slicePower[stru_sweepPower.u8_curOptRow][stru_sweepPower.u8_optCh * 8 + i];
+        }
+        s16_cur_power = s16_sum / SWEEP_FREQ_BLOCK_ROWS;
+    }
+
+    {
+        s16_sum = 0;
+        for(i = 0 ; i < SWEEP_FREQ_BLOCK_ROWS; i++)
+        {
+            s16_sum += stru_sweepPower.s16_power_average[i][other];
+        }
+        s16_aver_power = s16_sum / SWEEP_FREQ_BLOCK_ROWS;
+    }
+
+    if ( context.agclevel >= AGC_LEVEL_1 )
+        level = 3;
+    else if( context.agclevel >= AGC_LEVEL_0 )
+        level = 6;
+    else
+        level = 9;
+
+    //dlog_info("diff:%d %d %x %d %d %d \n", stru_sweepPower.u8_curMainRow, stru_sweepPower.u8_curOptRow, context.agclevel,
+    //                                 (s16_cur_power - s16_aver_power), (s16_cur_mainPower - s16_aver_power), level );
+
+    if ( s16_cur_power - s16_aver_power >= level && s16_cur_mainPower - s16_aver_power >= level)
+    {
+        return other;
+    }
+    else
+    {
+        return stru_sweepPower.u8_optCh;
+    }
+}
+
 
 
 static int8_t log10_lookup_table[]=
@@ -751,14 +821,15 @@ static int calc_power_db(uint8_t bw, uint32_t power_td,
         tmp = get_10log10(tmp);
         tmp += ((tmp > 30) ? (-123) : (-125));
         power_db[i] = tmp;
+        sum_power += power_db[i];
     }
 
     {
         if( flaglog )
         {
-            dlog_info("%d %d %d %d %d %d %d %d %d", power_db[0], power_db[1], power_db[2],
+            dlog_info("%d %d %d %d %d %d %d ", power_db[0], power_db[1], power_db[2],
                       power_db[3], power_db[4], power_db[5],
-                      power_db[6], power_db[7], sum_power);
+                      sum_power);
         }
     }
 
@@ -771,7 +842,7 @@ static int calc_power_db(uint8_t bw, uint32_t power_td,
 static void calc_average_and_fluct( uint8_t u8_bw , uint8_t u8_ItCh)
 {
     uint8_t cnt = ((u8_bw == BW_10M) ? BW_10M_VALID_CH_CNT : BW_20M_VALID_CH_CNT);
-    uint8_t u8_startPos = (u8_ItCh * 4 + 1);
+    uint8_t u8_startPos = (u8_ItCh * 8);
     uint8_t row;
 
     for( row = 0; row < SWEEP_FREQ_BLOCK_ROWS; row++)
@@ -790,7 +861,6 @@ static void calc_average_and_fluct( uint8_t u8_bw , uint8_t u8_ItCh)
             max_tmp = MAX( max_tmp, tmp );
             min_tmp = MIN( min_tmp, tmp );
         }
-        //stru_sweepPower.s16_power_flucate[row][u8_ItCh] = (max_tmp - min_tmp);
-        stru_sweepPower.s16_power_average[row][u8_ItCh] = (sum_power / cnt);
+        stru_sweepPower.s16_power_average[row][u8_ItCh] = (sum_power / cnt);   
     }
 }

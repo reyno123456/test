@@ -64,6 +64,7 @@ typedef struct
     STRU_FRQ_CHANNEL stru_rcRegs;
     STRU_FRQ_CHANNEL stru_itRegs;
     ENUM_BB_MODE en_bbmode;
+    uint8_t agclevel;
 }CONTEXT;
 
 typedef struct
@@ -142,7 +143,7 @@ typedef struct
 } STRU_CALC_DIST_DATA;
 
 
-extern CONTEXT context;
+extern volatile CONTEXT context;
 extern volatile DEVICE_STATE dev_state;
 extern PARAM *sys_param;
 
