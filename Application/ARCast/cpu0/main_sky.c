@@ -18,6 +18,7 @@
 #include "hal_softi2s.h"
 #include "systicks.h"
 #include "memory_config.h"
+#include "hal_uart.h"
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
