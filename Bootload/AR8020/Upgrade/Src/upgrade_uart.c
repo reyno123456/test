@@ -84,11 +84,44 @@ static int8_t UPGRADE_MD5SUM(uint32_t u32_addr)
     return 0; 
 }
 
+static void UPGRADE_IRQHandler(uint32_t vectorNum)
+{
+    uint32_t          u32_isrType;
+    uint32_t          u32_isrType2;
+    uint32_t          u32_status;
+    volatile uart_type   *uart_regs =(uart_type *)UART0_BASE;
+
+    u32_isrType    = uart_regs->IIR_FCR;
+
+    if (UART_IIR_RECEIVEDATA == (u32_isrType & 0xf))
+    {
+        uint8_t i = UART_RX_FIFOLEN;
+        while (i--)
+        {
+            *(g_pDst +g_u32RecCount) = uart_regs->RBR_THR_DLL;        
+            g_u32RecCount++;
+        }
+    }
+
+    if (UART_IIR_DATATIMEOUT == (u32_isrType & 0xf))
+    {
+
+        *(g_pDst +g_u32RecCount) = uart_regs->RBR_THR_DLL;        
+        g_u32RecCount++;
+    }
+
+    // TX empty interrupt.
+    if (UART_IIR_THR_EMPTY == (u32_isrType & UART_IIR_THR_EMPTY))
+    {
+        uart_putFifo(0);
+    }
+}
+
 uint32_t Upgrade_GetChar(uint8_t *u8_uartRxBuf, uint8_t u8_uartRxLen)
 {
-    memcpy(g_pDst,u8_uartRxBuf,u8_uartRxLen);
+    memcpy(g_pDst+g_u32RecCount,u8_uartRxBuf,u8_uartRxLen);
     g_u32RecCount += u8_uartRxLen;
-    g_pDst = (char *)(RECEIVE_ADDR+g_u32RecCount);
+    //g_pDst = (char *)(RECEIVE_ADDR+g_u32RecCount);
 }
 
 
@@ -103,8 +136,9 @@ static void UPGRADE_UartReceive(void)
     {
         ;
     }
-    dlog_output(100);
-    UART_RegisterUserRxHandler(DEBUG_LOG_UART_PORT, Upgrade_GetChar);
+
+    HAL_NVIC_RegisterHandler(HAL_NVIC_UART_INTR0_VECTOR_NUM, UPGRADE_IRQHandler, NULL);
+
     DLOG_INFO("Nor flash init start ...\n");
     HAL_NORFLASH_Init();
     DLOG_INFO("Nor flash end\n");    
@@ -112,10 +146,16 @@ static void UPGRADE_UartReceive(void)
     uint32_t i=0;
     uint32_t rec=1024*10;
     dlog_output(100);
-    
-    while((g_u32ImageSize!=g_u32RecCount))
+    //UART_RegisterUserRxHandler(DEBUG_LOG_UART_PORT, Upgrade_GetChar);
+        
+    while(1)
     {
-        if((1 == g_u32RecFlage)&&(g_u32RecCount>40))
+        if (g_u32ImageSize <= g_u32RecCount)
+        {
+            break;
+        }
+
+        if((1 == g_u32RecFlage)&&(g_u32RecCount>100))
         {
             uint8_t* p8_sizeAddr = (uint8_t*)(RECEIVE_ADDR+14);
             uint8_t* p8_loadAddr = (uint8_t*)(RECEIVE_ADDR+8);
@@ -137,7 +177,8 @@ static void UPGRADE_UartReceive(void)
             rec += 1024*10;
             dlog_output(100);
         }
-    } 
+    }
+    DLOG_INFO("receive finish %d\n",g_u32RecCount);
     g_pDst = (char *)RECEIVE_ADDR;
     UPGRADE_RollbackIsrHandler();
 }

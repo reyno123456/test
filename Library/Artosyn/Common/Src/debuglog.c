@@ -212,7 +212,11 @@ uint32_t DLOG_GetChar(uint8_t *u8_uartRxBuf, uint8_t u8_uartRxLen)
         u8_uartRxLen--;  
     }
 
-    u8_commandLine[u8_commandPos]=DEBUG_LOG_END;
+    if (u8_commandLine[u8_commandPos-1] != '\n')
+    {
+        u8_commandLine[u8_commandPos]=DEBUG_LOG_END;
+    }
+    
     printf("%s",u8_commandLine);
 }
 

@@ -255,7 +255,7 @@ char uart_getc(unsigned char index)
 
 void UART_IntrSrvc(uint32_t u32_vectorNum)
 {
-    uint8_t u8_uartRxBuf[50];
+    uint8_t u8_uartRxBuf[20];
     uint8_t u8_uartRxLen = 0;
     uint8_t u8_uartCh;
     uint32_t u32_uartIsrType;
@@ -279,30 +279,20 @@ void UART_IntrSrvc(uint32_t u32_vectorNum)
     u32_uartIsrType = pst_uartRegs->IIR_FCR;
 
      /* receive data irq, try to get the data */
-    while (UART_IIR_RECEIVEDATA == (u32_uartIsrType & UART_IIR_RECEIVEDATA))
+
+    if (UART_IIR_RECEIVEDATA == (u32_uartIsrType & 0xf))
     {
-        
-        if (UART_IIR_RECEIVEDATA == (u32_uartIsrType & 0xf))
+        uint8_t i = UART_RX_FIFOLEN;
+        while (i--)
         {
-            uint8_t i = UART_RX_FIFOLEN;
-            while (i--)
-            {
-                u8_uartRxBuf[u8_uartRxLen++] = pst_uartRegs->RBR_THR_DLL;
-            }
-        }
-
-        if (UART_IIR_DATATIMEOUT == (u32_uartIsrType & 0xf))
-        {
-
             u8_uartRxBuf[u8_uartRxLen++] = pst_uartRegs->RBR_THR_DLL;
         }
-            
-        if(u8_uartRxLen >= 50)
-        {
-            break;
-        }
+    }
 
-        u32_uartIsrType = pst_uartRegs->IIR_FCR;
+    if (UART_IIR_DATATIMEOUT == (u32_uartIsrType & 0xf))
+    {
+
+        u8_uartRxBuf[u8_uartRxLen++] = pst_uartRegs->RBR_THR_DLL;
     }
 
     if(u8_uartRxLen > 0) // call user function
