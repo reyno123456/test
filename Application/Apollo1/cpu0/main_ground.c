@@ -67,17 +67,22 @@ int main(void)
     HAL_SRAM_ReceiveVideoConfig();
 
     HAL_NV_Init();
+    
+    portDISABLE_INTERRUPTS();
 
     osThreadDef(USBHStatus_Task, USBH_USBHostStatus, osPriorityNormal, 0, 4 * 128);
     osThreadCreate(osThread(USBHStatus_Task), NULL);
 
-    osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 4 * 128);
+    osThreadDef(IOTask, IO_Task, osPriorityNormal, 0, 4 * 128);
     osThreadCreate(osThread(IOTask), NULL);
 
-    Wireless_TaskInit();
 
     COMTASK_Init();
 
+    Wireless_TaskInit();
+
+    portENABLE_INTERRUPTS();
+    
     osKernelStart();
 
     /* We should never get here as control is now taken by the scheduler */

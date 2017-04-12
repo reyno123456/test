@@ -13,6 +13,7 @@
 #include "testhal_gpio.h"
 #include "test_usbh.h"
 #include "test_hal_nv.h"
+#include "ar_freertos_specific.h"
 
 
 
@@ -115,6 +116,11 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_ViewUVC();
     }
+    else if ((memcmp(cmdArray[0], "top", strlen("top")) == 0))
+    {
+    /* like linux busybox top system call */
+        ar_top();
+    }
     /* error command */
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
@@ -139,6 +145,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("NvResetBbRcId");
         dlog_error("NvSetBbRcId <id1> <id2> <id3> <id4> <id5>");
         dlog_error("viewuvc");
+        dlog_error("top");
         dlog_output(1000);
     }
 }
