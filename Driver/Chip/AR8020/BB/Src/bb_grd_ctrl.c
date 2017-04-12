@@ -422,10 +422,6 @@ void wimax_vsoc_tx_isr(uint32_t u32_vectorNum)
     if( context.u8_flagdebugRequest & 0x80)
     {
         context.u8_debugMode = context.u8_flagdebugRequest & 0x01;
-        osdptr->in_debug = context.u8_debugMode;        
-        pst_devInfo->isDebug = context.u8_debugMode;
-        
-        context.u8_flagdebugRequest = 0;
 
         if( context.u8_debugMode != FALSE )
         {
@@ -436,6 +432,20 @@ void wimax_vsoc_tx_isr(uint32_t u32_vectorNum)
             osdptr->head = 0x00;
             osdptr->tail = 0xff;    //end of the writing
         }
+
+        if (context.u8_debugMode == TRUE)
+        {
+            BB_SPI_DisableEnable(0); //
+        }
+        else
+        {
+            BB_SPI_DisableEnable(1); //
+        }
+
+        osdptr->in_debug = context.u8_debugMode;        
+        pst_devInfo->isDebug = context.u8_debugMode;
+        
+        context.u8_flagdebugRequest = 0;
         dlog_info("bugMode %d %d\n", osdptr->in_debug, context.u8_debugMode);
     }
 
@@ -1197,7 +1207,7 @@ static void grd_calc_dist(void)
     uint8_t u8_data2[3];
     uint32_t u32_data2 = 0;
     uint32_t u32_i;
-    //static uint32_t u32_cnt = 1;
+    static uint32_t u32_cnt = 1;
     uint32_t cmpData;
     static uint32_t cmpCnt = 0;
 
@@ -1255,11 +1265,11 @@ static void grd_calc_dist(void)
                 
                 grd_calc_dist_get_avg_value(&(s_st_calcDistData.u32_calcDistValue));
 
-                /*u32_cnt += 1;
-                if (0 == (u32_cnt % 1000))
+                u32_cnt += 1;
+                if (0 == (u32_cnt % 300))
                 {
                     dlog_info("Zero:%d value:%d", s_st_calcDistData.u32_calcDistZero, s_st_calcDistData.u32_calcDistValue);
-                }*/ 
+                } 
             }
             else
             {

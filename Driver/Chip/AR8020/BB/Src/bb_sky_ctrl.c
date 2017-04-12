@@ -300,9 +300,7 @@ void wimax_vsoc_rx_isr(uint32_t u32_vectorNum)
     if( context.u8_flagdebugRequest & 0x80)
     {
         context.u8_debugMode = (context.u8_flagdebugRequest & 0x01);
-        osdptr->in_debug = context.u8_debugMode;
-        pst_devInfo->isDebug = context.u8_debugMode;
-        
+
         if( context.u8_debugMode )
         {
             osdptr->head = 0x00;
@@ -310,6 +308,18 @@ void wimax_vsoc_rx_isr(uint32_t u32_vectorNum)
         }
 
         context.u8_flagdebugRequest = 0;
+
+        if (context.u8_debugMode == TRUE)
+        {
+            BB_SPI_DisableEnable(0); //
+        }
+        else
+        {
+            BB_SPI_DisableEnable(1); //
+        }
+        
+        osdptr->in_debug = context.u8_debugMode;
+        pst_devInfo->isDebug = context.u8_debugMode;        
     }
 
     INTR_NVIC_EnableIRQ(TIMER_INTR26_VECTOR_NUM);

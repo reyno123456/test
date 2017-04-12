@@ -404,4 +404,12 @@ HAL_RET_T HAL_BB_CalcDistZeroCalibration(void);
  */
 HAL_RET_T HAL_BB_SetCalcDistZeroPoint(uint32_t value);
 
+/** 
+ * @brief   
+ * @param   
+ * @retval            
+ */
+HAL_RET_T HAL_BB_SPI_DisableEnable(uint8_t u8_flag);
+
+
 #endif

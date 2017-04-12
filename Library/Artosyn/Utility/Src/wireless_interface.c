@@ -801,8 +801,9 @@ uint8_t WIRELESS_INTERFACE_SWITCH_DEBUG_MODE_Handler(void *param)
         /*exit debug mode */
         if (eventFlag)
         {
+            HAL_BB_SPI_DisableEnable(0); //
             HAL_BB_SetBoardDebugModeProxy(1);  
-	        eventFlag = 0;
+            eventFlag = 0;
         }
 
         inDebugFlag = 0;
@@ -1372,6 +1373,7 @@ static void Wireless_Task(void const *argument)
 {
     uint8_t                                 messageId;
     uint8_t                                *u8_sendBuff;
+    uint8_t                                 debugMode = 0;
     uint32_t                                u32_sendLength;
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *pstWirelessParamConfig;
 
@@ -1442,6 +1444,15 @@ static void Wireless_Task(void const *argument)
 
             g_stWirelessParamConfig.u8_buffHead++;
             g_stWirelessParamConfig.u8_buffHead &= (WIRELESS_INTERFACE_MAX_MESSAGE_NUM - 1);
+        }
+        
+        if (debugMode != (g_pstWirelessInfoDisplay->in_debug))
+        {
+            debugMode = g_pstWirelessInfoDisplay->in_debug;
+            if (1 == debugMode)
+            {
+                HAL_BB_SPI_DisableEnable(debugMode);
+            }
         }
 
         osDelay(5);

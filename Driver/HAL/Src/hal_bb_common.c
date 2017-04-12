@@ -955,3 +955,16 @@ HAL_RET_T HAL_BB_SoftResetProxy(void)
         return HAL_BB_ERR_EVENT_NOTIFY;
     }
 }
+
+/** 
+ * @brief   
+ * @param   
+ * @retval            
+ */
+HAL_RET_T HAL_BB_SPI_DisableEnable(uint8_t u8_flag)
+{
+    BB_SPI_DisableEnable(u8_flag);
+    
+    return HAL_OK;
+}
+
