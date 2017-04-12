@@ -37,6 +37,8 @@ static uint8_t s_u8_dlogServerCpuId = 0xFF;
 
 #define SRAM_DEBUG_BUF_INIT_FLAG         0x30A5A503
 
+#define DEBUG_LOG_END                    (0x1f)
+
 typedef struct
 {
     volatile uint32_t input_buf_wr_pos;
@@ -180,7 +182,6 @@ uint32_t DLOG_GetChar(uint8_t *u8_uartRxBuf, uint8_t u8_uartRxLen)
         {
             s_u8_commandLine[s_u8_commandPos++] = c;
             u8_commandLine[u8_commandPos++] = '\n';
-            printf("\r\n");
             /* if s_u8_commandLine is not empty, go to parse command */
             if (s_u8_commandPos > 0)
             {
@@ -211,7 +212,7 @@ uint32_t DLOG_GetChar(uint8_t *u8_uartRxBuf, uint8_t u8_uartRxLen)
         u8_uartRxLen--;  
     }
 
-    u8_commandLine[i]='\n';
+    u8_commandLine[u8_commandPos]=DEBUG_LOG_END;
     printf("%s",u8_commandLine);
 }
 
@@ -451,6 +452,7 @@ unsigned int DLOG_Output(unsigned int byte_num)
 
     char **p_src;
     char* src;
+    char* tmpsrc;
     char* write_pos;
     char* head;
     char* tail;
@@ -508,9 +510,10 @@ unsigned int DLOG_Output(unsigned int byte_num)
                 tmp_buf[tmp_buf_index++] = *src;
             }
 
-            if (*src == '\n')
+            if ((*src == '\n') || (*src == DEBUG_LOG_END) )
             {
                 enter_detected = 1;
+                *tmpsrc = *src;
             }
 
             if (src >= tail)
@@ -524,11 +527,20 @@ unsigned int DLOG_Output(unsigned int byte_num)
 
             if (enter_detected == 1)
             {
-                uart_puts(DEBUG_LOG_UART_PORT, tmp_buf);
-                uart_putc(DEBUG_LOG_UART_PORT, '\r');
-               
-                iByte += tmp_buf_index;
                 
+                if ((*tmpsrc != DEBUG_LOG_END))
+                {
+                    uart_puts(DEBUG_LOG_UART_PORT, tmp_buf);
+                    uart_putc(DEBUG_LOG_UART_PORT, '\r');
+                    iByte += tmp_buf_index;
+                }
+                else
+                {   
+                    tmp_buf[tmp_buf_index-1]='\0';
+                    uart_puts(DEBUG_LOG_UART_PORT, tmp_buf);
+                    iByte += (tmp_buf_index-1);
+                }
+                               
                 *p_src = src;
 
 #ifdef DEBUG_LOG_OUTPUT_CPU_AFTER_CPU
