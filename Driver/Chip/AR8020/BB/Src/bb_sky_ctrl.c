@@ -529,7 +529,7 @@ void sky_physical_link_process(void)
     else if( context.rc_unlock_cnt > 40 && context.dev_state == CHECK_ID_MATCH )
     {
         context.rc_unlock_cnt = 0;
-        sky_search_id_timeout( 0 );
+        sky_search_id_timeout( 1 );
     }
 }
 
