@@ -34,7 +34,7 @@ static void IO_Task(void const *argument)
         
         DLOG_Process(NULL);
         
-        osDelay(20);
+        HAL_Delay(20);
     }
 }
 
