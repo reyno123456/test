@@ -218,7 +218,7 @@ int BB_Sweep_updateCh(uint8_t mainch)
     stru_sweepPower.u8_mainCh      = mainch;
 
     //re-select the option channel
-    BB_selectBestCh(SELECT_OPT, NULL, &opt, NULL, 1);
+    BB_selectBestCh(SELECT_OPT, NULL, &opt, NULL, 0);
 
     stru_sweepPower.u8_optCh = opt;
     stru_sweepPower.u8_optSweepCh = opt;
@@ -243,7 +243,7 @@ static int BB_SweepBeforeFull( void )
             {
                 uint8_t mainch = 0, opt = 0;
                 stru_sweepPower.u8_isFull = 1;
-                BB_selectBestCh(SELECT_MAIN_OPT, &mainch, &opt, NULL, 1);
+                BB_selectBestCh(SELECT_MAIN_OPT, &mainch, &opt, NULL, 0);
 
                 stru_sweepPower.u8_mainSweepCh = mainch;
                 stru_sweepPower.u8_mainCh      = mainch;
@@ -629,7 +629,7 @@ uint8_t get_opt_channel( void )
     int16_t s16_cur_mainPower;
     int16_t s16_cur_power, s16_aver_power, s16_sum;
     uint8_t level;
-    BB_selectBestCh(SELECT_OTHER, NULL, NULL, &other, 1);
+    BB_selectBestCh(SELECT_OTHER, NULL, NULL, &other, 0);
 
     {
         s16_sum = 0;

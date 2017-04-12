@@ -739,8 +739,8 @@ void BB_RF_2G_5G_switch(ENUM_RF_BAND rf_band)
 
     BB_WriteReg(PAGE0, 0x6d, regvalue);
 
-    BB_WriteReg(PAGE0, TX_CALI_ENABLE, 0X00);
-    BB_WriteReg(PAGE0, TX_CALI_ENABLE, 0X02);
+    BB_WriteReg(PAGE0, TX_CALI_ENABLE, 0x00);   //disable calibration
+    BB_WriteRegMask(PAGE0, 0x60, 0x02, 0x02);   //fix calibration result.
 
     data = BB_ReadReg(PAGE0, 0x00);
     data |= 0x01;
