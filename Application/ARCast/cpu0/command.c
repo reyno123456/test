@@ -5,9 +5,18 @@
 #include "test_hal_nv.h"
 #include "test_storagedatausb.h"
 #include "test_i2c_adv7611.h"
+#include "hal_dma.h"
+#include "md5.h"
+#include "data_type.h"
+#include "cmsis_os.h"
+
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
+static void command_dma(char * u32_src, char *u32_dst, char *u32_byteNum);
+static void command_test_dma_loop(char * u32_src, char *u32_dst, char *u32_byteNum);
+
+
 
 void command_run(char *cmdArray[], uint32_t cmdNum)
 {
@@ -45,6 +54,14 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_writeADV7611(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
+	else if (memcmp(cmdArray[0], "test_dma_cpu0", strlen("test_dma_cpu0")) == 0)
+    {
+        command_dma(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
+    else if ((memcmp(cmdArray[0], "test_dma_loop", strlen("test_dma_loop")) == 0) && (cmdNum == 4))
+    {
+        command_test_dma_loop(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
         dlog_error("Please use the commands like:");
@@ -56,6 +73,8 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("NvSetBbRcId <id1> <id2> <id3> <id4> <id5>");
         dlog_error("hdmiread <slv address> <reg address>");
         dlog_error("hdmiwrite <slv address> <reg address> <reg value>");
+		dlog_error("test_dma_cpu0 <src> <dst> <byte_num>");
+		dlog_error("test_dma_loop <src> <dst> <byte_num>");
         dlog_output(1000);
     }
 }
@@ -121,5 +140,87 @@ void command_writeMemory(char *addr, char *value)
     writeValue   = command_str2uint(value);
 
     *((unsigned int *)(writeAddress)) = writeValue;
+}
+
+static void command_dma(char * u32_src, char *u32_dst, char *u32_byteNum)
+{
+    unsigned int iSrcAddr;
+    unsigned int iDstAddr;
+    unsigned int iNum;
+
+    iDstAddr    = command_str2uint(u32_dst);
+    iSrcAddr    = command_str2uint(u32_src);
+    iNum        = command_str2uint(u32_byteNum);
+
+
+    HAL_DMA_Start(iSrcAddr, iDstAddr, iNum, DMA_AUTO, DMA_LINK_LIST_ITEM);
+	
+	/* use to fake the dst data */
+#if 0
+    unsigned char *p_reg;
+    p_reg = (unsigned char *)0x81800000;
+    *p_reg = 0xAA;
+#endif
+    /***********************/
+    
+    #define MD5_SIZE 16
+    uint8_t    md5_value[MD5_SIZE];
+    int i = 0;
+    MD5_CTX md5;
+    MD5Init(&md5);
+    MD5Update(&md5, (uint8_t *)iSrcAddr, iNum);
+    MD5Final(&md5, md5_value);
+    dlog_info("src MD5 = 0x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", 
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++]);
+
+    memset(&md5, 0, sizeof(MD5_CTX));
+    MD5Init(&md5);
+    MD5Update(&md5, (uint8_t *)iDstAddr, iNum);
+    memset(&md5_value, 0, sizeof(md5_value));
+    MD5Final(&md5, md5_value);
+    i = 0;
+    dlog_info("dst MD5 = 0x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", 
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++],
+                                    md5_value[i++]);
+}
+
+static void command_test_dma_loop(char * u32_src, char *u32_dst, char *u32_byteNum)
+{
+	unsigned int i = 0;
+	
+	while(1)
+	{
+		command_dma(u32_src, u32_dst, u32_byteNum);
+		dlog_info("i = %d\n", i++);
+	}
 }
 
