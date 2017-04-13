@@ -77,9 +77,9 @@ int main(void)
     osThreadCreate(osThread(IOTask), NULL);
 
 
-    COMTASK_Init();
 
     Wireless_TaskInit();
+    COMTASK_Init();
 
     portENABLE_INTERRUPTS();
     
