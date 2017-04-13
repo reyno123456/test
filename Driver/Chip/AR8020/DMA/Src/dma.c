@@ -107,7 +107,6 @@ int32_t DMA_Init(ENUM_Chan u8_channel, uint8_t u8_chanPriority)
 	uint8_t u8_inited = 1;
 
 	assert_param(IS_CHANNAL_PRIORITY(u8_chanPriority));
-	memset((void*)s_st_transStatus, 0, sizeof(s_st_transStatus));
 
 	if (u8_channel == AUTO)
 	{

@@ -48,9 +48,9 @@ HAL_RET_T HAL_DMA_Start(uint32_t u32_srcAddress, uint32_t u32_dstAddress, uint32
 
 	DMA_transfer(u32_srcAddress, u32_dstAddress, u32_dataLength, channel, e_transType);
 
-	while( DMA_getStatus(channel)  ==  0)
-	{
-		HAL_Delay(1);
-	}
+	// while( DMA_getStatus(channel)  ==  0)
+	// {
+	//	HAL_Delay(1);
+	// }
 	return HAL_TRUE;
 }
