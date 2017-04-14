@@ -72,7 +72,7 @@ static char *s_debug_log_input_buf_rd_pos_1 = DEBUG_LOG_INPUT_BUF_HEAD;
 static char *s_debug_log_input_buf_rd_pos_2 = DEBUG_LOG_INPUT_BUF_HEAD;
 
 static unsigned char s_u8_commandPos;
-static unsigned char s_u8_commandLine[50];
+static unsigned char s_u8_commandLine[128];
 
 static FUNC_CommandRun s_func_commandRun = NULL;
 
