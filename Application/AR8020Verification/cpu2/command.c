@@ -70,9 +70,9 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
                 dlog_info("%02x",configure->bb_sky_configure[j][i*16]);
                 dlog_output(100);
             }
-            dlog_info("***********************************************");
+            // dlog_info("***********************************************");
         }
-        dlog_info("***************      bb_grd            ********************");
+        // dlog_info("***************      bb_grd            ********************");
         for(j=0;j<4;j++)
         {
             for(i=0;i<16;i++)
@@ -80,9 +80,9 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
                 dlog_info("%02x",configure->bb_grd_configure[j][i*16]);
                 dlog_output(100);
             }
-            dlog_info("***********************************************");
+            // dlog_info("***********************************************");
         }
-        dlog_info("*********        rf           **************");
+        // dlog_info("*********        rf           **************");
         for(i=0;i<8;i++)
         {
             dlog_info("%02x",configure->rf1_configure[i*16]);
