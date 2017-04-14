@@ -328,15 +328,40 @@ void HAL_USB_EnterUSBHostTestMode(void)
 void HAL_USB_TransferUVCToGrd(uint8_t *buff, uint32_t dataLen)
 {
     static uint8_t          u8_frameInterval = 0;
+    uint8_t                 u8_header[10];
 
     u8_frameInterval++;
 
-    if (u8_frameInterval >= 5)
+    if (u8_frameInterval >= 10)
     {
         u8_frameInterval    = 0;
 
-        //copy to baseband
+        // set header of image
+        // header format:
+        // byte0 byte1 byte2 byte3 byte4 byte5 byte6 byte7 byte8   byte9   byte10 byte11
+        // 0x00  0x00  0x00  0x00  0xFF  0xFF  0xFF  0xFF  format  pixel     reserved
+        // format:  1: YUV       2: Y only
+        // pixel:   1: 160*120   2: 320*240
+        u8_header[0]            = 0x00;
+        u8_header[1]            = 0x00;
+        u8_header[2]            = 0x00;
+        u8_header[3]            = 0x00;
+        u8_header[4]            = 0xFF;
+        u8_header[5]            = 0xFF;
+        u8_header[6]            = 0xFF;
+        u8_header[7]            = 0xFF;
+        u8_header[8]            = 0x01;
+        u8_header[9]            = 0x01;
+        u8_header[10]           = 0x00;
+        u8_header[11]           = 0x00;
+
+        // copy header to baseband
         memcpy((void *)0xB1800000,
+               (void *)u8_header,
+               12);
+
+        // copy frame data to baseband
+        memcpy((void *)0xB180000C,
                (void *)buff,
                dataLen);
     }

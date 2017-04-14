@@ -234,7 +234,7 @@ void USBH_ProcUVC(void)
             //get a YUV frame, size should be u16_width * u16_height * 2
             if (HAL_OK == HAL_USB_GetVideoFrame(u8_FrameBuff, &u32_uvcFrameNum, &u32_frameSize))
             {
-                #if 1
+                #if 0
                 dlog_info("frameNum: %d, frameSize: %d, data: %02x, %02x, %02x, %02x",
                                             u32_uvcFrameNum,
                                             u32_frameSize,
