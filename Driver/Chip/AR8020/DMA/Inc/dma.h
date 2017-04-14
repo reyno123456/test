@@ -17,6 +17,9 @@ History:
 #define DW_DMA_MAX_NR_CHANNELS	8
 
 // #define DMA_DEBUG 
+#define DMA_LOWEST_PRIORITY 7
+#define DMA_HIGHEST_PRIORITY 0
+
 
 /* flow controller */
 typedef enum {
@@ -246,6 +249,13 @@ typedef enum {
 	ACTIVE
 } ENUM_ChanActive;
 
+typedef enum {
+	DMA_blocked = 0,
+	DMA_noneBlocked,
+	DMA_blockTimer
+} ENUM_blockMode;
+
+
 typedef struct {
 	uint32_t u32_transNum;
 	uint32_t u32_srcTranAddr;
@@ -266,5 +276,7 @@ void DMA_initIRQ();
 int32_t DMA_Init(ENUM_Chan u8_channel, uint8_t u8_chanPriority);
 uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_transByteNum, uint8_t u8_chanIndex, ENUM_TransferType e_transType);
 uint32_t DMA_getStatus(uint8_t u8_chanIndex);
+uint32_t DMA_forDriverTransfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_transByteNum, 
+											ENUM_blockMode e_blockMode, uint32_t u32_ms);
 
 #endif

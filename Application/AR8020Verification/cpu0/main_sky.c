@@ -14,6 +14,7 @@
 #include "hal_sys_ctl.h"
 #include "wireless_interface.h"
 #include "hal_nv.h"
+#include "hal_dma.h"
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
@@ -71,6 +72,8 @@ int main(void)
     HAL_USB_InitOTG(HAL_USB_PORT_0);
 
     HAL_NV_Init();
+
+	HAL_DMA_init();
 
     portDISABLE_INTERRUPTS();
 

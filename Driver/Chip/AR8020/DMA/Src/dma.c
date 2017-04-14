@@ -166,17 +166,13 @@ int32_t DMA_Init(ENUM_Chan u8_channel, uint8_t u8_chanPriority)
 
 			s_st_transStatus[u8_channel].e_transActive = ACTIVE;
 			u8_inited = 0;
+			
+			s_st_transStatus[u8_channel].trans_complete = 0;
+			
+			return u8_channel;
 		}
 
-		if ((u8_inited != 0) && (u8_channel >= DW_DMA_MAX_NR_CHANNELS) )
-		{
-			dlog_error("channel %d occupied!\n", u8_channel);
-			return -1;
-		}
-
-		s_st_transStatus[u8_chanIndex].trans_complete = 0;
-/* 		dlog_info("selected chanel = %d\n", u8_channel); */
-		return u8_channel;
+		return -1;
 	}
 }
 
@@ -468,4 +464,59 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
 uint32_t DMA_getStatus(uint8_t u8_chanIndex)
 {
 	return s_st_transStatus[u8_chanIndex].trans_complete;
+}
+
+uint32_t DMA_forDriverTransfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_transByteNum, 
+											ENUM_blockMode e_blockMode, uint32_t u32_ms)
+{
+	uint8_t u8_chanIndex;
+	uint8_t u8_chanInitFlag = 0;
+	uint32_t u32_start, u32_end;
+	
+	for (u8_chanIndex = 7; u8_chanIndex >= 4; u8_chanIndex--)
+	{
+		/* channel 7 priority 0, channel 6 priority 1, channel 5 priority 2, channel 4 priority 3 */
+		if (DMA_Init(u8_chanIndex, DMA_LOWEST_PRIORITY - u8_chanIndex) >= 0 )
+		{
+			DMA_transfer(u32_srcAddr, u32_dstAddr, u32_transByteNum, u8_chanIndex, LINK_LIST_ITEM);
+			break;
+		}
+		else
+		{
+			dlog_info("line = %d, no channel for %d!\n", __LINE__, u8_chanIndex);
+		}
+	}
+
+	if (u8_chanIndex < 4)
+	{
+		dlog_info("line = %d, all 4 channel occupied!\n", __LINE__);
+		return -1;
+	}
+
+
+	switch (e_blockMode)
+	{
+		case DMA_blocked:
+			while( DMA_getStatus(u8_chanIndex)  ==  0);
+			break;
+
+		case DMA_noneBlocked:
+			break;
+
+		case DMA_blockTimer:
+			u32_start = SysTicks_GetTickCount();
+			u32_end = u32_start + u32_ms;
+			while(SysTicks_GetTickCount() <= u32_end)
+			{
+				if (DMA_getStatus(u8_chanIndex) == 1)
+				{
+					break;
+				}
+			}
+			break;
+
+		default: break;
+	}
+
+	return 0;
 }

@@ -106,4 +106,16 @@ void command_test_dma_loop(char * u32_src, char *u32_dst, char *u32_byteNum)
 	}
 }
 
+extern HAL_RET_T HAL_DMA_forDriverTest(uint32_t u32_srcAddress, uint32_t u32_dstAddress, uint32_t u32_dataLength);
+void command_test_dma_driver(char * u32_src, char *u32_dst, char *u32_byteNum, 
+											char* u32_type, char* u32_ms)
+{
+	unsigned int iSrcAddr;
+    unsigned int iDstAddr;
+    unsigned int iNum;
 
+    iDstAddr    = command_str2uint(u32_dst);
+    iSrcAddr    = command_str2uint(u32_src);
+    iNum        = command_str2uint(u32_byteNum);
+	HAL_DMA_forDriverTest(iSrcAddr, iDstAddr, iNum);
+}

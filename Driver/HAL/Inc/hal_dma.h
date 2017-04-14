@@ -45,7 +45,8 @@ typedef enum {
  * @return  none
  */
 HAL_RET_T HAL_DMA_Start(uint32_t u32_srcAddress, uint32_t u32_dstAddress, 
-					uint32_t u32_dataLength,ENUM_DMA_chan e_channel, 
-					ENUM_DMA_TransferType e_transType);
+						uint32_t u32_dataLength,ENUM_DMA_chan e_channel, 
+						ENUM_DMA_TransferType e_transType);
+HAL_RET_T HAL_DMA_init(void);
 
 #endif

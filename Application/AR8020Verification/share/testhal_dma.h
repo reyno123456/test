@@ -3,5 +3,6 @@
 
 void command_dma(char * u32_src, char *u32_dst, char *u32_byteNum);
 void command_test_dma_loop(char * u32_src, char *u32_dst, char *u32_byteNum);
+void command_test_dma_driver(char * u32_src, char *u32_dst, char *u32_byteNum, char* u32_type, char* u32_ms);
 
 #endif

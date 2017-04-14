@@ -28,12 +28,6 @@ History:
 HAL_RET_T HAL_DMA_Start(uint32_t u32_srcAddress, uint32_t u32_dstAddress, uint32_t u32_dataLength, 
 					ENUM_DMA_chan u8_channel, ENUM_DMA_TransferType e_transType)
 {
-	static uint32_t flag = 0;
-	if (flag == 0){
-		DMA_initIRQ();
-		flag = 1;
-	}
-	
 	int32_t channel = 0;
 	channel = DMA_Init(u8_channel,7);
 	if (channel < 0)
@@ -52,5 +46,19 @@ HAL_RET_T HAL_DMA_Start(uint32_t u32_srcAddress, uint32_t u32_dstAddress, uint32
 	// {
 	//	HAL_Delay(1);
 	// }
+	return HAL_TRUE;
+}
+
+HAL_RET_T HAL_DMA_init(void)
+{
+	DMA_initIRQ();
+	
+	return HAL_TRUE;
+}
+
+HAL_RET_T HAL_DMA_forDriverTest(uint32_t u32_srcAddress, uint32_t u32_dstAddress, uint32_t u32_dataLength)
+{
+	DMA_forDriverTransfer(u32_srcAddress, u32_dstAddress, u32_dataLength, DMA_blockTimer, 10);
+	
 	return HAL_TRUE;
 }
