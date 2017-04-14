@@ -16,7 +16,7 @@ History:
 #include "interrupt.h"
 #include "hal_nvic.h"
 #include "debuglog.h"
-#include "hal_dma.h"
+#include "dma.h"
 #include "cpu_info.h"
 
 static ENUM_HAL_USB_HOST_STATE   s_eUSBHostAppState;
@@ -225,11 +225,12 @@ HAL_RET_T HAL_USB_GetVideoFrame(uint8_t *u8_buff, uint32_t *u32_frameNum, uint32
             u32_destAddr    += u32_addrOffset;
         }
 
-        HAL_DMA_Start(u32_srcAddr,
-                      u32_destAddr,
-                      *u32_frameSize,
-                      DMA_AUTO,
-                      DMA_LINK_LIST_ITEM);
+        //HAL_DMA_Start(u32_srcAddr,
+        //              u32_destAddr,
+        //              *u32_frameSize,
+        //              DMA_AUTO,
+        //              DMA_LINK_LIST_ITEM);
+        DMA_forDriverTransfer(u32_srcAddr, u32_destAddr, *u32_frameSize, DMA_blocked, 0);
 
         CPUINFO_DCacheInvalidateByAddr((uint32_t *)u8_buff, *u32_frameSize);
 
