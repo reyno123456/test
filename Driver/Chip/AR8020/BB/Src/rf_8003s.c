@@ -20,17 +20,6 @@ static int RF8003s_SPI_WriteReg_internal(uint8_t u8_addr, uint8_t u8_data, uint8
 {
     int ret = 0;
     uint8_t wdata[] = {0x80, (u8_addr <<1), u8_data};   //RF_8003S_SPI: wr: 0x80 ; 
-    
-    //use low speed for the RF8003 read, from test, read fail if use the same clockrate as baseband
-    /*
-    STRU_SPI_InitTypes init = {
-        .ctrl0   = 0x47,
-        .clk_Mhz = RF8003S_RF_CLOCKRATE,    
-        .Tx_Fthr = 0x03,
-        .Rx_Ftlr = 0x6,
-        .SER     = 0x01
-    };
-    */
 
     if(u8_flag)
     {
@@ -111,43 +100,68 @@ int RF8003s_SPI_ReadReg(uint8_t u8_addr, uint8_t *pu8_rxValue)
   * @param : addr: 8003 SPI address
   * @retval  None
   */
-void RF8003s_init(uint8_t *pu8_regs1, uint8_t *pu8_regs2, STRU_BoardCfg *boardCfg)
+void RF8003s_init(uint8_t *pu8_regs1, uint8_t *pu8_regs2, STRU_BoardCfg *boardCfg, ENUM_BB_MODE en_mode)
 {
     uint8_t idx;
     uint8_t cnt;
+    uint8_t num;
+    const STRU_RF_REG * pstru_rfReg = NULL;
 
-    BB_SPI_curPageWriteByte(0x01,0x01);             //bypass: SPI change into 8003
-
-    if ( boardCfg != NULL )
+    //RF 0
     {
-        for (cnt = 0; cnt < boardCfg->u8_rf1RegsCnt; cnt++)
+        BB_SPI_curPageWriteByte(0x01,0x01);             //bypass: SPI change into 8003
+        
+        if ( boardCfg != NULL )
+        {        
+            if ( en_mode == BB_SKY_MODE )               //sky mode register replace
+            {
+                num = boardCfg->u8_rf1SkyRegsCnt;
+                pstru_rfReg = boardCfg->pstru_rf1SkyRegs;
+            }
+            else                                        //ground mode register replace
+            {
+                num = boardCfg->u8_rf1GrdRegsCnt;
+                pstru_rfReg = boardCfg->pstru_rf1GrdRegs;
+            }
+        
+            for (cnt = 0; (pstru_rfReg != NULL) && (cnt < num); cnt++)
+            {
+                pu8_regs1[pstru_rfReg[cnt].addr] = pstru_rfReg[cnt].value;
+            } 
+        }
+        
+        for(idx = 0; idx < 128; idx++)
         {
-            STRU_RF_REG rfReg1 = boardCfg->pstru_rf1Regs[cnt];
-            pu8_regs1[rfReg1.addr] = rfReg1.value;
-        }    
+            RF8003s_SPI_WriteReg_internal( idx, pu8_regs1[idx], 0);
+        }
+        
+        {
+            //add patch, reset 8003
+            RF8003s_SPI_WriteReg_internal(0x15, 0x51, 0);
+            RF8003s_SPI_WriteReg_internal(0x15, 0x50, 0);
+        }
+        
+        BB_SPI_curPageWriteByte(0x01,0x02);             //SPI change into 8020
     }
 
-    for(idx = 0; idx < 128; idx++)
-    {
-        RF8003s_SPI_WriteReg_internal( idx, pu8_regs1[idx], 0);
-    }
-
-    {
-        //add patch, reset 8003
-        RF8003s_SPI_WriteReg_internal(0x15, 0x51, 0);
-        RF8003s_SPI_WriteReg_internal(0x15, 0x50, 0);
-    }
-
-    BB_SPI_curPageWriteByte(0x01,0x02);             //SPI change into 8020
-    
+    //RF 1    
     if (boardCfg != NULL && boardCfg->u8_rf8003Cnt > 1)
     {
+        if ( en_mode == BB_SKY_MODE )
+        {
+            num = boardCfg->u8_rf2SkyRegsCnt;
+            pstru_rfReg = boardCfg->pstru_rf2SkyRegs;
+        }
+        else
+        {
+            num = boardCfg->u8_rf2GrdRegsCnt;
+            pstru_rfReg = boardCfg->pstru_rf2GrdRegs;
+        }
         BB_SPI_curPageWriteByte(0x01,0x03);             //bypass: SPI change into 2rd 8003s
         
-        for (cnt = 0; cnt < boardCfg->u8_rf2RegsCnt; cnt++)
+        for (cnt = 0; (pstru_rfReg != NULL) && (cnt < num); cnt++)
         {
-            STRU_RF_REG rfReg2 = boardCfg->pstru_rf2Regs[cnt];
-            pu8_regs2[rfReg2.addr] = rfReg2.value;
+            pu8_regs2[pstru_rfReg[cnt].addr] = pstru_rfReg[cnt].value;
         }
         for(idx = 0; idx < 128; idx++)
         {

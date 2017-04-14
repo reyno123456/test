@@ -266,7 +266,7 @@ void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
     BB_SPI_init();
 
     BB_regs_init(en_mode, boardCfg);
-    RF8003s_init(RF1_8003s_regs, RF2_8003s_regs, boardCfg);
+    RF8003s_init(RF1_8003s_regs, RF2_8003s_regs, boardCfg, en_mode);
 
     BB_softReset(en_mode);
 
