@@ -318,7 +318,7 @@ int grd_freq_skip_pre_judge(void)
     }
 
     optch = get_opt_channel();
-    int16_t cmp = compare_chNoisePower(context.cur_IT_ch, optch, &aver, &fluct, 1);
+    int16_t cmp = compare_chNoisePower(context.cur_IT_ch, optch, &aver, &fluct, context.freq_band, 0);
     dlog_info("cmp:(%d:%d) rst:(%d %d) \n", context.cur_IT_ch, optch, aver, fluct);
     if( (aver >= 20) || ( aver > 15 && fluct > 10 ) ) //next channel is better than current channel
     {
@@ -635,7 +635,7 @@ void Grd_Timer2_6_Init(void)
 uint8_t grd_rc_channel = 0;
 void grd_rc_hopfreq(void)
 {
-	uint8_t max_ch_size = (context.freq_band == RF_2G) ? (MAX_2G_RC_FRQ_SIZE):(MAX_5G_RC_FRQ_SIZE);
+	uint8_t max_ch_size = (context.freq_band == RF_2G) ? MAX_2G_RC_FRQ_SIZE : MAX_5G_RC_FRQ_SIZE;
 
     grd_rc_channel++;
     if(grd_rc_channel >= max_ch_size)
@@ -1185,7 +1185,7 @@ static void BB_grd_GatherOSDInfo(void)
     osdptr->in_debug        = context.u8_debugMode;
     osdptr->lock_status     = ( osdptr->lock_status & 0xf0) | (BB_ReadReg(PAGE2, FEC_5_RD) & 0x0f);
     memset(osdptr->sweep_energy, 0, sizeof(osdptr->sweep_energy));
-    BB_GetSweepNoise(0, osdptr->sweep_energy);
+    BB_GetSweepNoise(osdptr->sweep_energy);
 
     if(context.brc_mode == AUTO)
     {

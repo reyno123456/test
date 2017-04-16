@@ -61,10 +61,8 @@ void BB_SKY_start(void)
     context.rc_skip_freq_mode = AUTO;
 
     context.cur_IT_ch         = 0xff;
-    context.it_manual_rf_band = 0xff;
     context.rc_unlock_cnt     = 0;
     context.dev_state         = SEARCH_ID;
-    //context.dev_state = (context.search_id_enable == 0xff)? SEARCH_ID : CHECK_ID_MATCH;
 
     sky_id_search_init();
     
@@ -229,15 +227,6 @@ void sky_auto_adjust_agc_gain(void)
     uint8_t rx1_gain = BB_ReadReg(PAGE2, AAGC_2_RD);
     uint8_t rx2_gain = BB_ReadReg(PAGE2, AAGC_3_RD);
     uint8_t i = 0;
-
-    {
-        static int count = 0;
-        if ( count ++ > 500)
-        {
-            count = 0;
-            dlog_info("%x %x", rx1_gain, rx2_gain);
-        }
-    }
     
     //average 50 times AGC
     {

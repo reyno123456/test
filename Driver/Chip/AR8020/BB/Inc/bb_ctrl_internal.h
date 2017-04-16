@@ -62,8 +62,8 @@ typedef struct _SysEvent_SkyStatus
 #define MAX_2G_RC_FRQ_SIZE (34)
 #define MAX_2G_IT_FRQ_SIZE (8)
 
-#define MAX_5G_RC_FRQ_SIZE (4)
-#define MAX_5G_IT_FRQ_SIZE (4)
+#define MAX_5G_RC_FRQ_SIZE (34)
+#define MAX_5G_IT_FRQ_SIZE (8)
 
 #define MAX(a,b) (((a) > (b)) ?  (a) :  (b) )
 
