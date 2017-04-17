@@ -449,7 +449,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestLocalIrq();
     }
-	if ((memcmp(cmdArray[0], "top", strlen("top")) == 0))
+	else if ((memcmp(cmdArray[0], "top", strlen("top")) == 0))
     {
 		/* like linux busybox top system call */
         ar_top();

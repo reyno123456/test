@@ -70,6 +70,7 @@ int main(void)
 
     HAL_NV_Init();
 
+    portDISABLE_INTERRUPTS();
     /* Create Main Task */
     osThreadDef(USBMAIN_Task, USB_MainTask, osPriorityBelowNormal, 0, 4 * 128);
     osThreadCreate(osThread(USBMAIN_Task), NULL);
@@ -77,13 +78,15 @@ int main(void)
     osThreadDef(USBHStatus_Task, USBH_USBHostStatus, osPriorityNormal, 0, 4 * 128);
     osThreadCreate(osThread(USBHStatus_Task), NULL);
 
-    osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 4 * 128);
+    osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 16 * 128);
     osThreadCreate(osThread(IOTask), NULL);
 
     osMessageQDef(osqueue, 1, uint16_t);
     g_usbhAppCtrl.usbhAppEvent  = osMessageCreate(osMessageQ(osqueue),NULL);
 
     Wireless_TaskInit();
+
+    portENABLE_INTERRUPTS();
 
     osKernelStart();
 
