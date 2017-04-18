@@ -15,6 +15,7 @@
 #include "wireless_interface.h"
 #include "hal_nv.h"
 #include "hal_dma.h"
+#include "hal_sd.h"
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
@@ -27,6 +28,7 @@ void HDMI_powerOn(void)
     HAL_GPIO_SetPin(63, HAL_GPIO_PIN_SET);
 }
 
+void SysTicks_DelayMS(uint32_t msDelay);
 static void IO_Task(void const *argument)
 {
     while (1)
@@ -76,6 +78,9 @@ int main(void)
     HAL_NV_Init();
 
 	HAL_DMA_init();
+
+	HAL_SD_InitIRQ();
+	HAL_SD_Init(SDR50);
 
     portDISABLE_INTERRUPTS();
 

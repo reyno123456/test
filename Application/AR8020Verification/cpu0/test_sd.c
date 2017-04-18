@@ -8,6 +8,7 @@ FIL outFile, inFile;
 
 void TestWR()
 {
+/*
 	dlog_info("testwr\n");
 	HAL_SD_InitIRQ();
 
@@ -17,6 +18,7 @@ void TestWR()
 		dlog_error("init SD failed\n");
 		return;
 	}
+*/
 
     uint32_t info;
     // extern SD_CardInfoTypedef cardinfo;
@@ -50,12 +52,15 @@ void TestWR()
 		dlog_info("ioctl failed\n");
 	}
 
+/*
 	cmd = HAL_SD_GET_CARD_STATUS;
 	if (HAL_SD_Ioctl(cmd, &info) != HAL_OK)
 	{
 		dlog_info("ioctl failed\n");
 	}
+*/
 
+#if 0
 	int i = 0;
 	uint32_t sect = 0;
 	while(i < 10)
@@ -68,6 +73,7 @@ void TestWR()
 	}
 
 	HAL_SD_Deinit();
+#endif
 }
 
 void TestFatFs()
@@ -297,8 +303,8 @@ void command_initSdcard()
 
 void command_SdcardFatFs()
 {	
-    // TestWR();
+    TestWR();
     // TestFatFs();
-   TestFatFs1();
+/*    TestFatFs1(); */
 //	TestFatFs2();
 }

@@ -648,7 +648,8 @@ void command_readSdcard(char *Dstaddr, char *BlockNum)
     iSrcAddr   = command_str2uint(Dstaddr);
     iBlockNum  = command_str2uint(BlockNum);
 
-    readSdcardBuff = m7_malloc(iBlockNum * 512);
+/*     readSdcardBuff = m7_malloc(iBlockNum * 512); */
+    readSdcardBuff = malloc(iBlockNum * 512);
     memset(readSdcardBuff, '\0', iBlockNum * 512);
     bufferPos = readSdcardBuff;
 
@@ -683,7 +684,8 @@ void command_readSdcard(char *Dstaddr, char *BlockNum)
         }
         dlog_info("\n");
     }
-    m7_free(readSdcardBuff);
+/*     m7_free(readSdcardBuff); */
+    free(readSdcardBuff);
 
 }
 
