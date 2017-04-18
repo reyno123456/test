@@ -141,8 +141,6 @@ USBD_HID_HandleTypeDef;
   * @{
   */ 
 
-extern volatile uint32_t g_u32USBConnState;
-
 
 extern USBD_ClassTypeDef  USBD_HID;
 #define USBD_HID_CLASS    &USBD_HID
@@ -161,6 +159,9 @@ uint8_t USBD_HID_SendReport (USBD_HandleTypeDef *pdev,
 uint32_t USBD_HID_GetPollingInterval (USBD_HandleTypeDef *pdev);
 uint8_t USBD_HID_RegisterInterface(USBD_HandleTypeDef *pdev,
                              USBD_HID_ItfTypeDef *fops);
+
+void USBD_HID_OpenVideoDisplay(USBD_HandleTypeDef *pdev);
+void USBD_HID_CloseVideoDisplay(USBD_HandleTypeDef *pdev);
 
 /**
   * @}

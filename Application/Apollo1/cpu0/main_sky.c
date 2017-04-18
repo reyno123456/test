@@ -65,9 +65,9 @@ int main(void)
     st_configure.u8_hdmiToEncoderCh = 0;
     HAL_HDMI_RX_Init(HAL_HDMI_RX_1, &st_configure);
 
-    HAL_USB_InitOTG(HAL_USB_PORT_1);
-
     HAL_USB_InitOTG(HAL_USB_PORT_0);
+
+    HAL_USB_InitOTG(HAL_USB_PORT_1);
 
     HAL_NV_Init();
 

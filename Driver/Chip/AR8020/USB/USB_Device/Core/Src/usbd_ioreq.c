@@ -107,7 +107,7 @@ USBD_StatusTypeDef  USBD_CtlSendData (USBD_HandleTypeDef  *pdev,
   pdev->ep_in[0].total_length = len;
   pdev->ep_in[0].rem_length   = len;
 
-  if (USB_OTG_IS_BIG_ENDIAN())
+  if (USB_OTG_IsBigEndian(pdev))
   {
     for (u8_i = 0; u8_i < len; u8_i += 4)
     {

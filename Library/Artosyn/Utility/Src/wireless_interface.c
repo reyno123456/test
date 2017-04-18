@@ -848,7 +848,7 @@ uint8_t WIRELESS_INTERFACE_WRITE_RF_REG_Handler(void *param)
 
 uint8_t WIRELESS_INTERFACE_OPEN_VIDEO_Handler(void *param)
 {
-    HAL_SRAM_OpenVideo();
+    HAL_USB_OpenVideo();
 
     return 0;
 }
@@ -856,7 +856,7 @@ uint8_t WIRELESS_INTERFACE_OPEN_VIDEO_Handler(void *param)
 
 uint8_t WIRELESS_INTERFACE_CLOSE_VIDEO_Handler(void *param)
 {
-    HAL_SRAM_CloseVideo();
+    HAL_USB_CloseVideo();
 
     return 0;
 }

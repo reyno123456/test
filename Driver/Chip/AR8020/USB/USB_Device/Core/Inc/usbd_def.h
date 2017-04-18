@@ -245,7 +245,11 @@ typedef struct _USBD_HandleTypeDef
   USBD_ClassTypeDef       *pClass;
   void                    *pClassData;  
   void                    *pUserData;    
-  void                    *pData;    
+  void                    *pData;
+  uint8_t                  u8_bigEndianFlag;
+  uint8_t                  u8_errorCount;
+  uint8_t                  u8_connState;    //0: disconnect  1: connect  2:normal
+  uint8_t                  u8_videoDisplay;
 } USBD_HandleTypeDef;
 
 /**

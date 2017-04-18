@@ -327,8 +327,6 @@ __ALIGN_BEGIN uint8_t HID_USER_INTERFACE_DESC[48]  __ALIGN_END;
 
 USBD_HID_HandleTypeDef        g_usbdHidData;
 uint8_t                       g_u32USBDeviceRecv[512];
-volatile uint32_t             g_u32USBConnState = 0;  //0: disconnect 1: connect 2:normal
-uint32_t                      g_u32UsbdErrorCount = 0;
 
 /*
   * @}
@@ -388,15 +386,15 @@ static uint8_t  USBD_HID_Init (USBD_HandleTypeDef *pdev,
         USBD_LL_PrepareReceive(pdev, HID_EPOUT_ADDR, g_u32USBDeviceRecv, HID_EPOUT_SIZE);
     }
 
-    g_u32USBConnState = 1;
-    g_u32UsbdErrorCount = 0;
-
-    SRAM_CloseVideoDisplay();
+    pdev->u8_connState  = 1;    //connect
+    pdev->u8_errorCount = 0;    //clear error count
 
     if (((USBD_HID_ItfTypeDef *)pdev->pUserData)->userInit)
     {
         ((USBD_HID_ItfTypeDef *)pdev->pUserData)->userInit();
     }
+
+    USBD_AddValidPortNum(pdev->id);
 
     return ret;
 }
@@ -429,15 +427,17 @@ static uint8_t  USBD_HID_DeInit (USBD_HandleTypeDef *pdev,
         ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state[i] = HID_IDLE;
     }
 
-    g_u32USBConnState = 0;
-    g_u32UsbdErrorCount = 0;
+    pdev->u8_connState  = 0;    //disconnect
+    pdev->u8_errorCount = 0;    //clear error count
 
-    SRAM_CloseVideoDisplay();
+    USBD_HID_CloseVideoDisplay(pdev);
 
     if (((USBD_HID_ItfTypeDef *)pdev->pUserData)->userInit)
     {
         ((USBD_HID_ItfTypeDef *)pdev->pUserData)->userInit();
     }
+
+    USBD_RmvValidPortNum(pdev->id);
 
     return USBD_OK;
 }
@@ -529,15 +529,21 @@ static uint8_t  USBD_HID_Setup (USBD_HandleTypeDef *pdev,
   * @param  
   * @retval status
   */
-static void USBD_HID_ErrorDetect(void)
+static void USBD_HID_ErrorDetect(USBD_HandleTypeDef *pdev)
 {
-    g_u32UsbdErrorCount++;
+    STRU_SysEvent_DEV_PLUG_OUT stDevPlugOut;
 
-    if (g_u32UsbdErrorCount >= 50)
+    pdev->u8_errorCount++;
+
+    if (pdev->u8_errorCount >= 50)
     {
         dlog_error("usb send fail detect");
-        g_u32UsbdErrorCount = 0;
-        g_u32USBConnState   = 0;
+        pdev->u8_errorCount = 0;
+        pdev->u8_connState  = 0;
+
+        stDevPlugOut.otg_port_id = pdev->id;
+
+        SYS_EVENT_Notify_From_ISR(SYS_EVENT_ID_USB_PLUG_OUT, (void *)&stDevPlugOut);
 
         SYS_EVENT_Notify(SYS_EVENT_ID_USB_PLUG_OUT, NULL);
     }
@@ -568,19 +574,26 @@ uint8_t USBD_HID_SendReport(USBD_HandleTypeDef  *pdev,
             /* take endian problem for consideration */
             if ((0x7F & ep_addr) != HID_EPIN_VIDEO_ADDR)
             {
-                if (USB_OTG_IS_BIG_ENDIAN())
+                if (USB_OTG_IsBigEndian(pdev))
                 {
                     USB_LL_ConvertEndian(report, report, len);
                 }
             }
 
+            /* temp add for test */
+            if (((ep_addr | 0x80) == HID_EPIN_VIDEO_ADDR)||
+                ((ep_addr | 0x80) == HID_EPIN_AUDIO_ADDR))
+            {
+                USB_OTG_SetBigEndian(pdev);
+            }
+            
             ret = USBD_LL_Transmit (pdev, ep_addr, report, len);
         }
         else
         {
             ret = USBD_BUSY;
 
-            USBD_HID_ErrorDetect();
+            USBD_HID_ErrorDetect(pdev);
         }
     }
     else
@@ -648,14 +661,14 @@ static uint8_t  USBD_HID_DataIn (USBD_HandleTypeDef *pdev,
           be caused by  a new transfer before the end of the previous transfer */
     ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state[epnum & 0x7F] = HID_IDLE;
 
-    g_u32UsbdErrorCount = 0;
+    pdev->u8_errorCount = 0;
 
     if (((epnum | 0x80) == HID_EPIN_VIDEO_ADDR) ||
         ((epnum | 0x80) == HID_EPIN_AUDIO_ADDR))
     {
-        if (g_u32USBConnState == 1)
+        if (pdev->u8_connState== 1)
         {
-            g_u32USBConnState = 2;
+            pdev->u8_connState  = 2;
         }
 
         if (1 == sramReady0)
@@ -679,7 +692,7 @@ static uint8_t USBD_HID_DataOut (USBD_HandleTypeDef *pdev,
 
     if (HID_EPOUT_ADDR == epnum)
     {
-        if (USB_OTG_IS_BIG_ENDIAN())
+        if (USB_OTG_IsBigEndian(pdev))
         {
             USB_LL_ConvertEndian(g_u32USBDeviceRecv, g_u32USBDeviceRecv, (uint32_t)sizeof(g_u32USBDeviceRecv));
         }
@@ -694,8 +707,6 @@ static uint8_t USBD_HID_DataOut (USBD_HandleTypeDef *pdev,
 
     return USBD_OK;
 }
-
-
 
 
 /**
@@ -750,6 +761,21 @@ static uint8_t  *USBD_HID_GetUsrStrDescriptor(USBD_HandleTypeDef *pdev, uint8_t 
 
     return HID_USER_INTERFACE_DESC;
 }
+
+
+void USBD_HID_OpenVideoDisplay(USBD_HandleTypeDef *pdev)
+{
+    pdev->u8_videoDisplay   = 1;
+}
+
+
+void USBD_HID_CloseVideoDisplay(USBD_HandleTypeDef *pdev)
+{
+    pdev->u8_videoDisplay   = 0;
+}
+
+
+
 
 
 /**

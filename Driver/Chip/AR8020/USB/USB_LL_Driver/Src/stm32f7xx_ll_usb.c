@@ -606,13 +606,6 @@ HAL_StatusTypeDef USB_EPStartXfer(USB_OTG_GlobalTypeDef *USBx , USB_OTG_EPTypeDe
     {
       tmp = (uint32_t)(ep->dma_addr);
 
-      /* temp add for test */
-      if ((ep->num == 0x6)||
-          (ep->num == 0x5))
-      {
-        USB_OTG_SET_BIG_ENDIAN();
-      }
-
       if ((tmp >= DTCM_START_ADDR) && (tmp <= DTCM_END_ADDR))
       {
         if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId())
@@ -1859,6 +1852,7 @@ void USB_LL_OTG1_IRQHandler(uint32_t u32_vectorNum)
     HAL_PCD_IRQHandler(&hpcd[1]);
   }
 }
+
 
 void USB_LL_ConvertEndian(void *src_data, void *dst_data, uint32_t dataLen)
 {

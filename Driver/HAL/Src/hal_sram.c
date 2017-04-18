@@ -42,30 +42,6 @@ void HAL_SRAM_ReceiveVideoConfig(void)
 
 
 /**
-* @brief  open the video output to PC or PAD.
-* @param  void
-* @retval   void
-* @note  
-*/
-void HAL_SRAM_OpenVideo(void)
-{
-    SRAM_OpenVideoDisplay();
-}
-
-
-/**
-* @brief  close the video output to PC or PAD.
-* @param  void
-* @retval   void
-* @note  
-*/
-void HAL_SRAM_CloseVideo(void)
-{
-    SRAM_CloseVideoDisplay();
-}
-
-
-/**
 * @brief  Enable Sky Video Bypass Function
 * @param  e_sramVideoCh                                     indicate which video channel to use
 * @retval   HAL_OK                                               reset buffer success

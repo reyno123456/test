@@ -19,7 +19,7 @@ History:
 #include "hal_nvic.h"
 #include "debuglog.h"
 
-extern USBD_HandleTypeDef   USBD_Device;
+USBD_HandleTypeDef          USBD_Device[USBD_PORT_NUM];
 USBD_HID_ItfTypeDef         g_stUsbdHidItf;
 
 
@@ -41,14 +41,18 @@ void HAL_USB_InitDevice(ENUM_HAL_USB_PORT e_usbPort)
         reg_IrqHandle(OTG_INTR1_VECTOR_NUM, USB_LL_OTG1_IRQHandler, NULL);
         INTR_NVIC_SetIRQPriority(OTG_INTR1_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_OTG_INITR1,0));
     }
+    else
+    {
+        dlog_error("invalid USB Port Num: %d", e_usbPort);
+    }
 
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USB_PLUG_OUT, HAL_USB_ResetDevice);
 
-    USBD_Init(&USBD_Device, &HID_Desc, (uint8_t)e_usbPort);
+    USBD_Init(&USBD_Device[e_usbPort], &HID_Desc, (uint8_t)e_usbPort);
 
-    USBD_RegisterClass(&USBD_Device, USBD_HID_CLASS);
+    USBD_RegisterClass(&USBD_Device[e_usbPort], USBD_HID_CLASS);
 
-    USBD_Start(&USBD_Device);
+    USBD_Start(&USBD_Device[e_usbPort]);
 
     return;
 }
@@ -62,8 +66,29 @@ void HAL_USB_InitDevice(ENUM_HAL_USB_PORT e_usbPort)
 */
 void HAL_USB_ResetDevice(void * p)
 {
-    USBD_LL_Init(&USBD_Device);
-    USBD_LL_Start(&USBD_Device);
+    STRU_SysEvent_DEV_PLUG_OUT  *stDevPlugOut;
+    uint8_t                      u8_portId;
+
+    if (p == NULL)
+    {
+        dlog_error("NULL Pointer");
+
+        return;
+    }
+
+    stDevPlugOut    = (STRU_SysEvent_DEV_PLUG_OUT *)p;
+
+    u8_portId       = stDevPlugOut->otg_port_id;
+
+    if (u8_portId > HAL_USB_PORT_NUM)
+    {
+        dlog_error("Invalid USB PORT Number");
+    }
+
+    dlog_info("reset USB%d", u8_portId);
+
+    USBD_LL_Init(&USBD_Device[u8_portId]);
+    USBD_LL_Start(&USBD_Device[u8_portId]);
 
     if (sramReady0 == 1)
     {
@@ -79,39 +104,6 @@ void HAL_USB_ResetDevice(void * p)
 
 
 /**
-* @brief  send video data to the host
-* @param  uint8_t    *buff                the buffer to send
-*               uint32_t    u32_len          buffer length 
-* @retval   void
-* @note
-*/
-HAL_RET_T HAL_USB_DeviceSendVideo(uint8_t *buff, uint32_t u32_len)
-{
-    uint8_t       ret;
-
-    ret = USBD_HID_SendReport(&USBD_Device, buff, u32_len, HID_EPIN_VIDEO_ADDR);
-
-    if (ret != USBD_OK)
-    {
-        if (USBD_BUSY == ret)
-        {
-            dlog_error("send video busy");
-
-            return HAL_USB_ERR_DEVICE_BUSY;
-        }
-        else
-        {
-            dlog_error("send video not configured");
-
-            return HAL_USB_ERR_DEVICE_NOT_CONGIURED;
-        }
-    }
-
-    return HAL_OK;
-}
-
-
-/**
 * @brief  send control data to the host
 * @param  uint8_t    *buff                the buffer to send
 *               uint32_t    u32_len          buffer length 
@@ -120,9 +112,12 @@ HAL_RET_T HAL_USB_DeviceSendVideo(uint8_t *buff, uint32_t u32_len)
 */
 HAL_RET_T HAL_USB_DeviceSendCtrl(uint8_t *buff, uint32_t u32_len)
 {
-    uint8_t       ret;
+    uint8_t         ret;
+    uint8_t         u8_portId;
 
-    ret = USBD_HID_SendReport(&USBD_Device, buff, u32_len, HID_EPIN_CTRL_ADDR);
+    u8_portId       = USBD_GetActivePortNum();
+
+    ret = USBD_HID_SendReport(&USBD_Device[u8_portId], buff, u32_len, HID_EPIN_CTRL_ADDR);
 
     if (ret != USBD_OK)
     {
@@ -156,14 +151,56 @@ void HAL_USB_RegisterUserProcess(void (*pUsrFunc)(void *),
     g_stUsbdHidItf.dataOut  = pUsrFunc;
     g_stUsbdHidItf.userInit = pInitFunc;
 
-    USBD_HID_RegisterInterface(&USBD_Device, &g_stUsbdHidItf);
+    USBD_HID_RegisterInterface(&USBD_Device[HAL_USB_PORT_0], &g_stUsbdHidItf);
+    USBD_HID_RegisterInterface(&USBD_Device[HAL_USB_PORT_1], &g_stUsbdHidItf);
 }
 
 
 uint8_t HAL_USB_DeviceGetConnState(void)
 {
-    return g_u32USBConnState;
+    uint8_t                 u8_usbPortId;
+    USBD_HandleTypeDef     *pdev;
+
+    u8_usbPortId            = USBD_GetActivePortNum();
+    pdev                    = &USBD_Device[u8_usbPortId];
+
+    return pdev->u8_connState;
 }
 
+
+/**
+* @brief  open the video output to PC or PAD.
+* @param  void
+* @retval   void
+* @note  
+*/
+void HAL_USB_OpenVideo(void)
+{
+    uint8_t                 u8_usbPortId;
+    USBD_HandleTypeDef     *pdev;
+
+    u8_usbPortId            = USBD_GetActivePortNum();
+    pdev                    = &USBD_Device[u8_usbPortId];
+
+    USBD_HID_OpenVideoDisplay(pdev);
+}
+
+
+/**
+* @brief  close the video output to PC or PAD.
+* @param  void
+* @retval   void
+* @note  
+*/
+void HAL_USB_CloseVideo(void)
+{
+    uint8_t                 u8_usbPortId;
+    USBD_HandleTypeDef     *pdev;
+
+    u8_usbPortId            = USBD_GetActivePortNum();
+    pdev                    = &USBD_Device[u8_usbPortId];
+
+    USBD_HID_CloseVideoDisplay(pdev);
+}
 
 

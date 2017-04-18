@@ -71,6 +71,8 @@ int main(void)
 
     HAL_USB_InitOTG(HAL_USB_PORT_0);
 
+    HAL_USB_InitOTG(HAL_USB_PORT_1);
+
     HAL_NV_Init();
 
 	HAL_DMA_init();

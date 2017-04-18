@@ -159,5 +159,10 @@ typedef struct _SysEvent_OTG_HOST_DEV_SWITCH
     uint8_t  reserve[SYS_EVENT_HANDLER_PARAMETER_LENGTH - 2];
 } STRU_SysEvent_OTG_HOST_DEV_SWITCH;
 
+typedef struct _SysEvent_DEV_PLUG_OUT
+{
+    uint8_t  otg_port_id;
+    uint8_t  reserve[SYS_EVENT_HANDLER_PARAMETER_LENGTH - 1];
+} STRU_SysEvent_DEV_PLUG_OUT;
 
 #endif

@@ -88,7 +88,6 @@
   * @brief PCD HAL module driver
   * @{
   */
-USBD_HandleTypeDef USBD_Device;
 
 /* Private types -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -494,8 +493,6 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
         HAL_PCD_SuspendCallback(hpcd);
       }
       __HAL_PCD_CLEAR_FLAG(hpcd, USB_OTG_GINTSTS_USBSUSP);
-
-      USB_OTG_SET_LITTLE_ENDIAN();
     }
 
     /* Handle LPM Interrupt */ 
@@ -631,9 +628,20 @@ void HAL_PCD_IRQHandler(PCD_HandleTypeDef *hpcd)
 
       if((temp & USB_OTG_GOTGINT_SEDET) == USB_OTG_GOTGINT_SEDET)
       {
+        STRU_SysEvent_DEV_PLUG_OUT stDevPlugOut;
+
         dlog_info("restart usb\n");
 
-        SYS_EVENT_Notify_From_ISR(SYS_EVENT_ID_USB_PLUG_OUT, NULL);
+        if (USBx == USB_OTG0_HS)
+        {
+          stDevPlugOut.otg_port_id = 0;
+        }
+        else
+        {
+          stDevPlugOut.otg_port_id = 1;
+        }
+
+        SYS_EVENT_Notify_From_ISR(SYS_EVENT_ID_USB_PLUG_OUT, (void *)&stDevPlugOut);
 
         HAL_PCD_DisconnectCallback(hpcd);
       }

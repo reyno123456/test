@@ -72,17 +72,19 @@ int main(void)
 
     HAL_USB_InitOTG(HAL_USB_PORT_0);
 
+    HAL_USB_InitOTG(HAL_USB_PORT_1);
+
     HAL_NV_Init();
 
     USBH_MountUSBDisk();
-    
+
     HAL_MP3EncodePcmInit(&st_audioConfig);
 
     uint32_t u32_audioSampleRate=0xf;
     uint32_t u32_audioSampleRateTmp=0;
     volatile uint32_t *pu32_newAudioSampleRate=(uint32_t *)(SRAM_MODULE_SHARE_AUDIO_RATE);
     *pu32_newAudioSampleRate=0xf;
-    
+
     /* We should never get here as control is now taken by the scheduler */
     for( ;; )
     {

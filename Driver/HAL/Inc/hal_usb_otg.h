@@ -6,6 +6,7 @@ typedef enum
 {
     HAL_USB_PORT_0 = 0,
     HAL_USB_PORT_1,
+    HAL_USB_PORT_NUM,
 } ENUM_HAL_USB_PORT;
 
 

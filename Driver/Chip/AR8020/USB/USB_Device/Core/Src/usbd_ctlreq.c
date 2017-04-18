@@ -28,6 +28,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_ctlreq.h"
 #include "usbd_ioreq.h"
+#include "debuglog.h"
 
 /** @addtogroup STM32_USBD_STATE_DEVICE_LIBRARY
   * @{
@@ -97,6 +98,10 @@ static void USBD_ClrFeature(USBD_HandleTypeDef *pdev ,
                             USBD_SetupReqTypedef *req);
 
 static uint8_t USBD_GetLen(uint8_t *buf);
+
+static uint8_t g_u8ActiveUSBDevicePort = 0;
+static uint8_t g_u8ValidUSBDevicePort[USBD_PORT_NUM];
+
 
 /**
   * @}
@@ -512,7 +517,6 @@ static void USBD_SetConfig(USBD_HandleTypeDef *pdev ,
           USBD_CtlError(pdev , req);  
           return;
         }
-
         USBD_CtlSendStatus(pdev);
       }
       else 
@@ -699,13 +703,15 @@ static void USBD_ClrFeature(USBD_HandleTypeDef *pdev ,
 * @param  req: usb request
 * @retval None
 */
-
-void USBD_ParseSetupRequest(USBD_SetupReqTypedef *req, uint8_t *pdata)
+void USBD_ParseSetupRequest(USBD_HandleTypeDef *pdev, uint8_t *pdata)
 {
-    uint8_t    u8_i;
-    uint8_t    u8_swap;
+    uint8_t                 u8_i;
+    uint8_t                 u8_swap;
+    USBD_SetupReqTypedef   *req;
 
-    if (USB_OTG_IS_BIG_ENDIAN())
+    req                     = &pdev->request;
+
+    if (USB_OTG_IsBigEndian(pdev))
     {
         for (u8_i = 0; u8_i < 8; u8_i += 4)
         {
@@ -724,6 +730,8 @@ void USBD_ParseSetupRequest(USBD_SetupReqTypedef *req, uint8_t *pdata)
     req->wValue             = SWAPBYTE      (pdata +  2);
     req->wIndex             = SWAPBYTE      (pdata +  4);
     req->wLength            = SWAPBYTE      (pdata +  6);
+
+    return;
 }
 
 /**
@@ -786,14 +794,48 @@ static uint8_t USBD_GetLen(uint8_t *buf)
 
     return len;
 }
-/**
-  * @}
-  */ 
 
 
 /**
   * @}
-  */ 
+  */
+void USBD_AddValidPortNum(uint8_t id)
+{
+    g_u8ValidUSBDevicePort[id] = 1;
+
+    g_u8ActiveUSBDevicePort = id;
+}
+
+
+void USBD_RmvValidPortNum(uint8_t id)
+{
+    uint8_t                     u8_otherPortId;
+
+    u8_otherPortId              = (id^1);
+
+    g_u8ValidUSBDevicePort[id]  = 0;
+
+    if (g_u8ValidUSBDevicePort[u8_otherPortId])
+    {
+        g_u8ActiveUSBDevicePort    = u8_otherPortId;
+    }
+}
+
+
+/**
+  * @}
+  */
+uint8_t USBD_GetActivePortNum(void)
+{
+    if (g_u8ActiveUSBDevicePort > 2)
+    {
+        dlog_error("erro port num");
+
+        return 0;
+    }
+
+    return g_u8ActiveUSBDevicePort;
+}
 
 
 /**

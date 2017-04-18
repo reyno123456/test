@@ -263,7 +263,7 @@ USBD_StatusTypeDef USBD_ClrClassConfig(USBD_HandleTypeDef  *pdev, uint8_t cfgidx
 */
 USBD_StatusTypeDef USBD_LL_SetupStage(USBD_HandleTypeDef *pdev, uint8_t *psetup)
 {
-  USBD_ParseSetupRequest(&pdev->request, psetup);
+  USBD_ParseSetupRequest(pdev, psetup);
   
   pdev->ep0_state = USBD_EP0_SETUP;
   pdev->ep0_data_len = pdev->request.wLength;
@@ -476,6 +476,9 @@ USBD_StatusTypeDef USBD_LL_Suspend(USBD_HandleTypeDef  *pdev)
   {
     ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state[i] = HID_IDLE;
   }
+
+  USB_OTG_SetLittleEndian(pdev);
+
   return USBD_OK;
 }
 

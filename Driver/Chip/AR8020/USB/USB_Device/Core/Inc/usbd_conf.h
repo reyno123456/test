@@ -62,6 +62,7 @@ extern PCD_HandleTypeDef hpcd[2];
 #define USBD_SUPPORT_USER_STRING              1
 #define USBD_SELF_POWERED                     1
 #define USBD_DEBUG_LEVEL                      2
+#define USBD_PORT_NUM                         2
 
 /* MSC Class Config */
 #define MSC_MEDIA_PACKET                       8192   

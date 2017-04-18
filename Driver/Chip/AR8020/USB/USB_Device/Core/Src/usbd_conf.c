@@ -93,6 +93,9 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
     HAL_PCDEx_SetTxFiFo(pPcdHandle, 0, 0x80);
     HAL_PCDEx_SetTxFiFo(pPcdHandle, 1, 0x174);
 
+    /* set little endian */
+    USB_OTG_SetLittleEndian(pdev);
+
     return USBD_OK;
 }
 
@@ -294,6 +297,45 @@ void USBD_LL_EnterTestMode(USBD_HandleTypeDef *pdev)
   return HAL_PCD_EnterTestMode(pdev->pData, pdev->dev_test_mode);
 }
 
+
+void USB_OTG_SetBigEndian(USBD_HandleTypeDef *pdev)
+{
+    if (pdev->id == 0)
+    {
+        USB_OTG_ENDIAN = (USB_OTG_ENDIAN | 0x00000002);
+    }
+    else if (pdev->id == 1)
+    {
+        USB_OTG_ENDIAN = (USB_OTG_ENDIAN | 0x00000004);
+    }
+
+    pdev->u8_bigEndianFlag  = 1;
+
+    return;
+}
+
+
+void USB_OTG_SetLittleEndian(USBD_HandleTypeDef *pdev)
+{
+    if (pdev->id == 0)
+    {
+        USB_OTG_ENDIAN = (USB_OTG_ENDIAN & 0xFFFFFFFD);
+    }
+    else if (pdev->id == 1)
+    {
+        USB_OTG_ENDIAN = (USB_OTG_ENDIAN & 0xFFFFFFFB);
+    }
+
+    pdev->u8_bigEndianFlag  = 0;
+
+    return;
+}
+
+
+uint8_t USB_OTG_IsBigEndian(USBD_HandleTypeDef *pdev)
+{
+    return pdev->u8_bigEndianFlag;
+}
 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

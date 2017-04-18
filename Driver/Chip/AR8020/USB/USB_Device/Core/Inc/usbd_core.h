@@ -142,6 +142,10 @@ USBD_StatusTypeDef  USBD_LL_PrepareReceive(USBD_HandleTypeDef *pdev,
 
 uint32_t USBD_LL_GetRxDataSize  (USBD_HandleTypeDef *pdev, uint8_t  ep_addr);  
 void USBD_LL_EnterTestMode(USBD_HandleTypeDef *pdev);
+void USB_OTG_SetBigEndian(USBD_HandleTypeDef *pdev);
+void USB_OTG_SetLittleEndian(USBD_HandleTypeDef *pdev);
+uint8_t USB_OTG_IsBigEndian(USBD_HandleTypeDef *pdev);
+
 
 /**
   * @}
