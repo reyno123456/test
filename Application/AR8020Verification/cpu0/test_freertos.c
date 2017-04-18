@@ -12,13 +12,20 @@ static SemaphoreHandle_t xMutex;
 
 void vTask1( void const * argument)
 {
-	volatile unsigned long ul;
-
-	for (;;)
-	{
-        dlog_info("Task1 is running\n");
-		osDelay(1500);
-	}
+	static portTickType xLastWakeTime;  
+     const portTickType xFrequency = 1000;  
+   
+     // 使用当前时间初始化变量xLastWakeTime  
+     xLastWakeTime = xTaskGetTickCount();  
+   
+     for( ;; )  
+     {  
+         //等待下一个周期  
+         vTaskDelayUntil( &xLastWakeTime,xFrequency );  
+   
+         // 需要周期性执行代码放在这里  
+         dlog_info("line = %d running\n", __LINE__);
+     }  
 }
 
 void vTask2( void const * argument)
@@ -109,7 +116,6 @@ void TestQueue(void)
         //xTaskCreate(vSendTask, "sender 2", 1000, (void *)'b', 1, NULL);
         //xTaskCreate(vReceiveTask, "receive", 1000, NULL, 2, NULL);
         dlog_info("Create task succ!\n");
-        osKernelStart();
     }
 	else
 	{
@@ -123,7 +129,7 @@ void TestTask(void)
 	osThreadCreate(osThread(Task1_Thread), NULL);
 	osThreadDef(Task2_Thread, vTask2, osPriorityNormal, 0, 8 * configMINIMAL_STACK_SIZE);
 	osThreadCreate(osThread(Task2_Thread), NULL);
-	osKernelStart();
+	
 	dlog_info("osKernelStart done \n");
 }
 
@@ -139,7 +145,6 @@ void TestMutex(void)
 		//xTaskCreate(PrintfMutex, "Print1", 1000, "Task1 gets the Mutex!\n", 1, NULL);
 		xTaskCreate(PrintfMutex, "Print1", 1000, "Task1 gets the Mutex!\n", 1, NULL);
 		xTaskCreate(PrintfMutex, "Print1", 1000, "Task2 gets the Mutex!\n", 2, NULL);
-		osKernelStart();
 	}
 	for (; ;);
 }
