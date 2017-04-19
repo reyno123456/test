@@ -16,6 +16,7 @@
 #include "gpio.h"
 #include "bb_uart_com.h"
 
+static uint32_t s_lockFlag = 0;
 
 #define MAX_SEARCH_ID_NUM  (5)
 #define SEARCH_ID_TIMEOUT  (2000) //ms
@@ -90,6 +91,7 @@ void BB_SKY_start(void)
     BB_UARTComInit( NULL ); 
 
     BB_GetDevInfo();
+	s_lockFlag = 0;
 }
 
 
@@ -204,16 +206,20 @@ void sky_agc_gain_toggle(void)
         loop = 0; 
     }
 
-    if(FAR_AGC == en_agcmode)
+    /*if(FAR_AGC == en_agcmode)
     {
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_NEAR);
         BB_WriteReg(PAGE0, AGC_3, AAGC_GAIN_NEAR);
+        BB_WriteReg(PAGE1, 0x03, 0x40);
+        BB_WriteReg(PAGE0, 0xBC, 0x40);
         en_agcmode = NEAR_AGC;
     }
-    else
+    else*/
     {
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_FAR);
         BB_WriteReg(PAGE0, AGC_3, AAGC_GAIN_FAR);
+        BB_WriteReg(PAGE1, 0x03, 0x28);
+        BB_WriteReg(PAGE0, 0xBC, 0xC0);
         en_agcmode = FAR_AGC;
     }
 }
@@ -409,6 +415,7 @@ void sky_soft_reset(void)
 void sky_physical_link_process(void)
 {
     uint8_t *p_id;
+    uint8_t max_ch_size = (context.freq_band == RF_2G) ? (MAX_2G_RC_FRQ_SIZE):(MAX_5G_RC_FRQ_SIZE);
 
     if(context.dev_state == SEARCH_ID)
     {
@@ -452,6 +459,8 @@ void sky_physical_link_process(void)
     }
     else if(context.dev_state == ID_MATCH_LOCK)
     {
+        s_lockFlag = 1;
+        
         if(context.rc_skip_freq_mode == AUTO)
         {
             sky_rc_hopfreq();
@@ -506,19 +515,32 @@ void sky_physical_link_process(void)
         else
         {
             context.rc_unlock_cnt++;
-            sky_soft_reset();
+            uint8_t data = BB_ReadReg(PAGE2, FEC_4_RD);
+            if (0x80 == (data & 0x80))
+            {
+                sky_soft_reset();
+            }
         }
     }
 
-    if( context.rc_unlock_cnt > 40 && context.dev_state == SEARCH_ID )
+    if( (context.rc_unlock_cnt > (max_ch_size + 1)) && (context.dev_state == SEARCH_ID) )
     {
         context.rc_unlock_cnt = 0;
         sky_search_id_timeout( 1 );
     }
-    else if( context.rc_unlock_cnt > 40 && context.dev_state == CHECK_ID_MATCH )
+    else if( (context.rc_unlock_cnt > (max_ch_size + 1)) && (context.dev_state == CHECK_ID_MATCH) )
     {
         context.rc_unlock_cnt = 0;
         sky_search_id_timeout( 1 );
+        /*sky_search_id_timeout( !s_lockFlag );
+        if (s_lockFlag)
+        {
+            s_lockFlag++;
+            if (s_lockFlag > 25)
+            {
+                s_lockFlag = 0;
+            }
+        }*/
     }
 }
 
@@ -672,7 +694,7 @@ void sky_Timer2_6_Init(void)
     sky_timer2_6.ctrl = 0;
     sky_timer2_6.ctrl |= TIME_ENABLE | USER_DEFINED;
 
-    TIM_RegisterTimer(sky_timer2_6, 6800);
+    TIM_RegisterTimer(sky_timer2_6, 3800);
 
     reg_IrqHandle(TIMER_INTR26_VECTOR_NUM, Sky_TIM2_6_IRQHandler, NULL);
 	INTR_NVIC_SetIRQPriority(TIMER_INTR26_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER00,0));
