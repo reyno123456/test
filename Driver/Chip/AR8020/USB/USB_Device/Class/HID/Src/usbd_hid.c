@@ -389,9 +389,12 @@ static uint8_t  USBD_HID_Init (USBD_HandleTypeDef *pdev,
     pdev->u8_connState  = 1;    //connect
     pdev->u8_errorCount = 0;    //clear error count
 
-    if (((USBD_HID_ItfTypeDef *)pdev->pUserData)->userInit)
+    if (pdev->pUserData)
     {
-        ((USBD_HID_ItfTypeDef *)pdev->pUserData)->userInit();
+        if (((USBD_HID_ItfTypeDef *)pdev->pUserData)->userInit)
+        {
+            ((USBD_HID_ItfTypeDef *)pdev->pUserData)->userInit();
+        }
     }
 
     USBD_AddValidPortNum(pdev->id);
@@ -432,9 +435,12 @@ static uint8_t  USBD_HID_DeInit (USBD_HandleTypeDef *pdev,
 
     USBD_HID_CloseVideoDisplay(pdev);
 
-    if (((USBD_HID_ItfTypeDef *)pdev->pUserData)->userInit)
+    if (pdev->pUserData)
     {
-        ((USBD_HID_ItfTypeDef *)pdev->pUserData)->userInit();
+        if (((USBD_HID_ItfTypeDef *)pdev->pUserData)->userInit)
+        {
+            ((USBD_HID_ItfTypeDef *)pdev->pUserData)->userInit();
+        }
     }
 
     USBD_RmvValidPortNum(pdev->id);
