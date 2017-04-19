@@ -18,6 +18,13 @@ History:
 
 typedef enum
 {
+    ENUM_HAL_SRAM_DATA_PATH_NORMAL    = 0,
+    ENUM_HAL_SRAM_DATA_PATH_REVERSE   = 1,
+} ENUM_HAL_SRAM_DATA_PATH;
+
+
+typedef enum
+{
     HAL_SRAM_VIDEO_CHANNEL_0 = 0,
     HAL_SRAM_VIDEO_CHANNEL_1,
 } ENUM_HAL_SRAM_VIDEO_CHANNEL;
@@ -30,7 +37,7 @@ typedef enum
 * @retval   void
 * @note  
 */
-void HAL_SRAM_ReceiveVideoConfig(void);
+void HAL_SRAM_ReceiveVideoConfig(ENUM_HAL_SRAM_DATA_PATH e_dataPathReverse);
 
 /**
 * @brief  Enable Sky Video Bypass Function
@@ -67,6 +74,7 @@ void HAL_SRAM_OpenVideo(void);
 * @note  
 */
 void HAL_SRAM_CloseVideo(void);
+
 
 #endif
 

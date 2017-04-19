@@ -7,9 +7,8 @@
 
 volatile uint32_t               sramReady0;
 volatile uint32_t               sramReady1;
-volatile uint32_t               g_u32VideoDisplay;
 extern USBD_HandleTypeDef       USBD_Device[USBD_PORT_NUM];
-
+volatile uint8_t                g_u8DataPathReverse = 0;
 
 void SRAM_Ready0IRQHandler(uint32_t u32_vectorNum)
 {
@@ -17,11 +16,7 @@ void SRAM_Ready0IRQHandler(uint32_t u32_vectorNum)
     uint32_t                dataLen;
     uint8_t                 u8_usbPortId;
     USBD_HandleTypeDef     *pdev;
-
-    buff                    = (uint8_t *)SRAM_BUFF_0_ADDRESS;
-
-    dataLen                 = SRAM_DATA_VALID_LEN_0;
-    dataLen                 = (dataLen << 2);
+    uint8_t                 u8_endPoint;
 
     u8_usbPortId            = USBD_GetActivePortNum();
     pdev                    = &USBD_Device[u8_usbPortId];
@@ -33,7 +28,21 @@ void SRAM_Ready0IRQHandler(uint32_t u32_vectorNum)
         return;
     }
 
-    if (USBD_OK != USBD_HID_SendReport(pdev, buff, dataLen, HID_EPIN_VIDEO_ADDR))
+    buff                    = (uint8_t *)SRAM_BUFF_0_ADDRESS;
+
+    dataLen                 = SRAM_DATA_VALID_LEN_0;
+    dataLen                 = (dataLen << 2);
+
+    if (g_u8DataPathReverse)
+    {
+        u8_endPoint         = HID_EPIN_AUDIO_ADDR;
+    }
+    else
+    {
+        u8_endPoint         = HID_EPIN_VIDEO_ADDR;
+    }
+
+    if (USBD_OK != USBD_HID_SendReport(pdev, buff, dataLen, u8_endPoint))
     {
         dlog_error("HID0 Send Error!\n");
 
@@ -59,23 +68,33 @@ void SRAM_Ready1IRQHandler(uint32_t u32_vectorNum)
     uint32_t                dataLen;
     uint8_t                 u8_usbPortId;
     USBD_HandleTypeDef     *pdev;
+    uint8_t                 u8_endPoint;
 
-    buff                    = (uint8_t *)SRAM_BUFF_1_ADDRESS;
+    u8_usbPortId            = USBD_GetActivePortNum();
+    pdev                    = &USBD_Device[u8_usbPortId];
 
-    dataLen                 = SRAM_DATA_VALID_LEN_1;
-    dataLen                 = (dataLen << 2);
-
-    if (g_u32VideoDisplay == 0)
+    if (pdev->u8_videoDisplay == 0)
     {
         SRAM_Ready1Confirm();
 
         return;
     }
 
-    u8_usbPortId            = USBD_GetActivePortNum();
-    pdev                    = &USBD_Device[u8_usbPortId];
+    buff                    = (uint8_t *)SRAM_BUFF_1_ADDRESS;
 
-    if (USBD_OK != USBD_HID_SendReport(pdev, buff, dataLen, HID_EPIN_AUDIO_ADDR))
+    dataLen                 = SRAM_DATA_VALID_LEN_1;
+    dataLen                 = (dataLen << 2);
+
+    if (g_u8DataPathReverse)
+    {
+        u8_endPoint         = HID_EPIN_VIDEO_ADDR;
+    }
+    else
+    {
+        u8_endPoint         = HID_EPIN_AUDIO_ADDR;
+    }
+
+    if (USBD_OK != USBD_HID_SendReport(pdev, buff, dataLen, u8_endPoint))
     {
         dlog_error("HID1 Send Error!\n");
 

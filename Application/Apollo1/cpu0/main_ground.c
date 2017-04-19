@@ -66,7 +66,7 @@ int main(void)
 
     HAL_USB_InitOTG(HAL_USB_PORT_1);
 
-    HAL_SRAM_ReceiveVideoConfig();
+    HAL_SRAM_ReceiveVideoConfig(ENUM_HAL_SRAM_DATA_PATH_NORMAL);
 
     HAL_NV_Init();
 
@@ -78,7 +78,7 @@ int main(void)
     osThreadDef(IOTask, IO_Task, osPriorityNormal, 0, 4 * 128);
     osThreadCreate(osThread(IOTask), NULL);
 
-    Wireless_TaskInit();
+    Wireless_TaskInit(WIRELESS_USE_RTOS);
 
     COMTASK_Init();
 

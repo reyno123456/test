@@ -17,6 +17,8 @@
 #define HID_UPGRADE_APP_ADDR_IN_NOR                 0x20000
 #define HID_UPGRADE_FLASH_BASE_ADDR                 ((uint8_t *)0x10000000)
 
+#define WIRELESS_USE_RTOS                           1
+#define WIRELESS_NO_RTOS                            0
 
 typedef enum
 {
@@ -254,7 +256,7 @@ uint8_t PAD_ENCODER_DYNAMIC_BITRATE_MODE_Handler(void *param);
 uint8_t PAD_ENCODER_DYNAMIC_BITRATE_SELECT_Handler(void *param);
 uint8_t PAD_WIRELESS_OSD_DISPLAY_Handler(void *param);
 void WIRELESS_ParseParamConfig(void *param);
-void Wireless_TaskInit(void);
+void Wireless_TaskInit(uint8_t u8_useRTOS);
 static void Wireless_InsertMsgIntoReplyBuff(STRU_WIRELESS_PARAM_CONFIG_MESSAGE *pstMessage);
 uint8_t WIRELESS_INTERFACE_OPEN_ADAPTION_BIT_STREAM_Handler(void *param);
 uint8_t WIRELESS_INTERFACE_SWITCH_CH1_Handler(void *param);
@@ -268,6 +270,7 @@ uint8_t WIRELESS_INTERFACE_RC_CODE_RATE_Handler(void *param);
 uint8_t WIRELESS_INTERFACE_VIDEO_AUTO_HOPPING_Handler(void *param);
 uint8_t WIRELESS_INTERFACE_VIDEO_BAND_WIDTH_Handler(void *param);
 uint8_t WIRELESS_INTERFACE_OPERATE_REG_Handler(void *param);
+void Wireless_MessageProcess(void);
 
 #endif
 

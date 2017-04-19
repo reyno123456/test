@@ -21,7 +21,7 @@ History:
 * @retval   void
 * @note  
 */
-void HAL_SRAM_ReceiveVideoConfig(void)
+void HAL_SRAM_ReceiveVideoConfig(ENUM_HAL_SRAM_DATA_PATH e_dataPathReverse)
 {
     SRAM_GROUND_ReceiveVideoConfig();
 
@@ -38,6 +38,8 @@ void HAL_SRAM_ReceiveVideoConfig(void)
 
     /* enable the SRAM_READY_1 IRQ */
     INTR_NVIC_EnableIRQ(BB_SRAM_READY_IRQ_1_VECTOR_NUM);
+
+    g_u8DataPathReverse = e_dataPathReverse;
 }
 
 

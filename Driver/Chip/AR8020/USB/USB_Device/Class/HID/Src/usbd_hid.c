@@ -374,7 +374,7 @@ static uint8_t  USBD_HID_Init (USBD_HandleTypeDef *pdev,
 
     if(pdev->pClassData == NULL)
     {
-        ret = 1; 
+        ret = 1;
     }
     else
     {

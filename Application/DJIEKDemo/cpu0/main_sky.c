@@ -86,7 +86,7 @@ int main(void)
     osMessageQDef(osqueue, 1, uint16_t);
     g_usbhAppCtrl.usbhAppEvent  = osMessageCreate(osMessageQ(osqueue),NULL);
 
-    Wireless_TaskInit();
+    Wireless_TaskInit(WIRELESS_USE_RTOS);
 
     portENABLE_INTERRUPTS();
 

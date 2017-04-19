@@ -37,6 +37,7 @@ void SRAM_GROUND_ReceiveVideoConfig(void);
 
 extern volatile uint32_t  sramReady0;
 extern volatile uint32_t  sramReady1;
+extern volatile uint8_t   g_u8DataPathReverse;
 
 
 /*

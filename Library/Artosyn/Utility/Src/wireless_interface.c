@@ -8,6 +8,7 @@
 #include "cmsis_os.h"
 #include "md5.h"
 #include "nor_flash.h"
+#include "hal.h"
 
 STRU_WIRELESS_INFO_DISPLAY             *g_pstWirelessInfoDisplay;        //OSD Info in SRAM
 STRU_WIRELESS_INFO_DISPLAY              g_stWirelessInfoSend;            //send OSD to PAD or PC
@@ -1369,7 +1370,7 @@ void WIRELESS_ParseParamConfig(void *param)
 }
 
 
-static void Wireless_Task(void const *argument)
+void Wireless_MessageProcess(void)
 {
     uint8_t                                 messageId;
     uint8_t                                *u8_sendBuff;
@@ -1379,83 +1380,88 @@ static void Wireless_Task(void const *argument)
 
     g_pstWirelessInfoDisplay  = (STRU_WIRELESS_INFO_DISPLAY *)OSD_STATUS_SHM_ADDR;
 
-    dlog_info("wireless task entry");
-
-    while (1)
+    if (HAL_USB_DeviceGetConnState() == 0)
     {
-        if (HAL_USB_DeviceGetConnState() == 0)
+        return;
+    }
+
+    if (g_stWirelessReply.u8_buffTail != g_stWirelessReply.u8_buffHead)
+    {
+        pstWirelessParamConfig = &g_stWirelessReply.stMsgPool[g_stWirelessReply.u8_buffHead];
+    
+        messageId              = pstWirelessParamConfig->messageId;
+    
+        u8_sendBuff         = (uint8_t *)pstWirelessParamConfig;
+        u32_sendLength      = (uint32_t)sizeof(STRU_WIRELESS_PARAM_CONFIG_MESSAGE);
+    
+        if (HAL_OK != HAL_USB_DeviceSendCtrl(u8_sendBuff, u32_sendLength))
         {
-            osDelay(3000);
-            continue;
+            dlog_error("send wireless info fail");
         }
-
-        if (g_stWirelessReply.u8_buffTail != g_stWirelessReply.u8_buffHead)
+        else
         {
-            pstWirelessParamConfig = &g_stWirelessReply.stMsgPool[g_stWirelessReply.u8_buffHead];
-
-            messageId              = pstWirelessParamConfig->messageId;
-
-            u8_sendBuff         = (uint8_t *)pstWirelessParamConfig;
-            u32_sendLength      = (uint32_t)sizeof(STRU_WIRELESS_PARAM_CONFIG_MESSAGE);
-
-            if (HAL_OK != HAL_USB_DeviceSendCtrl(u8_sendBuff, u32_sendLength))
-            {
-                dlog_error("send wireless info fail");
-            }
-            else
-            {
-                g_stWirelessReply.u8_buffHead++;
-                g_stWirelessReply.u8_buffHead &= (WIRELESS_INTERFACE_MAX_MESSAGE_NUM - 1);
-            }
+            g_stWirelessReply.u8_buffHead++;
+            g_stWirelessReply.u8_buffHead &= (WIRELESS_INTERFACE_MAX_MESSAGE_NUM - 1);
         }
-        else if (g_pstWirelessInfoDisplay->osd_enable)
+    }
+    else if (g_pstWirelessInfoDisplay->osd_enable)
+    {
+        if (g_u8OSDToggle == 0)
         {
-            if (g_u8OSDToggle == 0)
-            {
-                if (0 == WIRELESS_SendOSDInfo())
-                {
-                    g_u8OSDToggle  ^= 1;
-                }
-            }
-            else
+            if (0 == WIRELESS_SendOSDInfo())
             {
                 g_u8OSDToggle  ^= 1;
             }
         }
-
-        if (g_stWirelessParamConfig.u8_buffTail != g_stWirelessParamConfig.u8_buffHead)
+        else
         {
-            // get the head node from the buffer
-            pstWirelessParamConfig = &g_stWirelessParamConfig.stMsgPool[g_stWirelessParamConfig.u8_buffHead];
-
-            messageId = pstWirelessParamConfig->messageId;
-
-            if (messageId < MAX_PID_NUM)
-            {
-                if (g_stWirelessMsgHandler[messageId])
-                {
-                    (g_stWirelessMsgHandler[messageId])(pstWirelessParamConfig);
-                }
-                else
-                {
-                    dlog_error("no this message handler,%d", messageId);
-                }
-            }
-
-            g_stWirelessParamConfig.u8_buffHead++;
-            g_stWirelessParamConfig.u8_buffHead &= (WIRELESS_INTERFACE_MAX_MESSAGE_NUM - 1);
+            g_u8OSDToggle  ^= 1;
         }
-        
-        if (debugMode != (g_pstWirelessInfoDisplay->in_debug))
+    }
+    
+    if (g_stWirelessParamConfig.u8_buffTail != g_stWirelessParamConfig.u8_buffHead)
+    {
+        // get the head node from the buffer
+        pstWirelessParamConfig = &g_stWirelessParamConfig.stMsgPool[g_stWirelessParamConfig.u8_buffHead];
+    
+        messageId = pstWirelessParamConfig->messageId;
+    
+        if (messageId < MAX_PID_NUM)
         {
-            debugMode = g_pstWirelessInfoDisplay->in_debug;
-            if (1 == debugMode)
+            if (g_stWirelessMsgHandler[messageId])
             {
-                HAL_BB_SPI_DisableEnable(debugMode);
+                (g_stWirelessMsgHandler[messageId])(pstWirelessParamConfig);
+            }
+            else
+            {
+                dlog_error("no this message handler,%d", messageId);
             }
         }
+    
+        g_stWirelessParamConfig.u8_buffHead++;
+        g_stWirelessParamConfig.u8_buffHead &= (WIRELESS_INTERFACE_MAX_MESSAGE_NUM - 1);
+    }
+    
+    if (debugMode != (g_pstWirelessInfoDisplay->in_debug))
+    {
+        debugMode = g_pstWirelessInfoDisplay->in_debug;
+        if (1 == debugMode)
+        {
+            HAL_BB_SPI_DisableEnable(debugMode);
+        }
+    }
 
-        osDelay(5);
+}
+
+static void Wireless_Task(void const *argument)
+{
+    dlog_info("wireless task entry");
+
+    while (1)
+    {
+        Wireless_MessageProcess();
+
+        HAL_Delay(5);
     }
 }
 
@@ -1471,7 +1477,7 @@ void Wireless_InitBuffer(void)
 }
 
 
-void Wireless_TaskInit(void)
+void Wireless_TaskInit(uint8_t u8_useRTOS)
 {
     Wireless_InitBuffer();
 
@@ -1479,8 +1485,11 @@ void Wireless_TaskInit(void)
 
     HAL_USB_RegisterUserProcess(WIRELESS_ParseParamConfig, Wireless_InitBuffer);
 
-    osThreadDef(WIRELESS_TASK, Wireless_Task, osPriorityNormal, 0, 4 * 128);
-    osThreadCreate(osThread(WIRELESS_TASK), NULL);
+    if (u8_useRTOS)
+    {
+        osThreadDef(WIRELESS_TASK, Wireless_Task, osPriorityNormal, 0, 4 * 128);
+        osThreadCreate(osThread(WIRELESS_TASK), NULL);
+    }
 }
 
 

@@ -80,6 +80,8 @@ int main(void)
 
     HAL_MP3EncodePcmInit(&st_audioConfig);
 
+    Wireless_TaskInit(WIRELESS_NO_RTOS);
+
     uint32_t u32_audioSampleRate=0xf;
     uint32_t u32_audioSampleRateTmp=0;
     volatile uint32_t *pu32_newAudioSampleRate=(uint32_t *)(SRAM_MODULE_SHARE_AUDIO_RATE);
@@ -115,6 +117,8 @@ int main(void)
             u32_audioSampleRateTmp=0;
         }
         //HAL_USB_HostProcess();
+        Wireless_MessageProcess();
+
         HAL_MP3EncodePcm();
         SYS_EVENT_Process();
         DLOG_Process(NULL);
