@@ -169,7 +169,8 @@ static void BB_regs_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *pstru_boardCfg)
         {
             uint8_t num;
             uint8_t cfgRegNum = ((en_mode == BB_SKY_MODE ) ? pstru_boardCfg->u8_bbSkyRegsCnt : pstru_boardCfg->u8_bbGrdRegsCnt);
-            const STRU_BB_REG *bbBoardReg  = ((en_mode == BB_SKY_MODE ) ? pstru_boardCfg->pstru_bbSkyRegs : pstru_boardCfg->pstru_bbGrdRegs);
+            STRU_BB_REG *bbBoardReg  = ((en_mode == BB_SKY_MODE ) ? (STRU_BB_REG *)pstru_boardCfg->pstru_bbSkyRegs : 
+                                                                    (STRU_BB_REG *)pstru_boardCfg->pstru_bbGrdRegs);
 
             for(num = 0; num < cfgRegNum; num++ )
             {
@@ -286,12 +287,15 @@ void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
 
     BB_softReset(en_mode);
 
-    //RF calibration in both sky& Ground.
     BB_before_RF_cali();
     BB_RF_start_cali();
-    //BB_after_RF_cali();  //remove to fix usb problem
+
+    BB_WriteReg(PAGE0, TX_CALI_ENABLE, 0x00);   //disable calibration
+
+    BB_after_RF_cali(en_mode, boardCfg);
+    RF8003s_afterCali(en_mode, boardCfg);
+
     BB_set_RF_Band(en_mode, context.freq_band);
-    RF8003s_Set(en_mode);
     BB_softReset(en_mode);
 
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USER_CFG_CHANGE, BB_HandleEventsCallback);
@@ -515,18 +519,8 @@ void BB_set_RF_Band(ENUM_BB_MODE sky_ground, ENUM_RF_BAND rf_band)
 
     }
 
-    // grd mode,use only one TX.
-    if(sky_ground == BB_GRD_MODE)
-    {
-	// turn off DAC_B
-        BB_WriteRegMask(PAGE1, 0x90, 0xF7, 0xFF);
-    }
-    // set 2 RX
-    BB_WriteRegMask(PAGE1, 0x91, 0x78, 0xFF);
-
     //calibration and reset
     BB_RF_2G_5G_switch(rf_band);
-    //dlog_info("Set Band %d %d\r\n", sky_ground, rf_band);
 }
 
 
@@ -568,14 +562,44 @@ static int BB_before_RF_cali(void)
     BB_WriteRegMask(PAGE0, 0x20, 0x00, 0x0c);
 }
 
-static int BB_after_RF_cali(void)
+
+static void BB_after_RF_cali(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
 {
     //BB_WriteRegMask(PAGE0, 0x20, 0x80, 0x80);
     // enalbe RXTX
-    BB_WriteRegMask(PAGE1, 0x94, 0x10, 0xFF);
+    //BB_WriteRegMask(PAGE1, 0x94, 0x10, 0xFF);    //remove to fix usb problem
+
+    STRU_BB_REG * bb_regs;
+    uint8_t bb_regcnt;
+    uint8_t cnt;
+    
+    if( NULL == boardCfg)
+    {
+        return;
+    }
+
+    if (en_mode == BB_SKY_MODE)
+    {
+        bb_regcnt = boardCfg->u8_bbSkyRegsCntAfterCali;
+        bb_regs   = (STRU_BB_REG * )boardCfg->pstru_bbSkyRegsAfterCali;
+    }
+    else
+    {
+        bb_regcnt = boardCfg->u8_bbGrdRegsCntAfterCali;
+        bb_regs   = (STRU_BB_REG * )boardCfg->pstru_bbGrdRegsAfterCali;
+    }
+
+    if ( bb_regcnt > 0 && NULL != bb_regs )
+    {
+        for(cnt = 0; cnt < bb_regcnt; cnt ++)
+        {
+            ENUM_REG_PAGES page = (ENUM_REG_PAGES )(bb_regs[cnt].page << 6);
+            BB_WriteReg(page, bb_regs[cnt].addr, bb_regs[cnt].value);
+        }
+    }
 }
 
-static int BB_RF_start_cali()
+static void BB_RF_start_cali( void )
 {
     uint8_t data;
 
@@ -745,8 +769,6 @@ void BB_RF_2G_5G_switch(ENUM_RF_BAND rf_band)
     }
 
     BB_WriteReg(PAGE0, 0x6d, regvalue);
-
-    BB_WriteReg(PAGE0, TX_CALI_ENABLE, 0x00);   //disable calibration
     BB_WriteRegMask(PAGE0, 0x60, 0x02, 0x02);   //fix calibration result.
 
     data = BB_ReadReg(PAGE0, 0x00);

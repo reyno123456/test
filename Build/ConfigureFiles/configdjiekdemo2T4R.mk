@@ -33,7 +33,7 @@ endif
 
 DEFS = -mthumb -mcpu=cortex-m7 -mlittle-endian -mfpu=fpv5-sp-d16 -mfloat-abi=softfp -std=c99 -c -Wa,-mimplicit-it=thumb -Werror -DSTM32F746xx -DUSE_USB_HS -DUSE_HAL_DRIVER -DUSE_WINBOND_SPI_NOR_FLASH
 
-DEFS += -DUSE_BB_REG_CONFIG_BIN -DUSE_ADV7611_EDID_CONFIG_BIN
+DEFS += -DUSE_BB_REG_CONFIG_BIN -DUSE_ADV7611_EDID_CONFIG_BIN -DBBRF_2T4R
 
 CFLAGS += $(DEFS)
 
@@ -63,7 +63,7 @@ export CPU2_CFLAGS
 
 CHIP = AR8020
 BOOT = AR8020
-BOARD = AR8020TEST
+BOARD = EKDemo
 
 export CHIP
 export BOOT

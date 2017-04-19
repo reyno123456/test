@@ -1,54 +1,65 @@
 #include <string.h>
 #include "boardParameters.h"
 
-#define AR8020TEST_BB_SKY_REGS_CNT     	(0)
 
-#define AR8020TEST_BB_GRD_REGS_CNT      (0)
-
-#define AR8020TEST_RF1_SKY_REGS_CNT     (0)
-
-#define AR8020TEST_RF2_SKY_REGS_CNT     (0)
-
-
-#define AR8020TEST_RF1_GRD_REGS_CNT     (0)
-
-#define AR8020TEST_RF2_GRD_REGS_CNT     (0)
-
-
-const STRU_BB_REG AR8020TEST_bb_sky_regs[] = 
+const STRU_BB_REG AR8020TEST_bb_regsAfterCali[] = 
 {
-};
-
-const STRU_RF_REG AR8020TEST_rf1_sky_regs[] =
-{
+    {1, 0x90, 0xF7}, //turn off DAC_B for 1TX
+    {1, 0x91, 0x78}, //2RX
 };
 
 
-const STRU_RF_REG AR8020TEST_rf2_sky_regs[] =
+const STRU_RF_REG AR8020TEST_rf1_grdregs_afterCali[] = 
 {
+    {0x35, 0x70},
+    {0x45, 0x87},
+    {0x00, 0x74}, //1Tx only
+    {0x2D, 0xF6},
+    {0x37, 0xE0}
 };
+
+const STRU_RF_REG AR8020TEST_rf1_skyregs_afterCali[] = 
+{
+    {0x35, 0x70},
+    {0x45, 0x87},
+};
+
 
 
 STRU_BoardCfg stru_boardCfg = 
 {
-    .u8_bbSkyRegsCnt 	= AR8020TEST_BB_SKY_REGS_CNT,
+    .u8_bbSkyRegsCnt 	= 0,
     .pstru_bbSkyRegs    = NULL,
     
-    .u8_bbGrdRegsCnt    = AR8020TEST_BB_GRD_REGS_CNT,
+    .u8_bbGrdRegsCnt    = 0,
     .pstru_bbGrdRegs    = NULL,
 
     .u8_rf8003Cnt 	    = 1,
 
-    .u8_rf1SkyRegsCnt   = AR8020TEST_RF1_SKY_REGS_CNT,
+    .u8_rf1SkyRegsCnt   = 0,
     .pstru_rf1SkyRegs   = NULL,
     
-    .u8_rf2SkyRegsCnt   = AR8020TEST_RF2_SKY_REGS_CNT,
-    .pstru_rf2SkyRegs   = NULL,
-
-    .u8_rf1GrdRegsCnt   = AR8020TEST_RF1_GRD_REGS_CNT,
+    .u8_rf1GrdRegsCnt   = 0,
     .pstru_rf1GrdRegs   = NULL,
     
-    .u8_rf2GrdRegsCnt   = AR8020TEST_RF2_GRD_REGS_CNT,
-    .pstru_rf2GrdRegs   = NULL
+    .u8_rf2GrdRegsCnt   = 0,
+    .pstru_rf2GrdRegs   = NULL,
+
+     //after calibration
+    .u8_bbSkyRegsCntAfterCali 	 = sizeof(AR8020TEST_bb_regsAfterCali) / sizeof(STRU_BB_REG),
+    .pstru_bbSkyRegsAfterCali    = AR8020TEST_bb_regsAfterCali,
+
+    .u8_bbGrdRegsCntAfterCali    = sizeof(AR8020TEST_bb_regsAfterCali) / sizeof(STRU_BB_REG),
+    .pstru_bbGrdRegsAfterCali    = AR8020TEST_bb_regsAfterCali,
+
+    .u8_rf1SkyRegsCntAfterCali   = sizeof(AR8020TEST_rf1_skyregs_afterCali) / sizeof(STRU_RF_REG),
+    .pstru_rf1SkyRegsAfterCali   = AR8020TEST_rf1_skyregs_afterCali,
+
+    .u8_rf1GrdRegsCntAfterCali   = sizeof(AR8020TEST_rf1_grdregs_afterCali) / sizeof(STRU_RF_REG),
+    .pstru_rf1GrdRegsAfterCali   = AR8020TEST_rf1_skyregs_afterCali,
+    
+    .u8_rf2GrdRegsCntAfterCali   = 0,
+    .pstru_rf2GrdRegsAfterCali   = NULL,
+    
 };
 

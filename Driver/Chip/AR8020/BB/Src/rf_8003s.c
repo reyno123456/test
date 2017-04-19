@@ -14,32 +14,22 @@ History:
 #include "rf_8003s.h"
 
 
-#define  RF8003S_RF_CLOCKRATE    (1)    //2MHz clockrate
+#define  RF8003S_RF_CLOCKRATE    (1)    //1MHz clockrate
 
-static int RF8003s_SPI_WriteReg_internal(uint8_t u8_addr, uint8_t u8_data, uint8_t u8_flag)
+static int RF8003s_SPI_WriteReg_internal(uint8_t u8_addr, uint8_t u8_data)
 {
     int ret = 0;
     uint8_t wdata[] = {0x80, (u8_addr <<1), u8_data};   //RF_8003S_SPI: wr: 0x80 ; 
-
-    if(u8_flag)
-    {
-        BB_SPI_curPageWriteByte(0x01,0x01);     //SPI change into 8003
-    }
 
     //SPI_master_init(BB_SPI_BASE_IDX, &init);
     SPI_write_read(BB_SPI_BASE_IDX, wdata, sizeof(wdata), 0, 0); 
     ret =  SPI_WaitIdle(BB_SPI_BASE_IDX, BB_SPI_MAX_DELAY);
 
-    if(u8_flag)
-    {
-        BB_SPI_curPageWriteByte(0x01,0x02);     //SPI change into 8003
-    }
-
     return ret;
 }
 
 
-static int RF8003s_SPI_ReadReg_internal(uint8_t u8_addr, uint8_t u8_flag)
+static int RF8003s_SPI_ReadReg_internal(uint8_t u8_addr)
 {
     uint8_t wdata[2] = {0x00, (u8_addr<<1)};      //RF_8003S_SPI:  rd: 0x00
     uint8_t rdata;
@@ -52,10 +42,6 @@ static int RF8003s_SPI_ReadReg_internal(uint8_t u8_addr, uint8_t u8_flag)
         .Rx_Ftlr = SPI_RXFTLR_DEF_VALUE,
         .SER     = SPI_SSIENR_DEF_VALUE
     };
-    if(u8_flag)
-    {
-        BB_SPI_curPageWriteByte(0x01,0x01);     //SPI change into 8003
-    }
 
     SPI_master_init(BB_SPI_BASE_IDX, &init);
  
@@ -65,11 +51,6 @@ static int RF8003s_SPI_ReadReg_internal(uint8_t u8_addr, uint8_t u8_flag)
     BB_SPI_init();
     SPI_master_init(BB_SPI_BASE_IDX, &init);
 
-    if(u8_flag)
-    {
-        BB_SPI_curPageWriteByte(0x01,0x02);     //SPI change into 8003
-    }
-    
     return rdata;
 }
 
@@ -81,7 +62,7 @@ static int RF8003s_SPI_ReadReg_internal(uint8_t u8_addr, uint8_t u8_flag)
   */
 int RF8003s_SPI_WriteReg(uint8_t u8_addr, uint8_t u8_data)
 {
-    return RF8003s_SPI_WriteReg_internal(u8_addr, u8_data, 1);
+    return RF8003s_SPI_WriteReg_internal(u8_addr, u8_data);
 }
 
 /**
@@ -91,7 +72,7 @@ int RF8003s_SPI_WriteReg(uint8_t u8_addr, uint8_t u8_data)
   */
 int RF8003s_SPI_ReadReg(uint8_t u8_addr, uint8_t *pu8_rxValue)
 {
-    *pu8_rxValue = RF8003s_SPI_ReadReg_internal(u8_addr, 1);
+    *pu8_rxValue = RF8003s_SPI_ReadReg_internal(u8_addr);
     return 0;
 }
 
@@ -105,9 +86,9 @@ void RF8003s_init(uint8_t *pu8_regs1, uint8_t *pu8_regs2, STRU_BoardCfg *boardCf
     uint8_t idx;
     uint8_t cnt;
     uint8_t num;
-    const STRU_RF_REG * pstru_rfReg = NULL;
+    STRU_RF_REG * pstru_rfReg = NULL;
 
-    //RF 0
+    //RF 1
     {
         BB_SPI_curPageWriteByte(0x01,0x01);             //bypass: SPI change into 8003
         
@@ -116,12 +97,12 @@ void RF8003s_init(uint8_t *pu8_regs1, uint8_t *pu8_regs2, STRU_BoardCfg *boardCf
             if ( en_mode == BB_SKY_MODE )               //sky mode register replace
             {
                 num = boardCfg->u8_rf1SkyRegsCnt;
-                pstru_rfReg = boardCfg->pstru_rf1SkyRegs;
+                pstru_rfReg = (STRU_RF_REG * )boardCfg->pstru_rf1SkyRegs;
             }
             else                                        //ground mode register replace
             {
                 num = boardCfg->u8_rf1GrdRegsCnt;
-                pstru_rfReg = boardCfg->pstru_rf1GrdRegs;
+                pstru_rfReg = (STRU_RF_REG * )boardCfg->pstru_rf1GrdRegs;
             }
         
             for (cnt = 0; (pstru_rfReg != NULL) && (cnt < num); cnt++)
@@ -132,31 +113,24 @@ void RF8003s_init(uint8_t *pu8_regs1, uint8_t *pu8_regs2, STRU_BoardCfg *boardCf
         
         for(idx = 0; idx < 128; idx++)
         {
-            RF8003s_SPI_WriteReg_internal( idx, pu8_regs1[idx], 0);
+            RF8003s_SPI_WriteReg_internal( idx, pu8_regs1[idx]);
         }
         
         {
             //add patch, reset 8003
-            RF8003s_SPI_WriteReg_internal(0x15, 0x51, 0);
-            RF8003s_SPI_WriteReg_internal(0x15, 0x50, 0);
+            RF8003s_SPI_WriteReg_internal(0x15, 0x51);
+            RF8003s_SPI_WriteReg_internal(0x15, 0x50);
         }
         
         BB_SPI_curPageWriteByte(0x01,0x02);             //SPI change into 8020
     }
 
-    //RF 1    
-    if (boardCfg != NULL && boardCfg->u8_rf8003Cnt > 1)
+    //RF 2 only used in ground   
+    if (boardCfg != NULL && boardCfg->u8_rf8003Cnt > 1 && en_mode == BB_GRD_MODE )
     {
-        if ( en_mode == BB_SKY_MODE )
-        {
-            num = boardCfg->u8_rf2SkyRegsCnt;
-            pstru_rfReg = boardCfg->pstru_rf2SkyRegs;
-        }
-        else
-        {
-            num = boardCfg->u8_rf2GrdRegsCnt;
-            pstru_rfReg = boardCfg->pstru_rf2GrdRegs;
-        }
+        num = boardCfg->u8_rf2GrdRegsCnt;
+        pstru_rfReg = (STRU_RF_REG * )boardCfg->pstru_rf2GrdRegs;
+        
         BB_SPI_curPageWriteByte(0x01,0x03);             //bypass: SPI change into 2rd 8003s
         
         for (cnt = 0; (pstru_rfReg != NULL) && (cnt < num); cnt++)
@@ -165,42 +139,85 @@ void RF8003s_init(uint8_t *pu8_regs1, uint8_t *pu8_regs2, STRU_BoardCfg *boardCf
         }
         for(idx = 0; idx < 128; idx++)
         {
-            RF8003s_SPI_WriteReg_internal( idx, pu8_regs2[idx], 0);
+            RF8003s_SPI_WriteReg_internal( idx, pu8_regs2[idx]);
         }
 
         {
             //add patch, reset 8003
-            RF8003s_SPI_WriteReg_internal(0x15, 0x51, 0);
-            RF8003s_SPI_WriteReg_internal(0x15, 0x50, 0);
+            RF8003s_SPI_WriteReg_internal(0x15, 0x51);
+            RF8003s_SPI_WriteReg_internal(0x15, 0x50);
         } 
         
         BB_SPI_curPageWriteByte(0x01,0x02);             //SPI change into 8020
     }
 }
 
-/**
-  * @brief :  power consumption for RF8003s
-  * @param : 
-  * @retval  
-  */
-void RF8003s_Set(ENUM_BB_MODE en_mode)
+void RF8003s_afterCali(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
 {
-    uint32_t u32_delay = 1000;
+    STRU_RF_REG * rf1_regs, * rf2_regs;
+    uint8_t cnt;
+    uint8_t rf_regcnt1, rf_regcnt2;
 
-    BB_SPI_curPageWriteByte(0x01,0x01);             //bypass: SPI change into 8003
-
-    RF8003s_SPI_WriteReg_internal(0x35, 0x70, 0);
-    RF8003s_SPI_WriteReg_internal(0x45, 0x87, 0);
-    RF8003s_SPI_WriteReg_internal(0x15, 0x51, 0);
-    while(u32_delay--);
-    RF8003s_SPI_WriteReg_internal(0x15, 0x50, 0);
-
-    if(en_mode == BB_GRD_MODE)
+    if( NULL == boardCfg)
     {
-        RF8003s_SPI_WriteReg_internal(0x00, 0x74, 0);
-        RF8003s_SPI_WriteReg_internal(0x2D, 0xF6, 0);
-        RF8003s_SPI_WriteReg_internal(0x37, 0xE0, 0);
+        return;
     }
 
-    BB_SPI_curPageWriteByte(0x01,0x02);             //SPI change into 8020
+    if (en_mode == BB_SKY_MODE)
+    {
+        rf_regcnt1 = boardCfg->u8_rf1SkyRegsCntAfterCali;
+        rf_regcnt2 = 0;
+
+        rf1_regs   = (STRU_RF_REG * )boardCfg->pstru_rf1SkyRegsAfterCali;
+        rf2_regs   = NULL;
+    }
+    else
+    {
+        rf_regcnt1 = boardCfg->u8_rf1GrdRegsCntAfterCali;
+        rf_regcnt2 = boardCfg->u8_rf2GrdRegsCntAfterCali;
+
+        rf1_regs   = (STRU_RF_REG * )boardCfg->pstru_rf1GrdRegsAfterCali;
+        rf2_regs   = (STRU_RF_REG * )boardCfg->pstru_rf2GrdRegsAfterCali;
+    }
+
+    if ( rf_regcnt1 > 0 && rf1_regs != NULL)
+    {
+        BB_SPI_curPageWriteByte(0x01,0x01);             //bypass: SPI change into 1st 8003s
+        
+        for(cnt = 0; cnt < rf_regcnt1; cnt++)
+        {
+            RF8003s_SPI_WriteReg_internal( rf1_regs[cnt].addr, rf1_regs[cnt].value);
+        }
+
+        {
+            //add patch, reset 8003
+            uint16_t delay = 0;
+            RF8003s_SPI_WriteReg_internal(0x15, 0x51);
+            while(delay ++ < 1000);
+            RF8003s_SPI_WriteReg_internal(0x15, 0x50);
+        } 
+        
+        BB_SPI_curPageWriteByte(0x01,0x02);             //SPI change into 8020    
+    }
+
+    if (boardCfg->u8_rf8003Cnt > 1 && rf_regcnt2 > 0 && rf2_regs != NULL)
+    {
+        BB_SPI_curPageWriteByte(0x01,0x03);             //bypass: SPI change into 2rd 8003s
+        
+        for(cnt = 0; cnt < rf_regcnt2; cnt++)
+        {
+            dlog_info("%x %x \n", rf2_regs[cnt].addr, rf2_regs[cnt].value);
+            RF8003s_SPI_WriteReg_internal( rf2_regs[cnt].addr, rf2_regs[cnt].value);
+        }
+
+        {
+            //add patch, reset 8003
+            uint16_t delay = 0;
+            RF8003s_SPI_WriteReg_internal(0x15, 0x51);
+            while(delay ++ < 1000);            
+            RF8003s_SPI_WriteReg_internal(0x15, 0x50);
+        } 
+        
+        BB_SPI_curPageWriteByte(0x01,0x02);             //SPI change into 8020    
+    }    
 }

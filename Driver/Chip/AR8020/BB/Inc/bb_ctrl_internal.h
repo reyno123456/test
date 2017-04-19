@@ -104,7 +104,6 @@ int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
 
 void BB_SetBoardMode(ENUM_BB_MODE en_mode);
 
-
 void BB_set_QAM(ENUM_BB_QAM mod);
 
 void BB_set_LDPC(ENUM_BB_LDPC ldpc);
@@ -115,9 +114,9 @@ void sky_set_McsByIndex(uint8_t idx);
 
 static int BB_before_RF_cali(void);
 
-static int BB_after_RF_cali(void);
+static void BB_after_RF_cali(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg);
 
-static int BB_RF_start_cali();
+static void BB_RF_start_cali( void );
 
 int BB_WriteRegMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t data, uint8_t mask);
 
