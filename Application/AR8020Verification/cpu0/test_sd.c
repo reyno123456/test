@@ -1,27 +1,13 @@
 #include "debuglog.h"
 #include "interrupt.h"
 #include "test_sd.h"
-// #include "../../../Driver/Chip/AR8020/SD/Inc/sd_card.h"
 
 uint8_t pcm_buffer[2048];
 FIL outFile, inFile;
 
 void TestWR()
 {
-/*
-	dlog_info("testwr\n");
-	HAL_SD_InitIRQ();
-
-	HAL_RET_T res;
-	if ((res = HAL_SD_Init(SDR50)) != HAL_OK)
-	{
-		dlog_error("init SD failed\n");
-		return;
-	}
-*/
-
     uint32_t info;
-    // extern SD_CardInfoTypedef cardinfo;
 	ENUM_HAL_SD_CTRL cmd = HAL_SD_GET_SECTOR_COUNT;
 	if (HAL_SD_Ioctl(cmd, &info) != HAL_OK)
 	{
@@ -52,28 +38,25 @@ void TestWR()
 		dlog_info("ioctl failed\n");
 	}
 
-/*
 	cmd = HAL_SD_GET_CARD_STATUS;
 	if (HAL_SD_Ioctl(cmd, &info) != HAL_OK)
 	{
 		dlog_info("ioctl failed\n");
 	}
-*/
 
-#if 0
+
 	int i = 0;
 	uint32_t sect = 0;
 	while(i < 10)
 	{
-		HAL_SD_Write(sect, 0x20000000+i*0x1400, 10);
-		HAL_SD_Read(0x20100000, sect, 2);
+		HAL_SD_Write(sect, 0x81000000+i*0x1400, 10);
+		HAL_SD_Read(0x81100000, sect, 2);
 		dlog_info("%d",i);
 		i++;
 		sect += 1;
 	}
 
-	HAL_SD_Deinit();
-#endif
+	// HAL_SD_Deinit();
 }
 
 void TestFatFs()
