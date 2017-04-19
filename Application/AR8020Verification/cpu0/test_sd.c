@@ -4,6 +4,7 @@
 
 uint8_t pcm_buffer[2048];
 FIL outFile, inFile;
+extern unsigned int command_str2uint(char *str);
 
 void TestWR()
 {
@@ -284,10 +285,29 @@ void command_initSdcard()
 }
 
 
-void command_SdcardFatFs()
+void command_SdcardFatFs(char *argc)
 {	
-    TestWR();
-    // TestFatFs();
-/*    TestFatFs1(); */
-//	TestFatFs2();
+	uint8_t choise;
+	choise = command_str2uint(argc);
+
+	switch (choise)
+	{
+		case 0:
+			TestWR();
+		break;
+
+		case 1:
+			TestFatFs();
+		break;
+
+		case 2:
+			TestFatFs1();
+		break;
+
+		case 3:
+			TestFatFs2();
+		break;
+
+		default: break;
+	}
 }

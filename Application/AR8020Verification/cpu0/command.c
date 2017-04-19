@@ -101,7 +101,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     }
     else if (memcmp(cmdArray[0], "test_sdfs", 9) == 0)
     {
-        command_SdcardFatFs();
+        command_SdcardFatFs(cmdArray[1]);
     }
     else if (memcmp(cmdArray[0], "startbypassvideo", strlen("startbypassvideo")) == 0)
     {

@@ -16,7 +16,7 @@ void TestFatFs2();
 void TestFatFs1();
 void TestSDIRQ(void);
 void command_initSdcard();
-void command_SdcardFatFs();
+void command_SdcardFatFs(char *argc);
 
 
 #endif
