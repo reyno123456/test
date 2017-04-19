@@ -256,10 +256,6 @@ void BB_use_param_setting(PARAM *user_setting)
     context.trx_ctrl          = IT_RC_MODE;
 }
 
-void BB_SetBoardMode(ENUM_BB_MODE en_mode)
-{
-    SFR_TRX_MODE_SEL = (en_mode == BB_SKY_MODE) ? 0x01: 0x03;
-}
 
 void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
 {
@@ -276,7 +272,6 @@ void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
 
     BB_GetNv();
 
-    BB_SetBoardMode(en_mode);
     context.en_bbmode = en_mode;
 
     BB_uart10_spi_sel(0x00000003);

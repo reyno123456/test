@@ -102,8 +102,6 @@ void BB_handle_misc_cmds(STRU_WIRELESS_CONFIG_CHANGE* pcmd);
 
 int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2);
 
-void BB_SetBoardMode(ENUM_BB_MODE en_mode);
-
 void BB_set_QAM(ENUM_BB_QAM mod);
 
 void BB_set_LDPC(ENUM_BB_LDPC ldpc);

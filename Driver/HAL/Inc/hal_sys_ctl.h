@@ -23,7 +23,7 @@ typedef struct
     uint8_t  u8_icacheEnable;
     uint8_t  u8_dcacheEnable;
     uint16_t u16_sysTickIntervalUs;
-    uint8_t  u8_workMode;
+    uint8_t  u8_workMode; /*0: sky mode  1: ground mode*/
 } STRU_HAL_SYS_CTL_CONFIG;
 
 /**

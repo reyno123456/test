@@ -143,10 +143,13 @@ HAL_RET_T HAL_SYS_CTL_Init(STRU_HAL_SYS_CTL_CONFIG *pst_usrHalSysCtlCfg)
         pst_halSysCtlCfg = pst_usrHalSysCtlCfg;
     }
 
-    //set mode to sky or ground
     if (CPUINFO_GetLocalCpuId() == ENUM_CPU0_ID)
     {
-        Reg_Write32(0x40B00068, (pst_halSysCtlCfg->u8_workMode) ? 0x0:0x03);
+        /*
+         * u8_workMode: 1->  ground mode
+         *              0->  sky mode 
+         */
+        Reg_Write32(0x40B00068, (pst_halSysCtlCfg->u8_workMode) ? 0x03 : 0x01);
     }
     
     // Inter core SRAM init
