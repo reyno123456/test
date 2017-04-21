@@ -79,9 +79,6 @@ int main(void)
 
 	HAL_DMA_init();
 
-	HAL_SD_InitIRQ();
-	HAL_SD_Init(SDR50);
-
     portDISABLE_INTERRUPTS();
 
     /* Create Main Task */

@@ -2133,7 +2133,8 @@ static SD_ErrorTypedef SD_IsCardProgramming(SD_HandleTypeDef * hsd, uint8_t *sta
   }
 
   /* Find out card status */
-  *status = responseR1 & SDMMC_RESP1_CURRENT_STATE;
+  // *status = responseR1 & SDMMC_RESP1_CURRENT_STATE;
+  *status = responseR1 >> 9;
 
   return errorstate;
 }

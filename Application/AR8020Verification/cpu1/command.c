@@ -41,19 +41,19 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         command_writeMemory(cmdArray[1], cmdArray[2]);
     }
     /* read sdcard: "readsd $(startBlock) $(blockNum)" */
-    else if (memcmp(cmdArray[0], "readsd", 6) == 0)
-    {
-        command_readSdcard(cmdArray[1], cmdArray[2]);
-    }
+    //else if (memcmp(cmdArray[0], "readsd", 6) == 0)
+    //{
+    //    command_readSdcard(cmdArray[1], cmdArray[2]);
+    //}
     /* write sdcard: "writesd $startBlock) $(blockNum) $(data)" */
-    else if (memcmp(cmdArray[0], "writesd", 7) == 0)
-    {
-        command_writeSdcard(cmdArray[1], cmdArray[2], cmdArray[3]);
-    }
-    else if (memcmp(cmdArray[0], "erasesd", 7) == 0)
-    {
-        command_eraseSdcard(cmdArray[1], cmdArray[2]);
-    }
+    //else if (memcmp(cmdArray[0], "writesd", 7) == 0)
+    //{
+    //    command_writeSdcard(cmdArray[1], cmdArray[2], cmdArray[3]);
+    //}
+    //else if (memcmp(cmdArray[0], "erasesd", 7) == 0)
+    //{
+    //    command_eraseSdcard(cmdArray[1], cmdArray[2]);
+    //}
     else if (memcmp(cmdArray[0], "test_timerall", strlen("test_timerall")) == 0)
     {
        command_TestTimAll();
@@ -96,9 +96,9 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("Please use the commands like:");
         dlog_error("read <address>");
         dlog_error("write <address> <data>");
-        dlog_error("readsd <startBlock> <blockNum>");
-        dlog_error("writesd <startBlock> <blockNum> <data>");
-        dlog_error("erasesd");
+        //dlog_error("readsd <startBlock> <blockNum>");
+        //dlog_error("writesd <startBlock> <blockNum> <data>");
+        //dlog_error("erasesd");
         dlog_error("sendusb");
         dlog_error("hdmiinit");
         dlog_error("hdmigetvideoformat");
