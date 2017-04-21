@@ -17,8 +17,8 @@ USBH_ClassTypeDef  UVC_Class =
 };
 
 UVC_HandleTypeDef       g_stUVCHandle;
-uint8_t                *g_UVCRecvBuffer;
-uint8_t                *g_UVCVideoBuffer[UVC_VIDEO_BUFF_FRAME_NUM];
+uint8_t                 g_UVCRecvBuffer[UVC_VIDEO_MAX_SIZE_PER_SOF];
+uint8_t                 g_UVCVideoBuffer[UVC_VIDEO_BUFF_FRAME_NUM][UVC_VIDEO_BUFF_FRAME_SIZE];
 uint32_t                g_u32BufferFrameNumber[UVC_VIDEO_BUFF_FRAME_NUM];
 uint8_t                 g_u8curVideoBuffIndex = 0;
 uint32_t                g_u32recvBuffPos = 0;
@@ -167,18 +167,13 @@ USBH_StatusTypeDef USBH_UVC_InterfaceDeInit (USBH_HandleTypeDef *phost)
     USBH_memset((void *)UVC_Handle, 0, sizeof(UVC_HandleTypeDef));
     phost->pActiveClass->pData = 0;
 
-    USBH_UVC_SetBuffState(0, 0);
-    USBH_UVC_SetBuffState(1, 0);
+    for (i = 0; i < UVC_VIDEO_BUFF_FRAME_NUM; i++)
+    {
+        USBH_UVC_SetBuffState(i, UVC_VIDEO_BUFF_EMPTY);
+    }
 
     g_u8curVideoBuffIndex = 0;
     g_u32recvBuffPos = 0;
-
-    free(g_UVCRecvBuffer);
-
-    for (i = 0; i < UVC_VIDEO_BUFF_FRAME_NUM; i++)
-    {
-        free(g_UVCVideoBuffer[i]);
-    }
 
     return USBH_OK;
 }
@@ -852,35 +847,6 @@ uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost, uint8_t u8_frameIndex)
 
     g_u32UVCVideoBuffSizePerFrame   = USBH_UVC_GetFrameSize(u8_frameIndex);
 
-    g_UVCRecvBuffer                 = (uint8_t *)malloc(UVC_VIDEO_EP_MAX_SIZE);
-
-    if (g_UVCRecvBuffer != NULL)
-    {
-        dlog_info("malloc g_UVCRecvBuffer: 0x%08x", g_UVCRecvBuffer);
-    }
-    else
-    {
-        dlog_error("malloc g_UVCRecvBuffer error");
-
-        return 0xFF;
-    }
-
-    for (i = 0; i < UVC_VIDEO_BUFF_FRAME_NUM; i++)
-    {
-        g_UVCVideoBuffer[i]         = (uint8_t *)malloc(g_u32UVCVideoBuffSizePerFrame);
-
-        if (g_UVCVideoBuffer[i] != NULL)
-        {
-            dlog_info("malloc g_UVCVideoBuffer[%d]: 0x%08x", i, g_UVCVideoBuffer[i]);
-        }
-        else
-        {
-            dlog_error("malloc g_UVCVideoBuffer[%d] error");
-
-            return 0xFF;
-        }
-    }
-
     dlog_info("g_u32UVCVideoBuffSizePerFrame: %d", g_u32UVCVideoBuffSizePerFrame);
 
     return 0;
@@ -892,6 +858,11 @@ static void USBH_UVC_UrbDone(USBH_HandleTypeDef *phost)
     UVC_HandleTypeDef      *UVC_Handle;
     uint32_t                u32_recvSize;
     static uint32_t         u32_frameNumber = 0;
+    int32_t                 channel = 0;
+    ENUM_Chan               en_channel = AUTO;
+    uint32_t                u32_addrOffset = 0;
+    uint32_t                u32_srcAddr = 0;
+    uint32_t                u32_destAddr = 0;
 
     UVC_Handle =  (UVC_HandleTypeDef *) phost->pActiveClass->pData;
 
@@ -907,12 +878,20 @@ static void USBH_UVC_UrbDone(USBH_HandleTypeDef *phost)
         {
             u32_recvSize -= UVC_HEADER_SIZE;
 
+            u32_srcAddr     = (uint32_t)(g_UVCRecvBuffer + UVC_HEADER_SIZE);
+            u32_destAddr    = (uint32_t)(g_UVCVideoBuffer[g_u8curVideoBuffIndex] + g_u32recvBuffPos);
+            u32_addrOffset  = DTCM_CPU0_DMA_ADDR_OFFSET;
+
+            u32_srcAddr    += u32_addrOffset;
+            u32_destAddr   += u32_addrOffset;
+
             if (UVC_HEADER_FRAME_END != (UVC_HEADER_FRAME_END & g_UVCRecvBuffer[1]))
             {
-                //dma_transfer((uint32_t *)(g_UVCRecvBuffer + UVC_HEADER_SIZE), (uint32_t *)(g_UVCVideoBuffer[g_u8curVideoBuffIndex] + g_u32recvBuffPos), u32_recvSize);
-                memcpy((void *)(g_UVCVideoBuffer[g_u8curVideoBuffIndex] + g_u32recvBuffPos),
-                       (void *)(g_UVCRecvBuffer + UVC_HEADER_SIZE),
-                       u32_recvSize);
+                DMA_forDriverTransfer((uint32_t)u32_srcAddr, 
+                                      (uint32_t)u32_destAddr, 
+                                      u32_recvSize, 
+                                      DMA_noneBlocked, 
+                                      0);
 
                 g_u32recvBuffPos += u32_recvSize;
 
@@ -927,9 +906,14 @@ static void USBH_UVC_UrbDone(USBH_HandleTypeDef *phost)
             {
                 if ((g_u32recvBuffPos + u32_recvSize) == g_u32UVCVideoBuffSizePerFrame)
                 {
-                    memcpy((void *)(g_UVCVideoBuffer[g_u8curVideoBuffIndex] + g_u32recvBuffPos),
-                           (void *)(g_UVCRecvBuffer + UVC_HEADER_SIZE),
-                           u32_recvSize);
+                    DMA_forDriverTransfer((uint32_t)u32_srcAddr, 
+                                          (uint32_t)u32_destAddr, 
+                                          u32_recvSize, 
+                                          DMA_noneBlocked, 
+                                          0);
+
+                    CPUINFO_DCacheInvalidateByAddr((uint32_t *)g_UVCVideoBuffer[g_u8curVideoBuffIndex],
+                                                    g_u32UVCVideoBuffSizePerFrame);
 
                     USBH_UVC_SetBuffState(g_u8curVideoBuffIndex, UVC_VIDEO_BUFF_VALID);
 
@@ -959,7 +943,6 @@ static void USBH_UVC_UrbDone(USBH_HandleTypeDef *phost)
         }
     }
 
-//    USBH_IsocReceiveData(phost, g_UVCRecvBuffer, UVC_VIDEO_EP_MAX_SIZE, UVC_Handle->VideoPipe);
     USBH_IsocReceiveData(phost, g_UVCRecvBuffer, UVC_VIDEO_MAX_SIZE_PER_SOF, UVC_Handle->VideoPipe);
 }
 
@@ -1215,15 +1198,11 @@ void USBH_UVC_GetVideoFormatList(USBH_HandleTypeDef *phost)
                 {
                     USBH_ParseFormatUncompDesc(buff, formatUncompIndex);
 
-//                    dlog_info("formatUncompIndex: %d", formatUncompIndex);
-
                     formatUncompIndex++;
                 }
                 else if (buff[2] == USB_UVC_FRAME_UNCOMPRESSED)
                 {
                     USBH_ParseFrameUncompDesc(buff, frameUncompIndex);
-
-//                    dlog_info("frameUncompIndex: %d", frameUncompIndex);
 
                     frameUncompIndex++;
                 }

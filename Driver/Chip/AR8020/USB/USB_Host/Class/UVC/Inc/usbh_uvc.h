@@ -29,9 +29,12 @@ extern USBH_ClassTypeDef            UVC_Class;
 #define UVC_VIDEO_EP_MAX_SIZE               0x400
 #define UVC_CTRL_EP                         0x83
 
-#define UVC_VIDEO_MAX_SIZE_PER_SOF          0x1400
+#define UVC_VIDEO_MAX_SIZE_PER_SOF          0xC00
 
 #define UVC_VIDEO_BUFF_FRAME_NUM            0x2
+//#define UVC_VIDEO_BUFF_FRAME_SIZE           76800
+#define UVC_VIDEO_BUFF_FRAME_SIZE           153600
+
 //#define UVC_VIDEO_BUFF_SIZE_PER_FRAME       38400   // 160 * 120 * 2
 
 #define UVC_HEADER_SPECIAL_CHAR             0xC

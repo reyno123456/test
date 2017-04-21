@@ -47,6 +47,13 @@ typedef enum
 } ENUM_HAL_UVC_GET_PARAM_TYPE;
 
 
+typedef enum
+{
+    ENUM_UVC_DATA_YUV   = 1,
+    ENUM_UVC_DATA_Y     = 2,
+} ENUM_HAL_USB_UVC_DATA_TYPE;
+
+
 typedef struct
 {
     uint16_t    u16_width[HAL_USB_UVC_MAX_FRAME_FORMATS_NUM];
@@ -110,7 +117,10 @@ HAL_RET_T HAL_USB_StartUVC(uint16_t u16_width,
 *               HAL_OK                                      : means successfully get one video frame
 * @note  
 */
-HAL_RET_T HAL_USB_GetVideoFrame(uint8_t *u8_buff, uint32_t *u32_frameNum, uint32_t *u32_frameSize);
+HAL_RET_T HAL_USB_GetVideoFrame(uint8_t *u8_buff,
+                               uint32_t *u32_frameNum,
+                               uint32_t *u32_frameSize,
+                               ENUM_HAL_USB_UVC_DATA_TYPE e_dataType);
 
 /**
 * @brief  get the formats this camera support
@@ -141,7 +151,11 @@ uint32_t HAL_USB_GetUVCExtUnitControls(void);
 */
 void HAL_USB_EnterUSBHostTestMode(void);
 
-void HAL_USB_TransferUVCToGrd(uint8_t *buff, uint32_t dataLen);
+void HAL_USB_TransferUVCToGrd(uint8_t *buff,
+                             uint32_t dataLen,
+                             uint16_t width,
+                             uint16_t height,
+                             ENUM_HAL_USB_UVC_DATA_TYPE e_UVCDataType);
 
 ENUM_HAL_USB_HOST_CLASS HAL_USB_CurUsbClassType(void);
 

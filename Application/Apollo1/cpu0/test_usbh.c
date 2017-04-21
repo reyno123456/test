@@ -196,7 +196,7 @@ void USB_MainTask(void const *argument)
 }
 
 
-uint8_t  u8_FrameBuff[38400];
+uint8_t  u8_FrameBuff[76800];
 void USBH_ProcUVC(void)
 {
     STRU_UVC_VIDEO_FRAME_FORMAT     stVideoFrameFormat;
@@ -232,21 +232,11 @@ void USBH_ProcUVC(void)
         else
         {
             //get a YUV frame, size should be u16_width * u16_height * 2
-            if (HAL_OK == HAL_USB_GetVideoFrame(u8_FrameBuff, &u32_uvcFrameNum, &u32_frameSize))
+            if (HAL_OK == HAL_USB_GetVideoFrame(u8_FrameBuff, &u32_uvcFrameNum, &u32_frameSize, ENUM_UVC_DATA_Y))
             {
-                #if 0
-                dlog_info("frameNum: %d, frameSize: %d, data: %02x, %02x, %02x, %02x",
-                                            u32_uvcFrameNum,
-                                            u32_frameSize,
-                                            u8_FrameBuff[0],
-                                            u8_FrameBuff[1],
-                                            u8_FrameBuff[2],
-                                            u8_FrameBuff[3]);
-                #endif
-
                 if (g_u8ViewUVC == 1)
                 {
-                    HAL_USB_TransferUVCToGrd(u8_FrameBuff, u32_frameSize);
+                    HAL_USB_TransferUVCToGrd(u8_FrameBuff, u32_frameSize, u16_width, u16_height, ENUM_UVC_DATA_Y);
                 }
             }
             else

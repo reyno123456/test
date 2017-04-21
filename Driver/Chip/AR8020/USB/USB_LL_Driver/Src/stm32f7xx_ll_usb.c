@@ -1484,6 +1484,10 @@ HAL_StatusTypeDef USB_HC_Init(USB_OTG_GlobalTypeDef *USBx,
   {
     USBx_HC(ch_num)->HCCHAR |= USB_OTG_HCCHAR_ODDFRM ;
   }
+  else if (ep_type == EP_TYPE_ISOC)
+  {
+    USBx_HC(ch_num)->HCCHAR |= USB_OTG_HCCHAR_MC ;
+  }
 
   return HAL_USB_OK; 
 }

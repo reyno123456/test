@@ -189,18 +189,24 @@ HAL_RET_T HAL_USB_StartUVC(uint16_t u16_width,
 *               HAL_OK                                      : means successfully get one video frame
 * @note  
 */
-HAL_RET_T HAL_USB_GetVideoFrame(uint8_t *u8_buff, uint32_t *u32_frameNum, uint32_t *u32_frameSize)
+HAL_RET_T HAL_USB_GetVideoFrame(uint8_t *u8_buff,
+                               uint32_t *u32_frameNum,
+                               uint32_t *u32_frameSize,
+                               ENUM_HAL_USB_UVC_DATA_TYPE e_dataType)
 {
     HAL_RET_T               ret = HAL_USB_ERR_BUFF_IS_EMPTY;
     uint8_t                *u8_frameBuff = NULL;
-    uint32_t                u32_srcAddr;
-    uint32_t                u32_destAddr;
-    uint32_t                u32_addrOffset = 0;
+//    uint32_t                u32_srcAddr;
+//    uint32_t                u32_destAddr;
+//    uint32_t                u32_addrOffset = 0;
+    uint32_t                i;
+    uint32_t                loop;
 
     u8_frameBuff            = USBH_UVC_GetBuff(u32_frameNum, u32_frameSize);
 
     if (NULL != u8_frameBuff)
     {
+        #if 0
         u32_srcAddr             = (uint32_t)u8_frameBuff;
         u32_destAddr            = (uint32_t)u8_buff;
 
@@ -225,14 +231,26 @@ HAL_RET_T HAL_USB_GetVideoFrame(uint8_t *u8_buff, uint32_t *u32_frameNum, uint32
             u32_destAddr    += u32_addrOffset;
         }
 
-        //HAL_DMA_Start(u32_srcAddr,
-        //              u32_destAddr,
-        //              *u32_frameSize,
-        //              DMA_AUTO,
-        //              DMA_LINK_LIST_ITEM);
-        DMA_forDriverTransfer(u32_srcAddr, u32_destAddr, *u32_frameSize, DMA_blocked, 0);
+        DMA_forDriverTransfer(u32_srcAddr, u32_destAddr, *u32_frameSize, DMA_noneBlocked, 0);
 
         CPUINFO_DCacheInvalidateByAddr((uint32_t *)u8_buff, *u32_frameSize);
+        #endif
+
+        if (e_dataType == ENUM_UVC_DATA_YUV)
+        {
+            memcpy(u8_buff, u8_frameBuff, *u32_frameSize);
+        }
+        else if (e_dataType == ENUM_UVC_DATA_Y)
+        {
+            loop            = (*u32_frameSize >> 1);
+
+            for (i = 0; i < loop; i++)
+            {
+                u8_buff[i]  = u8_frameBuff[i<<1];
+            }
+
+            *u32_frameSize  >>= 1;
+        }
 
         USBH_UVC_SetBuffStateByAddr(u8_frameBuff, UVC_VIDEO_BUFF_EMPTY);
 
@@ -326,14 +344,18 @@ void HAL_USB_EnterUSBHostTestMode(void)
 }
 
 
-void HAL_USB_TransferUVCToGrd(uint8_t *buff, uint32_t dataLen)
+void HAL_USB_TransferUVCToGrd(uint8_t *buff,
+                             uint32_t dataLen,
+                             uint16_t width,
+                             uint16_t height,
+                             ENUM_HAL_USB_UVC_DATA_TYPE e_UVCDataType)
 {
     static uint8_t          u8_frameInterval = 0;
-    uint8_t                 u8_header[10];
+    uint8_t                 u8_header[12];
 
     u8_frameInterval++;
 
-    if (u8_frameInterval >= 10)
+    if (u8_frameInterval >= 5)
     {
         u8_frameInterval    = 0;
 
@@ -351,8 +373,25 @@ void HAL_USB_TransferUVCToGrd(uint8_t *buff, uint32_t dataLen)
         u8_header[5]            = 0xFF;
         u8_header[6]            = 0xFF;
         u8_header[7]            = 0xFF;
-        u8_header[8]            = 0x01;
-        u8_header[9]            = 0x01;
+
+        if (e_UVCDataType == ENUM_UVC_DATA_Y)
+        {
+            u8_header[8]        = 0x02;
+        }
+        else
+        {
+            u8_header[8]        = 0x01;
+        }
+
+        if ((width == 320) && (height == 240) )
+        {
+            u8_header[9]        = 0x02;
+        }
+        else
+        {
+            u8_header[9]        = 0x01;
+        }
+
         u8_header[10]           = 0x00;
         u8_header[11]           = 0x00;
 

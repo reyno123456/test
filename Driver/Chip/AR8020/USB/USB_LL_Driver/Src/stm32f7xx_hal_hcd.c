@@ -449,7 +449,7 @@ HAL_StatusTypeDef HAL_HCD_HC_SubmitRequest(HCD_HandleTypeDef *hhcd,
     break;
     
   case EP_TYPE_ISOC: 
-    hhcd->hc[ch_num].data_pid = HC_PID_DATA0;
+    hhcd->hc[ch_num].data_pid = HC_PID_DATA2;
     break;      
   }
   
