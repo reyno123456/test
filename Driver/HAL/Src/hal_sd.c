@@ -234,7 +234,7 @@ HAL_RET_T HAL_SD_Ioctl(ENUM_HAL_SD_CTRL e_sdCtrl, uint32_t *pu32_info)
     SDMMC_Status e_errorState = SDMMC_OK;
     uint32_t u32_tmpValue = 0;
     float tran_speed = 0;
-    long long int CardCapacity = 0;
+/*     long long int CardCapacity = 0; */
 	e_errorState = Card_SD_Get_CardInfo(&sdhandle, &cardinfo);
     
 	if (e_errorState != SDMMC_OK) 

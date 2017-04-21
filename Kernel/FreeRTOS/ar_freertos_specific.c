@@ -61,7 +61,7 @@ void ar_top(void)
 	uxArraySize = uxTaskGetSystemState(pxTaskStatusArray, uxArraySize, &ulTotalRunTime);  
 
 	dlog_info("\n");
-	dlog_info("name                    status ID Priority   stack   used\n");
+	dlog_info("name                            status ID Priority   stack   used\n");
 
 	if( ulTotalRunTime > 0 )  
 	{  
@@ -75,7 +75,7 @@ void ar_top(void)
    
             if( ulStatsAsPercentage > 0UL )  
             {
-            	sprintf(tmp,"%-24s%-7c%-6d%-8d%-8d%d%%",pxTaskStatusArray[x].pcTaskName,
+            	sprintf(tmp,"%-32s%-7c%-6d%-8d%-8d%d%%",pxTaskStatusArray[x].pcTaskName,
 					task_state[pxTaskStatusArray[x].eCurrentState],  
 					pxTaskStatusArray[x].xTaskNumber,pxTaskStatusArray[x].uxCurrentPriority,  
 					pxTaskStatusArray[x].usStackHighWaterMark,ulStatsAsPercentage);  
@@ -83,7 +83,7 @@ void ar_top(void)
             else  
             {  
 				/* cpu used not more than 1 */
-				sprintf(tmp,"%-24s%-7c%-6d%-8d%-8dt<1%%",pxTaskStatusArray[x].pcTaskName,
+				sprintf(tmp,"%-32s%-7c%-6d%-8d%-8dt<1%%",pxTaskStatusArray[x].pcTaskName,
 					task_state[pxTaskStatusArray[x].eCurrentState],  
 					pxTaskStatusArray[x].xTaskNumber,pxTaskStatusArray[x].uxCurrentPriority,
 					pxTaskStatusArray[x].usStackHighWaterMark); 

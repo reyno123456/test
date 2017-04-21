@@ -9,6 +9,7 @@
   *           + IO operation functions
   *           + Peripheral Control functions
   *           + Peripheral State functions
+  *           + bug fix for status check after erase (wumin) 2017-4-21
   */
 
 #include <stddef.h>
@@ -784,16 +785,23 @@ SD_ErrorTypedef Card_SD_Erase(SD_HandleTypeDef *hsd, uint32_t startaddr, uint32_
   Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
 
 
-//   /* Wait until the card is in programming state */
-//   errorstate = SD_IsCardProgramming(hsd, &cardstate);
-//   while ((errorstate == SD_OK) && ((cardstate == SD_CARD_PROGRAMMING) || (cardstate == SD_CARD_RECEIVE)))
-//   {
-//     errorstate = SD_IsCardProgramming(hsd, &cardstate);
-#ifdef ECHO
-//     dlog_info("sd is in programming\n");
-#endif
-//   }
-  return errorstate;
+	/* Wait until the card is in programming state */
+	errorstate = SD_IsCardProgramming(hsd, &cardstate);
+	while ( cardstate == SD_CARD_PROGRAMMING || cardstate == SD_CARD_TRANSFER)
+	{
+		errorstate = SD_IsCardProgramming(hsd, &cardstate);
+
+		if ( cardstate == SD_CARD_TRANSFER)
+		{
+			break;
+		}
+
+		#ifdef ECHO
+		/*      dlog_info("sd is in programming\n"); */
+		#endif
+	}
+
+	return errorstate;
 }
 
 /** 

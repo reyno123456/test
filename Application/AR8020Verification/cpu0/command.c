@@ -99,7 +99,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_eraseSdcard(cmdArray[1], cmdArray[2]);
     }
-    else if (memcmp(cmdArray[0], "test_sdfs", 9) == 0)
+    else if (memcmp(cmdArray[0], "test_sd", 7) == 0 && (cmdNum == 2))
     {
         command_SdcardFatFs(cmdArray[1]);
     }
@@ -464,7 +464,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("readsd <SrcAddr:0x> <SectorNum:0x>");
         dlog_error("writesd <DstAddr:0x> <SectorNum:0x> <Srcaddr:0x>");
         dlog_error("erasesd <startSector> <SectorNum>");
-        dlog_error("test_sdfs");
+        dlog_error("test_sd <choise>");
         dlog_error("hdmiinit <index>");
         dlog_error("hdmidump <index>");
         dlog_error("hdmigetvideoformat <index>");

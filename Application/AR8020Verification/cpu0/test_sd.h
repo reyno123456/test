@@ -17,6 +17,9 @@ void TestFatFs1();
 void TestSDIRQ(void);
 void command_initSdcard();
 void command_SdcardFatFs(char *argc);
+void TestRawWR();
+void OS_TestRawWR_Handler(void const * argument);
+void OS_TestRawWR();
 
 
 #endif
