@@ -8,7 +8,7 @@
 
 #define USE_FULL_ASSERT
 /* shift bit field */
-#define SBF(f, v)    ((v) << (f))
+#define SBF(v, f)    ((v) << (f))
 
 #ifndef BIT
 #define BIT(n)    ((uint32_t)1 << (n))
