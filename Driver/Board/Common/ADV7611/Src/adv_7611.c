@@ -19,7 +19,7 @@ static unsigned char hdmi_default_settings[][3] =
     {0x98, 0x02, 0xF5},    //Auto CSC, YCrCb out, Set op_656 bit
     {0x98, 0x03, 0x80},    //16 bit SDR 422 Mode 0
     {0x98, 0x05, 0x2C},    //AV Codes Off
-    {0x98, 0x06, 0xAE},    //Invert VS,HS pins with clock and DE
+    {0x98, 0x06, 0xA0},    //Invert VS,HS pins with clock and DE
     {0x98, 0x0B, 0x44},    //Power up part
     {0x98, 0x0C, 0x42},    //Power up part
     {0x98, 0x14, 0x7F},    //Max Drive Strength

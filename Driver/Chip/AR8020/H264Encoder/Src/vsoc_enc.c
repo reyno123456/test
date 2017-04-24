@@ -119,7 +119,7 @@ void vsoc_enc_enable(){
 void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsigned int fps, unsigned int br, ENUM_ENCODER_INPUT_SRC src) {
     if ((src >= ENCODER_INPUT_SRC_HDMI_0) && (src <= ENCODER_INPUT_SRC_DVP_1))
     {
-        WRITE_WORD((ENC_REG_ADDR+(0x00<<2)),0x00910736);
+        WRITE_WORD((ENC_REG_ADDR+(0x00<<2)),0x00900736);
     }
     else if (ENCODER_INPUT_SRC_MIPI == src)
     {
@@ -231,7 +231,7 @@ void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsig
 void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsigned int fps, unsigned int br, ENUM_ENCODER_INPUT_SRC src) {
     if ((src >= ENCODER_INPUT_SRC_HDMI_0) && (src <= ENCODER_INPUT_SRC_DVP_1))
     {
-        WRITE_WORD((ENC_REG_ADDR+(0x19<<2)),0x00910736);
+        WRITE_WORD((ENC_REG_ADDR+(0x19<<2)),0x00900736);
     }
     else if (ENCODER_INPUT_SRC_MIPI == src)
     {

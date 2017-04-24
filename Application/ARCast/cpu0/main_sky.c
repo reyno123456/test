@@ -19,6 +19,8 @@
 #include "systicks.h"
 #include "memory_config.h"
 #include "hal_uart.h"
+#include "typedef.h"
+#include "it6602.h"
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
@@ -57,8 +59,10 @@ int main(void)
     STRU_HDMI_CONFIGURE        st_configure;
     st_configure.e_getFormatMethod = HAL_HDMI_POLLING;
 
-    st_configure.u8_interruptGpio = HAL_GPIO_NUM64;
-    st_configure.u8_hdmiToEncoderCh = 0;
+    st_configure.st_interruptGpio.e_interruptGpioNum = HAL_GPIO_NUM98;
+    st_configure.st_interruptGpio.e_interruptGpioPolarity = HAL_GPIO_ACTIVE_LOW;
+    st_configure.st_interruptGpio.e_interruptGpioTypy = HAL_GPIO_LEVEL_SENUMSITIVE;
+    st_configure.u8_hdmiToEncoderCh = 1;
     HAL_HDMI_RX_Init(HAL_HDMI_RX_1, &st_configure);
 
     STRU_MP3_ENCODE_CONFIGURE_WAVE st_audioConfig;
@@ -75,7 +79,8 @@ int main(void)
     HAL_USB_InitOTG(HAL_USB_PORT_1);
 
     HAL_NV_Init();
-
+    Wireless_TaskInit(WIRELESS_NO_RTOS);
+/*
     USBH_MountUSBDisk();
 
     HAL_MP3EncodePcmInit(&st_audioConfig);
@@ -86,11 +91,12 @@ int main(void)
     uint32_t u32_audioSampleRateTmp=0;
     volatile uint32_t *pu32_newAudioSampleRate=(uint32_t *)(SRAM_MODULE_SHARE_AUDIO_RATE);
     *pu32_newAudioSampleRate=0xf;
-
+ */   
     /* We should never get here as control is now taken by the scheduler */
+    uint8_t i = 0;
     for( ;; )
     {
-        HAL_HDMI_RX_GetAudioSampleRate(HAL_HDMI_RX_1,&u32_audioSampleRate);
+        /*HAL_HDMI_RX_GetAudioSampleRate(HAL_HDMI_RX_1,&u32_audioSampleRate);
         if ((*pu32_newAudioSampleRate) != u32_audioSampleRate)
         {
             u32_audioSampleRateTmp++;
@@ -115,11 +121,19 @@ int main(void)
         else
         {
             u32_audioSampleRateTmp=0;
-        }
+        }*/
         //HAL_USB_HostProcess();
-        Wireless_MessageProcess();
+        //Wireless_MessageProcess();
 
-        HAL_MP3EncodePcm();
+        //HAL_MP3EncodePcm();
+        msleep(1);
+        i++;
+        if (i>100)
+        {
+            IT6602_fsm();
+            i=0;
+        }
+        Wireless_MessageProcess();
         SYS_EVENT_Process();
         DLOG_Process(NULL);
     }

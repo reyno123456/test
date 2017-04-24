@@ -62,12 +62,16 @@ int main(void)
     HDMI_powerOn();
     
     STRU_HDMI_CONFIGURE        st_configure;
+
     st_configure.e_getFormatMethod = HAL_HDMI_POLLING;
-    st_configure.u8_interruptGpio = HAL_GPIO_NUM64;
+    st_configure.st_interruptGpio.e_interruptGpioNum = HAL_GPIO_NUM64;
+    st_configure.st_interruptGpio.e_interruptGpioPolarity = HAL_GPIO_ACTIVE_HIGH;
+    st_configure.st_interruptGpio.e_interruptGpioTypy = HAL_GPIO_EDGE_SENUMSITIVE;
+  
     st_configure.u8_hdmiToEncoderCh = 1;
     HAL_HDMI_RX_Init(HAL_HDMI_RX_0, &st_configure);
 
-    st_configure.u8_interruptGpio = HAL_GPIO_NUM65;
+    st_configure.st_interruptGpio.e_interruptGpioNum = HAL_GPIO_NUM65;
     st_configure.u8_hdmiToEncoderCh = 0;
     HAL_HDMI_RX_Init(HAL_HDMI_RX_1, &st_configure);
 

@@ -210,6 +210,9 @@ typedef struct
 #ifdef USE_ADV7611_EDID_CONFIG_BIN
     unsigned char hdmi_configure[264][3];
 #endif
+#ifdef USE_IT66021_EDID_CONFIG_BIN
+    unsigned char hdmi_configure[257][3];
+#endif
 }STRU_SettingConfigure;
 
 #define GET_CONFIGURE_FROM_FLASH(structaddress) {do\

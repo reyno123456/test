@@ -4,7 +4,6 @@
 #include "debuglog.h"
 #include "test_hal_nv.h"
 #include "test_storagedatausb.h"
-#include "test_i2c_adv7611.h"
 #include "hal_dma.h"
 #include "md5.h"
 #include "data_type.h"
@@ -46,14 +45,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestNvSetBbRcId(cmdArray[1],cmdArray[2],cmdArray[3],cmdArray[4],cmdArray[5]);
     }
-    else if (memcmp(cmdArray[0], "hdmiread", strlen("hdmiread")) == 0)
-    {
-        command_readADV7611(cmdArray[1], cmdArray[2]);
-    }
-    else if (memcmp(cmdArray[0], "hdmiwrite", strlen("hdmiwrite")) == 0)
-    {
-        command_writeADV7611(cmdArray[1], cmdArray[2], cmdArray[3]);
-    }
 	else if (memcmp(cmdArray[0], "test_dma_cpu0", strlen("test_dma_cpu0")) == 0)
     {
         command_dma(cmdArray[1], cmdArray[2], cmdArray[3]);
@@ -71,8 +62,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("sky_auto_search_rc_id");
         dlog_error("NvResetBbRcId");
         dlog_error("NvSetBbRcId <id1> <id2> <id3> <id4> <id5>");
-        dlog_error("hdmiread <slv address> <reg address>");
-        dlog_error("hdmiwrite <slv address> <reg address> <reg value>");
 		dlog_error("test_dma_cpu0 <src> <dst> <byte_num>");
 		dlog_error("test_dma_loop <src> <dst> <byte_num>");
         dlog_output(1000);

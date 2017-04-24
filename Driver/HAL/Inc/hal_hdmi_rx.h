@@ -14,7 +14,9 @@ History:
 
 #include <stdint.h>
 #include "hal_ret_type.h"
-
+#include "hal_gpio.h"
+#include "hal_gpio.h"
+        
 typedef struct
 {
     uint16_t u16_width;
@@ -31,8 +33,15 @@ typedef enum
 
 typedef struct
 {
+    ENUM_HAL_GPIO_NUM e_interruptGpioNum;
+    ENUM_HAL_GPIO_InterrputPolarity e_interruptGpioPolarity;
+    ENUM_HAL_GPIO_InterrputLevel e_interruptGpioTypy;
+} STRU_HDMI_GPIOCONFIGURE;
+
+typedef struct
+{
     ENUM_HAL_HDMI_GETFORMATMETHOD e_getFormatMethod;
-    uint8_t u8_interruptGpio;
+    STRU_HDMI_GPIOCONFIGURE st_interruptGpio;
     uint8_t u8_hdmiToEncoderCh;
 } STRU_HDMI_CONFIGURE;
 
@@ -67,7 +76,7 @@ typedef enum
 HAL_RET_T HAL_HDMI_RX_Init(ENUM_HAL_HDMI_RX e_hdmiIndex, STRU_HDMI_CONFIGURE *pst_hdmiConfigure);
 
 /**
-* @brief  The HDMI RX init function.
+* @brief  The HDMI RX GetVideoFormat function.
 * @param  e_hdmiIndex         The HDMI RX index number, the right number should be 0-1 and totally
 *                             2 HDMI RX can be supported.
 * @param  pu16_width          The pointer to the video width value.
@@ -84,7 +93,7 @@ HAL_RET_T HAL_HDMI_RX_GetVideoFormat(ENUM_HAL_HDMI_RX e_hdmiIndex,
                                      uint8_t  *pu8_framterate);
 
 /**
-* @brief  The HDMI RX init function.
+* @brief  The HDMI RX GetAudioSampleRate function.
 * @param  e_hdmiIndex         The HDMI RX index number, the right number should be 0-1 and totally
 *                             2 HDMI RX can be supported.
 * @param  pu8_sampleRate      The pointer to the audio sample rate.

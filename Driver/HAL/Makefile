@@ -76,6 +76,7 @@ INCDIRS := -IInc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SRAM/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SD/Inc \
            -I$(TOP_DIR)/Driver/Board/Common/ADV7611/Inc \
+           -I$(TOP_DIR)/Driver/Board/Common/IT66021/Inc \
            -I$(TOP_DIR)/Driver/Board/Common/OV5640/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/H264Encoder/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/USB/USB_Device/Core/Inc \
