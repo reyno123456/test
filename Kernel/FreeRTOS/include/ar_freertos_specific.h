@@ -25,5 +25,8 @@ void rtos_feature_task_traceability_init(void);
 /* public for user application */
 void ar_top(void);
 void ar_osDelay(uint32_t u32_ms);
+void ar_osSysEventMsgQGet(void);
+void ar_osSysEventMsgQPut(void);
+void ar_osSysEventIdleSoftTimerCreate(void(*pTimerCallback)(void*), uint8_t u8_msInterval);
 
 #endif

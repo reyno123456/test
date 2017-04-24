@@ -34,10 +34,6 @@ static void IO_Task(void const *argument)
     while (1)
     {
         SYS_EVENT_Process();
-        
-        DLOG_Process(NULL);
-        
-        HAL_Delay(20);
     }
 }
 

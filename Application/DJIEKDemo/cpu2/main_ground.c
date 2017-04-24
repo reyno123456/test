@@ -34,9 +34,6 @@ int main(void)
     for( ;; )
     {
         SYS_EVENT_Process();
-
-        DLOG_Process(NULL);
-      
         HAL_Delay(20);
     }
 } 

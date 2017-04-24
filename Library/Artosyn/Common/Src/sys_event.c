@@ -47,6 +47,19 @@ static inline void disableInterrupts(void)
     s_ul_primask = local_irq_disable_save_flags();
 }
 
+__attribute__((weak)) void ar_osSysEventMsgQGet(void)
+{
+}
+
+__attribute__((weak)) void ar_osSysEventMsgQPut(void)
+{
+}
+
+__attribute__((weak)) uint8_t InterCore_SendMsg(INTER_CORE_CPU_ID dst, INTER_CORE_MSG_ID msg, uint8_t* buf, uint32_t length)
+{
+    dlog_error("InterCore_SendMsg function link is not right!");
+}
+
 /**
  * Internal functions about event node
  **/
@@ -404,11 +417,6 @@ static uint8_t removeNotifiedSysEventNode(STRU_NotifiedSysEvent_Node* pNode)
     return TRUE; 
 }
 
-__attribute__((weak)) uint8_t InterCore_SendMsg(INTER_CORE_CPU_ID dst, INTER_CORE_MSG_ID msg, uint8_t* buf, uint32_t length)
-{
-    dlog_error("InterCore_SendMsg function link is not right!");
-}
-
 /**
  * External APIs --------------------------------------------------------------------
  **/
@@ -482,14 +490,7 @@ uint8_t SYS_EVENT_UnRegisterHandler(uint32_t event_id, SYS_Event_Handler event_h
     return retval;
 }
 
-/** 
- * @brief       API for different modules to notify an envent in ISR functions.
- * @param[in]   event_id, the event ID the module wants to notify.
- * @param[in]   parameter, the parameter the module wants to transfer in this notification.
- * @retval      TURE, this means notification operation is sucessful. 
- * @retval      FALSE, this means error happens in this notification operation.
- */
-uint8_t SYS_EVENT_Notify_From_ISR(uint32_t event_id, void* parameter)
+static uint8_t notifySysEvent(uint32_t event_id, void* parameter)
 {
     uint8_t retval = FALSE;
 
@@ -534,6 +535,26 @@ uint8_t SYS_EVENT_Notify_From_ISR(uint32_t event_id, void* parameter)
     return retval;
 }
 
+static void notifySysEventIdle(void* parameter)
+{
+    ar_osSysEventMsgQPut();
+}
+
+/** 
+ * @brief       API for different modules to notify an envent in ISR functions.
+ * @param[in]   event_id, the event ID the module wants to notify.
+ * @param[in]   parameter, the parameter the module wants to transfer in this notification.
+ * @retval      TURE, this means notification operation is sucessful. 
+ * @retval      FALSE, this means error happens in this notification operation.
+ */
+uint8_t SYS_EVENT_Notify_From_ISR(uint32_t event_id, void* parameter)
+{
+    notifySysEvent(event_id, parameter);
+    
+    ar_osSysEventMsgQPut();
+}
+
+
 /** 
  * @brief       API for different modules to notify an envent.
  * @param[in]   event_id, the event ID the module wants to notify.
@@ -547,9 +568,11 @@ uint8_t SYS_EVENT_Notify(uint32_t event_id, void* parameter)
 
     acquireSysEventList();
 
-    retval = SYS_EVENT_Notify_From_ISR(event_id, parameter);
+    retval = notifySysEvent(event_id, parameter);
 
     releaseSysEventList();
+
+    ar_osSysEventMsgQPut();
     
     return retval;
 }
@@ -563,6 +586,8 @@ uint8_t SYS_EVENT_Notify(uint32_t event_id, void* parameter)
 uint8_t SYS_EVENT_Process(void)
 {
     uint8_t retval = FALSE;
+
+    ar_osSysEventMsgQGet();
 
     acquireSysEventList();
 

@@ -135,7 +135,6 @@ int main(void)
         }
         Wireless_MessageProcess();
         SYS_EVENT_Process();
-        DLOG_Process(NULL);
     }
 } 
 

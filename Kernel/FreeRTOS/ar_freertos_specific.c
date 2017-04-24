@@ -27,6 +27,8 @@ History:
 #define LOCAL_HAL_TIMER 21
 #define LOCAL_HAL_TIMER_INTERVEL 100
 
+static osMessageQId s_sys_event_msg_queue_id = 0;
+
 uint32_t g_rtos_feature_task_traceability_cnt = 0;
 
 static void rtos_feature_task_traceability_handler(void)
@@ -98,3 +100,44 @@ void ar_osDelay(uint32_t u32_ms)
 {
     osDelay(u32_ms);
 }
+
+static void createSysEventMsgQ(void)
+{
+    if (s_sys_event_msg_queue_id == 0)
+    {
+        osMessageQDef(sys_event_msg_queue, 4, uint8_t);
+        s_sys_event_msg_queue_id  = osMessageCreate(osMessageQ(sys_event_msg_queue), NULL);
+    }
+}
+
+static void getSysEventMsgQ(void)
+{
+    if (s_sys_event_msg_queue_id != 0)
+    {
+        osMessageGet(s_sys_event_msg_queue_id, 50);
+    }
+}
+
+static void putSysEventMsgQ(void)
+{
+    if (s_sys_event_msg_queue_id != 0)
+    {
+        uint8_t u8_Data;
+        osMessagePut(s_sys_event_msg_queue_id, u8_Data, 0);
+    }
+}
+
+void ar_osSysEventMsgQGet(void)
+{
+    createSysEventMsgQ();
+    
+    getSysEventMsgQ();
+}
+
+void ar_osSysEventMsgQPut(void)
+{
+    createSysEventMsgQ();
+
+    putSysEventMsgQ();
+}
+

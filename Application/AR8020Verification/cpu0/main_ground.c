@@ -25,10 +25,6 @@ static void IO_Task(void const *argument)
     while (1)
     {
         SYS_EVENT_Process();
-
-        DLOG_Process(NULL);
-      
-        HAL_Delay(20);
     }
 }
 
@@ -73,7 +69,7 @@ int main(void)
     osThreadDef(USBHStatus_Task, USBH_USBHostStatus, osPriorityNormal, 0, 4 * 128);
     osThreadCreate(osThread(USBHStatus_Task), NULL);
 
-    osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 4 * 128);
+    osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 16 * 128);
     osThreadCreate(osThread(IOTask), NULL);
 
     Wireless_TaskInit(WIRELESS_USE_RTOS);

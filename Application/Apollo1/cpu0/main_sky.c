@@ -31,10 +31,6 @@ static void IO_Task(void const *argument)
     while (1)
     {
         SYS_EVENT_Process();
-        
-        DLOG_Process(NULL);
-        
-        osDelay(20);
     }
 }
 
