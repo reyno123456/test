@@ -377,17 +377,11 @@ int SPI_WaitIdle(ENUM_SPI_COMPONENT en_id, uint32_t timeOut)
         start = SysTicks_GetTickCount();
         while (SPI_GetBusyStatus(en_id))
         {
-  
             if ((SysTicks_GetDiff(start, SysTicks_GetTickCount())) >= timeOut)
             {
-            
                 return -1;
- 
             }
-    
         }
-
- 
     }
 
     return 0;

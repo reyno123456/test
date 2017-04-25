@@ -7,17 +7,53 @@
 
 #define MAX_I2C_CONTOLLER_NUMBER 6
 
-#define BASE_ADDR_I2C0 0x40200000
-#define BASE_ADDR_I2C1 0x40240000
-#define BASE_ADDR_I2C2 0x40280000
-#define BASE_ADDR_I2C3 0x402c0000
-#define BASE_ADDR_I2C4 0x40900000
-#define BASE_ADDR_I2C5 0xA0080000
+#define BASE_ADDR_I2C0 (0x40200000)
+#define BASE_ADDR_I2C1 (0x40240000)
+#define BASE_ADDR_I2C2 (0x40280000)
+#define BASE_ADDR_I2C3 (0x402c0000)
+#define BASE_ADDR_I2C4 (0x40900000)
+#define BASE_ADDR_I2C5 (0xA0080000)
 
-#define I2C_TX_FIFO_BUFFER_DEPTH 8
-#define I2C_RX_FIFO_BUFFER_DEPTH 8
+// I2C Interrupt Mask Register
+#define IC_INTR_M_MASK             (0xFFF)
+#define IC_INTR_M_GEN_CALL         (1 << 11)
+#define IC_INTR_M_START_DET        (1 << 10)
+#define IC_INTR_M_STOP_DET         (1 << 9)
+#define IC_INTR_M_ACTIVITY         (1 << 8)
+#define IC_INTR_M_RX_DONE          (1 << 7)
+#define IC_INTR_M_TX_ABRT          (1 << 6)
+#define IC_INTR_M_RD_REQ           (1 << 5)
+#define IC_INTR_M_TX_EMPTY         (1 << 4)
+#define IC_INTR_M_TX_OVER          (1 << 3)
+#define IC_INTR_M_RX_FULL          (1 << 2)
+#define IC_INTR_M_RX_OVER          (1 << 1)
+#define IC_INTR_M_RX_UNDER         (1 << 0)
 
-#define I2C_CMD_ID_START 0x10000
+// I2C Interrupt Status Register
+#define IC_INTR_R_MASK             (0xFFF)
+#define IC_INTR_R_GEN_CALL         (1 << 11)
+#define IC_INTR_R_START_DET        (1 << 10)
+#define IC_INTR_R_STOP_DET         (1 << 9)
+#define IC_INTR_R_ACTIVITY         (1 << 8)
+#define IC_INTR_R_RX_DONE          (1 << 7)
+#define IC_INTR_R_TX_ABRT          (1 << 6)
+#define IC_INTR_R_RD_REQ           (1 << 5)
+#define IC_INTR_R_TX_EMPTY         (1 << 4)
+#define IC_INTR_R_TX_OVER          (1 << 3)
+#define IC_INTR_R_RX_FULL          (1 << 2)
+#define IC_INTR_R_RX_OVER          (1 << 1)
+#define IC_INTR_R_RX_UNDER         (1 << 0)
+
+
+#define I2C_TX_FIFO_BUFFER_DEPTH (8)
+#define I2C_RX_FIFO_BUFFER_DEPTH (8)
+
+#define IC_RX_TL_DEF_VALUE       (4)
+#define IC_TX_TL_DEF_VALUE       (4)
+
+
+
+#define I2C_CMD_ID_START (0x10000)
 
 #define ROUNDUP_DIVISION(a, b) ((a % b) ? ((a / b) + 1) : (a / b))
 
@@ -29,10 +65,14 @@ typedef enum
     I2C_CMD_SET_S_SLAVE_ADDRESS,
     I2C_CMD_SET_M_WRITE_DATA,
     I2C_CMD_SET_M_READ_LAUNCH,
+    I2C_CMD_SET_RX_TL,
+    I2C_CMD_SET_INTR_ENABLE,
+    I2C_CMD_SET_INTR_DISENABLE,
     I2C_CMD_GET_M_TX_FIFO_LENGTH,
     I2C_CMD_GET_M_RX_FIFO_LENGTH,
     I2C_CMD_GET_M_RX_FIFO_DATA,
     I2C_CMD_GET_M_IDLE,
+    I2C_CMD_GET_INTR_STAT,
 } ENUM_I2C_CMD_ID;
 
 typedef enum

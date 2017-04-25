@@ -110,9 +110,9 @@ static void I2C_LL_RefreshConfigRegisters(STRU_I2C_Controller* ptr_i2cController
             
             i2c_reg->IC_TAR = ptr_i2cController->parameter.master.addr;  // set address of target slave
             i2c_reg->IC_FS_SPKLEN = 0x1;                // set the min spike suppression limit
-            i2c_reg->IC_INTR_MASK = 0x0fff;             // unmask all the interrupts
-            i2c_reg->IC_TX_TL = 0x04;                   // set TX fifo threshold level
-            i2c_reg->IC_RX_TL = 0x04;                   // set RX fifo threshold level --for as a receiver
+            i2c_reg->IC_INTR_MASK = 0; // mask all i2c interrupt.
+            i2c_reg->IC_TX_TL = IC_TX_TL_DEF_VALUE;                   // set TX fifo threshold level
+            i2c_reg->IC_RX_TL = IC_RX_TL_DEF_VALUE;                   // set RX fifo threshold level --for as a receiver
 
             i2c_reg->IC_ENABLE |= 0x01;                 // enable the i2c
         }
@@ -128,8 +128,7 @@ static void I2C_LL_RefreshConfigRegisters(STRU_I2C_Controller* ptr_i2cController
             i2c_reg->IC_CON |= (1<<2 | 1<<5);           // [5]:enable the restart mode; [2:1]=2, fast mode
 
             // i2c slave config
-            //i2c_reg->IC_INTR_MASK = 0x0fff;           // unmask all the interrupts
-            i2c_reg->IC_INTR_MASK = 0x0064;             // unmask all the interrupts
+            i2c_reg->IC_INTR_MASK = 0; // mask all i2c interrupt.
 
             i2c_reg->IC_ENABLE |= 0x1;                  // enable i2c
         }
@@ -150,6 +149,8 @@ STRU_I2C_Controller* I2C_LL_GetI2CController(EN_I2C_COMPONENT en_i2cComponent)
 
 uint8_t I2C_LL_IOCtl(STRU_I2C_Controller* ptr_i2cController, ENUM_I2C_CMD_ID en_i2cCommandID, uint32_t* ptr_i2cCommandVal)
 {
+    uint32_t u32_value;
+    
     if (ptr_i2cController == NULL)
     {
         dlog_error("ptr_i2cController = %p\n", ptr_i2cController);
@@ -172,100 +173,114 @@ uint8_t I2C_LL_IOCtl(STRU_I2C_Controller* ptr_i2cController, ENUM_I2C_CMD_ID en_
 
     switch(en_i2cCommandID)
     {
-    case I2C_CMD_SET_MODE:
-        ptr_i2cController->en_i2cMode = (ENUM_I2C_Mode)(*ptr_i2cCommandVal);
-        I2C_LL_RefreshConfigRegisters(ptr_i2cController);
-        break;
-    case I2C_CMD_SET_M_SPEED:
-        ptr_i2cController->parameter.master.speed = (ENUM_I2C_Speed)(*ptr_i2cCommandVal);
-        break;
-    case I2C_CMD_SET_M_TARGET_ADDRESS:
-        if (ptr_i2cController->parameter.master.addr != (uint16_t)(*ptr_i2cCommandVal))
-        {
-            uint16_t u16_tmpCommandVal = (uint16_t)(*ptr_i2cCommandVal);
-            if (ptr_i2cController->parameter.master.addr != 0)    // Run-time target address change
+        case I2C_CMD_SET_MODE:
+            ptr_i2cController->en_i2cMode = (ENUM_I2C_Mode)(*ptr_i2cCommandVal);
+            I2C_LL_RefreshConfigRegisters(ptr_i2cController);
+            break;
+        case I2C_CMD_SET_M_SPEED:
+            ptr_i2cController->parameter.master.speed = (ENUM_I2C_Speed)(*ptr_i2cCommandVal);
+            break;
+        case I2C_CMD_SET_M_TARGET_ADDRESS:
+            if (ptr_i2cController->parameter.master.addr != (uint16_t)(*ptr_i2cCommandVal))
             {
-                ptr_i2cController->parameter.master.addr = u16_tmpCommandVal;
-                I2C_LL_RefreshConfigRegisters(ptr_i2cController);
+                uint16_t u16_tmpCommandVal = (uint16_t)(*ptr_i2cCommandVal);
+                if (ptr_i2cController->parameter.master.addr != 0)    // Run-time target address change
+                {
+                    ptr_i2cController->parameter.master.addr = u16_tmpCommandVal;
+                    I2C_LL_RefreshConfigRegisters(ptr_i2cController);
+                }
+                else    // Initial target address change
+                {
+                    ptr_i2cController->parameter.master.addr = u16_tmpCommandVal;
+                }
             }
-            else    // Initial target address change
+            break;
+        case I2C_CMD_SET_M_WRITE_DATA:
+            if (ptr_i2cController->en_i2cMode == I2C_Master_Mode)
             {
-                ptr_i2cController->parameter.master.addr = u16_tmpCommandVal;
+                unsigned int pre_rd;
+                unsigned int data = (*ptr_i2cCommandVal) & 0xFF;
+                pre_rd = i2c_reg->IC_DATA_CMD;
+                pre_rd = pre_rd & 0xfe000;              // Write enable, IC_DATA_CMD[8]=0x0
+                data |= pre_rd;
+                i2c_reg->IC_DATA_CMD = data;
             }
-        }
-        break;
-    case I2C_CMD_SET_M_WRITE_DATA:
-        if (ptr_i2cController->en_i2cMode == I2C_Master_Mode)
-        {
-            unsigned int pre_rd;
-            unsigned int data = (*ptr_i2cCommandVal) & 0xFF;
-            pre_rd = i2c_reg->IC_DATA_CMD;
-            pre_rd = pre_rd & 0xfe000;              // Write enable, IC_DATA_CMD[8]=0x0
-            data |= pre_rd;
-            i2c_reg->IC_DATA_CMD = data;
-        }
-        else
-        {
-            dlog_error("Error: Write data in slave I2C mode!");
+            else
+            {
+                dlog_error("Error: Write data in slave I2C mode!");
+                return FALSE;
+            }
+            break;
+        case I2C_CMD_SET_M_READ_LAUNCH:
+            if (ptr_i2cController->en_i2cMode == I2C_Master_Mode)
+            {
+                uint32_t data_tmp;
+                i2c_reg->IC_DATA_CMD |= (1<<8);         // Read enable, IC_DATA_CMD[8]=0x1
+            }
+            else
+            {
+                dlog_error("Error: Read data in slave I2C mode!");
+                return FALSE;
+            }
+            break;
+        case I2C_CMD_SET_RX_TL:
+            i2c_reg->IC_RX_TL = (*ptr_i2cCommandVal);
+            break;
+        case I2C_CMD_SET_INTR_ENABLE:
+            u32_value = i2c_reg->IC_INTR_MASK;
+            i2c_reg->IC_INTR_MASK = (u32_value | (*ptr_i2cCommandVal));
+            break;
+        case I2C_CMD_SET_INTR_DISENABLE:
+            u32_value = i2c_reg->IC_INTR_MASK;
+            i2c_reg->IC_INTR_MASK = (u32_value & (~(*ptr_i2cCommandVal)));
+            break;
+        case I2C_CMD_GET_M_TX_FIFO_LENGTH:
+            if (ptr_i2cController->en_i2cMode == I2C_Master_Mode)
+            {
+                /* Read data */
+                *ptr_i2cCommandVal = i2c_reg->IC_TXFLR;
+            }
+            else
+            {
+                dlog_error("Error: Read TX fifo length in slave I2C mode!");
+                return FALSE;
+            }
+            break;
+        case I2C_CMD_GET_M_RX_FIFO_LENGTH:
+            if (ptr_i2cController->en_i2cMode == I2C_Master_Mode)
+            {
+                /* Read data */
+                *ptr_i2cCommandVal = i2c_reg->IC_RXFLR;
+            }
+            else
+            {
+                dlog_error("Error: Read RX fifo length in slave I2C mode!");
+                return FALSE;
+            }
+            break;
+        case I2C_CMD_GET_M_RX_FIFO_DATA:
+            if (ptr_i2cController->en_i2cMode == I2C_Master_Mode)
+            {
+                /* Read data */
+                *ptr_i2cCommandVal = i2c_reg->IC_DATA_CMD & 0xFF;
+            }
+            else
+            {
+                dlog_error("Error: Read data in slave I2C mode!");
+                return FALSE;
+            }
+            break;
+        case I2C_CMD_GET_M_IDLE:
+            *ptr_i2cCommandVal =  i2c_reg->IC_STATUS & (1 << 5) ? I2C_MASTER_ACTIVE : I2C_MASTER_IDLE; 
+            break;
+        case I2C_CMD_GET_INTR_STAT:
+            *ptr_i2cCommandVal = i2c_reg->IC_INTR_STAT; 
+            break;
+        case I2C_CMD_SET_S_SLAVE_ADDRESS:
+            ptr_i2cController->parameter.slave.addr = (uint16_t)(*ptr_i2cCommandVal);
+            break;
+        default:
             return FALSE;
-        }
-        break;
-    case I2C_CMD_SET_M_READ_LAUNCH:
-        if (ptr_i2cController->en_i2cMode == I2C_Master_Mode)
-        {
-            uint32_t data_tmp;
-            i2c_reg->IC_DATA_CMD |= (1<<8);         // Read enable, IC_DATA_CMD[8]=0x1
-        }
-        else
-        {
-            dlog_error("Error: Read data in slave I2C mode!");
-            return FALSE;
-        }
-        break;
-    case I2C_CMD_GET_M_TX_FIFO_LENGTH:
-        if (ptr_i2cController->en_i2cMode == I2C_Master_Mode)
-        {
-            /* Read data */
-            *ptr_i2cCommandVal = i2c_reg->IC_TXFLR;
-        }
-        else
-        {
-            dlog_error("Error: Read TX fifo length in slave I2C mode!");
-            return FALSE;
-        }
-        break;
-    case I2C_CMD_GET_M_RX_FIFO_LENGTH:
-        if (ptr_i2cController->en_i2cMode == I2C_Master_Mode)
-        {
-            /* Read data */
-            *ptr_i2cCommandVal = i2c_reg->IC_RXFLR;
-        }
-        else
-        {
-            dlog_error("Error: Read RX fifo length in slave I2C mode!");
-            return FALSE;
-        }
-        break;
-    case I2C_CMD_GET_M_RX_FIFO_DATA:
-        if (ptr_i2cController->en_i2cMode == I2C_Master_Mode)
-        {
-            /* Read data */
-            *ptr_i2cCommandVal = i2c_reg->IC_DATA_CMD & 0xFF;
-        }
-        else
-        {
-            dlog_error("Error: Read data in slave I2C mode!");
-            return FALSE;
-        }
-        break;
-    case I2C_CMD_GET_M_IDLE:
-        *ptr_i2cCommandVal =  i2c_reg->IC_STATUS & (1 << 5) ? I2C_MASTER_ACTIVE : I2C_MASTER_IDLE; 
-        break;
-    case I2C_CMD_SET_S_SLAVE_ADDRESS:
-        ptr_i2cController->parameter.slave.addr = (uint16_t)(*ptr_i2cCommandVal);
-        break;
-    default:
-        return FALSE;
     }
     
     return TRUE;

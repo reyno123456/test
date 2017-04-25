@@ -12,6 +12,7 @@ History:
 #include "hal_camera.h"
 #include "ov5640.h"
 #include "debuglog.h"
+#include "hal_i2c.h"
 
 
 /**
@@ -25,6 +26,7 @@ History:
 HAL_RET_T HAL_CAMERA_Init(ENUM_HAL_CAMERA_FRAME_RATE e_cameraFrameRate, 
                           ENUM_HAL_CAMERA_MODE e_cameraMode)
 {
+    HAL_I2C_MasterInit(OV5640_COMPONENT, OV5640_I2C_ADDR, HAL_I2C_FAST_SPEED);
     OV5640_Init((ENUM_OV5640_FRAME_RATE)e_cameraFrameRate,
                 (ENUM_OV5640_MODE)e_cameraMode);
 

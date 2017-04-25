@@ -59,10 +59,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         GET_CONFIGURE_FROM_FLASH(configure);
 
         dlog_info("****************        %p       ******************",configure);
-        dlog_info("****************        HDMI       ******************");
+        //dlog_info("****************        HDMI       ******************");
         dlog_info("%02x %02x %02x",configure->hdmi_configure[0][0],configure->hdmi_configure[0][1],configure->hdmi_configure[0][2]);
         dlog_info("%02x %02x %02x",configure->hdmi_configure[262][0],configure->hdmi_configure[262][1],configure->hdmi_configure[262][2]);
-        dlog_info("****************        bb_sky       ******************");
+        //dlog_info("****************        bb_sky       ******************");
         for(j=0;j<4;j++)
         {
             for(i=0;i<16;i++)

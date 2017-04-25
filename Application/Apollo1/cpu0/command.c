@@ -8,8 +8,6 @@
 #include "cmsis_os.h"
 #include "testhal_pwm.h"
 #include "test_hal_uart.h"
-#include "test_hal_i2c_24c256.h"
-#include "test_hal_i2c.h"
 #include "testhal_gpio.h"
 #include "test_usbh.h"
 #include "test_hal_nv.h"
@@ -67,23 +65,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     else if (memcmp(cmdArray[0], "test_hal_uart_rx", strlen("test_hal_uart_rx")) == 0)
     {
         command_TestHalUartRx(cmdArray[1]);
-    }
-    else if (memcmp(cmdArray[0], "testhal24c256", strlen("testhal24c256")) == 0)
-    {
-        commandhal_Test24C256(cmdArray[1], cmdArray[2]);
-    }
-    else if (memcmp(cmdArray[0], "test_hal_i2c_init", strlen("test_hal_i2c_init")) == 0)
-    {
-        command_TestHalI2cInit(cmdArray[1], cmdArray[2], cmdArray[3]);
-    }
-    else if (memcmp(cmdArray[0], "test_hal_i2c_write", strlen("test_hal_i2c_write")) == 0)
-    {
-        command_TestHalI2cWrite(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5]);
-    }
-    else if (memcmp(cmdArray[0], "test_hal_i2c_read", strlen("test_hal_i2c_read")) == 0)
-    {
-        command_TestHalI2cRead(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4]);
-    }    
+    }   
     else if (memcmp(cmdArray[0], "testhal_TestGpioNormal", strlen("testhal_TestGpioNormal")) == 0)
     {
         commandhal_TestGpioNormal(cmdArray[1], cmdArray[2]);
@@ -133,10 +115,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_hal_uart_set_int <ch> <flag>");
         dlog_error("test_hal_uart_tx <ch> <len>");
         dlog_error("test_hal_uart_rx <ch>");
-        dlog_error("testhal24c256 <i2c port> <i2c_value>");
-        dlog_error("test_hal_i2c_init <ch> <i2c_addr> <speed>");
-        dlog_error("test_hal_i2c_write <ch> <subAddr> <subAddrLen> <data> <dataLen>");
-        dlog_error("test_hal_i2c_read <ch> <subAddr> <subAddrLen> <dataLen>");
         dlog_error("testhal_TestGpioNormal <gpionum> <highorlow>");
         dlog_error("testhal_TestGpioInterrupt <gpionum> <inttype> <polarity>");
         dlog_error("startbypassvideo");

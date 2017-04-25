@@ -7,6 +7,8 @@
 #include "adv_7611.h"
 #include "debuglog.h"
 #include "sys_event.h"
+#include "interrupt.h"
+
 
 typedef unsigned char (*HDMI_SET_TABLE)[3];
 static HDMI_SET_TABLE hdmi_edid_table = NULL;
@@ -81,6 +83,7 @@ static void ADV_7611_WriteByte(uint8_t slv_addr, uint8_t sub_addr, uint8_t val)
 {
     unsigned char data[2] = {sub_addr, val};
     I2C_Master_WriteData(ADV_7611_I2C_COMPONENT_NUM, slv_addr >> 1, data, 2);
+    I2C_Master_WaitTillIdle(ADV_7611_I2C_COMPONENT_NUM, ADV_7611_I2C_MAX_DELAY);
 }
 
 static uint8_t ADV_7611_ReadByte(uint8_t slv_addr, uint8_t sub_addr)
@@ -88,6 +91,7 @@ static uint8_t ADV_7611_ReadByte(uint8_t slv_addr, uint8_t sub_addr)
     unsigned char sub_addr_tmp = sub_addr;
     unsigned char val = 0;
     I2C_Master_ReadData(ADV_7611_I2C_COMPONENT_NUM, slv_addr >> 1, &sub_addr_tmp, 1, &val, 1);
+    I2C_Master_WaitTillIdle(ADV_7611_I2C_COMPONENT_NUM, ADV_7611_I2C_MAX_DELAY);
     return val;
 }
 
@@ -97,6 +101,10 @@ static void ADV_7611_I2CInitial(void)
     if (i2c_initialized == 0)
     {
         I2C_Init(ADV_7611_I2C_COMPONENT_NUM, I2C_Master_Mode, RX_I2C_IO_MAP_ADDR >> 1, I2C_Fast_Speed);
+        INTR_NVIC_SetIRQPriority(I2C_INTR2_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_I2C_DEFAULT,0));
+        reg_IrqHandle(I2C_INTR2_VECTOR_NUM, I2C_Master_IntrSrvc, NULL);
+        INTR_NVIC_EnableIRQ(I2C_INTR2_VECTOR_NUM);
+        
         ADV_7611_Delay(100);
         ADV_7611_WriteByte(0x98, 0x1B, 0x01);
         ADV_7611_Delay(100);

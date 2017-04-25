@@ -449,9 +449,9 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestLocalIrq();
     }
-	else if ((memcmp(cmdArray[0], "top", strlen("top")) == 0))
+    else if ((memcmp(cmdArray[0], "top", strlen("top")) == 0))
     {
-		/* like linux busybox top system call */
+        /* like linux busybox top system call */
         ar_top();
     }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
@@ -525,8 +525,8 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("configure");
         dlog_error("test_adc <channel>");
         dlog_error("test_dma_cpu0 <src> <dst> <byte_num>");
-		dlog_error("test_dma_loop <src> <dst> <byte_num>");
-		dlog_error("command_test_dma_driver <src> <dst> <byte_num><mode><ms>");
+        dlog_error("test_dma_loop <src> <dst> <byte_num>");
+        dlog_error("command_test_dma_driver <src> <dst> <byte_num><mode><ms>");
         dlog_error("test_camera_init <rate 0~1> <mode 0~8> <toEncoderCh 0~1>");
         dlog_error("test_write_camera <subAddr(hex)> <value>(hex)");
         dlog_error("test_read_camera <subAddr(hex)>");
@@ -536,8 +536,8 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("NvResetBbRcId");
         dlog_error("NvSetBbRcId <id1> <id2> <id3> <id4> <id5>");
         dlog_error("test_local_irq");
-		dlog_error("malloc <size>");
-		dlog_error("top");
+        dlog_error("malloc <size>");
+        dlog_error("top");
         dlog_output(1000);
     }
 }

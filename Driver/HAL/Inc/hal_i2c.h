@@ -22,6 +22,7 @@ typedef enum
     HAL_I2C_COMPONENT_2,
     HAL_I2C_COMPONENT_3,
     HAL_I2C_COMPONENT_4,
+    HAL_I2C_COMPONENT_5,
     HAL_I2C_COMPONENT_MAX
 } ENUM_HAL_I2C_COMPONENT;
 
@@ -68,7 +69,8 @@ HAL_RET_T HAL_I2C_MasterInit(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
 HAL_RET_T HAL_I2C_MasterWriteData(ENUM_HAL_I2C_COMPONENT e_i2cComponent, 
                                   uint16_t u16_i2cAddr,
                                   uint8_t *pu8_wrData,
-                                  uint32_t u32_wrSize);
+                                  uint32_t u32_wrSize,
+                                  uint32_t u32_timeOut);
 
 /**
 * @brief  The I2C data read function which can be used to read I2C data by the I2C controller.
@@ -90,7 +92,8 @@ HAL_RET_T HAL_I2C_MasterReadData(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
                                  uint8_t *pu8_wrData,
                                  uint8_t  u8_wrSize,
                                  uint8_t *pu8_rdData,
-                                 uint32_t u32_rdSize);
+                                 uint32_t u32_rdSize,
+                                 uint32_t u32_timeOut);
 
 #endif
 

@@ -50,7 +50,8 @@ INCDIRS := -I../ \
            -I$(TOP_DIR)/Driver/Chip/AR8020/QuadSPI/Inc \
            -I$(TOP_DIR)/Configure \
            -I$(TOP_DIR)/Configure/Include \
-           -I$(TOP_DIR)/Library/Artosyn/Common/Inc
+           -I$(TOP_DIR)/Library/Artosyn/Common/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc
 
 # object file(s)
 OBJ_C     := $(patsubst %.c,%.o,$(SRC_C))

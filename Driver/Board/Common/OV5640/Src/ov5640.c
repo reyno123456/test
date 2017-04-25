@@ -793,7 +793,9 @@ int32_t OV5640_WriteReg(uint16_t u16_ov5640Reg, uint8_t u8_ov5640Val)
     u8_buf[1] = u16_ov5640Reg & 0xff;
     u8_buf[2] = u8_ov5640Val;
 
-    if(I2C_Master_WriteData(OV5640_COMPONENT, OV5640_I2C_ADDR, u8_buf, 3) == FALSE)
+    I2C_Master_WriteData(OV5640_COMPONENT, OV5640_I2C_ADDR, u8_buf, 3);
+    s32_result = I2C_Master_WaitTillIdle(OV5640_COMPONENT, OV5640_I2C_MAX_DELAY);
+    if(0 != s32_result)
     {
         dlog_info("write reg error:reg=%x,val=%x", u16_ov5640Reg, u8_ov5640Val);
         s32_result = -1;
@@ -822,8 +824,9 @@ int32_t OV5640_ReadReg(uint16_t u16_ov5640Reg, uint8_t *pu8_ov5640Val)
     u8_regBuf[0] = u16_ov5640Reg >> 8;
     u8_regBuf[1] = u16_ov5640Reg & 0xff;
 
-    if(I2C_Master_ReadData(OV5640_COMPONENT, OV5640_I2C_ADDR, 
-                            u8_regBuf,2, &u8_rdVal, 1) == FALSE) 
+    I2C_Master_ReadData(OV5640_COMPONENT, OV5640_I2C_ADDR, u8_regBuf,2, &u8_rdVal, 1);
+    s32_result = I2C_Master_WaitTillIdle(OV5640_COMPONENT, OV5640_I2C_MAX_DELAY);
+    if(0 != s32_result) 
     {
         dlog_info("read reg error:reg=%x", u16_ov5640Reg);
         s32_result = -1;
@@ -1200,10 +1203,7 @@ int32_t OV5640_Init(ENUM_OV5640_FRAME_RATE e_ov5640FrameRate, ENUM_OV5640_MODE e
 
     uint32_t u32_ov5640ArSize = sizeof(OV5640_init_setting_30fps_VGA) /
                                 sizeof(OV5640_init_setting_30fps_VGA[0]);
-   
-    // init i2c
-    I2C_Init(OV5640_COMPONENT,I2C_Master_Mode,OV5640_I2C_ADDR, I2C_Standard_Speed);
-    
+
     // download the set
     OV5640_DownloadFirmware(OV5640_init_setting_30fps_VGA,u32_ov5640ArSize);
 

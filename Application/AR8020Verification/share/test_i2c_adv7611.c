@@ -10,6 +10,7 @@
 #define TAR_ADV7611_ADDR      (0x98 >> 1)
 
 #define ADV_7611_I2C_COMPONENT_NUM I2C_Component_2
+#define ADV_7611_I2C_MAX_DELAY      (2)
 
 #define RX_I2C_IO_MAP_ADDR              (0x98 >> 1)
 #define RX_I2C_CP_MAP_ADDR              (0x44 >> 1)
@@ -31,6 +32,7 @@ static void ADV_7611_WriteByte(unsigned char slv_addr, unsigned char sub_addr, u
 {
     unsigned char data[2] = {sub_addr, val};
     I2C_Master_WriteData(ADV_7611_I2C_COMPONENT_NUM, slv_addr >> 1, data, 2);
+    I2C_Master_WaitTillIdle(ADV_7611_I2C_COMPONENT_NUM, ADV_7611_I2C_MAX_DELAY);
 }
 
 static unsigned char ADV_7611_ReadByte(unsigned char slv_addr, unsigned char sub_addr)
@@ -38,6 +40,7 @@ static unsigned char ADV_7611_ReadByte(unsigned char slv_addr, unsigned char sub
     unsigned char sub_addr_tmp = sub_addr;
     unsigned char val = 0;
     I2C_Master_ReadData(ADV_7611_I2C_COMPONENT_NUM, slv_addr >> 1, &sub_addr_tmp, 1, &val, 1);
+    I2C_Master_WaitTillIdle(ADV_7611_I2C_COMPONENT_NUM, ADV_7611_I2C_MAX_DELAY);
     return val;
 }
 #endif

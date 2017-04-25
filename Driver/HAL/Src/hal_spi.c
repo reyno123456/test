@@ -34,7 +34,6 @@ HAL_RET_T HAL_SPI_MasterInit(ENUM_HAL_SPI_COMPONENT e_spiComponent,
                              STRU_HAL_SPI_INIT *pst_spiInitInfo)
 {
     uint16_t u16_spiDivision;
-    uint8_t u8_spiCh;
     uint8_t u8_spiVecNum;
     // init default value.
     STRU_SPI_InitTypes st_spiInit = 
@@ -68,8 +67,14 @@ HAL_RET_T HAL_SPI_MasterInit(ENUM_HAL_SPI_COMPONENT e_spiComponent,
     st_spiInit.ctrl0 |= (((uint16_t)(pst_spiInitInfo->e_halSpiPhase)) << 6) & 0x40;
 
     //connect spi interrupt service function
-    u8_spiCh = (uint8_t)(e_spiComponent);
-    u8_spiVecNum = u8_spiCh + HAL_NVIC_SSI_INTR_N0_VECTOR_NUM;
+    if (HAL_SPI_COMPONENT_7 == e_spiComponent)
+    {
+        u8_spiVecNum = VIDEO_SPI_INTR_BB_VECTOR_NUM;
+    }
+    else
+    {
+        u8_spiVecNum = e_spiComponent + HAL_NVIC_SSI_INTR_N0_VECTOR_NUM;
+    }
     HAL_NVIC_SetPriority(u8_spiVecNum, INTR_NVIC_PRIORITY_SPI_DEFAULT, 0);
     HAL_NVIC_RegisterHandler(u8_spiVecNum, SPI_IntrSrvc, NULL);
     SPI_master_init((ENUM_SPI_COMPONENT)(e_spiComponent), &st_spiInit);

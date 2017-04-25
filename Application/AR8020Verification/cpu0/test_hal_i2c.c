@@ -7,6 +7,8 @@
 #include "hal_i2c.h"
 #include "test_hal_i2c.h"
 
+#define I2C_TIMEOUT_VALUE    (2)
+
 static uint16_t u16_i2cAddr[6];
 
 void command_TestHalI2cInit(uint8_t *ch, uint8_t *i2c_addr, uint8_t *speed)
@@ -55,7 +57,8 @@ void command_TestHalI2cWrite(uint8_t *ch, uint8_t *subAddr, uint8_t *subAddrLen,
     HAL_I2C_MasterWriteData(u32_ch, 
                             u16_i2cAddr[u32_ch],
                             u8_addr_data,
-                            u32_addrLen + u32_dataLen);
+                            u32_addrLen + u32_dataLen,
+                            I2C_TIMEOUT_VALUE);
 
     dlog_info("e_i2cComponent:%d i2cAddr:0x%x",u32_ch,  u16_i2cAddr[u32_ch]);
 
@@ -91,7 +94,8 @@ void command_TestHalI2cRead(uint8_t *ch, uint8_t *subAddr, uint8_t *subAddrLen, 
                            u8_addr_data,
                            u32_addrLen,
                            u8_rxdata,
-                           u32_dataLen);
+                           u32_dataLen,
+                           I2C_TIMEOUT_VALUE);
 
 
     dlog_info("e_i2cComponent:%d i2cAddr:0x%x",u32_ch,  u16_i2cAddr[u32_ch]);

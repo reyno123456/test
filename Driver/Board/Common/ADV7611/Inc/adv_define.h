@@ -2,6 +2,8 @@
 #define ADV_DEFINE_H
 
 #define ADV_7611_I2C_COMPONENT_NUM  I2C_Component_2
+#define ADV_7611_I2C_MAX_DELAY      (2)
+
 
 #define RX_I2C_IO_MAP_ADDR              (0x98)
 #define RX_I2C_CP_MAP_ADDR              (0x44)

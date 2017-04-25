@@ -34,14 +34,14 @@ SRC_S   := start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
 SRC_C   := main_sky.c command.c test_usbh.c upgrade.c com_task.c \
-           test_hal_uart.c  test_hal_i2c.c ../share/testhal_pwm.c \
-           ../share/testhal_gpio.c test_hal_nv.c ../share/test_hal_i2c_24c256.c
+           test_hal_uart.c ../share/testhal_pwm.c \
+           ../share/testhal_gpio.c test_hal_nv.c
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
 SRC_C   := main_ground.c command.c test_usbh.c upgrade.c com_task.c \
-           test_hal_uart.c test_hal_i2c.c ../share/testhal_pwm.c \
-           ../share/testhal_gpio.c test_hal_nv.c ../share/test_hal_i2c_24c256.c
+           test_hal_uart.c ../share/testhal_pwm.c \
+           ../share/testhal_gpio.c test_hal_nv.c
 endif
 
 CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I./ -I../share

@@ -13,6 +13,11 @@ History:
 #include "i2c.h"
 #include "hal_i2c.h"
 #include "hal_ret_type.h"
+#include "hal_nvic.h"
+#include "systicks.h"
+#include "hal.h"
+#include "interrupt.h"
+
 
 /**
 * @brief  The I2C initialization function which must be called before using the I2C controller.
@@ -34,26 +39,30 @@ HAL_RET_T HAL_I2C_MasterInit(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
 {
     EN_I2C_COMPONENT en_component;
     ENUM_I2C_Speed en_speed;
+    uint8_t u8_i2cVecNum;
 
     switch (e_i2cComponent)
     {
-    case HAL_I2C_COMPONENT_0:
-        en_component = I2C_Component_0;
-        break;
-    case HAL_I2C_COMPONENT_1:
-        en_component = I2C_Component_1;
-        break;
-    case HAL_I2C_COMPONENT_2:
-        en_component = I2C_Component_2;
-        break;
-    case HAL_I2C_COMPONENT_3:
-        en_component = I2C_Component_3;
-        break;
-    case HAL_I2C_COMPONENT_4:
-        en_component = I2C_Component_4;
-        break;
-    default:
-        return HAL_I2C_ERR_INIT;
+        case HAL_I2C_COMPONENT_0:
+            en_component = I2C_Component_0;
+            break;
+        case HAL_I2C_COMPONENT_1:
+            en_component = I2C_Component_1;
+            break;
+        case HAL_I2C_COMPONENT_2:
+            en_component = I2C_Component_2;
+            break;
+        case HAL_I2C_COMPONENT_3:
+            en_component = I2C_Component_3;
+            break;
+        case HAL_I2C_COMPONENT_4:
+            en_component = I2C_Component_4;
+            break;
+        case HAL_I2C_COMPONENT_5:
+            en_component = I2C_Component_5;
+            break;
+        default:
+            return HAL_I2C_ERR_INIT;
     }
 
     switch (e_i2cSpeed)
@@ -70,8 +79,25 @@ HAL_RET_T HAL_I2C_MasterInit(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
     default:
         return HAL_I2C_ERR_INIT;
     }
+
+    if (HAL_I2C_COMPONENT_5 == e_i2cComponent)
+    {
+        u8_i2cVecNum = HAL_NVIC_VIDEO_I2C_INTR_VIDEO_VECTOR_NUM;
+    }
+    else if (HAL_I2C_COMPONENT_4 == e_i2cComponent)
+    {
+        u8_i2cVecNum = HAL_NVIC_I2C_SLV_INTR_VECTOR_NUM;
+    }
+    else
+    {
+        u8_i2cVecNum = e_i2cComponent + HAL_NVIC_I2C_INTR0_VECTOR_NUM;
+    }
     
+    HAL_NVIC_SetPriority(u8_i2cVecNum, INTR_NVIC_PRIORITY_I2C_DEFAULT, 0);
+    HAL_NVIC_RegisterHandler(u8_i2cVecNum, I2C_Master_IntrSrvc, NULL);
     I2C_Init(en_component, I2C_Master_Mode, u16_i2cAddr, en_speed);
+    HAL_NVIC_EnableIrq(u8_i2cVecNum);
+    
     return HAL_OK;
 }
 
@@ -93,32 +119,56 @@ HAL_RET_T HAL_I2C_MasterInit(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
 HAL_RET_T HAL_I2C_MasterWriteData(ENUM_HAL_I2C_COMPONENT e_i2cComponent, 
                                   uint16_t u16_i2cAddr,
                                   uint8_t *pu8_wrData,
-                                  uint32_t u32_wrSize)
+                                  uint32_t u32_wrSize,
+                                  uint32_t u32_timeOut)
 {
     EN_I2C_COMPONENT en_component;
+    uint32_t start;
 
     switch (e_i2cComponent)
     {
-    case HAL_I2C_COMPONENT_0:
-        en_component = I2C_Component_0;
-        break;
-    case HAL_I2C_COMPONENT_1:
-        en_component = I2C_Component_1;
-        break;
-    case HAL_I2C_COMPONENT_2:
-        en_component = I2C_Component_2;
-        break;
-    case HAL_I2C_COMPONENT_3:
-        en_component = I2C_Component_3;
-        break;
-    case HAL_I2C_COMPONENT_4:
-        en_component = I2C_Component_4;
-        break;
-    default:
-        return HAL_I2C_ERR_WRITE_DATA;
+        case HAL_I2C_COMPONENT_0:
+            en_component = I2C_Component_0;
+            break;
+        case HAL_I2C_COMPONENT_1:
+            en_component = I2C_Component_1;
+            break;
+        case HAL_I2C_COMPONENT_2:
+            en_component = I2C_Component_2;
+            break;
+        case HAL_I2C_COMPONENT_3:
+            en_component = I2C_Component_3;
+            break;
+        case HAL_I2C_COMPONENT_4:
+            en_component = I2C_Component_4;
+            break;
+        case HAL_I2C_COMPONENT_5:
+            en_component = I2C_Component_5;
+            break;
+        default:
+            return HAL_I2C_ERR_WRITE_DATA;
+    }
+
+    if (I2C_Master_GetBusyStatus(en_component))
+    {
+        return HAL_BUSY;
     }
 
     I2C_Master_WriteData(en_component, u16_i2cAddr, pu8_wrData, u32_wrSize);
+
+    if (0 != u32_timeOut)
+    {
+        start = SysTicks_GetTickCount();
+        while (I2C_Master_GetBusyStatus(en_component))
+        {
+            if ((SysTicks_GetDiff(start, SysTicks_GetTickCount())) >= u32_timeOut)
+            {
+                 return HAL_TIME_OUT;
+            }
+
+            HAL_Delay(1);
+        }
+    }
     
     return HAL_OK;
 }
@@ -143,32 +193,56 @@ HAL_RET_T HAL_I2C_MasterReadData(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
                                  uint8_t *pu8_wrData,
                                  uint8_t  u8_wrSize,
                                  uint8_t *pu8_rdData,
-                                 uint32_t u32_rdSize)
+                                 uint32_t u32_rdSize,
+                                 uint32_t u32_timeOut)
 {
     EN_I2C_COMPONENT en_component;
+    uint32_t start;
 
     switch (e_i2cComponent)
     {
-    case HAL_I2C_COMPONENT_0:
-        en_component = I2C_Component_0;
-        break;
-    case HAL_I2C_COMPONENT_1:
-        en_component = I2C_Component_1;
-        break;
-    case HAL_I2C_COMPONENT_2:
-        en_component = I2C_Component_2;
-        break;
-    case HAL_I2C_COMPONENT_3:
-        en_component = I2C_Component_3;
-        break;
-    case HAL_I2C_COMPONENT_4:
-        en_component = I2C_Component_4;
-        break;
-    default:
-        return HAL_I2C_ERR_READ_DATA;
+        case HAL_I2C_COMPONENT_0:
+            en_component = I2C_Component_0;
+            break;
+        case HAL_I2C_COMPONENT_1:
+            en_component = I2C_Component_1;
+            break;
+        case HAL_I2C_COMPONENT_2:
+            en_component = I2C_Component_2;
+            break;
+        case HAL_I2C_COMPONENT_3:
+            en_component = I2C_Component_3;
+            break;
+        case HAL_I2C_COMPONENT_4:
+            en_component = I2C_Component_4;
+            break;
+        case HAL_I2C_COMPONENT_5:
+            en_component = I2C_Component_5;
+            break;
+        default:
+            return HAL_I2C_ERR_READ_DATA;
+    }
+
+    if (I2C_Master_GetBusyStatus(en_component))
+    {
+        return HAL_BUSY;
     }
 
     I2C_Master_ReadData(en_component, u16_i2cAddr, pu8_wrData, u8_wrSize, pu8_rdData, u32_rdSize);
+
+    if (0 != u32_timeOut)
+    {
+        start = SysTicks_GetTickCount();
+        while (I2C_Master_GetBusyStatus(en_component))
+        {
+            if ((SysTicks_GetDiff(start, SysTicks_GetTickCount())) >= u32_timeOut)
+            {
+                 return HAL_TIME_OUT;
+            }
+
+            HAL_Delay(1);
+        }
+    }
 
     return HAL_OK;
 }
