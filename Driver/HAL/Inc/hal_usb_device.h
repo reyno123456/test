@@ -73,6 +73,24 @@ void HAL_USB_OpenVideo(void);
 void HAL_USB_CloseVideo(void);
 
 
+/**
+* @brief  register customer's receive data function
+* @param  void (*customerRecv)(void *)
+* @retval   void
+* @note  
+*/
+void HAL_USB_RegisterCustomerRecvData(void (*customerRecv)(void *));
+
+
+/**
+* @brief  Customer call this function to send data to host
+* @param  uint8_t *buff             customer's data buffer to send
+*               uint32_t u32_len       the length of buffer
+* @retval   void
+* @note  
+*/
+HAL_RET_T HAL_USB_CustomerSendData(uint8_t *buff, uint32_t u32_len);
+
 #endif
 
 

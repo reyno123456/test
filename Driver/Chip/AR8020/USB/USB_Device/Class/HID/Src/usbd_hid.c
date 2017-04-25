@@ -153,7 +153,7 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ]  __ALIGN_
   USB_HID_CONFIG_DESC_SIZ,
   /* wTotalLength: Bytes returned */
   0x00,
-  0x03,         /*bNumInterfaces: 3 interface*/
+  0x04,         /*bNumInterfaces: 4 interface*/
   0x01,         /*bConfigurationValue: Configuration value*/
   0x00,         /*iConfiguration: Index of string descriptor describing
   the configuration*/
@@ -254,8 +254,44 @@ __ALIGN_BEGIN static uint8_t USBD_HID_CfgDesc[USB_HID_CONFIG_DESC_SIZ]  __ALIGN_
   USB_DESC_TYPE_ENDPOINT, /*bDescriptorType:*/
   HID_EPIN_AUDIO_ADDR,     /*bEndpointAddress: Endpoint Address (IN)*/
   USBD_EP_TYPE_BULK,          /*bmAttributes: BULK endpoint*/
-  LOBYTE(HID_EPIN_VIDEO_SIZE), /*wMaxPacketSize: 4 Byte max */
-  HIBYTE(HID_EPIN_VIDEO_SIZE),
+  LOBYTE(HID_EPIN_AUDIO_SIZE), /*wMaxPacketSize: 4 Byte max */
+  HIBYTE(HID_EPIN_AUDIO_SIZE),
+  HID_HS_BINTERVAL,          /*bInterval: Polling Interval (10 ms)*/
+
+  0x09,         /*bLength: Interface Descriptor size*/
+  USB_DESC_TYPE_INTERFACE,/*bDescriptorType: Interface descriptor type*/
+  0x03,         /*bInterfaceNumber: Number of Interface*/
+  0x00,         /*bAlternateSetting: Alternate setting*/
+  0x02,         /*bNumEndpoints*/
+  0x03,         /*bInterfaceClass: HID*/
+  0x00,         /*bInterfaceSubClass : 1=BOOT, 0=no boot*/
+  0x00,         /*nInterfaceProtocol : 0=none, 1=keyboard, 2=mouse*/
+  HID_CUSTOMER_STRING_INTERFACE,            /*iInterface: Index of string descriptor*/
+
+  0x09,         /*bLength: HID Descriptor size*/
+  HID_DESCRIPTOR_TYPE, /*bDescriptorType: HID*/
+  0x11,         /*bcdHID: HID Class Spec release number*/
+  0x01,
+  0x00,         /*bCountryCode: Hardware target country*/
+  0x01,         /*bNumDescriptors: Number of HID class descriptors to follow*/
+  0x22,         /*bDescriptorType*/
+  HID_MOUSE_REPORT_DESC_SIZE,/*wItemLength: Total length of Report descriptor*/
+  0x00,
+
+  0x07,          /*bLength: Endpoint Descriptor size*/
+  USB_DESC_TYPE_ENDPOINT, /*bDescriptorType:*/
+  HID_CUSTOMER_OUT_ADDR,     /*bEndpointAddress: Endpoint Address (IN)*/
+  USBD_EP_TYPE_INTR,          /*bmAttributes: BULK endpoint*/
+  LOBYTE(HID_CUSTOMER_OUT_SIZE), /*wMaxPacketSize: 4 Byte max */
+  HIBYTE(HID_CUSTOMER_OUT_SIZE),
+  HID_HS_BINTERVAL,          /*bInterval: Polling Interval (10 ms)*/
+
+  0x07,          /*bLength: Endpoint Descriptor size*/
+  USB_DESC_TYPE_ENDPOINT, /*bDescriptorType:*/
+  HID_CUSTOMER_IN_ADDR,     /*bEndpointAddress: Endpoint Address (IN)*/
+  USBD_EP_TYPE_BULK,          /*bmAttributes: BULK endpoint*/
+  LOBYTE(HID_CUSTOMER_IN_SIZE), /*wMaxPacketSize: 4 Byte max */
+  HIBYTE(HID_CUSTOMER_IN_SIZE),
   HID_HS_BINTERVAL,          /*bInterval: Polling Interval (10 ms)*/
 } ;
 
@@ -321,12 +357,14 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE]  _
 #define HID_VIDEO0_STRING_DESC      "ArtosynVideo0"
 #define HID_VIDEO1_STRING_DESC      "ArtosynVideo1"
 #define HID_AUDIO_STRING_DESC       "ArtosynAudio"
+#define HID_CUSTOMER_STRING_DESC    "ArtosynCustomer"
 
 __ALIGN_BEGIN uint8_t HID_USER_INTERFACE_DESC[48]  __ALIGN_END;
 
 
 USBD_HID_HandleTypeDef        g_usbdHidData;
 uint8_t                       g_u32USBDeviceRecv[512];
+uint8_t                       g_u8CustomerOut[512];
 
 /*
   * @}
@@ -370,6 +408,16 @@ static uint8_t  USBD_HID_Init (USBD_HandleTypeDef *pdev,
                  USBD_EP_TYPE_INTR,
                  HID_EPOUT_SIZE);
 
+    USBD_LL_OpenEP(pdev,
+                 HID_CUSTOMER_OUT_ADDR,
+                 USBD_EP_TYPE_INTR,
+                 HID_CUSTOMER_OUT_SIZE);
+
+    USBD_LL_OpenEP(pdev,
+                 HID_CUSTOMER_IN_ADDR,
+                 USBD_EP_TYPE_INTR,
+                 HID_CUSTOMER_IN_SIZE);
+
     pdev->pClassData = &g_usbdHidData;
 
     if(pdev->pClassData == NULL)
@@ -384,6 +432,8 @@ static uint8_t  USBD_HID_Init (USBD_HandleTypeDef *pdev,
         }
 
         USBD_LL_PrepareReceive(pdev, HID_EPOUT_ADDR, g_u32USBDeviceRecv, HID_EPOUT_SIZE);
+
+        USBD_LL_PrepareReceive(pdev, HID_CUSTOMER_OUT_ADDR, g_u8CustomerOut, HID_CUSTOMER_OUT_SIZE);
     }
 
     pdev->u8_connState  = 1;    //connect
@@ -423,6 +473,15 @@ static uint8_t  USBD_HID_DeInit (USBD_HandleTypeDef *pdev,
 
     USBD_LL_CloseEP(pdev,
                   HID_EPOUT_ADDR);
+
+    USBD_LL_CloseEP(pdev,
+                  HID_EPIN_AUDIO_ADDR);
+
+    USBD_LL_CloseEP(pdev,
+                  HID_CUSTOMER_IN_ADDR);
+
+    USBD_LL_CloseEP(pdev,
+                  HID_CUSTOMER_OUT_ADDR);
 
     /* FRee allocated memory */
     for (i = 1; i <= 6; i++)
@@ -549,9 +608,7 @@ static void USBD_HID_ErrorDetect(USBD_HandleTypeDef *pdev)
 
         stDevPlugOut.otg_port_id = pdev->id;
 
-        SYS_EVENT_Notify_From_ISR(SYS_EVENT_ID_USB_PLUG_OUT, (void *)&stDevPlugOut);
-
-        SYS_EVENT_Notify(SYS_EVENT_ID_USB_PLUG_OUT, NULL);
+        SYS_EVENT_Notify(SYS_EVENT_ID_USB_PLUG_OUT, (void *)&stDevPlugOut);
     }
 }
 
@@ -703,12 +760,32 @@ static uint8_t USBD_HID_DataOut (USBD_HandleTypeDef *pdev,
             USB_LL_ConvertEndian(g_u32USBDeviceRecv, g_u32USBDeviceRecv, (uint32_t)sizeof(g_u32USBDeviceRecv));
         }
 
-        if (((USBD_HID_ItfTypeDef *)pdev->pUserData)->dataOut)
+        if (pdev->pUserData)
         {
-            ((USBD_HID_ItfTypeDef *)pdev->pUserData)->dataOut(g_u32USBDeviceRecv);
+            if (((USBD_HID_ItfTypeDef *)pdev->pUserData)->dataOut)
+            {
+                ((USBD_HID_ItfTypeDef *)pdev->pUserData)->dataOut(g_u32USBDeviceRecv);
+            }
         }
 
         USBD_LL_PrepareReceive(pdev, HID_EPOUT_ADDR, g_u32USBDeviceRecv, HID_EPOUT_SIZE);
+    }
+    else if (HID_CUSTOMER_OUT_ADDR == epnum)
+    {
+        if (USB_OTG_IsBigEndian(pdev))
+        {
+            USB_LL_ConvertEndian(g_u8CustomerOut, g_u8CustomerOut, (uint32_t)sizeof(g_u8CustomerOut));
+        }
+
+        if (pdev->pUserData)
+        {
+            if (((USBD_HID_ItfTypeDef *)pdev->pUserData)->customerOut)
+            {
+                ((USBD_HID_ItfTypeDef *)pdev->pUserData)->customerOut(g_u8CustomerOut);
+            }
+        }
+
+        USBD_LL_PrepareReceive(pdev, HID_CUSTOMER_OUT_ADDR, g_u8CustomerOut, HID_CUSTOMER_OUT_SIZE);
     }
 
     return USBD_OK;
@@ -758,6 +835,10 @@ static uint8_t  *USBD_HID_GetUsrStrDescriptor(USBD_HandleTypeDef *pdev, uint8_t 
 
     case HID_AUDIO_STRING_INTERFACE:
         USBD_GetString((uint8_t *)HID_AUDIO_STRING_DESC, HID_USER_INTERFACE_DESC, length);
+        break;
+
+    case HID_CUSTOMER_STRING_INTERFACE:
+        USBD_GetString((uint8_t *)HID_CUSTOMER_STRING_DESC, HID_USER_INTERFACE_DESC, length);
         break;
 
     default:

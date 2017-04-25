@@ -204,3 +204,55 @@ void HAL_USB_CloseVideo(void)
 }
 
 
+/**
+* @brief  register customer's receive data function
+* @param  void (*customerRecv)(void *)
+* @retval   void
+* @note  
+*/
+void HAL_USB_RegisterCustomerRecvData(void (*customerRecv)(void *))
+{
+    g_stUsbdHidItf.customerOut  = customerRecv;
+
+    USBD_HID_RegisterInterface(&USBD_Device[HAL_USB_PORT_0], &g_stUsbdHidItf);
+    USBD_HID_RegisterInterface(&USBD_Device[HAL_USB_PORT_1], &g_stUsbdHidItf);
+}
+
+
+/**
+* @brief  Customer call this function to send data to host
+* @param  uint8_t *buff             customer's data buffer to send
+*               uint32_t u32_len       the length of buffer
+* @retval   void
+* @note  
+*/
+HAL_RET_T HAL_USB_CustomerSendData(uint8_t *buff, uint32_t u32_len)
+{
+    uint8_t             ret;
+    uint8_t             u8_portId;
+
+    u8_portId           = USBD_GetActivePortNum();
+
+    ret = USBD_HID_SendReport(&USBD_Device[u8_portId], buff, u32_len, HID_CUSTOMER_IN_ADDR);
+
+    if (ret != USBD_OK)
+    {
+        if (USBD_BUSY == ret)
+        {
+            dlog_error("CUSTOMER IN EP BUSY");
+
+            return HAL_USB_ERR_DEVICE_BUSY;
+        }
+        else
+        {
+            dlog_error("CUSTOMER IN EP NOT CONFIGURED");
+
+            return HAL_USB_ERR_DEVICE_NOT_CONGIURED;
+        }
+    }
+
+    return HAL_OK;
+}
+
+
+

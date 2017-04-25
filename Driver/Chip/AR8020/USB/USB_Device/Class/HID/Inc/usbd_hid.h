@@ -61,7 +61,15 @@
 #define HID_EPOUT_ADDR                0x01
 #define HID_EPOUT_SIZE                64
 
-#define USB_HID_CONFIG_DESC_SIZ       91
+#define HID_CUSTOMER_OUT_ADDR         0x03
+#define HID_CUSTOMER_OUT_SIZE         512
+
+#define HID_CUSTOMER_IN_ADDR          0x83
+#define HID_CUSTOMER_IN_SIZE          512
+
+#define USB_HID_CONFIG_DESC_SIZ       123
+
+//#define USB_HID_CONFIG_DESC_SIZ       91
 #define USB_HID_DESC_SIZ              9
 #define HID_MOUSE_REPORT_DESC_SIZE    40
 
@@ -84,6 +92,7 @@
 #define HID_COMM_STRING_INTERFACE     0x06
 #define HID_VIDEO0_STRING_INTERFACE   0x07
 #define HID_AUDIO_STRING_INTERFACE    0x08
+#define HID_CUSTOMER_STRING_INTERFACE 0x09
 
 /**
   * @}
@@ -113,6 +122,7 @@ typedef struct _USBD_HID_Itf
 {
     void (* dataOut)(void *);
     void (* userInit)(void);
+    void (* customerOut)(void *);
 }USBD_HID_ItfTypeDef;
 
 
