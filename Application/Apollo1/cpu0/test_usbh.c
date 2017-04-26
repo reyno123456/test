@@ -196,7 +196,7 @@ void USB_MainTask(void const *argument)
 }
 
 
-uint8_t  u8_FrameBuff[76800];
+uint8_t     *u8_FrameBuff = NULL;
 void USBH_ProcUVC(void)
 {
     STRU_UVC_VIDEO_FRAME_FORMAT     stVideoFrameFormat;
@@ -205,6 +205,10 @@ void USBH_ProcUVC(void)
     uint16_t                        u16_height;
     uint32_t                        u32_frameSize;
     static uint8_t                  s_usbhUVCStarted = 0;
+
+    // set frame width and height
+    u16_width                       = 160;
+    u16_height                      = 120;
 
     // if UVC is started
     if ((HAL_USB_HOST_STATE_READY == HAL_USB_GetHostAppState())&&
@@ -215,14 +219,15 @@ void USBH_ProcUVC(void)
             // get supported formats first
             HAL_USB_GetVideoFormats(&stVideoFrameFormat);
 
-            // set frame width and height
-            u16_width               = 160;
-            u16_height              = 120;
-
             // start uvc
             if (HAL_OK == HAL_USB_StartUVC(u16_width, u16_height, &u32_frameSize))
             {
                 s_usbhUVCStarted = 1;
+
+                if (NULL == u8_FrameBuff)
+                {
+                    u8_FrameBuff    = (uint8_t *)malloc(u32_frameSize);
+                }
             }
             else
             {
@@ -232,11 +237,11 @@ void USBH_ProcUVC(void)
         else
         {
             //get a YUV frame, size should be u16_width * u16_height * 2
-            if (HAL_OK == HAL_USB_GetVideoFrame(u8_FrameBuff, &u32_uvcFrameNum, &u32_frameSize, ENUM_UVC_DATA_Y))
+            if (HAL_OK == HAL_USB_GetVideoFrame(u8_FrameBuff, &u32_uvcFrameNum, &u32_frameSize, ENUM_UVC_DATA_YUV))
             {
                 if (g_u8ViewUVC == 1)
                 {
-                    HAL_USB_TransferUVCToGrd(u8_FrameBuff, u32_frameSize, u16_width, u16_height, ENUM_UVC_DATA_Y);
+                    HAL_USB_TransferUVCToGrd(u8_FrameBuff, u32_frameSize, u16_width, u16_height, ENUM_UVC_DATA_YUV);
                 }
             }
             else
@@ -248,6 +253,12 @@ void USBH_ProcUVC(void)
     else if (HAL_USB_HOST_STATE_DISCONNECT == HAL_USB_GetHostAppState())
     {
         s_usbhUVCStarted = 0;
+
+        if (u8_FrameBuff != NULL)
+        {
+            free(u8_FrameBuff);
+            u8_FrameBuff     = NULL;
+        }
     }
 }
 

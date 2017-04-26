@@ -17,8 +17,8 @@ USBH_ClassTypeDef  UVC_Class =
 };
 
 UVC_HandleTypeDef       g_stUVCHandle;
-uint8_t                 g_UVCRecvBuffer[UVC_VIDEO_MAX_SIZE_PER_SOF];
-uint8_t                 g_UVCVideoBuffer[UVC_VIDEO_BUFF_FRAME_NUM][UVC_VIDEO_BUFF_FRAME_SIZE];
+uint8_t                *g_UVCRecvBuffer = NULL;
+uint8_t                *g_UVCVideoBuffer[UVC_VIDEO_BUFF_FRAME_NUM] = {NULL, NULL};
 uint32_t                g_u32BufferFrameNumber[UVC_VIDEO_BUFF_FRAME_NUM];
 uint8_t                 g_u8curVideoBuffIndex = 0;
 uint32_t                g_u32recvBuffPos = 0;
@@ -167,13 +167,25 @@ USBH_StatusTypeDef USBH_UVC_InterfaceDeInit (USBH_HandleTypeDef *phost)
     USBH_memset((void *)UVC_Handle, 0, sizeof(UVC_HandleTypeDef));
     phost->pActiveClass->pData = 0;
 
+    if (g_UVCRecvBuffer != NULL)
+    {
+        free(g_UVCRecvBuffer);
+        g_UVCRecvBuffer     = NULL;
+    }
+
     for (i = 0; i < UVC_VIDEO_BUFF_FRAME_NUM; i++)
     {
         USBH_UVC_SetBuffState(i, UVC_VIDEO_BUFF_EMPTY);
+
+        if (g_UVCVideoBuffer[i] != NULL)
+        {
+            free(g_UVCVideoBuffer[i]);
+            g_UVCVideoBuffer[i] = NULL;
+        }
     }
 
-    g_u8curVideoBuffIndex = 0;
-    g_u32recvBuffPos = 0;
+    g_u8curVideoBuffIndex   = 0;
+    g_u32recvBuffPos        = 0;
 
     return USBH_OK;
 }
@@ -838,6 +850,7 @@ static USBH_StatusTypeDef USBH_UVC_Commit(USBH_HandleTypeDef *phost)
 uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost, uint8_t u8_frameIndex)
 {
     uint8_t                   i;
+    uint8_t                   j;
     UVC_HandleTypeDef        *UVC_Handle =  (UVC_HandleTypeDef *)  phost->pActiveClass->pData;
 
     UVC_Handle->uvc_state           = UVC_STATE_PROBE;
@@ -848,6 +861,50 @@ uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost, uint8_t u8_frameIndex)
     g_u32UVCVideoBuffSizePerFrame   = USBH_UVC_GetFrameSize(u8_frameIndex);
 
     dlog_info("g_u32UVCVideoBuffSizePerFrame: %d", g_u32UVCVideoBuffSizePerFrame);
+
+    if (g_UVCRecvBuffer == NULL)
+    {
+        g_UVCRecvBuffer     = (uint8_t *)malloc(UVC_VIDEO_MAX_SIZE_PER_SOF);
+
+        if (g_UVCRecvBuffer == NULL)
+        {
+            dlog_error("malloc g_UVCRecvBuffer error");
+
+            return 1;
+        }
+    }
+
+    for (i = 0; i < UVC_VIDEO_BUFF_FRAME_NUM; i++)
+    {
+        if (g_UVCVideoBuffer[i] == NULL)
+        {
+            g_UVCVideoBuffer[i] = (uint8_t *)malloc(g_u32UVCVideoBuffSizePerFrame);
+
+            // when malloc error, need to free the memory malloced before
+            if (g_UVCVideoBuffer[i] == NULL)
+            {
+                dlog_error("malloc g_UVCVideoBuffer[%d] error", i);
+
+                if (g_UVCRecvBuffer != NULL)
+                {
+                    free(g_UVCRecvBuffer);
+                    g_UVCRecvBuffer = NULL;
+                }
+
+                for (j = 0 ; j < i; j++)
+                {
+                    if (g_UVCVideoBuffer[j] != NULL)
+                    {
+                        free(g_UVCVideoBuffer[j]);
+                        g_UVCVideoBuffer[j] = NULL;
+                    }
+                }
+
+                return 1;
+            }
+        }
+                
+    }
 
     return 0;
 }
