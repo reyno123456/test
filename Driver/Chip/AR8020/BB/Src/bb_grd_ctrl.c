@@ -284,7 +284,7 @@ int grd_freq_skip_pre_judge(void)
         return 0;
     }
     
-    if( it_span_cnt < 10 )
+    if( it_span_cnt < 16 )
     {
         it_span_cnt ++;
         return 0;
@@ -318,9 +318,9 @@ int grd_freq_skip_pre_judge(void)
     }
 
     optch = get_opt_channel();
-    int16_t cmp = compare_chNoisePower(context.cur_IT_ch, optch, &aver, &fluct, context.freq_band, 0);
-    dlog_info("cmp:(%d:%d) rst:(%d %d) \n", context.cur_IT_ch, optch, aver, fluct);
-    if( (aver >= 20) || ( aver > 15 && fluct > 10 ) ) //next channel is better than current channel
+    int16_t cmp = compare_chNoisePower(optch, context.cur_IT_ch, &aver, &fluct, context.freq_band, 0);
+    //dlog_info("cmp:(%d:%d)result:(%d %d)", context.cur_IT_ch, optch, aver, fluct);
+    if ( ( aver >= 20 ) || ( aver >= 10 && fluct > 0 )  )
     {
         if( 0 == flag ) //already Fail
         {

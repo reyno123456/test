@@ -36,6 +36,11 @@ typedef struct
     int16_t s16_power_average[SWEEP_FREQ_BLOCK_ROWS][MAX_2G_IT_FRQ_SIZE];           //channel power: 10M bandwidth
     int16_t s16_5G_power_average[SWEEP_FREQ_BLOCK_ROWS][MAX_5G_IT_FRQ_SIZE];        //channel power: 10M bandwidth
 
+    //////////////////
+    uint32_t u32_noisePower[SWEEP_FREQ_BLOCK_ROWS][MAX_2G_IT_FRQ_SIZE];
+    uint32_t u32_noisepower_average[MAX_2G_IT_FRQ_SIZE];
+    int32_t  i32_variance[MAX_2G_IT_FRQ_SIZE];                                      //
+
     ENUM_RF_BAND e_curBand;
     ENUM_CH_BW   e_bw;
     uint8_t      u8_mainCh;          //current VT channel
@@ -174,6 +179,8 @@ static uint8_t BB_GetSweepPower(uint8_t bw, uint8_t row, uint8_t ch, ENUM_RF_BAN
     uint32_t power_td =  (((uint32_t)(BB_ReadReg(PAGE2, SWEEP_ENERGY_HIGH)) << 16) |
                                      (BB_ReadReg(PAGE2, SWEEP_ENERGY_MID) << 8)  |
                                      (BB_ReadReg(PAGE2, SWEEP_ENERGY_LOW)));
+
+    stru_sweepPower.u32_noisePower[row][ch] = power_td;
 
     if(power_td == 0)
     {
@@ -365,15 +372,15 @@ static int BB_SweepAfterFull( uint8_t flag )
         {
             //compare the other channel and current opt channel
             int16_t diff, fluct;
+            //stru_sweepPower.u8_optCh * 10 / stru_sweepPower.u8_prevSweepCh
+            //fluct > 0
             compare_chNoisePower(stru_sweepPower.u8_prevSweepCh, stru_sweepPower.u8_optCh, 
                                  &diff, &fluct,
                                  stru_sweepPower.e_curBand, 0);
-
-            uint8_t *pu8_bestChCnt = ( stru_sweepPower.e_curBand ) ? stru_sweepPower.u8_bestChCnt : stru_sweepPower.u8_best5GChCnt;
-            
-            if ( (diff <= -20) || (diff <= -15 && fluct <= -10) )
+            if ( (diff >  20) || (diff >  10 && fluct > 0))
             {
-                //dlog_info("ch: %d %d %d", stru_sweepPower.u8_prevSweepCh, diff, fluct);
+                uint8_t *pu8_bestChCnt = ( stru_sweepPower.e_curBand ) ? stru_sweepPower.u8_bestChCnt : stru_sweepPower.u8_best5GChCnt;            
+                //dlog_info("ch: %d %d %d %d", stru_sweepPower.u8_prevSweepCh, stru_sweepPower.u8_optCh, diff, fluct);
                 pu8_bestChCnt[stru_sweepPower.u8_prevSweepCh] += 1;
     
                 //if the channel is the 8 times better than the current opt channel
@@ -414,8 +421,8 @@ uint8_t BB_GetSweepResult( uint8_t flag )
     if ( stru_sweepPower.u8_preMainCh != 0xFF && stru_sweepPower.u16_preMainCount++ >= CLEAR_MAIN_CNT )
     {
         //clear the premain;
-        stru_sweepPower.u16_preMainCount = 0;
-        stru_sweepPower.u8_preMainCh     = 0xFF;
+        //stru_sweepPower.u16_preMainCount = 0;
+        //stru_sweepPower.u8_preMainCh     = 0xFF;
     }
     
     uint32_t spend = SysTicks_GetTickCount() - start;
@@ -456,57 +463,19 @@ int16_t compare_chNoisePower(uint8_t u8_itCh1, uint8_t u8_itCh2,
                              int16_t *ps16_averdiff, int16_t *ps16_fluctdiff, 
                              ENUM_RF_BAND e_band, uint8_t log)
 {
-    uint8_t row;
+    calc_average_and_fluct( stru_sweepPower.e_bw, u8_itCh1, e_band );
+    calc_average_and_fluct( stru_sweepPower.e_bw, u8_itCh2, e_band );
 
-    int16_t s16_ch1Aver = 0;
-    int16_t s16_ch2Aver = 0;
-
-    int16_t s16_ch1Fluct = 0;
-    int16_t s16_ch2Fluct = 0;
-    int16_t s16_ch_per_row = (e_band == RF_2G) ? MAX_2G_IT_FRQ_SIZE : MAX_5G_IT_FRQ_SIZE;
-
-    int16_t diff = 0, fluct = 0;
-    int16_t *ps16_power_average;
-
-    calc_average_and_fluct(stru_sweepPower.e_bw, u8_itCh1, e_band);
-    calc_average_and_fluct(stru_sweepPower.e_bw, u8_itCh2, e_band);
-
-    for(row = 0 ; row < SWEEP_FREQ_BLOCK_ROWS; row++)
+    if (stru_sweepPower.u32_noisepower_average[u8_itCh1] == 0 )
     {
-        ps16_power_average = (e_band == RF_2G) ? stru_sweepPower.s16_power_average[row] : 
-                                                 stru_sweepPower.s16_5G_power_average[row];
-                                                      
-        s16_ch1Aver += ps16_power_average[u8_itCh1];
-        s16_ch2Aver += ps16_power_average[u8_itCh2];
+        dlog_info("Error: stru_sweepPower.u32_noisepower_average[u8_itCh1]");
+    }
+    else
+    {
+        *ps16_averdiff = stru_sweepPower.u32_noisepower_average[u8_itCh2] * 10 / stru_sweepPower.u32_noisepower_average[u8_itCh1];
     }
 
-    s16_ch1Aver = s16_ch1Aver * 10 / SWEEP_FREQ_BLOCK_ROWS;
-    s16_ch2Aver = s16_ch2Aver * 10 / SWEEP_FREQ_BLOCK_ROWS;
-    diff  = s16_ch1Aver - s16_ch2Aver;
-
-    //check the fluct
-    for(row = 0 ; row < SWEEP_FREQ_BLOCK_ROWS; row++)
-    {
-        ps16_power_average = (e_band == RF_2G) ? stru_sweepPower.s16_power_average[row] : 
-                                                 stru_sweepPower.s16_5G_power_average[row];
-    
-        int16_t tmp1  = ps16_power_average[u8_itCh1] * 10 - s16_ch1Aver;
-        int16_t tmp2  = ps16_power_average[u8_itCh2] * 10 - s16_ch2Aver;
-
-        s16_ch1Fluct += (( tmp1 < 0) ? ( -tmp1 ) : tmp1 );
-        s16_ch2Fluct += (( tmp2 < 0) ? ( -tmp2 ) : tmp2 );
-    }
-
-    if( ps16_averdiff )
-    {
-        *ps16_averdiff = diff;
-    }
-    if( ps16_fluctdiff )
-    {
-        *ps16_fluctdiff = (s16_ch1Fluct - s16_ch2Fluct) / SWEEP_FREQ_BLOCK_ROWS;
-    }
-    
-    return diff;
+    *ps16_fluctdiff = stru_sweepPower.i32_variance[u8_itCh2] - stru_sweepPower.i32_variance[u8_itCh1];
 }
 
 static uint8_t is_inlist(uint8_t item, uint8_t *pu8_exlude, uint8_t u8_cnt)
@@ -537,9 +506,9 @@ static uint8_t find_best(uint8_t *pu8_exlude, uint8_t u8_exclude_cnt, ENUM_RF_BA
     {
         if ( !is_inlist( ch, pu8_exlude, u8_exclude_cnt ) )
         {
-            compare_chNoisePower(u8_start, ch, &aver, &fluct, e_band, 0);
-            //if( aver >= 30 || ( aver >= 15 && fluct >= 10) )
-            if( aver +  (fluct / 5) > 0)
+            compare_chNoisePower(ch, u8_start, &aver, &fluct, e_band, 0);
+            //fluct[u8_start] - fluct[ch]
+            if( (aver > 20) || (aver > 10 && fluct > 0))
             {
                 u8_start = ch;
             }
@@ -697,11 +666,17 @@ uint8_t get_opt_channel( void )
     }
 
     if ( context.agclevel >= AGC_LEVEL_1 )
+    {
         level = 3;
+    }
     else if( context.agclevel >= AGC_LEVEL_0 )
+    {
         level = 6;
+    }
     else
+    {
         level = 9;
+    }
 
     //dlog_info("diff:%d %d %x %d %d %d \n", stru_sweepPower.u8_curMainRow, stru_sweepPower.u8_curOptRow, context.agclevel,
     //                                 (s16_cur_power - s16_aver_power), (s16_cur_mainPower - s16_aver_power), level );
@@ -903,4 +878,44 @@ static void calc_average_and_fluct( uint8_t u8_bw , uint8_t u8_ItCh, ENUM_RF_BAN
         ps16_power_average[u8_ItCh] = (sum_power / cnt);   
     }
 
+    stru_sweepPower.u32_noisepower_average[u8_ItCh] = 0;
+    stru_sweepPower.i32_variance[u8_ItCh] = 0;
+
+    uint32_t u32_avr = 0;
+    for( row = 0; row < SWEEP_FREQ_BLOCK_ROWS; row++)
+    {
+        u32_avr += stru_sweepPower.u32_noisePower[row][u8_ItCh];
+    }
+    u32_avr /= SWEEP_FREQ_BLOCK_ROWS;
+
+    for( row = 0; row < SWEEP_FREQ_BLOCK_ROWS; row++)
+    {
+        if (stru_sweepPower.u32_noisePower[row][u8_ItCh] >= u32_avr * 2)
+        {
+            stru_sweepPower.u32_noisepower_average[u8_ItCh] += (u32_avr * 2);
+        }
+        else if (stru_sweepPower.u32_noisePower[row][u8_ItCh] >= u32_avr / 2)
+        {
+            stru_sweepPower.u32_noisepower_average[u8_ItCh] += (u32_avr /2);
+        }
+        else
+        {
+            stru_sweepPower.u32_noisepower_average[u8_ItCh] += stru_sweepPower.u32_noisePower[row][u8_ItCh];
+        }    
+    }
+
+    stru_sweepPower.u32_noisepower_average[u8_ItCh] /= SWEEP_FREQ_BLOCK_ROWS;
+    for( row = 0; row < SWEEP_FREQ_BLOCK_ROWS; row++)
+    {
+        int32_t diff;
+        if ( stru_sweepPower.u32_noisepower_average[u8_ItCh] > u32_avr)
+        {
+            diff = stru_sweepPower.u32_noisepower_average[u8_ItCh] - u32_avr;
+        }
+        else
+        {
+            diff = u32_avr - stru_sweepPower.u32_noisepower_average[u8_ItCh];
+        }
+        stru_sweepPower.i32_variance[u8_ItCh] = diff * diff;
+    }
 }
