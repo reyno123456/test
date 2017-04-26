@@ -1,7 +1,10 @@
 #include "systicks.h"
 #include "reg_map.h"
+#include "pll_ctrl.h"
+#include "cpu_info.h"
 
 static volatile uint32_t g_u32SysTickCount = 0;
+static volatile uint32_t g_u32SysTickLoad = 0;
 
 /**
   * @brief This function is init system tick module.
@@ -17,6 +20,8 @@ uint8_t SysTicks_Init(uint32_t ticks)
     SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk |
                      SysTick_CTRL_TICKINT_Msk   |
                      SysTick_CTRL_ENABLE_Msk;                         /* Enable SysTick IRQ and SysTick Timer */
+
+    g_u32SysTickLoad = (uint32_t)(ticks - 1UL);
 
     return (0UL);                                                     /* Function successful */
 }
@@ -47,13 +52,30 @@ void SysTicks_IncTickCount(void)
 }
 
 /**
-  * @brief Provides a tick value
+  * @brief Provides a ms tick value
   * @note: Call xTaskGetTickCount instead if the FreeRTOS is running.  
   * @retval Tick value
   */
 uint32_t SysTicks_GetTickCount(void)
 {
     return g_u32SysTickCount;
+}
+
+/**
+  * @brief Provides a us tick value
+  * @note: Call xTaskGetTickCount instead if the FreeRTOS is running.  
+  * @retval Tick value
+  */
+uint64_t SysTicks_GetUsTickCount(void)
+{
+    uint16_t u16_pllClk;
+    uint32_t u32_Val = SysTick->VAL;
+
+    u32_Val = (g_u32SysTickLoad > u32_Val) ? (g_u32SysTickLoad - u32_Val) : 0;
+
+    PLLCTRL_GetCoreClk(&u16_pllClk, CPUINFO_GetLocalCpuId());
+    
+    return (uint64_t)((((uint64_t)g_u32SysTickCount) * 1000) + (u32_Val / u16_pllClk));
 }
 
 /**

@@ -32,4 +32,28 @@ __attribute__((weak)) void ar_osDelay(uint32_t u32_ms)
     SysTicks_DelayMS(u32_ms);
 }
 
+/**
+* @brief  The hal function to get system tick in millisecond level.
+* @param  NONE.
+* @retval The current system tick value.
+* @note   This function must be called when the system starts.
+*/
+
+uint32_t HAL_GetSysMsTick(void)
+{
+    return SysTicks_GetTickCount();
+}
+
+/**
+* @brief  The hal function to get system tick in microsecond level.
+* @param  NONE.
+* @retval The current system tick value.
+* @note   This function must be called when the system starts.
+*/
+
+uint64_t HAL_GetSysUsTick(void)
+{
+    return SysTicks_GetUsTickCount();
+}
+
 

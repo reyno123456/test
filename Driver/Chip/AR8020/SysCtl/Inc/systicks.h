@@ -9,6 +9,7 @@ uint8_t SysTicks_Init(uint32_t ticks);
 uint8_t SysTicks_UnInit(void);
 void SysTicks_IncTickCount(void);
 uint32_t SysTicks_GetTickCount(void);
+uint64_t SysTicks_GetUsTickCount(void);
 void SysTicks_DelayMS(uint32_t msDelay);
 
 void msleep(uint32_t millisecs);
