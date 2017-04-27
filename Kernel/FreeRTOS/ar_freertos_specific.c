@@ -147,3 +147,9 @@ void ar_osWirelessTaskInit(void TaskHandler(void const *argument))
     osThreadCreate(osThread(WIRELESS_TASK), NULL);
 }
 
+#if configCHECK_FOR_STACK_OVERFLOW > 0
+void vApplicationStackOverflowHook( TaskHandle_t xTask, char *pcTaskName )
+{
+    dlog_info("task stack overflow!\n");
+}
+#endif
