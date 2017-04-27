@@ -31,13 +31,13 @@ SRC_S   := start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
 LD_LIBS := -lutility -lfatfs -lhal -lboard -lAR8020drv -lmp3enc -lmp3dec -lm -lcommon -lsimplec -lgcc
-SRC_C   := main_sky.c command.c test_hal_nv.c 
+SRC_C   := main_sky.c command.c test_hal_nv.c test_hal_i2c.c
 
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
 LD_LIBS = -lfreertos -lutility -lfatfs -lhal -lboard -lAR8020drv -lmp3enc -lmp3dec -lm -lcommon -lsimplec -lgcc
-SRC_C   := main_ground.c command.c test_hal_nv.c test_usbh.c
+SRC_C   := main_ground.c command.c test_hal_nv.c test_usbh.c test_hal_i2c.c
 endif
 
 CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share

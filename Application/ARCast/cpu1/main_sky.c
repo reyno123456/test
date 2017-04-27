@@ -22,7 +22,7 @@ int main(void)
 
     /* initialize the uart */
     CONSOLE_Init();
-    STRU_HAL_SOFTI2S_INIT st_audioConfig = {AUDIO_DATA_START,HAL_GPIO_NUM64,HAL_GPIO_NUM96,HAL_GPIO_NUM100};  
+    STRU_HAL_SOFTI2S_INIT st_audioConfig = {AUDIO_DATA_START,HAL_GPIO_NUM35,HAL_GPIO_NUM70,HAL_GPIO_NUM20};    
     dlog_info("cpu1 start!!! %d \n",HAL_SOFTI2S_Init(&st_audioConfig)); 
 
     /* We should never get here as control is now taken by the scheduler */

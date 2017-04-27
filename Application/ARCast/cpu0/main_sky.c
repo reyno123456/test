@@ -21,6 +21,8 @@
 #include "hal_uart.h"
 #include "typedef.h"
 #include "it6602.h"
+#include "hal_sram.h"
+
 
 void CONSOLE_Init(void)
 {
@@ -80,18 +82,14 @@ int main(void)
 
     HAL_NV_Init();
     Wireless_TaskInit(WIRELESS_NO_RTOS);
-/*
-    USBH_MountUSBDisk();
 
-    HAL_MP3EncodePcmInit(&st_audioConfig);
-
-    Wireless_TaskInit(WIRELESS_NO_RTOS);
+    HAL_MP3EncodePcmInit(&st_audioConfig, ENUM_HAL_SRAM_DATA_PATH_REVERSE);
 
     uint32_t u32_audioSampleRate=0xf;
     uint32_t u32_audioSampleRateTmp=0;
     volatile uint32_t *pu32_newAudioSampleRate=(uint32_t *)(SRAM_MODULE_SHARE_AUDIO_RATE);
     *pu32_newAudioSampleRate=0xf;
- */   
+    
     /* We should never get here as control is now taken by the scheduler */
     uint8_t i = 0;
     for( ;; )
@@ -122,17 +120,14 @@ int main(void)
         {
             u32_audioSampleRateTmp=0;
         }*/
-        //HAL_USB_HostProcess();
-        //Wireless_MessageProcess();
-
-        //HAL_MP3EncodePcm();
-        msleep(1);
+        //HAL_USB_HostProcess();     
         i++;
         if (i>100)
         {
             IT6602_fsm();
             i=0;
         }
+        HAL_MP3EncodePcm();
         Wireless_MessageProcess();
         SYS_EVENT_Process();
     }

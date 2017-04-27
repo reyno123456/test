@@ -7,7 +7,7 @@
 #include "md5.h"
 #include "data_type.h"
 #include "cmsis_os.h"
-
+#include "test_hal_i2c.h"
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
@@ -48,6 +48,18 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_test_dma_loop(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
+    else if (memcmp(cmdArray[0], "hal_i2c_init", strlen("hal_i2c_init")) == 0)
+    {
+        command_TestHalI2cInit(cmdArray[1],cmdArray[2],cmdArray[3]);
+    }
+    else if (memcmp(cmdArray[0], "hal_i2c_read", strlen("hal_i2c_read")) == 0)
+    {
+        command_TestHalI2cRead(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4]);
+    }
+    else if ((memcmp(cmdArray[0], "hal_i2c_write", strlen("hal_i2c_write")) == 0) && (cmdNum == 4))
+    {
+        command_TestHalI2cWrite(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5]);
+    }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
         dlog_error("Please use the commands like:");
@@ -58,6 +70,9 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("NvSetBbRcId <id1> <id2> <id3> <id4> <id5>");
         dlog_error("test_dma_cpu0 <src> <dst> <byte_num>");
         dlog_error("test_dma_loop <src> <dst> <byte_num>");
+        dlog_error("hal_i2c_init <ch> <i2c_addr> <speed>");
+        dlog_error("hal_i2c_read <ch> <subAddr> <subAddrLen> <dataLen>");
+        dlog_error("hal_i2c_write <ch> <subAddr> <subAddrLen> <data> <dataLen>");
         dlog_output(1000);
     }
 }

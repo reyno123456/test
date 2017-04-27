@@ -89,11 +89,13 @@ void HAL_SOFTI2S_Funct(void)
         if (0 == g_u32_audioDataReady)
         {                      
             #ifdef AUDIO_SDRAM
-            DMA_transfer((uint32_t)g_u16_audioDataArray+DTCM_CPU1_DMA_ADDR_OFFSET, g_u32_dstAddress, \
+            //DMA_transfer((uint32_t)g_u16_audioDataArray+DTCM_CPU1_DMA_ADDR_OFFSET, g_u32_dstAddress, \
                         (ADUIO_DATA_BUFF_LENGHT*sizeof(uint16_t)), CHAN0, LINK_LIST_ITEM);
+            memcpy((void *)g_u32_dstAddress,(void *)g_u16_audioDataArray,(ADUIO_DATA_BUFF_LENGHT*sizeof(uint16_t)));
             #else
-            DMA_transfer((uint32_t)g_u16_audioDataArray+DTCM_CPU1_DMA_ADDR_OFFSET, g_u32_dstAddress+DTCM_CPU0_DMA_ADDR_OFFSET, \
+            //DMA_transfer((uint32_t)g_u16_audioDataArray+DTCM_CPU1_DMA_ADDR_OFFSET, g_u32_dstAddress+DTCM_CPU0_DMA_ADDR_OFFSET, \
                         (ADUIO_DATA_BUFF_LENGHT*sizeof(uint16_t)), CHAN0, LINK_LIST_ITEM);
+            memcpy((void *)(g_u32_dstAddress+DTCM_CPU0_DMA_ADDR_OFFSET),(void *)g_u16_audioDataArray,(ADUIO_DATA_BUFF_LENGHT*sizeof(uint16_t)));
             #endif            
             g_u32_audioDataReady=1;            
             g_u32_dstAddress+=(ADUIO_DATA_BUFF_LENGHT*sizeof(uint16_t));

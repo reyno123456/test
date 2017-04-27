@@ -21,8 +21,8 @@ extern "C"
 
 #include "hal_gpio.h"
 
-#define AUDIO_LEFT_INTERRUPT_ADDR        (68*4)
-#define AUDIO_RIGHT_INTERRUPT_ADDR       (69*4)
+#define AUDIO_LEFT_INTERRUPT_ADDR        (67*4)
+#define AUDIO_RIGHT_INTERRUPT_ADDR       (68*4)
 
 #define ADUIO_DATA_BUFF_LENGHT           (4608/sizeof(uint16_t)) 
 

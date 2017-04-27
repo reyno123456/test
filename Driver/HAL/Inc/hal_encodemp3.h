@@ -7,7 +7,10 @@ extern "C"
 #endif
 
 #define MPE3_ENCODER_DATA_ADDR        (0x81E00000)
-#define AUDIO_BYPASS_START            (0xB1800000)
+#define AUDIO_BYPASS_START_CH0        (0xB1000000)
+#define AUDIO_BYPASS_START_CH1        (0xB1800000)
+
+
 typedef enum
 {
     HAL_MP3_ENCODE_STEREO = 0,
@@ -41,7 +44,7 @@ typedef struct
 * @retval   HAL_FALSE   paramenter error.
 * @note     none
 */
-HAL_BOOL_T HAL_MP3EncodePcmInit(const STRU_MP3_ENCODE_CONFIGURE_WAVE *st_mp3EncodeConfg);
+HAL_BOOL_T HAL_MP3EncodePcmInit(const STRU_MP3_ENCODE_CONFIGURE_WAVE *st_mp3EncodeConfg, uint8_t dataPathReverse);
 
 /**
 * @brief    mp3 encoder un-initialization
