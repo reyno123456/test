@@ -1476,6 +1476,9 @@ void Wireless_InitBuffer(void)
     g_pstWirelessInfoDisplay->osd_enable = 0;
 }
 
+__attribute__((weak)) void ar_osWirelessTaskInit(void TaskHandler(void const *argument))
+{
+}
 
 void Wireless_TaskInit(uint8_t u8_useRTOS)
 {
@@ -1487,8 +1490,7 @@ void Wireless_TaskInit(uint8_t u8_useRTOS)
 
     if (u8_useRTOS)
     {
-        osThreadDef(WIRELESS_TASK, Wireless_Task, osPriorityNormal, 0, 4 * 128);
-        osThreadCreate(osThread(WIRELESS_TASK), NULL);
+        ar_osWirelessTaskInit(Wireless_Task);
     }
 }
 

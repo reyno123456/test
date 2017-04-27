@@ -12,6 +12,11 @@ History:
 #ifndef __HAL_SRAM_H__
 #define __HAL_SRAM_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdint.h>
 #include "hal_ret_type.h"
 
@@ -75,6 +80,9 @@ void HAL_SRAM_OpenVideo(void);
 */
 void HAL_SRAM_CloseVideo(void);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

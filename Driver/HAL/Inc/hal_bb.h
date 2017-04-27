@@ -13,6 +13,10 @@ History:
 #ifndef __HAL_BB___
 #define __HAL_BB___
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 #include <stdint.h>
 #include "bb_types.h"
@@ -411,5 +415,8 @@ HAL_RET_T HAL_BB_SetCalcDistZeroPoint(uint32_t value);
  */
 HAL_RET_T HAL_BB_SPI_DisableEnable(uint8_t u8_flag);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

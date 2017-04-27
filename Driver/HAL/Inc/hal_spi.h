@@ -12,6 +12,11 @@ History:
 #ifndef __HAL_SPI_H__
 #define __HAL_SPI_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdint.h>
 #include <string.h>
 #include "hal_ret_type.h"
@@ -97,6 +102,11 @@ HAL_RET_T HAL_SPI_MasterWriteRead(ENUM_HAL_SPI_COMPONENT e_spiComponent,
                                   uint8_t *pu8_rdData,
                                   uint32_t u32_rdSize,
                                   uint32_t u32_timeOut);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

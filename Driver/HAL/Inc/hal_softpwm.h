@@ -13,6 +13,11 @@ History:
 #ifndef __HAL_SOFTPWM_H__
 #define __HAL_SOFTPWM_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define MAXSOFTPWM         (10)
 
 #define MIXMODIFYTIMEUM    (20)
@@ -60,5 +65,8 @@ HAL_RET_T HAL_SOFTPWM_AddPwm(STRU_SoftPwmHandle *tmp);
 */
 HAL_RET_T HAL_SOFTPWM_RunPwm(void);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -14,6 +14,11 @@ History:
 #ifndef __HAL_SOFTI2S_H__
 #define __HAL_SOFTI2S_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "hal_gpio.h"
 
 #define AUDIO_LEFT_INTERRUPT_ADDR        (68*4)
@@ -69,5 +74,10 @@ void LeftAudio_44p1K(void);
 void RightAudio_44p1K(void);
 void LeftAudio_48K(void);
 void RightAudio_48K(void);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*__HAL_SOFTI2S_H__END*/

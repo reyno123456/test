@@ -12,6 +12,11 @@ History:
 #ifndef __HAL_H264_H__
 #define __HAL_H264_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdint.h>
 #include "hal_ret_type.h"
 
@@ -84,6 +89,11 @@ typedef struct
 */
 
 HAL_RET_T HAL_H264_Init(STRU_HAL_H264_CONFIG st_h264Cfg);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

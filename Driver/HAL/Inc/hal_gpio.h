@@ -14,6 +14,11 @@ History:
 #ifndef __HAL_GPIO_H__
 #define __HAL_GPIO_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "hal_ret_type.h"
 
 
@@ -243,5 +248,8 @@ HAL_RET_T HAL_GPIO_RegisterInterrupt(ENUM_HAL_GPIO_NUM e_gpioPin,
                                      ENUM_HAL_GPIO_InterrputPolarity e_polarity,
                                      void *fun_callBack);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

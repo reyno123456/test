@@ -1,6 +1,10 @@
 #ifndef __HAL_USB_OTG_H__
 #define __HAL_USB_OTG_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 typedef enum
 {
@@ -26,6 +30,10 @@ void HAL_USB_InitOTG(ENUM_HAL_USB_PORT e_usbPort);
 * @note  
 */
 void HAL_USB_ConfigPHY(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

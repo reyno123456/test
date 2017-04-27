@@ -12,6 +12,11 @@ History:
 #ifndef __HAL_H__
 #define __HAL_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "hal_ret_type.h"
 
 /**
@@ -42,6 +47,10 @@ uint64_t HAL_GetSysUsTick(void);
 * ar_osDelay will be called only linked with os.lib
 */
 __attribute__((weak)) void ar_osDelay(uint32_t u32_ms);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

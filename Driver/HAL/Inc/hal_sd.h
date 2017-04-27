@@ -11,6 +11,11 @@ History:
 #ifndef __HAL_SD_H__
 #define __HAL_SD_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdint.h>
 #include "hal_ret_type.h"
 
@@ -97,5 +102,8 @@ HAL_RET_T HAL_SD_Deinit();
 */
 void HAL_SD_InitIRQ();
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

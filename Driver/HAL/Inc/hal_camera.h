@@ -11,6 +11,10 @@ History:
 #ifndef __HAL_CAMERA_H__
 #define __HAL_CAMERA_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 #include <stdint.h>
 #include "hal_ret_type.h"
@@ -72,5 +76,8 @@ HAL_RET_T HAL_CAMERA_WriteReg(uint16_t u16_regAddr, uint8_t u8_val);
 HAL_RET_T HAL_CAMERA_GetImageInfo(uint16_t *u16_width, uint16_t *u16_hight, uint8_t *u8_frameRate);
 
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

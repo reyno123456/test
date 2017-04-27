@@ -14,6 +14,11 @@ History:
 #ifndef __HAL_TIMER_H__
 #define __HAL_TIMER_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef enum
 {
     HAL_TIMER_NUM0=0,
@@ -71,5 +76,8 @@ HAL_RET_T HAL_TIMER_Stop(ENUM_HAL_TIMER_NUM e_timerNum);
 */
 HAL_RET_T HAL_TIMER_Start(ENUM_HAL_TIMER_NUM e_timerNum);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

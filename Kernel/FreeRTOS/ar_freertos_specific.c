@@ -141,3 +141,9 @@ void ar_osSysEventMsgQPut(void)
     putSysEventMsgQ();
 }
 
+void ar_osWirelessTaskInit(void TaskHandler(void const *argument))
+{
+    osThreadDef(WIRELESS_TASK, TaskHandler, osPriorityNormal, 0, 4 * 128);
+    osThreadCreate(osThread(WIRELESS_TASK), NULL);
+}
+

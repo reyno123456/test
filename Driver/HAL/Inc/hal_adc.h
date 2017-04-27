@@ -13,6 +13,10 @@ History:
 #ifndef __HAL_ADC___
 #define __HAL_ADC___
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 #include <stdint.h>
 
@@ -26,5 +30,8 @@ History:
  */
 uint32_t HAL_ADC_Read(uint8_t channel);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

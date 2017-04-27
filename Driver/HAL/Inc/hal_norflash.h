@@ -12,6 +12,11 @@ History:
 #ifndef __HAL_NORFLASH_H__
 #define __HAL_NORFLASH_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef enum
 {
     HAL_NORFLASH_Sector = 0,
@@ -59,6 +64,9 @@ HAL_RET_T HAL_NORFLASH_ReadByteBuffer(uint32_t u32_startAddr,uint8_t* pu8_dataBu
 
 
 
+#ifdef __cplusplus
+}
+#endif
 
 
 

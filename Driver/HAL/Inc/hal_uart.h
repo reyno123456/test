@@ -11,6 +11,10 @@ History:
 #ifndef __HAL_UART_H__
 #define __HAL_UART_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 #include <stdint.h>
 #include "hal_ret_type.h"
@@ -81,5 +85,8 @@ HAL_RET_T HAL_UART_TxData(ENUM_HAL_UART_COMPONENT e_uartComponent,
                           uint8_t *pu8_txBuf, 
                           uint32_t u32_len);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

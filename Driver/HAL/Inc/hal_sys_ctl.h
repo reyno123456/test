@@ -12,6 +12,11 @@ History:
 #ifndef __HAL_SYS_CTL_H__
 #define __HAL_SYS_CTL_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdint.h>
 #include "hal_ret_type.h"
 
@@ -84,6 +89,11 @@ HAL_RET_T HAL_SYS_CTL_Init(STRU_HAL_SYS_CTL_CONFIG *pst_halSysCtlCfg);
 */
 
 HAL_RET_T HAL_SYS_CTL_SysTickInit(uint32_t u32_sysTickCount);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

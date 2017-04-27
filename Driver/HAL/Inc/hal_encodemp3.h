@@ -1,6 +1,10 @@
 #ifndef __HAL_MP3_ENCODER__H__
 #define __HAL_MP3_ENCODER__H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 #define MPE3_ENCODER_DATA_ADDR        (0x81E00000)
 #define AUDIO_BYPASS_START            (0xB1800000)
@@ -55,5 +59,8 @@ HAL_BOOL_T HAL_MP3EncodePcmUnInit(void);
 */
 void HAL_MP3EncodePcm(void);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __HAL_MP3_ENCODER__H__ */

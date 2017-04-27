@@ -12,6 +12,11 @@ History:
 #ifndef __HAL_I2C_H__
 #define __HAL_I2C_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdint.h>
 #include "hal_ret_type.h"
 
@@ -94,6 +99,11 @@ HAL_RET_T HAL_I2C_MasterReadData(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
                                  uint8_t *pu8_rdData,
                                  uint32_t u32_rdSize,
                                  uint32_t u32_timeOut);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

@@ -1,6 +1,11 @@
 #ifndef __HAL_RET_TYPE_H__
 #define __HAL_RET_TYPE_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdint.h>
 
 typedef uint32_t HAL_RET_T;
@@ -125,6 +130,11 @@ typedef uint8_t HAL_BOOL_T;
 
 #define HAL_NORFLASH_ERR_MASK                       (0x10500)
 #define HAL_NORFLASH_ERR_ERASE                      (HAL_NORFLASH_ERR_MASK | 0x1)
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

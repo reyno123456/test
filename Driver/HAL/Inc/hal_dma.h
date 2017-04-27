@@ -13,6 +13,10 @@ History:
 #ifndef __HAL_DMA___
 #define __HAL_DMA___
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 #include <stdint.h>
 #include "hal_ret_type.h"
@@ -48,5 +52,9 @@ HAL_RET_T HAL_DMA_Start(uint32_t u32_srcAddress, uint32_t u32_dstAddress,
 						uint32_t u32_dataLength,ENUM_DMA_chan e_channel, 
 						ENUM_DMA_TransferType e_transType);
 HAL_RET_T HAL_DMA_init(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

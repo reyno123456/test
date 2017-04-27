@@ -13,6 +13,10 @@ History:
 #ifndef __HAL_TIMER_H__
 #define __HAL_TIMER_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 typedef enum
 {
@@ -68,5 +72,10 @@ HAL_RET_T HAL_PWM_Start(ENUM_HAL_PWM_NUM e_pwmNum);
 * @note     none
 */
 HAL_RET_T HAL_PWM_DynamicModifyPwmDutyCycle(ENUM_HAL_PWM_NUM e_pwmNum, uint32_t u32_lowus, uint32_t u32_highus);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -12,6 +12,11 @@ History:
 #ifndef __HAL_HDMI_RX_H__
 #define __HAL_HDMI_RX_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdint.h>
 #include "hal_ret_type.h"
 #include "hal_gpio.h"
@@ -104,6 +109,9 @@ HAL_RET_T HAL_HDMI_RX_GetVideoFormat(ENUM_HAL_HDMI_RX e_hdmiIndex,
 
 HAL_RET_T HAL_HDMI_RX_GetAudioSampleRate(ENUM_HAL_HDMI_RX e_hdmiIndex, uint32_t *pu32_sampleRate);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

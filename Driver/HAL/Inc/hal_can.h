@@ -11,6 +11,10 @@ History:
 #ifndef __HAL_CAN_H__
 #define __HAL_CAN_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 #include <stdint.h>
 #include "hal_ret_type.h"
@@ -97,5 +101,8 @@ HAL_RET_T HAL_CAN_Init(STRU_HAL_CAN_CONFIG *st_halCanConfig);
 */
 HAL_RET_T HAL_CAN_Send(STRU_HAL_CAN_MSG *st_halCanMsg);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

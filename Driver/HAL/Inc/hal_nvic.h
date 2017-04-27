@@ -11,6 +11,11 @@ History:
 #ifndef __HAL_NVIC_H
 #define __HAL_NVIC_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "hal_ret_type.h"
 
 typedef enum
@@ -262,6 +267,9 @@ HAL_RET_T HAL_NVIC_ClearPendingIrq(ENUM_HAL_NVIC_IRQ_NUM e_Irqn);
   */
 HAL_RET_T HAL_NVIC_GetActive(ENUM_HAL_NVIC_IRQ_NUM e_Irqn, uint32_t *p_retActive);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif 
 
