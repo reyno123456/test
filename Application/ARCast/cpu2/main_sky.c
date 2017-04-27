@@ -7,9 +7,9 @@
 #include "hal_sys_ctl.h"
 #include "hal.h"
 
-void console_init(uint32_t uart_num, uint32_t baut_rate)
+void CONSOLE_Init(void)
 {
-    dlog_init(command_run, DLOG_CLIENT_PROCESSOR);
+    DLOG_Init(command_run, DLOG_CLIENT_PROCESSOR);
 }
 /**
   * @brief  Main program
@@ -25,7 +25,7 @@ int main(void)
     HAL_SYS_CTL_Init(pst_cfg);
 
     /* initialize the uart */
-    console_init(2, 115200);   
+    CONSOLE_Init();   
     dlog_info("cpu2 start!!! \n");
 
     STRU_HAL_H264_CONFIG st_h264Cfg;

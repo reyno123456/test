@@ -1561,74 +1561,32 @@ static unsigned char IT6602_DE3DFrame(unsigned char ena_de3d);
 /*  IO Functions   ***********************************************************/
 /*****************************************************************************/
 
-static SYS_STATUS EDID_RAM_Write(unsigned char offset,unsigned char byteno,_CODE unsigned char *p_data )
+static SYS_STATUS EDID_RAM_Write(unsigned char offset,unsigned char byteno, _CODE unsigned char *p_data )
 {
     
-    unsigned char flag;
-    unsigned char *pdata = malloc(byteno+1);
-    if (NULL != pdata)
-    {
-        (*pdata) = offset;
-        memcpy(pdata+1,p_data,byteno);
-        if( byteno>0 )
-        //FIX_ID_002 xxxxx  Check IT6602 chip version Identify for TogglePolarity and Port 1 Deskew
-        flag= I2C_Master_WriteData(IT_66021_I2C_COMPONENT_NUM, RX_I2C_EDID_MAP_ADDR >> 1, pdata, byteno+1);
-        //FIX_ID_002 xxxxx
-        if(flag==0)
-        {
-            dlog_info("====================================\n");
-            dlog_info("IT6602 I2C ERROR !!!");
-            dlog_info("=====  Write Reg0x%X=%X =====  \n",(int)offset,(int)p_data);
-            dlog_info("====================================\n");
-        }
-        free(pdata);
-    }
+    IT_66021_WriteBytes(RX_I2C_EDID_MAP_ADDR, offset, byteno, p_data);
 }
 
 static unsigned char EDID_RAM_Read(unsigned char offset)
 {
-    unsigned char sub_addr_tmp = offset;
-    unsigned char val = 0;
-    I2C_Master_ReadData(IT_66021_I2C_COMPONENT_NUM, RX_I2C_EDID_MAP_ADDR >> 1, &sub_addr_tmp, 1, &val, 1);
-
-    return val;
+    return IT_66021_ReadByte(RX_I2C_EDID_MAP_ADDR,offset);
 }
 
 //===============================================================================//
 static unsigned char IT6602VersionRead( unsigned char RegAddr)
 {
-    unsigned char sub_addr_tmp = RegAddr;
-    unsigned char val = 0;
-    I2C_Master_ReadData(IT_66021_I2C_COMPONENT_NUM, HdmiI2cAddr >> 1, &sub_addr_tmp, 1, &val, 1);
-    return val;
+    return IT_66021_ReadByte(HdmiI2cAddr,RegAddr);
 }
 
 
 static unsigned char hdmirxrd( unsigned char RegAddr)
 {
-    unsigned char sub_addr_tmp = RegAddr;
-    unsigned char val = 0;
-    I2C_Master_ReadData(IT_66021_I2C_COMPONENT_NUM, HdmiI2cAddr >> 1, &sub_addr_tmp, 1, &val, 1);
-    return val;
+    return IT_66021_ReadByte(HdmiI2cAddr,RegAddr);
 }
 
 static unsigned char hdmirxwr( unsigned char RegAddr,unsigned char DataIn)
-{
-
-    unsigned char flag;
-    unsigned char data[2] = {RegAddr,DataIn};
-
-    flag= I2C_Master_WriteData(IT_66021_I2C_COMPONENT_NUM, HdmiI2cAddr >> 1, data, 2);
-    
-//FIX_ID_002 xxxxx
-    if(flag==0)
-    {
-    dlog_info("====================================\n");
-    dlog_info("HDMI I2C ERROR !!!");
-    dlog_info("=====  Write Reg0x%X=%X =====  \n",(int)RegAddr,(int)DataIn);
-    dlog_info("====================================\n");
-    }
-    return !flag;
+{    
+    return IT_66021_WriteByte(HdmiI2cAddr, RegAddr, DataIn);
 }
 
 static unsigned char  hdmirxset( unsigned char  offset, unsigned char  mask, unsigned char  ucdata )
@@ -1641,25 +1599,7 @@ static unsigned char  hdmirxset( unsigned char  offset, unsigned char  mask, uns
 
 static void hdmirxbwr( unsigned char offset, unsigned char byteno, _CODE unsigned char *rddata )
 {
-    unsigned char flag;
-    unsigned char *pdata = malloc(byteno+1);
-    if (NULL != pdata)
-    {
-        (*pdata) = offset;
-        memcpy(pdata+1,rddata,byteno);
-        if( byteno>0 )
-        //FIX_ID_002 xxxxx  Check IT6602 chip version Identify for TogglePolarity and Port 1 Deskew
-        flag= I2C_Master_WriteData(IT_66021_I2C_COMPONENT_NUM, HdmiI2cAddr >> 1, pdata, byteno+1);
-        //FIX_ID_002 xxxxx
-        if(flag==0)
-        {
-            dlog_info("====================================\n");
-            dlog_info("IT6602 I2C ERROR !!!");
-            dlog_info("=====  Write Reg0x%X=%X =====  \n",(int)offset,(int)rddata);
-            dlog_info("====================================\n");
-        }
-        free(pdata);
-    }
+    IT_66021_WriteBytes(HdmiI2cAddr, offset, byteno, rddata);
 }
 
 //FIX_ID_036	xxxxx //Enable MHL Function for IT68XX

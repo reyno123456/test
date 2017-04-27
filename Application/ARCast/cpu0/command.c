@@ -3,7 +3,6 @@
 #include "command.h"
 #include "debuglog.h"
 #include "test_hal_nv.h"
-#include "test_storagedatausb.h"
 #include "hal_dma.h"
 #include "md5.h"
 #include "data_type.h"
@@ -29,10 +28,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_writeMemory(cmdArray[1], cmdArray[2]);
     }
-    else if (memcmp(cmdArray[0], "storageaudio", strlen("storageaudio")) == 0)
-    {
-        writeAudioPcm(cmdArray[1]);
-    }
     else if (memcmp(cmdArray[0], "sky_auto_search_rc_id", strlen("sky_auto_search_rc_id")) == 0)
     {
         command_TestNvSkyAutoSearhRcId();
@@ -45,7 +40,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestNvSetBbRcId(cmdArray[1],cmdArray[2],cmdArray[3],cmdArray[4],cmdArray[5]);
     }
-	else if (memcmp(cmdArray[0], "test_dma_cpu0", strlen("test_dma_cpu0")) == 0)
+    else if (memcmp(cmdArray[0], "test_dma_cpu0", strlen("test_dma_cpu0")) == 0)
     {
         command_dma(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
@@ -58,12 +53,11 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("Please use the commands like:");
         dlog_error("read <address>");
         dlog_error("write <address> <data>");
-        dlog_error("storageaudio <d1>");
         dlog_error("sky_auto_search_rc_id");
         dlog_error("NvResetBbRcId");
         dlog_error("NvSetBbRcId <id1> <id2> <id3> <id4> <id5>");
-		dlog_error("test_dma_cpu0 <src> <dst> <byte_num>");
-		dlog_error("test_dma_loop <src> <dst> <byte_num>");
+        dlog_error("test_dma_cpu0 <src> <dst> <byte_num>");
+        dlog_error("test_dma_loop <src> <dst> <byte_num>");
         dlog_output(1000);
     }
 }
@@ -143,8 +137,8 @@ static void command_dma(char * u32_src, char *u32_dst, char *u32_byteNum)
 
 
     HAL_DMA_Start(iSrcAddr, iDstAddr, iNum, DMA_AUTO, DMA_LINK_LIST_ITEM);
-	
-	/* use to fake the dst data */
+    
+    /* use to fake the dst data */
 #if 0
     unsigned char *p_reg;
     p_reg = (unsigned char *)0x81800000;
@@ -204,12 +198,12 @@ static void command_dma(char * u32_src, char *u32_dst, char *u32_byteNum)
 
 static void command_test_dma_loop(char * u32_src, char *u32_dst, char *u32_byteNum)
 {
-	unsigned int i = 0;
-	
-	while(1)
-	{
-		command_dma(u32_src, u32_dst, u32_byteNum);
-		dlog_info("i = %d\n", i++);
-	}
+    unsigned int i = 0;
+    
+    while(1)
+    {
+        command_dma(u32_src, u32_dst, u32_byteNum);
+        dlog_info("i = %d\n", i++);
+    }
 }
 

@@ -1,5 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include "data_type.h"
 #include "memory_config.h"
 #include "it_define.h"
@@ -8,6 +10,7 @@
 #include "debuglog.h"
 #include "sys_event.h"
 #include "systicks.h"
+#include "interrupt.h"
 
 #include "config.h"
 #include "Utility.h"
@@ -123,18 +126,64 @@ static unsigned char adv_i2c_addr_table[][3] =
     {0xFF, 0xFF, 0xFF}                          //End flag
 };
 
-void IT_66021_WriteByte(uint8_t slv_addr, uint8_t sub_addr, uint8_t val)
+uint8_t IT_66021_WriteByte(uint8_t slv_addr, uint8_t sub_addr, uint8_t val)
 {
-    unsigned char data[2] = {sub_addr, val};
-    I2C_Master_WriteData(IT_66021_I2C_COMPONENT_NUM, slv_addr >> 1, data, 2);
+    uint8_t flag;
+    uint8_t data[2] = {sub_addr, val};
+    flag = I2C_Master_WriteData(IT_66021_I2C_COMPONENT_NUM, slv_addr >> 1, data, 2);
+    if(flag==0)
+    {
+        dlog_info("=====  Write Reg0x%X=%X data error=====  \n",sub_addr,val);
+        return flag;
+    }
+    I2C_Master_WaitTillIdle(IT_66021_I2C_COMPONENT_NUM, IT_66021_I2C_I2C_MAX_DELAY_MS);
+    if(flag==0)
+    {
+        dlog_info("=====  Write Reg0x%X=%X timeout=====  \n",sub_addr,val);
+        return flag;
+    }
+    return 0;
 }
+
 
 uint8_t IT_66021_ReadByte(uint8_t slv_addr, uint8_t sub_addr)
 {
-    unsigned char sub_addr_tmp = sub_addr;
-    unsigned char val = 0;
+    uint8_t sub_addr_tmp = sub_addr;
+    uint8_t val = 0;
     I2C_Master_ReadData(IT_66021_I2C_COMPONENT_NUM, slv_addr >> 1, &sub_addr_tmp, 1, &val, 1);
+    I2C_Master_WaitTillIdle(IT_66021_I2C_COMPONENT_NUM, IT_66021_I2C_I2C_MAX_DELAY_MS);
     return val;
+}
+
+uint8_t IT_66021_WriteBytes(uint8_t slv_addr, uint8_t sub_addr, uint8_t byteno, uint8_t *p_data)
+{
+    uint8_t flag;
+    uint8_t *pdata = malloc(byteno+1);
+    if (NULL != pdata)
+    {
+        (*pdata) = sub_addr;
+        memcpy(pdata+1, p_data, byteno);
+        if( byteno>0 )
+        {
+            flag = I2C_Master_WriteData(IT_66021_I2C_COMPONENT_NUM, slv_addr >> 1, pdata, byteno+1);
+        }        
+        if(flag==0)
+        {
+            dlog_info("=====  Write Reg0x%X=%X data error=====  \n",sub_addr,(int)p_data);
+            free(pdata);
+            return flag;
+        }
+        I2C_Master_WaitTillIdle(IT_66021_I2C_COMPONENT_NUM, IT_66021_I2C_I2C_MAX_DELAY_MS);
+        //FIX_ID_002 xxxxx
+        if(flag==0)
+        {
+            dlog_info("=====  Write Reg0x%X=%X timeout=====  \n",sub_addr,(int)p_data);
+            free(pdata);
+            return flag;
+        }
+        free(pdata);
+    }
+    return 0;
 }
 
 void IT_66021_Set(unsigned char slv_addr, unsigned char sub_addr, unsigned char mask, unsigned char val)
@@ -191,6 +240,9 @@ static void IT_66021_I2CInitial(void)
     if (i2c_initialized == 0)
     {
         I2C_Init(IT_66021_I2C_COMPONENT_NUM, I2C_Master_Mode, RX_I2C_IO_MAP_ADDR >> 1, I2C_Fast_Speed);
+        INTR_NVIC_SetIRQPriority(I2C_INTR2_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_I2C_DEFAULT,0));
+        reg_IrqHandle(I2C_INTR2_VECTOR_NUM, I2C_Master_IntrSrvc, NULL);
+        INTR_NVIC_EnableIRQ(I2C_INTR2_VECTOR_NUM);
         msleep(100);
         i2c_initialized = 1;
     }

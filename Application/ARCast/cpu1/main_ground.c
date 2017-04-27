@@ -3,11 +3,11 @@
 #include "sys_event.h"
 #include "hal.h"
 #include "hal_sys_ctl.h"
-#include "hal_uart.h"
+
 
 void CONSOLE_Init(void)
 {
-    DLOG_Init(command_run, DLOG_CLIENT_PROCESSOR);
+    dlog_init(command_run, DLOG_CLIENT_PROCESSOR);
 }
 
 /**
@@ -21,12 +21,12 @@ int main(void)
 
     /* initialize the uart */
     CONSOLE_Init();
-    DLOG_Info("cpu1 start!!! \n");
+    dlog_info("cpu1 start!!! \n");
 
     /* We should never get here as control is now taken by the scheduler */
     for( ;; )
     {
-       ;
+        SYS_EVENT_Process();
+        HAL_Delay(20);
     }
 } 
-

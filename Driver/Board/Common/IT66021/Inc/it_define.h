@@ -27,4 +27,5 @@
 
 #define MAX_TABLE_ITEM_COUNT            (2000)
 
+#define IT_66021_I2C_I2C_MAX_DELAY_MS   (2)
 #endif

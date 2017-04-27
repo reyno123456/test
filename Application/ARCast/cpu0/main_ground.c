@@ -11,8 +11,8 @@
 #include "hal_sys_ctl.h"
 #include "wireless_interface.h"
 #include "hal_nv.h"
-#include "hal_uart.h"
 #include "hal_gpio.h"
+#include "hal_uart.h"
 
 void CONSOLE_Init(void)
 {
@@ -83,5 +83,3 @@ int main(void)
     {
     }
 }
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

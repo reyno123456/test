@@ -22,7 +22,7 @@
 #include "typedef.h"
 #include "it6602.h"
 
-void console_init(uint32_t uart_num, uint32_t baut_rate)
+void CONSOLE_Init(void)
 {
     HAL_UART_Init(DEBUG_LOG_UART_PORT, HAL_UART_BAUDR_115200, NULL);
     dlog_init(command_run, DLOG_SERVER_PROCESSOR);
@@ -47,7 +47,7 @@ int main(void)
     pst_cfg->u8_workMode = 0;
     HAL_SYS_CTL_Init(pst_cfg);
     /* initialize the uart */
-    console_init(0,115200);
+    CONSOLE_Init();
     dlog_info("cpu0 start!!! \n");
 
     HAL_GPIO_InPut(HAL_GPIO_NUM99);

@@ -28,8 +28,9 @@ void IT_66021_DumpOutDefaultSettings(uint8_t index);
 void IT_66021_GetVideoFormat(uint8_t index, uint16_t* widthPtr, uint16_t* hightPtr, uint8_t* framteratePtr);
 void IT_66021_GetAudioSampleRate(uint8_t index, uint32_t* sampleRate);
 void IT_66021_GetVideo(uint8_t index, uint16_t* widthPtr, uint16_t* hightPtr, uint8_t* framteratePtr);
-void IT_66021_WriteByte(uint8_t slv_addr, uint8_t sub_addr, uint8_t val);
+uint8_t IT_66021_WriteByte(uint8_t slv_addr, uint8_t sub_addr, uint8_t val);
 uint8_t IT_66021_ReadByte(uint8_t slv_addr, uint8_t sub_addr);
+uint8_t IT_66021_WriteBytes(uint8_t slv_addr, uint8_t sub_addr, uint8_t byteno, uint8_t *p_data);
 void IT_66021_Set(unsigned char slv_addr, unsigned char sub_addr, unsigned char mask, unsigned char val);
 void IT_66021_ChangeBank(uint8_t index, uint8_t bank);
 

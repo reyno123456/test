@@ -24,24 +24,26 @@ CPU_NUMBER = cpu0
 CFLAGS += $(CPU0_CFLAGS)
 
 # libs
-LD_LIBS := -lfreertos -lutility -lfatfs -lhal -lboard -lAR8020drv -lmp3enc -lmp3dec -lm -lcommon -lsimplec -lgcc
 
-LDFLAGS += -Bstatic
-LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) -L$(CROSS_COMPILE_LIB_PATH) $(LD_LIBS)
 
 # source file(s), including *.s *.c file(s)
 SRC_S   := start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
-SRC_C   := main_sky.c command.c test_usbh.c upgrade.c test_hal_nv.c test_storagedatausb.c 
+LD_LIBS := -lutility -lfatfs -lhal -lboard -lAR8020drv -lmp3enc -lmp3dec -lm -lcommon -lsimplec -lgcc
+SRC_C   := main_sky.c command.c test_hal_nv.c 
 
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
-SRC_C   := main_ground.c command.c  test_usbh.c upgrade.c test_hal_nv.c test_storagedatausb.c 
+LD_LIBS = -lfreertos -lutility -lfatfs -lhal -lboard -lAR8020drv -lmp3enc -lmp3dec -lm -lcommon -lsimplec -lgcc
+SRC_C   := main_ground.c command.c test_hal_nv.c test_usbh.c
 endif
 
 CFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
+
+LDFLAGS += -Bstatic
+LDFLAGS += -L$(OUTPUT_LIB_STAGING_DIR) -L$(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER) -L$(CROSS_COMPILE_LIB_PATH) $(LD_LIBS)
 
 # object file(s)
 OBJ_C   := $(patsubst %.s,%.o,$(SRC_S)) $(patsubst %.c,%.o,$(SRC_C))
