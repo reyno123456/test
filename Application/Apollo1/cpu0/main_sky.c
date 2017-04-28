@@ -57,7 +57,7 @@ int main(void)
     STRU_HDMI_CONFIGURE        st_configure;
 
 
-    st_configure.e_getFormatMethod = HAL_HDMI_INTERRUPT;
+    st_configure.e_getFormatMethod = HAL_HDMI_POLLING;
     st_configure.st_interruptGpio.e_interruptGpioNum = HAL_GPIO_NUM98;
     st_configure.st_interruptGpio.e_interruptGpioPolarity = HAL_GPIO_ACTIVE_HIGH;
     st_configure.st_interruptGpio.e_interruptGpioTypy = HAL_GPIO_EDGE_SENUMSITIVE;
