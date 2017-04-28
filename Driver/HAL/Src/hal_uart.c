@@ -100,13 +100,15 @@ HAL_RET_T HAL_UART_Init(ENUM_HAL_UART_COMPONENT e_uartComponent,
 *                                 can be used by application.
 *         pu8_txBuf               The transmit buffer pointer to be sent out by uart.
 *         u32_len                 The transmit buffer size in byte. 
+*         u32_timeoutms           timeout ms. 
 * @retval HAL_OK                  means the UART data write is well done.
 *         HAL_UART_ERR_WRITE_DATA means some error happens in the UART data .
 * @note   None.
 */
 HAL_RET_T HAL_UART_TxData(ENUM_HAL_UART_COMPONENT e_uartComponent, 
                           uint8_t *pu8_txBuf, 
-                          uint32_t u32_len)
+                          uint32_t u32_len,
+                          uint32_t u32_timeoutms)
 {
     uint8_t u8_uartCh;
     uint32_t u32_uartTxCnt = 0;
@@ -127,12 +129,9 @@ HAL_RET_T HAL_UART_TxData(ENUM_HAL_UART_COMPONENT e_uartComponent,
 
     u8_uartCh = (uint8_t)(e_uartComponent);
 
-    while(u32_uartTxCnt < u32_len)
-    {
-        uart_putc(u8_uartCh, pu8_txBuf[u32_uartTxCnt]);    
-        u32_uartTxCnt += 1;
-    }
+    uart_putdata(u8_uartCh, pu8_txBuf, u32_len);
 
+    Uart_WaitTillIdle(u8_uartCh, u32_timeoutms);
     return HAL_OK;
 }
 

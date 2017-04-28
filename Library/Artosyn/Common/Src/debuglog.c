@@ -93,6 +93,9 @@ __attribute__((weak)) void uart_putFifo(unsigned char index)
 {
 }
 
+__attribute__((weak)) int32_t Uart_WaitTillIdle(unsigned char index, uint32_t timeOut)
+{
+}
 
 __attribute__((weak)) HAL_RET_T HAL_UART_Init(ENUM_HAL_UART_COMPONENT e_uartComponent, 
                         ENUM_HAL_UART_BAUDR e_uartBaudr, 
@@ -535,13 +538,16 @@ unsigned int DLOG_Output(unsigned int byte_num)
                 if ((*tmpsrc != DEBUG_LOG_END))
                 {
                     uart_puts(DEBUG_LOG_UART_PORT, tmp_buf);
+                    Uart_WaitTillIdle(DEBUG_LOG_UART_PORT, UART_DEFAULT_TIMEOUTMS);
                     uart_putc(DEBUG_LOG_UART_PORT, '\r');
+                    Uart_WaitTillIdle(DEBUG_LOG_UART_PORT, UART_DEFAULT_TIMEOUTMS);
                     iByte += tmp_buf_index;
                 }
                 else
                 {   
                     tmp_buf[tmp_buf_index-1]='\0';
                     uart_puts(DEBUG_LOG_UART_PORT, tmp_buf);
+                    Uart_WaitTillIdle(DEBUG_LOG_UART_PORT, UART_DEFAULT_TIMEOUTMS);
                     iByte += (tmp_buf_index-1);
                 }
                                
@@ -596,9 +602,11 @@ int puts(const char * s)
             if (c == '\n')
             {
                 uart_putc(DEBUG_LOG_UART_PORT, '\r');
+                Uart_WaitTillIdle(DEBUG_LOG_UART_PORT, UART_DEFAULT_TIMEOUTMS);
             }
             
             uart_putc(DEBUG_LOG_UART_PORT, c);
+            Uart_WaitTillIdle(DEBUG_LOG_UART_PORT, UART_DEFAULT_TIMEOUTMS);
         }
     }
     

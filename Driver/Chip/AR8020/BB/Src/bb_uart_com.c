@@ -309,6 +309,7 @@ uint8_t BB_UARTComSendMsg(ENUM_BBUARTCOMSESSIONID session_id, uint8_t* data_buf,
     uint8_t unalign_block_byte = length % BBCOM_UART_RX_BUF_SIZE;
     uint8_t length_tmp = 0;
     uint8_t* data_buf_tmp = data_buf;
+    uint8_t data[256] = {0};
 
     BB_UARTComLockAccquire();
 
@@ -327,37 +328,41 @@ uint8_t BB_UARTComSendMsg(ENUM_BBUARTCOMSESSIONID session_id, uint8_t* data_buf,
         iTotalCnt = 0;
         for (iCnt = 0; iCnt < sizeof(header); iCnt++)
         {
-            uart_putc(BBCOM_UART_INDEX, header[iCnt]);
+            data[iTotalCnt] = header[iCnt];
             iTotalCnt++;
         }
 
         // Session ID
-        uart_putc(BBCOM_UART_INDEX, session_id);
+        data[iTotalCnt] = session_id;
         iTotalCnt++;
 
         // Data length
-        uart_putc(BBCOM_UART_INDEX, length_tmp);
+        data[iTotalCnt] = length_tmp;
         iTotalCnt++;
         
         // Data
         check_sum = 0;
         for (iCnt = 0; iCnt < length_tmp; iCnt++)
         {
-            uart_putc(BBCOM_UART_INDEX, data_buf_tmp[iCnt]);
+            data[iTotalCnt] = data_buf_tmp[iCnt];
             check_sum += data_buf_tmp[iCnt];
             iTotalCnt++;
         }
 
         // Checksum
-        uart_putc(BBCOM_UART_INDEX, check_sum);
+        data[iTotalCnt] = check_sum;
         iTotalCnt++;
 
         // Pad "0" when not aligned by 16 bytes
+        uint8_t iTotalCntTmp = iTotalCnt;
         iTotalCnt = 16 - (iTotalCnt % 16);
         for (iCnt = 0; iCnt < iTotalCnt; iCnt++)
         {
-            uart_putc(BBCOM_UART_INDEX, 0);
+            data[iTotalCntTmp++] = 0;
         }
+
+        uart_putdata(BBCOM_UART_INDEX,  data, iTotalCntTmp);
+        Uart_WaitTillIdle(BBCOM_UART_INDEX, UART_DEFAULT_TIMEOUTMS);
 
         if (align_block_num > 0)
         {

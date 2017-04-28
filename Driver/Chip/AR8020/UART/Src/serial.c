@@ -6,6 +6,7 @@
 #include "cpu_info.h"
 #include "interrupt.h"
 #include "serial.h"
+#include "systicks.h"
 
 #include "hal_uart.h"
 
@@ -135,6 +136,26 @@ uint8_t uart_checkoutFifoStatus(unsigned char index)
         return 1;
     }
 }
+
+int32_t Uart_WaitTillIdle(unsigned char index, uint32_t timeOut)
+{
+    uint32_t start;
+    
+    if (0 != timeOut)
+    {
+        start = SysTicks_GetTickCount();
+        while (uart_checkoutFifoStatus(index))
+        {
+            if ((SysTicks_GetDiff(start, SysTicks_GetTickCount())) >= timeOut)
+            {
+                return -1;
+            }
+        }
+    }
+
+    return 0;
+}
+
 void uart_putFifo(unsigned char index)
 {
     volatile uart_type *uart_regs;
@@ -182,13 +203,6 @@ void uart_putFifo(unsigned char index)
 static char s_s8_uartchartmp = '\0';
 void uart_putc(unsigned char index, char c)
 {
-
-    
-    while (uart_checkoutFifoStatus(index))
-    {
-        ;
-    }
-
     volatile uart_type *uart_regs;
     uart_regs = get_uart_type_by_index(index);
     
@@ -200,8 +214,6 @@ void uart_putc(unsigned char index, char c)
         return ;        
     }
 
-    //uart_regs->RBR_THR_DLL = c;
-
     s_st_uartTxArray[index].u16_uartSendBuffLen = 1;
     s_st_uartTxArray[index].u16_uartSendBuffLentmp = 0;
     s_st_uartTxArray[index].ps8_uartSendBuff = &s_s8_uartchartmp;
@@ -211,11 +223,6 @@ void uart_putc(unsigned char index, char c)
 
 void uart_puts(unsigned char index, const char *s)
 {
-    while (uart_checkoutFifoStatus(index))
-    {
-        ;
-    }
-
     volatile uart_type *uart_regs;
     uart_regs = get_uart_type_by_index(index);
 
@@ -231,6 +238,25 @@ void uart_puts(unsigned char index, const char *s)
 
     uart_regs->DLH_IER |= UART_DLH_IER_TX_INT;
 }
+
+void uart_putdata(unsigned char index,  const char *s, unsigned short dataLen)
+{
+    volatile uart_type *uart_regs;
+    uart_regs = get_uart_type_by_index(index);
+
+    s_st_uartTxArray[index].u16_uartSendBuffLen = dataLen;
+    s_st_uartTxArray[index].u16_uartSendBuffLentmp = 0;
+    s_st_uartTxArray[index].ps8_uartSendBuff = s;
+
+    if (NULL == uart_regs || (0 == s_st_uartTxArray[index].u16_uartSendBuffLen))
+    {
+        dlog_error("uart_regs = NULL uart index=%d || u16_uartSendBuffLen ==0 \n",index);
+        return ;        
+    }
+
+    uart_regs->DLH_IER |= UART_DLH_IER_TX_INT;
+}
+
 
 char uart_getc(unsigned char index)
 {

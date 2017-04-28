@@ -50,6 +50,7 @@ typedef enum
     HAL_UART_BAUDR_460800       // 8
 } ENUM_HAL_UART_BAUDR;
 
+#define HAL_UART_DEFAULT_TIMEOUTMS                   (2)
 /**
 * @brief  The UART initialization function which must be called 
 *         before using the UART controller.
@@ -77,13 +78,15 @@ HAL_RET_T HAL_UART_Init(ENUM_HAL_UART_COMPONENT e_uartComponent,
 *                                 can be used by application.
 *         pu8_txBuf               The transmit buffer pointer to be sent out by uart.
 *         u32_len                 The transmit buffer size in byte. 
+*         u32_timeoutms           timeout ms. 
 * @retval HAL_OK                  means the UART data write is well done.
 *         HAL_UART_ERR_WRITE_DATA means some error happens in the UART data .
 * @note   None.
 */
 HAL_RET_T HAL_UART_TxData(ENUM_HAL_UART_COMPONENT e_uartComponent, 
                           uint8_t *pu8_txBuf, 
-                          uint32_t u32_len);
+                          uint32_t u32_len,
+                          uint32_t u32_timeoutms);
 
 #ifdef __cplusplus
 }

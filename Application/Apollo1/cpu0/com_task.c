@@ -166,7 +166,7 @@ static void COMTASK_Rx0Function(void const *argument)
     
         cnt = BB_UARTComReceiveMsg(BB_UART_COM_SESSION_1, rx_buf0, sizeof(rx_buf0));
 
-        HAL_UART_TxData(HAL_UART_COMPONENT_3, rx_buf0, cnt);
+        HAL_UART_TxData(HAL_UART_COMPONENT_3, rx_buf0, cnt, HAL_UART_DEFAULT_TIMEOUTMS);
 
         osDelay(20);
     }
@@ -182,7 +182,7 @@ static void COMTASK_Rx1Function(void const *argument)
         
         cnt = BB_UARTComReceiveMsg(BB_UART_COM_SESSION_2, rx_buf1, sizeof(rx_buf1));
 
-        HAL_UART_TxData(HAL_UART_COMPONENT_4, rx_buf1, cnt);
+        HAL_UART_TxData(HAL_UART_COMPONENT_4, rx_buf1, cnt, HAL_UART_DEFAULT_TIMEOUTMS);
 
         osDelay(20);
     }

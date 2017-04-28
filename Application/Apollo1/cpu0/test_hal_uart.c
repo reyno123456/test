@@ -45,7 +45,8 @@ void command_TestHalUartTx(unsigned char *ch, unsigned char *len)
         u8_data = u16_i;
         HAL_UART_TxData((ENUM_HAL_UART_COMPONENT)(u32_ch), 
                         &u8_data, 
-                        1);
+                        1,
+                        HAL_UART_DEFAULT_TIMEOUTMS);
     }
 }
 
@@ -56,7 +57,8 @@ void command_TestHalUartRx(unsigned char *ch)
     
     HAL_UART_TxData((ENUM_HAL_UART_COMPONENT)(u32_ch), 
                      s_u8_uartRxBuf, 
-                     s_u8_uartRxLen);
+                     s_u8_uartRxLen,
+                     HAL_UART_DEFAULT_TIMEOUTMS);
     s_u8_uartRxLen = 0;
 }
 
