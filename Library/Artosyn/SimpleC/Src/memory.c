@@ -358,16 +358,6 @@ void nano_free (RARG void * free_p)
 
 /* newlib nano_malloc and nano_free end */
 
-void *malloc_simple(size_t size)
-{
-    return nano_malloc(size);
-}
-
-void free_simple(void *ap)
-{
-    nano_free(ap);
-}
-
 __attribute__((weak)) void *malloc(size_t size)
 {
     return nano_malloc(size);
