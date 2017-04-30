@@ -4,6 +4,7 @@
 #include "gpio.h"
 #include "debuglog.h" 
 #include "reg_rw.h"
+#include "interrupt.h"
 
 
 //#define GPIO_DEBUGE
@@ -75,67 +76,74 @@ void GPIO_ModeListList(uint32_t *pList, uint32_t size, uint32_t *mode)
     }
 }
 
-void GPIO_SetPinHi(uint32_t gpioNum)
-{
-    uint32_t u32_RegNoAddr = 0;
-    uint32_t u32_PinNoAddr = 0;
-    uint32_t u32_GroupNoAddr = 0;
-    uint8_t u8_RegNo = 0;
-    uint8_t u8_PinNo = 0;
-    uint8_t u8_GroupNo = 0;
-    uint32_t u32_GpioRegVal = 0;
-    
-    
-    u8_GroupNo = (gpioNum>>5);
-    u8_RegNo = (gpioNum%32)>>3;
-    u8_PinNo = (gpioNum%32)%8;
-    
-    
-    u32_GroupNoAddr = u8_GroupNo*0x40000 + GPIO0_BASE_ADDR;
-    u32_RegNoAddr = u8_RegNo*0x0C + GPIO_DATA_A_OFFSET;
-    
-    u32_GpioRegVal = Reg_Read32(u32_GroupNoAddr + u32_RegNoAddr);
-   	u32_GpioRegVal |= (1 << u8_PinNo);
-    Reg_Write32(u32_GroupNoAddr + u32_RegNoAddr, u32_GpioRegVal);
-
-    DLOG_INFO("\n SetPinHi  %x %x %d %d %d\n",u32_GroupNoAddr + u32_RegNoAddr,
-        Reg_Read32(u32_GroupNoAddr + u32_RegNoAddr),u8_GroupNo,u8_RegNo,u8_PinNo);
-}
-
-void GPIO_SetPinLo(uint32_t gpioNum)
-{
-    uint32_t u32_RegNoAddr = 0;
-    uint32_t u32_PinNoAddr = 0;
-    uint32_t u32_GroupNoAddr = 0;
-    uint8_t u8_RegNo = 0;
-    uint8_t u8_PinNo = 0;
-    uint8_t u8_GroupNo = 0;
-    uint32_t u32_GpioRegVal = 0;
-    
-    
-    u8_GroupNo = (gpioNum>>5);
-    u8_RegNo = (gpioNum%32)>>3;
-    u8_PinNo = (gpioNum%32)%8;
-    
-    
-    u32_GroupNoAddr = u8_GroupNo*0x40000 + GPIO0_BASE_ADDR;
-    u32_RegNoAddr = u8_RegNo*0x0C + GPIO_DATA_A_OFFSET;
-
-    u32_GpioRegVal = Reg_Read32(u32_GroupNoAddr + u32_RegNoAddr);
-   	u32_GpioRegVal &= ~(1 << u8_PinNo);
-    Reg_Write32(u32_GroupNoAddr + u32_RegNoAddr, u32_GpioRegVal);
-
-    DLOG_INFO("\n SetPinLo %x\n",Reg_Read32(u32_GroupNoAddr + u32_RegNoAddr));
-}
-
 void GPIO_SetPin(uint32_t gpioNum, uint32_t value)
 {
     DLOG_INFO("\n SetPin \n");
     
+    uint32_t u32_RegNoAddr = 0;
+    uint32_t u32_GroupNoAddr = 0;
+    uint8_t u8_PinNo = ((gpioNum%32)%8);
+    
+    switch((gpioNum>>5))
+    {
+        case 0:
+        {
+            u32_GroupNoAddr = GPIO0_BASE_ADDR;
+            break;
+        }
+        case 1:
+        {
+            u32_GroupNoAddr = GPIO1_BASE_ADDR;
+            break;
+        }
+        case 2:
+        {
+            u32_GroupNoAddr = GPIO2_BASE_ADDR;
+            break;
+        }
+        case 3:
+        {
+            u32_GroupNoAddr = GPIO3_BASE_ADDR;
+            break;
+        }
+        default:
+            return ;
+    }
+    switch(((gpioNum%32)>>3))
+    {
+        case 0:
+        {
+            u32_RegNoAddr = GPIO_DATA_A_OFFSET;
+            break;
+        }
+        case 1:
+        {
+            u32_RegNoAddr = GPIO_DATA_B_OFFSET;
+            break;
+        }
+        case 2:
+        {
+            u32_RegNoAddr = GPIO_DATA_C_OFFSET;
+            break;
+        }
+        case 3:
+        {
+            u32_RegNoAddr = GPIO_DATA_D_OFFSET;
+            break;
+        }
+        default:
+            return ;
+    }
+
     if (value == 0)
-        GPIO_SetPinLo(gpioNum);
+    {
+        Reg_Write32_Mask(u32_GroupNoAddr + u32_RegNoAddr, 0, (1 << u8_PinNo));
+    }
     else
-        GPIO_SetPinHi(gpioNum);
+    {
+        Reg_Write32_Mask(u32_GroupNoAddr + u32_RegNoAddr, (1 << u8_PinNo), (1 << u8_PinNo));
+    }
+
 }
 #if MULTIPLE
 void GPIO_SetPinRange(uint32_t gpioNum1, uint32_t gpioNum2, uint32_t mode)
@@ -409,6 +417,7 @@ void GPIO_SetPinDebounce(uint32_t gpioNum, uint32_t mode)
     DLOG_INFO("\n SetPinDebounce %x\n",Reg_Read32(u32_GroupNoAddr + GPIO_DEBOUNCE_OFFSET));
 }
 #endif
+
 uint32_t GPIO_Intr_GetIntrStatus(uint32_t gpioNum)
 {
     uint32_t u32_GroupNoAddr = 0;
@@ -427,6 +436,40 @@ uint32_t GPIO_Intr_GetIntrStatus(uint32_t gpioNum)
     u32_GpioRegVal = Reg_Read32(u32_GroupNoAddr + GPIO_INTSTATUS_OFFSET);
     return ((u32_GpioRegVal >> u8_PinNo) & 1);
 }
+
+uint32_t GPIO_Intr_GetIntrGroupStatus(uint32_t u32_vectorNum)
+{
+    uint32_t u32_GroupNoAddr = 0;
+   
+    switch(u32_vectorNum)
+    {
+        case GPIO_INTR_N0_VECTOR_NUM:
+        {
+            u32_GroupNoAddr = GPIO0_BASE_ADDR;
+            break;
+        }
+        case GPIO_INTR_N1_VECTOR_NUM:
+        {
+            u32_GroupNoAddr = GPIO1_BASE_ADDR;
+            break;
+        }
+        case GPIO_INTR_N2_VECTOR_NUM:
+        {
+            u32_GroupNoAddr = GPIO2_BASE_ADDR;
+            break;
+        }
+        case GPIO_INTR_N3_VECTOR_NUM:
+        {
+            u32_GroupNoAddr = GPIO3_BASE_ADDR;
+            break;
+        }
+        default:
+            return 0;
+    }
+
+    return Reg_Read32(u32_GroupNoAddr + GPIO_INTSTATUS_OFFSET);
+}
+
 uint32_t GPIO_Intr_GetRawIntrStatus(uint32_t gpioNum)
 {
     uint32_t u32_GroupNoAddr = 0;
@@ -463,4 +506,38 @@ void GPIO_Intr_ClearIntr(uint32_t gpioNum)
     DLOG_INFO("\n ClearInt %x %x \n",u32_GpioRegVal,GPIO_Intr_GetIntrStatus(gpioNum));
     u32_GpioRegVal |= 1 << u8_PinNo;
     Reg_Write32(u32_GroupNoAddr + GPIO_CLEARINT_OFFSET, u32_GpioRegVal);
+}
+
+void GPIO_Intr_ClearIntrGroup(uint32_t u32_vectorNum, uint8_t u8_flag)
+{
+   
+    uint32_t u32_GroupNoAddr = 0;
+   
+    switch(u32_vectorNum)
+    {
+        case GPIO_INTR_N0_VECTOR_NUM:
+        {
+            u32_GroupNoAddr = GPIO0_BASE_ADDR + GPIO_CLEARINT_OFFSET;
+            break;
+        }
+        case GPIO_INTR_N1_VECTOR_NUM:
+        {
+            u32_GroupNoAddr = GPIO1_BASE_ADDR + GPIO_CLEARINT_OFFSET;
+            break;
+        }
+        case GPIO_INTR_N2_VECTOR_NUM:
+        {
+            u32_GroupNoAddr = GPIO2_BASE_ADDR + GPIO_CLEARINT_OFFSET;
+            break;
+        }
+        case GPIO_INTR_N3_VECTOR_NUM:
+        {
+            u32_GroupNoAddr = GPIO3_BASE_ADDR + GPIO_CLEARINT_OFFSET;
+            break;
+        }
+        default:
+            return ;
+    }
+
+    Reg_Write32(u32_GroupNoAddr, u8_flag);
 }

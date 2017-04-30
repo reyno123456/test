@@ -144,8 +144,9 @@ uint8_t TIM_RegisterPwm(init_timer_st time_st, uint32_t low_us, uint32_t high_us
     {
         return TIMER_GETCLOCKFAIL;
     }
-    uint32_t u32_TimLow = u16_TimerClock * low_us;
-    uint32_t u32_TimHigh = u16_TimerClock * high_us;
+
+    uint32_t u32_TimLow = u16_TimerClock * low_us - 1;
+    uint32_t u32_TimHigh = u16_TimerClock * high_us - 1;
 
     
     if(u8_TimNum > 7 || time_st.base_time_group > 2)

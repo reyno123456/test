@@ -100,5 +100,7 @@ void GPIO_Intr_SetPinIntrPol(uint32_t gpioNum, uint32_t mode);
 uint32_t GPIO_Intr_GetIntrStatus(uint32_t gpioNum);
 uint32_t GPIO_Intr_GetRawIntrStatus(uint32_t gpioNum);
 void GPIO_Intr_ClearIntr(uint32_t gpioNum);
+uint32_t GPIO_Intr_GetIntrGroupStatus(uint32_t u32_vectorNum);
+void GPIO_Intr_ClearIntrGroup(uint32_t u32_vectorNum, uint8_t u8_flag);
 
 #endif

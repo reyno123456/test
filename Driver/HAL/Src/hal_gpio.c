@@ -166,24 +166,24 @@ HAL_RET_T HAL_GPIO_RegisterInterrupt(ENUM_HAL_GPIO_NUM e_gpioPin,
     }
     
     g_pv_GpioVectorListArray[e_gpioPin>>5][(e_gpioPin%32)%8] = fun_callBack;
-    reg_IrqHandle(GPIO_INTR_N0_VECTOR_NUM + (e_gpioPin>>5), g_pv_GpioVectorNumArray[e_gpioPin>>5], GPIO_ClearNvic);    
+    reg_IrqHandle(GPIO_INTR_N0_VECTOR_NUM + (e_gpioPin>>5), g_pv_GpioVectorNumArray[e_gpioPin>>5], NULL);    
     
     GPIO_SetPinDirect(e_gpioPin, GPIO_DATA_DIRECT_INPUT);
-
-    GPIO_SetPinCtrl(e_gpioPin, GPIO_CTRL_SOFTWARE);
-
-    GPIO_SetMode(e_gpioPin, GPIO_MODE_2);
-
-    GPIO_Intr_SetPinIntrEn(e_gpioPin, GPIO_INTEN_INTERRUPT);
-
-    GPIO_Intr_SetPinIntrMask(e_gpioPin, GPIO_MASK_MASK);
-
-    GPIO_Intr_SetPinIntrType(e_gpioPin, e_inttype);
-
-    GPIO_Intr_SetPinIntrPol(e_gpioPin, e_polarity);   
     
-    INTR_NVIC_EnableIRQ(GPIO_INTR_N0_VECTOR_NUM + (e_gpioPin>>5));
+    GPIO_SetPinCtrl(e_gpioPin, GPIO_CTRL_SOFTWARE);
+    
+    GPIO_SetMode(e_gpioPin, GPIO_MODE_2);
+    
+    GPIO_Intr_SetPinIntrEn(e_gpioPin, GPIO_INTEN_INTERRUPT);
+    
+    GPIO_Intr_SetPinIntrMask(e_gpioPin, GPIO_MASK_MASK);
+    
+    GPIO_Intr_SetPinIntrType(e_gpioPin, e_inttype);
+    
+    GPIO_Intr_SetPinIntrPol(e_gpioPin, e_polarity);   
 
+    INTR_NVIC_EnableIRQ(GPIO_INTR_N0_VECTOR_NUM + (e_gpioPin>>5));
+    
     return HAL_OK;
 }
 
@@ -198,7 +198,7 @@ static void GPIO_ClearNvic(uint32_t u32_vectorNum)
 {
     
     uint32_t i = 0;
-    for (i=(u32_vectorNum-66)*32; i<7+(u32_vectorNum-66)*32; i++)
+    for (i=(u32_vectorNum-66)*32; i<8+(u32_vectorNum-66)*32; i++)
     {
         
         if(GPIO_Intr_GetIntrStatus(i))
@@ -227,7 +227,7 @@ HAL_RET_T HAL_GPIO_DisableNvic(ENUM_HAL_GPIO_NUM e_gpioPin)
 
     g_pv_GpioVectorListArray[e_gpioPin>>5][(e_gpioPin%32)%8] = NULL;
 
-    for (i=0;i<7;i++)
+    for (i=0;i<8;i++)
     {
        if ((g_pv_GpioVectorListArray[e_gpioPin>>5][i]) == NULL)
        {
@@ -247,11 +247,11 @@ HAL_RET_T HAL_GPIO_DisableNvic(ENUM_HAL_GPIO_NUM e_gpioPin)
 static void GPIO_VectorFunctionN0(uint32_t u32_vectorNum)
 {
     uint8_t i = 0;
-
-    for (i=0; i<7; i++)
+    uint8_t u8_intrStattus = GPIO_Intr_GetIntrGroupStatus(u32_vectorNum);
+    GPIO_Intr_ClearIntrGroup(u32_vectorNum,u8_intrStattus);
+    for (i=0; i<8; i++)
     {
-        
-        if(GPIO_Intr_GetIntrStatus(i))
+        if((u8_intrStattus & (0x01 << i)))
         {
             if (g_pv_GpioVectorListArray[0][i] != NULL)
             {
@@ -265,14 +265,15 @@ static void GPIO_VectorFunctionN0(uint32_t u32_vectorNum)
 static void GPIO_VectorFunctionN1(uint32_t u32_vectorNum)
 {
     uint8_t i = 0;
-    
-    for (i=32; i<39; i++)
+    uint8_t u8_intrStattus = GPIO_Intr_GetIntrGroupStatus(u32_vectorNum);
+    GPIO_Intr_ClearIntrGroup(u32_vectorNum,u8_intrStattus);
+    for (i=0; i<8; i++)
     {
-        if(GPIO_Intr_GetIntrStatus(i))
+        if((u8_intrStattus & (0x01 << i)))
         {
-            if (g_pv_GpioVectorListArray[1][i-32] != NULL)
+            if (g_pv_GpioVectorListArray[1][i] != NULL)
             {
-                (*(g_pv_GpioVectorListArray[1][i-32]))(u32_vectorNum);
+                (*(g_pv_GpioVectorListArray[1][i]))(u32_vectorNum);
             }
         }
     }
@@ -281,17 +282,17 @@ static void GPIO_VectorFunctionN1(uint32_t u32_vectorNum)
 static void GPIO_VectorFunctionN2(uint32_t u32_vectorNum)
 {
     uint8_t i = 0;
-
-    for (i=64; i<71; i++)
-    {        
-        if(GPIO_Intr_GetIntrStatus(i))
+    uint8_t u8_intrStattus = GPIO_Intr_GetIntrGroupStatus(u32_vectorNum);
+    GPIO_Intr_ClearIntrGroup(u32_vectorNum,u8_intrStattus);
+    for (i=0; i<8; i++)
+    {
+        if((u8_intrStattus & (0x01 << i)))
         {
-            if (g_pv_GpioVectorListArray[2][i-64] != NULL)
+            if (g_pv_GpioVectorListArray[2][i] != NULL)
             {
-                (*(g_pv_GpioVectorListArray[2][i-64]))(u32_vectorNum);
-            }           
+                (*(g_pv_GpioVectorListArray[2][i]))(u32_vectorNum);
+            }
         }
-
     }
 }
 
@@ -299,16 +300,16 @@ static void GPIO_VectorFunctionN3(uint32_t u32_vectorNum)
 {
    
     uint8_t i = 0;
-    
-    for (i=96; i<103; i++)
+    uint8_t u8_intrStattus = GPIO_Intr_GetIntrGroupStatus(u32_vectorNum);
+    GPIO_Intr_ClearIntrGroup(u32_vectorNum,u8_intrStattus);
+    for (i=0; i<8; i++)
     {
-        if(GPIO_Intr_GetIntrStatus(i))
+        if((u8_intrStattus & (0x01 << i)))
         {
-            if (g_pv_GpioVectorListArray[3][i-96] != NULL)
+            if (g_pv_GpioVectorListArray[3][i] != NULL)
             {
-                (*(g_pv_GpioVectorListArray[3][i-96]))(u32_vectorNum);
+                (*(g_pv_GpioVectorListArray[3][i]))(u32_vectorNum);
             }
-            
         }
     }
 }
