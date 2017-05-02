@@ -71,6 +71,12 @@
 #define SPI_CTRLR0_TMOD_RO      (0x02 << 8) //Receive Only
 #define SPI_CTRLR0_TMOD_EE      (0x03 << 8) //EEPROM Read
 
+#define SPI_CTRLR0_DFS_MASK     (0x0F) // 
+#define SPI_CTRLR0_DFS_8BIT     (0x07) // 8 bit
+#define SPI_CTRLR0_DFS_16BIT    (0x0F) // 16 bit
+
+
+
 #define SPI_IMR_MASK              (0x3F) //
 #define SPI_IMR_MSTIM             (0x20) // Multi-Master Contention Interrupt Mask
 #define SPI_IMR_RXFIM             (0x10) // Receive FIFO Full Interrupt Mask
@@ -118,6 +124,7 @@ typedef struct
     uint32_t rxLen;     //
     uint32_t rxAlrLen;  //
     uint8_t *rxBuf;     //
+    uint32_t dfl;      //0:8bit,1:16bit
 } STRU_SPI_INT_DATA;
 
 

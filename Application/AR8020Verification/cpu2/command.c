@@ -14,7 +14,6 @@
 #include "hal_ret_type.h"
 #include "hal_nvic.h"
 #include "test_float.h"
-#include "memory_config.h"
 
 extern void BB_uart10_spi_sel(uint32_t sel_dat);
 
@@ -51,55 +50,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
                     strtoul(cmdArray[4], NULL, 0)   //param2
                     );
     }
-    else if (memcmp(cmdArray[0], "configure", 8) == 0)
-    {
-        STRU_SettingConfigure *configure=NULL;
-        uint32_t i =0;
-        uint32_t j =0;
-        GET_CONFIGURE_FROM_FLASH(configure);
-
-        dlog_info("****************        %p       ******************",configure);
-        //dlog_info("****************        HDMI       ******************");
-        dlog_info("%02x %02x %02x",configure->hdmi_configure[0][0],configure->hdmi_configure[0][1],configure->hdmi_configure[0][2]);
-        dlog_info("%02x %02x %02x",configure->hdmi_configure[262][0],configure->hdmi_configure[262][1],configure->hdmi_configure[262][2]);
-        //dlog_info("****************        bb_sky       ******************");
-        for(j=0;j<4;j++)
-        {
-            for(i=0;i<16;i++)
-            {
-                dlog_info("%02x",configure->bb_sky_configure[j][i*16]);
-                dlog_output(100);
-            }
-            // dlog_info("***********************************************");
-        }
-        // dlog_info("***************      bb_grd            ********************");
-        for(j=0;j<4;j++)
-        {
-            for(i=0;i<16;i++)
-            {
-                dlog_info("%02x",configure->bb_grd_configure[j][i*16]);
-                dlog_output(100);
-            }
-            // dlog_info("***********************************************");
-        }
-        // dlog_info("*********        rf           **************");
-        for(i=0;i<8;i++)
-        {
-            dlog_info("%02x",configure->rf1_configure[i*16]);
-            dlog_output(100);
-        }
-        /*for(i=0;i<263;i++)
-        {
-            dlog_error("%x %x %x",configure->hdmi_configure[i][0],configure->hdmi_configure[i][1],configure->hdmi_configure[i][2]);
-            dlog_output(100);
-        }
-        dlog_error("***********************************************");
-        for(i=0;i<263;i++)
-        {
-            dlog_error("%x %x %x",configure->hdmi_configure1[i][0],configure->hdmi_configure1[i][1],configure->hdmi_configure1[i][2]);
-            dlog_output(100);
-        }*/
-    }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0) 
     {
         dlog_error("Please use commands like:");
@@ -113,7 +63,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_SysEventIdle");
         dlog_error("command_test_BB_uart");
         dlog_error("test_float_calculate_pi");
-        dlog_error("configure");
         dlog_error("BB_add_cmds <type> <param0> <param1> <param2>");		
         dlog_output(1000);	
     }
