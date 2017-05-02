@@ -44,7 +44,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_dma(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
-    else if ((memcmp(cmdArray[0], "test_dma_loop", strlen("test_dma_loop")) == 0) && (cmdNum == 4))
+    else if ((memcmp(cmdArray[0], "test_dma_loop", strlen("test_dma_loop")) == 0))
     {
         command_test_dma_loop(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
@@ -56,7 +56,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestHalI2cRead(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4]);
     }
-    else if ((memcmp(cmdArray[0], "hal_i2c_write", strlen("hal_i2c_write")) == 0) && (cmdNum == 4))
+    else if ((memcmp(cmdArray[0], "hal_i2c_write", strlen("hal_i2c_write")) == 0))
     {
         command_TestHalI2cWrite(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5]);
     }

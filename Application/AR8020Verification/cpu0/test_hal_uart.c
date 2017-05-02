@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "test_hal_uart.h"
 #include "hal_nvic.h"
-
+#include "debuglog.h"
 
 uint8_t s_u8_uartRxBuf[64];
 uint8_t s_u8_uartRxLen = 0;
@@ -35,19 +35,21 @@ void command_TestHalUartInit(unsigned char *ch, unsigned char *br)
 
 void command_TestHalUartTx(unsigned char *ch, unsigned char *len)
 {
-    uint8_t u8_data;
+    uint8_t u8_data[64]={0};
     uint16_t u16_i;
     unsigned int u32_ch = strtoul(ch, NULL, 0);
     unsigned int u32_len = strtoul(len, NULL, 0);
     
     for(u16_i = 0; u16_i < (uint16_t)u32_len; u16_i++)
     {
-        u8_data = u16_i;
-        HAL_UART_TxData((ENUM_HAL_UART_COMPONENT)(u32_ch), 
-                        &u8_data, 
-                        1,
-                        HAL_UART_DEFAULT_TIMEOUTMS);
+        u8_data[u16_i] = u16_i;
+        
     }
+
+    HAL_UART_TxData((ENUM_HAL_UART_COMPONENT)(u32_ch), 
+                    u8_data, 
+                    u16_i,
+                    HAL_UART_DEFAULT_TIMEOUTMS);
 }
 
 void command_TestHalUartRx(unsigned char *ch)
@@ -59,6 +61,7 @@ void command_TestHalUartRx(unsigned char *ch)
                      s_u8_uartRxBuf, 
                      s_u8_uartRxLen,
                      HAL_UART_DEFAULT_TIMEOUTMS);
+
     s_u8_uartRxLen = 0;
 }
 

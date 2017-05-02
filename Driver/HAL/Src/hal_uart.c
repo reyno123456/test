@@ -11,9 +11,11 @@ History:
 
 #include "interrupt.h"
 #include "serial.h"
+#include "systicks.h"
 
 #include "hal_nvic.h"
 #include "hal_uart.h"
+#include "hal.h"
 
 #include "debuglog.h"
 
@@ -30,6 +32,27 @@ static const uint32_t s_u32_uartBaudrTbl[] =
                           380400,      // 7
                           460800       // 8                          
                       };
+
+HAL_RET_T HAL_UART_WaitTillIdle(ENUM_HAL_UART_COMPONENT e_uartComponent, uint32_t u32_timeoutms)
+{
+  uint32_t start;
+    
+    if (0 != u32_timeoutms)
+    {
+        start = SysTicks_GetTickCount();
+        while (uart_checkoutFifoStatus(e_uartComponent))
+        {
+            if ((SysTicks_GetDiff(start, SysTicks_GetTickCount())) >= u32_timeoutms)
+            {
+                return HAL_UART_ERR_TIMEOUT;
+            }
+            
+            HAL_Delay(1);
+        }        
+    }
+
+    return 0;
+}    
 
 /**
 * @brief  The UART initialization function which must be called 
@@ -131,7 +154,7 @@ HAL_RET_T HAL_UART_TxData(ENUM_HAL_UART_COMPONENT e_uartComponent,
 
     uart_putdata(u8_uartCh, pu8_txBuf, u32_len);
 
-    Uart_WaitTillIdle(u8_uartCh, u32_timeoutms);
+    HAL_UART_WaitTillIdle(u8_uartCh, u32_timeoutms);
     return HAL_OK;
 }
 

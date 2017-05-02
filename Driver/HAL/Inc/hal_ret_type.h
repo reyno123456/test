@@ -83,6 +83,7 @@ typedef uint8_t HAL_BOOL_T;
 #define HAL_UART_ERR_INIT                           (HAL_UART_ERR_MASK | 0x2)
 #define HAL_UART_ERR_WRITE_DATA                     (HAL_UART_ERR_MASK | 0x3)
 #define HAL_UART_ERR_READ_DATA                      (HAL_UART_ERR_MASK | 0x4)
+#define HAL_UART_ERR_TIMEOUT                        (HAL_UART_ERR_MASK | 0x5)
 
 #define HAL_NVIC_ERR_MASK                           (0xC0000)
 

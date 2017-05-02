@@ -96,7 +96,7 @@ void uart_putFifo(unsigned char index);
 void uart_puts(unsigned char index, const char *s);
 char uart_getc(unsigned char index);
 void uart_putdata(unsigned char index,  const char *s, unsigned short dataLen);
-
+uint8_t uart_checkoutFifoStatus(unsigned char index);
 /**
 * @brief  WaitTillIdle.  
 * @param  index           uart channel, 0 ~ 10.
