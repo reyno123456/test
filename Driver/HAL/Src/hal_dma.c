@@ -18,37 +18,6 @@ History:
 #include "cmsis_os.h"
 #include "hal_dma.h"
 
-/** 
- * @brief   Start the DMA Transfer
- * @param   u32_srcAddress: The source memory Buffer address
- * @param   u32_dstAddress: The destination memory Buffer address
- * @param   u32_dataLength: The length of data to be transferred from source to destination
- * @return  none
- */
-HAL_RET_T HAL_DMA_Start(uint32_t u32_srcAddress, uint32_t u32_dstAddress, uint32_t u32_dataLength, 
-					ENUM_DMA_chan u8_channel, ENUM_DMA_TransferType e_transType)
-{
-	int32_t channel = 0;
-	channel = DMA_Init(u8_channel,7);
-	if (channel < 0)
-	{
-		dlog_info("No enough Channel for transfer!\n");
-		return HAL_FALSE;
-	}  
-	else 
-	{
-		dlog_info("channel = %d\n", channel);
-	}
-
-	DMA_transfer(u32_srcAddress, u32_dstAddress, u32_dataLength, channel, e_transType);
-
-	// while( DMA_getStatus(channel)  ==  0)
-	// {
-	//	HAL_Delay(1);
-	// }
-	return HAL_TRUE;
-}
-
 HAL_RET_T HAL_DMA_init(void)
 {
 	DMA_initIRQ();
@@ -56,9 +25,60 @@ HAL_RET_T HAL_DMA_init(void)
 	return HAL_TRUE;
 }
 
-HAL_RET_T HAL_DMA_forDriverTest(uint32_t u32_srcAddress, uint32_t u32_dstAddress, uint32_t u32_dataLength)
+/** 
+ * @brief   Start the DMA Transfer
+ * @param   u32_srcAddress: The source memory Buffer address
+ * @param   u32_dstAddress: The destination memory Buffer address
+ * @param   u32_dataLength: The length of data to be transferred from source to destination
+ * @param   u32_timeOut: timeout threshold, unit:ms
+ * @return  none
+ */
+HAL_RET_T HAL_DMA_forUserTransfer(uint32_t u32_srcAddr, 
+											uint32_t u32_dstAddr, 
+											uint32_t u32_transByteNum, 
+											uint32_t u32_timeOut)
 {
-	DMA_forDriverTransfer(u32_srcAddress, u32_dstAddress, u32_dataLength, DMA_blockTimer, 10);
+	uint8_t u8_chanIndex;
+	uint32_t u32_start, u32_end;
 	
-	return HAL_TRUE;
+	for (u8_chanIndex = 0; u8_chanIndex < 4; u8_chanIndex++)
+	{
+		/* 
+		 * channel 0 priority 4, 
+		 * channel 1 priority 5, 
+		 * channel 5 priority 6, 
+		 * channel 4 priority 7
+		 */
+		if (DMA_Init(u8_chanIndex, 4 + u8_chanIndex) >= 0 )
+		{
+			DMA_transfer(u32_srcAddr, u32_dstAddr, u32_transByteNum, u8_chanIndex, LINK_LIST_ITEM);
+			break;
+		}
+		else
+		{
+			dlog_info("line = %d, no channel for channel %d\n", __LINE__, u8_chanIndex);
+		}
+	}
+
+	if (u8_chanIndex >= 4)
+	{
+		dlog_info("line = %d, all 4 channel occupied!\n", __LINE__);
+		return HAL_BUSY;
+	}
+	
+	if ( 0 != u32_timeOut )
+	{
+		u32_start = SysTicks_GetTickCount();
+		u32_end = u32_start + u32_timeOut;
+		while(SysTicks_GetTickCount() <= u32_end)
+		{
+			if (DMA_getStatus(u8_chanIndex) == 1)
+			{
+				return HAL_TRUE;
+			}
+			HAL_Delay(1);
+		}		
+	}
+	
+	return HAL_TIME_OUT;
 }

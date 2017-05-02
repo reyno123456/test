@@ -40,6 +40,9 @@ typedef enum {
 	DMA_AUTO_RELOAD
 } ENUM_DMA_TransferType;
 
+
+HAL_RET_T HAL_DMA_init(void);
+
 /** 
  * @brief   Start the DMA Transfer
  * @param   u32_srcAddress: The source memory Buffer address
@@ -48,10 +51,11 @@ typedef enum {
  * @param   u8_channel: The channel index from 0 to 7
  * @return  none
  */
-HAL_RET_T HAL_DMA_Start(uint32_t u32_srcAddress, uint32_t u32_dstAddress, 
-						uint32_t u32_dataLength,ENUM_DMA_chan e_channel, 
-						ENUM_DMA_TransferType e_transType);
-HAL_RET_T HAL_DMA_init(void);
+HAL_RET_T HAL_DMA_forUserTransfer(uint32_t u32_srcAddr, 
+								uint32_t u32_dstAddr, 
+								uint32_t u32_transByteNum, 
+								uint32_t u32_timeOut);
+
 
 #ifdef __cplusplus
 }

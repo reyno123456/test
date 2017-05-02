@@ -483,7 +483,7 @@ uint32_t DMA_forDriverTransfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint3
 		}
 		else
 		{
-			dlog_info("line = %d, no channel for %d!\n", __LINE__, u8_chanIndex);
+			dlog_info("line = %d, no channel for channel %d\n", __LINE__, u8_chanIndex);
 		}
 	}
 

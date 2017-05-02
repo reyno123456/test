@@ -353,19 +353,21 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestHalSpiRx(cmdArray[1], cmdArray[2]);
     }
-    /* dma transfer: "transdma $(startBlock) $(blockNum)" */
     else if (memcmp(cmdArray[0], "test_dma_cpu0", strlen("test_dma_cpu0")) == 0)
     {
         command_dma(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
-	/* dma transfer endless: "transdma $(startBlock) $(blockNum)" */
     else if ((memcmp(cmdArray[0], "test_dma_loop", strlen("test_dma_loop")) == 0) && (cmdNum == 4))
     {
         command_test_dma_loop(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
-	else if ((memcmp(cmdArray[0], "test_dma_driver", strlen("test_dma_driver")) == 0))
+    else if ((memcmp(cmdArray[0], "test_dma_driver", strlen("test_dma_driver")) == 0))
     {
-        command_test_dma_driver(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5]);
+        command_test_dma_driver(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4]);
+    }
+    else if ((memcmp(cmdArray[0], "test_dma_user", strlen("test_dma_user")) == 0))
+    {
+        command_test_dma_user(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4]);
     }
     else if (memcmp(cmdArray[0], "test_adc", 8) == 0)
     {
@@ -526,7 +528,8 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_adc <channel>");
         dlog_error("test_dma_cpu0 <src> <dst> <byte_num>");
         dlog_error("test_dma_loop <src> <dst> <byte_num>");
-        dlog_error("command_test_dma_driver <src> <dst> <byte_num><mode><ms>");
+        dlog_error("test_dma_driver <src> <dst> <byte_num><ms>");        
+        dlog_error("test_dma_user <src> <dst> <byte_num><ms>");
         dlog_error("test_camera_init <rate 0~1> <mode 0~8> <toEncoderCh 0~1>");
         dlog_error("test_write_camera <subAddr(hex)> <value>(hex)");
         dlog_error("test_read_camera <subAddr(hex)>");
