@@ -142,7 +142,7 @@ typedef enum
 #define INTR_NVIC_PRIORITY_TIMER01              (6)
 #define INTR_NVIC_PRIORITY_BB_TX                (7)
 #define INTR_NVIC_PRIORITY_BB_RX                (7)
-#define INTR_NVIC_PRIORITY_VIDEO_ARMCM7         (10)
+#define INTR_NVIC_PRIORITY_VIDEO_ARMCM7         (5)
 
 typedef void(*Irq_handler)(uint32_t);
 

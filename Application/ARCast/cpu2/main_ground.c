@@ -20,8 +20,6 @@ int main(void)
 { 
     STRU_HAL_SYS_CTL_CONFIG *pst_cfg;
     HAL_SYS_CTL_GetConfig(&pst_cfg);
-    pst_cfg->u8_icacheEnable = 0;
-    pst_cfg->u8_dcacheEnable = 0;
     HAL_SYS_CTL_Init(pst_cfg);
    
     console_init(2, 115200);
