@@ -12,7 +12,7 @@ extern char end;
 static unsigned int mem_malloc_start = (unsigned int)(&end);
 static unsigned int mem_malloc_end;
 static unsigned int mem_malloc_brk = (unsigned int)(&end);
-#define MORECORE_FAILURE (0)
+#define MORECORE_FAILURE (-1)
 
 #define MAX(a,b) ((a) >= (b) ? (a) : (b))
 
@@ -62,9 +62,13 @@ static void *sbrk(ptrdiff_t increment)
 #define RONEARG
 #define RCALL
 #define RONECALL
+#if 0
 #define MALLOC_LOCK       do { Lock(&s_heap_lock); \
                                s_ul_primask = local_irq_disable_save_flags(); \
                                UnLock(&s_heap_lock); } while(0);
+#else
+#define MALLOC_LOCK       do { s_ul_primask = local_irq_disable_save_flags(); } while(0);
+#endif
 #define MALLOC_UNLOCK     do { local_irq_restore(s_ul_primask); } while(0);
 #define RERRNO errno
 
