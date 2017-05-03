@@ -7,6 +7,7 @@ Version: 0.0.1
 Date: 2016/1/4
 History: 
         0.0.1    2016/1/4    The initial version of hal_dma.c
+                   2017/5/5    change the HAL api for users
 *****************************************************************************/
 
 #include <stdint.h>
@@ -33,7 +34,7 @@ HAL_RET_T HAL_DMA_init(void)
  * @param   u32_timeOut: timeout threshold, unit:ms
  * @return  none
  */
-HAL_RET_T HAL_DMA_forUserTransfer(uint32_t u32_srcAddr, 
+HAL_RET_T HAL_DMA_Transfer(uint32_t u32_srcAddr, 
 											uint32_t u32_dstAddr, 
 											uint32_t u32_transByteNum, 
 											uint32_t u32_timeOut)
@@ -46,8 +47,8 @@ HAL_RET_T HAL_DMA_forUserTransfer(uint32_t u32_srcAddr,
 		/* 
 		 * channel 0 priority 4, 
 		 * channel 1 priority 5, 
-		 * channel 5 priority 6, 
-		 * channel 4 priority 7
+		 * channel 2 priority 6, 
+		 * channel 3 priority 7
 		 */
 		if (DMA_Init(u8_chanIndex, 4 + u8_chanIndex) >= 0 )
 		{

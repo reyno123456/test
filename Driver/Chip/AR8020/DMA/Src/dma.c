@@ -104,39 +104,40 @@ void DMA_initIRQ()
 int32_t DMA_Init(ENUM_Chan u8_channel, uint8_t u8_chanPriority)
 {
 	uint8_t u8_chanIndex = 0;
-	uint8_t u8_inited = 1;
+	static uint8_t u8_flagInitOnce = 0;
 
 	assert_param(IS_CHANNAL_PRIORITY(u8_chanPriority));
 
+	if (u8_flagInitOnce == 0)
+	{
+		s_st_dmaRegs->MASK.BLOCK = 0;
+		s_st_dmaRegs->MASK.SRCTRAN = 0;
+		s_st_dmaRegs->MASK.DSTTRAN = 0;
+		s_st_dmaRegs->MASK.ERROR = 0;
+
+		for (u8_chanIndex = 0; u8_chanIndex< DW_DMA_MAX_NR_CHANNELS; u8_chanIndex++)
+		{
+			s_st_dmaRegs->CHAN[u8_chanIndex].CFG_HI = 0x0;			
+		}
+		
+		u8_flagInitOnce = 1;
+	}
+	
 	if (u8_channel == AUTO)
 	{
-		/* find out which channel is idle */
 		for (u8_chanIndex = 0; u8_chanIndex < DW_DMA_MAX_NR_CHANNELS; ++u8_chanIndex)
 		{
 			if ((s_st_dmaRegs->CH_EN & (1 << u8_chanIndex)) == 0)
 			{
-				 /* disable the channel */
-				s_st_dmaRegs->CHAN[u8_chanIndex].CFG_HI = 0x0;
-				s_st_dmaRegs->CHAN[u8_chanIndex].CFG_LO = DWC_CFGL_HS_SRC | DWC_CFGL_HS_DST | \
+				s_st_dmaRegs->CHAN[u8_chanIndex].CFG_LO = DWC_CFGL_HS_SRC | DWC_CFGL_HS_DST | 
 														  (u8_chanPriority << 5);
-
-				/* clear interrupt */
-				DMA_clearIRQ(u8_chanIndex);
-
-				/* set interrupt mask */
 				s_st_dmaRegs->MASK.TFR = ((1 << u8_chanIndex) | (1 << (u8_chanIndex + 8)));
-				s_st_dmaRegs->MASK.BLOCK = 0;
-				s_st_dmaRegs->MASK.SRCTRAN = 0;
-				s_st_dmaRegs->MASK.DSTTRAN = 0;
-				s_st_dmaRegs->MASK.ERROR = 0;
-				
 				s_st_transStatus[u8_chanIndex].e_transActive = ACTIVE;
-				u8_inited = 0;
 				break;
 			}
 		}
 
-		if ((u8_inited != 0) && (u8_chanIndex >= DW_DMA_MAX_NR_CHANNELS) )
+		if (u8_chanIndex >= DW_DMA_MAX_NR_CHANNELS)
 		{
 			dlog_error("No channel left for DMA!\n");
 			return -1;
@@ -150,25 +151,11 @@ int32_t DMA_Init(ENUM_Chan u8_channel, uint8_t u8_chanPriority)
 	{
 		if ((s_st_dmaRegs->CH_EN & (1 << u8_channel)) == 0)
 		{
-			 /* disable the channel */
-			s_st_dmaRegs->CHAN[u8_channel].CFG_HI = 0x0;
-			s_st_dmaRegs->CHAN[u8_channel].CFG_LO = DWC_CFGL_HS_SRC | DWC_CFGL_HS_DST | \
-													  (u8_chanPriority << 5);
-			/* clear interrupt */
-			DMA_clearIRQ(u8_channel);
-
-			/* set interrupt mask */
+			s_st_dmaRegs->CHAN[u8_channel].CFG_LO = DWC_CFGL_HS_SRC | DWC_CFGL_HS_DST | 
+													(u8_chanPriority << 5);
 			s_st_dmaRegs->MASK.TFR = ((1 << u8_channel) | (1 << (u8_channel + 8)));
-			s_st_dmaRegs->MASK.BLOCK = 0;
-			s_st_dmaRegs->MASK.ERROR = 0;
-			s_st_dmaRegs->MASK.SRCTRAN = 0;
-			s_st_dmaRegs->MASK.DSTTRAN = 0;
-
 			s_st_transStatus[u8_channel].e_transActive = ACTIVE;
-			u8_inited = 0;
-			
 			s_st_transStatus[u8_channel].trans_complete = 0;
-			
 			return u8_channel;
 		}
 
@@ -176,7 +163,8 @@ int32_t DMA_Init(ENUM_Chan u8_channel, uint8_t u8_chanPriority)
 	}
 }
 
-uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_transByteNum, uint8_t u8_chanIndex, ENUM_TransferType e_transType)
+uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_transByteNum, 
+							uint8_t u8_chanIndex, ENUM_TransferType e_transType)
 {
 	uint32_t u32_totalBlkNum = 0;  /* the num of block to be transfered */
 	uint32_t u32_llpBaseAddr = 0;

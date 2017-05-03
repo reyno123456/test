@@ -51,7 +51,7 @@ HAL_RET_T HAL_DMA_init(void);
  * @param   u8_channel: The channel index from 0 to 7
  * @return  none
  */
-HAL_RET_T HAL_DMA_forUserTransfer(uint32_t u32_srcAddr, 
+HAL_RET_T HAL_DMA_Transfer(uint32_t u32_srcAddr, 
 								uint32_t u32_dstAddr, 
 								uint32_t u32_transByteNum, 
 								uint32_t u32_timeOut);

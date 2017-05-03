@@ -528,7 +528,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_adc <channel>");
         dlog_error("test_dma_cpu0 <src> <dst> <byte_num>");
         dlog_error("test_dma_loop <src> <dst> <byte_num>");
-        dlog_error("test_dma_driver <src> <dst> <byte_num><ms>");        
+        dlog_error("test_dma_driver <src> <dst> <byte_num><mode><ms>");        
         dlog_error("test_dma_user <src> <dst> <byte_num><ms>");
         dlog_error("test_camera_init <rate 0~1> <mode 0~8> <toEncoderCh 0~1>");
         dlog_error("test_write_camera <subAddr(hex)> <value>(hex)");

@@ -20,7 +20,7 @@ History:
 #include "md5.h"
 #include "data_type.h"
 #include "cmsis_os.h"
-
+#include "systicks.h"
 
 extern unsigned int command_str2uint(char *str);
 
@@ -35,7 +35,7 @@ void command_dma(char * u32_src, char *u32_dst, char *u32_byteNum)
     iNum        = command_str2uint(u32_byteNum);
 
 
-    HAL_DMA_forUserTransfer(iSrcAddr, iDstAddr, iNum, 10);
+    HAL_DMA_Transfer(iSrcAddr, iDstAddr, iNum, 10);
 	
 	/* use to fake the dst data */
 #if 0
@@ -112,6 +112,21 @@ typedef enum {
 	DMA_blockTimer
 } ENUM_blockMode;
 
+static void delay_us(uint64_t us)
+{
+	uint64_t start;
+	uint64_t end;
+	start = SysTicks_GetUsTickCount();
+
+	while(1)
+	{
+		if (SysTicks_GetUsTickCount() >= start + us)
+		{
+			break;
+		}
+	}
+}
+
 extern uint32_t DMA_forDriverTransfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_transByteNum, 
 											ENUM_blockMode e_blockMode, uint32_t u32_ms);
 											
@@ -121,7 +136,6 @@ void command_test_dma_driver(char * u32_src, char *u32_dst, char *u32_byteNum,
 	unsigned int iSrcAddr;
 	unsigned int iDstAddr;
 	unsigned int iNum;
-	unsigned int iMode;
 	unsigned int iTimeout;
 
 	iDstAddr = command_str2uint(u32_dst);
@@ -129,7 +143,17 @@ void command_test_dma_driver(char * u32_src, char *u32_dst, char *u32_byteNum,
 	iNum = command_str2uint(u32_byteNum);
 	iTimeout = command_str2uint(u32_ms);
 
-	DMA_forDriverTransfer(iSrcAddr, iDstAddr, iNum, DMA_noneBlocked, iTimeout);
+	extern unsigned int mem_malloc_brk;
+	while(1)
+	{
+		DMA_forDriverTransfer(iSrcAddr, iDstAddr, iNum, DMA_noneBlocked, iTimeout);
+		dlog_info("%d, brk = 0x%x", __LINE__, mem_malloc_brk);
+		delay_us(125);
+		
+		HAL_DMA_Transfer(iSrcAddr, iDstAddr, iNum, 0);
+		dlog_info("%d, brk = 0x%x", __LINE__, mem_malloc_brk);
+		delay_us(125);
+	}
 }
 
 void command_test_dma_user(char * u32_src, char *u32_dst, char *u32_byteNum, 
@@ -145,5 +169,5 @@ void command_test_dma_user(char * u32_src, char *u32_dst, char *u32_byteNum,
 	iNum = command_str2uint(u32_byteNum);
 	iTimeout = command_str2uint(u32_ms);
 	
-	HAL_DMA_forUserTransfer(iSrcAddr, iDstAddr, iNum, iTimeout);
+	HAL_DMA_Transfer(iSrcAddr, iDstAddr, iNum, iTimeout);
 }
