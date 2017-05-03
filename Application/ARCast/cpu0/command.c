@@ -151,7 +151,7 @@ static void command_dma(char * u32_src, char *u32_dst, char *u32_byteNum)
     iNum        = command_str2uint(u32_byteNum);
 
 
-    HAL_DMA_Start(iSrcAddr, iDstAddr, iNum, DMA_AUTO, DMA_LINK_LIST_ITEM);
+    HAL_DMA_Transfer(iSrcAddr, iDstAddr, iNum, 0);
     
     /* use to fake the dst data */
 #if 0
