@@ -143,15 +143,15 @@ void command_test_dma_driver(char * u32_src, char *u32_dst, char *u32_byteNum,
 	iNum = command_str2uint(u32_byteNum);
 	iTimeout = command_str2uint(u32_ms);
 
-	extern unsigned int mem_malloc_brk;
+	//extern unsigned int mem_malloc_brk;
 	while(1)
 	{
 		DMA_forDriverTransfer(iSrcAddr, iDstAddr, iNum, DMA_noneBlocked, iTimeout);
-		dlog_info("%d, brk = 0x%x", __LINE__, mem_malloc_brk);
+		//dlog_info("%d, brk = 0x%x", __LINE__, mem_malloc_brk);
 		delay_us(125);
 		
 		HAL_DMA_Transfer(iSrcAddr, iDstAddr, iNum, 0);
-		dlog_info("%d, brk = 0x%x", __LINE__, mem_malloc_brk);
+		//dlog_info("%d, brk = 0x%x", __LINE__, mem_malloc_brk);
 		delay_us(125);
 	}
 }
