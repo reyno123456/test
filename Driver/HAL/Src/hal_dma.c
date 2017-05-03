@@ -57,7 +57,7 @@ HAL_RET_T HAL_DMA_Transfer(uint32_t u32_srcAddr,
 		}
 		else
 		{
-			dlog_info("line = %d, no channel for channel %d\n", __LINE__, u8_chanIndex);
+			//dlog_info("line = %d, no channel for channel %d\n", __LINE__, u8_chanIndex);
 		}
 	}
 
