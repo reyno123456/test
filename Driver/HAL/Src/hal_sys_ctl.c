@@ -150,6 +150,15 @@ HAL_RET_T HAL_SYS_CTL_Init(STRU_HAL_SYS_CTL_CONFIG *pst_usrHalSysCtlCfg)
          *              0->  sky mode 
          */
         Reg_Write32(0x40B00068, (pst_halSysCtlCfg->u8_workMode) ? 0x03 : 0x01);
+        if (pst_halSysCtlCfg->u8_workMode == 0)
+        {
+            /*
+             * Leave 2MB SDRAM for CPU access in sky mode
+             */
+            Reg_Write32(0xA003007C, 0x81C00000); // SDRAM offset for channel 0
+            Reg_Write32(0xA0030080, 0x81D00000); // SDRAM offset for channel 1
+            Reg_Write32(0xA0030084, 0x00000036); // SDRAM 1MB size for both channel 0 and channel 1
+        }
     }
     
     // Inter core SRAM init
