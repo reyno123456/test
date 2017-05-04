@@ -9,15 +9,7 @@ typedef enum
     QAMKEEP
 }QAMUPDONW;
 
-uint8_t is_snr_ok(uint16_t iMCS);
-
-void grd_get_snr(void);
-
-void arlink_snr_daq(void);
-
 uint8_t snr_static_for_qam_change(uint16_t threshod_left_section,uint16_t threshold_right_section);
-
-uint16_t get_snr_qam_threshold(void);
 
 uint16_t get_snr_average(void);
 

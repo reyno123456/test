@@ -170,6 +170,9 @@
 #define AGC_2      ((uint8_t)0x92 ) //reg_aagc_fix_gain1 0x00  RW  [7:0]
 #define AGC_3      ((uint8_t)0x93 ) //reg_aagc_fix_gain2 0x01  RW  [7:0]
 
+#define AGC_5G_GAIN1      ((uint8_t)0xc6 )
+#define AGC_5G_GAIN2      ((uint8_t)0xc7 )
+
 
 //page2 0x50
 #define FEC_7        ((uint8_t)(0x50))  //PAGE2_rc_id[39:32]  0x00 RW  [7:0]

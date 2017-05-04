@@ -856,7 +856,7 @@ static void calc_average_and_fluct( uint8_t u8_bw , uint8_t u8_ItCh, ENUM_RF_BAN
     uint8_t cnt = ((u8_bw == BW_10M) ? BW_10M_VALID_CH_CNT : BW_20M_VALID_CH_CNT);
     uint16_t row = 0;
 
-    
+    //base on slice power.
     for( row = 0; row < SWEEP_FREQ_BLOCK_ROWS; row++)
     {
         uint8_t i;
@@ -869,7 +869,6 @@ static void calc_average_and_fluct( uint8_t u8_bw , uint8_t u8_ItCh, ENUM_RF_BAN
                                                             stru_sweepPower.s16_5G_power_average[row];
                                                             
 
-        //get row average and fluct
         for(i = start; (i-start) < cnt; i++)        
         {
             sum_power += ps16_slicePower[(u8_ItCh * 8) + i];
@@ -878,6 +877,7 @@ static void calc_average_and_fluct( uint8_t u8_bw , uint8_t u8_ItCh, ENUM_RF_BAN
         ps16_power_average[u8_ItCh] = (sum_power / cnt);   
     }
 
+    //base on time-domain power
     stru_sweepPower.u32_noisepower_average[u8_ItCh] = 0;
     stru_sweepPower.i32_variance[u8_ItCh] = 0;
 
@@ -904,6 +904,7 @@ static void calc_average_and_fluct( uint8_t u8_bw , uint8_t u8_ItCh, ENUM_RF_BAN
         }    
     }
 
+    //calc diff
     stru_sweepPower.u32_noisepower_average[u8_ItCh] /= SWEEP_FREQ_BLOCK_ROWS;
     for( row = 0; row < SWEEP_FREQ_BLOCK_ROWS; row++)
     {

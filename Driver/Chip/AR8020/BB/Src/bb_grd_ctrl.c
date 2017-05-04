@@ -33,11 +33,9 @@ static void grd_calc_dist(void);
 static uint32_t grd_calc_dist_get_avg_value(uint32_t *u32_dist);
 
 
-
 STRU_CALC_DIST_DATA s_st_calcDistData = 
 {
     .e_status = INVALID,
-    //u8_rawData[CALC_DIST_RAW_DATA_MAX_RECORD][3],
     .u32_calcDistValue = 0,
     .u32_calcDistZero = 0,
     .u32_cnt = 0,
@@ -172,15 +170,7 @@ void grd_fec_judge(void)
         {
             context.dev_state = FEC_LOCK;
             GPIO_SetPin(BLUE_LED_GPIO, 0);  //BLUE LED ON
-            GPIO_SetPin(RED_LED_GPIO, 1);   //RED LED OFF
-            
-            #if 0
-            if(context.first_freq_value == 0xff)
-            { 
-                context.first_freq_value = context.cur_IT_ch;
-            }   
-            #endif
-            
+            GPIO_SetPin(RED_LED_GPIO, 1);   //RED LED OFF            
             context.fec_unlock_cnt = 0;
         }
         else
@@ -1135,27 +1125,6 @@ static void BB_grd_GatherOSDInfo(void)
     //osdptr->agc_value[2] = BB_ReadReg(PAGE2, RX3_GAIN_ALL_R);
     //osdptr->agc_value[3] = BB_ReadReg(PAGE2, RX4_GAIN_ALL_R);
     //osdptr->lock_status  = BB_ReadReg(PAGE2, FEC_5_RD);
-
-	#if 0
-    {
-        uint8_t buf[16];
-        uint8_t n = BB_UARTComReceiveMsg(BB_UART_COM_SESSION_0, buf, 16);
-        if ( n >= 4 && buf[0] == 0xaa && buf[1] == 0x55)
-        {
-            osdptr->snr_vlaue[3] = ( (uint16_t)buf[2] << 8 ) | buf[3];
-            //osdptr->reserved[0]  = buf[4];
-
-            {
-                static int loop = 0;
-                if( loop ++ >= 250)
-                {
-                    dlog_info("RCLock %d %d", buf[2], buf[3]);
-                    loop = 0;
-                }
-            }
-        }
-    }
-	#endif
     
     osdptr->snr_vlaue[0] = grd_get_it_snr();
     osdptr->snr_vlaue[1] = get_snr_average();

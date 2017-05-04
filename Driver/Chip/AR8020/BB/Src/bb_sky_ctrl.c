@@ -45,7 +45,6 @@ static init_timer_st sky_timer2_6;
 static init_timer_st sky_timer2_7;
 static int switch_5G_count = 0;
 
-
 static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd);
 static void sky_handle_all_cmds(void);
 static int32_t sky_chk_flash_id_validity(void);
@@ -56,6 +55,8 @@ extern int BB_WriteRegMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t data, uint
 static void BB_sky_SendStatus(void *p);
 static void sky_calc_dist(void);
 
+static uint16_t sky_get_rc_snr( void );
+static uint16_t sky_get_snr_average(void);
 
 void BB_SKY_start(void)
 {   
@@ -136,7 +137,7 @@ uint8_t sky_id_match(void)
                 .u8_rcNrLockCnt  = pre_nrlockcnt
             };
 
-            //SYS_EVENT_Notify_From_ISR(SYS_EVENT_ID_UART_DATA_SND_SESSION0, &stru_skycStatus);
+            SYS_EVENT_Notify_From_ISR(SYS_EVENT_ID_UART_DATA_SND_SESSION0, &stru_skycStatus);
         }
     }
 
@@ -210,6 +211,10 @@ void sky_agc_gain_toggle(void)
     {
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_NEAR);
         BB_WriteReg(PAGE0, AGC_3, AAGC_GAIN_NEAR);
+
+        BB_WriteReg(PAGE0, AGC_5G_GAIN1, AAGC_GAIN_NEAR); //add 5G agc setting
+        BB_WriteReg(PAGE0, AGC_5G_GAIN2, AAGC_GAIN_NEAR);
+        
         BB_WriteReg(PAGE1, 0x03, 0x40);
         BB_WriteReg(PAGE0, 0xBC, 0x40);
         en_agcmode = NEAR_AGC;
@@ -218,6 +223,10 @@ void sky_agc_gain_toggle(void)
     {
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_FAR);
         BB_WriteReg(PAGE0, AGC_3, AAGC_GAIN_FAR);
+
+        BB_WriteReg(PAGE0, AGC_5G_GAIN1, AAGC_GAIN_FAR); //add 5G agc setting
+        BB_WriteReg(PAGE0, AGC_5G_GAIN2, AAGC_GAIN_FAR);
+
         BB_WriteReg(PAGE1, 0x03, 0x28);
         BB_WriteReg(PAGE0, 0xBC, 0xC0);
         en_agcmode = FAR_AGC;
@@ -338,7 +347,7 @@ void Sky_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
     {
         return;
     }
-
+    sky_get_rc_snr();
     sky_calc_dist();
     
     sky_handle_all_cmds();
@@ -653,9 +662,6 @@ void Sky_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
 {
     static int Timer1_Delay2_Cnt = 0;    
 
-
-
-    //dlog_info("sky_search_id_timeout_irq_enable \r\n");
     INTR_NVIC_ClearPendingIRQ(TIMER_INTR27_VECTOR_NUM);
 	
 	if(TRUE == context.u8_debugMode) 
@@ -1166,11 +1172,10 @@ static void BB_sky_GatherOSDInfo(void)
     osdptr->agc_value[2] = get_rc_status();
     osdptr->agc_value[3] = BB_ReadReg(PAGE2, 0xd7);
     
-    arlink_snr_daq();
     //osdptr->agc_value[2] = BB_ReadReg(PAGE2, RX3_GAIN_ALL_R);
     //osdptr->agc_value[3] = BB_ReadReg(PAGE2, RX4_GAIN_ALL_R);
     osdptr->snr_vlaue[0] = (((uint16_t)BB_ReadReg(PAGE2, SNR_REG_0)) << 8) | BB_ReadReg(PAGE2, SNR_REG_1);
-    osdptr->snr_vlaue[1] = get_snr_average();
+    osdptr->snr_vlaue[1] = sky_get_snr_average();
     
     u8_data = BB_ReadReg(PAGE2, TX_2);
     osdptr->modulation_mode = (u8_data >> 6) & 0x03;
@@ -1182,13 +1187,6 @@ static void BB_sky_GatherOSDInfo(void)
 
     osdptr->lock_status  = get_rc_status();
     osdptr->in_debug     = context.u8_debugMode;
-
-    #if 0
-    {
-        uint8_t buf[8] = {0xaa, 0x55, osdptr->agc_value[3], pre_lockcnt, osdptr->lock_status};
-        BB_UARTComSendMsg(BB_UART_COM_SESSION_0, buf, 8);
-    }
-    #endif
 	
     osdptr->head = 0x00;
     osdptr->tail = 0xff;    //end of the writing
@@ -1273,3 +1271,34 @@ static void sky_calc_dist(void)
     BB_WriteReg(PAGE0, 0x1B, u8_data[2]);
 }
 
+
+////sky snr ////
+
+static uint16_t u16_sky_snr[8];
+static uint8_t  u8_snr_idx = 0;
+
+static uint16_t sky_get_rc_snr( void )
+{
+    static uint32_t cnt = 0;
+    uint16_t snr = (((uint16_t)BB_ReadReg(PAGE2, SNR_REG_0)) << 8) | BB_ReadReg(PAGE2, SNR_REG_1);
+    if( cnt++ > 500 )
+    {
+        cnt = 0;
+        dlog_info("SNR1:%0.4x\n", snr);
+    }
+
+    return snr;
+}
+
+
+static uint16_t sky_get_snr_average(void)
+{
+    uint8_t i;
+    uint32_t sum = 0; 
+    for (i = 0; i < sizeof(u16_sky_snr) / sizeof(u16_sky_snr[0]); i++)
+    {
+        sum += u16_sky_snr[i];
+    }
+
+    return (sum/i);
+}

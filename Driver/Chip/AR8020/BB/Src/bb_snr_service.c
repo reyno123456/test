@@ -301,7 +301,7 @@ QAMUPDONW snr_static_for_qam_change(uint16_t threshod_left_section, uint16_t thr
 }
 
 
-void arlink_snr_daq(void)
+void grd_get_snr(void)
 {
     if( work_ch_snr.row_index >= MCS_SNR_BLOCK_ROWS )
     {
@@ -549,7 +549,7 @@ void grd_judge_qam_mode(void)
     QAMUPDONW harq_qamupdown = QAMKEEP;
     QAMUPDONW ldpc_qamupdown = QAMKEEP;
 
-    arlink_snr_daq();
+    grd_get_snr();
     snr_qamupdown = snr_static_for_qam_change( context.qam_threshold_range[context.qam_ldpc][0], 
                                                context.qam_threshold_range[context.qam_ldpc][1]);
     if ( context.qam_ldpc == 0)

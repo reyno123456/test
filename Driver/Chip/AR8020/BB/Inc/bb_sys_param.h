@@ -38,8 +38,6 @@ typedef struct
     uint8_t id[5];
     uint8_t need_write_flash;
     uint8_t pwr;
-    uint8_t rc_mask[32];
-    uint8_t it_mask[8];
     uint16_t qam_threshold_range[QAM_CHANGE_THRESHOLD_COUNT][2];
     uint8_t locked;
     uint8_t rc_status;
@@ -76,7 +74,6 @@ typedef struct
     ENUM_BB_QAM qam_mode;
     uint8_t power;
     uint8_t id_num;
-    //MIMO_MODE mimo_mode;
     uint8_t test_enable;
     ENUM_RUN_MODE it_skip_freq_mode;
     ENUM_RUN_MODE rc_skip_freq_mode;
@@ -86,8 +83,6 @@ typedef struct
     uint8_t sp20dbm[4]; 
     ENUM_BB_LDPC ldpc;
     ENUM_RUN_MODE qam_skip_mode;
-    uint8_t rc_mask[32];
-    uint8_t it_mask[8];
     uint16_t qam_change_threshold[QAM_CHANGE_THRESHOLD_COUNT][2];
     uint8_t enable_freq_offset;
     uint8_t gp20dbmb[4];

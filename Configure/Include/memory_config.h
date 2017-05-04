@@ -206,6 +206,10 @@ typedef struct
     unsigned char bb_grd_configure[4][256];
     unsigned char rf1_configure[128];
     unsigned char rf2_configure[128];
+    unsigned char RC_2_4G_frq[34][4];
+    unsigned char IT_2_4G_frq[8][4];
+    unsigned char RC_5G_frq[34][4];
+    unsigned char IT_5G_frq[8][4];
 #endif
 #ifdef USE_ADV7611_EDID_CONFIG_BIN
     unsigned char hdmi_configure[264][3];
