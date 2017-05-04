@@ -19,7 +19,7 @@ RM = -rm -rf
 MAKE = make
 
 CFLAGS = #-Wall
-DEBUG = y
+DEBUG ?= n
 
 ifeq ($(DEBUG), y)
 CPU0_CFLAGS = -g
@@ -27,7 +27,9 @@ CPU1_CFLAGS = -g
 CPU2_CFLAGS = -O1 -g
 DEBREL = Debug
 else
-CFLAGS += -O2 -s
+CPU0_CFLAGS = -O2 -s
+CPU1_CFLAGS = -O2 -s
+CPU2_CFLAGS = -O1 -s
 DEBREL = Release
 endif
 
