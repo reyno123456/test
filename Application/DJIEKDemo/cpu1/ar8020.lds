@@ -17,30 +17,51 @@ SECTIONS
     .vectors :
     {
         *(.isr_vectors)
+        . = ALIGN(4);
     } > ITCM1
 
     .start :
     {
         *(.start*)
+        . = ALIGN(4);
     } > ITCM1
 
     .text :
     {
         *(.text*)
+        . = ALIGN(4);
     } > ITCM1
+
+    __exidx_start = . ;
+    .ARM.exidx :
+    {
+        *(.ARM.exidx*)
+        . = ALIGN(4);
+    } > ITCM1
+    __exidx_end = . ;
+
+    __extab_start = . ;
+    .ARM.extab :
+    {
+        *(.ARM.extab*)
+        . = ALIGN(4);
+    } > ITCM1
+    __extab_end = . ;
+
+    _data_start = . ;
 
     .rodata :
     {
         *(.rodata*)
-    } > ITCM1
-
-    _data_start = . ;
+        . = ALIGN(4);
+    } > DTCM1 AT > ITCM1
 
     .data :
     {
         *(.data*)
         . = ALIGN(4);
         *(.ramcode)
+        . = ALIGN(4);
     } > DTCM1 AT > ITCM1
 
     .data_e :
@@ -52,7 +73,9 @@ SECTIONS
     {
         _bss_start = .; 
         *(.bss*)
+        . = ALIGN(4);
         *(COMMON)
+        . = ALIGN(4);
         _bss_end = .;
     } > DTCM1
 

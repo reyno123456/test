@@ -24,17 +24,17 @@ LIB = lib$(CHIP)drv.a
 CFG_BIN = $(BB_REG_CFG_BIN_FILE_NAME)
 
 ifeq ($(CPU_NUMBER), cpu0)
-CFLAGS += $(CPU0_CFLAGS)
+CFLAGS += $(CPU0_COMPILE_FLAGS)
 include ./src.cpu0
 endif
 
 ifeq ($(CPU_NUMBER), cpu1)
-CFLAGS += $(CPU1_CFLAGS)
+CFLAGS += $(CPU1_COMPILE_FLAGS)
 include ./src.cpu1
 endif
 
 ifeq ($(CPU_NUMBER), cpu2)
-CFLAGS += $(CPU2_CFLAGS)
+CFLAGS += $(CPU2_COMPILE_FLAGS)
 include ./src.cpu2
 endif
 

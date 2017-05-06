@@ -1,12 +1,10 @@
 # cross compile...
-CROSS_COMPILE = /opt/toolchain/gcc-arm-none-eabi-5_2-2015q4/bin/arm-none-eabi-
+CROSS_COMPILE              = /opt/toolchain/gcc-arm-none-eabi-5_2-2015q4/bin/arm-none-eabi-
 CROSS_COMPILE_LIB_GCC_PATH = /opt/toolchain/gcc-arm-none-eabi-5_2-2015q4/lib/gcc/arm-none-eabi/5.2.1/armv7e-m
-CROSS_COMPILE_LIB_PATH = /opt/toolchain/gcc-arm-none-eabi-5_2-2015q4/arm-none-eabi/lib/armv7e-m
-
-APPLICATION_DIR ?= $(TOP_DIR)/Application/DJIEKDemo
-
+CROSS_COMPILE_LIB_PATH     = /opt/toolchain/gcc-arm-none-eabi-5_2-2015q4/arm-none-eabi/lib/armv7e-m
 
 CC      = $(CROSS_COMPILE)gcc
+CXX     = $(CROSS_COMPILE)g++
 AR      = $(CROSS_COMPILE)ar
 LD      = $(CROSS_COMPILE)ld
 OBJCOPY = $(CROSS_COMPILE)objcopy
@@ -18,70 +16,70 @@ ARFLAGS = cr
 RM = -rm -rf
 MAKE = make
 
-CFLAGS = #-Wall
-DEBUG ?= n
+suffix = $(notdir $(CURDIR))
 
-ifeq ($(DEBUG), y)
-CPU0_CFLAGS = -g
-CPU1_CFLAGS = -g
-CPU2_CFLAGS = -O1 -g
-DEBREL = Debug
-else
-CPU0_CFLAGS = -O2 -s
-CPU1_CFLAGS = -O2 -s
-CPU2_CFLAGS = -O1 -s
-DEBREL = Release
-endif
+export suffix
 
-DEFS = -mthumb -mcpu=cortex-m7 -mlittle-endian -mfpu=fpv5-sp-d16 -mfloat-abi=softfp -std=c99 -c -Wa,-mimplicit-it=thumb -Werror -DSTM32F746xx -DUSE_USB_HS -DUSE_HAL_DRIVER -DUSE_WINBOND_SPI_NOR_FLASH
-
-DEFS += -DUSE_BB_REG_CONFIG_BIN -DUSE_ADV7611_EDID_CONFIG_BIN -DBBRF_2T4R
-
-CFLAGS += $(DEFS)
-
-LDFLAGS = -L$(CROSS_COMPILE_LIB_GCC_PATH) -L$(CROSS_COMPILE_LIB_PATH) $(LIBS)
-
-INCDIRS =
-
-CFLAGS += $(INCDIRS)
+export CC
+export CXX
+export AS
+export AR
+export CFLAGS
+export CXXFLAGS
+export INCDIRS
+export LDFLAGS
+export ARFLAGS
+export MAKE
+export RM
 
 ###############################################################################
 
-suffix = $(notdir $(CURDIR))
-export suffix
+DEBUG ?= n
 
-# export to other Makefile
-export CC
-export CFLAGS
-export INCDIRS
-export AR
-export ARFLAGS
-export RM
-export AS
+ifeq ($(DEBUG), y)
+CPU0_COMPILE_FLAGS = -g
+CPU1_COMPILE_FLAGS = -g
+CPU2_COMPILE_FLAGS = -O1 -g
+DEBREL = Debug
+else
+CPU0_COMPILE_FLAGS = -O2 -s
+CPU1_COMPILE_FLAGS = -O2 -s
+CPU2_COMPILE_FLAGS = -O1 -s
+DEBREL = Release
+endif
 
-export CPU0_CFLAGS
-export CPU1_CFLAGS
-export CPU2_CFLAGS
+export CPU0_COMPILE_FLAGS
+export CPU1_COMPILE_FLAGS
+export CPU2_COMPILE_FLAGS
 
-CHIP = AR8020
-BOOT = AR8020
-BOARD = EKDemo
+CFLAGS = #-Wall
 
-export CHIP
-export BOOT
-export BOARD
+DEFS =
+
+CPU_DEFS = -mthumb -mcpu=cortex-m7 -mlittle-endian -mfpu=fpv5-sp-d16 -mfloat-abi=softfp -c -Wa,-mimplicit-it=thumb -Werror
+
+INCDIRS =
+
+LDFLAGS = -L$(CROSS_COMPILE_LIB_GCC_PATH) -L$(CROSS_COMPILE_LIB_PATH) $(LIBS)
+
+###############################################################################
+
+export CHIP = AR8020
+export BOOT = AR8020
+export BOARD = EKDemo
 
 export USB_DEV_CLASS_HID_ENABLE = 1
-export CROSS_COMPILE_LIB_PATH
 
 export BB_REG_CFG_BIN_FILE_NAME = 001_cfg_bb_reg.bin
 export HDMI_EDID_CFG_BIN_FILE_NAME = 002_cfg_adv_7611_edid.bin
 export CFG_BIN_FILE_NAME_LIST = $(BB_REG_CFG_BIN_FILE_NAME) $(HDMI_EDID_CFG_BIN_FILE_NAME)
 
+FUNCTION_DEFS = -DSTM32F746xx -DUSE_USB_HS -DUSE_HAL_DRIVER -DUSE_WINBOND_SPI_NOR_FLASH -DUSE_BB_REG_CONFIG_BIN -DUSE_ADV7611_EDID_CONFIG_BIN -DBBRF_2T4R
+
+CFLAGS += $(DEFS) $(CPU_DEFS) $(FUNCTION_DEFS) -std=c99 $(INCDIRS)
+
+CXXFLAGS += $(DEFS) $(CPU_DEFS) $(INCDIRS)
+
+APPLICATION_DIR ?= $(TOP_DIR)/Application/DJIEKDemo
+
 ###############################################################################
-
-# make all .c
-%.o:	%.c
-	@echo "Compling: " $(addsuffix .c, $(basename $(notdir $@)))
-	@$(CC) $(CFLAGS) -c $< -o $@
-

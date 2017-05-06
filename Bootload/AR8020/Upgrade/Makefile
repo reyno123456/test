@@ -22,7 +22,7 @@ include $(BUILD_DIR)/config.mk
 # libs
 CPU_NUMBER := cpu0
 
-CFLAGS += $(CPU0_CFLAGS)
+CFLAGS += $(CPU0_COMPILE_FLAGS)
 
 LD_LIBS := -lfatfs -lhal -lboard -lAR8020drv -lcommon -lsimplec
 

@@ -20,15 +20,15 @@ include $(BUILD_DIR)/config.mk
 LIB = libboard.a
 
 ifeq ($(CPU_NUMBER), cpu0)
-    CFLAGS += $(CPU0_CFLAGS)
+    CFLAGS += $(CPU0_COMPILE_FLAGS)
 endif
 
 ifeq ($(CPU_NUMBER), cpu1)
-    CFLAGS += $(CPU1_CFLAGS)
+    CFLAGS += $(CPU1_COMPILE_FLAGS)
 endif
 
 ifeq ($(CPU_NUMBER), cpu2)
-    CFLAGS += $(CPU2_CFLAGS)
+    CFLAGS += $(CPU2_COMPILE_FLAGS)
 endif
 
 CFG_BIN = $(HDMI_EDID_CFG_BIN_FILE_NAME)

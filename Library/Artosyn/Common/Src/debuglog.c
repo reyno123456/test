@@ -392,7 +392,7 @@ void DLOG_Init(FUNC_CommandRun func, ENUM_DLOG_PROCESSOR e_dlogProcessor)
 
 #ifdef DEBUG_LOG_USE_SRAM_OUTPUT_BUFFER
 
-static unsigned int DLOG_StrCpyToDebugOutputLogBuf(const char *src)
+static unsigned int DLOG_StrCpyToDebugOutputLogBuf(const char *src, unsigned int length)
 {
     char* dst;
     char* head;
@@ -421,7 +421,7 @@ static unsigned int DLOG_StrCpyToDebugOutputLogBuf(const char *src)
         return 0;
     }
 
-    while (*src)
+    while ((*src) && (length--))
     {
         *dst = *src;
         if (dst >= tail)
@@ -576,12 +576,25 @@ unsigned int DLOG_Output(unsigned int byte_num)
     return iByte;
 }
 
+// Output string when use libsimplec.a 
 int puts(const char * s)
 {
     // Print to buffer
-    DLOG_StrCpyToDebugOutputLogBuf(s);
+    DLOG_StrCpyToDebugOutputLogBuf(s, 2048);
 
     return 0;
+}
+
+// Output data when use libc.a
+int _write(int file, char *ptr, int len)
+{
+    if ((file == 0) || (file == 1) || (file ==2))
+    {
+        // Print to buffer
+        DLOG_StrCpyToDebugOutputLogBuf(ptr, len);
+    }
+
+    return len;
 }
 
 #else
