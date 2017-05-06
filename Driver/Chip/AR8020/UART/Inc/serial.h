@@ -56,6 +56,13 @@ typedef struct
 
 typedef struct 
 {
+  uint32_t u32_buffCurrentPosition;
+  uint16_t u16_uartSendBuffLen;  
+  uint16_t u16_uartSendBuffLentmp;
+}uart_tx_ringbuff;
+
+typedef struct 
+{
   unsigned int RBR_THR_DLL;
   unsigned int DLH_IER;
   unsigned int IIR_FCR;
@@ -97,6 +104,7 @@ void uart_puts(unsigned char index, const char *s);
 char uart_getc(unsigned char index);
 void uart_putdata(unsigned char index,  const char *s, unsigned short dataLen);
 uint8_t uart_checkoutFifoStatus(unsigned char index);
+int32_t Uart10_WaitTillIdle(unsigned char index, uint16_t datalen);
 /**
 * @brief  WaitTillIdle.  
 * @param  index           uart channel, 0 ~ 10.

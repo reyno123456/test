@@ -7,6 +7,7 @@
 #include "interrupt.h"
 #include "serial.h"
 #include "systicks.h"
+#include "memory_config.h"
 
 #include "hal_uart.h"
 
@@ -20,6 +21,7 @@ static UART_RxHandler s_pfun_uartUserHandlerTbl[UART_TOTAL_CHANNEL] =
        { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
 volatile static uart_tx s_st_uartTxArray[UART_TOTAL_CHANNEL];
+volatile static uart_tx_ringbuff *s_pst_uart10 = (uart_tx_ringbuff *)(SRAM_BB_UART_COM_TX_SHARE_MEMORY_ST_ADDR);
 /*********************************************************
  * Generic UART APIs
  *********************************************************/
@@ -118,23 +120,59 @@ void uart_init(unsigned char index, unsigned int baud_rate)
         uart_regs->RBR_THR_DLL = devisor & 0x000000ff;
         uart_regs->LCR &= ~UART_LCR_DLAB;
         uart_regs->DLH_IER |= UART_DLH_IER_RX_INT;
+
+        if (10 != index)
+        {        
+            s_st_uartTxArray[index].ps8_uartSendBuff = NULL;
+            s_st_uartTxArray[index].u16_uartSendBuffLentmp = 0;
+            s_st_uartTxArray[index].u16_uartSendBuffLen = 0;
+        }
+        else
+        {
+            memset((void *)(SRAM_BB_UART_COM_TX_SHARE_MEMORY_ST_ADDR), 0, SRAM_BB_UART_COM_TX_SHARE_MEMORY_SIZE);
+            s_pst_uart10->u32_buffCurrentPosition = SRAM_BB_UART_COM_TX_SHARE_MEMORY_ST_ADDR + sizeof(uart_tx_ringbuff);
+        }
     }
 
-    s_st_uartTxArray[index].ps8_uartSendBuff = NULL;
-    s_st_uartTxArray[index].u16_uartSendBuffLentmp = 0;
-    s_st_uartTxArray[index].u16_uartSendBuffLen = 0;
+    return;
 }
 
 uint8_t uart_checkoutFifoStatus(unsigned char index)
 {
-    if ((0 == s_st_uartTxArray[index].u16_uartSendBuffLen) && (0 == s_st_uartTxArray[index].u16_uartSendBuffLentmp))
+    if (10 != index)
     {
-        return 0;
+        if ((0 == s_st_uartTxArray[index].u16_uartSendBuffLen) && (0 == s_st_uartTxArray[index].u16_uartSendBuffLentmp))
+        {
+            return 0;
+        }
+        else
+        {
+            return 1;
+        }        
     }
     else
     {
-        return 1;
+        if ((0 == s_pst_uart10->u16_uartSendBuffLen) && (0 == s_pst_uart10->u16_uartSendBuffLentmp))
+        {
+            return 0;
+        }
+        else
+        {
+            return 1;
+        }        
     }
+}
+
+int32_t Uart10_WaitTillIdle(unsigned char index, uint16_t datalen)
+{
+
+    if (s_pst_uart10->u16_uartSendBuffLen + datalen  >= SRAM_BB_UART_COM_TX_SHARE_MEMORY_SIZE - sizeof(uart_tx_ringbuff))
+    {
+        dlog_error("uart10 data overflow");
+        return -1;
+    }
+    
+    return 0;    
 }
 
 int32_t Uart_WaitTillIdle(unsigned char index, uint32_t timeOut)
@@ -163,36 +201,77 @@ void uart_putFifo(unsigned char index)
 
     if (uart_regs != NULL)
     {
-        uint16_t u16_sendDataLen = 0;
-        uint32_t u32_clearInterrupt = 0;
+        uint8_t u8_sendDataLenCunt = 0;
 
-        if (s_st_uartTxArray[index].u16_uartSendBuffLen > UART_TFL_MAX)
+        if (10 != index)
         {
-            for (u16_sendDataLen=0; u16_sendDataLen < UART_TFL_MAX; u16_sendDataLen++)
-            {                      
-                uart_regs->RBR_THR_DLL = *(s_st_uartTxArray[index].ps8_uartSendBuff + s_st_uartTxArray[index].u16_uartSendBuffLentmp + u16_sendDataLen);            
-            }
+            if (s_st_uartTxArray[index].u16_uartSendBuffLen > UART_TFL_MAX)
+            {
+                for (u8_sendDataLenCunt=0; u8_sendDataLenCunt < UART_TFL_MAX; u8_sendDataLenCunt++)
+                {                      
+                    uart_regs->RBR_THR_DLL = *(s_st_uartTxArray[index].ps8_uartSendBuff + s_st_uartTxArray[index].u16_uartSendBuffLentmp + u8_sendDataLenCunt);            
+                }
 
-            s_st_uartTxArray[index].u16_uartSendBuffLen -= UART_TFL_MAX;
-            s_st_uartTxArray[index].u16_uartSendBuffLentmp += UART_TFL_MAX;
+                s_st_uartTxArray[index].u16_uartSendBuffLen -= UART_TFL_MAX;
+                s_st_uartTxArray[index].u16_uartSendBuffLentmp += UART_TFL_MAX;
 
-        }
-        else if ((s_st_uartTxArray[index].u16_uartSendBuffLen <= UART_TFL_MAX) && (s_st_uartTxArray[index].u16_uartSendBuffLen > 0))
-        {
-            for (u16_sendDataLen=0; u16_sendDataLen<s_st_uartTxArray[index].u16_uartSendBuffLen; u16_sendDataLen++)
-            {                      
-                uart_regs->RBR_THR_DLL = *(s_st_uartTxArray[index].ps8_uartSendBuff + s_st_uartTxArray[index].u16_uartSendBuffLentmp + u16_sendDataLen);            
             }
-            s_st_uartTxArray[index].u16_uartSendBuffLentmp += s_st_uartTxArray[index].u16_uartSendBuffLen;
-            s_st_uartTxArray[index].u16_uartSendBuffLen = 0;
-            s_st_uartTxArray[index].ps8_uartSendBuff = NULL;                  
+            else if ((s_st_uartTxArray[index].u16_uartSendBuffLen <= UART_TFL_MAX) && (s_st_uartTxArray[index].u16_uartSendBuffLen > 0))
+            {
+                for (u8_sendDataLenCunt=0; u8_sendDataLenCunt<s_st_uartTxArray[index].u16_uartSendBuffLen; u8_sendDataLenCunt++)
+                {                      
+                    uart_regs->RBR_THR_DLL = *(s_st_uartTxArray[index].ps8_uartSendBuff + s_st_uartTxArray[index].u16_uartSendBuffLentmp + u8_sendDataLenCunt);            
+                }
+                s_st_uartTxArray[index].u16_uartSendBuffLentmp += s_st_uartTxArray[index].u16_uartSendBuffLen;
+                s_st_uartTxArray[index].u16_uartSendBuffLen = 0;
+                s_st_uartTxArray[index].ps8_uartSendBuff = NULL;                  
+            }
+            else
+            {            
+                s_st_uartTxArray[index].u16_uartSendBuffLentmp = 0;
+                uart_regs->DLH_IER &= ~(UART_DLH_IER_TX_INT);
+            }        
         }
         else
-        {            
-            s_st_uartTxArray[index].u16_uartSendBuffLentmp = 0;
-            u32_clearInterrupt = uart_regs->IIR_FCR;
-            uart_regs->DLH_IER &= ~(UART_DLH_IER_TX_INT);
-        }        
+        {
+            if (s_pst_uart10->u16_uartSendBuffLen > UART_TFL_MAX)
+            {
+                for (u8_sendDataLenCunt=0; u8_sendDataLenCunt < UART_TFL_MAX; u8_sendDataLenCunt++)
+                {                      
+                    uart_regs->RBR_THR_DLL = *((uint8_t *)(s_pst_uart10->u32_buffCurrentPosition++));
+                    
+                    if (s_pst_uart10->u32_buffCurrentPosition >=(SRAM_BB_UART_COM_TX_SHARE_MEMORY_ST_ADDR + SRAM_BB_UART_COM_TX_SHARE_MEMORY_SIZE))            
+                    {
+                        s_pst_uart10->u32_buffCurrentPosition = SRAM_BB_UART_COM_TX_SHARE_MEMORY_ST_ADDR + sizeof(uart_tx_ringbuff);
+                    }
+                }
+                
+                s_pst_uart10->u16_uartSendBuffLen -= UART_TFL_MAX;
+                s_pst_uart10->u16_uartSendBuffLentmp += UART_TFL_MAX;
+
+            }
+            else if ((s_pst_uart10->u16_uartSendBuffLen <= UART_TFL_MAX) && (s_pst_uart10->u16_uartSendBuffLen > 0))
+            {
+                for (u8_sendDataLenCunt=0; u8_sendDataLenCunt < s_pst_uart10->u16_uartSendBuffLen; u8_sendDataLenCunt++)
+                {                      
+                    
+                    uart_regs->RBR_THR_DLL = *((uint8_t *)(s_pst_uart10->u32_buffCurrentPosition++));
+                    
+                    if (s_pst_uart10->u32_buffCurrentPosition >=(SRAM_BB_UART_COM_TX_SHARE_MEMORY_ST_ADDR + SRAM_BB_UART_COM_TX_SHARE_MEMORY_SIZE))            
+                    {
+                        s_pst_uart10->u32_buffCurrentPosition = SRAM_BB_UART_COM_TX_SHARE_MEMORY_ST_ADDR + sizeof(uart_tx_ringbuff);
+                    }
+                }
+                
+                s_pst_uart10->u16_uartSendBuffLentmp += s_pst_uart10->u16_uartSendBuffLen;
+                s_pst_uart10->u16_uartSendBuffLen = 0;                
+            }
+            else
+            {            
+                s_pst_uart10->u16_uartSendBuffLentmp = 0;
+                uart_regs->DLH_IER &= ~(UART_DLH_IER_TX_INT);
+            }            
+        }
     }
     else
     {
@@ -213,7 +292,7 @@ void uart_putc(unsigned char index, char c)
         dlog_error("uart_regs == NULL uart index=%d \n",index);
         return ;        
     }
-
+    
     s_st_uartTxArray[index].u16_uartSendBuffLen = 1;
     s_st_uartTxArray[index].u16_uartSendBuffLentmp = 0;
     s_st_uartTxArray[index].ps8_uartSendBuff = &s_s8_uartchartmp;
@@ -226,15 +305,15 @@ void uart_puts(unsigned char index, const char *s)
     volatile uart_type *uart_regs;
     uart_regs = get_uart_type_by_index(index);
 
-    s_st_uartTxArray[index].u16_uartSendBuffLen = strlen(s);
-    s_st_uartTxArray[index].u16_uartSendBuffLentmp = 0;
-    s_st_uartTxArray[index].ps8_uartSendBuff = s;
-
-    if (NULL == uart_regs || (0 == s_st_uartTxArray[index].u16_uartSendBuffLen))
+    if (NULL == uart_regs || (0 == strlen(s)))
     {
         dlog_error("uart_regs = NULL uart index=%d || u16_uartSendBuffLen ==0 \n",index);
         return ;        
     }
+
+    s_st_uartTxArray[index].u16_uartSendBuffLen = strlen(s);
+    s_st_uartTxArray[index].u16_uartSendBuffLentmp = 0;
+    s_st_uartTxArray[index].ps8_uartSendBuff = s;
 
     uart_regs->DLH_IER |= UART_DLH_IER_TX_INT;
 }
@@ -244,17 +323,48 @@ void uart_putdata(unsigned char index,  const char *s, unsigned short dataLen)
     volatile uart_type *uart_regs;
     uart_regs = get_uart_type_by_index(index);
 
-    s_st_uartTxArray[index].u16_uartSendBuffLen = dataLen;
-    s_st_uartTxArray[index].u16_uartSendBuffLentmp = 0;
-    s_st_uartTxArray[index].ps8_uartSendBuff = s;
-
-    if (NULL == uart_regs || (0 == s_st_uartTxArray[index].u16_uartSendBuffLen))
+    if (NULL == uart_regs || (0 == dataLen))
     {
         dlog_error("uart_regs = NULL uart index=%d || u16_uartSendBuffLen ==0 \n",index);
         return ;        
     }
+    
+    if (10 != index)
+    {
+        s_st_uartTxArray[index].u16_uartSendBuffLen = dataLen;
+        s_st_uartTxArray[index].u16_uartSendBuffLentmp = 0;
+        s_st_uartTxArray[index].ps8_uartSendBuff = s;
+        
+    }
+    else
+    {
+        if (s_pst_uart10->u16_uartSendBuffLen + dataLen  >= SRAM_BB_UART_COM_TX_SHARE_MEMORY_SIZE - sizeof(uart_tx_ringbuff))
+        {
+            return ;
+        }
+        else
+        {
 
+            if ((s_pst_uart10->u32_buffCurrentPosition + s_pst_uart10->u16_uartSendBuffLen + dataLen) >= 
+                (SRAM_BB_UART_COM_TX_SHARE_MEMORY_ST_ADDR + SRAM_BB_UART_COM_TX_SHARE_MEMORY_SIZE))            
+            {
+                uint16_t tmp = SRAM_BB_UART_COM_TX_SHARE_MEMORY_ST_ADDR + SRAM_BB_UART_COM_TX_SHARE_MEMORY_SIZE - s_pst_uart10->u32_buffCurrentPosition - s_pst_uart10->u16_uartSendBuffLen;
+                
+                memcpy((uint8_t *)(s_pst_uart10->u32_buffCurrentPosition + s_pst_uart10->u16_uartSendBuffLen), s, tmp);
+                
+                memcpy((uint8_t *)(SRAM_BB_UART_COM_TX_SHARE_MEMORY_ST_ADDR + sizeof(uart_tx_ringbuff)), s + tmp, dataLen - tmp);            
+            }
+            else
+            {
+                memcpy((uint8_t *)(s_pst_uart10->u32_buffCurrentPosition + s_pst_uart10->u16_uartSendBuffLen), s, dataLen);
+            }
+
+            s_pst_uart10->u16_uartSendBuffLen += dataLen;
+                    
+        }
+    }
     uart_regs->DLH_IER |= UART_DLH_IER_TX_INT;
+    
 }
 
 

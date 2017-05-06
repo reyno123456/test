@@ -360,9 +360,10 @@ uint8_t BB_UARTComSendMsg(ENUM_BBUARTCOMSESSIONID session_id, uint8_t* data_buf,
         {
             data[iTotalCntTmp++] = 0;
         }
-
+        
+        Uart10_WaitTillIdle(BBCOM_UART_INDEX,iTotalCntTmp);
         uart_putdata(BBCOM_UART_INDEX,  data, iTotalCntTmp);
-        Uart_WaitTillIdle(BBCOM_UART_INDEX, UART_DEFAULT_TIMEOUTMS);
+        
 
         if (align_block_num > 0)
         {

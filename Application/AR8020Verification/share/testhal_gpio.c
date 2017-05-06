@@ -77,14 +77,6 @@ void commandhal_TestGpioInterrupt(uint8_t *gpionum, uint8_t *inttype, uint8_t *p
     {
         dlog_info("fail %d",u8_GpioNum);
     }
-    if(0==HAL_GPIO_RegisterInterrupt(u8_GpioNum+1, u8_GpioIntType, u8_GpioPolarity, GPIOhal_IRQHandler1))
-    {
-        dlog_info("ok %d",u8_GpioNum+1);
-    }
-    else
-    {
-        dlog_info("fail %d",u8_GpioNum+1);
-    }
     dlog_output(100);
 	
 
