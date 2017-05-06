@@ -30,10 +30,10 @@ TARGET = ar8020_cpu0.bin
 SRC_S   := start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
-SRC_C   := command.c test_hal_camera.c ../share/test_i2c_adv7611.c \
+SRC_C   := main_sky.c command.c test_hal_camera.c ../share/test_i2c_adv7611.c \
            upgrade.c test_hal_mipi.c test_usbh.c \
 		   test_hal_nv.c
-SRC_CXX := main_sky.cpp
+SRC_CXX :=
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
