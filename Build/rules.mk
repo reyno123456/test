@@ -16,6 +16,11 @@ $(obj).depend: $(BUILD_DIR)/config.mk $(SRC_C) $(SRC_CXX)
 		$(CXX) -MM $(CXXFLAGS) -E -MQ $(_obj)$$g $$f >> $@ ; \
         done
 
+# make all .s
+ %.ao:    %.s
+	@echo "Compling: " $(addsuffix .s, $(basename $(notdir $@)))
+	@$(AS) $(ASFLAGS) $< -o $@
+
 # make all .c
 %.o:    %.c
 	@echo "Compling: " $(addsuffix .c, $(basename $(notdir $@)))
@@ -24,10 +29,5 @@ $(obj).depend: $(BUILD_DIR)/config.mk $(SRC_C) $(SRC_CXX)
 # make all .cpp
 %.cpp.o:    %.cpp
 	@echo "Compling: " $(basename $(notdir $@))
-	@$(CXX) $(CXXFLAGS) -c $< -o $@
-
-# make all .s
-%.ao:    %.s
-	@echo "Compling: " $(addsuffix .s, $(basename $(notdir $@)))
-	@$(AS) $(ASFLAGS) $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
