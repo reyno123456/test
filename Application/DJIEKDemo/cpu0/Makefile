@@ -49,7 +49,7 @@ CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../s
 
 # libs
 LD_LIBS := --start-group
-LD_LIBS += -lfreertos -lutility -lfatfs -lhal -lboard -lAR8020drv -lm -lcommon -lc -lnosys -lgcc
+LD_LIBS += -lfreertos -lutility -lfatfs -lhal -lboard -lAR8020drv -lm -lcommon -lc_nano -lnosys -lgcc
 ifeq ($(SRC_CXX), )
 LD_LIBS += --end-group
 else
@@ -69,7 +69,11 @@ OBJ_CXX := $(patsubst %.cpp,%.cpp.o,$(SRC_CXX))
 
 all: .depend $(TARGET)
 
+ifeq ($(SRC_CXX), )
 $(TARGET): $(OBJ_S) $(OBJ_C) $(OBJ_CXX)
+else
+$(TARGET): $(OBJ_S) $(OBJ_C) $(OBJ_CXX) $(CRTBEGIN_OBJ) $(CRTEND_OBJ)
+endif
 	$(LD) $^ $(LDFLAGS) -Tar8020.lds -o $(TARGET).elf 
 	$(OBJCOPY) -O binary $(TARGET).elf $@
 	$(OBJDUMP) -D $(TARGET).elf > $(TARGET).dis

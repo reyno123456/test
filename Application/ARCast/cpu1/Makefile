@@ -65,7 +65,11 @@ OBJ_CXX := $(patsubst %.cpp,%.cpp.o,$(SRC_CXX))
 
 all: .depend $(TARGET)
 
+ifeq ($(SRC_CXX), )
 $(TARGET): $(OBJ_S) $(OBJ_C) $(OBJ_CXX)
+else
+$(TARGET): $(OBJ_S) $(OBJ_C) $(OBJ_CXX) $(CRTBEGIN_OBJ) $(CRTEND_OBJ)
+endif
 	$(LD) $^ $(LDFLAGS) -Tar8020.lds -o $(TARGET).elf 
 	$(OBJCOPY) -O binary $(TARGET).elf $@
 	$(OBJDUMP) -D $(TARGET).elf > $(TARGET).dis
