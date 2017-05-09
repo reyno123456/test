@@ -138,6 +138,21 @@ typedef struct
 } STRU_CALC_DIST_DATA;
 
 
+#define RC_FRQ_MAX_MASK_NUM         (10)
+#define RC_FRQ_MASK_THRESHOLD       (5)
+#define RF_FRQ_MAX_NUM              ((MAX_2G_RC_FRQ_SIZE>=MAX_5G_RC_FRQ_SIZE)?MAX_2G_RC_FRQ_SIZE:MAX_5G_RC_FRQ_SIZE)
+typedef struct
+{
+    uint64_t u64_mask; // bit0 <-> freq0  ... bit63 <-> freq63
+    uint64_t u64_rcvGrdMask; // received mask from spi, send by grd
+    uint8_t  u8_unLock[RF_FRQ_MAX_NUM]; // continue unlock cnt 
+    uint8_t  u8_maskOrderIndex;
+    uint8_t  u8_maskOrder[RC_FRQ_MAX_MASK_NUM]; // u8_maskOrder[0] earlist masked frq's channel                                      
+} STRU_RC_FRQ_MASK;
+
+
+
+
 extern volatile CONTEXT context;
 extern volatile DEVICE_STATE dev_state;
 extern PARAM *sys_param;

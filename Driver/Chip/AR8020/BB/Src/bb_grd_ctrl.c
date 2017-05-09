@@ -27,10 +27,14 @@ static uint8_t snr_static_count = SNR_STATIC_START_VALUE;
 static uint8_t hop_count = 0;
 static uint8_t flag_itFreqskip = 0;
 static uint8_t flag_snrPostCheck;
+static uint64_t s_u64_rcMask = 0;
+static uint8_t s_u8_rcMaskEnable = 0;
 
 static void BB_grd_uartDataHandler(void *p);
 static void grd_calc_dist(void);
 static uint32_t grd_calc_dist_get_avg_value(uint32_t *u32_dist);
+static void grd_init_rc_frq_mask_func(void);
+static void grd_write_mask_code_to_sky(uint8_t enable, uint64_t *mask);
 
 
 STRU_CALC_DIST_DATA s_st_calcDistData = 
@@ -79,12 +83,15 @@ void BB_GRD_start(void)
 
     BB_UARTComInit( BB_grd_uartDataHandler ); 
     BB_GetDevInfo();
+
+    grd_init_rc_frq_mask_func();
 }
 
 
 static void BB_grd_uartDataHandler(void *p)
 {
     STRU_SysEventSkyStatus  status;
+    uint64_t tmpMaskCode = 0;
 
     uint32_t u32_rcvLen = BB_UARTComReceiveMsg(BB_UART_COM_SESSION_0,
                           (uint8_t *)&status,
@@ -92,7 +99,24 @@ static void BB_grd_uartDataHandler(void *p)
 
     if ( u32_rcvLen  >= sizeof(STRU_SysEventSkyStatus))
     {
-        dlog_info("rclock:%d  nrlock:%d", status.u8_rcCrcLockCnt, status.u8_rcNrLockCnt);
+        if (RC_LOCK_CNT == status.pid)
+        {
+            dlog_info("rclock:%d  nrlock:%d", status.par.rcLockCnt.u8_rcCrcLockCnt, status.par.rcLockCnt.u8_rcNrLockCnt);
+        }
+        else if (RC_MASK_CODE == status.pid)
+        {
+            tmpMaskCode = s_u64_rcMask;
+            s_u64_rcMask = status.par.u64_rcMask;
+            grd_write_mask_code_to_sky(s_u8_rcMaskEnable, &s_u64_rcMask);
+            if (tmpMaskCode != s_u64_rcMask)
+            {
+                dlog_info("rcv_sky_calc_mask_code:0x%x,0x%x", (uint32_t)((s_u64_rcMask)>>32), (uint32_t)(s_u64_rcMask));
+            }
+        }
+        else
+        {
+
+        }
     }
 }
 
@@ -632,7 +656,20 @@ void grd_rc_hopfreq(void)
     {
         grd_rc_channel = 0;
     }
-	BB_set_Rcfrq(context.freq_band, grd_rc_channel);
+    
+    BB_WriteReg(PAGE2, GRD_RC_CHANNEL, grd_rc_channel);
+    
+    if (s_u8_rcMaskEnable)
+    {
+        if ( !(s_u64_rcMask & (((uint64_t)1) << grd_rc_channel)) )
+        {
+            BB_set_Rcfrq(context.freq_band, grd_rc_channel);
+        }
+    }
+    else
+    {
+        BB_set_Rcfrq(context.freq_band, grd_rc_channel);
+    }
 }
 
 
@@ -1079,6 +1116,12 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 grd_set_calc_dist_zero_point(value);
                 break;
             }
+
+            case SET_RC_FRQ_MASK:
+            {
+                grd_disable_enable_rc_frq_mask_func(value);
+                break;
+            }
             default:
                 break;                
         }
@@ -1299,6 +1342,46 @@ static uint32_t grd_calc_dist_get_avg_value(uint32_t *u32_dist)
     }
 
     return u32_data2;
+}
+
+static void grd_init_rc_frq_mask_func(void)
+{
+    grd_write_mask_code_to_sky(s_u8_rcMaskEnable, &s_u64_rcMask);
+}
+
+void grd_disable_enable_rc_frq_mask_func(uint8_t flag)
+{
+    if (flag)
+    {
+        s_u8_rcMaskEnable = 1;
+        dlog_info("enable rc frq mask");
+    }
+    else
+    {
+        s_u8_rcMaskEnable = 0;
+        dlog_info("disable rc frq mask");
+    }
+}
+
+static void grd_write_mask_code_to_sky(uint8_t enable, uint64_t *mask)
+{
+    uint8_t *pu8_tmpAddr;
+    uint8_t i;
+    uint64_t u64_tmpData = 0;
+
+    if (0 == enable) // disable rc frq mask function
+    {
+        pu8_tmpAddr = (uint8_t *)(&u64_tmpData);
+    }
+    else
+    {
+        pu8_tmpAddr = (uint8_t *)(mask);
+    }
+    
+    for (i=0; i<sizeof(uint64_t); i++)
+    {
+        BB_WriteReg(PAGE2, GRD_MASK_CODE + i, pu8_tmpAddr[i]);
+    }
 }
 
 

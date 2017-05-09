@@ -45,12 +45,21 @@ typedef enum
     MISC_WRITE_BB_REG,
 } ENUM_WIRELESS_MISC_ITEM;
 
-
+#define  RC_LOCK_CNT      (0)
+#define  RC_MASK_CODE     (1)
 typedef struct _SysEvent_SkyStatus
 {
     uint8_t pid;
-    uint8_t u8_rcNrLockCnt;
-    uint8_t u8_rcCrcLockCnt;
+    union
+    {
+        struct
+        {
+            uint8_t u8_rcNrLockCnt;
+            uint8_t u8_rcCrcLockCnt;
+        } rcLockCnt;
+        
+        uint64_t u64_rcMask;
+    } par;
 } STRU_SysEventSkyStatus;
 
 

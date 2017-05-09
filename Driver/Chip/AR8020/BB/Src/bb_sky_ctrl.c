@@ -44,6 +44,8 @@ static enum EN_AGC_MODE en_agcmode = UNKOWN_AGC;
 static init_timer_st sky_timer2_6;
 static init_timer_st sky_timer2_7;
 static int switch_5G_count = 0;
+static STRU_RC_FRQ_MASK s_st_rcFrqMask;
+
 
 static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd);
 static void sky_handle_all_cmds(void);
@@ -57,6 +59,9 @@ static void sky_calc_dist(void);
 
 static uint16_t sky_get_rc_snr( void );
 static uint16_t sky_get_snr_average(void);
+
+static void sky_init_rc_frq_mask_func(void);
+static void sky_rc_frq_status_statistics(void);
 
 void BB_SKY_start(void)
 {   
@@ -92,7 +97,9 @@ void BB_SKY_start(void)
     BB_UARTComInit( NULL ); 
 
     BB_GetDevInfo();
-	s_lockFlag = 0;
+    s_lockFlag = 0;
+    
+    sky_init_rc_frq_mask_func();
 }
 
 
@@ -132,9 +139,9 @@ uint8_t sky_id_match(void)
 
         {
             STRU_SysEventSkyStatus stru_skycStatus = {
-                .pid             = 0,
-                .u8_rcCrcLockCnt = pre_lockcnt,
-                .u8_rcNrLockCnt  = pre_nrlockcnt
+                .pid             = RC_LOCK_CNT,
+                .par.rcLockCnt.u8_rcCrcLockCnt = pre_lockcnt,
+                .par.rcLockCnt.u8_rcNrLockCnt  = pre_nrlockcnt,
             };
 
             SYS_EVENT_Notify_From_ISR(SYS_EVENT_ID_UART_DATA_SND_SESSION0, &stru_skycStatus);
@@ -354,6 +361,8 @@ void Sky_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
 
     {
         sky_physical_link_process();
+
+        sky_rc_frq_status_statistics();
         
         //patch for 5G switch: For demo test only.
         if(context.freq_band == RF_5G && switch_5G_count < 5)
@@ -375,14 +384,18 @@ void Sky_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
 
 void sky_rc_hopfreq(void)
 {
-	uint8_t max_ch_size = (context.freq_band == RF_2G) ? (MAX_2G_RC_FRQ_SIZE):(MAX_5G_RC_FRQ_SIZE);
-	
+    uint8_t max_ch_size = (context.freq_band == RF_2G) ? (MAX_2G_RC_FRQ_SIZE):(MAX_5G_RC_FRQ_SIZE);
+    
     sky_rc_channel++;
     if(sky_rc_channel >=  max_ch_size)
     {
         sky_rc_channel = 0;
     }
-	BB_set_Rcfrq(context.freq_band, sky_rc_channel);
+
+    if ( !((s_st_rcFrqMask.u64_rcvGrdMask) & (((uint64_t)1) << sky_rc_channel)) )
+    {
+        BB_set_Rcfrq(context.freq_band, sky_rc_channel);
+    }
 }
 
 
@@ -908,6 +921,38 @@ static void sky_handle_MCS_cmd(void)
     }
 }
 
+static void sky_handle_rc_rcv_grd_mask_code_cmd(void)
+{
+    uint8_t i;
+    uint64_t u64_tmpMask = 0;
+    uint8_t *pu8_tmpAddr = (uint8_t *)(&u64_tmpMask);
+
+    for (i=0; i<sizeof(uint64_t); i++)
+    {
+        pu8_tmpAddr[i] = BB_ReadReg(PAGE2, GRD_MASK_CODE + i);
+    }
+    if ((s_st_rcFrqMask.u64_rcvGrdMask) != u64_tmpMask)
+    {
+        s_st_rcFrqMask.u64_rcvGrdMask = u64_tmpMask;
+        dlog_info("rcv_grd_mask:0x%x,0x%x", (uint32_t)((u64_tmpMask)>>32), (uint32_t)(u64_tmpMask));
+    }
+}
+
+static void sky_handle_rc_channel_sync_cmd(void)
+{
+    uint8_t data0 = BB_ReadReg(PAGE2, GRD_RC_CHANNEL);
+    uint8_t max_ch_size = (context.freq_band == RF_2G) ? (MAX_2G_RC_FRQ_SIZE):(MAX_5G_RC_FRQ_SIZE);
+    
+    data0 += 1;
+    data0 %= max_ch_size;
+
+    if (data0 != sky_rc_channel)
+    {
+        sky_rc_channel = data0;
+        dlog_info("sync rc frq channel.");
+    }
+}
+
 
 void sky_handle_all_spi_cmds(void)
 {
@@ -930,6 +975,10 @@ void sky_handle_all_spi_cmds(void)
     sky_handle_brc_bitrate_cmd();
 
     sky_handle_RF_band_cmd();
+
+    sky_handle_rc_rcv_grd_mask_code_cmd();
+
+    sky_handle_rc_channel_sync_cmd();
 }
 
 static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
@@ -1301,4 +1350,98 @@ static uint16_t sky_get_snr_average(void)
     }
 
     return (sum/i);
+}
+
+static void sky_init_rc_frq_mask_func(void)
+{
+    memset((uint8_t*)(&s_st_rcFrqMask), 0x00, sizeof(STRU_RC_FRQ_MASK));
+}
+
+
+static void sky_rc_frq_status_statistics(void)
+{
+    static uint16_t u16_txCnt = 0;
+    uint8_t u8_rcCh = 0;
+    uint8_t u8_cnt = 0;
+    uint8_t u8_clcCh = 0;
+    uint8_t i = 0;
+    uint64_t u64_mask;
+    uint64_t u64_preMask = s_st_rcFrqMask.u64_mask;
+    int8_t max_ch_size = (context.freq_band == RF_2G) ? (MAX_2G_RC_FRQ_SIZE):(MAX_5G_RC_FRQ_SIZE);
+    
+    if(context.dev_state == ID_MATCH_LOCK)
+    {
+        if (0 == sky_rc_channel)
+        {
+            u8_rcCh = max_ch_size - 1;
+        }
+        else
+        {
+            u8_rcCh = sky_rc_channel - 1;
+        }
+
+        if ((s_st_rcFrqMask.u64_mask) & (((uint64_t)1) << u8_rcCh))
+        {
+            return;
+        }
+        
+        if(context.locked)
+        {
+            s_st_rcFrqMask.u8_unLock[u8_rcCh] = 0;
+        }
+        else
+        {
+            s_st_rcFrqMask.u8_unLock[u8_rcCh] += 1;
+        }
+
+        if (s_st_rcFrqMask.u8_unLock[u8_rcCh] >= RC_FRQ_MASK_THRESHOLD)
+        {
+            s_st_rcFrqMask.u64_mask |= ( ((uint64_t)1) << u8_rcCh );
+            
+            u8_clcCh = s_st_rcFrqMask.u8_maskOrder[s_st_rcFrqMask.u8_maskOrderIndex];
+            s_st_rcFrqMask.u8_maskOrder[s_st_rcFrqMask.u8_maskOrderIndex] = u8_rcCh;
+            s_st_rcFrqMask.u8_maskOrderIndex += 1;
+            s_st_rcFrqMask.u8_maskOrderIndex %= RC_FRQ_MAX_MASK_NUM;
+
+            u8_cnt = 0;
+            u64_mask = s_st_rcFrqMask.u64_mask;
+            while(i < max_ch_size)
+            {
+                if (u64_mask & ((uint64_t)0x01))
+                {
+                    u8_cnt += 1;
+                }
+                u64_mask = (u64_mask >> 1);
+                i += 1;
+            }
+            
+            if (u8_cnt > RC_FRQ_MAX_MASK_NUM) // unmask oldest rf frq
+            {
+                s_st_rcFrqMask.u64_mask &= (~(((uint64_t)1) << (u8_clcCh)));
+            }
+
+            // mask one, then all start again.
+            memset(&(s_st_rcFrqMask.u8_unLock[0]), 0x00, RF_FRQ_MAX_NUM);
+            s_st_rcFrqMask.u8_unLock[u8_rcCh] = RC_FRQ_MASK_THRESHOLD;
+        }
+
+        if (u64_preMask != (s_st_rcFrqMask.u64_mask))
+        {
+            u16_txCnt = 169;
+            dlog_info("new_calc_mask_code:0x%x,0x%x", (uint32_t)((s_st_rcFrqMask.u64_mask)>>32), (uint32_t)(s_st_rcFrqMask.u64_mask));
+        }
+
+        u16_txCnt += 1;
+        if (170 == u16_txCnt) // 170 * 14 = 2380ms
+        {
+            STRU_SysEventSkyStatus stru_skycStatus = 
+            {
+                .pid             = RC_MASK_CODE,
+                .par.u64_rcMask = s_st_rcFrqMask.u64_mask,
+            };
+            SYS_EVENT_Notify_From_ISR(SYS_EVENT_ID_UART_DATA_SND_SESSION0, &stru_skycStatus);
+                
+            u16_txCnt = 0;
+        }
+    }
 }

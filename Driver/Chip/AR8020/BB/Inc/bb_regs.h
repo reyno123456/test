@@ -101,6 +101,12 @@
 #define     IT_FRQ_2            ( (uint8_t)0x86 )
 #define     IT_FRQ_3            ( (uint8_t)0x87 )
 
+
+#define     GRD_RC_CHANNEL      ( (uint8_t)0x88 )
+#define     GRD_MASK_CODE       ( (uint8_t)0x89 ) // 8 byte, 0x89 ~ 0x90
+
+
+
 /****end of ground - > sky registers From 0x60 -> 0x9F */
 
 #define     SWEEP_ENERGY_HIGH       (0xa2)

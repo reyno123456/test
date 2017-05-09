@@ -927,6 +927,15 @@ int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
             cmd.u32_configValue  = (param0);
             break;
         }
+
+        case 23:
+        {
+            cmd.u8_configClass  = WIRELESS_OTHER;
+            cmd.u8_configItem   = SET_RC_FRQ_MASK;
+            cmd.u32_configValue  = (param0);
+            break;
+        }
+        
         default:
         {
             ret = 0;
