@@ -41,6 +41,7 @@ void USBH_MountUSBDisk(void);
 void USB_MainTask(void const *argument);
 void USBH_ProcUVC(void);
 void command_ViewUVC(void);
+void USBH_UVCTask(void const *argument);
 
 
 extern USBH_AppCtrl             g_usbhAppCtrl;

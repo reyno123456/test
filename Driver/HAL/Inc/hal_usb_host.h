@@ -22,7 +22,7 @@ extern "C"
 #include "hal_usb_otg.h"
 
 
-#define HAL_USB_UVC_MAX_FRAME_FORMATS_NUM     20
+#define HAL_USB_UVC_MAX_FRAME_FORMATS_NUM     10
 
 typedef enum
 {
@@ -121,10 +121,18 @@ HAL_RET_T HAL_USB_StartUVC(uint16_t u16_width,
 *               HAL_OK                                      : means successfully get one video frame
 * @note  
 */
-HAL_RET_T HAL_USB_GetVideoFrame(uint8_t *u8_buff,
-                               uint32_t *u32_frameNum,
-                               uint32_t *u32_frameSize,
-                               ENUM_HAL_USB_UVC_DATA_TYPE e_dataType);
+HAL_RET_T HAL_USB_UVCGetVideoFrame(uint8_t *u8_buff);
+
+
+/**
+* @brief  get the latest frame buffer
+* @param  *u32_frameNum           frame number in frame serises
+*               *u32_frameSize            data size if  a frame 
+* @retval   HAL_OK                       frame is ready
+* @note  
+*/
+HAL_RET_T HAL_USB_UVCCheckFrameReady(uint32_t *u32_frameNum,
+                                     uint32_t *u32_frameSize);
 
 /**
 * @brief  get the formats this camera support
@@ -132,7 +140,7 @@ HAL_RET_T HAL_USB_GetVideoFrame(uint8_t *u8_buff,
 * @retval   STRU_UVC_VIDEO_FRAME_FORMAT *stVideoFrameFormat
 * @note  
 */
-void HAL_USB_GetVideoFormats(STRU_UVC_VIDEO_FRAME_FORMAT *stVideoFrameFormat);
+void HAL_USB_UVCGetVideoFormats(STRU_UVC_VIDEO_FRAME_FORMAT *stVideoFrameFormat);
 
 
 /**
@@ -155,6 +163,17 @@ uint32_t HAL_USB_GetUVCExtUnitControls(void);
 */
 void HAL_USB_EnterUSBHostTestMode(void);
 
+
+/*
+ * @brief    transfer UVC Data To Ground
+ * @param  *buff                    UVC Data Buffer
+                  dataLen                data size of a UVC frame
+                  width                    frame width
+                  height                   frame height
+                  e_UVCDataType     YUV or Y only
+ * @retval   void
+ * @note  
+ */
 void HAL_USB_TransferUVCToGrd(uint8_t *buff,
                              uint32_t dataLen,
                              uint16_t width,

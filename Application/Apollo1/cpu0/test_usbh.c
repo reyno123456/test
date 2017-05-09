@@ -5,6 +5,7 @@
 #include "hal_usb_host.h"
 #include "hal_usb_device.h"
 #include "hal_sram.h"
+#include "hal.h"
 
 
 #define USB_VIDEO_BYPASS_SIZE_ONCE      (8192)
@@ -24,8 +25,6 @@ void USBH_USBHostStatus(void const *argument)
     while (1)
     {
         HAL_USB_HostProcess();
-
-        USBH_ProcUVC();
 
         osDelay(10);
     }
@@ -217,7 +216,7 @@ void USBH_ProcUVC(void)
         if (0 == s_usbhUVCStarted)
         {
             // get supported formats first
-            HAL_USB_GetVideoFormats(&stVideoFrameFormat);
+            HAL_USB_UVCGetVideoFormats(&stVideoFrameFormat);
 
             // start uvc
             if (HAL_OK == HAL_USB_StartUVC(u16_width, u16_height, &u32_frameSize))
@@ -227,6 +226,11 @@ void USBH_ProcUVC(void)
                 if (NULL == u8_FrameBuff)
                 {
                     u8_FrameBuff    = (uint8_t *)malloc(u32_frameSize);
+
+                    if (u8_FrameBuff == NULL)
+                    {
+                        dlog_error("malloc error in UVC APP");
+                    }
                 }
             }
             else
@@ -236,17 +240,17 @@ void USBH_ProcUVC(void)
         }
         else
         {
-            //get a YUV frame, size should be u16_width * u16_height * 2
-            if (HAL_OK == HAL_USB_GetVideoFrame(u8_FrameBuff, &u32_uvcFrameNum, &u32_frameSize, ENUM_UVC_DATA_YUV))
+            //get a YUV frame
+            HAL_USB_UVCGetVideoFrame(u8_FrameBuff);
+
+            // check whether a frame is ready
+            if (HAL_OK == HAL_USB_UVCCheckFrameReady(&u32_uvcFrameNum, &u32_frameSize))
             {
+                // do something USER need, such as transfer to ground , or optical flow process
                 if (g_u8ViewUVC == 1)
                 {
                     HAL_USB_TransferUVCToGrd(u8_FrameBuff, u32_frameSize, u16_width, u16_height, ENUM_UVC_DATA_YUV);
                 }
-            }
-            else
-            {
-                dlog_error("get video buffer error");
             }
         }
     }
@@ -271,5 +275,15 @@ void command_ViewUVC(void)
 }
 
 
+void USBH_UVCTask(void const *argument)
+{
+    dlog_info("UVC Task");
 
+    while (1)
+    {
+        USBH_ProcUVC();
+
+        HAL_Delay(1);
+    }
+}
 

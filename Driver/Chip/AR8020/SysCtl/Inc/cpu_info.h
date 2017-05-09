@@ -30,6 +30,11 @@ void CPUINFO_DCacheCleanInvalidateByAddr(uint32_t *addr, int32_t dsize);
 #define DTCM_CPU0_DMA_ADDR_OFFSET       0x24080000
 #define DTCM_CPU1_DMA_ADDR_OFFSET       0x24180000
 
+#define ITCM_START_ADDR                 0x00000000
+#define ITCM_END_ADDR                   0x00080000
+#define ITCM_CPU0_DMA_ADDR_OFFSET       0x44000000
+#define ITCM_CPU1_DMA_ADDR_OFFSET       0x44100000
+
 
 #endif
 

@@ -16,11 +16,14 @@ History:
 #include "interrupt.h"
 #include "hal_nvic.h"
 #include "debuglog.h"
-#include "dma.h"
+#include "hal_dma.h"
 #include "cpu_info.h"
+#include "systicks.h"
+#include "hal.h"
 
 static ENUM_HAL_USB_HOST_STATE   s_eUSBHostAppState;
 USBH_HandleTypeDef               hUSBHost;
+uint8_t                          u8_header[12];
 
 
 /**
@@ -189,75 +192,47 @@ HAL_RET_T HAL_USB_StartUVC(uint16_t u16_width,
 *               HAL_OK                                      : means successfully get one video frame
 * @note  
 */
-HAL_RET_T HAL_USB_GetVideoFrame(uint8_t *u8_buff,
-                               uint32_t *u32_frameNum,
-                               uint32_t *u32_frameSize,
-                               ENUM_HAL_USB_UVC_DATA_TYPE e_dataType)
+HAL_RET_T HAL_USB_UVCGetVideoFrame(uint8_t *u8_buff)
 {
-    HAL_RET_T               ret = HAL_USB_ERR_BUFF_IS_EMPTY;
-    uint8_t                *u8_frameBuff = NULL;
-//    uint32_t                u32_srcAddr;
-//    uint32_t                u32_destAddr;
-//    uint32_t                u32_addrOffset = 0;
-    uint32_t                i;
-    uint32_t                loop;
+    HAL_RET_T                   ret = HAL_USB_ERR_UVC_LAST_FRAME_PREPARING;
 
-    u8_frameBuff            = USBH_UVC_GetBuff(u32_frameNum, u32_frameSize);
-
-    if (NULL != u8_frameBuff)
+    if (g_stUVCUserInterface.u8_userWaiting != UVC_USER_GET_FRAME_IDLE)
     {
-        #if 0
-        u32_srcAddr             = (uint32_t)u8_frameBuff;
-        u32_destAddr            = (uint32_t)u8_buff;
-
-        if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId())
-        {
-            u32_addrOffset  = DTCM_CPU0_DMA_ADDR_OFFSET;
-        }
-        else if (ENUM_CPU1_ID == CPUINFO_GetLocalCpuId())
-        {
-            u32_addrOffset  = DTCM_CPU1_DMA_ADDR_OFFSET;
-        }
-
-        if ((u32_srcAddr > DTCM_START_ADDR)&&
-            (u32_srcAddr <= DTCM_END_ADDR))
-        {
-            u32_srcAddr    += u32_addrOffset;
-        }
-
-        if ((u32_destAddr > DTCM_START_ADDR)&&
-            (u32_destAddr <= DTCM_END_ADDR))
-        {
-            u32_destAddr    += u32_addrOffset;
-        }
-
-        DMA_forDriverTransfer(u32_srcAddr, u32_destAddr, *u32_frameSize, DMA_noneBlocked, 0);
-
-        CPUINFO_DCacheInvalidateByAddr((uint32_t *)u8_buff, *u32_frameSize);
-        #endif
-
-        if (e_dataType == ENUM_UVC_DATA_YUV)
-        {
-            memcpy(u8_buff, u8_frameBuff, *u32_frameSize);
-        }
-        else if (e_dataType == ENUM_UVC_DATA_Y)
-        {
-            loop            = (*u32_frameSize >> 1);
-
-            for (i = 0; i < loop; i++)
-            {
-                u8_buff[i]  = u8_frameBuff[i<<1];
-            }
-
-            *u32_frameSize  >>= 1;
-        }
-
-        USBH_UVC_SetBuffStateByAddr(u8_frameBuff, UVC_VIDEO_BUFF_EMPTY);
-
-        ret = HAL_OK;
+        return ret;
     }
 
+    g_stUVCUserInterface.u8_userWaiting = UVC_USER_GET_FRAME_WAITING;
+    g_stUVCUserInterface.u8_userBuffer  = u8_buff;
+
+    ret = HAL_OK;
+
     return ret;
+}
+
+
+/**
+* @brief  get the latest frame buffer
+* @param      *u32_frameNum      frame number in the frame series
+*                   *u32_frameSize      data size of an frame
+* @retval       HAL_RET_T             whether the frame is ready to use
+* @note  
+*/
+HAL_RET_T HAL_USB_UVCCheckFrameReady(uint32_t *u32_frameNum,
+                                     uint32_t *u32_frameSize)
+{
+    if (g_stUVCUserInterface.u8_userWaiting == UVC_USER_GET_FRAME_FINISHED)
+    {
+        *u32_frameNum       = g_stUVCUserInterface.u32_frameIndex;
+        *u32_frameSize      = g_stUVCUserInterface.u32_frameLen;
+
+        g_stUVCUserInterface.u8_userWaiting = UVC_USER_GET_FRAME_IDLE;
+
+        return HAL_OK;
+    }
+    else
+    {
+        return HAL_USB_ERR_USBH_UVC_FRAME_NOT_READY;
+    }
 }
 
 
@@ -267,7 +242,7 @@ HAL_RET_T HAL_USB_GetVideoFrame(uint8_t *u8_buff,
 * @retval   void
 * @note  
 */
-void HAL_USB_GetVideoFormats(STRU_UVC_VIDEO_FRAME_FORMAT *stVideoFrameFormat)
+void HAL_USB_UVCGetVideoFormats(STRU_UVC_VIDEO_FRAME_FORMAT *stVideoFrameFormat)
 {
     uint8_t         i;
 
@@ -344,6 +319,16 @@ void HAL_USB_EnterUSBHostTestMode(void)
 }
 
 
+/*
+ * @brief    transfer UVC Data To Ground
+ * @param  *buff                    UVC Data Buffer
+                  dataLen                data size of a UVC frame
+                  width                    frame width
+                  height                   frame height
+                  e_UVCDataType     YUV or Y only
+ * @retval   void
+ * @note  
+ */
 void HAL_USB_TransferUVCToGrd(uint8_t *buff,
                              uint32_t dataLen,
                              uint16_t width,
@@ -351,11 +336,22 @@ void HAL_USB_TransferUVCToGrd(uint8_t *buff,
                              ENUM_HAL_USB_UVC_DATA_TYPE e_UVCDataType)
 {
     static uint8_t          u8_frameInterval = 0;
-    uint8_t                 u8_header[12];
+    uint8_t                 u8_frameCounter;
 
     u8_frameInterval++;
 
-    if (u8_frameInterval >= 5)
+    // to save bandwidth, every u8_frameCounter frames just transfer one frame
+    if ((width == 320)&&
+        (height == 240))
+    {
+        u8_frameCounter = 10;
+    }
+    else
+    {
+        u8_frameCounter = 5;
+    }
+
+    if (u8_frameInterval >= u8_frameCounter)
     {
         u8_frameInterval    = 0;
 

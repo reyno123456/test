@@ -128,8 +128,8 @@ typedef enum
 
 //cpu0 interrupt priority use 5-10,
 #define INTR_NVIC_PRIORITY_UART0                (5)
-#define INTR_NVIC_PRIORITY_OTG_INITR0           (6)
-#define INTR_NVIC_PRIORITY_OTG_INITR1           (6)
+#define INTR_NVIC_PRIORITY_OTG_INITR0           (8)
+#define INTR_NVIC_PRIORITY_OTG_INITR1           (8)
 #define INTR_NVIC_PRIORITY_SRAM0                (7)
 #define INTR_NVIC_PRIORITY_SRAM1                (7)
 #define INTR_NVIC_PRIORITY_SD                   (6)

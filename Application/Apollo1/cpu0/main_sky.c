@@ -89,6 +89,9 @@ int main(void)
 
     Wireless_TaskInit(WIRELESS_USE_RTOS);
 
+    osThreadDef(UVC_Task, USBH_UVCTask, osPriorityNormal, 0, 4 * 128);
+    osThreadCreate(osThread(UVC_Task), NULL);
+
     portENABLE_INTERRUPTS();
 
     osKernelStart();
