@@ -1,6 +1,12 @@
 #ifndef DEBUGLOG_H
 #define DEBUGLOG_H
 
+#ifdef  __cplusplus
+extern "C"
+{
+#endif
+
+
 #include <stdio.h>
 
 enum
@@ -18,7 +24,7 @@ enum
 #define _print_log(fmt, arg...)  \
     do \
     { \
-        printf("CPU%d: %s\t"fmt"\n", *((int*)0x0000018C), __FUNCTION__, ##arg);   \
+        printf("CPU%d: %s\t" fmt "\n", *((int*)0x0000018C), __FUNCTION__, ##arg);   \
     }while(0)
 
 #if(LOG_LEVEL_CRITICAL <= LOG_LEVEL)
@@ -69,5 +75,10 @@ void DLOG_Process(void* p);
 #define dlog_warning(...)  DLOG_Warning(__VA_ARGS__)
 #define dlog_error(...)    DLOG_Error(__VA_ARGS__)
 #define dlog_critical(...) DLOG_Critical(__VA_ARGS__)
+
+#ifdef  __cplusplus
+}
+#endif
+
 
 #endif

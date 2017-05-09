@@ -1,6 +1,12 @@
 #ifndef SYS_EVENT_H
 #define SYS_EVENT_H
 
+#ifdef  __cplusplus
+extern "C"
+{
+#endif
+
+
 #include <stdint.h>
 
 
@@ -164,5 +170,10 @@ typedef struct _SysEvent_DEV_PLUG_OUT
     uint8_t  otg_port_id;
     uint8_t  reserve[SYS_EVENT_HANDLER_PARAMETER_LENGTH - 1];
 } STRU_SysEvent_DEV_PLUG_OUT;
+
+#ifdef  __cplusplus
+}
+#endif
+
 
 #endif

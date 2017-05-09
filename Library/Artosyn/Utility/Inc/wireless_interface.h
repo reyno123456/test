@@ -1,6 +1,12 @@
 #ifndef __WIRELESS_INTERFACE_H
 #define __WIRELESS_INTERFACE_H
 
+#ifdef  __cplusplus
+extern "C"
+{
+#endif
+
+
 #include <stdint.h>
 #include "memory_config.h"
 
@@ -271,6 +277,11 @@ uint8_t WIRELESS_INTERFACE_VIDEO_AUTO_HOPPING_Handler(void *param);
 uint8_t WIRELESS_INTERFACE_VIDEO_BAND_WIDTH_Handler(void *param);
 uint8_t WIRELESS_INTERFACE_OPERATE_REG_Handler(void *param);
 void Wireless_MessageProcess(void);
+
+#ifdef  __cplusplus
+}
+#endif
+
 
 #endif
 
