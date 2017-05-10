@@ -211,8 +211,8 @@ typedef struct
     unsigned char rf2_configure[128];
     unsigned char RC_2_4G_frq[34][4];
     unsigned char IT_2_4G_frq[8][4];
-    unsigned char RC_5G_frq[34][4];
-    unsigned char IT_5G_frq[8][4];
+    unsigned char RC_5G_frq[40][4];
+    unsigned char IT_5G_frq[13][4];
 #endif
 #ifdef USE_ADV7611_EDID_CONFIG_BIN
     unsigned char hdmi_configure[264][3];
