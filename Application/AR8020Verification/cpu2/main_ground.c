@@ -1,6 +1,6 @@
 #include "serial.h"
 #include "debuglog.h"
-#include "test_BB.h"
+#include "test_bb.h"
 #include "command.h"
 #include "sys_event.h"
 #include "hal_sys_ctl.h"

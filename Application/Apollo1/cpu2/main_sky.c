@@ -1,7 +1,7 @@
 #include "serial.h"
 #include "debuglog.h"
 #include "hal_h264.h"
-#include "test_BB.h"
+#include "test_bb.h"
 #include "command.h"
 #include "hal_bb.h"
 #include "sys_event.h"

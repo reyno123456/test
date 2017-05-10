@@ -45,4 +45,6 @@ void BB_UARTComUnRegisterSession(ENUM_BBUARTCOMSESSIONID session_id);
 uint8_t BB_UARTComSendMsg(ENUM_BBUARTCOMSESSIONID session_id, uint8_t* data_buf, uint32_t length);
 uint32_t BB_UARTComReceiveMsg(ENUM_BBUARTCOMSESSIONID session_id, uint8_t* data_buf, uint32_t length_max);
 
+uint8_t get_session_eventid(uint8_t id, uint32_t *pu32_rcv_event);
+
 #endif
