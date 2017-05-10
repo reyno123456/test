@@ -23,6 +23,7 @@ const STRU_BB_REG ek2T4R_bb_grd_regsAfterCali[] =  //ground bb after
 
 const STRU_BB_REG ek2T4R_bb_skyregs_afterCali[] =     //sky bb after
 {
+    {1, 0x90, 0xFF}, //2TX
     {1, 0x91, 0x78}, //2RX
     {2, 0x03, 0x80}  //2T
 };
@@ -84,7 +85,7 @@ STRU_BoardCfg stru_boardCfg =
     .pstru_rf1SkyRegsAfterCali   = ek2T4R_rf1_skyregs_afterCali,
 
     .u8_rf1GrdRegsCntAfterCali   = sizeof(ek2T4R_rf1_grdregs_afterCali) / sizeof(STRU_RF_REG),
-    .pstru_rf1GrdRegsAfterCali   = ek2T4R_rf1_skyregs_afterCali,
+    .pstru_rf1GrdRegsAfterCali   = ek2T4R_rf1_grdregs_afterCali,
     
     .u8_rf2GrdRegsCntAfterCali   = sizeof(ek2T4R_rf2_grdregs_afterCali) / sizeof(STRU_RF_REG),
     .pstru_rf2GrdRegsAfterCali   = ek2T4R_rf2_grdregs_afterCali,
@@ -94,30 +95,39 @@ STRU_BoardCfg stru_boardCfg =
 
 #ifdef BBRF_2T2R
 
-const STRU_BB_REG AR8020TEST_bb_regsAfterCali[] = 
+//sky
+const STRU_BB_REG ek2T2R_bb_skyregsAfterCali[] = 
+{
+    {1, 0x90, 0xFF}, //for 2TX
+    {1, 0x91, 0x78}, //2RX
+};
+
+
+//grd
+const STRU_BB_REG ek2T2R_bb_grdregsAfterCali[] = 
 {
     {1, 0x90, 0xF7}, //turn off DAC_B for 1TX
     {1, 0x91, 0x78}, //2RX
 };
 
 
-const STRU_RF_REG AR8020TEST_rf1_grdregs_afterCali[] = 
+const STRU_RF_REG ek2T2R_rf1_grdregs_afterCali[] = 
 {
     {0x35, 0x70},
     {0x45, 0x87},
-    {0x00, 0x74}, //1Tx only
+    {0x00, 0x74},   //1Tx only
     {0x2D, 0xF6},
     {0x37, 0xE0},
-    {0x66, 0x06},  //5G RF power
-    {0x67, 0x06},  //5G RF power
+    {0x66, 0x06},   //5G RF power
+    {0x67, 0x06},   //5G RF power
 };
 
-const STRU_RF_REG AR8020TEST_rf1_skyregs_afterCali[] = 
+const STRU_RF_REG ek2T2R_rf1_skyregs_afterCali[] = 
 {
     {0x35, 0x70},
     {0x45, 0x87},
-    {0x66, 0x06},  //5G RF power
-    {0x67, 0x06},  //5G RF power
+    {0x66, 0x06},   //5G RF power
+    {0x67, 0x06},   //5G RF power
 };
 
 
@@ -141,17 +151,17 @@ STRU_BoardCfg stru_boardCfg =
     .pstru_rf2GrdRegs   = NULL,
 
      //after calibration
-    .u8_bbSkyRegsCntAfterCali 	 = sizeof(AR8020TEST_bb_regsAfterCali) / sizeof(STRU_BB_REG),
-    .pstru_bbSkyRegsAfterCali    = AR8020TEST_bb_regsAfterCali,
+    .u8_bbSkyRegsCntAfterCali 	 = sizeof(ek2T2R_bb_skyregsAfterCali) / sizeof(STRU_BB_REG),
+    .pstru_bbSkyRegsAfterCali    = ek2T2R_bb_skyregsAfterCali,
 
-    .u8_bbGrdRegsCntAfterCali    = sizeof(AR8020TEST_bb_regsAfterCali) / sizeof(STRU_BB_REG),
-    .pstru_bbGrdRegsAfterCali    = AR8020TEST_bb_regsAfterCali,
+    .u8_bbGrdRegsCntAfterCali    = sizeof(ek2T2R_bb_grdregsAfterCali) / sizeof(STRU_BB_REG),
+    .pstru_bbGrdRegsAfterCali    = ek2T2R_bb_grdregsAfterCali,
 
-    .u8_rf1SkyRegsCntAfterCali   = sizeof(AR8020TEST_rf1_skyregs_afterCali) / sizeof(STRU_RF_REG),
-    .pstru_rf1SkyRegsAfterCali   = AR8020TEST_rf1_skyregs_afterCali,
+    .u8_rf1SkyRegsCntAfterCali   = sizeof(ek2T2R_rf1_skyregs_afterCali) / sizeof(STRU_RF_REG),
+    .pstru_rf1SkyRegsAfterCali   = ek2T2R_rf1_skyregs_afterCali,
 
-    .u8_rf1GrdRegsCntAfterCali   = sizeof(AR8020TEST_rf1_grdregs_afterCali) / sizeof(STRU_RF_REG),
-    .pstru_rf1GrdRegsAfterCali   = AR8020TEST_rf1_skyregs_afterCali,
+    .u8_rf1GrdRegsCntAfterCali   = sizeof(ek2T2R_rf1_grdregs_afterCali) / sizeof(STRU_RF_REG),
+    .pstru_rf1GrdRegsAfterCali   = ek2T2R_rf1_grdregs_afterCali,
     
     .u8_rf2GrdRegsCntAfterCali   = 0,
     .pstru_rf2GrdRegsAfterCali   = NULL,

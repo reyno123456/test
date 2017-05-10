@@ -2,7 +2,14 @@
 #include "boardParameters.h"
 
 
-const STRU_BB_REG AR8020TEST_bb_regsAfterCali[] = 
+const STRU_BB_REG AR8020TEST_bb_skyregsAfterCali[] = 
+{
+    {1, 0x90, 0xFF}, //for 2TX
+    {1, 0x91, 0x78}, //2RX
+};
+
+
+const STRU_BB_REG AR8020TEST_bb_grdregsAfterCali[] = 
 {
     {1, 0x90, 0xF7}, //turn off DAC_B for 1TX
     {1, 0x91, 0x78}, //2RX
@@ -46,11 +53,11 @@ STRU_BoardCfg stru_boardCfg =
     .pstru_rf2GrdRegs   = NULL,
 
      //after calibration
-    .u8_bbSkyRegsCntAfterCali 	 = sizeof(AR8020TEST_bb_regsAfterCali) / sizeof(STRU_BB_REG),
-    .pstru_bbSkyRegsAfterCali    = AR8020TEST_bb_regsAfterCali,
+    .u8_bbSkyRegsCntAfterCali 	 = sizeof(AR8020TEST_bb_skyregsAfterCali) / sizeof(STRU_BB_REG),
+    .pstru_bbSkyRegsAfterCali    = AR8020TEST_bb_skyregsAfterCali,
 
-    .u8_bbGrdRegsCntAfterCali    = sizeof(AR8020TEST_bb_regsAfterCali) / sizeof(STRU_BB_REG),
-    .pstru_bbGrdRegsAfterCali    = AR8020TEST_bb_regsAfterCali,
+    .u8_bbGrdRegsCntAfterCali    = sizeof(AR8020TEST_bb_grdregsAfterCali) / sizeof(STRU_BB_REG),
+    .pstru_bbGrdRegsAfterCali    = AR8020TEST_bb_grdregsAfterCali,
 
     .u8_rf1SkyRegsCntAfterCali   = sizeof(AR8020TEST_rf1_skyregs_afterCali) / sizeof(STRU_RF_REG),
     .pstru_rf1SkyRegsAfterCali   = AR8020TEST_rf1_skyregs_afterCali,
