@@ -8,10 +8,10 @@ Date: 2017/1/14
 History: 
         0.0.1    2017/1/14    The initial version of dma.c
         0.1.1    2017/3/31    Version capability for RTOS
-        0.1.2    2017/5/9      intergrate signle block mode
-                                      universe func DMA_transfer
-                                      added single block transfer mode
-                                      channel cfg_low ip have been fixed by 0x18B1FFF5
+        0.1.2    2017/5/9     intergrate signle block mode
+                              universe func DMA_transfer
+                              added single block transfer mode
+                              channel cfg_low ip have been fixed by 0x18B1FFF5
 *****************************************************************************/
 #include "dma.h"
 #include "debuglog.h"
@@ -75,8 +75,8 @@ static void dmaIntRegDisplay(void)
     dlog_info("%d s_st_dmaRegs->STATUS.DSTTRAN = 0x%08x", __LINE__, s_st_dmaRegs->STATUS.DSTTRAN);
 
 
-     dlog_info("%d s_st_dmaRegs->MASK.BLOCK = 0x%08x", __LINE__, s_st_dmaRegs->MASK.BLOCK);
-     dlog_info("%d s_st_dmaRegs->MASK.TFR = 0x%08x", __LINE__, s_st_dmaRegs->MASK.TFR);
+    dlog_info("%d s_st_dmaRegs->MASK.BLOCK = 0x%08x", __LINE__, s_st_dmaRegs->MASK.BLOCK);
+    dlog_info("%d s_st_dmaRegs->MASK.TFR = 0x%08x", __LINE__, s_st_dmaRegs->MASK.TFR);
 }
 
 static void DMA_irqISR(uint32_t vectorNum)
@@ -113,10 +113,10 @@ static void DMA_irqISR(uint32_t vectorNum)
     }
 #endif
 
-#if 0
+#if 1
     for (index  = 0; index < 8; index++)
     {
-        if (tmp_tfr == (1 << index))
+        if (tmp_tfr & (1 << index))
         {
             u8_chanIndex = index;
 
@@ -151,10 +151,10 @@ static void DMA_irqISR(uint32_t vectorNum)
     }
 #endif
 
-#if 1
+#if 0
     for (index  = 0; index < 8; index++)
     {
-        if (tmp_tfr == (1 << index))
+        if (tmp_tfr & (1 << index))
         {
             u8_chanIndex = index;
 
@@ -285,13 +285,13 @@ static uint8_t dma_prepare_LL_Config(STRU_DMA_DESCRIPTER *s_configure,
     {
         if(u32_blkIndex < (s_configure->totalBlkNum -1)) // belong to block 1st
         {
-        u32_dataCtlLO = DWC_CTLL_INT_EN | DWC_CTLL_DMS(0x1) | 
-                       DWC_CTLL_DST_WIDTH(u32_1stHSize) | 
-                       DWC_CTLL_SRC_WIDTH(u32_1stHSize) |
-                       DWC_CTLL_DST_MSIZE(0x1) | DWC_CTLL_SRC_MSIZE(0x1) | 
-                       DWC_CTLL_LLP_D_EN | DWC_CTLL_LLP_S_EN;
-        u32_dataCtlHI = (u32_1stTfrBlkSize & DWC_CTLH_BLOCK_TS_MASK) | 
-                       DWC_CTLH_DONE;
+            u32_dataCtlLO = DWC_CTLL_INT_EN | DWC_CTLL_DMS(0x1) | 
+                            DWC_CTLL_DST_WIDTH(u32_1stHSize) | 
+                            DWC_CTLL_SRC_WIDTH(u32_1stHSize) |
+                            DWC_CTLL_DST_MSIZE(0x1) | DWC_CTLL_SRC_MSIZE(0x1) | 
+                            DWC_CTLL_LLP_D_EN | DWC_CTLL_LLP_S_EN;
+            u32_dataCtlHI = (u32_1stTfrBlkSize & DWC_CTLH_BLOCK_TS_MASK) | 
+                            DWC_CTLH_DONE;
         }
         else if(u32_blkIndex == (u32_totalBlkNum -1)) //(the second from the end of the block)
         {
@@ -421,22 +421,14 @@ int32_t DMA_Init(ENUM_Chan u8_channel, uint8_t u8_chanPriority)
 
 static uint32_t dmaPerpAddrConvert(uint32_t addr)
 {
-     if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId())
-            {
-/*
-                return = (((uint32_t)s_st_transStatus[u8_chanIndex].pst_lliMalloc + 
-                                    DTCM_CPU0_DMA_ADDR_OFFSET) );  
-*/
-                return addr + DTCM_CPU0_DMA_ADDR_OFFSET;                    
-            }
-            else if (ENUM_CPU1_ID == CPUINFO_GetLocalCpuId())
-            {
-/*
-                u32_llpBaseAddr = (((uint32_t)s_st_transStatus[u8_chanIndex].pst_lliMalloc + 
-                                    DTCM_CPU1_DMA_ADDR_OFFSET) );
-*/
-                return addr + DTCM_CPU1_DMA_ADDR_OFFSET;                    
-            }
+    if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId())
+    {
+        return addr + DTCM_CPU0_DMA_ADDR_OFFSET;                    
+    }
+    else if (ENUM_CPU1_ID == CPUINFO_GetLocalCpuId())
+    {
+        return addr + DTCM_CPU1_DMA_ADDR_OFFSET;                    
+    }
     return -1;        
 }
 
@@ -447,7 +439,7 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
     STRU_DMA_DESCRIPTER s_dma_config = {0};
     uint32_t u32_llpBaseAddr = 0;
             
-    if ( (u32_transByteNum % 4) == 0 && (u32_transByteNum <= DW_CH_MAX_BLK_SIZE * 4) )
+    if ( (u32_transByteNum % 4) == 0 && (u32_transByteNum <= AR_DW_CH_MAX_BLK_SIZE) )
     {
         mode = SINGLE_BLOCK;
     }
