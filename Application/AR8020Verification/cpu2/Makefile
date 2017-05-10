@@ -30,12 +30,12 @@ TARGET = ar8020_cpu2.bin
 SRC_S   := start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
-    SRC_C   := main_sky.c command.c test_BB.c ../share/test_sysevent.c ../share/test_float.c
+    SRC_C   := main_sky.c command.c ../share/test_bb.c ../share/test_sysevent.c ../share/test_float.c
     SRC_CXX :=
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
-    SRC_C   := main_ground.c command.c test_BB.c ../share/test_sysevent.c ../share/test_float.c
+    SRC_C   := main_ground.c command.c ../share/test_bb.c ../share/test_sysevent.c ../share/test_float.c
     SRC_CXX :=
 endif
 

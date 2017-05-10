@@ -24,6 +24,46 @@ static void BB_UARTComLockRelease(void)
     UnLock(lock_p);
 }
 
+uint8_t get_session_eventid(uint8_t id, uint32_t *pu32_rcv_event)
+{
+    uint8_t ret = 0;
+    uint32_t u32_rcv_event;
+
+    if ( id == 0 )
+    {
+        u32_rcv_event = SYS_EVENT_ID_UART_DATA_RCV_SESSION0;
+        ret = 1;
+    }
+    else if ( id == 1 )
+    {
+        u32_rcv_event = SYS_EVENT_ID_UART_DATA_RCV_SESSION1;
+        ret = 1;
+    }
+    else if ( id == 2)
+    {
+        u32_rcv_event = SYS_EVENT_ID_UART_DATA_RCV_SESSION2;
+        ret = 1;
+    }
+    else if ( id == 3)
+    {
+        u32_rcv_event = SYS_EVENT_ID_UART_DATA_RCV_SESSION3;
+        ret = 1;
+    }
+    else if( id == 4)
+    {
+        u32_rcv_event = SYS_EVENT_ID_UART_DATA_RCV_SESSION4;
+        ret = 1;        
+    }
+    
+    if (ret && pu32_rcv_event )
+    {
+        *pu32_rcv_event = u32_rcv_event;
+    }
+
+    return ret;
+}
+
+
 static void BB_UARTComWriteSessionRxBuffer(ENUM_BBUARTCOMSESSIONID session_id, uint8_t* data_buf, uint32_t data_size)
 {
     if (g_BBUARTComSessionArray[session_id].rx_buf->header.in_use == 1)
@@ -54,12 +94,11 @@ static void BB_UARTComWriteSessionRxBuffer(ENUM_BBUARTCOMSESSIONID session_id, u
 
         //notify the session
         {
-            uint32_t u32_event = ( session_id == 0) ? SYS_EVENT_ID_UART_DATA_RCV_SESSION0 : 
-                                 ((session_id == 1) ? SYS_EVENT_ID_UART_DATA_RCV_SESSION1 : 
-                                 ((session_id == 2) ? SYS_EVENT_ID_UART_DATA_RCV_SESSION2 : SYS_EVENT_ID_UART_DATA_RCV_SESSION3));
-            SYS_EVENT_Notify_From_ISR(u32_event, NULL);
-            
-            //dlog_info("Notify Event %d", u32_event);
+            uint32_t u32_rcv_event;
+            if ( get_session_eventid(session_id, &u32_rcv_event) )
+            {
+                SYS_EVENT_Notify_From_ISR(u32_rcv_event, NULL);                
+            }
         }
     }
 }

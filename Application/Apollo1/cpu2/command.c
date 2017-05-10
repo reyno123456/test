@@ -6,7 +6,7 @@
 #include "serial.h"
 #include "cmsis_os.h"
 #include "bb_ctrl.h"
-#include "test_BB.h"
+#include "test_bb.h"
 
 extern void BB_uart10_spi_sel(uint32_t sel_dat);
 

@@ -307,7 +307,7 @@ void uart_puts(unsigned char index, const char *s)
 
     if (NULL == uart_regs || (0 == strlen(s)))
     {
-        dlog_error("uart_regs = NULL uart index=%d || u16_uartSendBuffLen ==0 \n",index);
+        dlog_error("uart_regs=0x%x uart index=%d u16_uartSendBuffLen=%d \n", uart_regs, index, strlen(s));
         return ;        
     }
 

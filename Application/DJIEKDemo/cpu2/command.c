@@ -6,7 +6,7 @@
 #include "serial.h"
 #include "cmsis_os.h"
 #include "bb_ctrl.h"
-#include "test_BB.h"
+#include "test_bb.h"
 #include "hal_ret_type.h"
 #include "hal_nvic.h"
 #include "memory_config.h"
@@ -21,10 +21,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         BB_uart10_spi_sel( strtoul(cmdArray[1], NULL, 0) );
     }
-    else if(memcmp(cmdArray[0], "command_test_BB_uart", strlen("command_test_BB_uart")) == 0)
-    {
-        command_test_BB_uart(cmdArray[1]);
-    }
     else if(memcmp(cmdArray[0], "BB_add_cmds", strlen("BB_add_cmds")) == 0)
     {
         BB_add_cmds(strtoul(cmdArray[1], NULL, 0),  //type
@@ -37,7 +33,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         dlog_error("Please use commands like:");
         dlog_error("BB_uart10_spi_sel <value>");
-        dlog_error("command_test_BB_uart");
         dlog_error("BB_add_cmds <type> <param0> <param1> <param2>");
     }
 }

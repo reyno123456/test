@@ -6,7 +6,7 @@
 #include "serial.h"
 #include "cmsis_os.h"
 #include "bb_ctrl.h"
-#include "test_BB.h"
+#include "test_bb.h"
 #include "test_timer.h"
 #include "test_h264_encoder.h"
 #include "test_i2c_adv7611.h"
@@ -33,11 +33,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestSysEventIdle();
     }
-
-    else if(memcmp(cmdArray[0], "command_test_BB_uart", strlen("command_test_BB_uart")) == 0)
-    {
-        command_test_BB_uart(cmdArray[1]);
-    }
     else if (memcmp(cmdArray[0], "test_float_calculate_pi", strlen("test_float_calculate_pi")) == 0)
     {
         test_float_calculate_pi();
@@ -61,7 +56,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("BB_uart10_spi_sel <value>");
         dlog_error("test_nor_flash_all <flash start address> <size> <value>");
         dlog_error("test_SysEventIdle");
-        dlog_error("command_test_BB_uart");
         dlog_error("test_float_calculate_pi");
         dlog_error("BB_add_cmds <type> <param0> <param1> <param2>");		
         dlog_output(1000);	

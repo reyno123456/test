@@ -93,7 +93,6 @@ void BB_SKY_start(void)
     context.qam_ldpc = 0;
     sky_set_McsByIndex(context.qam_ldpc);
 
-    SYS_EVENT_RegisterHandler(SYS_EVENT_ID_UART_DATA_SND_SESSION0, BB_sky_SendStatus);
     BB_UARTComInit( NULL ); 
 
     BB_GetDevInfo();
@@ -103,14 +102,7 @@ void BB_SKY_start(void)
 }
 
 
-static void BB_sky_SendStatus(void *p)
-{
-    STRU_SysEventSkyStatus *p_sndData = (STRU_SysEventSkyStatus *)p;
 
-    BB_UARTComSendMsg( BB_UART_COM_SESSION_0, 
-                       (uint8_t *)p_sndData, 
-                       sizeof(STRU_SysEventSkyStatus));
-}
 
 
 uint8_t sky_id_match(void)
@@ -144,7 +136,9 @@ uint8_t sky_id_match(void)
                 .par.rcLockCnt.u8_rcNrLockCnt  = pre_nrlockcnt,
             };
 
-            SYS_EVENT_Notify_From_ISR(SYS_EVENT_ID_UART_DATA_SND_SESSION0, &stru_skycStatus);
+            BB_UARTComSendMsg( BB_UART_COM_SESSION_0, 
+                               (uint8_t *)&stru_skycStatus, 
+                               sizeof(STRU_SysEventSkyStatus));
         }
     }
 
@@ -1439,8 +1433,10 @@ static void sky_rc_frq_status_statistics(void)
                 .pid             = RC_MASK_CODE,
                 .par.u64_rcMask = s_st_rcFrqMask.u64_mask,
             };
-            SYS_EVENT_Notify_From_ISR(SYS_EVENT_ID_UART_DATA_SND_SESSION0, &stru_skycStatus);
-                
+            BB_UARTComSendMsg( BB_UART_COM_SESSION_0, 
+                       (uint8_t *)&stru_skycStatus, 
+                       sizeof(STRU_SysEventSkyStatus));
+
             u16_txCnt = 0;
         }
     }

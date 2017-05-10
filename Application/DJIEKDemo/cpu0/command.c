@@ -15,7 +15,7 @@
 #include "test_usbh.h"
 #include "test_hal_nv.h"
 #include "ar_freertos_specific.h"
-
+#include "test_bb.h"
 
 
 void command_readMemory(char *addr);
@@ -110,6 +110,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     else if (memcmp(cmdArray[0], "NvSetBbRcId", strlen("NvSetBbRcId")) == 0)
     {
         command_TestNvSetBbRcId(cmdArray[1],cmdArray[2],cmdArray[3],cmdArray[4],cmdArray[5]);
+    }
+    else if(memcmp(cmdArray[0], "command_test_BB_uart", strlen("command_test_BB_uart")) == 0)
+    {
+        command_test_BB_uart(cmdArray[1]);
     }	
 	else if ((memcmp(cmdArray[0], "top", strlen("top")) == 0))
     {
@@ -136,6 +140,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("sky_auto_search_rc_id");
         dlog_error("NvResetBbRcId");
         dlog_error("NvSetBbRcId <id1> <id2> <id3> <id4> <id5>");
+        dlog_error("command_test_BB_uart <param>");
 		dlog_error("top");
     }
 }

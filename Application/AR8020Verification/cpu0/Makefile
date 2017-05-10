@@ -31,7 +31,7 @@ SRC_S   := start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
 SRC_C   := main_sky.c command.c test_freertos.c test_hal_can.c test_hal_camera.c ../share/test_i2c_adv7611.c \
-           test_usbh.c test_sd.c test_bbuartcom.c\
+           test_usbh.c test_sd.c ../share/test_bb.c\
            ../share/test_timer.c ../share/test_hal_spi_flash.c test_quadspi.c ../share/test_float.c ../share/test_gpio.c \
            upgrade.c ../share/testhal_gpio.c ../share/testhal_timer.c ../share/testhal_pwm.c \
            ../share/testhal_softpwm.c ../share/test_hal_i2c_24c256.c test_hal_uart.c test_hal_spi.c \
@@ -41,7 +41,7 @@ endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
 SRC_C   := main_ground.c command.c test_freertos.c test_hal_can.c test_hal_camera.c ../share/test_i2c_adv7611.c \
-           test_usbh.c test_sd.c test_bbuartcom.c\
+           test_usbh.c test_sd.c ../share/test_bb.c\
            ../share/test_timer.c ../share/test_hal_spi_flash.c test_quadspi.c ../share/test_float.c ../share/test_gpio.c \
            upgrade.c ../share/testhal_gpio.c ../share/testhal_timer.c ../share/testhal_pwm.c\
            ../share/testhal_softpwm.c ../share/test_hal_i2c_24c256.c test_hal_uart.c test_hal_spi.c \

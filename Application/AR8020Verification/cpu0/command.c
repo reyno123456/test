@@ -19,7 +19,7 @@
 #include "test_hal_camera.h"
 #include "hal_dma.h"
 #include "upgrade.h"
-#include "test_bbuartcom.h"
+#include "test_bb.h"
 #include "testhal_gpio.h"
 #include "testhal_timer.h"
 #include "testhal_pwm.h"
