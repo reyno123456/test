@@ -115,7 +115,7 @@ typedef struct {
 #define DW_PARAMS_EN		28		/* encoded parameters */
 #define DW_PARAMS_NUM_MASTER_INT 2
 #define DW_CH_MAX_BLK_SIZE 4095
-#define DW_CH_RELOAD_BLK_SIZE 1024
+#define AR_DW_CH_MAX_BLK_SIZE 16380	/* DW_CH_MAX_BLK_SIZE x 4 */
 #define DW_MABRST 0                 /*Allow the AMBA burst length to be limited to a programmable maximum value */
 
 
@@ -241,6 +241,7 @@ typedef enum {
 typedef enum {
 	LINK_LIST_ITEM,
 	AUTO_RELOAD,
+	SINGLE_BLOCK
 } ENUM_TransferType;
 
 /* identify the channel is active */
@@ -269,7 +270,7 @@ typedef struct {
 
 #define IS_CHANNAL_PRIORITY(x) ((x) >= 0 && (x) <= 7)
 #define assert_param(expr) ((expr) ? (void)0 : assert_failed((uint8_t *)__FILE__, __LINE__))
-void assert_failed(uint8_t* file, uint32_t line);
+// void assert_failed(uint8_t* file, uint32_t line);
 
 
 void DMA_initIRQ();
