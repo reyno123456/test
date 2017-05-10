@@ -44,6 +44,8 @@ static volatile uint32_t g_u32_dstAddress = AUDIO_DATA_START;
 HAL_RET_T HAL_SOFTI2S_Init(STRU_HAL_SOFTI2S_INIT *st_i2sInit)
 {
 
+    volatile uint32_t *pu8_newAudioSampleRate=(uint32_t *)(SRAM_MODULE_SHARE_AUDIO_RATE);
+    
     if (((st_i2sInit->e_audioLeftGpioNum)/32) == ((st_i2sInit->e_audioRightGpioNum)/32))
     {
         return HAL_SOFTI2S_ERR_INIT;
@@ -75,6 +77,17 @@ HAL_RET_T HAL_SOFTI2S_Init(STRU_HAL_SOFTI2S_INIT *st_i2sInit)
     //right   
     HAL_GPIO_RegisterInterrupt(st_i2sInit->e_audioRightGpioNum, HAL_GPIO_EDGE_SENUMSITIVE, HAL_GPIO_ACTIVE_HIGH, NULL);
     dlog_info("i2s init %p %p %p %p\n",LeftAudio_48K,RightAudio_48K,LeftAudio_44p1K,RightAudio_44p1K);
+
+    if (HAL_SOFTI2S_ENCODE_IEC_44100 == *pu8_newAudioSampleRate)
+    {
+        *((uint32_t *)(AUDIO_LEFT_INTERRUPT_ADDR)) = (uint32_t)&LeftAudio_44p1K;
+        *((uint32_t *)(AUDIO_RIGHT_INTERRUPT_ADDR)) = (uint32_t)&RightAudio_44p1K;
+    }
+    else if (HAL_SOFTI2S_ENCODE_IEC_48000 == *pu8_newAudioSampleRate)
+    {
+        *((uint32_t *)(AUDIO_LEFT_INTERRUPT_ADDR)) = (uint32_t)&LeftAudio_48K;
+        *((uint32_t *)(AUDIO_RIGHT_INTERRUPT_ADDR)) = (uint32_t)&RightAudio_48K;
+    }
 
     return  HAL_OK;
 }

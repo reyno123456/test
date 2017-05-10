@@ -14,12 +14,12 @@
 #include "wireless_interface.h"
 #include "hal_nv.h"
 #include "hal_usb_host.h"
-#include "hal_encodemp3.h"
 #include "hal_softi2s.h"
+#include "hal_encodemp3.h"
 #include "systicks.h"
 #include "memory_config.h"
 #include "hal_uart.h"
-#include "typedef.h"
+#include "it_typedef.h"
 #include "it6602.h"
 #include "hal_sram.h"
 
@@ -57,24 +57,25 @@ int main(void)
     HAL_USB_ConfigPHY();
 
     HDMI_powerOn();
-
-    STRU_HDMI_CONFIGURE        st_configure;
-    st_configure.e_getFormatMethod = HAL_HDMI_POLLING;
-
-    st_configure.st_interruptGpio.e_interruptGpioNum = HAL_GPIO_NUM98;
-    st_configure.st_interruptGpio.e_interruptGpioPolarity = HAL_GPIO_ACTIVE_LOW;
-    st_configure.st_interruptGpio.e_interruptGpioTypy = HAL_GPIO_LEVEL_SENUMSITIVE;
-    st_configure.u8_hdmiToEncoderCh = 1;
-    HAL_HDMI_RX_Init(HAL_HDMI_RX_1, &st_configure);
-
+    
+    *((uint8_t *)(SRAM_MODULE_SHARE_AUDIO_PCM)) = HAL_SOFTI2S_ENCODE_IEC_48000;
     STRU_MP3_ENCODE_CONFIGURE_WAVE st_audioConfig;
-    st_audioConfig.e_samplerate = HAL_MP3_ENCODE_44100;
+    st_audioConfig.e_samplerate = HAL_MP3_ENCODE_48000;
     st_audioConfig.e_modes = HAL_MP3_ENCODE_STEREO;
     st_audioConfig.u32_rawDataAddr = AUDIO_DATA_START;
     st_audioConfig.u32_rawDataLenght = AUDIO_DATA_BUFF_SIZE;
     st_audioConfig.u32_encodeDataAddr = MPE3_ENCODER_DATA_ADDR;
     st_audioConfig.u32_newPcmDataFlagAddr = SRAM_MODULE_SHARE_AUDIO_PCM;
     st_audioConfig.u8_channel = 2;
+    HAL_MP3EncodePcmInit(&st_audioConfig, ENUM_HAL_SRAM_DATA_PATH_REVERSE);
+    
+    STRU_HDMI_CONFIGURE        st_configure;
+    st_configure.e_getFormatMethod = HAL_HDMI_POLLING;
+    st_configure.st_interruptGpio.e_interruptGpioNum = HAL_GPIO_NUM98;
+    st_configure.st_interruptGpio.e_interruptGpioPolarity = HAL_GPIO_ACTIVE_LOW;
+    st_configure.st_interruptGpio.e_interruptGpioTypy = HAL_GPIO_LEVEL_SENUMSITIVE;
+    st_configure.u8_hdmiToEncoderCh = 1;
+    HAL_HDMI_RX_Init(HAL_HDMI_RX_1, &st_configure);
 
     HAL_USB_InitOTG(HAL_USB_PORT_0);
 
@@ -83,51 +84,10 @@ int main(void)
     HAL_NV_Init();
     Wireless_TaskInit(WIRELESS_NO_RTOS);
 
-    HAL_MP3EncodePcmInit(&st_audioConfig, ENUM_HAL_SRAM_DATA_PATH_REVERSE);
-
-    uint32_t u32_audioSampleRate=0xf;
-    uint32_t u32_audioSampleRateTmp=0;
-    volatile uint32_t *pu32_newAudioSampleRate=(uint32_t *)(SRAM_MODULE_SHARE_AUDIO_RATE);
-    *pu32_newAudioSampleRate=0xf;
-    
-    /* We should never get here as control is now taken by the scheduler */
-    uint8_t i = 0;
     for( ;; )
     {
-        /*HAL_HDMI_RX_GetAudioSampleRate(HAL_HDMI_RX_1,&u32_audioSampleRate);
-        if ((*pu32_newAudioSampleRate) != u32_audioSampleRate)
-        {
-            u32_audioSampleRateTmp++;
-            if (u32_audioSampleRateTmp >3)
-            {
-                u32_audioSampleRateTmp=0;
-                *pu32_newAudioSampleRate = u32_audioSampleRate;
-                HAL_MP3EncodePcmUnInit();
-                if (2 == u32_audioSampleRate)
-                {                    
-                    st_audioConfig.e_samplerate = HAL_MP3_ENCODE_48000;
-                    dlog_info("Audio Sample Rate 48000");
-                }
-                else if (0 == u32_audioSampleRate)
-                {
-                    st_audioConfig.e_samplerate = HAL_MP3_ENCODE_44100;   
-                    dlog_info("Audio Sample Rate 44100");                 
-                }
-                HAL_MP3EncodePcmInit(&st_audioConfig);
-            }                         
-        }
-        else
-        {
-            u32_audioSampleRateTmp=0;
-        }*/
         //HAL_USB_HostProcess();     
-        i++;
-        if (i>100)
-        {
-            IT6602_fsm();
-            i=0;
-        }
-        HAL_MP3EncodePcm();
+        //HAL_MP3EncodePcm();
         Wireless_MessageProcess();
         SYS_EVENT_Process();
     }

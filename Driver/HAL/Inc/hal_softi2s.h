@@ -26,6 +26,15 @@ extern "C"
 
 #define ADUIO_DATA_BUFF_LENGHT           (4608/sizeof(uint16_t)) 
 
+typedef enum
+{
+    HAL_SOFTI2S_ENCODE_IEC_44100 = 0,
+    HAL_SOFTI2S_ENCODE_IEC_NOT_INDICATED,
+    HAL_SOFTI2S_ENCODE_IEC_48000,
+    HAL_SOFTI2S_ENCODE_IEC_32000,
+    HAL_SOFTI2S_ENCODE_IEC_24000 = 6
+} ENUM_HAL_I2S_IEC_SAMPLERATE;
+
 
 //#define AUDIO_SDRAM                     (1)
 

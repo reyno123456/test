@@ -8,6 +8,7 @@
 #include "data_type.h"
 #include "cmsis_os.h"
 #include "test_hal_i2c.h"
+#include "test_hdmi.h"
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
@@ -60,6 +61,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestHalI2cWrite(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5]);
     }
+    else if ((memcmp(cmdArray[0], "hdmi", strlen("hdmi")) == 0))
+    {
+        command_hdmi(cmdArray[1]);
+    }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
         dlog_error("Please use the commands like:");
@@ -73,6 +78,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("hal_i2c_init <ch> <i2c_addr> <speed>");
         dlog_error("hal_i2c_read <ch> <subAddr> <subAddrLen> <dataLen>");
         dlog_error("hal_i2c_write <ch> <subAddr> <subAddrLen> <data> <dataLen>");
+        dlog_error("hdmi");
         dlog_output(1000);
     }
 }

@@ -74,7 +74,7 @@ install:
 	@cp -f ../boardParameters.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f ../Common/IT66021/Inc/it_66021.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f ../Common/IT66021/Inc/it6602.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f ../Common/IT66021/Inc/typedef.h $(OUTPUT_HEADER_STAGING_DIR)	
+	@cp -f ../Common/IT66021/Inc/it_typedef.h $(OUTPUT_HEADER_STAGING_DIR)	
 	@cp -f ../Common/NORFlash/Inc/nor_flash.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f ../Common/OV5640/Inc/ov5640.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f $(CFG_BIN) $(OUTPUT_BIN_STAGING_DIR)/
@@ -86,7 +86,7 @@ clean:
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/it6602.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/nor_flash.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/ov5640.h
-	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/typedef.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/it_typedef.h
 
 .PHONY: all clean install
 #########################################################################

@@ -23,8 +23,7 @@ typedef enum
 {
     HAL_MP3_ENCODE_44100 = 44100,
     HAL_MP3_ENCODE_48000 = 48000
-} ENUM_HAL_MP3_ENCODE_SAMPLERATR;
-
+} ENUM_HAL_MP3_ENCODE_SAMPLERATE;
 
 typedef struct
 {
@@ -32,7 +31,7 @@ typedef struct
     uint32_t u32_rawDataLenght;
     uint32_t u32_encodeDataAddr;
     uint32_t u32_newPcmDataFlagAddr;
-    ENUM_HAL_MP3_ENCODE_SAMPLERATR e_samplerate;
+    ENUM_HAL_MP3_ENCODE_SAMPLERATE e_samplerate;
     ENUM_HAL_MP3_ENCODE_MODE e_modes;
     uint8_t u8_channel;
     

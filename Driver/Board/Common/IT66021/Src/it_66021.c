@@ -17,8 +17,8 @@
 #include "it6602.h"
 #include "it6602_reg.h"
 
+extern volatile VTiming CurVTiming;
 
-struct it6602_dev_data it6602DEV;
 typedef unsigned char (*HDMI_SET_TABLE)[3];
 static HDMI_SET_TABLE hdmi_edid_table = NULL;
 
@@ -197,10 +197,6 @@ void IT_66021_Set(unsigned char slv_addr, unsigned char sub_addr, unsigned char 
     I2C_Master_WriteData(IT_66021_I2C_COMPONENT_NUM, slv_addr >> 1, data, 2);
 }
 
-static struct it6602_dev_data* get_it6602_dev_data(void)
-{
-    return &it6602DEV;
-}
 
 void IT_66021_ChangeBank(uint8_t index, uint8_t bank)
 {
@@ -240,7 +236,7 @@ static void IT_66021_I2CInitial(void)
     if (i2c_initialized == 0)
     {
         I2C_Init(IT_66021_I2C_COMPONENT_NUM, I2C_Master_Mode, RX_I2C_IO_MAP_ADDR >> 1, I2C_Fast_Speed);
-        INTR_NVIC_SetIRQPriority(I2C_INTR2_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_I2C_DEFAULT,0));
+        INTR_NVIC_SetIRQPriority(I2C_INTR2_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,4,0));
         reg_IrqHandle(I2C_INTR2_VECTOR_NUM, I2C_Master_IntrSrvc, NULL);
         INTR_NVIC_EnableIRQ(I2C_INTR2_VECTOR_NUM);
         msleep(100);
@@ -486,69 +482,33 @@ static void IT_66021_EDIDRAMInitial(uint8_t index)
 
 }
 
-
-
-static void IT_66021_GenericInitial(uint8_t index)
-{
-    uint8_t u8_sum=0;
-    uint32_t i = 0;
-    uint8_t slv_addr_offset = (index == 0) ? 0 : 2;
-
-    struct it6602_dev_data *it6602data = get_it6602_dev_data();
-    IT_66021_SetTable(index, hdmi_default_settings);
-    IT_66021_WriteTable(index, adv_i2c_addr_table);
-    IT_66021_HPDCtrl(index, 0);
-    msleep(1000);    
-
-    IT_66021_EDIDRAMInitial(index);
-    
-    //it66021 must set hdmi port 0
-    IT_66021_Set(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, 0x51, 0x01, 0x00);
-    IT_66021_WriteByte(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, 0x51, 0x00);
-    IT_66021_WriteByte(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, 0x65, 0x51);
-    IT_66021_HPDCtrl(index, 1);
-    
-}
-
-
-
-
-
 void IT_66021_GetVideoFormat(uint8_t index, uint16_t* widthPtr, uint16_t* hightPtr, uint8_t* framteratePtr)
 {
-    uint8_t hdmi_i2c_addr = (index == 0) ? RX_I2C_HDMI_MAP_ADDR : (RX_I2C_HDMI_MAP_ADDR + 2);
 
-    uint32_t u32_HTotal   = (((IT_66021_ReadByte(hdmi_i2c_addr, 0x9D))&0x3F)<<8) + IT_66021_ReadByte(hdmi_i2c_addr, 0x9C);
-    uint32_t u32_HActive  = (((IT_66021_ReadByte(hdmi_i2c_addr, 0x9F))&0x3F)<<8) + IT_66021_ReadByte(hdmi_i2c_addr, 0x9E);
-    uint32_t u32_HEP      = (((IT_66021_ReadByte(hdmi_i2c_addr, 0xA1))&0xF0)<<4) + IT_66021_ReadByte(hdmi_i2c_addr, 0xA2);
-    uint32_t u32_HSYNCW   = (((IT_66021_ReadByte(hdmi_i2c_addr, 0xA1))&0x01)<<8) + IT_66021_ReadByte(hdmi_i2c_addr, 0xA0);
-    uint32_t u32_HSyncPol = ( (IT_66021_ReadByte(hdmi_i2c_addr, 0xA8))&0x04)>>2; 
-    
-
-    uint32_t u32_VTotal   = (((IT_66021_ReadByte(hdmi_i2c_addr, 0xA4))&0x0F)<<8) + IT_66021_ReadByte(hdmi_i2c_addr, 0xA3);
-    uint32_t u32_VActive  = (((IT_66021_ReadByte(hdmi_i2c_addr, 0xA4))&0xF0)<<4) + IT_66021_ReadByte(hdmi_i2c_addr, 0xA5);
-    uint32_t u32_VEP      = ( (IT_66021_ReadByte(hdmi_i2c_addr, 0xA7))&0x3F);
-    uint32_t u32_VSYNCW   = ( (IT_66021_ReadByte(hdmi_i2c_addr, 0xA6))&0x1F);
-    uint32_t u32_VSyncPol = ( (IT_66021_ReadByte(hdmi_i2c_addr, 0xA8))&0x08)>>3; 
-
-    uint8_t u8_rddata = IT_66021_ReadByte(hdmi_i2c_addr, 0x9A);
-    uint32_t PCLK = (124*255/u8_rddata)/10;
-    uint64_t u64_FrameRate = (uint64_t)(PCLK)*1000;
-    u64_FrameRate /= u32_HTotal;
-    u64_FrameRate /= u32_VTotal;
-     
-    *widthPtr = (uint16_t)u32_HActive;
-    *hightPtr = (uint16_t)u32_VActive;
-    //*framteratePtr = u64_FrameRate;
-    *framteratePtr = 60;
+    *widthPtr = (uint16_t)CurVTiming.HActive;
+    *hightPtr = (uint16_t)CurVTiming.VActive;
+    uint64_t u64_FrameRate = (uint64_t)(CurVTiming.PCLK)*1000*1000;
+    u64_FrameRate /= CurVTiming.HTotal;
+    u64_FrameRate /= CurVTiming.VTotal;
+   
+    if ((u64_FrameRate > 55) || (u64_FrameRate > 65))   
+    {
+        *framteratePtr = 60;
+    }
+    else if ((u64_FrameRate > 45) || (u64_FrameRate > 55))
+    {
+        *framteratePtr = 50;    
+    }
+    else if ((u64_FrameRate > 25) || (u64_FrameRate > 35))
+    {
+        *framteratePtr = 30;
+    }
 }
 
 void IT_66021_GetAudioSampleRate(uint8_t index, uint32_t* sampleRate)
 {
-
-    uint8_t hdmi_i2c_addr = (index == 0) ? RX_I2C_HDMI_MAP_ADDR : (RX_I2C_HDMI_MAP_ADDR + 2);
-
-    *sampleRate = IT_66021_ReadByte(hdmi_i2c_addr, 0x39) & 0xF;
+    struct it6602_dev_data *it6602data = get_it6602_dev_data();
+    *sampleRate = (int)it6602data->m_RxAudioCaps.SampleFreq;
 }
 
 void IT_66021_DumpOutEdidData(uint8_t index)

@@ -11,7 +11,7 @@
 
 #ifndef _Utility_h_
 #define _Utility_h_
-#include "typedef.h"
+#include "it_typedef.h"
 
 
 #ifdef MEGAWIN82516

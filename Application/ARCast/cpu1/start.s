@@ -165,8 +165,8 @@ Infinite_Loop:
   .word     IRQHandler_64
   .word     IRQHandler_65
   .word     IRQHandler_66
-  .word     LeftAudio_44p1K
-  .word     RightAudio_44p1K
+  .word     LeftAudio_48K
+  .word     RightAudio_48K
   .word     IRQHandler_69
   .word     IRQHandler_70
   .word     IRQHandler_71

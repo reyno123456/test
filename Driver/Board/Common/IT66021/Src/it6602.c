@@ -99,7 +99,7 @@
 #include "it_66021.h"
 #include "it_define.h"
 #include "it6602_reg.h"
-#include "typedef.h"
+#include "it_typedef.h"
 #include "Utility.h"
 #include "debuglog.h"
 #include "i2c.h"
@@ -144,7 +144,7 @@
 // 14 eBTA1004_SDR,
 // 15 eBTA1004_DDR
 //06-27 disable --> #define HDMIRX_OUTPUT_VID_MODE (F_MODE_EN_UDFILT | F_MODE_RGB444)
-#define HDMIRX_OUTPUT_VID_MODE eYUV422_Emb_Sync_SDR
+#define HDMIRX_OUTPUT_VID_MODE eYUV422_Sep_Sync_SDR
 //FIX_ID_003 xxxxx
 
 #define MS_TimeOut(x) (x+1)
@@ -370,7 +370,7 @@ unsigned char HdmiI2cAddr=IT6602B0_HDMI_ADDR;
 
 //for debug video format only
 int CurTMDSCLK;
-VTiming CurVTiming;
+volatile VTiming CurVTiming;
 AVI_InfoFrame aviinfoframe;
 //int GCP_CD       = CD8BIT; //24 bits per pixel
 int InColorMode  = RGB444; //RGB444, YCbCr422, YCbCr444
@@ -1252,7 +1252,7 @@ static void mhlrx_write_init(struct IT6602_REG_INI _CODE *tdata);
 //FIX_ID_036	xxxxx
 
 /* ITEHDMI Configuration and Initialization ***********************************/
-static struct it6602_dev_data* get_it6602_dev_data(void);
+struct it6602_dev_data* get_it6602_dev_data(void);
 static void hdimrx_write_init(struct IT6602_REG_INI _CODE *tdata);
 //FIX_ID_036	xxxxx //Enable MHL Function for IT68XX
 //static void mhlrx_write_init(struct IT6602_REG_INI _CODE *tdata);
@@ -1660,7 +1660,7 @@ static void mhlrxbwr( unsigned char offset, unsigned char byteno, unsigned char 
 /* ITEHDMI Configuration and Initialization ***********************************/
 /*****************************************************************************/
 #ifdef _ITEHDMI_
-static struct it6602_dev_data* get_it6602_dev_data(void)
+struct it6602_dev_data* get_it6602_dev_data(void)
 {
 	return &it6602DEV;
 }
@@ -2057,6 +2057,7 @@ void IT6602_fsm_init(void)
 	IT6602_Identify_Chip();
 //FIX_ID_002 xxxxx
 
+	
     IT6602_Rst(it6602data);
 
 //FIX_ID_001 xxxxx Add Auto EQ with Manual EQ
@@ -6639,7 +6640,6 @@ static void IT6602SwitchVideoState(struct it6602_dev_data *it6602,Video_State_Ty
 
 				get_vid_info();
 				show_vid_info();
-
 				hdmirxwr(0x84, 0x8F);	//2011/06/17 xxxxx, for enable Rx Chip count
 
 				#ifdef Enable_Vendor_Specific_packet
@@ -7041,7 +7041,6 @@ static void hdmirx_INT_SCDT_Chg(struct it6602_dev_data *it6602)
 		dlog_info("#### SCDT OFF ####\r\n");
 		IT6602SwitchVideoState(it6602,VSTATE_SyncWait);
 		IT6602SwitchAudioState(it6602,ASTATE_AudioOff);
-
 //		TMDSCheck(it6602->m_ucCurrentHDMIPort);
 //		TogglePolarity (it6602->m_ucCurrentHDMIPort);
 
@@ -11612,7 +11611,6 @@ void show_vid_info( void )
 	FrameRate /= CurVTiming.HTotal;
 	FrameRate /= CurVTiming.VTotal;
 	dlog_info("FrameRate = %ld Hz\n", FrameRate);
-
 	if( CurVTiming.ScanMode==0 ) {
 	dlog_info("ScanMode = Progressive\n");
 	}
