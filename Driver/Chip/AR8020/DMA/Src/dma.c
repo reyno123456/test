@@ -224,7 +224,11 @@ static uint8_t dma_prepare_LL_pre_Config(uint32_t u32_transByteNum, STRU_DMA_DES
     else if ( (u32_1stBlkNum) && (!u32_2stBlkNum) && (!u32_3stBlkNum) ) //100
     {
         s_configure->totalBlkNum = u32_1stBlkNum;
+        s_configure->tfr_1_size = DW_CH_MAX_BLK_SIZE;
+        s_configure->tfr_2_size = DW_CH_MAX_BLK_SIZE;
         s_configure->tfr_3_size = DW_CH_MAX_BLK_SIZE;
+        s_configure->tfr_1_width = 2;
+        s_configure->tfr_2_width = 2;
         s_configure->tfr_3_width = 2;
     }
     else if ( (!u32_1stBlkNum) && (u32_2stBlkNum) && (u32_3stBlkNum) ) //011
@@ -238,16 +242,20 @@ static uint8_t dma_prepare_LL_pre_Config(uint32_t u32_transByteNum, STRU_DMA_DES
     else if ( (u32_1stBlkNum) && (!u32_2stBlkNum) && (u32_3stBlkNum) ) //101
     {
         s_configure->totalBlkNum = u32_1stBlkNum + 1;
+        s_configure->tfr_1_size = DW_CH_MAX_BLK_SIZE;            // from Z to A
         s_configure->tfr_2_size = DW_CH_MAX_BLK_SIZE;            // from Z to A
         s_configure->tfr_3_size = u32_3stBlkNum;
+        s_configure->tfr_1_width = 2;
         s_configure->tfr_2_width = 2;
         s_configure->tfr_3_width = 0;
     }
     else if ( (u32_1stBlkNum) && (u32_2stBlkNum) && (!u32_3stBlkNum) ) //110
     {
         s_configure->totalBlkNum = u32_1stBlkNum + 1;            // from Z to A
+        s_configure->tfr_1_size = DW_CH_MAX_BLK_SIZE;
         s_configure->tfr_2_size = DW_CH_MAX_BLK_SIZE;
         s_configure->tfr_3_size = u32_2stBlkNum;
+        s_configure->tfr_1_width = 2;
         s_configure->tfr_2_width = 2;
         s_configure->tfr_3_width = 2;
     }
