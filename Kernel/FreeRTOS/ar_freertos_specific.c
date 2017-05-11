@@ -63,7 +63,7 @@ void ar_top(void)
 	uxArraySize = uxTaskGetSystemState(pxTaskStatusArray, uxArraySize, &ulTotalRunTime);  
 
 	dlog_info("\n");
-	dlog_info("name                            status ID Priority   stack   used\n");
+	dlog_info("name                            status ID Priority   stack   used");
 
 	if( ulTotalRunTime > 0 )  
 	{  
@@ -90,7 +90,7 @@ void ar_top(void)
 					pxTaskStatusArray[x].xTaskNumber,pxTaskStatusArray[x].uxCurrentPriority,
 					pxTaskStatusArray[x].usStackHighWaterMark); 
             }
-			dlog_info("%s\n",tmp);  
+			dlog_info("%s",tmp);  
         }  
     }  
 	return;
