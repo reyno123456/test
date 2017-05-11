@@ -38,8 +38,12 @@ History:
 #pragma message("defined IT_66021")
 #endif
 
+#ifdef USE_IT66021_EDID_CONFIG_BIN
 static uint32_t u32_audioSampleRateChangeCount=0;
 static volatile uint32_t *HAL_hdmi_pu32_newAudioSampleRate=(uint32_t *)(SRAM_MODULE_SHARE_AUDIO_RATE);
+static uint32_t s_u32_hdmiRxSupportedOutputSampleRate[] = {0,2};
+static uint32_t s_u32_hdmiRxAudioSampleRateStatus = 0;
+#endif
 
 static STRU_HDMI_RX_STATUS s_st_hdmiRxStatus[HAL_HDMI_RX_MAX] = {0};
 static void HAL_HDMI_RX_IrqHandler0(uint32_t u32_vectorNum);
@@ -56,9 +60,6 @@ static STRU_HDMI_RX_OUTPUT_FORMAT s_st_hdmiRxSupportedOutputFormat[] =
     {1920, 1080, 50},
     {1920, 1080, 60},
 };
-
-static uint32_t s_u32_hdmiRxSupportedOutputSampleRate[] = {0,2};
-static uint32_t s_u32_hdmiRxAudioSampleRateStatus = 0;
 
 static uint8_t HDMI_RX_MapToDeviceIndex(ENUM_HAL_HDMI_RX e_hdmiIndex)
 {
@@ -92,30 +93,6 @@ static HAL_BOOL_T HDMI_RX_CheckVideoFormatSupportOrNot(uint16_t u16_width, uint1
 }
 
 
-static HAL_BOOL_T HDMI_RX_CheckAudioSampleRateSupportOrNot(uint32_t u32_sampleRate)
-{
-    uint8_t i = 0;
-    uint8_t array_size = sizeof(s_u32_hdmiRxSupportedOutputSampleRate)/sizeof(s_u32_hdmiRxSupportedOutputSampleRate[0]);
-
-    for (i = 0; i < array_size; i++)
-    {
-        if (u32_sampleRate == s_u32_hdmiRxSupportedOutputSampleRate[i])
-        {
-            break;
-        }
-    }
-
-    if (i < array_size)
-    {
-        return HAL_TRUE;
-    }
-    else
-    {
-        return HAL_FALSE;
-    }
-}
-
-
 static HAL_BOOL_T HDMI_RX_CheckVideoFormatChangeOrNot(ENUM_HAL_HDMI_RX e_hdmiIndex, 
                                                       uint16_t u16_width, 
                                                       uint16_t u16_hight, 
@@ -135,36 +112,6 @@ static HAL_BOOL_T HDMI_RX_CheckVideoFormatChangeOrNot(ENUM_HAL_HDMI_RX e_hdmiInd
     }
     else
     {
-        return HAL_FALSE;
-    }
-}
-
-
-static HAL_BOOL_T HDMI_RX_CheckAudioSampleRateChangeOrNot(ENUM_HAL_HDMI_RX e_hdmiIndex,uint32_t u32_sampleRate)
-{
-    if (e_hdmiIndex >= HAL_HDMI_RX_MAX)
-    {
-        return HAL_FALSE;
-    }
-
-    if ((s_st_hdmiRxStatus[e_hdmiIndex].u8_devEnable == 1) &&
-        (s_u32_hdmiRxAudioSampleRateStatus != u32_sampleRate))
-    {
-        u32_audioSampleRateChangeCount++;
-        if (u32_audioSampleRateChangeCount > 3)
-        {
-            u32_audioSampleRateChangeCount = 0;
-            s_u32_hdmiRxAudioSampleRateStatus = u32_sampleRate;
-            return HAL_TRUE;    
-        }
-        else
-        {
-            return HAL_FALSE;        
-        }
-    }
-    else
-    {
-        u32_audioSampleRateChangeCount = 0;
         return HAL_FALSE;
     }
 }
@@ -254,6 +201,60 @@ static void HDMI_RX_CheckFormatStatus(ENUM_HAL_HDMI_RX e_hdmiIndex, HAL_BOOL_T b
     }
 }
 
+#ifdef USE_IT66021_EDID_CONFIG_BIN
+
+static HAL_BOOL_T HDMI_RX_CheckAudioSampleRateSupportOrNot(uint32_t u32_sampleRate)
+{
+    uint8_t i = 0;
+    uint8_t array_size = sizeof(s_u32_hdmiRxSupportedOutputSampleRate)/sizeof(s_u32_hdmiRxSupportedOutputSampleRate[0]);
+
+    for (i = 0; i < array_size; i++)
+    {
+        if (u32_sampleRate == s_u32_hdmiRxSupportedOutputSampleRate[i])
+        {
+            break;
+        }
+    }
+
+    if (i < array_size)
+    {
+        return HAL_TRUE;
+    }
+    else
+    {
+        return HAL_FALSE;
+    }
+}
+
+
+static HAL_BOOL_T HDMI_RX_CheckAudioSampleRateChangeOrNot(ENUM_HAL_HDMI_RX e_hdmiIndex,uint32_t u32_sampleRate)
+{
+    if (e_hdmiIndex >= HAL_HDMI_RX_MAX)
+    {
+        return HAL_FALSE;
+    }
+
+    if ((s_st_hdmiRxStatus[e_hdmiIndex].u8_devEnable == 1) &&
+        (s_u32_hdmiRxAudioSampleRateStatus != u32_sampleRate))
+    {
+        u32_audioSampleRateChangeCount++;
+        if (u32_audioSampleRateChangeCount > 3)
+        {
+            u32_audioSampleRateChangeCount = 0;
+            s_u32_hdmiRxAudioSampleRateStatus = u32_sampleRate;
+            return HAL_TRUE;    
+        }
+        else
+        {
+            return HAL_FALSE;        
+        }
+    }
+    else
+    {
+        u32_audioSampleRateChangeCount = 0;
+        return HAL_FALSE;
+    }
+}
 
 uint8_t HDMI_RX_CheckAudioStatus(ENUM_HAL_HDMI_RX e_hdmiIndex)
 {
@@ -301,6 +302,7 @@ uint8_t HDMI_RX_CheckAudioStatus(ENUM_HAL_HDMI_RX e_hdmiIndex)
     }
     return 0;
 }
+#endif
 
 static void HDMI_RX_IdleCallback0(void *paramPtr)
 {

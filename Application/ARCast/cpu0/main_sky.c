@@ -87,7 +87,7 @@ int main(void)
     for( ;; )
     {
         //HAL_USB_HostProcess();     
-        //HAL_MP3EncodePcm();
+        HAL_MP3EncodePcm();
         Wireless_MessageProcess();
         SYS_EVENT_Process();
     }
