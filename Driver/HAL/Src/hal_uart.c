@@ -51,7 +51,7 @@ HAL_RET_T HAL_UART_WaitTillIdle(ENUM_HAL_UART_COMPONENT e_uartComponent, uint32_
         }        
     }
 
-    return 0;
+    return HAL_OK;
 }    
 
 /**
@@ -152,9 +152,15 @@ HAL_RET_T HAL_UART_TxData(ENUM_HAL_UART_COMPONENT e_uartComponent,
 
     u8_uartCh = (uint8_t)(e_uartComponent);
 
+    if (1 == uart_checkoutFifoStatus(u8_uartCh))
+    {
+      return HAL_BUSY;
+    }
+    
     uart_putdata(u8_uartCh, pu8_txBuf, u32_len);
 
     HAL_UART_WaitTillIdle(u8_uartCh, u32_timeoutms);
+    
     return HAL_OK;
 }
 
