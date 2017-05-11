@@ -40,7 +40,7 @@ HAL_RET_T HAL_DMA_Transfer(uint32_t u32_srcAddr,
 											uint32_t u32_timeOut)
 {
 	uint8_t u8_chanIndex;
-	uint32_t u32_start, u32_end;
+	uint32_t u32_start;
 	
 	for (u8_chanIndex = 0; u8_chanIndex < 4; u8_chanIndex++)
 	{
@@ -63,23 +63,24 @@ HAL_RET_T HAL_DMA_Transfer(uint32_t u32_srcAddr,
 
 	if (u8_chanIndex >= 4)
 	{
-		dlog_info("line = %d, all 4 channel occupied!\n", __LINE__);
+		dlog_info("line = %d, all 4 channel occupied!", __LINE__);
 		return HAL_BUSY;
 	}
 	
 	if ( 0 != u32_timeOut )
 	{
 		u32_start = SysTicks_GetTickCount();
-		u32_end = u32_start + u32_timeOut;
-		while(SysTicks_GetTickCount() <= u32_end)
+		
+		while( DMA_getStatus(u8_chanIndex) == 0 )
 		{
-			if (DMA_getStatus(u8_chanIndex) == 1)
-			{
-				return HAL_TRUE;
-			}
-			HAL_Delay(1);
-		}		
+                    if ((SysTicks_GetDiff(u32_start, SysTicks_GetTickCount())) >= u32_timeOut)            
+                    {                 
+                        return HAL_TIME_OUT;            
+                    }            
+
+                    HAL_Delay(1);
+		}
 	}
 	
-	return HAL_TIME_OUT;
+	return HAL_OK;
 }
