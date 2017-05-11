@@ -543,7 +543,7 @@ uint32_t DMA_forDriverTransfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint3
 {
     uint8_t u8_chanIndex;
     uint8_t u8_chanInitFlag = 0;
-    uint32_t u32_start, u32_end;
+    uint32_t u32_start;
     
     for (u8_chanIndex = 7; u8_chanIndex >= 4; u8_chanIndex--)
     {
@@ -561,8 +561,8 @@ uint32_t DMA_forDriverTransfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint3
 
     if (u8_chanIndex < 4)
     {
-        dlog_info("line = %d, all 4 channel occupied!\n", __LINE__);
-        return -1;
+        dlog_info("line = %d, all 4 channel occupied!", __LINE__);
+        return DMA_BUSY;
     }
 
 
@@ -577,18 +577,22 @@ uint32_t DMA_forDriverTransfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint3
 
         case DMA_blockTimer:
             u32_start = SysTicks_GetTickCount();
-            u32_end = u32_start + u32_ms;
-            while(SysTicks_GetTickCount() <= u32_end)
-            {
-                if (DMA_getStatus(u8_chanIndex) == 1)
-                {
-                    break;
-                }
-            }
-            break;
 
-        default: break;
+            while( DMA_getStatus(u8_chanIndex) == 0 )
+            {
+                if ((SysTicks_GetDiff(u32_start, SysTicks_GetTickCount())) >= u32_ms)            
+                {                 
+                    break;            
+                }
+
+                SysTicks_DelayMS(1);
+            }
+            return DMA_TIME_OUT;
+        break;
+
+        default:
+            break;
     }
 
-    return 0;
+    return DMA_OK;
 }
