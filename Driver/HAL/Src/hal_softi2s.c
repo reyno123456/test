@@ -92,6 +92,7 @@ HAL_RET_T HAL_SOFTI2S_Init(STRU_HAL_SOFTI2S_INIT *st_i2sInit)
     return  HAL_OK;
 }
 
+extern uint8_t InterCore_GetMsg(uint32_t* msg_p, uint8_t* buf, uint32_t max_length);
 void HAL_SOFTI2S_Funct(void)
 {
     volatile uint32_t *pu32_newPcmDataFlagAddr=(uint32_t *)(SRAM_MODULE_SHARE_AUDIO_PCM);
@@ -124,7 +125,7 @@ void HAL_SOFTI2S_Funct(void)
                 //dlog_info("OK %x %d %p\n",g_u32_dstAddress,*pu32_newPcmDataFlagAddr,pu32_newPcmDataFlagAddr);                          
             } 
         }
-        if (u8_audioSampleRateTmp != *pu8_newAudioSampleRate)
+        else if (u8_audioSampleRateTmp != *pu8_newAudioSampleRate)
         {
             if (0 == *pu8_newAudioSampleRate)
             {
@@ -139,6 +140,13 @@ void HAL_SOFTI2S_Funct(void)
             u8_audioSampleRateTmp = *pu8_newAudioSampleRate;
             //dlog_info("OK %x %x %p %p\n",u8_audioSampleRateTmp,*pu8_newAudioSampleRate,*((uint32_t *)(AUDIO_RIGHT_INTERRUPT_ADDR)),*((uint32_t *)(AUDIO_LEFT_INTERRUPT_ADDR)));             
         }
+        else
+        {
+            uint32_t msg = 0; 
+            uint8_t buf[16];
+            InterCore_GetMsg(&msg, buf,   sizeof(buf));
+        }
+        
     }
     
 }

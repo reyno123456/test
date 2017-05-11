@@ -484,12 +484,22 @@ static void IT_66021_EDIDRAMInitial(uint8_t index)
 
 void IT_66021_GetVideoFormat(uint8_t index, uint16_t* widthPtr, uint16_t* hightPtr, uint8_t* framteratePtr)
 {
+    uint8_t hdmi_i2c_addr = (index == 0) ? RX_I2C_HDMI_MAP_ADDR : (RX_I2C_HDMI_MAP_ADDR + 2);
 
-    *widthPtr = (uint16_t)CurVTiming.HActive;
-    *hightPtr = (uint16_t)CurVTiming.VActive;
-    uint64_t u64_FrameRate = (uint64_t)(CurVTiming.PCLK)*1000*1000;
-    u64_FrameRate /= CurVTiming.HTotal;
-    u64_FrameRate /= CurVTiming.VTotal;
+    uint32_t u32_HTotal   = (((IT_66021_ReadByte(hdmi_i2c_addr, 0x9D))&0x3F)<<8) + IT_66021_ReadByte(hdmi_i2c_addr, 0x9C);
+    uint32_t u32_HActive  = (((IT_66021_ReadByte(hdmi_i2c_addr, 0x9F))&0x3F)<<8) + IT_66021_ReadByte(hdmi_i2c_addr, 0x9E);
+
+    uint32_t u32_VTotal   = (((IT_66021_ReadByte(hdmi_i2c_addr, 0xA4))&0x0F)<<8) + IT_66021_ReadByte(hdmi_i2c_addr, 0xA3);
+    uint32_t u32_VActive  = (((IT_66021_ReadByte(hdmi_i2c_addr, 0xA4))&0xF0)<<4) + IT_66021_ReadByte(hdmi_i2c_addr, 0xA5);
+
+    uint8_t u8_rddata = IT_66021_ReadByte(hdmi_i2c_addr, 0x9A);
+    uint32_t PCLK = (124*255/u8_rddata)/10;
+    uint64_t u64_FrameRate = (uint64_t)(PCLK)*1000*1000;
+    u64_FrameRate /= u32_HTotal;
+    u64_FrameRate /= u32_VTotal;
+     
+    *widthPtr = (uint16_t)u32_HActive;
+    *hightPtr = (uint16_t)u32_VActive;
    
     if ((u64_FrameRate > 55) || (u64_FrameRate > 65))   
     {
