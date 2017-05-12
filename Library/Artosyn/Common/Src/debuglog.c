@@ -218,6 +218,7 @@ uint32_t DLOG_GetChar(uint8_t *u8_uartRxBuf, uint8_t u8_uartRxLen)
     if (u8_commandLine[u8_commandPos-1] != '\n')
     {
         u8_commandLine[u8_commandPos]=DEBUG_LOG_END;
+        u8_commandLine[u8_commandPos+1]='\n';
     }
     
     printf("%s",u8_commandLine);
@@ -588,10 +589,20 @@ int puts(const char * s)
 // Output data when use libc.a
 int _write(int file, char *ptr, int len)
 {
+    int len2;
+    
     if ((file == 0) || (file == 1) || (file ==2))
     {
+        if ((len > 2) && ('\n' == ptr[len-1]) && (DEBUG_LOG_END == ptr[len-2]))
+        {
+            len2 = len -1;
+        }
+        else
+        {
+            len2 = len;
+        }
         // Print to buffer
-        DLOG_StrCpyToDebugOutputLogBuf(ptr, len);
+        DLOG_StrCpyToDebugOutputLogBuf(ptr, len2);
     }
 
     return len;
