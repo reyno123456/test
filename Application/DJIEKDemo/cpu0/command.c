@@ -114,10 +114,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     else if(memcmp(cmdArray[0], "command_test_BB_uart", strlen("command_test_BB_uart")) == 0)
     {
         command_test_BB_uart(cmdArray[1]);
-    }	
-	else if ((memcmp(cmdArray[0], "top", strlen("top")) == 0))
+    }   
+    else if ((memcmp(cmdArray[0], "top", strlen("top")) == 0))
     {
-		/* like linux busybox top system call */
+        /* like linux busybox top system call */
         ar_top();
     }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)

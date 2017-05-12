@@ -7,6 +7,9 @@
 #include "test_hal_can.h"
 #include "hal_nvic.h"
 
+#define CAN_MAX_TIEM_MS     (2) 
+
+
 static STRU_HAL_CAN_MSG s_st_canRxBuf[5];
 static  uint8_t s_u8_canRxCnt = 0;
 
@@ -108,9 +111,9 @@ void command_TestCanInit(unsigned char *ch, unsigned char *br, unsigned char *ac
     st_canConfig.u32_halCanAmask = strtoul(amask, NULL, 0);      //            
     st_canConfig.e_halCanFormat = strtoul(format, NULL, 0);      //
     st_canConfig.pfun_halCanRcvMsg = test_CAN_RcvMsgHandler;
-	 
+     
     HAL_CAN_Init(&st_canConfig);
-	
+    
     printCanConfigInfo(&st_canConfig);
 }
 
@@ -138,15 +141,23 @@ void command_TestCanTx(unsigned char *ch, unsigned char *id, unsigned char *len,
     
     st_canSendMsg.e_halCanComponent = strtoul(ch, NULL, 0);       //
     st_canSendMsg.u32_halCanId = strtoul(id, NULL, 0);            //
-    for(u8_ii=0;u8_ii<8;u8_ii++)
-    {
-        st_canSendMsg.u8_halCanDataArray[u8_ii] = u8_ii+1;   
-    }
     st_canSendMsg.u8_halCanDataLen = strtoul(len, NULL, 0);       //            
     st_canSendMsg.e_halCanFormat = strtoul(format, NULL, 0);          //
     st_canSendMsg.e_halCanType = strtoul(type,  NULL, 0);            //
-
-    HAL_CAN_Send(&st_canSendMsg);
+    memset(st_canSendMsg.u8_halCanDataArray, 0x11, 8);
+    HAL_CAN_Send(&st_canSendMsg, CAN_MAX_TIEM_MS);
+    
+    memset(st_canSendMsg.u8_halCanDataArray, 0x22, 8);
+    HAL_CAN_Send(&st_canSendMsg, CAN_MAX_TIEM_MS);
+    
+    memset(st_canSendMsg.u8_halCanDataArray, 0x33, 8);
+    HAL_CAN_Send(&st_canSendMsg, CAN_MAX_TIEM_MS);
+    
+    memset(st_canSendMsg.u8_halCanDataArray, 0x44, 8);
+    HAL_CAN_Send(&st_canSendMsg, CAN_MAX_TIEM_MS);
+    
+    memset(st_canSendMsg.u8_halCanDataArray, 0x55, 8);
+    HAL_CAN_Send(&st_canSendMsg, CAN_MAX_TIEM_MS);
 
     printCanMsg(&st_canSendMsg);
 

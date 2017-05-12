@@ -50,6 +50,17 @@
 #define CAN_TBUF_EDL    (1<<5)
 #define CAN_TBUF_BRS    (1<<4)
 
+//define register CFG_STAT
+#define CFG_STAT_RESET     (1<<7) // 
+#define CFG_STAT_LBME      (1<<6) // 
+#define CFG_STAT_LBMI      (1<<5) // 
+#define CFG_STAT_TPSS      (1<<4) // 
+#define CFG_STAT_TSSS      (1<<3) // 
+#define CFG_STAT_RACTIVE   (1<<2) // Reception ACTIVE (Receive Status bit)
+#define CFG_STAT_TACTIVE   (1<<1) // Transmission ACTIVE (Transmit Status bit)
+#define CFG_STAT_BUSOFF    (1<<0) // 
+
+
 /*******************can register define**************************/
 typedef struct{
     volatile uint32_t    u32_rxBuf[18];          // 0x00-0x47

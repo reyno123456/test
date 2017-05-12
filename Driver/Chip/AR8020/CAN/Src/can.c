@@ -369,7 +369,7 @@ static int32_t CAN_RcvArr(uint8_t u8_ch, uint8_t *u8_rxBuf)
 
     *(uint32_t*)(u8_rxBuf + 0) = pst_canReg->u32_rxBuf[0];   //ID
     *(uint32_t*)(u8_rxBuf + 4) = pst_canReg->u32_rxBuf[1];   //DLC
-    *(uint32_t*)(u8_rxBuf + 8) = pst_canReg->u32_rxBuf[2];   //data1~data$
+    *(uint32_t*)(u8_rxBuf + 8) = pst_canReg->u32_rxBuf[2];   //data1~data4
     *(uint32_t*)(u8_rxBuf + 12) = pst_canReg->u32_rxBuf[3];  //data5~data8
 
     pst_canReg->u32_reg3 |= (1<<28);       // RREL, release the RBUF
@@ -525,3 +525,28 @@ int32_t CAN_UnRegisterUserRxHandler(uint8_t u8_canCh)
 
     return 0;
 }
+
+/**
+* @brief  get can control tx busy status.
+* @param  e_canComponent        CAN_COMPONENT_0 ~ 3
+* @retval 
+*         0                     can control idle
+*         1                     can control busy
+* @note   None.
+*/
+int32_t CAN_GetTxBusyStatus(ENUM_CAN_COMPONENT e_canComponent)
+{
+    volatile STRU_CAN_TYPE *pst_canReg;
+    
+    pst_canReg = CAN_GetBaseAddrByCh(e_canComponent); 
+
+    if ((pst_canReg->u32_reg3) & CFG_STAT_TACTIVE)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+

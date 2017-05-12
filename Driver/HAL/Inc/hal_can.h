@@ -82,7 +82,7 @@ typedef struct STRU_HAL_CAN_MSG
 /**
 * @brief   can controller initialization. 
 * @param   st_halCanConfig        init need info.  
-*                           
+*          u32_timeOut            timeout threshold, unit:ms                 
 * @retval HAL_OK                  init can controller successed. 
 *         HAL_CAN_ERR_INIT        init can controller failed.
 *         HAL_CAN_ERR_COMPONENTi  can channel error.init failed.
@@ -99,7 +99,7 @@ HAL_RET_T HAL_CAN_Init(STRU_HAL_CAN_CONFIG *st_halCanConfig);
 *         HAL_CAN_ERR_SEND_MSG  can message send failed.
 * @note   None. 
 */
-HAL_RET_T HAL_CAN_Send(STRU_HAL_CAN_MSG *st_halCanMsg);
+HAL_RET_T HAL_CAN_Send(STRU_HAL_CAN_MSG *st_halCanMsg, uint32_t u32_timeOut);
 
 #ifdef __cplusplus
 }

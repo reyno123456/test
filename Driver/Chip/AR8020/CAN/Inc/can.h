@@ -179,6 +179,15 @@ int32_t CAN_RegisterUserRxHandler(uint8_t u8_canCh, CAN_RcvMsgHandler userHandle
 */
 int32_t CAN_UnRegisterUserRxHandler(uint8_t u8_canCh);
 
+/**
+* @brief  get can control tx busy status.
+* @param  e_canComponent        CAN_COMPONENT_0 ~ 3
+* @retval 
+*         0                     can control idle
+*         1                     can control busy
+* @note   None.
+*/
+int32_t CAN_GetTxBusyStatus(ENUM_CAN_COMPONENT e_canComponent);
 
 
 

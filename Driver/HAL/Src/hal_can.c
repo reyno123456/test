@@ -11,6 +11,9 @@ History:
 #include "hal_can.h"
 #include "hal_nvic.h"
 #include "can.h"
+#include "systicks.h"
+#include "hal.h"
+#include "debuglog.h"
 #include <stdio.h>
 
 /**
@@ -51,7 +54,7 @@ HAL_RET_T HAL_CAN_Init(STRU_HAL_CAN_CONFIG *st_halCanConfig)
     //connect can interrupt service function
     HAL_NVIC_RegisterHandler(u8_canCh + HAL_NVIC_CAN_IRQ0_VECTOR_NUM, 
                            CAN_IntrSrvc, 
-		           NULL);
+                           NULL);
 
     // enable can_x interrupt.
     if (NULL != (st_halCanConfig->pfun_halCanRcvMsg)) 
@@ -66,13 +69,21 @@ HAL_RET_T HAL_CAN_Init(STRU_HAL_CAN_CONFIG *st_halCanConfig)
 * @brief  send can frame.include standard data frame,standard remote frame,
 *         extended data frame, extended remote frame
 * @param  st_halCanMsg       pointer to can message for send. 
-*                           
+*         u32_timeOut            timeout threshold, unit:ms                    
 * @retval HAL_OK                can message send successed. 
 *         HAL_CAN_ERR_SEND_MSG  can message send failed.
 * @note   None. 
 */
-HAL_RET_T HAL_CAN_Send(STRU_HAL_CAN_MSG *st_halCanMsg)
+HAL_RET_T HAL_CAN_Send(STRU_HAL_CAN_MSG *st_halCanMsg, uint32_t u32_timeOut)
 {
+    uint32_t start;
+    volatile uint32_t tmpCnt = 100;
+    
+    if (CAN_GetTxBusyStatus(st_halCanMsg->e_halCanComponent))
+    {
+        return HAL_BUSY; 
+    }
+    
     CAN_Send((st_halCanMsg->e_halCanComponent), 
               (st_halCanMsg->u32_halCanId), 
               &(st_halCanMsg->u8_halCanDataArray[0]), 
@@ -80,5 +91,22 @@ HAL_RET_T HAL_CAN_Send(STRU_HAL_CAN_MSG *st_halCanMsg)
               (st_halCanMsg->e_halCanFormat), 
               (st_halCanMsg->e_halCanType));
 
+    if (0 != u32_timeOut)
+    {
+        while(tmpCnt--);
+        
+        start = SysTicks_GetTickCount();
+        while (CAN_GetTxBusyStatus(st_halCanMsg->e_halCanComponent))
+        {
+            if ((SysTicks_GetDiff(start, SysTicks_GetTickCount())) >= u32_timeOut)
+            {
+                 dlog_info("can %dtime out.", st_halCanMsg->e_halCanComponent);
+                 return HAL_TIME_OUT;
+            }
+
+            HAL_Delay(1);
+        }
+    }
+    
     return HAL_OK;
 }
