@@ -184,10 +184,16 @@ uint16_t get_snr_average(void)
 }
 
 
-uint16_t count_num_inbuf(uint8_t *buf, uint16_t len, uint8_t data)
+/**
+ * buf : data buffer to count
+ * idx : start count index
+ * len : total len
+ * cnt : number of item to count
+*/
+static uint16_t count_num_inbuf(uint8_t *buf, uint16_t len)
 {
     uint16_t cnt = 0;
-    uint8_t  i;
+    uint16_t i;
     for ( i = 0 ;i < len; i++ )
     {
         cnt += buf[i];
@@ -197,16 +203,22 @@ uint16_t count_num_inbuf(uint8_t *buf, uint16_t len, uint8_t data)
 }
 
 
-uint32_t count_num_inbuf_1(uint8_t *buf, uint16_t len, uint8_t data, uint8_t cnt, uint8_t idx)
+/** 
+ * buf : data buffer to count
+ * idx : start count index
+ * len : total len
+ * cnt : number of item to count
+*/
+static uint32_t count_num_inbuf_1(uint8_t *buf, uint16_t len, uint8_t cnt, uint8_t idx)
 {
     if ( len == cnt )
     {
-        return count_num_inbuf( buf, len, data );
+        return count_num_inbuf( buf, len );
     }
     else
     {
         uint32_t errcnt = 0;
-        uint8_t i = 0;
+        uint16_t i = 0;
 
         if ( idx >= cnt )
         {
@@ -270,7 +282,7 @@ QAMUPDONW snr_static_for_qam_change(uint16_t threshod_left_section, uint16_t thr
         work_ch_snr.u16_downCount ++;
 
         work_ch_snr.snr_cmpResult[ work_ch_snr.u16_cmpCnt ] = QAMDOWN;
-        cnt = count_num_inbuf(work_ch_snr.snr_cmpResult, SNR_CMP_CNT, QAMDOWN);
+        cnt = count_num_inbuf( work_ch_snr.snr_cmpResult, SNR_CMP_CNT );     //QAMDOWN times in 100times statistics
 
         if (  ( context.qam_ldpc == 1 && work_ch_snr.u16_downCount >= MCS1_DOWN_CONT_SNR ) || 
               /*( context.qam_ldpc == 1 && cnt >= MCS1_DOWN_SNR ) ||*/
@@ -345,7 +357,7 @@ uint8_t grd_get_harqCnt( void )
 
     if ( stru_harqStatus.u8_isFull )
     {
-        uint8_t cnt = count_num_inbuf( stru_harqStatus.u8_flagharq, HARQ_STATUS_CNT, 1 ); //count the harq times
+        uint8_t cnt = count_num_inbuf( stru_harqStatus.u8_flagharq, HARQ_STATUS_CNT ); //count the harq times
         //dlog_info("Harq: %d", cnt);
         return QAMUP;
     }
@@ -494,11 +506,11 @@ QAMUPDONW ldpc_static_for_qam_change( void )
 
     if ( stru_ldpcErr.u8_isFull )
     {
-        uint32_t cnt  = count_num_inbuf( stru_ldpcErr.u8_flagErr, TOTAL_LDPC_ERR_CNT, 1 );                                      //count the err times
-        uint32_t cnt1 = count_num_inbuf_1(stru_ldpcErr.u8_flagErr, TOTAL_LDPC_ERR_CNT, 1, MCS_DOWN_CNT, stru_ldpcErr.u8_idx);   //count the err times
+        uint32_t cnt  = count_num_inbuf  (stru_ldpcErr.u8_flagErr, TOTAL_LDPC_ERR_CNT );                                     //count the err times
+        uint32_t cnt1 = count_num_inbuf_1(stru_ldpcErr.u8_flagErr, TOTAL_LDPC_ERR_CNT, MCS_DOWN_CNT, stru_ldpcErr.u8_idx);   //count the err times
 
-        osdptr->snr_vlaue[2] =   ( (uint32_t)cnt  * 100 / ldpc_total[context.qam_ldpc] ) << 8;
-        osdptr->snr_vlaue[2] |=  ( (uint32_t)cnt1 * 100 * 2 / ldpc_total[context.qam_ldpc] );
+        osdptr->errcnt1 =   (uint32_t)cnt  * 100 / ldpc_total[context.qam_ldpc];
+        osdptr->errcnt2 =   (uint32_t)cnt1 * 100 * 2 / ldpc_total[context.qam_ldpc];
 
         //dlog_info( "%d %d %d", context.qam_ldpc, cnt, cnt1 );
 

@@ -149,28 +149,33 @@ typedef struct
 {
     uint16_t        messageId;
     uint16_t        paramLen;
-    uint16_t        snr_vlaue[4];
+    uint16_t        snr_vlaue[2];           //0,1 3,2
+    uint16_t        u16_afterErr;           //5,4  masoic
+    uint8_t         u8_optCh;               //6 current optional channel
+    uint8_t         u8_mcs;                 //7
     int16_t         sweep_energy[21*8];     //Max channel: 21
-    uint16_t        ldpc_error;
-    uint8_t         agc_value[4];
-    uint8_t         harq_count;
-    uint8_t         modulation_mode;
-    uint8_t         ch_bandwidth;
-    uint8_t         code_rate;
-    uint8_t         osd_enable;
-    uint8_t         IT_channel;
-    uint8_t         head;
-    uint8_t         tail;
-    uint8_t         in_debug;
-    uint8_t         lock_status;
-    uint16_t        video_width[2];
-    uint16_t        video_height[2];
-    uint8_t         frameRate[2];
-    uint8_t         encoder_bitrate[2];
-    uint8_t         rc_modulation_mode;
-    uint8_t         rc_code_rate;
-    uint8_t         encoder_status;
-    uint8_t         reserved[1];
+    uint16_t        ldpc_error;             //9,8 error after Harq
+    uint8_t         agc_value[4];           //13 12 11 10
+    uint8_t         harq_count;             //14
+    uint8_t         modulation_mode;        //15
+    uint8_t         ch_bandwidth;           //16
+    uint8_t         code_rate;              //17
+    uint8_t         osd_enable;             //18
+    uint8_t         IT_channel;             //19
+    uint8_t         head;                   //20
+    uint8_t         tail;                   //21
+    uint8_t         in_debug;               //22
+    uint8_t         lock_status;            //23
+    uint16_t        video_width[2];         //27,26 25,24
+    uint16_t        video_height[2];        //31,30 29,28
+    uint8_t         frameRate[2];           //33,32
+    uint8_t         encoder_bitrate[2];     //35,34
+    uint8_t         rc_modulation_mode;     //36
+    uint8_t         rc_code_rate;           //37
+    uint8_t         encoder_status;         //38
+    uint8_t         errcnt1;                //39
+    uint8_t         errcnt2;                //40
+    uint8_t         reserved[15];           //reserve
 } STRU_WIRELESS_INFO_DISPLAY;
 
 

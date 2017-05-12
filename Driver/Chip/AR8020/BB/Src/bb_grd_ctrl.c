@@ -332,7 +332,7 @@ int grd_freq_skip_pre_judge(void)
     }
 
     optch = get_opt_channel();
-    int16_t cmp = compare_chNoisePower(optch, context.cur_IT_ch, &aver, &fluct, context.freq_band, 0);
+    int16_t cmp = compare_chNoisePower(context.freq_band, optch, context.cur_IT_ch, &aver, &fluct, 0);
     //dlog_info("cmp:(%d:%d)result:(%d %d)", context.cur_IT_ch, optch, aver, fluct);
     if ( ( aver >= 20 ) || ( aver >= 10 && fluct > 0 )  )
     {
@@ -1157,45 +1157,39 @@ static void BB_grd_GatherOSDInfo(void)
     osdptr->head = 0xff; //starting writing
     osdptr->tail = 0x00;
 
-    //osdptr->IT_channel = context.cur_IT_ch;
-
     osdptr->agc_value[0] = BB_ReadReg(PAGE2, AAGC_2_RD);
     osdptr->agc_value[1] = BB_ReadReg(PAGE2, AAGC_3_RD);
     
-    osdptr->agc_value[2] = BB_ReadReg(PAGE2, 0xde);
-    osdptr->agc_value[3] = BB_ReadReg(PAGE2, 0xdf);
-    
-    //osdptr->agc_value[2] = BB_ReadReg(PAGE2, RX3_GAIN_ALL_R);
-    //osdptr->agc_value[3] = BB_ReadReg(PAGE2, RX4_GAIN_ALL_R);
-    //osdptr->lock_status  = BB_ReadReg(PAGE2, FEC_5_RD);
+    osdptr->agc_value[2] = BB_ReadReg(PAGE2, RX3_GAIN_ALL_R);
+    osdptr->agc_value[3] = BB_ReadReg(PAGE2, RX4_GAIN_ALL_R);
+
+    osdptr->lock_status  = BB_ReadReg(PAGE2, FEC_5_RD);
     
     osdptr->snr_vlaue[0] = grd_get_it_snr();
     osdptr->snr_vlaue[1] = get_snr_average();
-    //osdptr->snr_vlaue[2] = 0x12aa;
 
-    osdptr->ldpc_error = (((uint16_t)BB_ReadReg(PAGE2, LDPC_ERR_HIGH_8)) << 8) | BB_ReadReg(PAGE2, LDPC_ERR_LOW_8);
+    //masoic
+    osdptr->u16_afterErr = (((uint16_t)BB_ReadReg(PAGE2, LDPC_ERR_AFTER_HARQ_HIGH_8)) << 8) | BB_ReadReg(PAGE2, LDPC_ERR_AFTER_HARQ_LOW_8);
+    osdptr->ldpc_error = (((uint16_t)BB_ReadReg(PAGE2, LDPC_ERR_HIGH_8)) << 8) | BB_ReadReg(PAGE2, LDPC_ERR_LOW_8); //1byte is enough
     osdptr->harq_count = (BB_ReadReg(PAGE2, FEC_5_RD) & 0xF0) | ((BB_ReadReg(PAGE2, 0xd1)& 0xF0) >> 4);
     
-    uint8_t tmp = BB_ReadReg(PAGE2, 0xdd);
+    //uint8_t tmp = BB_ReadReg(PAGE2, 0xdd);
     //if(osdptr->harq_count > 1 )
     //{
     //    dlog_info("err:0x%x harq:0x%x lost:0x%x SNR:0x%x 0x%x\n", osdptr->ldpc_error, osdptr->harq_count, tmp, grd_get_it_snr(),
     //                                                              (((uint16_t)BB_ReadReg(PAGE2, 0xc2)) << 8) | BB_ReadReg(PAGE2, 0xc3));
     //}
-    
-    #if 0
+
+    osdptr->u8_mcs          = context.qam_ldpc;
     osdptr->modulation_mode = grd_get_IT_QAM();
-    #else
-    osdptr->modulation_mode = context.qam_ldpc;
-    #endif
     osdptr->code_rate       = grd_get_IT_LDPC();
 
     u8_data = BB_ReadReg(PAGE2, TX_2);
     osdptr->rc_modulation_mode = (u8_data >> 6) & 0x01;
     osdptr->rc_code_rate       = (u8_data >> 0) & 0x01;
-    osdptr->ch_bandwidth    = context.CH_bandwidth;         
-    osdptr->in_debug        = context.u8_debugMode;
-    osdptr->lock_status     = ( osdptr->lock_status & 0xf0) | (BB_ReadReg(PAGE2, FEC_5_RD) & 0x0f);
+    osdptr->ch_bandwidth       = context.CH_bandwidth;         
+    osdptr->in_debug           = context.u8_debugMode;
+
     memset(osdptr->sweep_energy, 0, sizeof(osdptr->sweep_energy));
     BB_GetSweepNoise(osdptr->sweep_energy);
 
@@ -1209,6 +1203,8 @@ static void BB_grd_GatherOSDInfo(void)
         osdptr->encoder_bitrate[0] = context.brc_bps[0];
         osdptr->encoder_bitrate[1] = context.brc_bps[1];
     }
+
+    osdptr->reserved[14] = 0x55;
 
     osdptr->head = 0x00;
     osdptr->tail = 0xff;    //end of the writing

@@ -12,7 +12,6 @@
 #include "bb_sys_param.h"
 #include "debuglog.h"
 #include "sys_event.h"
-#include "bb_snr_service.h"
 #include "gpio.h"
 #include "bb_uart_com.h"
 

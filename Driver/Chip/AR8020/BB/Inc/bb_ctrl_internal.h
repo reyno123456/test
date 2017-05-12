@@ -64,15 +64,15 @@ typedef struct _SysEvent_SkyStatus
 
 
 #define SFR_TRX_MODE_SEL            (*(volatile uint32_t *)0x40B00068)
-#define SFR_TRX_MODE_GROUND         0x03
-#define SFR_TRX_MODE_SKY            0x01
+#define SFR_TRX_MODE_GROUND         (0x03)
+#define SFR_TRX_MODE_SKY            (0x01)
 
 
-#define MAX_2G_RC_FRQ_SIZE (34)
-#define MAX_2G_IT_FRQ_SIZE (8)
+#define MAX_2G_RC_FRQ_SIZE          (34)
+#define MAX_2G_IT_FRQ_SIZE          (8)
 
-#define MAX_5G_RC_FRQ_SIZE (34)
-#define MAX_5G_IT_FRQ_SIZE (8)
+#define MAX_5G_RC_FRQ_SIZE          (40)
+#define MAX_5G_IT_FRQ_SIZE          (13)
 
 #define MAX(a,b) (((a) > (b)) ?  (a) :  (b) )
 
@@ -118,12 +118,6 @@ void BB_set_LDPC(ENUM_BB_LDPC ldpc);
 uint8_t BB_write_ItRegs(uint32_t u32_it);
 
 void sky_set_McsByIndex(uint8_t idx);
-
-static int BB_before_RF_cali(void);
-
-static void BB_after_RF_cali(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg);
-
-static void BB_RF_start_cali( void );
 
 int BB_WriteRegMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t data, uint8_t mask);
 

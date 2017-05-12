@@ -2,13 +2,9 @@
 #define __SYS_PARAM_H
 
 #include "bb_ctrl_internal.h"
-#include "bb_sys_param.h"
 
 
 #define QAM_CHANGE_THRESHOLD_COUNT (6)
-#define DISABLE_FLAG (0xff)
-#define ENABLE_FLAG  (0x00)
-
 
 typedef struct
 {
@@ -65,56 +61,13 @@ typedef struct
     uint8_t agclevel;
 }CONTEXT;
 
-typedef struct
-{
-    uint8_t usb_sel;
-    uint8_t usb_cofig;
-    ENUM_RF_BAND freq_band_sel;
-    uint8_t it_mode;
-    ENUM_BB_QAM qam_mode;
-    uint8_t power;
-    uint8_t id_num;
-    uint8_t test_enable;
-    ENUM_RUN_MODE it_skip_freq_mode;
-    ENUM_RUN_MODE rc_skip_freq_mode;
-    uint8_t search_id_enable;
-    uint8_t freq_band;  
-    uint8_t gp20dbm[4];
-    uint8_t sp20dbm[4]; 
-    ENUM_BB_LDPC ldpc;
-    ENUM_RUN_MODE qam_skip_mode;
-    uint16_t qam_change_threshold[QAM_CHANGE_THRESHOLD_COUNT][2];
-    uint8_t enable_freq_offset;
-    uint8_t gp20dbmb[4];
-    uint8_t sp20dbmb[4];     
-    ENUM_RUN_MODE rf_power_mode;     
-}SYS_PARAM;
-
-
-typedef struct
-{
-    uint8_t id1[5];
-    uint8_t id2[5];
-    uint8_t id3[5];
-    uint8_t id4[5];
-}RC_ID;
-
-typedef struct
-{
-    uint8_t id1[2];
-    uint8_t id2[2];
-    uint8_t id3[2];
-    uint8_t id4[2];
-}IT_ID;
-
-
 typedef struct param
 {
-    uint8_t is_init;
-    uint8_t update;
-    RC_ID   rc_id;
-    IT_ID   it_id;
-    SYS_PARAM user_param;
+    ENUM_RF_BAND  freq_band;
+    ENUM_RUN_MODE it_skip_freq_mode;
+    ENUM_RUN_MODE rc_skip_freq_mode;
+    ENUM_RUN_MODE qam_skip_mode;
+    uint16_t qam_change_threshold[QAM_CHANGE_THRESHOLD_COUNT][2];
 }PARAM;
 
 #define CALC_DIST_RAW_DATA_MAX_RECORD    (100)
@@ -155,7 +108,6 @@ typedef struct
 
 extern volatile CONTEXT context;
 extern volatile DEVICE_STATE dev_state;
-extern PARAM *sys_param;
 
 PARAM * BB_get_sys_param(void);
 

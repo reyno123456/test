@@ -63,7 +63,7 @@ STRU_BoardCfg stru_boardCfg =
     .pstru_rf1SkyRegsAfterCali   = AR8020TEST_rf1_skyregs_afterCali,
 
     .u8_rf1GrdRegsCntAfterCali   = sizeof(AR8020TEST_rf1_grdregs_afterCali) / sizeof(STRU_RF_REG),
-    .pstru_rf1GrdRegsAfterCali   = AR8020TEST_rf1_skyregs_afterCali,
+    .pstru_rf1GrdRegsAfterCali   = AR8020TEST_rf1_grdregs_afterCali,
     
     .u8_rf2GrdRegsCntAfterCali   = 0,
     .pstru_rf2GrdRegsAfterCali   = NULL,

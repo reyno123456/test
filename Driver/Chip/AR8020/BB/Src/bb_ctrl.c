@@ -45,6 +45,12 @@ static uint8_t *RF2_8003s_regs = NULL;
 
 static void BB_GetNv(void);
 
+static int BB_before_RF_cali(void);
+
+static void BB_after_RF_cali(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg);
+
+static void BB_RF_start_cali( void );
+
 
 static void BB_regs_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *pstru_boardCfg)
 {
@@ -130,23 +136,20 @@ int BB_softReset(ENUM_BB_MODE en_mode)
 
 void BB_use_param_setting(PARAM *user_setting)
 {
-    memcpy((uint8_t*)(context.id), user_setting->rc_id.id1, 5);
-    
     memcpy( (uint8_t *)((void *)(context.qam_threshold_range)),
-            (uint8_t *)((void *)(user_setting->user_param.qam_change_threshold)),
+            (uint8_t *)((void *)(user_setting->qam_change_threshold)),
             sizeof(context.qam_threshold_range));
 
-    context.it_skip_freq_mode = user_setting->user_param.it_skip_freq_mode;
-    context.rc_skip_freq_mode = user_setting->user_param.rc_skip_freq_mode;
-    context.pwr = user_setting->user_param.power;
-    context.enable_freq_offset = user_setting->user_param.enable_freq_offset;
-    context.freq_band = user_setting->user_param.freq_band;
-    context.search_id_enable = user_setting->user_param.search_id_enable;
-    context.rf_power_mode = user_setting->user_param.rf_power_mode;
+    context.freq_band = user_setting->freq_band;
+
+    context.it_skip_freq_mode = user_setting->it_skip_freq_mode;
+    context.rc_skip_freq_mode = user_setting->rc_skip_freq_mode;
+    context.qam_skip_mode = user_setting->qam_skip_mode;
 
     context.it_manual_ch  = 0xff;
-    context.qam_skip_mode = AUTO;
+
     context.CH_bandwidth      = BW_10M;
+
     context.it_manual_rf_band = 0xff;
     context.trx_ctrl          = IT_RC_MODE;
 }
@@ -995,28 +998,28 @@ void BB_handle_misc_cmds(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
             {
                 uint8_t v;
                 RF8003s_SPI_ReadReg(value, &v);
-                //dlog_info("RF read addr=0x%0.2x value=0x%0.2x", value, v);
+                dlog_info("RF read addr=0x%0.2x value=0x%0.2x", value, v);
                 break;
             }
 
             case MISC_WRITE_RF_REG:
             {
                 RF8003s_SPI_WriteReg(value, value1);
-                //dlog_info("RF write addr=0x%0.2x value=0x%0.2x", value, value1);
+                dlog_info("RF write addr=0x%0.2x value=0x%0.2x", value, value1);
                 break;
             }
 
             case MISC_READ_BB_REG:
             {
                 uint8_t v = BB_ReadReg( (ENUM_REG_PAGES)value, (uint8_t)value1);
-                //dlog_info("BB read PAGE=0x%0.2x addr=0x%0.2x value=0x%0.2x", value, value1, v);
+                dlog_info("BB read PAGE=0x%0.2x addr=0x%0.2x value=0x%0.2x", value, value1, v);
                 break;
             }
 
             case MISC_WRITE_BB_REG:
             {
                 BB_WriteReg((ENUM_REG_PAGES)value, (uint8_t)value1, (uint8_t)value2);
-                //dlog_info("BB write PAGE=0x%0.2x addr=0x%0.2x value=0x%0.2x", value, value1, value2);
+                dlog_info("BB write PAGE=0x%0.2x addr=0x%0.2x value=0x%0.2x", value, value1, value2);
                 break;
             }
 
@@ -1269,12 +1272,8 @@ static void BB_GetNv(void)
  */
 int BB_GetDevInfo(void)
 { 
-    static uint32_t u32_cnt = 1;
     uint8_t u8_data;
     STRU_DEVICE_INFO *pst_devInfo = (STRU_DEVICE_INFO *)(DEVICE_INFO_SHM_ADDR);
-
-    //pst_devInfo->u8_startWrite = 1;
-    //pst_devInfo->u8_endWrite   = 0;
 
     pst_devInfo->messageId = 0x19;
     pst_devInfo->paramLen = sizeof(STRU_DEVICE_INFO);
