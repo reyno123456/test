@@ -580,8 +580,15 @@ unsigned int DLOG_Output(unsigned int byte_num)
 // Output string when use libsimplec.a 
 int puts(const char * s)
 {
+    unsigned int len = 0;
+
+    while (('\n' != s[len]) && (DEBUG_LOG_END != s[len]) && (0 != s[len]))
+    {
+        len++;
+    }
+    
     // Print to buffer
-    DLOG_StrCpyToDebugOutputLogBuf(s, 2048);
+    DLOG_StrCpyToDebugOutputLogBuf(s, len+1);
 
     return 0;
 }
