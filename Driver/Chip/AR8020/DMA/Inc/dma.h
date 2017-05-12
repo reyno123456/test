@@ -37,21 +37,21 @@ typedef enum {
  * Redefine this macro to handle differences between 32- and 64-bit
  * addressing, big vs. little endian, etc.
  */
-#define DW_REG(name)		uint32_t name; uint32_t __pad_##name
+#define DW_REG(name)		volatile uint32_t name; volatile uint32_t __pad_##name
 
 /* Hardware register definitions. */
 typedef struct {
 	DW_REG(SAR);		/* Source Address Register */
 	DW_REG(DAR);		/* Destination Address Register */
 	DW_REG(LLP);		/* Linked List Pointer */
-	uint32_t	CTL_LO;		/* Control Register Low */
-	uint32_t	CTL_HI;		/* Control Register High */
+	volatile uint32_t	CTL_LO;		/* Control Register Low */
+	volatile uint32_t	CTL_HI;		/* Control Register High */
 	DW_REG(SSTAT);
 	DW_REG(DSTAT);
 	DW_REG(SSTATAR);
 	DW_REG(DSTATAR);
-	uint32_t	CFG_LO;		/* Configuration Register Low */
-	uint32_t	CFG_HI;		/* Configuration Register High */
+	volatile uint32_t	CFG_LO;		/* Configuration Register Low */
+	volatile uint32_t	CFG_HI;		/* Configuration Register High */
 	DW_REG(SGR);
 	DW_REG(DSR);
 } STRU_DmaChanRegs;
@@ -216,12 +216,12 @@ typedef enum {
 /* LLI == Linked List Item; a.k.a. DMA block descriptor */
 typedef struct {
 	/* values that are not changed by hardware */
-	uint32_t		sar;
-	uint32_t		dar;
-	uint32_t		llp;		/* chain to next lli */
-	uint32_t		ctllo;
+	volatile uint32_t		sar;
+	volatile uint32_t		dar;
+	volatile uint32_t		llp;		/* chain to next lli */
+	volatile uint32_t		ctllo;
 	/* values that may get written back: */
-	uint32_t		ctlhi;
+	volatile uint32_t		ctlhi;
 }  STRU_LinkListItem;
 
 /* Flag to identify which channel to be used */
@@ -258,14 +258,14 @@ typedef enum {
 
 
 typedef struct {
-	uint32_t u32_transNum;
-	uint32_t u32_srcTranAddr;
-	uint32_t u32_dstTranAddr;
-	uint32_t u32_blkSize;
+	volatile uint32_t u32_transNum;
+	volatile uint32_t u32_srcTranAddr;
+	volatile uint32_t u32_dstTranAddr;
+	volatile uint32_t u32_blkSize;
 	STRU_LinkListItem *pst_lliMalloc; 
 	ENUM_TransferType e_transferType;
 	ENUM_ChanActive e_transActive;
-	uint8_t trans_complete;
+	volatile uint8_t trans_complete;
 } STRU_transStatus;
 
 #define IS_CHANNAL_PRIORITY(x) ((x) >= 0 && (x) <= 7)

@@ -26,15 +26,15 @@ History:
 
 typedef struct
 {
-    uint32_t totalBlkNum;
+    volatile uint32_t totalBlkNum;
     
-    uint32_t tfr_1_size; 
-    uint32_t tfr_2_size; 
-    uint32_t tfr_3_size;
+    volatile uint32_t tfr_1_size; 
+    volatile uint32_t tfr_2_size; 
+    volatile uint32_t tfr_3_size;
     
-    uint8_t tfr_1_width; 
-    uint8_t tfr_2_width; 
-    uint8_t tfr_3_width;
+    volatile uint8_t tfr_1_width; 
+    volatile uint8_t tfr_2_width; 
+    volatile uint8_t tfr_3_width;
 }STRU_DMA_DESCRIPTER;
 
 static volatile STRU_DmaRegs *s_st_dmaRegs = (STRU_DmaRegs *)DMA_BASE;
