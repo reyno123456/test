@@ -16,7 +16,7 @@
 #include "test_hal_nv.h"
 #include "ar_freertos_specific.h"
 #include "test_bb.h"
-
+#include "test_sd.h"
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
@@ -114,7 +114,15 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     else if(memcmp(cmdArray[0], "command_test_BB_uart", strlen("command_test_BB_uart")) == 0)
     {
         command_test_BB_uart(cmdArray[1]);
-    }   
+    }
+    else if (memcmp(cmdArray[0], "initsd", 6) == 0)
+    {
+        command_initSdcard();
+    }
+    else if (memcmp(cmdArray[0], "test_sd", 7) == 0 && (cmdNum == 2))
+    {
+        command_SdcardFatFs(cmdArray[1]);
+    }
     else if ((memcmp(cmdArray[0], "top", strlen("top")) == 0))
     {
         /* like linux busybox top system call */
@@ -141,7 +149,9 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("NvResetBbRcId");
         dlog_error("NvSetBbRcId <id1> <id2> <id3> <id4> <id5>");
         dlog_error("command_test_BB_uart <param>");
-		dlog_error("top");
+		dlog_error("initsd");
+        dlog_error("test_sd <choise>");
+        dlog_error("top");
     }
 }
 

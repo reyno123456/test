@@ -786,8 +786,13 @@ SD_ErrorTypedef Card_SD_Erase(SD_HandleTypeDef *hsd, uint32_t startaddr, uint32_
 
 
 	/* Wait until the card is in programming state */
-	errorstate = SD_IsCardProgramming(hsd, &cardstate);
-	while ( cardstate == SD_CARD_PROGRAMMING || cardstate == SD_CARD_TRANSFER)
+    
+    for (uint32_t i = 0; i < 20; i++)
+    {
+        errorstate = SD_IsCardProgramming(hsd, &cardstate);
+    }
+
+	while ( cardstate == SD_CARD_PROGRAMMING )
 	{
 		errorstate = SD_IsCardProgramming(hsd, &cardstate);
 
