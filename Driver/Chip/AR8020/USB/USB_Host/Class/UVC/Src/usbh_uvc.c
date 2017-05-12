@@ -186,6 +186,20 @@ static USBH_StatusTypeDef USBH_UVC_Process (USBH_HandleTypeDef *phost)
     UVC_HandleTypeDef        *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
     USBH_StatusTypeDef        status = USBH_BUSY;
 
+    if (UVC_Handle->u8_startUVCFlag == USB_UVC_SWITCH_PIXEL)
+    {
+        if (USBH_OK == USBH_SetInterface(phost,
+                                         1,
+                                         0))
+        {
+            UVC_Handle->u8_startUVCFlag = USB_UVC_STARTED;
+
+            dlog_info("set interface");
+        }
+
+        return status;
+    }
+
     switch (UVC_Handle->uvc_state)
     {
     case UVC_STATE_PROBE:
@@ -828,13 +842,22 @@ uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost, uint8_t u8_frameIndex)
 {
     uint8_t                     i;
     uint8_t                     j;
-    UVC_HandleTypeDef          *UVC_Handle =  (UVC_HandleTypeDef *)  phost->pActiveClass->pData;
+    UVC_HandleTypeDef          *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
     uint8_t                    *u8_baseAddr;
 
     UVC_Handle->uvc_state           = UVC_STATE_PROBE;
     UVC_Handle->uvc_probeState      = UVC_PROBE_STATE_GET_CUR;
     UVC_Handle->probeCount          = 0;
     UVC_Handle->u8_selFrameIndex    = u8_frameIndex;
+
+    if (UVC_Handle->u8_startUVCFlag == USB_UVC_STARTED)
+    {
+        UVC_Handle->u8_startUVCFlag = USB_UVC_SWITCH_PIXEL;
+    }
+    else
+    {
+        UVC_Handle->u8_startUVCFlag = USB_UVC_STARTED;
+    }
 
     g_u32UVCVideoBuffSizePerFrame   = USBH_UVC_GetFrameSize(u8_frameIndex);
 
@@ -850,10 +873,10 @@ uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost, uint8_t u8_frameIndex)
 
             return 1;
         }
-
-        g_UVCVideoBuffer->u32_rawDataLen    = 0;
-        g_UVCVideoBuffer->u8_rawData        = (uint8_t *)0x4405A7F4;
     }
+
+    g_UVCVideoBuffer->u32_rawDataLen    = 0;
+    g_UVCVideoBuffer->u8_rawData        = (uint8_t *)0x4405A7F4;
 
     g_stUVCUserInterface.u32_frameIndex    = 0;
     g_stUVCUserInterface.u32_frameLen      = 0;
@@ -966,9 +989,16 @@ static void USBH_UVC_UrbDone(USBH_HandleTypeDef *phost)
         }
     }
 
-    u8_recvBuff         = USBH_GetRecvBuffer();
+    if (UVC_Handle->u8_startUVCFlag == USB_UVC_SWITCH_PIXEL)
+    {
+        dlog_info("switch pixel, do not configure receive");
+    }
+    else
+    {
+        u8_recvBuff         = USBH_GetRecvBuffer();
 
-    USBH_IsocReceiveData(phost, u8_recvBuff, UVC_VIDEO_MAX_SIZE_PER_SOF, UVC_Handle->VideoPipe);
+        USBH_IsocReceiveData(phost, u8_recvBuff, UVC_VIDEO_MAX_SIZE_PER_SOF, UVC_Handle->VideoPipe);
+    }
 
     return;
 }
@@ -1144,22 +1174,6 @@ static void USBH_ParseExtensionUnitDesc(uint8_t * buf)
     }
 
     g_stExtensionUnitDesc.iExtension           = *(uint8_t  *) (buf + ((23 + g_stExtensionUnitDesc.bNrInPins) + g_stExtensionUnitDesc.bControlSize));
-
-    dlog_info("bLength: %d, bDescriptorType: %d, bDescriptorSubtype: %d, bUnitID: %d, guidExtensionCode: %d",
-                g_stExtensionUnitDesc.bLength,
-                g_stExtensionUnitDesc.bDescriptorType,
-                g_stExtensionUnitDesc.bDescriptorSubtype,
-                g_stExtensionUnitDesc.bUnitID,
-                g_stExtensionUnitDesc.guidExtensionCode[0]);
-
-    dlog_info("bNumControls: %d, bNrInPins: %d, baSourceID[0]: %d, bControlSize: %d, bmControls[0]: %d, iExtension: %d",
-                g_stExtensionUnitDesc.bNumControls,
-                g_stExtensionUnitDesc.bNrInPins,
-                g_stExtensionUnitDesc.baSourceID[0],
-                g_stExtensionUnitDesc.bControlSize,
-                g_stExtensionUnitDesc.bmControls[0],
-                g_stExtensionUnitDesc.iExtension);
-
 }
 
 

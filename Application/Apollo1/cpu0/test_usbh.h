@@ -15,6 +15,16 @@ typedef enum
 }USBH_APP_EVENT_DEF;
 
 
+typedef enum
+{
+    USBH_UVC_TASK_IDLE                  = 0,
+    USBH_UVC_TASK_START                 = 1,
+    USBH_UVC_TASK_GET_FRAME             = 2,
+    USBH_UVC_TASK_CHECK_FRAME_READY     = 3,
+    USBH_UVC_TASK_DISCONNECT            = 4,
+} USBH_UVC_TASK_STATE;
+
+
 typedef struct
 {
     volatile uint8_t        taskActivate;
@@ -42,6 +52,7 @@ void USB_MainTask(void const *argument);
 void USBH_ProcUVC(void);
 void command_ViewUVC(void);
 void USBH_UVCTask(void const *argument);
+void command_startUVC(char *width, char *height);
 
 
 extern USBH_AppCtrl             g_usbhAppCtrl;

@@ -16,7 +16,11 @@
 USBH_BypassVideoCtrl            g_usbhBypassVideoCtrl;
 USBH_AppCtrl                    g_usbhAppCtrl;
 uint8_t                         g_u8ViewUVC = 0;
-
+uint8_t                         u8_FrameBuff[153600];
+USBH_UVC_TASK_STATE             g_eUVCTaskState = USBH_UVC_TASK_IDLE;
+uint16_t                        g_u16UVCWidth = 0;
+uint16_t                        g_u16UVCHeight = 0;
+volatile uint8_t                g_u8UserSelectPixel = 0;
 
 void USBH_USBHostStatus(void const *argument)
 {
@@ -143,7 +147,7 @@ void USB_MainTask(void const *argument)
                     if (0 == g_usbhBypassVideoCtrl.taskExist)
                     {
                         USBH_MountUSBDisk();
-                    
+
                         osThreadDef(BypassTask, USBH_BypassVideo, osPriorityIdle, 0, 4 * 128);
                         g_usbhBypassVideoCtrl.threadID  = osThreadCreate(osThread(BypassTask), NULL);
 
@@ -195,75 +199,111 @@ void USB_MainTask(void const *argument)
 }
 
 
-uint8_t     *u8_FrameBuff = NULL;
+
 void USBH_ProcUVC(void)
 {
     STRU_UVC_VIDEO_FRAME_FORMAT     stVideoFrameFormat;
     uint32_t                        u32_uvcFrameNum;
-    uint16_t                        u16_width;
-    uint16_t                        u16_height;
-    uint32_t                        u32_frameSize;
-    static uint8_t                  s_usbhUVCStarted = 0;
+    static uint16_t                 u16_UVCWidth;
+    static uint16_t                 u16_UVCHeight;
+    static uint32_t                 u32_UVCFrameSize;
+    static uint8_t                  u8_UVCFrameIndex;
+    uint32_t                        i;
 
-    // set frame width and height
-    u16_width                       = 160;
-    u16_height                      = 120;
-
-    // if UVC is started
-    if ((HAL_USB_HOST_STATE_READY == HAL_USB_GetHostAppState())&&
-        (HAL_USB_HOST_CLASS_UVC == HAL_USB_CurUsbClassType()))
+    if (HAL_USB_GetHostAppState() == HAL_USB_HOST_STATE_DISCONNECT)
     {
-        if (0 == s_usbhUVCStarted)
+        g_eUVCTaskState = USBH_UVC_TASK_DISCONNECT;
+    }
+
+    switch (g_eUVCTaskState)
+    {
+    case USBH_UVC_TASK_IDLE:
+        if ((HAL_USB_HOST_STATE_READY == HAL_USB_GetHostAppState())&&
+            (HAL_USB_HOST_CLASS_UVC == HAL_USB_CurUsbClassType()))
         {
             // get supported formats first
             HAL_USB_UVCGetVideoFormats(&stVideoFrameFormat);
 
-            // start uvc
-            if (HAL_OK == HAL_USB_StartUVC(u16_width, u16_height, &u32_frameSize))
+            u16_UVCHeight           = 240;
+            u16_UVCWidth            = 320;
+
+            if (g_u8UserSelectPixel)
             {
-                s_usbhUVCStarted = 1;
+                g_u8UserSelectPixel = 0;
 
-                if (NULL == u8_FrameBuff)
+                u16_UVCHeight       = g_u16UVCHeight;
+                u16_UVCWidth        = g_u16UVCWidth;
+            }
+
+            for (i = 0; i < HAL_USB_UVC_MAX_FRAME_FORMATS_NUM; i++)
+            {
+                if ((u16_UVCHeight == stVideoFrameFormat.u16_height[i])&&
+                    (u16_UVCWidth == stVideoFrameFormat.u16_width[i]))
                 {
-                    u8_FrameBuff    = (uint8_t *)malloc(u32_frameSize);
+                    u8_UVCFrameIndex = stVideoFrameFormat.u8_frameIndex[i];
 
-                    if (u8_FrameBuff == NULL)
-                    {
-                        dlog_error("malloc error in UVC APP");
-                    }
+                    break;
                 }
             }
-            else
+
+            if (i >= HAL_USB_UVC_MAX_FRAME_FORMATS_NUM)
             {
-                dlog_error("app start UVC fail");
+                dlog_error("format info incorect: width: %d, height: %d", 
+                                u16_UVCWidth, u16_UVCHeight);
+
+                return;
             }
+
+            g_eUVCTaskState = USBH_UVC_TASK_START;
+        }
+
+        break;
+
+    case USBH_UVC_TASK_START:
+        if (HAL_OK == HAL_USB_StartUVC(u16_UVCWidth, u16_UVCHeight, &u32_UVCFrameSize))
+        {
+            dlog_info("start UVC OK!");
         }
         else
         {
-            //get a YUV frame
-            HAL_USB_UVCGetVideoFrame(u8_FrameBuff);
+            dlog_error("app start UVC fail");
 
-            // check whether a frame is ready
-            if (HAL_OK == HAL_USB_UVCCheckFrameReady(&u32_uvcFrameNum, &u32_frameSize))
+            return;
+        }
+
+        g_eUVCTaskState = USBH_UVC_TASK_GET_FRAME;
+
+        break;
+
+    case USBH_UVC_TASK_GET_FRAME:
+        if (HAL_OK == HAL_USB_UVCGetVideoFrame(u8_FrameBuff))
+        {
+            g_eUVCTaskState = USBH_UVC_TASK_CHECK_FRAME_READY;
+        }
+
+        break;
+
+    case USBH_UVC_TASK_CHECK_FRAME_READY:
+        if (HAL_OK == HAL_USB_UVCCheckFrameReady(&u32_uvcFrameNum, &u32_UVCFrameSize))
+        {
+            g_eUVCTaskState = USBH_UVC_TASK_GET_FRAME;
+
+            // do something USER need, such as transfer to ground , or optical flow process
+            if (g_u8ViewUVC == 1)
             {
-                // do something USER need, such as transfer to ground , or optical flow process
-                if (g_u8ViewUVC == 1)
-                {
-                    HAL_USB_TransferUVCToGrd(u8_FrameBuff, u32_frameSize, u16_width, u16_height, ENUM_UVC_DATA_YUV);
-                }
+                HAL_USB_TransferUVCToGrd(u8_FrameBuff, u32_UVCFrameSize, u16_UVCWidth, u16_UVCHeight, ENUM_UVC_DATA_YUV);
             }
         }
-    }
-    else if (HAL_USB_HOST_STATE_DISCONNECT == HAL_USB_GetHostAppState())
-    {
-        s_usbhUVCStarted = 0;
 
-        if (u8_FrameBuff != NULL)
-        {
-            free(u8_FrameBuff);
-            u8_FrameBuff     = NULL;
-        }
+        break;
+
+    case USBH_UVC_TASK_DISCONNECT:
+
+        g_eUVCTaskState = USBH_UVC_TASK_IDLE;
+
+        break;
     }
+
 }
 
 
@@ -272,6 +312,23 @@ void command_ViewUVC(void)
     HAL_SRAM_EnableSkyBypassVideo(HAL_SRAM_VIDEO_CHANNEL_1);
 
     g_u8ViewUVC = 1;
+}
+
+
+void command_startUVC(char *width, char *height)
+{
+    uint32_t                        u32_width = strtoul(width, NULL, 0);
+    uint32_t                        u32_height = strtoul(height, NULL, 0);
+    STRU_UVC_VIDEO_FRAME_FORMAT     stVideoFrameFormat;
+
+    HAL_USB_UVCGetVideoFormats(&stVideoFrameFormat);
+
+    g_eUVCTaskState     = USBH_UVC_TASK_DISCONNECT;
+
+    g_u16UVCWidth       = (uint16_t)u32_width;
+    g_u16UVCHeight      = (uint16_t)u32_height;
+
+    g_u8UserSelectPixel = 1;
 }
 
 

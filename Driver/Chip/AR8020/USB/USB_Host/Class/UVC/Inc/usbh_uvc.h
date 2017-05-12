@@ -81,6 +81,10 @@ extern USBH_ClassTypeDef            UVC_Class;
 #define USB_UVC_PARAN_DIGITAL_MULTI             0x4000
 #define USB_UVC_PARAN_DIGITAL_MULTI_LIMIT       0x8000
 
+#define USB_UVC_STARTED                         0x01
+#define USB_UVC_SWITCH_PIXEL                    0x02
+
+
 typedef enum
 {
     UVC_STATE_SET_INTERFACE = 0,
@@ -139,6 +143,7 @@ typedef struct _UVC_Process
     uint8_t                     u8_selFrameIndex;
     uint8_t                     u8_selInterface;
     uint8_t                     u8_selAltInterface;
+    volatile uint8_t            u8_startUVCFlag;
 }
 UVC_HandleTypeDef;
 

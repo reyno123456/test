@@ -103,6 +103,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     /* like linux busybox top system call */
         ar_top();
     }
+    else if ((memcmp(cmdArray[0], "startuvc", strlen("startuvc")) == 0))
+    {
+        command_startUVC(cmdArray[1], cmdArray[2]);
+    }
     /* error command */
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
