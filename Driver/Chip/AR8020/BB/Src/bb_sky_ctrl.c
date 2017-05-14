@@ -9,7 +9,6 @@
 #include "systicks.h"
 #include "bb_sky_ctrl.h"
 #include "bb_regs.h"
-#include "bb_sys_param.h"
 #include "debuglog.h"
 #include "sys_event.h"
 #include "gpio.h"
@@ -96,12 +95,9 @@ void BB_SKY_start(void)
 
     BB_GetDevInfo();
     s_lockFlag = 0;
-    
+
     sky_init_rc_frq_mask_func();
 }
-
-
-
 
 
 uint8_t sky_id_match(void)
@@ -123,21 +119,19 @@ uint8_t sky_id_match(void)
     {   
         dlog_info("-L:%d-%d-", lock_count, nr_lock);
         pre_nrlockcnt = nr_lock;
-        pre_lockcnt = lock_count;
-        total_count = 0;
-        lock_count = 0;
-        nr_lock = 0;
+        pre_lockcnt   = lock_count;
+        total_count   = 0;
+        lock_count    = 0;
+        nr_lock       = 0;
 
         {
             STRU_SysEventSkyStatus stru_skycStatus = {
-                .pid             = RC_LOCK_CNT,
+                .pid             = SKY_LOCK_STATUS,
                 .par.rcLockCnt.u8_rcCrcLockCnt = pre_lockcnt,
                 .par.rcLockCnt.u8_rcNrLockCnt  = pre_nrlockcnt,
             };
 
-            BB_UARTComSendMsg( BB_UART_COM_SESSION_0, 
-                               (uint8_t *)&stru_skycStatus, 
-                               sizeof(STRU_SysEventSkyStatus));
+            BB_UARTComSendMsg( BB_UART_COM_SESSION_0, (uint8_t *)&stru_skycStatus, sizeof(STRU_SysEventSkyStatus));
         }
     }
 
@@ -229,6 +223,7 @@ void sky_agc_gain_toggle(void)
 
         BB_WriteReg(PAGE1, 0x03, 0x28);
         BB_WriteReg(PAGE0, 0xBC, 0xC0);
+
         en_agcmode = FAR_AGC;
     }
 }
@@ -237,6 +232,7 @@ void sky_agc_gain_toggle(void)
 uint8_t agc_value1[50];
 uint8_t agc_value2[50];
 uint8_t agc_idx = 0;
+
 void sky_auto_adjust_agc_gain(void)
 {
     uint8_t rx1_gain = BB_ReadReg(PAGE2, AAGC_2_RD);
@@ -261,19 +257,27 @@ void sky_auto_adjust_agc_gain(void)
             sum_1 += agc_value1[i];
             sum_2 += agc_value2[i];
         }
-        
+
         rx1_gain = sum_1 / 50;
         rx2_gain = sum_2 / 50;
-        
+
         {
             static int count1 = 0;
-            if ( count1 ++ > 500)
+            if ( count1 ++ > 100)
             {
                 count1 = 0;
-                dlog_info("aver: %d %d %x %x", sum_1, sum_2, rx1_gain, rx2_gain);
+                STRU_SysEventSkyStatus stru_skyAgcStatus = {
+                    .pid             = SKY_AGC_STATUS,
+                    .par.skyAgc.u8_skyagc1 = rx1_gain,
+                    .par.skyAgc.u8_skyagc2 = rx2_gain,
+                };
+
+                BB_UARTComSendMsg( BB_UART_COM_SESSION_0, (uint8_t *)&stru_skyAgcStatus, sizeof(STRU_SysEventSkyStatus));
+                //dlog_info("aver: %d %d %x %x", sum_1, sum_2, rx1_gain, rx2_gain);
             }
-        }        
+        }
     }
+
     if((rx1_gain >= POWER_GATE)&&(rx2_gain >= POWER_GATE) && en_agcmode != FAR_AGC)
     {
         BB_WriteReg(PAGE0, AGC_2, AAGC_GAIN_FAR);

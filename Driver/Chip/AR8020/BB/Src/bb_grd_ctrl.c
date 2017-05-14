@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "bb_sys_param.h"
 #include "debuglog.h"
 #include "interrupt.h"
 #include "timer.h"
@@ -14,7 +13,6 @@
 #include "bb_grd_sweep.h"
 #include "gpio.h"
 #include "bb_uart_com.h"
-
 
 #define SNR_STATIC_START_VALUE      (100)
 #define SNR_STATIC_UP_THRESHOD      (5)
@@ -29,13 +27,13 @@ static uint8_t flag_itFreqskip = 0;
 static uint8_t flag_snrPostCheck;
 static uint64_t s_u64_rcMask = 0;
 static uint8_t s_u8_rcMaskEnable = 0;
+static STRU_SkyStatus g_stru_skyStatus;
 
 static void BB_grd_uartDataHandler(void *p);
 static void grd_calc_dist(void);
 static uint32_t grd_calc_dist_get_avg_value(uint32_t *u32_dist);
 static void grd_init_rc_frq_mask_func(void);
 static void grd_write_mask_code_to_sky(uint8_t enable, uint64_t *mask);
-
 
 STRU_CALC_DIST_DATA s_st_calcDistData = 
 {
@@ -87,35 +85,38 @@ void BB_GRD_start(void)
     grd_init_rc_frq_mask_func();
 }
 
-
 static void BB_grd_uartDataHandler(void *p)
 {
-    STRU_SysEventSkyStatus  status;
     uint64_t tmpMaskCode = 0;
+    STRU_SysEventSkyStatus skyStatus;
+    uint32_t u32_rcvLen = BB_UARTComReceiveMsg(BB_UART_COM_SESSION_0, (uint8_t *)&skyStatus, sizeof(STRU_SysEventSkyStatus));
 
-    uint32_t u32_rcvLen = BB_UARTComReceiveMsg(BB_UART_COM_SESSION_0,
-                          (uint8_t *)&status,
-                          sizeof(STRU_SysEventSkyStatus));
-
-    if ( u32_rcvLen  >= sizeof(STRU_SysEventSkyStatus))
+    if ( u32_rcvLen >= sizeof(STRU_SysEventSkyStatus))
     {
-        if (RC_LOCK_CNT == status.pid)
+        if (SKY_LOCK_STATUS == skyStatus.pid)
         {
-            dlog_info("rclock:%d  nrlock:%d", status.par.rcLockCnt.u8_rcCrcLockCnt, status.par.rcLockCnt.u8_rcNrLockCnt);
+            g_stru_skyStatus.u8_rcCrcLockCnt = skyStatus.par.rcLockCnt.u8_rcCrcLockCnt;
+            g_stru_skyStatus.u8_rcNrLockCnt  = skyStatus.par.rcLockCnt.u8_rcNrLockCnt;
+
+            dlog_info("rclock:%d  nrlock:%d", g_stru_skyStatus.u8_rcCrcLockCnt, g_stru_skyStatus.u8_rcNrLockCnt);
         }
-        else if (RC_MASK_CODE == status.pid)
+        else if (RC_MASK_CODE == skyStatus.pid)
         {
             tmpMaskCode = s_u64_rcMask;
-            s_u64_rcMask = status.par.u64_rcMask;
+            s_u64_rcMask = skyStatus.par.u64_rcMask;
+
             grd_write_mask_code_to_sky(s_u8_rcMaskEnable, &s_u64_rcMask);
             if (tmpMaskCode != s_u64_rcMask)
             {
                 dlog_info("rcv_sky_calc_mask_code:0x%x,0x%x", (uint32_t)((s_u64_rcMask)>>32), (uint32_t)(s_u64_rcMask));
             }
         }
-        else
+        else if (SKY_AGC_STATUS == skyStatus.pid)
         {
-
+            g_stru_skyStatus.u8_skyagc1 = skyStatus.par.skyAgc.u8_skyagc1;
+            g_stru_skyStatus.u8_skyagc2 = skyStatus.par.skyAgc.u8_skyagc2;
+            
+            dlog_info("sky agc:0x%x 0x%x", g_stru_skyStatus.u8_skyagc1, g_stru_skyStatus.u8_skyagc2);
         }
     }
 }
@@ -431,7 +432,7 @@ void wimax_vsoc_tx_isr(uint32_t u32_vectorNum)
 {
     INTR_NVIC_DisableIRQ(BB_TX_ENABLE_VECTOR_NUM);
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
-    STRU_DEVICE_INFO *pst_devInfo = (STRU_DEVICE_INFO *)(DEVICE_INFO_SHM_ADDR);
+    STRU_DEVICE_INFO *pst_devInfo      = (STRU_DEVICE_INFO *)(DEVICE_INFO_SHM_ADDR);
 
     if( context.u8_flagdebugRequest & 0x80)
     {
@@ -456,9 +457,9 @@ void wimax_vsoc_tx_isr(uint32_t u32_vectorNum)
             BB_SPI_DisableEnable(1); //
         }
 
-        osdptr->in_debug = context.u8_debugMode;        
+        osdptr->in_debug     = context.u8_debugMode;        
         pst_devInfo->isDebug = context.u8_debugMode;
-        
+
         context.u8_flagdebugRequest = 0;
         dlog_info("bugMode %d %d\n", osdptr->in_debug, context.u8_debugMode);
     }
@@ -469,6 +470,7 @@ void wimax_vsoc_tx_isr(uint32_t u32_vectorNum)
     }
     context.cycle_count ++;
 }
+
 
 void Grd_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
 {
@@ -1153,9 +1155,9 @@ static void BB_grd_GatherOSDInfo(void)
         return;
     }
 
-    osdptr->messageId = 0x33;
-    osdptr->head = 0xff; //starting writing
-    osdptr->tail = 0x00;
+    osdptr->messageId    = 0x33;
+    osdptr->head         = 0xff; //starting writing
+    osdptr->tail         = 0x00;
 
     osdptr->agc_value[0] = BB_ReadReg(PAGE2, AAGC_2_RD);
     osdptr->agc_value[1] = BB_ReadReg(PAGE2, AAGC_3_RD);
@@ -1170,15 +1172,8 @@ static void BB_grd_GatherOSDInfo(void)
 
     //masoic
     osdptr->u16_afterErr = (((uint16_t)BB_ReadReg(PAGE2, LDPC_ERR_AFTER_HARQ_HIGH_8)) << 8) | BB_ReadReg(PAGE2, LDPC_ERR_AFTER_HARQ_LOW_8);
-    osdptr->ldpc_error = (((uint16_t)BB_ReadReg(PAGE2, LDPC_ERR_HIGH_8)) << 8) | BB_ReadReg(PAGE2, LDPC_ERR_LOW_8); //1byte is enough
-    osdptr->harq_count = (BB_ReadReg(PAGE2, FEC_5_RD) & 0xF0) | ((BB_ReadReg(PAGE2, 0xd1)& 0xF0) >> 4);
-    
-    //uint8_t tmp = BB_ReadReg(PAGE2, 0xdd);
-    //if(osdptr->harq_count > 1 )
-    //{
-    //    dlog_info("err:0x%x harq:0x%x lost:0x%x SNR:0x%x 0x%x\n", osdptr->ldpc_error, osdptr->harq_count, tmp, grd_get_it_snr(),
-    //                                                              (((uint16_t)BB_ReadReg(PAGE2, 0xc2)) << 8) | BB_ReadReg(PAGE2, 0xc3));
-    //}
+    osdptr->ldpc_error   = (((uint16_t)BB_ReadReg(PAGE2, LDPC_ERR_HIGH_8)) << 8) | BB_ReadReg(PAGE2, LDPC_ERR_LOW_8); //1byte is enough
+    osdptr->harq_count   = (BB_ReadReg(PAGE2, FEC_5_RD) & 0xF0) | ((BB_ReadReg(PAGE2, 0xd1)& 0xF0) >> 4);
 
     osdptr->u8_mcs          = context.qam_ldpc;
     osdptr->modulation_mode = grd_get_IT_QAM();
@@ -1204,7 +1199,14 @@ static void BB_grd_GatherOSDInfo(void)
         osdptr->encoder_bitrate[1] = context.brc_bps[1];
     }
 
-    osdptr->reserved[14] = 0x55;
+    osdptr->u8_rclock =  g_stru_skyStatus.u8_rcCrcLockCnt;
+    osdptr->u8_nrlock =  g_stru_skyStatus.u8_rcNrLockCnt;
+
+    osdptr->sky_agc[0]=  g_stru_skyStatus.u8_skyagc1;
+    osdptr->sky_agc[1]=  g_stru_skyStatus.u8_skyagc2;
+
+    osdptr->dist_zero = (uint16_t)(s_st_calcDistData.u32_calcDistZero);
+    osdptr->dist_value= (uint16_t)(s_st_calcDistData.u32_calcDistValue);
 
     osdptr->head = 0x00;
     osdptr->tail = 0xff;    //end of the writing

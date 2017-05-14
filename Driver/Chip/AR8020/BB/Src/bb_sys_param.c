@@ -1,5 +1,5 @@
 #include <string.h>
-#include "bb_sys_param.h"
+#include "bb_ctrl_internal.h"
 
 /* 
  *default_sys_param

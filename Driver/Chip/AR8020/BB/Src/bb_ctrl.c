@@ -9,7 +9,6 @@
 #include "bb_uart_com.h"
 #include "reg_rw.h"
 #include "systicks.h"
-#include "bb_sys_param.h"
 #include "bb_regs.h"
 #include "sys_event.h"
 #include "rf_8003s.h"
@@ -51,7 +50,6 @@ static void BB_after_RF_cali(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg);
 
 static void BB_RF_start_cali( void );
 
-
 static void BB_regs_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *pstru_boardCfg)
 {
     uint32_t page_cnt=0;    
@@ -60,10 +58,7 @@ static void BB_regs_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *pstru_boardCfg)
     for(page_cnt = 0 ; page_cnt < 4; page_cnt ++)
     {
         uint32_t addr_cnt=0;
-        
-        ENUM_REG_PAGES page = (page_cnt==0)? PAGE0: \
-                              ((page_cnt==1)?PAGE1: \
-                              ((page_cnt==2)?PAGE2:PAGE3));
+        ENUM_REG_PAGES page = (ENUM_REG_PAGES)(page_cnt << 6);
         /*
          * PAGE setting included in the regs array.
          */
@@ -133,7 +128,6 @@ int BB_softReset(ENUM_BB_MODE en_mode)
 }
 
 
-
 void BB_use_param_setting(PARAM *user_setting)
 {
     memcpy( (uint8_t *)((void *)(context.qam_threshold_range)),
@@ -159,7 +153,8 @@ void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
 {
     PARAM *user_setting = BB_get_sys_param();
     BB_use_param_setting(user_setting);
-    
+    context.en_bbmode = en_mode;
+
     STRU_SettingConfigure* cfg_addr = NULL;
     GET_CONFIGURE_FROM_FLASH(cfg_addr);
 
@@ -175,10 +170,7 @@ void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
     Rc_5G_frq = (STRU_FRQ_CHANNEL *)(cfg_addr->RC_5G_frq);
     It_5G_frq = (STRU_FRQ_CHANNEL *)(cfg_addr->IT_5G_frq);
 
-
     BB_GetNv();
-
-    context.en_bbmode = en_mode;
 
     BB_uart10_spi_sel(0x00000003);
     BB_SPI_init();
@@ -711,6 +703,7 @@ int BB_GetCmd(STRU_WIRELESS_CONFIG_CHANGE *pconfig)
     return (found) ? TRUE:FALSE;
 }
 
+
 int BB_InsertCmd(STRU_WIRELESS_CONFIG_CHANGE *p)
 {
     uint8_t i;
@@ -828,7 +821,7 @@ int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
         {
             cmd.u8_configClass  = WIRELESS_ENCODER_CHANGE;
             cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT_CH2;
-            cmd.u32_configValue  = param0;
+            cmd.u32_configValue = param0;
             break;
         }
 
@@ -836,8 +829,8 @@ int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
         {
             cmd.u8_configClass  = WIRELESS_MISC;
             cmd.u8_configItem   = MISC_READ_RF_REG;
-            cmd.u32_configValue  = param0;
-            
+            cmd.u32_configValue = (param0) | (param1 << 8);
+
             dlog_info("1:%d 2:%d 3:%d 4:%d", type, param0, param1, param2);
             break;
         }
@@ -846,8 +839,8 @@ int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
         {
             cmd.u8_configClass  = WIRELESS_MISC;
             cmd.u8_configItem   = MISC_WRITE_RF_REG;
-                               //addr, value
-            cmd.u32_configValue  = (param0) | (param1 << 8);
+                               //8003s num: addr: value
+            cmd.u32_configValue  = (param0) | (param1 << 8) | (param2 << 16);
             break;
         }
 
@@ -969,6 +962,7 @@ void BB_HandleEventsCallback(void *p)
         if( context.u8_debugMode != u8_debugMode )
         {
             context.u8_flagdebugRequest = u8_debugMode | 0x80;
+            BB_SPI_curPageWriteByte(0x01, 0x02);
             en_curPage = (BB_SPI_curPageReadByte(0x0) & 0xc0);
         }
         dlog_info("Event Debug: %d \n", u8_debugMode);         
@@ -984,7 +978,7 @@ void BB_handle_misc_cmds(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 {
     uint8_t class = pcmd->u8_configClass;
     uint8_t item  = pcmd->u8_configItem;
-    
+
     uint8_t value  = (uint8_t)(pcmd->u32_configValue);
     uint8_t value1 = (uint8_t)(pcmd->u32_configValue >> 8);
     uint8_t value2 = (uint8_t)(pcmd->u32_configValue >> 16);
@@ -997,15 +991,22 @@ void BB_handle_misc_cmds(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
             case MISC_READ_RF_REG:
             {
                 uint8_t v;
-                RF8003s_SPI_ReadReg(value, &v);
-                dlog_info("RF read addr=0x%0.2x value=0x%0.2x", value, v);
+                BB_SPI_curPageWriteByte(0x01, (value == 0)? 0x01 : 0x03);               //value2==0: write RF8003-0
+                                                                                        //value2==1: write RF8003-1
+                RF8003s_SPI_ReadReg(value1, &v);
+                dlog_info("RF read 8003-%d addr=0x%0.2x value=0x%0.2x", value, value1, v);
+                BB_SPI_curPageWriteByte(0x01,0x02);
                 break;
             }
 
             case MISC_WRITE_RF_REG:
             {
-                RF8003s_SPI_WriteReg(value, value1);
-                dlog_info("RF write addr=0x%0.2x value=0x%0.2x", value, value1);
+                BB_SPI_curPageWriteByte(0x01, (value == 0)? 0x01 : 0x03);              //value2==0: write RF8003-0
+                                                                                       //value2==1: write RF8003-1
+                RF8003s_SPI_WriteReg(value1, value2);
+                BB_SPI_curPageWriteByte(0x01,0x02);
+
+                dlog_info("RF write 8003-%d addr=0x%0.2x value=0x%0.2x", value, value1, value2);
                 break;
             }
 

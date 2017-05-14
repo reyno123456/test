@@ -7,7 +7,6 @@
 #include "bb_regs.h"
 #include "systicks.h"
 #include "debuglog.h"
-#include "bb_sys_param.h"
 
 #define     WORK_FREQ_SNR_BLOCK_ROWS        (4)
 #define     WORK_FREQ_SNR_DAQ_CNT           (16)

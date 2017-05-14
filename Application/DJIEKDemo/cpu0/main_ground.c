@@ -27,17 +27,6 @@ static void IO_Task(void const *argument)
     }
 }
 
-/** 
- * @brief       API for set board SKY mode or GROUND mode
- * @param[in]   SFR_TRX_MODE_SKY or SFR_TRX_MODE_GROUND
- */
-#define SFR_TRX_MODE_SEL (*(volatile uint32_t *)0x40B00068)
-
-void BB_SetBoardMODE(uint8_t mode)
-{
-    SFR_TRX_MODE_SEL = mode;
-}
-
 
 /**
   * @brief  Main program

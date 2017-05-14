@@ -175,7 +175,13 @@ typedef struct
     uint8_t         encoder_status;         //38
     uint8_t         errcnt1;                //39
     uint8_t         errcnt2;                //40
-    uint8_t         reserved[15];           //reserve
+    uint8_t         u8_rclock;              //41
+    uint8_t         u8_nrlock;              //42
+    uint8_t         sky_agc[4];             //43,44,45,46
+    uint8_t         reserved0;              //47
+    uint16_t        dist_zero;              //49,48
+    uint16_t        dist_value;             //50,51
+    uint8_t         reserved[4];            //52~55
 } STRU_WIRELESS_INFO_DISPLAY;
 
 
