@@ -494,42 +494,46 @@ static uint8_t notifySysEvent(uint32_t event_id, void* parameter)
 {
     uint8_t retval = FALSE;
 
-    STRU_NotifiedSysEvent_Node** ppFirstNode = &g_notifiedSysEventList;
-    STRU_NotifiedSysEvent_Node** ppLastNode  = &g_notifiedSysEventList_tail;
-
-    STRU_NotifiedSysEvent_Node* pNewNode = (STRU_NotifiedSysEvent_Node*)malloc(sizeof(STRU_NotifiedSysEvent_Node));
-
-    if (pNewNode != NULL)
+    // Local CPU core process
+    if (retrieveRegisteredEventNode((event_id & ~SYS_EVENT_INTER_CORE_MASK), FALSE) != NULL)
     {
-        // Add the new node to the tail, unmask the inter core bit.
-        pNewNode->event_id = (event_id & ~SYS_EVENT_INTER_CORE_MASK);
-        memcpy((void*)(pNewNode->parameter), parameter, sizeof(pNewNode->parameter));
-        pNewNode->prev = *ppLastNode;
-        pNewNode->next = NULL;
+        STRU_NotifiedSysEvent_Node** ppFirstNode = &g_notifiedSysEventList;
+        STRU_NotifiedSysEvent_Node** ppLastNode  = &g_notifiedSysEventList_tail;
 
-        if (*ppLastNode == NULL)
+        STRU_NotifiedSysEvent_Node* pNewNode = (STRU_NotifiedSysEvent_Node*)malloc(sizeof(STRU_NotifiedSysEvent_Node));
+
+        if (pNewNode != NULL)
         {
-            // The first node to be created
-            *ppFirstNode = pNewNode;
+            // Add the new node to the tail, unmask the inter core bit.
+            pNewNode->event_id = (event_id & ~SYS_EVENT_INTER_CORE_MASK);
+            memcpy((void*)(pNewNode->parameter), parameter, sizeof(pNewNode->parameter));
+            pNewNode->prev = *ppLastNode;
+            pNewNode->next = NULL;
+
+            if (*ppLastNode == NULL)
+            {
+                // The first node to be created
+                *ppFirstNode = pNewNode;
+            }
+            else
+            {
+                (*ppLastNode)->next = pNewNode;
+            }
+
+            *ppLastNode = pNewNode;
+
+            retval = TRUE;
         }
-        else
-        {
-            (*ppLastNode)->next = pNewNode;
-        }
+    }
 
-        *ppLastNode = pNewNode;
-
-        // Inter-Core event nofitication
-        if (event_id & SYS_EVENT_INTER_CORE_MASK)
-        {
-            INTER_CORE_CPU_ID dst = 0;
-
-            dst |= ((INTER_CORE_CPU0_ID | INTER_CORE_CPU1_ID | INTER_CORE_CPU2_ID) & (~(1 << CPUINFO_GetLocalCpuId())));
-            // Inter-Core message send
-            InterCore_SendMsg(dst, event_id & ~SYS_EVENT_INTER_CORE_MASK, parameter, SYS_EVENT_HANDLER_PARAMETER_LENGTH);
-        }
-
-        retval = TRUE;
+    // Inter-Core event nofitication
+    if (event_id & SYS_EVENT_INTER_CORE_MASK)
+    {
+        INTER_CORE_CPU_ID dst = 0;
+    
+        dst |= ((INTER_CORE_CPU0_ID | INTER_CORE_CPU1_ID | INTER_CORE_CPU2_ID) & (~(1 << CPUINFO_GetLocalCpuId())));
+        // Inter-Core message send
+        InterCore_SendMsg(dst, event_id & ~SYS_EVENT_INTER_CORE_MASK, parameter, SYS_EVENT_HANDLER_PARAMETER_LENGTH);
     }
     
     return retval;

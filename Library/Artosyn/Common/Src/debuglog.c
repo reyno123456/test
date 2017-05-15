@@ -175,53 +175,61 @@ uint32_t DLOG_GetChar(uint8_t *u8_uartRxBuf, uint8_t u8_uartRxLen)
 {
     uint8_t i = 0;
     char c = '\r';
-    char u8_commandLine[64] = {0};
-    uint16_t u8_commandPos = 0;
+    char u8_commandTemp[64] = {0};
+    uint16_t u8_commandTempPos = 0;
     while (u8_uartRxLen)
     {
         c = *(u8_uartRxBuf + i);
-        /* receive "enter" key */
-        if (c == '\r')
+
+        if ((s_u8_commandPos < (sizeof(s_u8_commandLine) - 1)) &&
+            (u8_commandTempPos < (sizeof(u8_commandTemp) - 1)))
         {
-            s_u8_commandLine[s_u8_commandPos++] = c;
-            u8_commandLine[u8_commandPos++] = '\n';
-            /* if s_u8_commandLine is not empty, go to parse command */
-            if (s_u8_commandPos > 0)
+            /* receive "enter" key */
+            if (c == '\r')
             {
-                DLOG_Input(s_u8_commandLine, s_u8_commandPos);
-                s_u8_commandPos = 0;
-                memset(s_u8_commandLine, 0, sizeof(s_u8_commandLine));
+                s_u8_commandLine[s_u8_commandPos++] = c;
+                u8_commandTemp[u8_commandTempPos++] = '\n';
+                /* if s_u8_commandLine is not empty, go to parse command */
+                if (s_u8_commandPos > 0)
+                {
+                    DLOG_Input(s_u8_commandLine, s_u8_commandPos);
+                    s_u8_commandPos = 0;
+                    memset(s_u8_commandLine, 0, sizeof(s_u8_commandLine));
+                }
             }
-        }
-        /* receive "backspace" key */
-        else if (c == '\b')
-        {
-            if (s_u8_commandPos > 1)
+            /* receive "backspace" key */
+            else if (c == '\b')
             {
-                s_u8_commandLine[--s_u8_commandPos] = '\0';
+                if (s_u8_commandPos > 1)
+                {
+                    s_u8_commandLine[--s_u8_commandPos] = '\0';
+                }
+                u8_commandTemp[u8_commandTempPos++] = '\b';
+                u8_commandTemp[u8_commandTempPos++] = ' ';
+                u8_commandTemp[u8_commandTempPos++] = '\b';
             }
-            u8_commandLine[u8_commandPos++] = '\b';
-            u8_commandLine[u8_commandPos++] = ' ';
-            u8_commandLine[u8_commandPos++] = '\b';
-        }
-        /* receive normal data */
-        else if (s_u8_commandPos < (sizeof(s_u8_commandLine) - 1))
-        {
-            s_u8_commandLine[s_u8_commandPos++] = c;
-            u8_commandLine[u8_commandPos++] = c;
+            /* receive normal data */
+            else if ((c >= 32) && (c <= 126))
+            {
+                s_u8_commandLine[s_u8_commandPos++] = c;
+                u8_commandTemp[u8_commandTempPos++] = c;
+            }
         }
 
         i++;
         u8_uartRxLen--;  
     }
 
-    if (u8_commandLine[u8_commandPos-1] != '\n')
+    if (u8_commandTempPos != 0)
     {
-        u8_commandLine[u8_commandPos]=DEBUG_LOG_END;
-        u8_commandLine[u8_commandPos+1]='\n';
+        if (u8_commandTemp[u8_commandTempPos-1] != '\n')
+        {
+            u8_commandTemp[u8_commandTempPos] = DEBUG_LOG_END;
+            u8_commandTemp[u8_commandTempPos+1] = '\n';
+        }
+        
+        printf("%s",u8_commandTemp);
     }
-    
-    printf("%s",u8_commandLine);
 }
 
 static void DLOG_InputCommandInit(void)
