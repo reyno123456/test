@@ -215,6 +215,13 @@ uint32_t DLOG_GetChar(uint8_t *u8_uartRxBuf, uint8_t u8_uartRxLen)
                 u8_commandTemp[u8_commandTempPos++] = c;
             }
         }
+        else
+        {
+             s_u8_commandPos = 0;
+             memset(s_u8_commandLine, 0, sizeof(s_u8_commandLine));
+             printf("!!! Too long input string one time, skip the operation !!!\n\n\n");
+        }
+
 
         i++;
         u8_uartRxLen--;  
