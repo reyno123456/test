@@ -13,11 +13,18 @@
 #include "hal_nv.h"
 #include "hal_gpio.h"
 #include "hal_uart.h"
+#include "arcast_appcommon.h"
 
 void CONSOLE_Init(void)
 {
     HAL_UART_Init(DEBUG_LOG_UART_PORT, HAL_UART_BAUDR_115200, NULL);
     DLOG_Init(command_run, DLOG_SERVER_PROCESSOR);
+}
+
+static void GenericInitial(void const *argument)
+{
+    Common_AVFORMATSysEventGroundInit();
+    vTaskDelete(NULL);
 }
 
 static void IO_Task(void const *argument)
@@ -55,8 +62,12 @@ int main(void)
     HAL_USB_InitOTG(HAL_USB_PORT_1);
 
     HAL_SRAM_ReceiveVideoConfig(ENUM_HAL_SRAM_DATA_PATH_REVERSE);
+    
 
     HAL_NV_Init();
+
+    osThreadDef(GenericInitialTask, GenericInitial, osPriorityNormal, 0, 4 * 128);
+    osThreadCreate(osThread(GenericInitialTask), NULL);
 
     osThreadDef(USBHStatus_Task, USBH_USBHostStatus, osPriorityNormal, 0, 4 * 128);
     osThreadCreate(osThread(USBHStatus_Task), NULL);

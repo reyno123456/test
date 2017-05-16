@@ -98,12 +98,14 @@ void SYS_EVENT_DumpAllListNodes(void);
 #define SYS_EVENT_ID_NV_MSG                           (SYS_EVENT_LEVEL_MIDIUM_MASK | 0x0006 | SYS_EVENT_INTER_CORE_MASK)
 #define SYS_EVENT_ID_USB_SWITCH_HOST_DEVICE           (SYS_EVENT_LEVEL_HIGH_MASK   | 0x0007)
 
+
 #define SYS_EVENT_ID_UART_DATA_RCV_SESSION0           (SYS_EVENT_LEVEL_HIGH_MASK   | 0x0008)
 #define SYS_EVENT_ID_UART_DATA_RCV_SESSION1           (SYS_EVENT_LEVEL_MIDIUM_MASK | 0x0009 | SYS_EVENT_INTER_CORE_MASK)
 #define SYS_EVENT_ID_UART_DATA_RCV_SESSION2           (SYS_EVENT_LEVEL_MIDIUM_MASK | 0x000A | SYS_EVENT_INTER_CORE_MASK)
 #define SYS_EVENT_ID_UART_DATA_RCV_SESSION3           (SYS_EVENT_LEVEL_MIDIUM_MASK | 0x000B | SYS_EVENT_INTER_CORE_MASK)
 #define SYS_EVENT_ID_UART_DATA_RCV_SESSION4           (SYS_EVENT_LEVEL_MIDIUM_MASK | 0x000C | SYS_EVENT_INTER_CORE_MASK)
 
+#define SYS_EVENT_ID_AUDIO_INPUT_CHANGE               (SYS_EVENT_LEVEL_MIDIUM_MASK | 0x000D )
 
 typedef enum
 {
@@ -137,6 +139,11 @@ typedef struct _SysEvent_BB_DATA_BUFFER_FULL_RATIO_Change
     uint8_t  reserve[SYS_EVENT_HANDLER_PARAMETER_LENGTH - 1];
 } STRU_SysEvent_BB_DATA_BUFFER_FULL_RATIO_Change;
 
+typedef struct _SysEvent_AudioInputChangeParameter
+{
+    uint8_t  u8_audioSampleRate;
+    uint8_t  reserve[SYS_EVENT_HANDLER_PARAMETER_LENGTH - 1];
+} STRU_SysEvent_AudioInputChangeParameter;
 
 // data struct used between cpu communication
 typedef enum

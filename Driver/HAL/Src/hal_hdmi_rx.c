@@ -1,4 +1,4 @@
-/*****************************************************************************
+ /*****************************************************************************
 Copyright: 2016-2020, Artosyn. Co., Ltd.
 File name: hal_hdmi_rx.c
 Description: The external HAL APIs to use HDMI RX.
@@ -38,12 +38,14 @@ History:
 #pragma message("defined IT_66021")
 #endif
 
-#ifdef USE_IT66021_EDID_CONFIG_BIN
+
 static uint32_t u32_audioSampleRateChangeCount=0;
+static ENUM_HAL_I2S_IEC_SAMPLERATE s_e_hdmiRxAudioSampleRateStatus = HAL_SOFTI2S_ENCODE_IEC_48000;
+
 static volatile uint32_t *HAL_hdmi_pu32_newAudioSampleRate=(uint32_t *)(SRAM_MODULE_SHARE_AUDIO_RATE);
-static uint32_t s_u32_hdmiRxSupportedOutputSampleRate[] = {0,2};
-static uint32_t s_u32_hdmiRxAudioSampleRateStatus = 0;
-#endif
+static ENUM_HAL_I2S_IEC_SAMPLERATE s_u32_hdmiRxSupportedOutputSampleRate[] = {HAL_SOFTI2S_ENCODE_IEC_44100,
+                                                                              HAL_SOFTI2S_ENCODE_IEC_48000};
+
 
 static STRU_HDMI_RX_STATUS s_st_hdmiRxStatus[HAL_HDMI_RX_MAX] = {0};
 static void HAL_HDMI_RX_IrqHandler0(uint32_t u32_vectorNum);
@@ -158,7 +160,7 @@ static void HDMI_RX_CheckFormatStatus(ENUM_HAL_HDMI_RX e_hdmiIndex, HAL_BOOL_T b
             s_st_hdmiRxStatus[e_hdmiIndex].st_videoFormat.u16_width    = u16_width;
             s_st_hdmiRxStatus[e_hdmiIndex].st_videoFormat.u16_hight    = u16_hight;
             s_st_hdmiRxStatus[e_hdmiIndex].st_videoFormat.u8_framerate = u8_framerate;
-            dlog_info("video width=%d u16_hight=%d u8_framerate=%d ", u16_width, u16_hight, u8_framerate);
+            
         }
     }
     else
@@ -201,8 +203,6 @@ static void HDMI_RX_CheckFormatStatus(ENUM_HAL_HDMI_RX e_hdmiIndex, HAL_BOOL_T b
     }
 }
 
-#ifdef USE_IT66021_EDID_CONFIG_BIN
-
 static HAL_BOOL_T HDMI_RX_CheckAudioSampleRateSupportOrNot(uint32_t u32_sampleRate)
 {
     uint8_t i = 0;
@@ -235,13 +235,13 @@ static HAL_BOOL_T HDMI_RX_CheckAudioSampleRateChangeOrNot(ENUM_HAL_HDMI_RX e_hdm
     }
 
     if ((s_st_hdmiRxStatus[e_hdmiIndex].u8_devEnable == 1) &&
-        (s_u32_hdmiRxAudioSampleRateStatus != u32_sampleRate))
+        (s_e_hdmiRxAudioSampleRateStatus != (ENUM_HAL_I2S_IEC_SAMPLERATE)u32_sampleRate))
     {
         u32_audioSampleRateChangeCount++;
         if (u32_audioSampleRateChangeCount > 3)
         {
             u32_audioSampleRateChangeCount = 0;
-            s_u32_hdmiRxAudioSampleRateStatus = u32_sampleRate;
+            s_e_hdmiRxAudioSampleRateStatus = (ENUM_HAL_I2S_IEC_SAMPLERATE)u32_sampleRate;
             return HAL_TRUE;    
         }
         else
@@ -275,34 +275,17 @@ uint8_t HDMI_RX_CheckAudioStatus(ENUM_HAL_HDMI_RX e_hdmiIndex)
         if ((HDMI_RX_CheckAudioSampleRateChangeOrNot(e_hdmiIndex, u32_sampleRate) == HAL_TRUE))
         {
 
+            STRU_SysEvent_AudioInputChangeParameter p;
+            p.u8_audioSampleRate = u32_sampleRate;
             *HAL_hdmi_pu32_newAudioSampleRate = u32_sampleRate;
-            HAL_MP3EncodePcmUnInit();
-            STRU_MP3_ENCODE_CONFIGURE_WAVE st_audioConfig;
-            if (HAL_SOFTI2S_ENCODE_IEC_48000 == u32_sampleRate)
-            {                    
-                st_audioConfig.e_samplerate = HAL_MP3_ENCODE_48000;
-                dlog_info("Audio Sample Rate 48000");
-            }
-            else if (HAL_SOFTI2S_ENCODE_IEC_44100 == u32_sampleRate)
-            {
-                st_audioConfig.e_samplerate = HAL_MP3_ENCODE_44100;   
-                dlog_info("Audio Sample Rate 44100");                 
-            }
-            
-            st_audioConfig.e_modes = HAL_MP3_ENCODE_STEREO;
-            st_audioConfig.u32_rawDataAddr = AUDIO_DATA_START;
-            st_audioConfig.u32_rawDataLenght = AUDIO_DATA_BUFF_SIZE;
-            st_audioConfig.u32_encodeDataAddr = MPE3_ENCODER_DATA_ADDR;
-            st_audioConfig.u32_newPcmDataFlagAddr = SRAM_MODULE_SHARE_AUDIO_PCM;
-            st_audioConfig.u8_channel = 2;
-            HAL_MP3EncodePcmInit(&st_audioConfig, ENUM_HAL_SRAM_DATA_PATH_REVERSE);
 
+            SYS_EVENT_Notify(SYS_EVENT_ID_AUDIO_INPUT_CHANGE, (void*)&p);
             return 1;
         }
     }
     return 0;
 }
-#endif
+
 
 static void HDMI_RX_IdleCallback0(void *paramPtr)
 {

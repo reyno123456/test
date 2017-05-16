@@ -30,11 +30,11 @@ TARGET = ar8020_cpu0.bin
 SRC_S   := start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
-SRC_C   := main_sky.c command.c test_hal_nv.c test_hal_i2c.c test_hdmi.c
+SRC_C   := main_sky.c command.c test_hal_nv.c test_hal_i2c.c test_hdmi.c  arcast_appcommon.c test_bb.c
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
-SRC_C   := main_ground.c command.c test_hal_nv.c test_usbh.c test_hal_i2c.c test_hdmi.c
+SRC_C   := main_ground.c command.c test_hal_nv.c test_usbh.c test_hal_i2c.c test_hdmi.c arcast_appcommon.c test_bb.c
 endif
 
 SRC_CXX :=

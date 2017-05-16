@@ -22,6 +22,7 @@
 #include "it_typedef.h"
 #include "it6602.h"
 #include "hal_sram.h"
+#include "arcast_appcommon.h"
 
 
 void CONSOLE_Init(void)
@@ -58,6 +59,7 @@ int main(void)
 
     HDMI_powerOn();
     
+
     *((uint8_t *)(SRAM_MODULE_SHARE_AUDIO_PCM)) = HAL_SOFTI2S_ENCODE_IEC_48000;
     STRU_MP3_ENCODE_CONFIGURE_WAVE st_audioConfig;
     st_audioConfig.e_samplerate = HAL_MP3_ENCODE_48000;
@@ -83,6 +85,7 @@ int main(void)
 
     HAL_NV_Init();
     Wireless_TaskInit(WIRELESS_NO_RTOS);
+    Common_AVFORMATSysEventSKYInit();
 
     for( ;; )
     {
