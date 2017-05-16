@@ -19,6 +19,7 @@
 #include "sd_core.h"
 #include "sd_card.h"
 #include "debuglog.h"
+#include "systicks.h"
 
 
 SDMMC_DMATransTypeDef dma;
@@ -1607,10 +1608,11 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
   // get_val = Core_SDMMC_GetRINTSTS(hsd->Instance);
   // dlog_info("ACMD41 RINTSTS = 0x%x\n", get_val);
   response = Core_SDMMC_GetRESP0(hsd->Instance);
-  // dlog_info("ACMD41 RESP0 = 0x%x\n", response);
+  dlog_info("ACMD41 RESP0 = 0x%x\n", response);
 
   vs_busy = (response & SD_ACMD41_BUSY);
-  if (vs_busy == 0) {
+  if (vs_busy == 0) 
+  {
     dlog_info("ACMD41 Loop Start:\n");
     do 
     {
@@ -1667,12 +1669,12 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
         dlog_info("ACMD41 Loop Fail\n");
       }
       vs_busy = (response & SD_ACMD41_BUSY);
-    } while (vs_busy == 0);
+    } while ((vs_busy == 0) && loop <= 1000);
 
     if (vs_busy != 0) 
     {
       delay_ms(10);
-      dlog_info("ACMD41 Loop Done\n");
+      dlog_info("ACMD41 Loop Done, loop = %d\n", loop);
     }
   }
 
@@ -1897,6 +1899,7 @@ static SD_ErrorTypedef SD_CmdError(SD_HandleTypeDef *hsd)
   SD_ErrorTypedef errorstate = SD_OK;
   uint32_t RINTSTS_val, cmd_done, endBitErr, startBitErr, hdLockErr, datStarvTo, resp_to;
   uint32_t datCrcErr, resp_crc_err, datTranOver, resp_err, errHappen;
+    uint32_t start = SysTicks_GetTickCount();
   do {
     RINTSTS_val = Core_SDMMC_GetRINTSTS(hsd->Instance);
     cmd_done     = (RINTSTS_val & SDMMC_RINTSTS_CMD_DONE);
@@ -1909,6 +1912,11 @@ static SD_ErrorTypedef SD_CmdError(SD_HandleTypeDef *hsd)
     resp_crc_err = (RINTSTS_val & SDMMC_RINTSTS_RCRC); //[6]
     datTranOver  = (RINTSTS_val & SDMMC_RINTSTS_DATA_OVER); //[3]
     resp_err     = (RINTSTS_val & SDMMC_RINTSTS_RESP_ERR); //[1]
+    
+    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 100)
+    {
+        dlog_error("time out");
+    }
   } while (!cmd_done);
 
   // errHappen = endBitErr | startBitErr | hdLockErr | resp_to | datCrcErr | resp_crc_err | resp_err;
@@ -2168,9 +2176,15 @@ static SD_ErrorTypedef SD_ENUM(SD_HandleTypeDef * hsd)
 #ifdef ECHO
   dlog_info("CMD5 RINTSTS_val = %x\n", RINTSTS_val);
 #endif
+    uint32_t start = SysTicks_GetTickCount();
   do {
     RINTSTS_val = Core_SDMMC_GetRINTSTS(hsd->Instance);
     cmd_done = (RINTSTS_val & SDMMC_RINTSTS_CMD_DONE);
+    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 100)
+    {
+        dlog_error("time out");
+        return SD_ERROR;
+    }
   } while (!cmd_done);
 
   RINTSTS_val = Core_SDMMC_GetRINTSTS(hsd->Instance);

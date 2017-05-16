@@ -18,6 +18,7 @@
 #include "FreeRTOSConfig.h"
 #include "memory_config.h"
 #include "debuglog.h"
+#include "systicks.h"
 
 /**
   * @brief  Get SDMMC Power state.
@@ -105,11 +106,18 @@ SDMMC_Status Core_SDMMC_WaiteCmdStart(SDMMC_REG *SDMMCx)
 SDMMC_Status Core_SDMMC_WaiteVoltSwitchInt(SDMMC_REG *SDMMCx) 
 {
   uint32_t get_val, volt_switch_int;
+  uint32_t start;
+
+  start = SysTicks_GetTickCount();
   do {
     get_val = Core_SDMMC_GetRINTSTS(SDMMCx);
     volt_switch_int = (get_val & SDMMC_RINTSTS_HTO);
     // dlog_info("volt_switch_int\n");
     // dlog_output(50);
+    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 100)
+    {
+        dlog_error("time out");
+    }
   } while (!volt_switch_int);
   return SDMMC_OK;
 }
