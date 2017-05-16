@@ -50,7 +50,6 @@ static void rcvFormatHandler_sky(void *p)
 {
     uint32_t u32_rcvLen = 0;
     uint32_t u32_sizeSTRU_ARCAST_AVFORMAT = sizeof(STRU_ARCAST_AVFORMAT);
-    STRU_ARCAST_AVFORMAT g_st_formatChangeTmp;
 
     HAL_BB_UartComReceiveMsg(BB_UART_COM_SESSION_3, (uint8_t*)(&g_st_formatChangeTmp), u32_sizeSTRU_ARCAST_AVFORMAT, &u32_rcvLen);
 
