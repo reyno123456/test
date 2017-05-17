@@ -634,8 +634,14 @@ uint8_t USBD_HID_SendReport(USBD_HandleTypeDef  *pdev,
         {
             hhid->state[0x7F & ep_addr]   = HID_BUSY;
 
+            /* temp add for test */
             /* take endian problem for consideration */
-            if ((0x7F & ep_addr) != HID_EPIN_VIDEO_ADDR)
+            if (((ep_addr | 0x80) == HID_EPIN_VIDEO_ADDR)||
+                ((ep_addr | 0x80) == HID_EPIN_AUDIO_ADDR))
+            {
+                USB_OTG_SetBigEndian(pdev);
+            }
+            else
             {
                 if (USB_OTG_IsBigEndian(pdev))
                 {
@@ -643,13 +649,6 @@ uint8_t USBD_HID_SendReport(USBD_HandleTypeDef  *pdev,
                 }
             }
 
-            /* temp add for test */
-            if (((ep_addr | 0x80) == HID_EPIN_VIDEO_ADDR)||
-                ((ep_addr | 0x80) == HID_EPIN_AUDIO_ADDR))
-            {
-                USB_OTG_SetBigEndian(pdev);
-            }
-            
             ret = USBD_LL_Transmit (pdev, ep_addr, report, len);
         }
         else
