@@ -56,6 +56,11 @@ SD_ErrorTypedef Card_SD_Init(SD_HandleTypeDef *hsd, SD_CardInfoTypedef *SDCardIn
   __IO SD_ErrorTypedef errorstate = SD_OK;
   uint32_t get_val;
   /* To identify if card is powered on */
+  Core_SDMMC_SetPWREN(hsd->Instance, SDMMC_PWREN_0 | \
+                  SDMMC_PWREN_1 | \
+                  SDMMC_PWREN_2 | \
+                  SDMMC_PWREN_3);    
+  delay_ms(100);
   get_val = Core_SDMMC_GetPWREN(hsd->Instance);
   if (!get_val)
   {
@@ -1077,7 +1082,9 @@ static SD_ErrorTypedef IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef
     // dlog_info("CMD2 RESP0 = %x\n", get_val);
     get_val = Core_SDMMC_GetRINTSTS(hsd->Instance);
     // dlog_info("CMD2 RINTSTS = %x\n", get_val);
+    uint32_t start = SysTicks_GetTickCount();
     delay_ms(1000);
+    dlog_info("%d, delay_ms 1000 used %d ticks", __LINE__, SysTicks_GetTickCount() - start);
   }
 
   if ((hsd->CardType == STD_CAPACITY_SD_CARD)    ||  \
@@ -1368,8 +1375,14 @@ static SD_ErrorTypedef IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef
                                        SDMMC_CMD_UPDATE_CLK;
     Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-    Core_SDMMC_WaiteCmdStart(hsd->Instance);
-    delay_ms(10);
+    if (SDMMC_OK == Core_SDMMC_WaiteCmdStart(hsd->Instance))
+    {
+        delay_ms(10);
+    }
+    else
+    {
+        return -1;
+    }
 
     switch(hsd->SpeedMode)
     {
@@ -2264,6 +2277,8 @@ void SD_IRQHandler(uint32_t vectorNum)
 {
 
   uint32_t status, pending, cdetect;
+
+  static uint8_t flag_plug_out = 0;
    
   status  = read_reg32((uint32_t *)(SDMMC_BASE + 0x44));  /* RINTSTS */
   pending = read_reg32((uint32_t *)(SDMMC_BASE + 0x40));  /* MINTSTS */
@@ -2277,22 +2292,30 @@ void SD_IRQHandler(uint32_t vectorNum)
       {
         if (!cdetect)
         {
-            dlog_info("Initializing the SD Card...\n");
-            write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
-            sdhandle.Instance = SDMMC_ADDR;
-            SD_CardInfoTypedef *cardinfo;
-            Card_SD_Init(&sdhandle, cardinfo);
-            dlog_info("Initialize SD Success!\n");
-            write_reg32((uint32_t *)(SDMMC_BASE + 0x44), 0xFFFFFFFF);
+            if (flag_plug_out == 1)
+            {
+                dlog_info("Initializing the SD Card...\n");
+                write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
+                sdhandle.Instance = SDMMC_ADDR;
+                SD_CardInfoTypedef *cardinfo;
+                Card_SD_Init(&sdhandle, cardinfo);
+                dlog_info("Initialize SD Success!\n");
+                write_reg32((uint32_t *)(SDMMC_BASE + 0x44), 0xFFFFFFFF);
+                flag_plug_out = 0;
+            }
         }
         else
         {
-            dlog_info("Removing the SD Card...\n");
-            write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
-            SDMMC_Status errorstate = SDMMC_OK;
-            Card_SD_DeInit(&sdhandle);
-            dlog_info("Remove SD Success!\n");
-            write_reg32((uint32_t *)(SDMMC_BASE + 0x44), 0xFFFFFFFF);
+            if (flag_plug_out == 0)
+            {
+                dlog_info("Removing the SD Card...\n");
+                write_reg32((uint32_t *)(SDMMC_BASE + 0x44), status);
+                SDMMC_Status errorstate = SDMMC_OK;
+                Card_SD_DeInit(&sdhandle);
+                dlog_info("Remove SD Success!\n");
+                write_reg32((uint32_t *)(SDMMC_BASE + 0x44), 0xFFFFFFFF);
+                flag_plug_out = 1;
+            }
         }
       }
     }
