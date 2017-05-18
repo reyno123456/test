@@ -20,6 +20,7 @@ void command_SdcardFatFs(char *argc);
 void TestRawWR();
 void OS_TestRawWR_Handler(void const * argument);
 void OS_TestRawWR();
-
+void OS_TestSD_Erase_Handler(void const * argument);
+void OS_TestSD_Erase();
 
 #endif

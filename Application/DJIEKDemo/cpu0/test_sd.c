@@ -335,6 +335,10 @@ void command_SdcardFatFs(char *argc)
 			OS_TestRawWR();
 		break;
 
+		case 5:
+			OS_TestSD_Erase();
+		break;
+
 		default: break;
 	}
 }
@@ -350,6 +354,7 @@ void OS_TestRawWR_Handler(void const * argument)
 	totol_sects = 30541 * 1024;
 	u32_start = SysTicks_GetTickCount();
 	
+#if 0
 	if (HAL_OK == HAL_SD_Erase(0, totol_sects) )
 	{
 		dlog_info("erase %d sects, used %d ms", totol_sects, SysTicks_GetTickCount() - u32_start);
@@ -358,6 +363,7 @@ void OS_TestRawWR_Handler(void const * argument)
 	{
 		dlog_info("error");
 	}
+#endif
 	
 	uint32_t sect_multi = 0;
 
@@ -401,8 +407,36 @@ void OS_TestRawWR_Handler(void const * argument)
 	}
 }
 
+void OS_TestSD_Erase_Handler(void const * argument)
+{
+	uint32_t totol_sects = 30541 * 1024;
+	uint32_t u32_start = SysTicks_GetTickCount();
+	
+	if (HAL_OK == HAL_SD_Erase(0, totol_sects) )
+	{
+		dlog_info("erase %d sects, used %d ms", totol_sects, SysTicks_GetTickCount() - u32_start);
+	}
+	else
+	{
+		dlog_info("error");
+	}
+	
+        for (;;)
+	{
+		HAL_Delay(1500);
+	}
+}
+
+
 void OS_TestRawWR()
 {	
 	osThreadDef(TestRawWR_Handler, OS_TestRawWR_Handler, osPriorityNormal, 0, 8 * configMINIMAL_STACK_SIZE);
 	osThreadCreate(osThread(TestRawWR_Handler), NULL);
 }
+
+void OS_TestSD_Erase()
+{
+	osThreadDef(TestSD_Erase, OS_TestSD_Erase_Handler, osPriorityNormal, 0, 8 * configMINIMAL_STACK_SIZE);
+	osThreadCreate(osThread(TestSD_Erase), NULL);
+}
+
