@@ -387,6 +387,10 @@ void OS_TestRawWR_Handler(void const * argument)
 			dlog_info("read 30000 sects, sect_multi = %d, used %d ms", sect_multi, 
 						SysTicks_GetTickCount() - u32_start);			
 		}
+		else
+		{
+			dlog_info("error");
+		}
 	}
 
 	dlog_info("task finished");

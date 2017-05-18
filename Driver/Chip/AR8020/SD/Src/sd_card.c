@@ -552,6 +552,7 @@ SD_ErrorTypedef Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATra
   Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc[0]));
   if (errorstate != SD_OK) {
     dlog_info("SD_DMAConfig Fail\n");
+    free(desc);
     return errorstate;
   }
 

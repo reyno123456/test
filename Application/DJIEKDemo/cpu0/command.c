@@ -23,6 +23,7 @@ void command_writeMemory(char *addr, char *value);
 void command_upgrade(void);
 void command_startBypassVideo(void);
 void command_stopBypassVideo(void);
+void command_malloc(char *size);
 
 
 void command_run(char *cmdArray[], uint32_t cmdNum)
@@ -123,6 +124,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_SdcardFatFs(cmdArray[1]);
     }
+    else if ((memcmp(cmdArray[0], "malloc", strlen("malloc")) == 0) && (cmdNum == 2))
+    {
+        command_malloc(cmdArray[1]);
+    }
     else if ((memcmp(cmdArray[0], "top", strlen("top")) == 0))
     {
         /* like linux busybox top system call */
@@ -151,6 +156,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("command_test_BB_uart <param>");
 		dlog_error("initsd");
         dlog_error("test_sd <choise>");
+        dlog_error("malloc <size>");
         dlog_error("top");
     }
 }
@@ -258,4 +264,19 @@ void command_stopBypassVideo(void)
     }
 }
 
+void command_malloc(char *size)
+{
+    unsigned int mallocSize;
+	char *malloc_addr;
+	
+    mallocSize = command_str2uint(size);
+	malloc_addr = malloc(mallocSize);
+
+	if (malloc_addr != 0)
+	{
+		dlog_info("0x%08x\n", malloc_addr);
+	}
+
+	return;
+}
 
