@@ -332,6 +332,7 @@ SD_ErrorTypedef Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATran
   errorstate = SD_DMAConfig(hsd, dma);
   Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc[0]));
   if (errorstate != SD_OK) {
+    free(desc);
     return errorstate;
   }
 
