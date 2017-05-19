@@ -942,7 +942,7 @@ static void calc_average_and_fluct(ENUM_RF_BAND e_rfBand, uint8_t u8_bw , uint8_
         {
             pu32_noisepower_average[u8_ItCh] += (u32_avr * 2);
         }
-        else if (pu32_power_td[u8_ItCh] >= u32_avr / 2)
+        else if (pu32_power_td[u8_ItCh] <= u32_avr / 2)
         {
             pu32_noisepower_average[u8_ItCh] += (u32_avr / 2);
         }
@@ -957,7 +957,7 @@ static void calc_average_and_fluct(ENUM_RF_BAND e_rfBand, uint8_t u8_bw , uint8_
     pi32_variance = (e_rfBand == RF_2G) ? stru_sweepPower.i32_variance :
                                           stru_sweepPower.i32_5G_variance;
     pi32_variance[u8_ItCh] = 0;
-    for( row = 0; row < SWEEP_FREQ_BLOCK_ROWS; row++)
+    //for( row = 0; row < SWEEP_FREQ_BLOCK_ROWS; row++)
     {
         int diff;
         if ( pu32_noisepower_average[u8_ItCh] > u32_avr)
