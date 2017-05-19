@@ -500,6 +500,7 @@ SD_ErrorTypedef Card_SD_WriteBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransType
   sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
                                             SDMMC_CMD_USE_HOLD_REG | \
                                             SDMMC_CMD_PRV_DAT_WAIT | \
+											SDMMC_CMD_TRANSFER_MODE |
                                             SDMMC_CMD_DAT_READ_WRITE | \
                                             SDMMC_CMD_DAT_EXP      | \
                                             SDMMC_CMD_RESP_CRC     | \
@@ -625,6 +626,7 @@ SD_ErrorTypedef Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATra
         SDMMC_CMD_USE_HOLD_REG | \
         SDMMC_CMD_PRV_DAT_WAIT | \
         SDMMC_CMD_SEND_STOP    | \
+		SDMMC_CMD_TRANSFER_MODE |
         SDMMC_CMD_DAT_READ_WRITE | \
         SDMMC_CMD_DAT_EXP      | \
         SDMMC_CMD_RESP_CRC     | \
