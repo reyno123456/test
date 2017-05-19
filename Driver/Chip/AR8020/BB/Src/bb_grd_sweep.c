@@ -919,10 +919,7 @@ static void calc_average_and_fluct(ENUM_RF_BAND e_rfBand, uint8_t u8_bw , uint8_
     //base on time-domain power    
     int *pu32_power_td;
     int *pu32_noisepower_average;
-    int *pi32_variance = (e_rfBand == RF_2G) ? stru_sweepPower.i32_noisePower[row] : 
-                                               stru_sweepPower.i32_5G_noisePower[row];
-    pu32_noisepower_average[u8_ItCh] = 0;
-    pi32_variance[u8_ItCh] = 0;
+    int *pi32_variance;
 
     int u32_avr = 0;
     //add each row, get the average
