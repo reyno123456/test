@@ -39,6 +39,8 @@ static uint8_t s_u8_dlogServerCpuId = 0xFF;
 
 #define DEBUG_LOG_END                    (0x1f)
 
+#define DLOG_INPUT_MAX_CMD_PAR           (6)
+
 typedef struct
 {
     volatile uint32_t input_buf_wr_pos;
@@ -313,12 +315,12 @@ unsigned int DLOG_InputParse(char *buf, unsigned int byte_max)
 static void DLOG_InputCommandParse(char *cmd)
 {
     unsigned char cmdIndex;
-    char *tempCommand[6];
+    char *tempCommand[DLOG_INPUT_MAX_CMD_PAR];
 
     cmdIndex = 0;
     memset(tempCommand, 0, sizeof(tempCommand));
 
-    while (cmdIndex < 6)
+    while (cmdIndex < DLOG_INPUT_MAX_CMD_PAR)
     {
         /* skip the sapce */
         while ((*cmd == ' ') || (*cmd == '\t'))
@@ -329,7 +331,6 @@ static void DLOG_InputCommandParse(char *cmd)
         /* end of the cmdline */
         if (*cmd == '\0')
         {
-            tempCommand[cmdIndex] = 0;
             break;
         }
 
@@ -344,7 +345,6 @@ static void DLOG_InputCommandParse(char *cmd)
         /* no more command */
         if (*cmd == '\0')
         {
-            tempCommand[cmdIndex] = 0;
             break;
         }
 

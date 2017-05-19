@@ -14,6 +14,7 @@
 #include "wireless_interface.h"
 #include "hal_nv.h"
 #include "hal_dma.h"
+#include "com_task.h"
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
@@ -91,6 +92,8 @@ int main(void)
 
     osThreadDef(UVC_Task, USBH_UVCTask, osPriorityNormal, 0, 4 * 128);
     osThreadCreate(osThread(UVC_Task), NULL);
+
+    COMTASK_Init();
 
     portENABLE_INTERRUPTS();
 
