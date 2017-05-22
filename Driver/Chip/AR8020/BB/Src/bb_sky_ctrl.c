@@ -131,7 +131,7 @@ uint8_t sky_id_match(void)
                 .par.rcLockCnt.u8_rcNrLockCnt  = pre_nrlockcnt,
             };
 
-            BB_UARTComSendMsg( BB_UART_COM_SESSION_0, (uint8_t *)&stru_skycStatus, sizeof(STRU_SysEventSkyStatus));
+            //BB_UARTComSendMsg( BB_UART_COM_SESSION_0, (uint8_t *)&stru_skycStatus, sizeof(STRU_SysEventSkyStatus));
         }
     }
 
@@ -272,7 +272,7 @@ void sky_auto_adjust_agc_gain(void)
                     .par.skyAgc.u8_skyagc2 = rx2_gain,
                 };
 
-                BB_UARTComSendMsg( BB_UART_COM_SESSION_0, (uint8_t *)&stru_skyAgcStatus, sizeof(STRU_SysEventSkyStatus));
+                //BB_UARTComSendMsg( BB_UART_COM_SESSION_0, (uint8_t *)&stru_skyAgcStatus, sizeof(STRU_SysEventSkyStatus));
                 //dlog_info("aver: %d %d %x %x", sum_1, sum_2, rx1_gain, rx2_gain);
             }
         }
@@ -1436,10 +1436,12 @@ static void sky_rc_frq_status_statistics(void)
                 .pid             = RC_MASK_CODE,
                 .par.u64_rcMask = s_st_rcFrqMask.u64_mask,
             };
+            
+#if 0
             BB_UARTComSendMsg( BB_UART_COM_SESSION_0, 
                        (uint8_t *)&stru_skycStatus, 
                        sizeof(STRU_SysEventSkyStatus));
-
+#endif
             u16_txCnt = 0;
         }
     }
