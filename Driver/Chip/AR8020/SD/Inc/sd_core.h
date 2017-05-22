@@ -418,7 +418,7 @@ SDMMC_Status Core_SDMMC_WaiteVoltSwitchInt(SDMMC_REG *SDMMCx);
 #define   Core_SDMMC_GetCMD(SDMMCx) \
             read_reg32((uint32_t *)&(SDMMCx->CMD));
 #define   Core_SDMMC_GetRESP0(SDMMCx) \
-            read_reg32((uint32_t *)&(SDMMCx->RESP0));
+            read_reg32((uint32_t *)&(SDMMCx->RESP0))
 #define   Core_SDMMC_GetRESP1(SDMMCx) \
             read_reg32((uint32_t *)&(SDMMCx->RESP1));
 #define   Core_SDMMC_GetRESP2(SDMMCx) \

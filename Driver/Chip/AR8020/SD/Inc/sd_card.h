@@ -203,6 +203,8 @@ typedef enum
 	/**
 	  * @brief  SD specific error defines
 	  */
+	  SD_FAIL                   =  (-1),
+	SD_OK                              = (0),
 	SD_CMD_CRC_FAIL                    = (1),   /*!< Command response received (but CRC check failed)              */
 	SD_DATA_CRC_FAIL                   = (2),   /*!< Data block sent/received (CRC check failed)                   */
 	SD_CMD_RSP_TIMEOUT                 = (3),   /*!< Command response timeout                                      */
@@ -250,8 +252,7 @@ typedef enum
 	SD_UNSUPPORTED_HW                  = (40),
 	SD_ERROR                           = (41),
 	SD_NOTCARD                         = (42), /* sdcard is not detected */
-	SD_UNSUPPORTED_VOLTAGE             = (43),
-	SD_OK                              = (0)
+	SD_UNSUPPORTED_VOLTAGE             = (43)
 
 } SD_ErrorTypedef;
 
