@@ -84,7 +84,7 @@ void HAL_USB_CloseVideo(void);
 * @retval   void
 * @note  
 */
-void HAL_USB_RegisterCustomerRecvData(void (*customerRecv)(void *));
+void HAL_USB_RegisterCustomerRecvData(void (*customerRecv)(void *, uint32_t *));
 
 
 /**
