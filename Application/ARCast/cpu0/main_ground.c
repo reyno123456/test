@@ -14,6 +14,7 @@
 #include "hal_gpio.h"
 #include "hal_uart.h"
 #include "arcast_appcommon.h"
+#include "pmu_rtp5903.h"
 
 void CONSOLE_Init(void)
 {
@@ -23,7 +24,8 @@ void CONSOLE_Init(void)
 
 static void GenericInitial(void const *argument)
 {
-    //Common_AVFORMATSysEventGroundInit();
+    Pmu_Rtp5903Configure();
+    Common_AVFORMATSysEventGroundInit();
     vTaskDelete(NULL);
 }
 
@@ -34,7 +36,6 @@ static void IO_Task(void const *argument)
         SYS_EVENT_Process();
     }
 }
-
 
 
 /**
@@ -52,7 +53,7 @@ int main(void)
     /* initialize the uart */
     CONSOLE_Init();
     dlog_info("cpu0 start!!! \n");
-
+    
     HAL_GPIO_InPut(HAL_GPIO_NUM99);
 
     HAL_USB_ConfigPHY();

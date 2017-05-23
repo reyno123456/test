@@ -39,7 +39,8 @@ SRC_C := ../Common/NORFlash/Src/nor_flash.c \
          ../Common/OV5640/Src/ov5640.c \
          ../Common/IT66021/Src/it_66021.c \
          ../Common/IT66021/Src/it6602.c \
-         ./Src/board_bbrf.c
+         ./Src/board_bbrf.c \
+         ./Src/pmu_rtp5903.c
 
 
 INCDIRS := -I../ \
@@ -53,6 +54,8 @@ INCDIRS := -I../ \
            -I$(TOP_DIR)/Library/Artosyn/Common/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc \
            -I../Common/IT66021/Inc \
+           -I$(TOP_DIR)/Driver/HAL/Inc \
+           -I./Inc \
 
 
 # object file(s)
@@ -77,6 +80,7 @@ install:
 	@cp -f ../Common/IT66021/Inc/it_typedef.h $(OUTPUT_HEADER_STAGING_DIR)	
 	@cp -f ../Common/NORFlash/Inc/nor_flash.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f ../Common/OV5640/Inc/ov5640.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f ./Inc/pmu_rtp5903.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f $(CFG_BIN) $(OUTPUT_BIN_STAGING_DIR)/
 
 clean:

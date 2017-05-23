@@ -661,14 +661,5 @@ void IT_66021_Initial(uint8_t index)
     InitMessage();
     IT_66021_I2CInitial();
     it66021_init();
-    #if 0
-    STRU_SettingConfigure* cfg_addr;
-    GET_CONFIGURE_FROM_FLASH(cfg_addr);    
-    hdmi_edid_table = (HDMI_SET_TABLE)(&(cfg_addr->hdmi_configure));
-    InitMessage();
-    IT_66021_I2CInitial();
-    IT_66021_GenericInitial(index);
 
-    dlog_info("HDMI IT66021 %d init finished!", index);
-    #endif
 }

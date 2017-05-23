@@ -9,3 +9,4 @@
 *.depend
 .nfs*
 Output/
+.APPLICATION_SCENARIO

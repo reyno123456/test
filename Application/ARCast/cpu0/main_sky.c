@@ -23,6 +23,7 @@
 #include "it6602.h"
 #include "hal_sram.h"
 #include "arcast_appcommon.h"
+#include "pmu_rtp5903.h"
 
 
 void CONSOLE_Init(void)
@@ -52,7 +53,9 @@ int main(void)
     /* initialize the uart */
     CONSOLE_Init();
     dlog_info("cpu0 start!!! \n");
-
+    
+    Pmu_Rtp5903Configure();
+    
     HAL_GPIO_InPut(HAL_GPIO_NUM99);
 
     HAL_USB_ConfigPHY();
@@ -85,12 +88,12 @@ int main(void)
 
     HAL_NV_Init();
     Wireless_TaskInit(WIRELESS_NO_RTOS);
-    //Common_AVFORMATSysEventSKYInit();
+    Common_AVFORMATSysEventSKYInit();
 
     for( ;; )
     {
         //HAL_USB_HostProcess();     
-        //HAL_MP3EncodePcm();
+        HAL_MP3EncodePcm();
         Wireless_MessageProcess();
         SYS_EVENT_Process();
     }
