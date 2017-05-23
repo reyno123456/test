@@ -98,7 +98,7 @@ static void BB_grd_uartDataHandler(void *p)
             g_stru_skyStatus.u8_rcCrcLockCnt = skyStatus.par.rcLockCnt.u8_rcCrcLockCnt;
             g_stru_skyStatus.u8_rcNrLockCnt  = skyStatus.par.rcLockCnt.u8_rcNrLockCnt;
 
-            dlog_info("rclock:%d  nrlock:%d", g_stru_skyStatus.u8_rcCrcLockCnt, g_stru_skyStatus.u8_rcNrLockCnt);
+            //dlog_info("rclock:%d  nrlock:%d", g_stru_skyStatus.u8_rcCrcLockCnt, g_stru_skyStatus.u8_rcNrLockCnt);
         }
         else if (RC_MASK_CODE == skyStatus.pid)
         {
@@ -108,7 +108,7 @@ static void BB_grd_uartDataHandler(void *p)
             grd_write_mask_code_to_sky(s_u8_rcMaskEnable, &s_u64_rcMask);
             if (tmpMaskCode != s_u64_rcMask)
             {
-                dlog_info("rcv_sky_calc_mask_code:0x%x,0x%x", (uint32_t)((s_u64_rcMask)>>32), (uint32_t)(s_u64_rcMask));
+         //       dlog_info("rcv_sky_calc_mask_code:0x%x,0x%x", (uint32_t)((s_u64_rcMask)>>32), (uint32_t)(s_u64_rcMask));
             }
         }
         else if (SKY_AGC_STATUS == skyStatus.pid)
@@ -116,7 +116,7 @@ static void BB_grd_uartDataHandler(void *p)
             g_stru_skyStatus.u8_skyagc1 = skyStatus.par.skyAgc.u8_skyagc1;
             g_stru_skyStatus.u8_skyagc2 = skyStatus.par.skyAgc.u8_skyagc2;
             
-            dlog_info("sky agc:0x%x 0x%x", g_stru_skyStatus.u8_skyagc1, g_stru_skyStatus.u8_skyagc2);
+         //   dlog_info("sky agc:0x%x 0x%x", g_stru_skyStatus.u8_skyagc1, g_stru_skyStatus.u8_skyagc2);
         }
     }
 }

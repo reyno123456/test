@@ -179,7 +179,7 @@ void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsig
         WRITE_WORD((ENC_REG_ADDR+(0x07<<2)),8000000); //8Mbps
     else
         WRITE_WORD((ENC_REG_ADDR+(0x07<<2)),(br*1000000));
-    WRITE_WORD((ENC_REG_ADDR+(0x08<<2)),0x04040000);
+    WRITE_WORD((ENC_REG_ADDR+(0x08<<2)),0x04040f00); // default ipratiomax=15, lhu
     WRITE_WORD((ENC_REG_ADDR+(0x09<<2)),0x00005900);
     if ((src >= ENCODER_INPUT_SRC_HDMI_0) && (src <= ENCODER_INPUT_SRC_DVP_1))
     {
@@ -194,7 +194,7 @@ void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsig
         ;
     }
     WRITE_WORD((ENC_REG_ADDR+(0x0b<<2)),0x12469422);
-    WRITE_WORD((ENC_REG_ADDR+(0x0c<<2)),0x00FFFF00);
+    WRITE_WORD((ENC_REG_ADDR+(0x0c<<2)),0x00FFFF03); // bs_info enable, aciprato enable, lhu
 
     if( height <= 720 ) {
         dlog_info("v0 <= 720p\n");
@@ -214,6 +214,11 @@ void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsig
     }
 
     WRITE_WORD((ENC_REG_ADDR+(0x12<<2)),0x1D1E0401);
+#ifdef ARCAST
+    WRITE_WORD((ENC_REG_ADDR+(0x18<<2)),0x0005AA64); // HBitsRatioAbits_level=5, AbitsRatioTargetBits_level=170, psnr_drop_level=3db, insertOneIFrame mode disable, wireless_screen mode enable, lhu
+#else
+    WRITE_WORD((ENC_REG_ADDR+(0x18<<2)),0x0005AA60); // HBitsRatioAbits_level=5, AbitsRatioTargetBits_level=170, psnr_drop_level=3db, insertOneIFrame mode disable, wireless_screen mode disable, lhu
+#endif
 
     WRITE_WORD((ENC_REG_ADDR+(0x32<<2)),0x18212931);
     
@@ -291,7 +296,7 @@ void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsig
         WRITE_WORD((ENC_REG_ADDR+(0x20<<2)),8000000); //8Mbps
     else
         WRITE_WORD((ENC_REG_ADDR+(0x20<<2)),(br*1000000));
-    WRITE_WORD((ENC_REG_ADDR+(0x21<<2)),0x04040000);
+    WRITE_WORD((ENC_REG_ADDR+(0x21<<2)),0x04040f00); // default ipratiomax=15, lhu
     WRITE_WORD((ENC_REG_ADDR+(0x22<<2)),0x00003000);
     if ((src >= ENCODER_INPUT_SRC_HDMI_0) && (src <= ENCODER_INPUT_SRC_DVP_1))
     {
@@ -306,7 +311,7 @@ void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsig
         ;
     }
     WRITE_WORD((ENC_REG_ADDR+(0x24<<2)),0x12469422);
-    WRITE_WORD((ENC_REG_ADDR+(0x25<<2)),0x01FFFF00);
+    WRITE_WORD((ENC_REG_ADDR+(0x25<<2)),0x01FFFF03); // bs_info enable, acipratio enable, lhu
 
     if( height <= 720 ) {
         dlog_info("v1 <= 720p\n");
@@ -327,6 +332,12 @@ void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsig
         WRITE_WORD((ENC_REG_ADDR+(0x2a<<2)),0x3e808580);
     }
     WRITE_WORD((ENC_REG_ADDR+(0x2b<<2)),0x11120401);
+#ifdef ARCAST
+    WRITE_WORD((ENC_REG_ADDR+(0x31<<2)),0x0005AA64); // HBitsRatioAbits_level=5, AbitsRatioTargetBits_level=170, psnr_drop_level=3db, insertOneIFrame mode disable, wireless_screen mode enable, lhu
+#else
+    WRITE_WORD((ENC_REG_ADDR+(0x31<<2)),0x0005AA60); // HBitsRatioAbits_level=5, AbitsRatioTargetBits_level=170, psnr_drop_level=3db, insertOneIFrame mode disable, wireless_screen mode disable, lhu
+#endif
+
     WRITE_WORD((ENC_REG_ADDR+(0x32<<2)),0x18212931);
 #ifdef RUN_IN_EMULATOR    // Test in emulator  
     WRITE_WORD((ENC_REG_ADDR+(0x33<<2)),0x39414A08);

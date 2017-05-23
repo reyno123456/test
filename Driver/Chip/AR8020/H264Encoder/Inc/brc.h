@@ -15,7 +15,7 @@
     #define MIN_INT   0x80000000
     #define MAX_INT   0x7fffffff
     typedef long long int64;
-    typedef int Boolean;
+    typedef unsigned char Boolean;
 #endif	  //###########
 
 #define MIN_INT64 0x8000000000000000
@@ -25,51 +25,65 @@
 //// generic rate control variables
 struct my_rc{
 //// top set(img,params)
-  int    v0_enable;
-  int    v0_rc_enable;
+  unsigned char v0_enable;
+  unsigned char v0_rc_enable;
   int    v0_height;
   int    v0_width;
   int    v0_basicunit;
-  int    v0_RCUpdateMode;
+  unsigned char v0_RCUpdateMode;
   int    v0_bit_rate;
-  int    v0_framerate;
-  int    v0_PMaxQpChange;
-  int    v0_SeinitialQP;
+  unsigned char v0_framerate;
+  unsigned char v0_PMaxQpChange;
   int    v0_size;
-  int    v0_intra_period;
-  int    v0_RCISliceBitRatio;
+  unsigned char v0_intra_period;
+  unsigned char v0_RCISliceBitRatio;
+  unsigned char v0_RCISliceBitRatioMax;
   int    v0_no_frm_base;
-  int    v0_RCMinQP;
-  int    v0_RCMaxQP;
+  unsigned char v0_RCMinQP;
+  unsigned char v0_RCMaxQP;
   int    v0_FrameSizeInMbs;  
   int    v0_FrameHeightInMbs;
   int    v0_type;
   int    v0_BasicUnit;
   int    v0_MBPerRow;
   int    v0_qp;
-  int    v0_RCIoverPRatio;
+  unsigned char v0_RCIoverPRatio;
   int    v0_header_bits;
-  int    v0_c1_over; //
-  int    v0_re_bitrate;
+  unsigned char v0_c1_over; //
+  unsigned char v0_re_bitrate;
   int    v0_new_bitrate;
   int    v0_PrevBitRate;// lhumod
-  int    v0_cmadequ0;// lhumod
+  unsigned char v0_cmadequ0;// lhumod
   int    v0_TotalFrameMAD;// lhumod
-  int    v0_RCEnableAutoConfigGOP;// @lhu
-  int    v0_RCEnableAutoConfigIOPRatio;// @lhu
-  int    v0_prev_ac_br_index;// @lhu
-  int    v0_wireless_screen;// @lhu
-  int    v0_PrevRCMinQP;// lhupsnr
+  unsigned char v0_prev_ac_br_index;// @lhu
+  unsigned char v0_wireless_screen;// @lhu
+  unsigned char v0_changeToIFrame;// @lhu
+  unsigned char v0_insertOneIFrame;// @lhu
+  unsigned char v0_PrevFrmPSNRLow; // @lhu
+  unsigned char v0_HBitsRatioABits_level; // @lhu
+  unsigned char v0_PrevIntraPeriod;// @lhu
+  unsigned char v0_gop_change_NotResetRC;// @lhu
+  unsigned char v0_nextPFgotoIF;// @lhu
+  unsigned char v0_IFduration;// @lhu
+  int    v0_RCISliceTargetBits;// @lhu
+  unsigned char v0_PrevRCMinQP;// lhupsnr
+  unsigned char v0_PSNRDropSharply;
+  long long v0_ifrm_ymse, v0_lastpfrm_ymse;
+  long long v0_frm_ymse[2];
+  int    v0_frm_fbits[2];
+  int    v0_frm_hbits[2];
+  int    v0_frm_abits[2];
+  int    v0_RCSliceBits;
+  int    v0_PrevFbits;
 //
   int    v0_gop_cnt;
   int    v0_frame_cnt;
   int    v0_bu_cnt;
   int    v0_mb_cnt;
-  int    v0_rc_start;
-  
   int    v0_frame_mad;
   int    v0_frame_tbits;
   int    v0_frame_hbits;
+  int    v0_frame_abits;
   
   int    v0_frame_bs;
   int    v0_slice_qp;
@@ -113,9 +127,9 @@ struct my_rc{
   int    v0_rc_tmp3 [20];
   int    v0_rc_tmp4 [20];
   
-  int    v0_rc_hold;
-  int    v0_mad_hold;
-  
+  unsigned char v0_rc_hold;
+  unsigned char v0_mad_hold;
+
   char   v0_rc_rgRejected [20];
   char   v0_mad_rgRejected [20];
   int    v0_m_X1_8p;
@@ -164,12 +178,12 @@ struct my_rc{
   int    v0_TotalPFrame;
 //// for feedback
   int    v0_aof_inc_qp;
-  int    v0_fd_row_cnt;
-  int    v0_fd_last_row;
-  int    v0_fd_last_p;
-  int    v0_fd_iframe;
-  int    v0_fd_reset;  
-  int    v0_fd_irq_en;
+  unsigned char v0_fd_row_cnt;
+  unsigned char v0_fd_last_row;
+  unsigned char v0_fd_last_p;
+  unsigned char v0_fd_iframe;
+  unsigned char v0_fd_reset;  
+  unsigned char v0_fd_irq_en;
 //int    fd_cpu_test;
 //// for test
 // int    v0_PrevImgType;// added by lhulhu
@@ -180,51 +194,66 @@ struct my_rc{
 // int    v0_TargetBitsPerFrm;// added by lhusc
 
 // second view global parameters
-  int    v1_enable;
-  int    v1_rc_enable;
+  unsigned char v1_enable;
+  unsigned char v1_rc_enable;
   int    v1_height;
   int    v1_width;
   int    v1_basicunit;
-  int    v1_RCUpdateMode;
+  unsigned char v1_RCUpdateMode;
   int    v1_bit_rate;
-  int    v1_framerate;
-  int    v1_PMaxQpChange;
-  int    v1_SeinitialQP;
+  unsigned char v1_framerate;
+  unsigned char v1_PMaxQpChange;
   int    v1_size;
-  int    v1_intra_period;
-  int    v1_RCISliceBitRatio;
+  unsigned char v1_intra_period;
+  unsigned char v1_RCISliceBitRatio;
+  unsigned char v1_RCISliceBitRatioMax;
   int    v1_no_frm_base;
-  int    v1_RCMinQP;
-  int    v1_RCMaxQP;
+  unsigned char v1_RCMinQP;
+  unsigned char v1_RCMaxQP;
   int    v1_FrameSizeInMbs;  
   int    v1_FrameHeightInMbs;
   int    v1_type;
   int    v1_BasicUnit;
   int    v1_MBPerRow;
   int    v1_qp;
-  int    v1_RCIoverPRatio;
+  unsigned char v1_RCIoverPRatio;
   int    v1_header_bits;
-  int    v1_c1_over; //
-  int    v1_re_bitrate;
+  unsigned char v1_c1_over; //
+  unsigned char v1_re_bitrate;
   int    v1_new_bitrate;
-  int    v1_cmadequ0;// lhumod
+  unsigned char v1_cmadequ0;// lhumod
   int    v1_PrevBitRate;// lhumod
   int    v1_TotalFrameMAD;// lhumod
-  int    v1_RCEnableAutoConfigGOP;// @lhu
-  int    v1_RCEnableAutoConfigIOPRatio;// @lhu
-  int    v1_prev_ac_br_index;// @lhu
-  int    v1_wireless_screen;// @lhu
-  int    v1_PrevRCMinQP;// lhupsnr
+  unsigned char v1_prev_ac_br_index;// @lhu
+  unsigned char v1_wireless_screen;// @lhu
+  unsigned char v1_changeToIFrame;// @lhu
+  unsigned char v1_insertOneIFrame;// @lhu
+  unsigned char v1_PrevFrmPSNRLow; // @lhu
+  unsigned char v1_HBitsRatioABits_level; // @lhu
+  unsigned char v1_PrevIntraPeriod;// @lhu
+  unsigned char v1_gop_change_NotResetRC;// @lhu
+  unsigned char v1_nextPFgotoIF;// @lhu
+  unsigned char v1_IFduration;// @lhu
+  int    v1_RCISliceTargetBits;// @lhu
+  unsigned char v1_PrevRCMinQP;// lhupsnr
+  unsigned char v1_PSNRDropSharply;
+  long long v1_ifrm_ymse, v1_lastpfrm_ymse;
+  long long v1_frm_ymse[2];
+  int    v1_frm_fbits[2];
+  int    v1_frm_hbits[2];
+  int    v1_frm_abits[2];
+  int    v1_RCSliceBits;
+  int    v1_PrevFbits;
 //
   int    v1_gop_cnt;
   int    v1_frame_cnt;
   int    v1_bu_cnt;
   int    v1_mb_cnt;
-  int    v1_rc_start;
   
   int    v1_frame_mad;
   int    v1_frame_tbits;
   int    v1_frame_hbits;
+  int    v1_frame_abits;
   
   int    v1_frame_bs;
   int    v1_slice_qp;
@@ -268,9 +297,9 @@ struct my_rc{
   int    v1_rc_tmp3 [20];
   int    v1_rc_tmp4 [20];
   
-  int    v1_rc_hold;
-  int    v1_mad_hold;
-  
+  unsigned char v1_rc_hold;
+  unsigned char v1_mad_hold;
+
   char   v1_rc_rgRejected [20];
   char   v1_mad_rgRejected [20];
   int    v1_m_X1_8p;
@@ -319,12 +348,12 @@ struct my_rc{
   int    v1_TotalPFrame;
 //// for feedback
   int    v1_aof_inc_qp;
-  int    v1_fd_row_cnt;
-  int    v1_fd_last_row;
-  int    v1_fd_last_p;
-  int    v1_fd_iframe;
-  int    v1_fd_reset;  
-  int    v1_fd_irq_en;
+  unsigned char v1_fd_row_cnt;
+  unsigned char v1_fd_last_row;
+  unsigned char v1_fd_last_p;
+  unsigned char v1_fd_iframe;
+  unsigned char v1_fd_reset;  
+  unsigned char v1_fd_irq_en;
 //// for test
 // int    v1_PrevImgType;// added by lhulhu
 // int    v1_RCInitialQP;// added by lhulhu
@@ -340,8 +369,8 @@ int v0_tbits_tmp,v0_hbits_tmp,v0_fbits_tmp,v0_mad_tmp;
 int v1_tbits_tmp,v1_hbits_tmp,v1_fbits_tmp,v1_mad_tmp;
 int qp;
 int ymsel_tmp, ymseh_tmp; // @lhu
-long long v0_ymse_frame,v0_ymse_iframe,v0_ymse_pframe,v0_ymse_last_p;
-long long v1_ymse_frame,v1_ymse_iframe,v1_ymse_pframe,v1_ymse_last_p;
+long long v0_ymse_frame;
+long long v1_ymse_frame;
 Boolean v0_last_p_gop_change;
 Boolean v1_last_p_gop_change;
 int v0_last_p_prev_gop;
@@ -359,15 +388,15 @@ int  my_sqrt(int x);
 int  my_sqrt64(int64 x);
 int  Qstep2QP_8p(int Qstep_8p);
 int  QP2Qstep_8p(int QP);
-//int  RCAutoConfig_GOP( ); // @lhu
-//int  RCAutoConfig_IOverPRatio( ); // @lhu
-int RCRaiseMinQP_PSPNBig39(int view, int prev_RCMinQP); //lhupsnr
 void my_rc_ac_br(int view); // @lhu
+//void my_calc_prevFramePSNR(unsigned char psnr_level, int view);
+unsigned short my_divider2psnr(int my_divider);
+unsigned char my_trace_PSNRDropSharply(unsigned char psnr_drop_level, unsigned char view);
+void my_criteria_decide_changeToIFrame(unsigned char HBitsRatioABits_level, unsigned char ABitsRatioTargetBits_level, unsigned char PSNRDrop_level, unsigned char view);
+void my_decide_backtoNormalGOP(int view);
+void my_ac_RCISliceBitRatio(unsigned char RCISliceBitRatioMax, int view);
 
 void my_v0_rc_params( );
-//void my_v0_rc_params_ac_gop( ); // @lhu
-//void my_v0_rc_params_ac_iopratio( ); // @lhu
-void my_v0_rc_raiseminqp_psnrbig39( ); //lhupsnr
 void my_v0_rc_init_seq( );
 void my_v0_rc_init_GOP(int np);
 void my_v0_rc_init_pict(int mult);
@@ -392,9 +421,9 @@ void my_v0_rc_update_frame_stats( );
 void my_v0_rc_init_gop_params( );
 void my_v0_rc_init_frame( );
 void my_v0_rc_store_header_bits( );
-int  my_v0_updateQPRC1( );
+//int  my_v0_updateQPRC1( );
 int  my_v0_updateQPRC3( );
-int  my_v0_updateQPRC0( );
+//int  my_v0_updateQPRC0( );
 void my_v0_initial_all( );
 void my_v0_feedback( );
 void my_v0_hold( );
@@ -403,9 +432,6 @@ int  (*my_v0_updateQP)( );
 // second view sub-function
 void my_v1_rc_params( );
 void my_v1_rc_init_seq( );
-//void my_v1_rc_params_ac_gop( ); // @lhu
-//void my_v1_rc_params_ac_iopratio( ); // @lhu
-void my_v1_rc_raiseminqp_psnrbig39( ); //lhupsnr
 void my_v1_rc_init_GOP(int np);
 void my_v1_rc_init_pict(int mult);
 void my_v1_rc_update_pict(int nbits);
@@ -429,9 +455,9 @@ void my_v1_rc_update_frame_stats( );
 void my_v1_rc_init_gop_params( );
 void my_v1_rc_init_frame( );
 void my_v1_rc_store_header_bits( );
-int  my_v1_updateQPRC1( );
+//int  my_v1_updateQPRC1( );
 int  my_v1_updateQPRC3( );
-int  my_v1_updateQPRC0( );
+//int  my_v1_updateQPRC0( );
 void my_v1_initial_all( );
 void my_v1_feedback( );
 void my_v1_hold( );
@@ -439,7 +465,6 @@ int  (*my_v1_updateQP)( );
 
 void update_aof_cycle();
 void update_aof();
-
 
 
 #ifdef ARMCM7_RC //###########

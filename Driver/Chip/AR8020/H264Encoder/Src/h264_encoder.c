@@ -187,29 +187,34 @@ static uint32_t H264_Encoder_GetBufferLevel(unsigned char view)
 {
     uint32_t buf_level = 0;
 
+    Reg_Write32_Mask(ENC_REG_ADDR + 0xDC, (unsigned int)(0x21 << 24), BIT(31)|BIT(30)|BIT(29)|BIT(28)|BIT(27)|BIT(26)|BIT(25)|BIT(24));
+    
+    //read buffer counter
+
     if (view == 0)
     {
-        //read buffer counter
-        Reg_Write32_Mask(ENC_REG_ADDR + 0xDC, (unsigned int)(0x21 << 24), BIT(31)|BIT(30)|BIT(29)|BIT(28)|BIT(27)|BIT(26)|BIT(25)|BIT(24));
         Reg_Write32_Mask(ENC_REG_ADDR + 0xD8, (unsigned int)(0x04 <<  8), BIT(11)|BIT(10)|BIT(9)|BIT(8));       // Switch to vdb debug register
-        
-        buf_level = Reg_Read32(ENC_REG_ADDR + 0xF8);
-        Reg_Write32_Mask(ENC_REG_ADDR + 0xDC, (unsigned int)(0x00 << 24), BIT(31)|BIT(30)|BIT(29)|BIT(28)|BIT(27)|BIT(26)|BIT(25)|BIT(24));
-        //dlog_info("F: %d, L: %d.", rca.v0_frame_cnt, buf_level );
     }
+    else
+    {
+        Reg_Write32_Mask(ENC_REG_ADDR + 0xD8, (unsigned int)(0x05 <<  8), BIT(11)|BIT(10)|BIT(9)|BIT(8));       // Switch to vdb debug register
+    }
+    
+    buf_level = Reg_Read32(ENC_REG_ADDR + 0xF8);
+    Reg_Write32_Mask(ENC_REG_ADDR + 0xDC, (unsigned int)(0x00 << 24), BIT(31)|BIT(30)|BIT(29)|BIT(28)|BIT(27)|BIT(26)|BIT(25)|BIT(24));
 
     return buf_level;
 }
 
 static void H264_Encoder_IdleCallback(void* p)
 {
+    uint32_t buf_level;
     if ((g_stEncoderStatus[0].over_flow == 1) && (g_stEncoderStatus[0].running == 0))
     {
-        uint32_t buf_level = H264_Encoder_GetBufferLevel(0);
-        
+        buf_level = H264_Encoder_GetBufferLevel(0);
         if (buf_level <= H264_ENCODER_BUFFER_LOW_LEVEL)
         {
-            Reg_Write32( 0xa003008c, 0x0);
+            Reg_Write32_Mask( 0xa003008c, 0x0, 0x01);
             H264_Encoder_StartView(0, g_stEncoderStatus[0].resW, g_stEncoderStatus[0].resH, 
                                       g_stEncoderStatus[0].gop, g_stEncoderStatus[0].framerate, 
                                       g_stEncoderStatus[0].bitrate,
@@ -218,10 +223,29 @@ static void H264_Encoder_IdleCallback(void* p)
 
             g_stEncoderStatus[0].over_flow = 0;
             
-            dlog_info("Buffer level %d, open view 0.", buf_level);
+            dlog_info("Buffer level %d, open view 0", buf_level);
         }
     }
+    else if ((g_stEncoderStatus[1].over_flow == 1) && (g_stEncoderStatus[1].running == 0))
+    {
+        buf_level = H264_Encoder_GetBufferLevel(1);
+        if (buf_level <= H264_ENCODER_BUFFER_LOW_LEVEL)
+        {
+            Reg_Write32_Mask(0xa003004c, 0x0, 0x04);
+            H264_Encoder_StartView(1, g_stEncoderStatus[1].resW, g_stEncoderStatus[1].resH, 
+                                      g_stEncoderStatus[1].gop,  g_stEncoderStatus[1].framerate, 
+                                      g_stEncoderStatus[1].bitrate,
+                                      g_stEncoderStatus[1].src
+                                      );
+
+            g_stEncoderStatus[1].over_flow = 0;
+            
+            dlog_info("Buffer level %d, open view 1", buf_level);
+        }        
+    }
 }
+
+
 static void H264_Encoder_InputVideoFormatChangeCallback(void* p)
 {
     uint8_t index  = ((STRU_SysEvent_H264InputFormatChangeParameter*)p)->index;
@@ -251,7 +275,7 @@ static int H264_Encoder_UpdateGop(unsigned char view, unsigned char gop)
 }
 
 
-int H264_Encoder_UpdateIpRatio(unsigned char view, unsigned char ipratio)
+int H264_Encoder_UpdateIpRatioAndIpRatioMax(unsigned char view, unsigned char ipratio, unsigned char ipratiomax)
 {
     uint32_t addr;
 
@@ -265,68 +289,71 @@ int H264_Encoder_UpdateIpRatio(unsigned char view, unsigned char ipratio)
     }
     
     Reg_Write32_Mask(addr, (unsigned int)(ipratio << 24), BIT(27)|BIT(26)|BIT(25)|BIT(24));
+    Reg_Write32_Mask(addr, (unsigned int)(ipratiomax << 8), BIT(15)|BIT(14)|BIT(13)|BIT(12)|BIT(11)|BIT(10)|BIT(9)|BIT(8));
 }
 
-static int H264_Encoder_UpdateMinQP(unsigned char view, unsigned char br)
+static int H264_Encoder_UpdateMinAndMaxQP(unsigned char view, unsigned char br)
 {
-    unsigned int addr, addr_wireless_screen, minqp, maxqp;
-    switch( br ) {
-        case 0 : minqp = 10 ; break; // 8Mbps
-        case 1 : minqp = 19 ; break; // 600kbps
-        case 2 : minqp = 18 ; break; // 1.2Mbps
-        case 3 : minqp = 17 ; break; // 2.4Mbps
-        case 4 : minqp = 16 ; break; // 3Mbps
-        case 5 : minqp = 15 ; break; // 3.5Mbps
-        case 6 : minqp = 15 ; break; // 4Mbps
-        case 7 : minqp = 14 ; break; // 4.8Mbps
-        case 8 : minqp = 14 ; break; // 5Mbps
-        case 9 : minqp = 12 ; break; // 6Mbps
-        case 10: minqp = 12 ; break; // 7Mbps
-        case 11: minqp = 11 ; break; // 7.5Mbps
-        case 12: minqp = 10 ; break; // 9Mbps
-        case 13: minqp = 9  ; break; // 10Mbps
-        default: minqp = 16 ; break; // 3Mbps
-    }
+    unsigned int addr, addr_arcast, minqp, maxqp;
     if(view==0) {
     	addr = ENC_REG_ADDR+(0x06<<2);
-    	addr_wireless_screen = ENC_REG_ADDR+(0x18<<2);
+    	addr_arcast = ENC_REG_ADDR+(0x18<<2);
     } else {
         addr = ENC_REG_ADDR+(0x1F<<2);
-    	addr_wireless_screen = ENC_REG_ADDR+(0x31<<2);
+    	addr_arcast = ENC_REG_ADDR+(0x31<<2);
+    }
+    switch( br ) { // update minqp value, lhu, 2017/04/21
+        case 0 : {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x10; else minqp = 0x12 ;} break; // 8Mbps
+        case 1 : {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x17; else minqp = 0x19 ;} break; // 600kbps
+        case 2 : {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x16; else minqp = 0x18 ;} break; // 1.2Mbps
+        case 3 : {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x15; else minqp = 0x17 ;} break; // 2.4Mbps
+        case 4 : {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x15; else minqp = 0x17 ;} break; // 3Mbps
+        case 5 : {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x14; else minqp = 0x16 ;} break; // 3.5Mbps
+        case 6 : {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x14; else minqp = 0x16 ;} break; // 4Mbps
+        case 7 : {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x13; else minqp = 0x15 ;} break; // 4.8Mbps
+        case 8 : {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x13; else minqp = 0x15 ;} break; // 5Mbps
+        case 9 : {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x12; else minqp = 0x14 ;} break; // 6Mbps
+        case 10: {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x12; else minqp = 0x14 ;} break; // 7Mbps
+        case 11: {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x11; else minqp = 0x13 ;} break; // 7.5Mbps
+        case 12: {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x10; else minqp = 0x12 ;} break; // 9Mbps
+        case 13: {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x0e; else minqp = 0x10 ;} break; // 10Mbps
+        default: {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x15; else minqp = 0x17 ;} break; // 3Mbps
     }
     Reg_Write32_Mask(addr, (unsigned int)(minqp<<8), BIT(15)|BIT(14)|BIT(13)|BIT(12)|BIT(11)|BIT(10)|BIT(9)|BIT(8)); // set minqp, lhu
-    // set maxqp when wireless_screen application, lhu
-    if (((Reg_Read32(addr_wireless_screen))>>2)&0x1) {
-    	maxqp = minqp + 30;
-        Reg_Write32_Mask(addr, (unsigned int)(maxqp<<8), BIT(23)|BIT(22)|BIT(21)|BIT(20)|BIT(19)|BIT(18)|BIT(17)|BIT(16));
+    // set maxqp in arcast mode (maxqp-minqp:0x13) and non-arcast mode (maxqp-minqp:0x19) when bit-rate changed, lhu, 2017/05/05
+    {
+    	maxqp = minqp + ((((Reg_Read32(addr_arcast))>>2)&0x01)? 0x13:0x19);
+        Reg_Write32_Mask(addr, (unsigned int)(maxqp<<16), BIT(23)|BIT(22)|BIT(21)|BIT(20)|BIT(19)|BIT(18)|BIT(17)|BIT(16));
     }
 }
 
 int H264_Encoder_UpdateBitrate(unsigned char view, unsigned char br_idx)
 {
-    uint8_t ratio = 0;
+    uint8_t ratio = 0, ratiomax = 0;
+    unsigned int frame_rate;
 
     if (view >= 2)
     {
         return 0;
     }
 
-    switch( br_idx ) {
-        case 0 : ratio = 4  ; break; // 8Mbps
-        case 1 : ratio = 12 ; break; // 600kbps
-        case 2 : ratio = 11 ; break; // 1.2Mbps
-        case 3 : ratio = 9 ; break;  // 2.4Mbps
-        case 4 : ratio = 8 ; break;  // 3Mbps
-        case 5 : ratio = 7 ; break;  // 3.5Mbps
-        case 6 : ratio = 7 ; break;  // 4Mbps
-        case 7 : ratio = 6 ; break;  // 4.8Mbps
-        case 8 : ratio = 6 ; break;  // 5Mbps
-        case 9 : ratio = 6 ; break;  // 6Mbps
-        case 10: ratio = 5 ; break;  // 7Mbps
-        case 11: ratio = 5 ; break;  // 7.5Mbps
-        case 12: ratio = 4 ; break;  // 9Mbps
-        case 13: ratio = 4;  break;  // 10Mbps
-        default: ratio = 8;  break;  //3Mbps
+    frame_rate = (view == 0) ? g_stEncoderStatus[0].framerate: g_stEncoderStatus[1].framerate;
+    switch( br_idx ) { // update ipratio and ipratiomax value, lhu, 2017/04/21
+        case 0 : {ratio =  4 ; if (frame_rate == 30) ratiomax = 10; else ratiomax =  8;} break; // 8Mbps
+        case 1 : {ratio = 12 ; if (frame_rate == 30) ratiomax = 26; else ratiomax = 18;} break; // 600kbps
+        case 2 : {ratio = 11 ; if (frame_rate == 30) ratiomax = 23; else ratiomax = 17;} break; // 1.2Mbps
+        case 3 : {ratio =  9 ; if (frame_rate == 30) ratiomax = 23; else ratiomax = 17;} break; // 2.4Mbps
+        case 4 : {ratio =  8 ; if (frame_rate == 30) ratiomax = 23; else ratiomax = 17;} break; // 3Mbps
+        case 5 : {ratio =  7 ; if (frame_rate == 30) ratiomax = 22; else ratiomax = 16;} break; // 3.5Mbps
+        case 6 : {ratio =  7 ; if (frame_rate == 30) ratiomax = 21; else ratiomax = 16;} break; // 4Mbps
+        case 7 : {ratio =  6 ; if (frame_rate == 30) ratiomax = 15; else ratiomax = 12;} break; // 4.8Mbps
+        case 8 : {ratio =  6 ; if (frame_rate == 30) ratiomax = 15; else ratiomax = 12;} break; // 5Mbps
+        case 9 : {ratio =  6 ; if (frame_rate == 30) ratiomax = 15; else ratiomax = 12;} break; // 6Mbps
+        case 10: {ratio =  5 ; if (frame_rate == 30) ratiomax = 12; else ratiomax = 10;} break; // 7Mbps
+        case 11: {ratio =  5 ; if (frame_rate == 30) ratiomax = 11; else ratiomax =  9;} break; // 7.5Mbps
+        case 12: {ratio =  4 ; if (frame_rate == 30) ratiomax =  8; else ratiomax =  7;} break; // 9Mbps
+        case 13: {ratio =  4 ; if (frame_rate == 30) ratiomax =  7; else ratiomax =  7;} break; // 10Mbps
+        default: {ratio =  8 ; if (frame_rate == 30) ratiomax = 23; else ratiomax = 17;} break; // 3Mbps
     }
 
     dlog_info("%d %d %d %d %d %d\n", g_stEncoderStatus[0].running, g_stEncoderStatus[1].running, 
@@ -337,33 +364,19 @@ int H264_Encoder_UpdateBitrate(unsigned char view, unsigned char br_idx)
         if (view == 0)
         {
             Reg_Write32_Mask(ENC_REG_ADDR+(0xA<<2), (unsigned int)(br_idx << 26), BIT(26) | BIT(27) | BIT(28) | BIT(29) | BIT(30));
-            if(br_idx >= 1 && br_idx <= 5)
-            {
-                H264_Encoder_UpdateGop(view, 60);
-            }
-            else
-            {
-                H264_Encoder_UpdateGop(view, 30);
-            }  
-
-            H264_Encoder_UpdateIpRatio(view, ratio);
+            //H264_Encoder_UpdateGop(0, g_stEncoderStatus[0].framerate); // comment out by lhu, 2017/04/21
+            H264_Encoder_UpdateIpRatioAndIpRatioMax(0, ratio, ratiomax);
+            H264_Encoder_UpdateMinAndMaxQP(0, br_idx);
         }
         else
         {
             Reg_Write32_Mask(ENC_REG_ADDR+(0x23<<2), (unsigned int)(br_idx << 26), BIT(26) | BIT(27) | BIT(28) | BIT(29) | BIT(30));
-            if(br_idx >= 1 && br_idx <= 5)
-            {
-                H264_Encoder_UpdateGop(view, 60);
-            }
-            else
-            {
-                H264_Encoder_UpdateGop(view, 30);
-            }
-
-            H264_Encoder_UpdateIpRatio(view, ratio);            
+            //H264_Encoder_UpdateGop(1, g_stEncoderStatus[1].framerate); // comment out by lhu, 2017/04/21
+            H264_Encoder_UpdateIpRatioAndIpRatioMax(1, ratio, ratiomax);
+            H264_Encoder_UpdateMinAndMaxQP(1, br_idx);
         }
 
-        dlog_info("Encoder bitrate change: %d, %d %d\n", view, br_idx, ratio);
+        dlog_info("Encoder bitrate change: %d, %d, %d, %d\n", view, br_idx, ratio, ratiomax);
     }
     
     g_stEncoderStatus[view].bitrate = br_idx;
@@ -375,9 +388,6 @@ static void H264_Encoder_BBModulationChangeCallback(void* p)
     uint8_t br_idx = ((STRU_SysEvent_BB_ModulationChange *)p)->BB_MAX_support_br;
     uint8_t ch = ((STRU_SysEvent_BB_ModulationChange *)p)->u8_bbCh;
     
-    /*dlog_info("H264 bitidx: %d \r\n", br_idx);
-    H264_Encoder_UpdateBitrate(0, br_idx);
-    H264_Encoder_UpdateBitrate(1, br_idx);*/
     if (0 == ch)
     {
         H264_Encoder_UpdateBitrate(0, br_idx);
@@ -391,14 +401,12 @@ static void H264_Encoder_BBModulationChangeCallback(void* p)
     else
     {
     }
-
 }
 
 static void VEBRC_IRQ_Wrap_Handler(uint32_t u32_vectorNum)
 {
     uint32_t view0_feedback = Reg_Read32(ENC_REG_ADDR+(0x09<<2));
     uint32_t view1_feedback = Reg_Read32(ENC_REG_ADDR+(0x22<<2));
-	g_stEncoderStatus[0].bu_cnt ++;
 
     if(g_stEncoderStatus[0].running == 1)  // View0 is opened
     {
@@ -412,34 +420,15 @@ static void VEBRC_IRQ_Wrap_Handler(uint32_t u32_vectorNum)
             if(buf_level >= H264_ENCODER_BUFFER_HIGH_LEVEL)
             {
                 //Close Encoder
-                Reg_Write32( (unsigned int) 0xa003008c, 0x01);
+                Reg_Write32_Mask( (unsigned int) 0xa003008c, 0x01, 0x01);
                 g_stEncoderStatus[0].over_flow = 1;
                 close_view0();
                 g_stEncoderStatus[0].running = 0;
-                //dlog_info("BL %d, close 0. %d", buf_level, g_stEncoderStatus[0].bu_cnt);
-                //while( 1 )
-                //{
-                //    buf_level = H264_Encoder_GetBufferLevel( 0 );
-                //    if ( buf_level <= H264_ENCODER_BUFFER_LOW_LEVEL )
-                //    {
-                //        Reg_Write32( (unsigned int) 0xa003008c, 0x00);
-                //        H264_Encoder_StartView(0, g_stEncoderStatus[0].resW, g_stEncoderStatus[0].resH, 
-                //                                  g_stEncoderStatus[0].gop, g_stEncoderStatus[0].framerate, 
-                //                                  g_stEncoderStatus[0].bitrate);
-
-                //        g_stEncoderStatus[0].over_flow = 0;
-                //        
-                //        dlog_info("Buffer level %d, open view 0.", buf_level);
-                //        break;
-                //    }
-                //}
             }
-			g_stEncoderStatus[0].bu_cnt = 0;
         }
     }
 
-
-    if(g_stEncoderStatus[1].running == 1)  // View0 is opened
+    if(g_stEncoderStatus[1].running == 1)  // View1 is opened
     {
         // check if this is the last row
         uint32_t v1_last_row = ((view1_feedback >> 8) & 0x01);
@@ -451,6 +440,8 @@ static void VEBRC_IRQ_Wrap_Handler(uint32_t u32_vectorNum)
             if(buf_level >= H264_ENCODER_BUFFER_HIGH_LEVEL)
             {
                 //Close Encoder
+                Reg_Write32_Mask( (unsigned int) 0xa003004c, 0x04, 0x04);
+
                 g_stEncoderStatus[1].over_flow = 1;
                 close_view1();
                 g_stEncoderStatus[1].running = 0;

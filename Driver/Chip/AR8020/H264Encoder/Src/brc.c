@@ -26,6 +26,7 @@
 #define V0_RCSET2_ADDR   (REG_BASE_ADDR+(8<<2))
 #define V0_FEEDBACK_ADDR (REG_BASE_ADDR+(9<<2))
 #define V0_RC_ACBR_ADDR  (REG_BASE_ADDR+(10<<2))
+#define V0_ZW_BSINFO_ADDR (REG_BASE_ADDR+(12<<2))
 
 #define V0_QP_ADDR       (REG_BASE_ADDR+(18<<2))
 #define V0_MAD_ADDR      (REG_BASE_ADDR+(19<<2))
@@ -45,6 +46,7 @@
 #define V1_RCSET2_ADDR   (V1_REG_BASE_ADDR+(8<<2))
 #define V1_FEEDBACK_ADDR (V1_REG_BASE_ADDR+(9<<2))
 #define V1_RC_ACBR_ADDR  (V1_REG_BASE_ADDR+(10<<2))
+#define V1_ZW_BSINFO_ADDR (V1_REG_BASE_ADDR+(12<<2))
 
 #define V1_QP_ADDR       (V1_REG_BASE_ADDR+(18<<2))
 #define V1_MAD_ADDR      (V1_REG_BASE_ADDR+(19<<2))
@@ -161,7 +163,7 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
         run_case=0;
         // only for gop change at last_p_frame. At this circumstance, Hardware use the updated gop for frame_cnt increment immediately,
         // but software use the un-updated one for its frame_cnt counting. Thus would iccur mismatch for both side.
-        if (rca.v0_fd_last_p==1) {
+        if (rca.v0_fd_last_p==1 && rca.v0_fd_iframe!=1) { // fix the false decision when inserting OneIFrame
             READ_WORD(V0_GOPFPS_ADDR,i); //read view0 gop
             if (rca.v0_fd_row_cnt==0) v0_last_p_prev_gop = (i>>24)&0xff;
             if (((i>>24)&0xff)!=v0_last_p_prev_gop) v0_last_p_gop_change = TRUE; // check view0's GOP change or not at last_p_frame
@@ -181,7 +183,7 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
                 run_case=1;
             // only for gop change at last_p_frame. At this circumstance, Hardware use the updated gop for frame_cnt increment immediately,
             // but software use the un-updated one for its frame_cnt counting. Thus would iccur mismatch for both side.
-            if (rca.v1_fd_last_p==1) {
+            if (rca.v1_fd_last_p==1 && rca.v1_fd_iframe!=1) { // fix the false decision when inserting OneIFrame
                 READ_WORD(V1_GOPFPS_ADDR,i); //read view1 gop
                 if (rca.v1_fd_row_cnt==0) v1_last_p_prev_gop = (i>>24)&0xff;
                 if (((i>>24)&0xff)!=v1_last_p_prev_gop) v1_last_p_gop_change = TRUE; // check view1's GOP change or not at last_p_frame
@@ -194,13 +196,13 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
 
     switch(run_case) {
         case 0:
-            if((rca.v0_fd_reset==1) && (rca.v0_fd_last_p==1) && (rca.v0_fd_last_row==1) && (v0_last_p_gop_change==FALSE) && (v0_poweron_rc_params_set==0)) {//restart!!!
+            if((rca.v0_fd_reset==1) && (rca.v0_fd_last_p==1) && (rca.v0_fd_last_row==1) && (v0_last_p_gop_change==FALSE) && (v0_poweron_rc_params_set==0) && (rca.v0_gop_change_NotResetRC==0)) { // lhu, 2017/04/17
                 update_aof (); //lyu
                 my_v0_initial_all( );
             }
             else if(rca.v0_rc_enable==1)
             {
-                if ((rca.v0_fd_iframe==1) && (rca.v0_fd_row_cnt==0) && (v0_last_p_gop_change==TRUE)) {
+                if ((rca.v0_fd_iframe==1) && (rca.v0_fd_row_cnt==0) && (v0_last_p_gop_change==TRUE) && (rca.v0_gop_change_NotResetRC==0)) { // lhu, 2017/04/17
                 	// release last_p_gop_change to FALSE and execute initial_all operation until the first bu of iframe reached!!!
                     update_aof (); //lyu
                     my_v0_initial_all( );
@@ -215,23 +217,35 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
 
                 READ_WORD(V0_MAD_ADDR,v0_mad_tmp); //read mad
                 READ_WORD(V0_HBITS_ADDR,v0_hbits_tmp); //read hbits
-                READ_WORD(V0_TBITS_ADDR,v0_tbits_tmp); //read tbits
+                //READ_WORD(V0_TBITS_ADDR,v0_tbits_tmp); //read tbits
+                //Fix the HeaderBits and TextureBits assignment according to lyu's statistics === begin
+                if (rca.v0_type==I_SLICE) v0_hbits_tmp = v0_hbits_tmp - (rca.v0_MBPerRow*3/2); // decrease 1.5 bit every MB for I SLICE
+                else                      v0_hbits_tmp = v0_hbits_tmp - 5;                     // decrease 5 bit every BU for P SLICE
+                READ_WORD(V0_ABITS_ADDR,v0_fbits_tmp);
+                v0_tbits_tmp = (v0_fbits_tmp - rca.v0_PrevFbits) - v0_hbits_tmp;
+                if (rca.v0_bu_cnt==0) rca.v0_PrevFbits = 0;
+                else                  rca.v0_PrevFbits = v0_fbits_tmp;
+                //Fix the HeaderBits and TextureBits assignment according to lyu's statistics === end
                 if(rca.v0_fd_last_row==1) {
                     READ_WORD(V0_ABITS_ADDR,v0_fbits_tmp); //read abits
                     READ_WORD(V0_YMSEL_ADDR,ymsel_tmp); // read frame's y-mse
                     READ_WORD(V0_YMSEH_ADDR,ymseh_tmp);
-                    v0_ymse_frame = (((long long)((ymseh_tmp>>24)&0xff)<<32) + ymsel_tmp);
-                    if ((ymseh_tmp>>2)&0x1) rca.v0_wireless_screen=1;
-                    if ((ymseh_tmp>>3)&0x1) my_v0_rc_raiseminqp_psnrbig39();
-                    if(rca.v0_fd_iframe==1) {
-                        v0_ymse_iframe = v0_ymse_frame;
-                    }
+                    v0_ymse_frame = (((long long)((ymseh_tmp>>24)&0x3f)<<32) + ymsel_tmp);
+                    if ((ymseh_tmp>>2)&0x1) rca.v0_wireless_screen=1; else rca.v0_wireless_screen=0;
+                    if ((ymseh_tmp>>3)&0x1) rca.v0_changeToIFrame=1; else rca.v0_changeToIFrame=0; // lhu, 2017/03/09
+                    if ((ymseh_tmp>>4)&0x1) rca.v0_insertOneIFrame=1; else rca.v0_insertOneIFrame=0; // lhu, 2017/03/09
+                    rca.v0_frm_ymse[0]  = v0_ymse_frame; // lhu, 2017/03/27
+                    rca.v0_frm_fbits[0] = v0_fbits_tmp;  // lhu, 2017/03/27
+                    rca.v0_RCSliceBits = (rca.v0_type==P_SLICE)? rca.v0_RCPSliceBits:rca.v0_RCISliceBits; // lhu, 2017/03/27
+                    rca.v0_frm_hbits[0] = rca.v0_frame_hbits; // lhu, 2017/03/27
+                    rca.v0_frm_abits[0] = rca.v0_frame_abits; // lhu, 2017/03/27
+                    if (rca.v0_fd_iframe==1) rca.v0_ifrm_ymse = v0_ymse_frame; // lhu, 2017/04/13
                     else {
-                        v0_ymse_pframe = v0_ymse_frame; //lhuqu2
                         if (rca.v0_fd_last_p==1) {
-                            v0_ymse_last_p = v0_ymse_frame;
-                            //if (ymseh_tmp&0x1) my_v0_rc_params_ac_gop( ); // @lhu, write ac_gop start symbol
-                            //if ((ymseh_tmp>>1)&0x1) my_v0_rc_params_ac_iopratio( ); // @lhu, write ac_iopratio start symbol
+                            rca.v0_lastpfrm_ymse = v0_ymse_frame;
+                            READ_WORD(V0_ZW_BSINFO_ADDR,i);
+                            if ((i>>1)&0x1) my_ac_RCISliceBitRatio(rca.v0_RCISliceBitRatioMax,0);
+                            else {READ_WORD(V0_RCSET2_ADDR,i); rca.v0_RCISliceBitRatio = (i>>24)&0xf;}
                         }
                     }
                 }
@@ -246,13 +260,13 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
             return 1; //// view0 done
 
         case 1:
-            if ((rca.v1_fd_reset==1) && (rca.v1_fd_last_p==1) && (rca.v1_fd_last_row==1) && (v1_last_p_gop_change==FALSE) && (v1_poweron_rc_params_set==0)) {//restart
+            if ((rca.v1_fd_reset==1) && (rca.v1_fd_last_p==1) && (rca.v1_fd_last_row==1) && (v1_last_p_gop_change==FALSE) && (v1_poweron_rc_params_set==0) && (rca.v1_gop_change_NotResetRC==0)) { // lhu, 2017/04/17
                 update_aof (); //lyu
                 my_v1_initial_all( );
             }
             else if(rca.v1_rc_enable==1)
             {
-                if ((rca.v1_fd_iframe==1) && (rca.v1_fd_row_cnt==0) && (v1_last_p_gop_change==TRUE)) {
+                if ((rca.v1_fd_iframe==1) && (rca.v1_fd_row_cnt==0) && (v1_last_p_gop_change==TRUE) && (rca.v1_gop_change_NotResetRC==0)) { // lhu, 2017/04/17
                     // release last_p_gop_change to FALSE and execute initial_all operation until the first bu of iframe reached!!!
                     update_aof (); //lyu
                     my_v1_initial_all( );
@@ -267,23 +281,35 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
 
                 READ_WORD(V1_MAD_ADDR,v1_mad_tmp); //read mad
                 READ_WORD(V1_HBITS_ADDR,v1_hbits_tmp); //read hbits
-                READ_WORD(V1_TBITS_ADDR,v1_tbits_tmp); //read tbits
+                //READ_WORD(V1_TBITS_ADDR,v1_tbits_tmp); //read tbits
+                //Fix the HeaderBits and TextureBits assignment according to lyu's statistics === begin
+                if (rca.v1_type==I_SLICE) v1_hbits_tmp = v1_hbits_tmp - (rca.v1_MBPerRow*3/2); // decrease 1.5 bit every MB for I SLICE
+                else                      v1_hbits_tmp = v1_hbits_tmp - 5;                     // decrease 5 bit every BU for P SLICE
+                READ_WORD(V1_ABITS_ADDR,v1_fbits_tmp);
+                v1_tbits_tmp = (v1_fbits_tmp - rca.v1_PrevFbits) - v1_hbits_tmp;
+                if (rca.v1_bu_cnt==0) rca.v1_PrevFbits = 0;
+                else                  rca.v1_PrevFbits = v1_fbits_tmp;
+                //Fix the HeaderBits and TextureBits assignment according to lyu's statistics === end
                 if(rca.v1_fd_last_row==1) {
                     READ_WORD(V1_ABITS_ADDR,v1_fbits_tmp); //read abits
                     READ_WORD(V1_YMSEL_ADDR,ymsel_tmp); // read frame's y-mse
                     READ_WORD(V1_YMSEH_ADDR,ymseh_tmp);
-                    v1_ymse_frame = (((long long)((ymseh_tmp>>24)&0xff)<<32) + ymsel_tmp);
-                    if ((ymseh_tmp>>2)&0x1) rca.v1_wireless_screen=1;
-                    if ((ymseh_tmp>>3)&0x1) my_v1_rc_raiseminqp_psnrbig39();
-                    if(rca.v1_fd_iframe==1) {
-                        v1_ymse_iframe = v1_ymse_frame;
-                    }
+                    v1_ymse_frame = (((long long)((ymseh_tmp>>24)&0x3f)<<32) + ymsel_tmp);
+                    if ((ymseh_tmp>>2)&0x1) rca.v1_wireless_screen=1; else rca.v1_wireless_screen=0;
+                    if ((ymseh_tmp>>3)&0x1) rca.v1_changeToIFrame=1; else rca.v1_changeToIFrame=0; // lhu, 2017/03/09
+                    if ((ymseh_tmp>>4)&0x1) rca.v1_insertOneIFrame=1; else rca.v1_insertOneIFrame=0; // lhu, 2017/03/09
+                    rca.v1_frm_ymse[0]  = v1_ymse_frame; // lhu, 2017/03/27
+                    rca.v1_frm_fbits[0] = v1_fbits_tmp;  // lhu, 2017/03/27
+                    rca.v1_RCSliceBits = (rca.v1_type==P_SLICE)? rca.v1_RCPSliceBits:rca.v1_RCISliceBits; // lhu, 2017/03/27
+                    rca.v1_frm_hbits[0] = rca.v1_frame_hbits; // lhu, 2017/03/27
+                    rca.v1_frm_abits[0] = rca.v1_frame_abits; // lhu, 2017/03/27
+                    if (rca.v1_fd_iframe==1) rca.v1_ifrm_ymse = v1_ymse_frame; // lhu, 2017/04/13
                     else {
-                        v1_ymse_pframe = v1_ymse_frame; //lhuqu2
-                        if(rca.v1_fd_last_p==1) {
-                            v1_ymse_last_p = v1_ymse_frame;
-                            //if (ymseh_tmp&0x1) my_v1_rc_params_ac_gop( ); // @lhu, write ac_gop start symbol
-                            //if ((ymseh_tmp>>1)&0x1) my_v1_rc_params_ac_iopratio( ); //@ lhu, write ac_iopratio start symbol
+                        if (rca.v1_fd_last_p==1) {
+                            rca.v1_lastpfrm_ymse = v1_ymse_frame;
+                            READ_WORD(V1_ZW_BSINFO_ADDR,i);
+                            if ((i>>1)&0x1) my_ac_RCISliceBitRatio(rca.v1_RCISliceBitRatioMax,1);
+                            else {READ_WORD(V1_RCSET2_ADDR,i); rca.v1_RCISliceBitRatio = (i>>24)&0xf;}
                         }
                     }
                 }
@@ -298,13 +324,13 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
             return 1; //// view1 done
 
         case 2: // 1080p used view0
-            if ((rca.v1_fd_reset==1) && (rca.v1_fd_last_p==1) && (rca.v1_fd_last_row==1) && (v1_last_p_gop_change==FALSE) && (v1_poweron_rc_params_set==0)) {//restart
+            if ((rca.v1_fd_reset==1) && (rca.v1_fd_last_p==1) && (rca.v1_fd_last_row==1) && (v1_last_p_gop_change==FALSE) && (v1_poweron_rc_params_set==0) && (rca.v1_gop_change_NotResetRC==0)) { // lhu, 2017/04/17
                 update_aof (); //lyu
                 my_v1_initial_all( );
             }
             else if(rca.v1_rc_enable==1)
             {
-                if ((rca.v1_fd_iframe==1) && (rca.v1_fd_row_cnt==0) && (v1_last_p_gop_change==TRUE)) {
+                if ((rca.v1_fd_iframe==1) && (rca.v1_fd_row_cnt==0) && (v1_last_p_gop_change==TRUE) && (rca.v1_gop_change_NotResetRC==0)) { // lhu, 2017/04/17
                     // release last_p_gop_change to FALSE and execute initial_all operation until the first bu of iframe reached!!!
                     update_aof (); //lyu
                     my_v1_initial_all( );
@@ -319,23 +345,35 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
 
                 READ_WORD(V0_MAD_ADDR,v1_mad_tmp); //read mad
                 READ_WORD(V0_HBITS_ADDR,v1_hbits_tmp); //read hbits
-                READ_WORD(V0_TBITS_ADDR,v1_tbits_tmp); //read tbits
+                //READ_WORD(V0_TBITS_ADDR,v1_tbits_tmp); //read tbits
+                //Fix the HeaderBits and TextureBits assignment according to lyu's statistics === begin
+                if (rca.v1_type==I_SLICE) v1_hbits_tmp = v1_hbits_tmp - (rca.v1_MBPerRow*3/2); // decrease 1.5 bit every MB for I SLICE
+                else                      v1_hbits_tmp = v1_hbits_tmp - 5;                     // decrease 5 bit every BU for P SLICE
+                READ_WORD(V0_ABITS_ADDR,v1_fbits_tmp);
+                v1_tbits_tmp = (v1_fbits_tmp - rca.v1_PrevFbits) - v1_hbits_tmp;
+                if (rca.v1_bu_cnt==0) rca.v1_PrevFbits = 0;
+                else                  rca.v1_PrevFbits = v1_fbits_tmp;
+                //Fix the HeaderBits and TextureBits assignment according to lyu's statistics === end
                 if(rca.v1_fd_last_row==1) {
                     READ_WORD(V0_ABITS_ADDR,v1_fbits_tmp); //read abits
                     READ_WORD(V0_YMSEL_ADDR,ymsel_tmp); // read frame's y-mse
                     READ_WORD(V0_YMSEH_ADDR,ymseh_tmp);
-                    v1_ymse_frame = (((long long)((ymseh_tmp>>24)&0xff)<<32) + ymsel_tmp);
-                    if ((ymseh_tmp>>2)&0x1) rca.v1_wireless_screen=1;
-                    if ((ymseh_tmp>>3)&0x1) my_v1_rc_raiseminqp_psnrbig39();
-                    if(rca.v1_fd_iframe==1) {
-                        v1_ymse_iframe = v1_ymse_frame;
-                    }
+                    v1_ymse_frame = (((long long)((ymseh_tmp>>24)&0x3f)<<32) + ymsel_tmp);
+                    if ((ymseh_tmp>>2)&0x1) rca.v1_wireless_screen=1; else rca.v1_wireless_screen=0;
+                    if ((ymseh_tmp>>3)&0x1) rca.v1_changeToIFrame=1; else rca.v1_changeToIFrame=0; // lhu, 2017/03/09
+                    if ((ymseh_tmp>>4)&0x1) rca.v1_insertOneIFrame=1; else rca.v1_insertOneIFrame=0; // lhu, 2017/03/09
+                    rca.v1_frm_ymse[0]  = v1_ymse_frame; // lhu, 2017/03/27
+                    rca.v1_frm_fbits[0] = v1_fbits_tmp;  // lhu, 2017/03/27
+    	            rca.v1_RCSliceBits = (rca.v1_type==P_SLICE)? rca.v1_RCPSliceBits:rca.v1_RCISliceBits; // lhu, 2017/03/27
+                    rca.v1_frm_hbits[0] = rca.v1_frame_hbits; // lhu, 2017/03/27
+                    rca.v1_frm_abits[0] = rca.v1_frame_abits; // lhu, 2017/03/27
+                    if (rca.v1_fd_iframe==1) rca.v1_ifrm_ymse = v1_ymse_frame; // lhu, 2017/04/13
                     else {
-                        v1_ymse_pframe = v1_ymse_frame; //lhuqu2
-                        if(rca.v1_fd_last_p==1) {
-                            v1_ymse_last_p = v1_ymse_frame;
-                            //if (ymseh_tmp&0x1) my_v1_rc_params_ac_gop( ); // @lhu, write ac_gop start symbol
-                            //if ((ymseh_tmp>>1)&0x1) my_v1_rc_params_ac_iopratio( ); //@ lhu, write ac_iopratio start symbol
+                        if (rca.v1_fd_last_p==1) {
+                            rca.v1_lastpfrm_ymse = v1_ymse_frame;
+                            READ_WORD(V1_ZW_BSINFO_ADDR,i);
+                            if ((i>>1)&0x1) my_ac_RCISliceBitRatio(rca.v1_RCISliceBitRatioMax,1);
+                            else {READ_WORD(V1_RCSET2_ADDR,i); rca.v1_RCISliceBitRatio = (i>>24)&0xf;}
                         }
                     }
                 }
@@ -501,6 +539,13 @@ void my_v0_rc_params( ) {
     rca.v0_re_bitrate = 0;
     rca.v0_prev_ac_br_index = 0;
     rca.v0_wireless_screen = 0; // lhu, 2017/02/27
+    rca.v0_changeToIFrame = 0; // lhu, 2017/03/09
+    rca.v0_insertOneIFrame= 0; // lhu, 2017/03/09
+    rca.v0_PrevFrmPSNRLow= 0; // lhu, 2017/03/15
+    rca.v0_gop_change_NotResetRC = 0; // lhu, 2017/03/07
+    rca.v0_nextPFgotoIF = 0; // lhu, 2017/03/07
+    rca.v0_IFduration = 0; // lhu, 2017/03/07
+    rca.v0_PrevFbits = 0; // lhu, 2017/04/05
     v0_last_p_gop_change = FALSE; // @lhu, initial value
 
     READ_WORD(V0_FRAME_XY_ADDR,m); //read frame-x & frame-y
@@ -532,8 +577,7 @@ void my_v0_rc_params( ) {
         rca.v0_bit_rate = i;
 
     READ_WORD(V0_RCSET2_ADDR,i); //read rcset2
-        rca.v0_RCEnableAutoConfigGOP = i&0x1;
-        rca.v0_RCEnableAutoConfigIOPRatio = (i>>1)&0x1;
+        rca.v0_RCISliceBitRatioMax= (i>>8)&0x3f;
         rca.v0_RCIoverPRatio = (i>>16)&0xf;
         rca.v0_RCISliceBitRatio = (i>>24)&0xf;
 }
@@ -564,9 +608,8 @@ void my_rc_params( ) {
 #ifdef ARMCM7_RC //###########
 //===== Auto-config Bit-Rate =====
 void my_rc_ac_br(int view) {
-    int m, ac_br_index, ac_br;
-    int v0_ac_br_index,v0_ac_br;
-    int v1_ac_br_index,v1_ac_br;
+    int m,ac_br;
+    unsigned char ac_br_index,v0_ac_br_index,v1_ac_br_index;
     if (view==0) {
         READ_WORD(V0_RC_ACBR_ADDR,m);
         v0_ac_br_index = (m>>26)&0x3f;
@@ -623,267 +666,205 @@ void my_rc_ac_br(int view) {
         rca.v1_prev_ac_br_index = v1_ac_br_index;
     }
 }
-/*===== Auto-config GOP based on sub-function of RCAutoConfig_GOP =====
-void my_v0_rc_params_ac_gop( ) {
-    int i,j,m,v0_autoconfig_gop;
-
-    READ_WORD(V0_FRAME_XY_ADDR,m); //read frame-x & frame-y
-        i=(m>>16)&0xffff;
-        j=m&0xffff;
-        rca.v0_width = i;
-        rca.v0_height = j;
-
-    READ_WORD(V0_RCEN_BU_ADDR,i); //read rc_en, rc_mode & bu
-        rca.v0_rc_enable = (i>>24)&0x1;
-        rca.v0_RCUpdateMode = (i>>16)&0x3;
-
-    READ_WORD(V0_BR_ADDR,i); //read br
-        rca.v0_bit_rate = i;
-
-    if (rca.v0_rc_enable==1 && rca.v0_RCUpdateMode==RC_MODE_3) {
-        v0_autoconfig_gop = RCAutoConfig_GOP(rca.v0_width, rca.v0_height, rca.v0_bit_rate, v0_ymse_last_p);
-        rca.v0_intra_period = v0_autoconfig_gop;
-        READ_WORD(V0_QP_ADDR, i);
-        WRITE_WORD(V0_QP_ADDR, (((i>>8)<<8)+v0_autoconfig_gop));
-    }
+unsigned short my_divider2psnr(int my_divider) {
+    unsigned short my_psnr;
+    if      (my_divider>=1000000)                      my_psnr = 60;// 10^6.0=10000
+    else if (my_divider>=794328 && my_divider<1000000) my_psnr = 59;// 10^5.9=794328
+    else if (my_divider>=630957 && my_divider<794328)  my_psnr = 58;// 10^5.8=630957
+    else if (my_divider>=501187 && my_divider<630957)  my_psnr = 57;// 10^5.7=501187
+    else if (my_divider>=398107 && my_divider<501187)  my_psnr = 56;// 10^5.6=398107
+    else if (my_divider>=316227 && my_divider<398107)  my_psnr = 55;// 10^5.5=316227
+    else if (my_divider>=251188 && my_divider<316227)  my_psnr = 54;// 10^5.4=251188
+    else if (my_divider>=199526 && my_divider<251188)  my_psnr = 53;// 10^5.3=199526
+    else if (my_divider>=158489 && my_divider<199526)  my_psnr = 52;// 10^5.2=158489
+    else if (my_divider>=125892 && my_divider<158489)  my_psnr = 51;// 10^5.1=125892
+    else if (my_divider>=100000 && my_divider<125892)  my_psnr = 50;// 10^5.0=100000
+    else if (my_divider>=79432  && my_divider<100000)  my_psnr = 49;// 10^4.9=79432
+    else if (my_divider>=63095  && my_divider<79432 )  my_psnr = 48;// 10^4.8=63095
+    else if (my_divider>=50118  && my_divider<63095 )  my_psnr = 47;// 10^4.7=50118
+    else if (my_divider>=39810  && my_divider<50118 )  my_psnr = 46;// 10^4.6=39810
+    else if (my_divider>=31622  && my_divider<39810 )  my_psnr = 45;// 10^4.5=31622
+    else if (my_divider>=25118  && my_divider<31622 )  my_psnr = 44;// 10^4.4=25118
+    else if (my_divider>=19952  && my_divider<25118 )  my_psnr = 43;// 10^4.3=19952
+    else if (my_divider>=15848  && my_divider<19952 )  my_psnr = 42;// 10^4.2=15848
+    else if (my_divider>=12589  && my_divider<15848 )  my_psnr = 41;// 10^4.1=12589
+    else if (my_divider>=10000  && my_divider<12589 )  my_psnr = 40;// 10^4.0=10000
+    else if (my_divider>=7943   && my_divider<10000 )  my_psnr = 39;// 10^3.9=7943
+    else if (my_divider>=6309   && my_divider<7943  )  my_psnr = 38;// 10^3.8=6309
+    else if (my_divider>=5011   && my_divider<6309  )  my_psnr = 37;// 10^3.7=5011
+    else if (my_divider>=3981   && my_divider<5011  )  my_psnr = 36;// 10^3.6=3981
+    else if (my_divider>=3162   && my_divider<3981  )  my_psnr = 35;// 10^3.5=3162
+    else if (my_divider>=2511   && my_divider<3162  )  my_psnr = 34;// 10^3.4=2511
+    else if (my_divider>=1995   && my_divider<2511  )  my_psnr = 33;// 10^3.3=1995
+    else if (my_divider>=1584   && my_divider<1995  )  my_psnr = 32;// 10^3.2=1584
+    else if (my_divider>=1258   && my_divider<1584  )  my_psnr = 31;// 10^3.1=1258
+    else if (my_divider>=1000   && my_divider<1258  )  my_psnr = 30;// 10^3.0=1000
+    else if (my_divider>=794    && my_divider<1000  )  my_psnr = 29;// 10^2.9=794
+    else if (my_divider>=630    && my_divider<794   )  my_psnr = 28;// 10^2.8=630
+    else if (my_divider>=501    && my_divider<630   )  my_psnr = 27;// 10^2.7=501
+    else if (my_divider>=398    && my_divider<501   )  my_psnr = 26;// 10^2.6=398
+    else if (my_divider>=316    && my_divider<398   )  my_psnr = 25;// 10^2.5=316
+    else if (my_divider>=251    && my_divider<316   )  my_psnr = 24;// 10^2.4=251
+    else if (my_divider>=199    && my_divider<251   )  my_psnr = 23;// 10^2.3=199
+    else if (my_divider>=158    && my_divider<199   )  my_psnr = 22;// 10^2.2=158
+    else if (my_divider>=125    && my_divider<158   )  my_psnr = 21;// 10^2.1=125
+    else if (my_divider>=100    && my_divider<125   )  my_psnr = 20;// 10^2.0=100
+    else if (my_divider>=79     && my_divider<100   )  my_psnr = 19;// 10^1.9=79
+    else if (my_divider>=63     && my_divider<79    )  my_psnr = 18;// 10^1.8=63
+    else if (my_divider>=50     && my_divider<63    )  my_psnr = 17;// 10^1.7=50
+    else if (my_divider>=39     && my_divider<50    )  my_psnr = 16;// 10^1.6=39
+    else if (my_divider>=31     && my_divider<39    )  my_psnr = 15;// 10^1.5=31
+    else if (my_divider>=25     && my_divider<31    )  my_psnr = 14;// 10^1.4=25
+    else                                               my_psnr = 13;
+    
+    return my_psnr;
 }
-//===== Criteria for RC auto configure GOP ===> Depend on bitrate & frame's psnr (MSE) =====
-int RCAutoConfig_GOP(int w, int h, int bit_rate, int64 mse) {
-    int64 whm255square;
-    int divider, rc_ac_gop;
-
-    whm255square = (int64)(((w<<8)-w)*((h<<8)-h));
-    divider = (int)(whm255square/mse);
-
-    if (bit_rate>=5000000 && bit_rate <=8000000) { // 5Mbps ~ 8Mbps
-        if      (divider>=10000)                 rc_ac_gop =  20;// psnr>=40db
-        else if (divider>=6309 && divider<10000) rc_ac_gop =  20;// 10^4.0=10000  , 10^3.8=6309.57
-        else if (divider>=3981 && divider<6309)  rc_ac_gop =  30;// 10^3.8=6309.57, 10^3.6=3981.07
-        else if (divider>=3162 && divider<3981)  rc_ac_gop =  40;// 10^3.6=3981.07, 10^3.5=3162.27
-        else if (divider>=2511 && divider<3162)  rc_ac_gop =  40;// 10^3.5=3162.27, 10^3.4=2511.88
-        else if (divider>=1995 && divider<2511)  rc_ac_gop =  50;// 10^3.4=2511.88, 10^3.3=1995.26
-        else if (divider>=1584 && divider<1995)  rc_ac_gop =  50;// 10^3.3=1995.26, 10^3.2=1584.89
-        else if (divider>=1258 && divider<1584)  rc_ac_gop =  60;// 10^3.2=1584.89, 10^3.1=1258.92
-        else if (divider>=1000 && divider<1258)  rc_ac_gop =  60;// 10^3.1=1258.92, 10^3.0=1000
-        else if (divider>=794  && divider<1000)  rc_ac_gop =  70;// 10^3.0=1000   , 10^2.9=794.32
-        else if (divider>=630  && divider<794 )  rc_ac_gop =  70;// 10^2.9=794.32 , 10^2.8=630.95
-        else if (divider>=501  && divider<630 )  rc_ac_gop =  80;// 10^2.8=630.95 , 10^2.7=501.18
-        else if (divider>=398  && divider<501 )  rc_ac_gop =  80;// 10^2.7=501.18 , 10^2.6=398.10
-        else if (divider>=316  && divider<398 )  rc_ac_gop =  90;// 10^2.6=398.10 , 10^2.5=316.22
-        else if (divider>=215  && divider<316 )  rc_ac_gop =  90;// 10^2.5=316.22 , 10^2.4=215.18
-        else if (divider>=199  && divider<215 )  rc_ac_gop = 100;// 10^2.4=215.18 , 10^2.3=199.52
-        else if (divider>=158  && divider<199 )  rc_ac_gop = 100;// 10^2.3=199.52 , 10^2.2=158.48
-        else                                     rc_ac_gop = 110;// psnr<22db
-    }
-    else if (bit_rate>=3000000 && bit_rate <5000000) { // 3Mbps ~ 5Mbps
-        if      (divider>=10000)                 rc_ac_gop =  30;// psnr>=40db
-        else if (divider>=6309 && divider<10000) rc_ac_gop =  30;// 10^4.0=10000  , 10^3.8=6309.57
-        else if (divider>=3981 && divider<6309)  rc_ac_gop =  40;// 10^3.8=6309.57, 10^3.6=3981.07
-        else if (divider>=3162 && divider<3981)  rc_ac_gop =  50;// 10^3.6=3981.07, 10^3.5=3162.27
-        else if (divider>=2511 && divider<3162)  rc_ac_gop =  50;// 10^3.5=3162.27, 10^3.4=2511.88
-        else if (divider>=1995 && divider<2511)  rc_ac_gop =  60;// 10^3.4=2511.88, 10^3.3=1995.26
-        else if (divider>=1584 && divider<1995)  rc_ac_gop =  60;// 10^3.3=1995.26, 10^3.2=1584.89
-        else if (divider>=1258 && divider<1584)  rc_ac_gop =  70;// 10^3.2=1584.89, 10^3.1=1258.92
-        else if (divider>=1000 && divider<1258)  rc_ac_gop =  70;// 10^3.1=1258.92, 10^3.0=1000
-        else if (divider>=794  && divider<1000)  rc_ac_gop =  80;// 10^3.0=1000   , 10^2.9=794.32
-        else if (divider>=630  && divider<794 )  rc_ac_gop =  80;// 10^2.9=794.32 , 10^2.8=630.95
-        else if (divider>=501  && divider<630 )  rc_ac_gop =  90;// 10^2.8=630.95 , 10^2.7=501.18
-        else if (divider>=398  && divider<501 )  rc_ac_gop =  90;// 10^2.7=501.18 , 10^2.6=398.10
-        else if (divider>=316  && divider<398 )  rc_ac_gop = 100;// 10^2.6=398.10 , 10^2.5=316.22
-        else if (divider>=215  && divider<316 )  rc_ac_gop = 100;// 10^2.5=316.22 , 10^2.4=215.18
-        else if (divider>=199  && divider<215 )  rc_ac_gop = 110;// 10^2.4=215.18 , 10^2.3=199.52
-        else if (divider>=158  && divider<199 )  rc_ac_gop = 110;// 10^2.3=199.52 , 10^2.2=158.48
-        else                                     rc_ac_gop = 120;// psnr<22db
-    }
-    else if (bit_rate>=2000000 && bit_rate <3000000) { // 2Mbps ~ 3Mbps
-        if      (divider>=10000)                 rc_ac_gop =  50;// psnr>=40db
-        else if (divider>=6309 && divider<10000) rc_ac_gop =  50;// 10^4.0=10000  , 10^3.8=6309.57
-        else if (divider>=3981 && divider<6309)  rc_ac_gop =  60;// 10^3.8=6309.57, 10^3.6=3981.07
-        else if (divider>=3162 && divider<3981)  rc_ac_gop =  70;// 10^3.6=3981.07, 10^3.5=3162.27
-        else if (divider>=2511 && divider<3162)  rc_ac_gop =  70;// 10^3.5=3162.27, 10^3.4=2511.88
-        else if (divider>=1995 && divider<2511)  rc_ac_gop =  80;// 10^3.4=2511.88, 10^3.3=1995.26
-        else if (divider>=1584 && divider<1995)  rc_ac_gop =  80;// 10^3.3=1995.26, 10^3.2=1584.89
-        else if (divider>=1258 && divider<1584)  rc_ac_gop =  90;// 10^3.2=1584.89, 10^3.1=1258.92
-        else if (divider>=1000 && divider<1258)  rc_ac_gop =  90;// 10^3.1=1258.92, 10^3.0=1000
-        else if (divider>=794  && divider<1000)  rc_ac_gop = 100;// 10^3.0=1000   , 10^2.9=794.32
-        else if (divider>=630  && divider<794 )  rc_ac_gop = 100;// 10^2.9=794.32 , 10^2.8=630.95
-        else if (divider>=501  && divider<630 )  rc_ac_gop = 110;// 10^2.8=630.95 , 10^2.7=501.18
-        else if (divider>=398  && divider<501 )  rc_ac_gop = 110;// 10^2.7=501.18 , 10^2.6=398.10
-        else if (divider>=316  && divider<398 )  rc_ac_gop = 120;// 10^2.6=398.10 , 10^2.5=316.22
-        else if (divider>=215  && divider<316 )  rc_ac_gop = 120;// 10^2.5=316.22 , 10^2.4=215.18
-        else if (divider>=199  && divider<215 )  rc_ac_gop = 130;// 10^2.4=215.18 , 10^2.3=199.52
-        else if (divider>=158  && divider<199 )  rc_ac_gop = 130;// 10^2.3=199.52 , 10^2.2=158.48
-        else                                     rc_ac_gop = 140;// psnr<22db
-    }
-    else if (bit_rate>=1000000 && bit_rate <2000000) { // 1Mbps ~ 2Mbps
-        if      (divider>=10000)                 rc_ac_gop =  60;// psnr>=40db
-        else if (divider>=6309 && divider<10000) rc_ac_gop =  60;// 10^4.0=10000  , 10^3.8=6309.57
-        else if (divider>=3981 && divider<6309)  rc_ac_gop =  70;// 10^3.8=6309.57, 10^3.6=3981.07
-        else if (divider>=3162 && divider<3981)  rc_ac_gop =  80;// 10^3.6=3981.07, 10^3.5=3162.27
-        else if (divider>=2511 && divider<3162)  rc_ac_gop =  80;// 10^3.5=3162.27, 10^3.4=2511.88
-        else if (divider>=1995 && divider<2511)  rc_ac_gop =  90;// 10^3.4=2511.88, 10^3.3=1995.26
-        else if (divider>=1584 && divider<1995)  rc_ac_gop =  90;// 10^3.3=1995.26, 10^3.2=1584.89
-        else if (divider>=1258 && divider<1584)  rc_ac_gop = 100;// 10^3.2=1584.89, 10^3.1=1258.92
-        else if (divider>=1000 && divider<1258)  rc_ac_gop = 100;// 10^3.1=1258.92, 10^3.0=1000
-        else if (divider>=794  && divider<1000)  rc_ac_gop = 110;// 10^3.0=1000   , 10^2.9=794.32
-        else if (divider>=630  && divider<794 )  rc_ac_gop = 110;// 10^2.9=794.32 , 10^2.8=630.95
-        else if (divider>=501  && divider<630 )  rc_ac_gop = 120;// 10^2.8=630.95 , 10^2.7=501.18
-        else if (divider>=398  && divider<501 )  rc_ac_gop = 120;// 10^2.7=501.18 , 10^2.6=398.10
-        else if (divider>=316  && divider<398 )  rc_ac_gop = 130;// 10^2.6=398.10 , 10^2.5=316.22
-        else if (divider>=215  && divider<316 )  rc_ac_gop = 130;// 10^2.5=316.22 , 10^2.4=215.18
-        else if (divider>=199  && divider<215 )  rc_ac_gop = 140;// 10^2.4=215.18 , 10^2.3=199.52
-        else if (divider>=158  && divider<199 )  rc_ac_gop = 140;// 10^2.3=199.52 , 10^2.2=158.48
-        else                                     rc_ac_gop = 150;// psnr<22db
-    }
-
-    return rc_ac_gop;
-}
-
-//===== Auto-config IOverPRatio based on sub-function of RCAutoConfig_IOverPRatio =====
-void my_v0_rc_params_ac_iopratio( ) {
-    int i,j,m,v0_ac_iopratio;
-
-    READ_WORD(V0_FRAME_XY_ADDR,m); //read frame-x & frame-y
-        i=(m>>16)&0xffff;
-        j=m&0xffff;
-        rca.v0_width = i;
-        rca.v0_height = j;
-
-    READ_WORD(V0_RCEN_BU_ADDR,i); //read rc_en, rc_mode & bu
-        rca.v0_rc_enable = (i>>24)&0x1;
-        rca.v0_RCUpdateMode = (i>>16)&0x3;
-
-    READ_WORD(V0_BR_ADDR,i); //read br
-        rca.v0_bit_rate = i;
-
-    if (rca.v0_rc_enable==1 && rca.v0_RCUpdateMode==RC_MODE_3) {
-        v0_ac_iopratio = RCAutoConfig_IOverPRatio(rca.v0_width, rca.v0_height, rca.v0_bit_rate, rca.v0_RCIoverPRatio, v0_ymse_iframe, v0_ymse_last_p);
-        rca.v0_RCIoverPRatio = v0_ac_iopratio;
-        READ_WORD(V0_QP_ADDR, i);
-        WRITE_WORD(V0_QP_ADDR, (((i>>16)<<16)+(v0_ac_iopratio<<8)+(i&0xff)));
-    }
-}
-
-//===== Criteria for RC auto config IOverPRatio =====
-// 1> Depend on bitrate & comparsion of I frame's psnr and last P frame's psnr in one GOP.
-// 2> If I frame's psnr less or equal than last P frame's psnr, the next GOP would level-up iopratio till the I frams's psnr > last P frame's psnr.
-// 3> If I frame's psnr bigger than last P frame's psnr, the next GOP would remain iopratio value of current GOP.
-// 4> Finally use a high level threshold to clamp final output iopratio value.
-int RCAutoConfig_IOverPRatio (int w, int h, int bit_rate, int iopratio, int64 imse, int64 pmse) {
-    int64 whm255square;
-    int i_divider, p_divider, rc_ac_iopratio;
-    int ac_iopratio_high;
-
-    whm255square = (int64)(((w<<8)-w)*((h<<8)-h));
-    i_divider = (int)(whm255square/imse);
-    p_divider = (int)(whm255square/pmse);
-
-    if (bit_rate>=5000000 && bit_rate <=8000000) { // 5Mbps ~ 8Mbps
-        if (i_divider <= p_divider) rc_ac_iopratio = iopratio + 1;
-        else                        rc_ac_iopratio = iopratio;
-        if      (p_divider>=10000)                   ac_iopratio_high =  2;// psnr>=40db
-        else if (p_divider>=6309 && p_divider<10000) ac_iopratio_high =  2;// 10^4.0=10000  , 10^3.8=6309.57
-        else if (p_divider>=3981 && p_divider<6309)  ac_iopratio_high =  3;// 10^3.8=6309.57, 10^3.6=3981.07
-        else if (p_divider>=2511 && p_divider<3981)  ac_iopratio_high =  4;// 10^3.6=3981.07, 10^3.4=2511.88
-        else if (p_divider>=1584 && p_divider<2511)  ac_iopratio_high =  5;// 10^3.4=2511.88, 10^3.2=1584.89
-        else if (p_divider>=1000 && p_divider<1584)  ac_iopratio_high =  6;// 10^3.2=1584.89, 10^3.0=1000
-        else if (p_divider>=630  && p_divider<1000)  ac_iopratio_high =  7;// 10^3.0=1000   , 10^2.8=630.95
-        else if (p_divider>=398  && p_divider<630 )  ac_iopratio_high =  8;// 10^2.8=630.95 , 10^2.6=398.10
-        else if (p_divider>=251  && p_divider<398 )  ac_iopratio_high =  9;// 10^2.6=398.10 , 10^2.4=251.18
-        else if (p_divider>=158  && p_divider<251 )  ac_iopratio_high = 10;// 10^2.4=251.18 , 10^2.2=158.48
-        else                                         ac_iopratio_high = 11;// psnr<22db
-
-        rc_ac_iopratio = my_iequmin (rc_ac_iopratio, ac_iopratio_high);
-    }
-    else if (bit_rate>=3000000 && bit_rate <5000000) { // 3Mbps ~ 5Mbps
-        if (i_divider <= p_divider) rc_ac_iopratio = iopratio + 1;
-        else                        rc_ac_iopratio = iopratio;
-        if      (p_divider>=10000)                   ac_iopratio_high =  3;// psnr>=40db
-        else if (p_divider>=6309 && p_divider<10000) ac_iopratio_high =  3;// 10^4.0=10000  , 10^3.8=6309.57
-        else if (p_divider>=3981 && p_divider<6309)  ac_iopratio_high =  4;// 10^3.8=6309.57, 10^3.6=3981.07
-        else if (p_divider>=2511 && p_divider<3981)  ac_iopratio_high =  5;// 10^3.6=3981.07, 10^3.4=2511.88
-        else if (p_divider>=1584 && p_divider<2511)  ac_iopratio_high =  6;// 10^3.4=2511.88, 10^3.2=1584.89
-        else if (p_divider>=1000 && p_divider<1584)  ac_iopratio_high =  7;// 10^3.2=1584.89, 10^3.0=1000
-        else if (p_divider>=630  && p_divider<1000)  ac_iopratio_high =  8;// 10^3.0=1000   , 10^2.8=630.95
-        else if (p_divider>=398  && p_divider<630 )  ac_iopratio_high =  9;// 10^2.8=630.95 , 10^2.6=398.10
-        else if (p_divider>=251  && p_divider<398 )  ac_iopratio_high = 10;// 10^2.6=398.10 , 10^2.4=251.18
-        else if (p_divider>=158  && p_divider<251 )  ac_iopratio_high = 11;// 10^2.4=251.18 , 10^2.2=158.48
-        else                                         ac_iopratio_high = 12;// psnr<22db
-
-    rc_ac_iopratio = my_iequmin (rc_ac_iopratio, ac_iopratio_high);
-    }
-    else if (bit_rate>=2000000 && bit_rate <3000000) { // 2Mbps ~ 3Mbps
-        if (i_divider <= p_divider) rc_ac_iopratio = iopratio + 1;
-        else                        rc_ac_iopratio = iopratio;
-        if      (p_divider>=10000)                   ac_iopratio_high =  4;// psnr>=40db
-        else if (p_divider>=6309 && p_divider<10000) ac_iopratio_high =  4;// 10^4.0=10000  , 10^3.8=6309.57
-        else if (p_divider>=3981 && p_divider<6309)  ac_iopratio_high =  5;// 10^3.8=6309.57, 10^3.6=3981.07
-        else if (p_divider>=2511 && p_divider<3981)  ac_iopratio_high =  6;// 10^3.6=3981.07, 10^3.4=2511.88
-        else if (p_divider>=1584 && p_divider<2511)  ac_iopratio_high =  7;// 10^3.4=2511.88, 10^3.2=1584.89
-        else if (p_divider>=1000 && p_divider<1584)  ac_iopratio_high =  8;// 10^3.2=1584.89, 10^3.0=1000
-        else if (p_divider>=630  && p_divider<1000)  ac_iopratio_high =  9;// 10^3.0=1000   , 10^2.8=630.95
-        else if (p_divider>=398  && p_divider<630 )  ac_iopratio_high = 10;// 10^2.8=630.95 , 10^2.6=398.10
-        else if (p_divider>=251  && p_divider<398 )  ac_iopratio_high = 11;// 11^2.6=398.10 , 10^2.4=251.18
-        else if (p_divider>=158  && p_divider<251 )  ac_iopratio_high = 12;// 10^2.4=251.18 , 10^2.2=158.48
-        else                                         ac_iopratio_high = 13;// psnr<22db
-
-    rc_ac_iopratio = my_iequmin (rc_ac_iopratio, ac_iopratio_high);
-    }
-    else if (bit_rate>=1000000 && bit_rate <2000000) { // 1Mbps ~ 2Mbps
-        if (i_divider <= p_divider) rc_ac_iopratio = iopratio + 1;
-        else                        rc_ac_iopratio = iopratio;
-        if      (p_divider>=10000)                   ac_iopratio_high =  5;// psnr>=40db
-        else if (p_divider>=6309 && p_divider<10000) ac_iopratio_high =  5;// 10^4.0=10000  , 10^3.8=6309.57
-        else if (p_divider>=3981 && p_divider<6309)  ac_iopratio_high =  6;// 10^3.8=6309.57, 10^3.6=3981.07
-        else if (p_divider>=2511 && p_divider<3981)  ac_iopratio_high =  7;// 10^3.6=3981.07, 10^3.4=2511.88
-        else if (p_divider>=1584 && p_divider<2511)  ac_iopratio_high =  8;// 10^3.4=2511.88, 10^3.2=1584.89
-        else if (p_divider>=1000 && p_divider<1584)  ac_iopratio_high =  9;// 10^3.2=1584.89, 10^3.0=1000
-        else if (p_divider>=630  && p_divider<1000)  ac_iopratio_high = 10;// 10^3.0=1000   , 10^2.8=630.95
-        else if (p_divider>=398  && p_divider<630 )  ac_iopratio_high = 11;// 10^2.8=630.95 , 10^2.6=398.10
-        else if (p_divider>=251  && p_divider<398 )  ac_iopratio_high = 12;// 10^2.6=398.10 , 10^2.4=251.18
-        else if (p_divider>=158  && p_divider<251 )  ac_iopratio_high = 13;// 10^2.4=251.18 , 10^2.2=158.48
-        else                                         ac_iopratio_high = 14;// psnr<22db
-
-    rc_ac_iopratio = my_iequmin (rc_ac_iopratio, ac_iopratio_high);
-    }
-
-    return rc_ac_iopratio;
-}*/
-
-//===== raise the MinQP value when psnr >=39db =====
-void my_v0_rc_raiseminqp_psnrbig39( ) { // lhupsnr
-    int i,j,m;
-
-    READ_WORD(V0_FRAME_XY_ADDR,m); //read frame-x & frame-y
-        i=(m>>16)&0xffff;
-        j=m&0xffff;
-        rca.v0_width = i;
-        rca.v0_height = j;
-
-    READ_WORD(V0_RCEN_BU_ADDR,i); //read rc_en, rc_mode & bu
-        rca.v0_rc_enable = (i>>24)&0x1;
-        rca.v0_RCUpdateMode = (i>>16)&0x3;
-
-    if (rca.v0_rc_enable==1 && rca.v0_RCUpdateMode==RC_MODE_3) {
-        rca.v0_RCMinQP = RCRaiseMinQP_PSPNBig39(0, rca.v0_PrevRCMinQP);
-    }
-}
-int RCRaiseMinQP_PSPNBig39(int view, int prev_RCMinQP) {
+// compare two consecutive P frame's psnr, if it drop sharply and the degree of drop is greater than psnr_drop_level, I frame should be inserted afterward.
+unsigned char my_trace_PSNRDropSharply(unsigned char psnr_drop_level, unsigned char view) {
     long long whm255square,m;
-    int frame_divider, RC_tuneMinQP, RC_MinQP;
+    int prev_frame_divider,curr_frame_divider;
+    unsigned short prev_frame_psnr, curr_frame_psnr;
     if (view==0) {
         whm255square = (long long)(rca.v0_width*255)*(long long)(rca.v0_height*255);
-        frame_divider = (int)(whm255square/v0_ymse_frame);
+        prev_frame_divider = (int)(whm255square/rca.v0_frm_ymse[1]);
+        curr_frame_divider = (int)(whm255square/rca.v0_frm_ymse[0]);
     } else {
         whm255square = (long long)(rca.v1_width*255)*(long long)(rca.v1_height*255);
-        frame_divider = (int)(whm255square/v1_ymse_frame);
+        prev_frame_divider = (int)(whm255square/rca.v1_frm_ymse[1]);
+        curr_frame_divider = (int)(whm255square/rca.v1_frm_ymse[0]);
     }
-    if (view==0) {READ_WORD(V0_RCSET1_ADDR,m); RC_MinQP = (m>>8)&0x3f;}
-    else         {READ_WORD(V1_RCSET1_ADDR,m); RC_MinQP = (m>>8)&0x3f;}
-    //psnr=40.0db, divider=10^4.00=10000
-    if (frame_divider>=10000) RC_tuneMinQP = my_imin((prev_RCMinQP+3), (RC_MinQP+3));
-    else                      RC_tuneMinQP = RC_MinQP;
-    return RC_tuneMinQP;
+    prev_frame_psnr = my_divider2psnr(prev_frame_divider);
+    curr_frame_psnr = my_divider2psnr(curr_frame_divider);
+    if ( (prev_frame_psnr>curr_frame_psnr) && ((prev_frame_psnr-curr_frame_psnr)>=psnr_drop_level) ) {
+        if (view==0) rca.v0_PSNRDropSharply = 1;
+        else         rca.v1_PSNRDropSharply = 1;
+    } else {
+        if (view==0) rca.v0_PSNRDropSharply = 0;
+        else         rca.v1_PSNRDropSharply = 0;
+    }
+    if (view==0) return rca.v0_PSNRDropSharply;
+    else         return rca.v1_PSNRDropSharply;
+}
+void my_criteria_decide_changeToIFrame(unsigned char HBitsRatioABits_level, unsigned char ABitsRatioTargetBits_level, unsigned char PSNRDrop_level, unsigned char view) {
+    int v0_IntraPeriod, v0_NotResetRC, v1_IntraPeriod, v1_NotResetRC, i, RCSliceBits;
+    Boolean v0_Condition1=FALSE,v0_Condition2=FALSE,v0_Condition3=FALSE,v1_Condition1=FALSE,v1_Condition2=FALSE,v1_Condition3=FALSE;
+    if (view == 0) {
+        // Condition1: Hbits/(Hbits+Tbits) bigger or equal than HBitsRatioABits_level.
+        if ( (rca.v0_frm_hbits[0]*100/rca.v0_frm_abits[0])>=HBitsRatioABits_level ) v0_Condition1=TRUE;
+        // Condition2: Abits/TargetBits of this frame is bigger or equal than ABitsRatioTargetBits_level.
+        if ( (rca.v0_frm_fbits[0]*100/rca.v0_RCSliceBits)>=ABitsRatioTargetBits_level ) v0_Condition2=TRUE;
+        // Condition3: PSNR drop sharply and degree of the drop is greater than PSNRDrop_level.
+        if ( my_trace_PSNRDropSharply(PSNRDrop_level,0) ) v0_Condition3=TRUE;
+        if ( v0_Condition1==TRUE && v0_Condition2==TRUE && v0_Condition3==TRUE ) {rca.v0_nextPFgotoIF=1; v0_IntraPeriod=1; v0_NotResetRC=1; rca.v0_IFduration=1;}
+        else                                                                     {rca.v0_nextPFgotoIF=0; v0_NotResetRC=0; rca.v0_IFduration=0;}
+    } else {
+        if ( (rca.v1_frm_hbits[0]*100/rca.v1_frm_abits[0])>=HBitsRatioABits_level ) v1_Condition1=TRUE;
+        if ( (rca.v1_frm_fbits[0]*100/rca.v1_RCSliceBits)>=ABitsRatioTargetBits_level ) v1_Condition2=TRUE;
+        if ( my_trace_PSNRDropSharply(PSNRDrop_level,1) ) v1_Condition3=TRUE;
+        if ( v1_Condition1==TRUE && v1_Condition2==TRUE && v1_Condition3==TRUE ) {rca.v1_nextPFgotoIF=1; v1_IntraPeriod=1; v1_NotResetRC= 1; rca.v1_IFduration=1;}
+        else                                                                     {rca.v1_nextPFgotoIF=0; v1_NotResetRC= 0; rca.v1_IFduration=0;}
+    }
+	if (view == 0) {
+        rca.v0_gop_change_NotResetRC = v0_NotResetRC;
+        if (rca.v0_nextPFgotoIF==1) {
+            READ_WORD(V0_GOPFPS_ADDR,i);
+            rca.v0_PrevIntraPeriod = (i>>24)&0xff; // save previous GOP before writing new GOP to it.
+            WRITE_WORD(V0_GOPFPS_ADDR,((v0_IntraPeriod<<24)+(i&0xffffff)));
+            if (rca.v0_insertOneIFrame==1) {
+                READ_WORD(V0_GOPFPS_ADDR,i);
+                rca.v0_intra_period= (i>>24)&0xff;
+            }
+        }
+    } else {
+        rca.v1_gop_change_NotResetRC = v1_NotResetRC;
+        if (rca.v1_nextPFgotoIF==1) {
+            READ_WORD(V1_GOPFPS_ADDR,i);
+            rca.v1_PrevIntraPeriod = (i>>24)&0xff; // save previous GOP before writing new GOP to it.
+            WRITE_WORD(V1_GOPFPS_ADDR,((v1_IntraPeriod<<24)+(i&0xffffff)));
+            if (rca.v1_insertOneIFrame==1) {
+                READ_WORD(V1_GOPFPS_ADDR,i);
+                rca.v1_intra_period= (i>>24)&0xff;
+            }
+        }
+    }
+}
+// Go back to its normal GOP structure ===> After reach next GOP's I frame, release the IFduration.
+void my_decide_backtoNormalGOP(int view) {
+	int i;
+    if (view == 0) {
+        if ( (rca.v0_frame_cnt==0) && (rca.v0_IFduration==1) ) {
+            READ_WORD(V0_GOPFPS_ADDR,i);
+            WRITE_WORD(V0_GOPFPS_ADDR,((rca.v0_PrevIntraPeriod<<24)+(i&0xffffff)));
+            rca.v0_IFduration=0;
+            if (rca.v0_insertOneIFrame==1) {
+                READ_WORD(V0_GOPFPS_ADDR,i);
+                rca.v0_intra_period= (i>>24)&0xff; // go back to its normal IntraPeriod
+            }
+        }
+    } else {
+        if ( (rca.v1_frame_cnt==0) && (rca.v1_IFduration==1) ) {
+            READ_WORD(V1_GOPFPS_ADDR,i);
+            WRITE_WORD(V1_GOPFPS_ADDR,((rca.v1_PrevIntraPeriod<<24)+(i&0xffffff)));
+            rca.v1_IFduration=0;
+            if (rca.v1_insertOneIFrame==1) {
+                READ_WORD(V1_GOPFPS_ADDR,i);
+                rca.v1_intra_period= (i>>24)&0xff; // go back to its normal IntraPeriod
+            }
+        }
+    }
+}
+/*===== Criteria for auto-config of RCISliceBitRatio=====
+1> Depend on comparsion of I frame's psnr(Ipsnr) and last P frame's psnr(Ppsnr) in current GOP.
+2> Ppsnr-Ipsnr and RCISliceBitRatio_nextGOP and RCISliceBitRatio_currGOP's relation:
+    ||                       ||
+    \/                       \/
+    -5             RCISliceBitRatio_currGOP-4
+    ...                      ...
+    -2             RCISliceBitRatio_currGOP-1
+    -1             RCISliceBitRatio_currGOP
+     0             RCISliceBitRatio_currGOP
+    +1             RCISliceBitRatio_currGOP+1
+    +2             RCISliceBitRatio_currGOP+2
+    ...                      ...
+    +5             RCISliceBitRatio_currGOP+5
+3> Finally use RCISliceBitRatioMax value to clamp final output RCISliceBitRatio value.*/
+void my_ac_RCISliceBitRatio(unsigned char RCISliceBitRatioMax, int view) {
+    long long whm255square,m;
+    int i,iframe_divider,lastpframe_divider;
+    unsigned short iframe_psnr, lastpframe_psnr;
+    signed short diffpsnr_PI;
+    unsigned char RCISliceBitRatio_currGOP, RCISliceBitRatio_nextGOP;
+    if (view==0) {
+        whm255square = (long long)(rca.v0_width*255)*(long long)(rca.v0_height*255);
+        iframe_divider = (int)(whm255square/rca.v0_ifrm_ymse);
+        lastpframe_divider = (int)(whm255square/rca.v0_lastpfrm_ymse);
+    } else {
+        whm255square = (long long)(rca.v1_width*255)*(long long)(rca.v1_height*255);
+        iframe_divider = (int)(whm255square/rca.v1_ifrm_ymse);
+        lastpframe_divider = (int)(whm255square/rca.v1_lastpfrm_ymse);
+    }
+    iframe_psnr = my_divider2psnr(iframe_divider);
+    lastpframe_psnr = my_divider2psnr(lastpframe_divider);
+
+    diffpsnr_PI = lastpframe_psnr - iframe_psnr;
+    if (view==0) RCISliceBitRatio_currGOP = rca.v0_RCISliceBitRatio;
+    else         RCISliceBitRatio_currGOP = rca.v1_RCISliceBitRatio;
+    
+    if (diffpsnr_PI>=1)                         RCISliceBitRatio_nextGOP = RCISliceBitRatio_currGOP+diffpsnr_PI;
+    else if (diffpsnr_PI>=-1 && diffpsnr_PI<=0) RCISliceBitRatio_nextGOP = RCISliceBitRatio_currGOP;
+    else                                        RCISliceBitRatio_nextGOP = RCISliceBitRatio_currGOP+diffpsnr_PI+1;
+    RCISliceBitRatio_nextGOP = my_imax(RCISliceBitRatio_nextGOP, 1);
+    RCISliceBitRatio_nextGOP = my_iequmin(RCISliceBitRatio_nextGOP, RCISliceBitRatioMax);
+    
+    if (view==0) {
+        READ_WORD(V0_ZW_BSINFO_ADDR,i);
+        WRITE_WORD(V0_ZW_BSINFO_ADDR,((i&0xffffff03)|((RCISliceBitRatio_nextGOP&0x3f)<<2)));
+        rca.v0_RCISliceBitRatio = RCISliceBitRatio_nextGOP;
+	} else {
+        READ_WORD(V1_ZW_BSINFO_ADDR,i);
+        WRITE_WORD(V1_ZW_BSINFO_ADDR,((i&0xffffff03)|((RCISliceBitRatio_nextGOP&0x3f)<<2)));
+        rca.v1_RCISliceBitRatio = RCISliceBitRatio_nextGOP;
+	}
 }
 #endif  //###########
 
@@ -903,9 +884,10 @@ void my_v0_rc_init_seq( )
   rca.v0_frame_mad   = 0;
   rca.v0_frame_tbits = 0;
   rca.v0_frame_hbits = 0;
+  rca.v0_frame_abits = 0;
 
-  if(rca.v0_intra_period==1)
-    rca.v0_RCUpdateMode = RC_MODE_1;
+  //if(rca.v0_intra_period==1)
+  //  rca.v0_RCUpdateMode = RC_MODE_1;
 
   if(rca.v0_RCUpdateMode!=RC_MODE_0)
   {
@@ -920,8 +902,8 @@ void my_v0_rc_init_seq( )
 ////////////////////////////////////////////////////////
   switch (rca.v0_RCUpdateMode )
   {
-     case RC_MODE_0: my_v0_updateQP = my_v0_updateQPRC0; break;
-     case RC_MODE_1: my_v0_updateQP = my_v0_updateQPRC1; break;
+     //case RC_MODE_0: my_v0_updateQP = my_v0_updateQPRC0; break;
+     //case RC_MODE_1: my_v0_updateQP = my_v0_updateQPRC1; break;
      case RC_MODE_3: my_v0_updateQP = my_v0_updateQPRC3; break;
      default: my_v0_updateQP = my_v0_updateQPRC3; break;
   }
@@ -942,6 +924,9 @@ void my_v0_rc_init_seq( )
     rca.v0_BUCFMAD_8p[i] = 0;
   }
 
+  for(i=0;i<2;i++) { // set ymse_pframe[i] to max value at begining of sequence, lhu, 2017/03/27
+    rca.v0_frm_ymse[i] = rca.v0_height*rca.v0_width*((1<<8)-1)*((1<<8)-1);
+  }
   rca.v0_PrevBitRate = rca.v0_bit_rate; //lhumod
   //compute the total number of MBs in a frame
   if(rca.v0_basicunit >= rca.v0_FrameSizeInMbs)
@@ -1031,10 +1016,10 @@ void my_v0_rc_init_seq( )
 void my_v0_rc_init_GOP(int np)
 {
   Boolean Overum=FALSE;
-  int OverBits,denom;
+  int OverBits,denom,i;
   int GOPDquant;
   int gop_bits;
-  int v0_RCISliceTargetBits,v0_RCISliceBitsLow,v0_RCISliceBitsHigh,v0_RCISliceBitsLow2,v0_RCISliceBitsHigh2,v0_RCISliceBitsLow4,v0_RCISliceBitsHigh4,v0_RCISliceBitsLow8,v0_RCISliceBitsHigh8; // lhuqu1
+  int v0_RCISliceBitsLow,v0_RCISliceBitsHigh,v0_RCISliceBitsLow2,v0_RCISliceBitsHigh2,v0_RCISliceBitsLow4,v0_RCISliceBitsHigh4,v0_RCISliceBitsLow8,v0_RCISliceBitsHigh8; // lhuqu1
 
     //if(rca.v0_RCUpdateMode != RC_MODE_0) {// lhugop
     //  my_v0_rc_init_seq( );
@@ -1069,13 +1054,22 @@ void my_v0_rc_init_GOP(int np)
         Overum=TRUE;
     OverBits=-rca.v0_RemainingBits;
 
+    rca.v0_RemainingBits = 0; // set remainingbits as 0 at beginning of gop, lhu, 2017/02/08
     //initialize the lower bound and the upper bound for the target bits of each frame, HRD consideration
     rca.v0_LowerBound  = rca.v0_RemainingBits + (rca.v0_bit_rate/rca.v0_framerate);
     rca.v0_UpperBound1 = rca.v0_RemainingBits + (rca.v0_bit_rate<<1); //2.048
+    rca.v0_UpperBound2  = ((OMEGA_4p*rca.v0_UpperBound1) >> 4); // lhu, 2017/03/13
 
     //compute the total number of bits for the current GOP
-    gop_bits = (1+np)*(rca.v0_bit_rate/rca.v0_framerate);
-    rca.v0_RemainingBits = gop_bits;//+= gop_bits; // set remainingbits as gop_bits at beginning of gop, lhu, 2017/02/08
+    if (rca.v0_IFduration!=1)
+        gop_bits = (1+np)*(rca.v0_bit_rate/rca.v0_framerate);
+    else {
+        if (rca.v0_changeToIFrame==1)
+            gop_bits = ((1+np)*(rca.v0_bit_rate/rca.v0_framerate)*14)/10; // expand whole GOP target by 40%, lhu, 2017/03/07
+        else if (rca.v0_insertOneIFrame==1)
+            gop_bits = (1+np)*(rca.v0_bit_rate/rca.v0_framerate); // maintain the original GOP target, lhu, 2017/03/09
+    }
+    rca.v0_RemainingBits+= gop_bits;
     rca.v0_Np = np;
 
     //  OverDuantQp=(int)(8 * OverBits/gop_bits+0.5);
@@ -1115,15 +1109,15 @@ void my_v0_rc_init_GOP(int np)
 
         if(rca.v0_RCUpdateMode == RC_MODE_3) {
             // lhuqu1, Determine the threshold windows for ISliceBits based on RCISliceBitRatio value
-            v0_RCISliceTargetBits = gop_bits * rca.v0_RCISliceBitRatio/(rca.v0_RCISliceBitRatio+(rca.v0_intra_period-1));
-            v0_RCISliceBitsLow    = v0_RCISliceTargetBits*9/10;
-            v0_RCISliceBitsHigh   = v0_RCISliceTargetBits*11/10;
-            v0_RCISliceBitsLow2   = v0_RCISliceTargetBits*8/10;
-            v0_RCISliceBitsHigh2  = v0_RCISliceTargetBits*12/10;
-            v0_RCISliceBitsLow4   = v0_RCISliceTargetBits*6/10;
-            v0_RCISliceBitsHigh4  = v0_RCISliceTargetBits*14/10;
-            v0_RCISliceBitsLow8   = v0_RCISliceTargetBits*2/10;
-            v0_RCISliceBitsHigh8  = v0_RCISliceTargetBits*18/10;
+            rca.v0_RCISliceTargetBits = gop_bits * rca.v0_RCISliceBitRatio/(rca.v0_RCISliceBitRatio+(rca.v0_intra_period-1));
+            v0_RCISliceBitsLow    = rca.v0_RCISliceTargetBits*9/10;
+            v0_RCISliceBitsHigh   = rca.v0_RCISliceTargetBits*11/10;
+            v0_RCISliceBitsLow2   = rca.v0_RCISliceTargetBits*8/10;
+            v0_RCISliceBitsHigh2  = rca.v0_RCISliceTargetBits*12/10;
+            v0_RCISliceBitsLow4   = rca.v0_RCISliceTargetBits*6/10;
+            v0_RCISliceBitsHigh4  = rca.v0_RCISliceTargetBits*14/10;
+            v0_RCISliceBitsLow8   = rca.v0_RCISliceTargetBits*2/10;
+            v0_RCISliceBitsHigh8  = rca.v0_RCISliceTargetBits*18/10;
             if(rca.v0_RCISliceActualBits  <= v0_RCISliceBitsLow8)                                                              rca.v0_PAverageQp = rca.v0_QPLastGOP-6;
             else if((v0_RCISliceBitsLow8  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsLow4))  rca.v0_PAverageQp = rca.v0_QPLastGOP-4;
             else if((v0_RCISliceBitsLow4  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsLow2))  rca.v0_PAverageQp = rca.v0_QPLastGOP-2;
@@ -1272,11 +1266,16 @@ void my_v0_rc_init_pict(int mult)
         }
       }
       rca.v0_Target = mult * rca.v0_Target;
-      //rca.v0_Target = (mult * rca.v0_Target * 95)/100; // discount the pict target, lhutar
 
       // HRD consideration
-      if(rca.v0_RCUpdateMode!=RC_MODE_3 || rca.v0_type==P_SLICE)
-        rca.v0_Target = my_iClip3(rca.v0_LowerBound, rca.v0_UpperBound2, rca.v0_Target);
+      if(rca.v0_RCUpdateMode!=RC_MODE_3 || rca.v0_type==P_SLICE) {
+        if (rca.v0_IFduration!=1)
+          rca.v0_Target = my_iClip3(rca.v0_LowerBound, rca.v0_UpperBound2, rca.v0_Target);
+        else {
+          if (rca.v0_changeToIFrame==1)
+            rca.v0_Target = (rca.v0_Target*14)/10; // expand P frame target by 40%, lhu, 2017/03/07
+        }
+      }
     }
 
     #ifdef JM_RC_DUMP
@@ -1779,7 +1778,7 @@ void my_v0_hold( )
     }
 }
 
-
+/*
 int my_v0_updateQPRC0( )
 {
   int m_Bits;
@@ -1903,7 +1902,7 @@ int my_v0_updateQPRC1( )
   int SumofBasicUnit;
   int MaxQpChange, m_Qp, m_Hp;
 
-  /* frame layer rate control */
+  // frame layer rate control
   if(rca.v0_BasicUnit >= rca.v0_FrameSizeInMbs )
   {
     {
@@ -1933,11 +1932,11 @@ int my_v0_updateQPRC1( )
         m_Qp = rca.v0_Pm_Qp;
         m_Hp = rca.v0_PPreHeader;
 
-        /* predict the MAD of current picture*/
+        // predict the MAD of current picture
 //20        rca.v0_CurrentMAD=rca.v0_MADPictureC1*rca.v0_PreviousPictureMAD + rca.v0_MADPictureC2;
         rca.v0_CurrentMAD_8p = (rca.v0_MADPictureC1_12p*rca.v0_PreviousPictureMAD_8p)/(1<<12) + rca.v0_MADPictureC2_12p/(1<<4);
 
-        /*compute the number of bits for the texture*/
+        //compute the number of bits for the texture
         if(rca.v0_Target < 0)
         {
           rca.v0_m_Qc=m_Qp+MaxQpChange;
@@ -1960,7 +1959,7 @@ int my_v0_updateQPRC1( )
       }
     }
   }
-  /*basic unit layer rate control*/
+  //basic unit layer rate control
   else
   {
     if(rca.v0_gop_cnt==0 && rca.v0_frame_cnt==0) // (rca.v0_number == 0)
@@ -1985,7 +1984,7 @@ int my_v0_updateQPRC1( )
 
         SumofBasicUnit=rca.v0_TotalNumberofBasicUnit;
 
-        /*the average QP of the previous frame is used to coded the first basic unit of the current frame or field*/
+        //the average QP of the previous frame is used to coded the first basic unit of the current frame or field
         if(rca.v0_bu_cnt==0)
           return my_v0_updateFirstBU( );
         else
@@ -2016,7 +2015,7 @@ int my_v0_updateQPRC1( )
     }
   }
   return rca.v0_m_Qc;
-}
+}*/
 
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -2159,8 +2158,8 @@ int my_v0_updateQPRC3( )
 
             rca.v0_TotalFrameQP +=rca.v0_m_Qc;
             rca.v0_Pm_Qp=rca.v0_m_Qc;
-            //if((rca.v0_bu_cnt==(rca.v0_TotalNumberofBasicUnit-1)) && rca.v0_type==P_SLICE)
-            if((rca.v0_bu_cnt==(rca.v0_TotalNumberofBasicUnit-1)) && (rca.v0_type==P_SLICE || rca.v0_type==I_SLICE) ) //lhuitune
+            if((rca.v0_bu_cnt==(rca.v0_TotalNumberofBasicUnit-1)) && rca.v0_type==P_SLICE) // lhu, 2017/03/23
+            //if((rca.v0_bu_cnt==(rca.v0_TotalNumberofBasicUnit-1)) && (rca.v0_type==P_SLICE || rca.v0_type==I_SLICE) ) //lhuitune
               my_v0_updateLastBU( );
 
             return rca.v0_m_Qc;
@@ -2211,10 +2210,11 @@ int my_v0_updateNegativeTarget( int m_Qp )
   rca.v0_m_Qc = my_imin(rca.v0_m_Qc, rca.v0_RCMaxQP);  // clipping
   if(rca.v0_basicunit>=rca.v0_MBPerRow) {
     if (rca.v0_wireless_screen!=1) { // added by lhu, 2017/02/27
-      if (rca.v0_type == P_SLICE) rca.v0_m_Qc = my_imin(rca.v0_m_Qc, rca.v0_PAveFrameQP+10); // change +6 to +10, lhu, 2017/01/26
-      else                        rca.v0_m_Qc = my_imin(rca.v0_m_Qc, rca.v0_PAveFrameQP+6); // lower QP change range for I slice, lhu, 2017/02/07
-    } else { // added by lhu, 2017/02/27
-      rca.v0_m_Qc = my_imin(rca.v0_m_Qc, rca.v0_PAveFrameQP+6);
+      if (rca.v0_type == P_SLICE) rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+6, rca.v0_m_Qc); // change +6 to +10, lhu, 2017/01/26
+      else                        rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+5, rca.v0_m_Qc); // lower QP change range for I slice, lhu, 2017/02/07
+    } else {
+      if (rca.v0_type == P_SLICE) rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+3, rca.v0_m_Qc); // change +6 to +3, lhu, 2017/04/25
+      else                        rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+2, rca.v0_m_Qc); // change +6 to +2 for I slice, lhu, 2017/04/25
     }
   } else
     rca.v0_m_Qc = my_imin(rca.v0_m_Qc, rca.v0_PAveFrameQP+3);
@@ -2242,6 +2242,8 @@ int my_v0_updateNegativeTarget( int m_Qp )
 
 int my_v0_updateFirstBU( )
 {
+  if(rca.v0_frame_cnt==1) rca.v0_PAveFrameQP = rca.v0_QPLastPFrame; // first P frame's initial QP value equals to LastPFrame's average QP, lhu, 2017/03/23
+  else                    rca.v0_PAveFrameQP = rca.v0_PAveFrameQP;
   if(rca.v0_Target<=0)
   {
     rca.v0_m_Qc = rca.v0_PAveFrameQP + 2;
@@ -2372,10 +2374,11 @@ void my_v0_updateModelQPBU( int m_Qp )
   
   if(rca.v0_basicunit>=rca.v0_MBPerRow) {
   	if (rca.v0_wireless_screen!=1) { // added by lhu, 2017/02/27
-      if (rca.v0_type == P_SLICE) rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+10, rca.v0_m_Qc); // change +6 to +10, lhu, 2017/01/24
-      else                        rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+6, rca.v0_m_Qc); // lower QP change range for I slice, lhu, 2017/02/07
-    } else { // added by lhu, 2017/02/27
-      rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+6, rca.v0_m_Qc);
+      if (rca.v0_type == P_SLICE) rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+6, rca.v0_m_Qc); // change +6 to +10, lhu, 2017/01/24
+      else                        rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+5, rca.v0_m_Qc); // lower QP change range for I slice, lhu, 2017/02/07
+    } else {
+      if (rca.v0_type == P_SLICE) rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+3, rca.v0_m_Qc); // change +6 to +3, lhu, 2017/04/25
+      else                        rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+2, rca.v0_m_Qc); // change +6 to +2 for I slice, lhu, 2017/04/25
     }
   } else
     rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+3, rca.v0_m_Qc);
@@ -2386,9 +2389,15 @@ void my_v0_updateModelQPBU( int m_Qp )
   else
     rca.v0_m_Qc = my_iClip3(m_Qp-rca.v0_DDquant, rca.v0_RCMaxQP, rca.v0_m_Qc); // clipping
 
-  if(rca.v0_basicunit>=rca.v0_MBPerRow)
-    rca.v0_m_Qc = my_imax(rca.v0_PAveFrameQP-6, rca.v0_m_Qc);
-  else
+  if(rca.v0_basicunit>=rca.v0_MBPerRow) {
+  	if (rca.v0_wireless_screen!=1) { // added by lhu, 2017/04/18
+      if (rca.v0_type == P_SLICE) rca.v0_m_Qc = my_imax(rca.v0_PAveFrameQP-6, rca.v0_m_Qc); // lhu, 2017/04/18
+      else                        rca.v0_m_Qc = my_imax(rca.v0_PAveFrameQP-5, rca.v0_m_Qc); // lhu, 2017/04/18
+    } else {
+      if (rca.v0_type == P_SLICE) rca.v0_m_Qc = my_imax(rca.v0_PAveFrameQP-3, rca.v0_m_Qc); // lhu, 2017/04/25
+      else                        rca.v0_m_Qc = my_imax(rca.v0_PAveFrameQP-2, rca.v0_m_Qc); // lhu, 2017/04/25
+    }
+  } else
     rca.v0_m_Qc = my_imax(rca.v0_PAveFrameQP-3, rca.v0_m_Qc);
 
   rca.v0_m_Qc = my_imax(rca.v0_RCMinQP, rca.v0_m_Qc);
@@ -2406,15 +2415,15 @@ void my_v0_rc_update_bu_stats( ) {
     }
 }
 void my_v0_rc_update_frame_stats( ) {
-    if(rca.v0_bu_cnt==0) { //frame over
+    rca.v0_frame_mad   += v0_mad_tmp;
+    rca.v0_frame_tbits += v0_tbits_tmp;
+    rca.v0_frame_hbits += v0_hbits_tmp;
+    rca.v0_frame_abits = rca.v0_frame_tbits+rca.v0_frame_hbits;
+    if(rca.v0_bu_cnt==0) { //after calculate frame's status reset related status to zero, lhu, 2017/03/06
         rca.v0_frame_mad   = 0;
         rca.v0_frame_tbits = 0;
         rca.v0_frame_hbits = 0;
-    }
-    else {
-        rca.v0_frame_mad   += v0_mad_tmp;
-        rca.v0_frame_tbits += v0_tbits_tmp;
-        rca.v0_frame_hbits += v0_hbits_tmp;
+        rca.v0_frame_abits = 0;
     }
 }
 #else //#########
@@ -2466,8 +2475,13 @@ void my_v0_rc_init_gop_params( )
     }
     else if((rca.v0_RCUpdateMode==RC_MODE_0)|(rca.v0_RCUpdateMode==RC_MODE_2)|(rca.v0_RCUpdateMode==RC_MODE_3))
     {
-        if(rca.v0_frame_cnt==0 && rca.v0_bu_cnt==0) // && rca.mb_cnt==0)
+        if(rca.v0_frame_cnt==0 && rca.v0_bu_cnt==0) {
+            if (rca.v0_IFduration==1 && rca.v0_insertOneIFrame==1) {
+                rca.v0_intra_period = rca.v0_PrevIntraPeriod; // use previous intra_period to calculate GOP TargetBits, lhu, 2017/03/13
+                rca.v0_RCISliceBitRatio = 3; // fix the Ipratio when decide insert Intra Frame, lhu, 2017/04/26
+            }
             my_v0_rc_init_GOP( rca.v0_intra_period - 1 );
+        }
     }
 }
 
@@ -2548,13 +2562,27 @@ int my_v0_rc_handle_mb( )
 
     rca.v0_qp = my_iClip3(rca.v0_RCMinQP, rca.v0_RCMaxQP, rca.v0_qp); // -rca.bitdepth_luma_qp_scale
 
+    my_v0_rc_update_frame_stats(); // computer frame parameters
+    if( rca.v0_bu_cnt==(rca.v0_TotalNumberofBasicUnit-1) ) {
+        if (rca.v0_changeToIFrame==1 || rca.v0_insertOneIFrame==1) {
+            if (rca.v0_type==P_SLICE) my_criteria_decide_changeToIFrame((ymseh_tmp>>16)&0xff,(ymseh_tmp>>8)&0xff,(ymseh_tmp>>5)&0x7,0); // lhu, 2017/03/24
+            else                      my_decide_backtoNormalGOP(0); // lhu, 2017/03/24
+        } else { // lhu, 2017/04/10
+            rca.v0_gop_change_NotResetRC=0; rca.v0_IFduration=0;
+        }
+        rca.v0_frm_ymse[1]  = rca.v0_frm_ymse[0]; // lhu, 2017/03/27
+        // renew the QPLastPFrame after intra_period updated, lhu, 2017/03/28
+        if ( (rca.v0_type==P_SLICE) && (rca.v0_frame_cnt>=(rca.v0_intra_period-1)) ) {
+            rca.v0_QPLastPFrame = (rca.v0_TotalFrameQP+(rca.v0_TotalNumberofBasicUnit>>1))/rca.v0_TotalNumberofBasicUnit;
+        }
+    }
 
     if(rca.v0_basicunit < rca.v0_FrameSizeInMbs) // bu-level counter
     {
         if(rca.v0_bu_cnt==(rca.v0_TotalNumberofBasicUnit-1))
         {
             rca.v0_bu_cnt=0;
-            if(rca.v0_frame_cnt==(rca.v0_intra_period-1))
+            if(rca.v0_frame_cnt>=(rca.v0_intra_period-1)) // change "==" to ">=", lhu, 2017/03/09
             {
                 rca.v0_frame_cnt=0;
                 //if(rca.v0_gop_cnt<=1000)
@@ -2577,9 +2605,6 @@ int my_v0_rc_handle_mb( )
         else
             rca.v0_frame_cnt++;
     }
-
-
-    my_v0_rc_update_frame_stats(); // computer frame parameters
 
 #ifndef ARMCM7_RC //#############
     my_hold( );
@@ -2619,6 +2644,13 @@ void my_v1_rc_params( ) {
     rca.v1_re_bitrate = 0;
     rca.v1_prev_ac_br_index = 0;
     rca.v1_wireless_screen = 0; // lhu, 2017/02/27
+    rca.v1_changeToIFrame = 0; // lhu, 2017/03/09
+    rca.v1_insertOneIFrame= 0; // lhu, 2017/03/09
+    rca.v1_PrevFrmPSNRLow= 0; // lhu, 2017/03/15
+    rca.v1_gop_change_NotResetRC = 0; // lhu, 2017/03/07
+    rca.v1_nextPFgotoIF = 0; // lhu, 2017/03/07
+    rca.v1_IFduration = 0; // lhu, 2017/03/07
+    rca.v1_PrevFbits = 0; // lhu, 2017/04/05
     v1_last_p_gop_change = FALSE; //@lhu, initial value
 
     READ_WORD(V1_FRAME_XY_ADDR,m); //read frame-x & frame-y
@@ -2650,8 +2682,7 @@ void my_v1_rc_params( ) {
         rca.v1_bit_rate = i;
 
     READ_WORD(V1_RCSET2_ADDR,i); //read rcset2
-        rca.v1_RCEnableAutoConfigGOP = i&0x1;
-        rca.v1_RCEnableAutoConfigIOPRatio = (i>>1)&0x1;
+        rca.v1_RCISliceBitRatioMax = (i>>8)&0x3f;
         rca.v1_RCIoverPRatio = (i>>16)&0xf;
         rca.v1_RCISliceBitRatio = (i>>24)&0xf;
 }
@@ -2679,78 +2710,6 @@ void my_rc_params( ) {
 }
 #endif //###########
 
-#ifdef ARMCM7_RC  //###########
-/*===== Auto-config GOP based on sub-function of RCAutoConfig_GOP =====
-void my_v1_rc_params_ac_gop( ) {
-    int i,j,m,v1_autoconfig_gop;
-
-    READ_WORD(V1_FRAME_XY_ADDR,m); //read frame-x & frame-y
-        i=(m>>16)&0xffff;
-        j=m&0xffff;
-        rca.v1_width = i;
-        rca.v1_height = j;
-
-    READ_WORD(V1_RCEN_BU_ADDR,i); //read rc_en, rc_mode & bu
-        rca.v1_rc_enable = (i>>24)&0x1;
-        rca.v1_RCUpdateMode = (i>>16)&0x3;
-
-    READ_WORD(V1_BR_ADDR,i); //read br
-        rca.v1_bit_rate = i;
-
-    if (rca.v1_rc_enable==1 && rca.v1_RCUpdateMode==RC_MODE_3) {
-        v1_autoconfig_gop = RCAutoConfig_GOP(rca.v1_width, rca.v1_height, rca.v1_bit_rate, v1_ymse_last_p);
-        rca.v1_intra_period = v1_autoconfig_gop;
-        READ_WORD(V1_QP_ADDR, i);
-        WRITE_WORD(V1_QP_ADDR, (((i>>8)<<8)+v1_autoconfig_gop));
-    }
-}
-
-//===== Auto-config IOverPRatio based on sub-function of RCAutoConfig_IOverPRatio =====
-void my_v1_rc_params_ac_iopratio( ) {
-    int i,j,m,v1_ac_iopratio;
-
-    READ_WORD(V1_FRAME_XY_ADDR,m); //read frame-x & frame-y
-        i=(m>>16)&0xffff;
-        j=m&0xffff;
-        rca.v1_width = i;
-        rca.v1_height = j;
-
-    READ_WORD(V1_RCEN_BU_ADDR,i); //read rc_en, rc_mode & bu
-        rca.v1_rc_enable = (i>>24)&0x1;
-        rca.v1_RCUpdateMode = (i>>16)&0x3;
-
-    READ_WORD(V1_BR_ADDR,i); //read br
-        rca.v1_bit_rate = i;
-
-    if (rca.v1_rc_enable==1 && rca.v1_RCUpdateMode==RC_MODE_3) {
-        v1_ac_iopratio = RCAutoConfig_IOverPRatio(rca.v1_width, rca.v1_height, rca.v1_bit_rate, rca.v1_RCIoverPRatio, v1_ymse_iframe, v1_ymse_last_p);
-        rca.v1_RCIoverPRatio = v1_ac_iopratio;
-        READ_WORD(V1_QP_ADDR, i);
-        WRITE_WORD(V1_QP_ADDR, (((i>>16)<<16)+(v1_ac_iopratio<<8)+(i&0xff)));
-    }
-}*/
-
-//===== raise the MinQP value when psnr >=39db =====
-void my_v1_rc_raiseminqp_psnrbig39( ) { // lhupsnr
-    int i,j,m;
-
-    READ_WORD(V1_FRAME_XY_ADDR,m); //read frame-x & frame-y
-        i=(m>>16)&0xffff;
-        j=m&0xffff;
-        rca.v1_width = i;
-        rca.v1_height = j;
-
-    READ_WORD(V1_RCEN_BU_ADDR,i); //read rc_en, rc_mode & bu
-        rca.v1_rc_enable = (i>>24)&0x1;
-        rca.v1_RCUpdateMode = (i>>16)&0x3;
-
-    if (rca.v1_rc_enable==1 && rca.v1_RCUpdateMode==RC_MODE_3) {
-        rca.v1_RCMinQP = RCRaiseMinQP_PSPNBig39(1, rca.v1_PrevRCMinQP);
-    }
-}
-#endif //###########
-
-
 void my_v1_rc_init_seq( )
 {
 //18  double L1,L2,L3;
@@ -2768,8 +2727,8 @@ void my_v1_rc_init_seq( )
   rca.v1_frame_tbits = 0;
   rca.v1_frame_hbits = 0;
 
-  if(rca.v1_intra_period==1)
-    rca.v1_RCUpdateMode = RC_MODE_1;
+  //if(rca.v1_intra_period==1)
+  //  rca.v1_RCUpdateMode = RC_MODE_1;
 
   if(rca.v1_RCUpdateMode!=RC_MODE_0)
   {
@@ -2784,8 +2743,8 @@ void my_v1_rc_init_seq( )
 ////////////////////////////////////////////////////////
   switch (rca.v1_RCUpdateMode )
   {
-     case RC_MODE_0: my_v1_updateQP = my_v1_updateQPRC0; break;
-     case RC_MODE_1: my_v1_updateQP = my_v1_updateQPRC1; break;
+     //case RC_MODE_0: my_v1_updateQP = my_v1_updateQPRC0; break;
+     //case RC_MODE_1: my_v1_updateQP = my_v1_updateQPRC1; break;
      case RC_MODE_3: my_v1_updateQP = my_v1_updateQPRC3; break;
      default: my_v1_updateQP = my_v1_updateQPRC3; break;
   }
@@ -2806,6 +2765,9 @@ void my_v1_rc_init_seq( )
     rca.v1_BUCFMAD_8p[i] = 0;
   }
 
+  for(i=0;i<2;i++) { // set ymse_pframe[i] to max value at begining of sequence, lhu, 2017/03/27
+    rca.v1_frm_ymse[i] = rca.v1_height*rca.v1_width*((1<<8)-1)*((1<<8)-1);
+  }
   rca.v1_PrevBitRate = rca.v1_bit_rate; //lhumod
   //compute the total number of MBs in a frame
   if(rca.v1_basicunit >= rca.v1_FrameSizeInMbs)
@@ -2895,10 +2857,10 @@ void my_v1_rc_init_seq( )
 void my_v1_rc_init_GOP(int np)
 {
   Boolean Overum=FALSE;
-  int OverBits,denom;
+  int OverBits,denom,i;
   int GOPDquant;
   int gop_bits;
-  int v1_RCISliceTargetBits,v1_RCISliceBitsLow,v1_RCISliceBitsHigh,v1_RCISliceBitsLow2,v1_RCISliceBitsHigh2,v1_RCISliceBitsLow4,v1_RCISliceBitsHigh4,v1_RCISliceBitsLow8,v1_RCISliceBitsHigh8; // lhuqu1
+  int v1_RCISliceBitsLow,v1_RCISliceBitsHigh,v1_RCISliceBitsLow2,v1_RCISliceBitsHigh2,v1_RCISliceBitsLow4,v1_RCISliceBitsHigh4,v1_RCISliceBitsLow8,v1_RCISliceBitsHigh8; // lhuqu1
 
     //if(rca.v1_RCUpdateMode != RC_MODE_0) {// lhugop
     //  my_v1_rc_init_seq( );
@@ -2933,13 +2895,22 @@ void my_v1_rc_init_GOP(int np)
         Overum=TRUE;
     OverBits=-rca.v1_RemainingBits;
 
+    rca.v1_RemainingBits = 0; // set remainingbits as 0 at beginning of gop, lhu, 2017/02/08
     //initialize the lower bound and the upper bound for the target bits of each frame, HRD consideration
     rca.v1_LowerBound  = rca.v1_RemainingBits + (rca.v1_bit_rate/rca.v1_framerate);
     rca.v1_UpperBound1 = rca.v1_RemainingBits + (rca.v1_bit_rate<<1); //2.048
+    rca.v1_UpperBound2  = ((OMEGA_4p*rca.v1_UpperBound1) >> 4); // lhu, 2017/03/13
 
     //compute the total number of bits for the current GOP
-    gop_bits = (1+np)*(rca.v1_bit_rate/rca.v1_framerate);
-    rca.v1_RemainingBits = gop_bits; //+= gop_bits; // set remainingbits as gop_bits at beginning of gop, lhu, 2017/02/08
+    if (rca.v1_IFduration!=1)
+        gop_bits = (1+np)*(rca.v1_bit_rate/rca.v1_framerate);
+    else {
+        if (rca.v1_changeToIFrame==1)
+            gop_bits = ((1+np)*(rca.v1_bit_rate/rca.v1_framerate)*14)/10; // expand whole GOP target by 40%, lhu, 2017/03/07
+        else if (rca.v1_insertOneIFrame==1)
+            gop_bits = (1+np)*(rca.v1_bit_rate/rca.v1_framerate); // maintain the original GOP target, lhu, 2017/03/09
+    }
+    rca.v1_RemainingBits+= gop_bits;
     rca.v1_Np = np;
 
     //  OverDuantQp=(int)(8 * OverBits/gop_bits+0.5);
@@ -2979,15 +2950,15 @@ void my_v1_rc_init_GOP(int np)
 
         if(rca.v1_RCUpdateMode == RC_MODE_3) {
             // lhuqu1, Determine the threshold windows for ISliceBits based on RCISliceBitRatio value
-            v1_RCISliceTargetBits = gop_bits * rca.v1_RCISliceBitRatio/(rca.v1_RCISliceBitRatio+(rca.v1_intra_period-1));
-            v1_RCISliceBitsLow    = v1_RCISliceTargetBits*9/10;
-            v1_RCISliceBitsHigh   = v1_RCISliceTargetBits*11/10;
-            v1_RCISliceBitsLow2   = v1_RCISliceTargetBits*8/10;
-            v1_RCISliceBitsHigh2  = v1_RCISliceTargetBits*12/10;
-            v1_RCISliceBitsLow4   = v1_RCISliceTargetBits*6/10;
-            v1_RCISliceBitsHigh4  = v1_RCISliceTargetBits*14/10;
-            v1_RCISliceBitsLow8   = v1_RCISliceTargetBits*2/10;
-            v1_RCISliceBitsHigh8  = v1_RCISliceTargetBits*18/10;
+            rca.v1_RCISliceTargetBits = gop_bits * rca.v1_RCISliceBitRatio/(rca.v1_RCISliceBitRatio+(rca.v1_intra_period-1));
+            v1_RCISliceBitsLow    = rca.v1_RCISliceTargetBits*9/10;
+            v1_RCISliceBitsHigh   = rca.v1_RCISliceTargetBits*11/10;
+            v1_RCISliceBitsLow2   = rca.v1_RCISliceTargetBits*8/10;
+            v1_RCISliceBitsHigh2  = rca.v1_RCISliceTargetBits*12/10;
+            v1_RCISliceBitsLow4   = rca.v1_RCISliceTargetBits*6/10;
+            v1_RCISliceBitsHigh4  = rca.v1_RCISliceTargetBits*14/10;
+            v1_RCISliceBitsLow8   = rca.v1_RCISliceTargetBits*2/10;
+            v1_RCISliceBitsHigh8  = rca.v1_RCISliceTargetBits*18/10;
             if(rca.v1_RCISliceActualBits  <= v1_RCISliceBitsLow8)                                                              rca.v1_PAverageQp = rca.v1_QPLastGOP-6;
             else if((v1_RCISliceBitsLow8  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsLow4))  rca.v1_PAverageQp = rca.v1_QPLastGOP-4;
             else if((v1_RCISliceBitsLow4  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsLow2))  rca.v1_PAverageQp = rca.v1_QPLastGOP-2;
@@ -3136,11 +3107,16 @@ void my_v1_rc_init_pict(int mult)
         }
       }
       rca.v1_Target = mult * rca.v1_Target;
-      //rca.v1_Target = (mult * rca.v1_Target * 95)/100; // discount the pict target, lhutar
 
       // HRD consideration
-      if(rca.v1_RCUpdateMode!=RC_MODE_3 || rca.v1_type==P_SLICE)
-        rca.v1_Target = my_iClip3(rca.v1_LowerBound, rca.v1_UpperBound2, rca.v1_Target);
+      if(rca.v1_RCUpdateMode!=RC_MODE_3 || rca.v1_type==P_SLICE) {
+        if (rca.v1_IFduration!=1)
+          rca.v1_Target = my_iClip3(rca.v1_LowerBound, rca.v1_UpperBound2, rca.v1_Target);
+        else {
+          if (rca.v1_changeToIFrame==1)
+            rca.v1_Target = (rca.v1_Target*14)/10; // expand P frame target by 40%, lhu, 2017/03/07
+        }
+      }
     }
 
     #ifdef JM_RC_DUMP
@@ -3643,7 +3619,7 @@ void my_v1_hold( )
     }
 }
 
-
+/*
 int my_v1_updateQPRC0( )
 {
   int m_Bits;
@@ -3767,7 +3743,7 @@ int my_v1_updateQPRC1( )
   int SumofBasicUnit;
   int MaxQpChange, m_Qp, m_Hp;
 
-  /* frame layer rate control */
+  // frame layer rate control
   if(rca.v1_BasicUnit >= rca.v1_FrameSizeInMbs )
   {
     {
@@ -3797,11 +3773,11 @@ int my_v1_updateQPRC1( )
         m_Qp = rca.v1_Pm_Qp;
         m_Hp = rca.v1_PPreHeader;
 
-        /* predict the MAD of current picture*/
+        // predict the MAD of current picture
 //20        rca.v1_CurrentMAD=rca.v1_MADPictureC1*rca.v1_PreviousPictureMAD + rca.v1_MADPictureC2;
         rca.v1_CurrentMAD_8p = (rca.v1_MADPictureC1_12p*rca.v1_PreviousPictureMAD_8p)/(1<<12) + rca.v1_MADPictureC2_12p/(1<<4);
 
-        /*compute the number of bits for the texture*/
+        //compute the number of bits for the texture
         if(rca.v1_Target < 0)
         {
           rca.v1_m_Qc=m_Qp+MaxQpChange;
@@ -3824,7 +3800,7 @@ int my_v1_updateQPRC1( )
       }
     }
   }
-  /*basic unit layer rate control*/
+  //basic unit layer rate control
   else
   {
     if(rca.v1_gop_cnt==0 && rca.v1_frame_cnt==0) // (rca.v1_number == 0)
@@ -3849,7 +3825,7 @@ int my_v1_updateQPRC1( )
 
         SumofBasicUnit=rca.v1_TotalNumberofBasicUnit;
 
-        /*the average QP of the previous frame is used to coded the first basic unit of the current frame or field*/
+        //the average QP of the previous frame is used to coded the first basic unit of the current frame or field
         if(rca.v1_bu_cnt==0)
           return my_v1_updateFirstBU( );
         else
@@ -3880,7 +3856,7 @@ int my_v1_updateQPRC1( )
     }
   }
   return rca.v1_m_Qc;
-}
+}*/
 
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -4024,8 +4000,8 @@ int my_v1_updateQPRC3( )
 
             rca.v1_TotalFrameQP +=rca.v1_m_Qc;
             rca.v1_Pm_Qp=rca.v1_m_Qc;
-            //if((rca.v1_bu_cnt==(rca.v1_TotalNumberofBasicUnit-1)) && rca.v1_type==P_SLICE)
-            if((rca.v1_bu_cnt==(rca.v1_TotalNumberofBasicUnit-1)) && (rca.v1_type==P_SLICE || rca.v1_type==I_SLICE) ) //lhuitune
+            if((rca.v1_bu_cnt==(rca.v1_TotalNumberofBasicUnit-1)) && rca.v1_type==P_SLICE) // lhu, 2017/03/23
+            //if((rca.v1_bu_cnt==(rca.v1_TotalNumberofBasicUnit-1)) && (rca.v1_type==P_SLICE || rca.v1_type==I_SLICE) ) //lhuitune
               my_v1_updateLastBU( );
 
             return rca.v1_m_Qc;
@@ -4076,10 +4052,11 @@ int my_v1_updateNegativeTarget( int m_Qp )
   rca.v1_m_Qc = my_imin(rca.v1_m_Qc, rca.v1_RCMaxQP);  // clipping
   if(rca.v1_basicunit>=rca.v1_MBPerRow) {
   	if (rca.v1_wireless_screen!=1) { // added by lhu, 2017/02/27
-      if (rca.v1_type == P_SLICE) rca.v1_m_Qc = my_imin(rca.v1_m_Qc, rca.v1_PAveFrameQP+10); // change +6 to +10, lhu, 2017/01/26
-      else                        rca.v1_m_Qc = my_imin(rca.v1_m_Qc, rca.v1_PAveFrameQP+6); // lower QP change range for I slice, lhu, 2017/02/07
-    } else { // added by lhu, 2017/02/27
-      rca.v1_m_Qc = my_imin(rca.v1_m_Qc, rca.v1_PAveFrameQP+6);
+      if (rca.v1_type == P_SLICE) rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+6, rca.v1_m_Qc); // change +6 to +10, lhu, 2017/01/26
+      else                        rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+5, rca.v1_m_Qc); // lower QP change range for I slice, lhu, 2017/02/07
+    } else {
+      if (rca.v1_type == P_SLICE) rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+3, rca.v1_m_Qc); // change +6 to +3, lhu, 2017/04/25
+      else                        rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+2, rca.v1_m_Qc); // change +6 to +2 for I slice, lhu, 2017/04/25
     }
   } else
     rca.v1_m_Qc = my_imin(rca.v1_m_Qc, rca.v1_PAveFrameQP+3);
@@ -4107,6 +4084,8 @@ int my_v1_updateNegativeTarget( int m_Qp )
 
 int my_v1_updateFirstBU( )
 {
+  if(rca.v1_frame_cnt==1) rca.v1_PAveFrameQP = rca.v1_QPLastPFrame; // first P frame's initial QP value equals to LastPFrame's average QP, lhu, 2017/03/23
+  else                    rca.v1_PAveFrameQP = rca.v1_PAveFrameQP;
   if(rca.v1_Target<=0)
   {
     rca.v1_m_Qc = rca.v1_PAveFrameQP + 2;
@@ -4237,10 +4216,11 @@ void my_v1_updateModelQPBU( int m_Qp )
 
   if(rca.v1_basicunit>=rca.v1_MBPerRow) {
   	if (rca.v1_wireless_screen!=1) {// added by lhu, 2017/02/27
-      if (rca.v1_type == P_SLICE) rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+10, rca.v1_m_Qc); // change +6 to +10, lhu, 2017/01/24
-      else                        rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+6, rca.v1_m_Qc); // lower QP change range for I slice, lhu, 2017/02/07
-    } else { // added by lhu, 2017/02/27
-      rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+6, rca.v1_m_Qc);
+      if (rca.v1_type == P_SLICE) rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+6, rca.v1_m_Qc); // change +6 to +10, lhu, 2017/01/24
+      else                        rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+5, rca.v1_m_Qc); // lower QP change range for I slice, lhu, 2017/02/07
+    } else {
+      if (rca.v1_type == P_SLICE) rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+3, rca.v1_m_Qc); // change +6 to +3, lhu, 2017/04/25
+      else                        rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+2, rca.v1_m_Qc); // change +6 to +2 for I slice, lhu, 2017/04/25
     }
   } else
     rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+3, rca.v1_m_Qc);
@@ -4251,9 +4231,15 @@ void my_v1_updateModelQPBU( int m_Qp )
   else
     rca.v1_m_Qc = my_iClip3(m_Qp-rca.v1_DDquant, rca.v1_RCMaxQP, rca.v1_m_Qc); // clipping
 
-  if(rca.v1_basicunit>=rca.v1_MBPerRow)
-    rca.v1_m_Qc = my_imax(rca.v1_PAveFrameQP-6, rca.v1_m_Qc);
-  else
+  if(rca.v1_basicunit>=rca.v1_MBPerRow) {
+  	if (rca.v1_wireless_screen!=1) {// added by lhu, 2017/04/18
+      if (rca.v1_type == P_SLICE) rca.v1_m_Qc = my_imax(rca.v1_PAveFrameQP-6, rca.v1_m_Qc); // lhu, 2017/04/18
+      else                        rca.v1_m_Qc = my_imax(rca.v1_PAveFrameQP-5, rca.v1_m_Qc); // lhu, 2017/04/18
+    } else {
+      if (rca.v1_type == P_SLICE) rca.v1_m_Qc = my_imax(rca.v1_PAveFrameQP-3, rca.v1_m_Qc); // lhu, 2017/04/25
+      else                        rca.v1_m_Qc = my_imax(rca.v1_PAveFrameQP-2, rca.v1_m_Qc); // lhu, 2017/04/25
+    }
+  } else
     rca.v1_m_Qc = my_imax(rca.v1_PAveFrameQP-3, rca.v1_m_Qc);
 
   rca.v1_m_Qc = my_imax(rca.v1_RCMinQP, rca.v1_m_Qc);
@@ -4271,15 +4257,15 @@ void my_v1_rc_update_bu_stats( ) {
     }
 }
 void my_v1_rc_update_frame_stats( ) {
-    if(rca.v1_bu_cnt==0) { //frame over
+    rca.v1_frame_mad   += v1_mad_tmp;
+    rca.v1_frame_tbits += v1_tbits_tmp;
+    rca.v1_frame_hbits += v1_hbits_tmp;
+    rca.v1_frame_abits = rca.v1_frame_tbits+rca.v1_frame_hbits;
+    if(rca.v1_bu_cnt==0) { //after calculate frame's status reset related status to zero, lhu, 2017/03/06
         rca.v1_frame_mad   = 0;
         rca.v1_frame_tbits = 0;
         rca.v1_frame_hbits = 0;
-    }
-    else {
-        rca.v1_frame_mad   += v1_mad_tmp;
-        rca.v1_frame_tbits += v1_tbits_tmp;
-        rca.v1_frame_hbits += v1_hbits_tmp;
+        rca.v1_frame_abits = 0;
     }
 }
 #else //#########
@@ -4330,8 +4316,13 @@ void my_v1_rc_init_gop_params( )
     }
     else if((rca.v1_RCUpdateMode==RC_MODE_0)|(rca.v1_RCUpdateMode==RC_MODE_2)|(rca.v1_RCUpdateMode==RC_MODE_3))
     {
-        if(rca.v1_frame_cnt==0 && rca.v1_bu_cnt==0) // && rca.mb_cnt==0)
+        if(rca.v1_frame_cnt==0 && rca.v1_bu_cnt==0) {
+            if (rca.v1_IFduration==1 && rca.v1_insertOneIFrame==1) {
+                rca.v1_intra_period = rca.v1_PrevIntraPeriod; // use previous intra_period to calculate GOP TargetBits, lhu, 2017/03/13
+                rca.v1_RCISliceBitRatio = 3; // fix the Ipratio when decide insert Intra Frame, lhu, 2017/04/26
+            }
             my_v1_rc_init_GOP( rca.v1_intra_period - 1 );
+        }
     }
 }
 
@@ -4412,13 +4403,27 @@ int my_v1_rc_handle_mb( )
 
     rca.v1_qp = my_iClip3(rca.v1_RCMinQP, rca.v1_RCMaxQP, rca.v1_qp); // -rca.bitdepth_luma_qp_scale
 
+    my_v1_rc_update_frame_stats(); // computer frame parameters
+    if( rca.v1_bu_cnt==(rca.v1_TotalNumberofBasicUnit-1) ) {
+        if (rca.v1_changeToIFrame==1 || rca.v1_insertOneIFrame==1) {
+            if (rca.v1_type==P_SLICE) my_criteria_decide_changeToIFrame((ymseh_tmp>>16)&0xff,(ymseh_tmp>>8)&0xff,(ymseh_tmp>>5)&0x7,1); // lhu, 2017/03/24
+            else                      my_decide_backtoNormalGOP(1); // lhu, 2017/03/24
+        } else { // lhu, 2017/04/10
+            rca.v1_gop_change_NotResetRC=0; rca.v1_IFduration=0;
+        }
+        rca.v1_frm_ymse[1]  = rca.v1_frm_ymse[0]; // lhu, 2017/03/27
+        // renew the QPLastPFrame after intra_period updated, lhu, 2017/03/28
+        if ( (rca.v1_type==P_SLICE) && (rca.v1_frame_cnt>=(rca.v1_intra_period-1)) ) {
+            rca.v1_QPLastPFrame = (rca.v1_TotalFrameQP+(rca.v1_TotalNumberofBasicUnit>>1))/rca.v1_TotalNumberofBasicUnit;
+        }
+    }
 
     if(rca.v1_basicunit < rca.v1_FrameSizeInMbs) // bu-level counter
     {
         if(rca.v1_bu_cnt==(rca.v1_TotalNumberofBasicUnit-1))
         {
             rca.v1_bu_cnt=0;
-            if(rca.v1_frame_cnt==(rca.v1_intra_period-1))
+            if(rca.v1_frame_cnt>=(rca.v1_intra_period-1)) // change "==" to ">=", lhu, 2017/03/09
             {
                 rca.v1_frame_cnt=0;
                 //if(rca.v1_gop_cnt<=1000)
@@ -4441,9 +4446,6 @@ int my_v1_rc_handle_mb( )
         else
             rca.v1_frame_cnt++;
     }
-
-
-    my_v1_rc_update_frame_stats(); // computer frame parameters
 
 #ifndef ARMCM7_RC //#############
     my_hold( );

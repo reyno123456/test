@@ -23,7 +23,7 @@ void CONSOLE_Init(void)
 
 static void GenericInitial(void const *argument)
 {
-    Common_AVFORMATSysEventGroundInit();
+    //Common_AVFORMATSysEventGroundInit();
     vTaskDelete(NULL);
 }
 

@@ -85,12 +85,12 @@ int main(void)
 
     HAL_NV_Init();
     Wireless_TaskInit(WIRELESS_NO_RTOS);
-    Common_AVFORMATSysEventSKYInit();
+    //Common_AVFORMATSysEventSKYInit();
 
     for( ;; )
     {
         //HAL_USB_HostProcess();     
-        HAL_MP3EncodePcm();
+        //HAL_MP3EncodePcm();
         Wireless_MessageProcess();
         SYS_EVENT_Process();
     }
