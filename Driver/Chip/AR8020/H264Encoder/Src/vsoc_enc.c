@@ -215,7 +215,7 @@ void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsig
 
     WRITE_WORD((ENC_REG_ADDR+(0x12<<2)),0x1D1E0401);
 #ifdef ARCAST
-    WRITE_WORD((ENC_REG_ADDR+(0x18<<2)),0x0005AA64); // HBitsRatioAbits_level=5, AbitsRatioTargetBits_level=170, psnr_drop_level=3db, insertOneIFrame mode disable, wireless_screen mode enable, lhu
+    WRITE_WORD((ENC_REG_ADDR+(0x18<<2)),0x0005AA74); // HBitsRatioAbits_level=5, AbitsRatioTargetBits_level=170, psnr_drop_level=3db, insertOneIFrame mode enable, wireless_screen mode enable, lhu
 #else
     WRITE_WORD((ENC_REG_ADDR+(0x18<<2)),0x0005AA60); // HBitsRatioAbits_level=5, AbitsRatioTargetBits_level=170, psnr_drop_level=3db, insertOneIFrame mode disable, wireless_screen mode disable, lhu
 #endif
@@ -333,7 +333,7 @@ void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsig
     }
     WRITE_WORD((ENC_REG_ADDR+(0x2b<<2)),0x11120401);
 #ifdef ARCAST
-    WRITE_WORD((ENC_REG_ADDR+(0x31<<2)),0x0005AA64); // HBitsRatioAbits_level=5, AbitsRatioTargetBits_level=170, psnr_drop_level=3db, insertOneIFrame mode disable, wireless_screen mode enable, lhu
+    WRITE_WORD((ENC_REG_ADDR+(0x31<<2)),0x0005AA74); // HBitsRatioAbits_level=5, AbitsRatioTargetBits_level=170, psnr_drop_level=3db, insertOneIFrame mode enable, wireless_screen mode enable, lhu
 #else
     WRITE_WORD((ENC_REG_ADDR+(0x31<<2)),0x0005AA60); // HBitsRatioAbits_level=5, AbitsRatioTargetBits_level=170, psnr_drop_level=3db, insertOneIFrame mode disable, wireless_screen mode disable, lhu
 #endif
