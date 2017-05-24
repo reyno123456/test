@@ -59,7 +59,7 @@ int main(void)
 
     st_configure.st_interruptGpio.e_interruptGpioNum = HAL_GPIO_NUM98;
     st_configure.st_interruptGpio.e_interruptGpioPolarity = HAL_GPIO_ACTIVE_LOW;
-    st_configure.st_interruptGpio.e_interruptGpioTypy = HAL_GPIO_LEVEL_SENUMSITIVE;
+    st_configure.st_interruptGpio.e_interruptGpioType = HAL_GPIO_LEVEL_SENUMSITIVE;
     st_configure.u8_hdmiToEncoderCh = 0;
     HAL_HDMI_RX_Init(HAL_HDMI_RX_1, &st_configure);
 
