@@ -483,6 +483,10 @@ SD_ErrorTypedef Card_SD_SendSDStatus(SD_HandleTypeDef *hsd, uint32_t *pSDstatus)
 void SD_IRQHandler(uint32_t vectorNum);
 SD_TRANSFER_STATUS SD_CardStatus(SD_STATUS *e_cardStatus);
 //SD_ErrorTypedef Card_SD_GetCardStatus(SD_HandleTypeDef *hsd, HAL_SD_CardStatusTypedef *pCardStatus);
+void SD_init_deInit_Callback(void* p);
 
+#define getCardPresence (read_reg32((uint32_t *)(SDMMC_BASE + 0x50)) & (1<<0))
+#define CARD_IN 0
+#define CARD_OUT 1
 
 #endif

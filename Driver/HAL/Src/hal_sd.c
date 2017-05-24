@@ -17,6 +17,7 @@ History:
 #include "debuglog.h"
 #include "reg_rw.h"
 #include "interrupt.h"
+#include "sys_event.h"
 
 extern SDMMC_DMATransTypeDef dma;
 extern SD_HandleTypeDef sdhandle;
@@ -30,16 +31,44 @@ extern SD_CardInfoTypedef cardinfo;
 * @retval HAL_OK            means the initializtion is well done
 *         HAL_SD_ERR_ERROR  means some error happens in the initializtion
 */
-HAL_RET_T HAL_SD_Init(ENUM_HAL_SD_SPEED_MODE e_speedMode)
+HAL_RET_T HAL_SD_Init(void)
 {
-	sdhandle.Instance = SDMMC_ADDR;
-	SDMMC_Status e_errorState = SDMMC_OK;
-	sdhandle.SpeedMode = e_speedMode;
-	dlog_info("speedMode = %x!", sdhandle.SpeedMode);
-	e_errorState = Card_SD_Init(&sdhandle, &cardinfo);
-	if (e_errorState != SDMMC_OK) {
-		return HAL_SD_ERR_ERROR;
-	}
+      
+    dlog_info("CDETECT = 0x%08x", read_reg32((uint32_t *)(SDMMC_BASE + 0x50)));
+    // if ((read_reg32((uint32_t *)(SDMMC_BASE + 0x50)) & (1<<0)) == 0)
+    if (getCardPresence == CARD_IN)
+    {
+        sdhandle.Instance = SDMMC_ADDR;
+        SDMMC_Status e_errorState = SDMMC_OK;
+        sdhandle.SpeedMode = 2;
+        dlog_info("speedMode = %x!", sdhandle.SpeedMode);
+        e_errorState = Card_SD_Init(&sdhandle, &cardinfo);
+        if (e_errorState != SDMMC_OK) 
+        {
+            return HAL_SD_ERR_ERROR;
+        }
+    }
+    else
+    {
+        write_reg32((uint32_t *)(SDMMC_BASE + 0x50), 0xFFFFFFFF);
+        write_reg32((uint32_t *)(SDMMC_BASE + 0x24), 0x00000001);
+        write_reg32((uint32_t *)(SDMMC_BASE), 0x00000010);
+    }
+
+    reg_IrqHandle(SD_INTR_VECTOR_NUM, SD_IRQHandler, NULL);
+    INTR_NVIC_SetIRQPriority(SD_INTR_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_SD,0));
+    INTR_NVIC_EnableIRQ(SD_INTR_VECTOR_NUM);
+    
+    if ( FALSE == SYS_EVENT_RegisterHandler(SYS_EVENT_ID_SD_CARD_CHANGE, SD_init_deInit_Callback))
+    {
+        dlog_info("SYS_EVENT_Register fail");
+		return HAL_SD_ERR_ERROR;            
+    }
+    else
+    {
+        dlog_info("SYS_EVENT_Register success");
+    }
+    
 	dlog_info("Initialize SD Success!\n");
 	return HAL_OK;
 }
@@ -371,19 +400,3 @@ HAL_RET_T HAL_SD_Ioctl(ENUM_HAL_SD_CTRL e_sdCtrl, uint32_t *pu32_info)
 
 	return HAL_OK;
 }
-
-/**
-* @brief  The SD interrupt initialization function which must be called before HAL_SD_Init(), which is 
-      used to enable the interrupt function of SD card
-* @param  none
-* @retval none
-*/
-void HAL_SD_InitIRQ(void)
-{
-	 /* register the irq handler */
-    reg_IrqHandle(SD_INTR_VECTOR_NUM, SD_IRQHandler, NULL);
-    INTR_NVIC_SetIRQPriority(SD_INTR_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_SD,0));
-    INTR_NVIC_EnableIRQ(SD_INTR_VECTOR_NUM);
-}
-
-

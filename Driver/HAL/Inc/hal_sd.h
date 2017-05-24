@@ -45,7 +45,7 @@ typedef enum
 * @retval HAL_OK            means the initializtion is well done
 *         HAL_SD_ERR_ERROR  means some error happens in the initializtion
 */
-HAL_RET_T HAL_SD_Init(ENUM_HAL_SD_SPEED_MODE e_speedMode);
+HAL_RET_T HAL_SD_Init(void);
 
 /**
 * @brief  Writes block(s) to a specified address in a card. The Data transfer 
@@ -93,14 +93,6 @@ HAL_RET_T HAL_SD_Ioctl(ENUM_HAL_SD_CTRL e_sdCtrl, uint32_t *pu32_info);
 		  HAL_SD_ERR_ERROR means de-initialization
 */
 HAL_RET_T HAL_SD_Deinit();
-
-/**
-* @brief  The SD interrupt initialization function which must be called before HAL_SD_Init(), which is 
-			used to enable the interrupt function of SD card
-* @param  none
-* @retval none
-*/
-void HAL_SD_InitIRQ();
 
 #ifdef __cplusplus
 }

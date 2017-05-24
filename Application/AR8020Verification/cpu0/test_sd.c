@@ -298,9 +298,9 @@ void TestFatFs2()
 
 void command_initSdcard()
 {
-    HAL_SD_InitIRQ();
+    // HAL_SD_InitIRQ();
 	int res;
-	if ((res = HAL_SD_Init(SDR50)) != 0)
+	if ((res = HAL_SD_Init()) != 0)
 	{
 		return;
 	}
