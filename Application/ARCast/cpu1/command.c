@@ -17,20 +17,9 @@ void command_writeMemory(char *addr, char *value);
 
 void command_run(char *cmdArray[], uint32_t cmdNum)
 {
-    if ((memcmp(cmdArray[0], "read", 4) == 0) && (cmdNum == 2))
-    {
-        command_readMemory(cmdArray[1]);
-    }
-    /* write memory: "write $(address) $(data)" */
-    else if ((memcmp(cmdArray[0], "write", 5) == 0) && (cmdNum == 3))
-    {
-        command_writeMemory(cmdArray[1], cmdArray[2]);
-    }
-    else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
+    if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
         dlog_error("Please use the commands like:");
-        dlog_error("read <address>");
-        dlog_error("write <address> <data>");
     }
 }
 

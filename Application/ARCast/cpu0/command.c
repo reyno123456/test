@@ -62,13 +62,13 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestHalI2cWrite(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4], cmdArray[5]);
     }
-    else if ((memcmp(cmdArray[0], "hdmi", strlen("hdmi")) == 0))
-    {
-        command_hdmi(cmdArray[1]);
-    }
     else if ((memcmp(cmdArray[0], "bb_uart", strlen("bb_uart")) == 0))
     {
         command_test_BB_uart(cmdArray[1]);
+	}
+    else if ((memcmp(cmdArray[0], "it_hdmi_handler", strlen("it_hdmi_handler")) == 0))
+    {
+        command_hdmiHandler(cmdArray[1]);
     }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
@@ -83,8 +83,8 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("hal_i2c_init <ch> <i2c_addr> <speed>");
         dlog_error("hal_i2c_read <ch> <subAddr> <subAddrLen> <dataLen>");
         dlog_error("hal_i2c_write <ch> <subAddr> <subAddrLen> <data> <dataLen>");
-        dlog_error("hdmi");
         dlog_error("bb_uart");
+        dlog_error("it_hdmi_handler <index>");
         dlog_output(1000);
     }
 }

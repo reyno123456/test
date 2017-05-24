@@ -40,7 +40,7 @@ typedef struct
 {
     ENUM_HAL_GPIO_NUM e_interruptGpioNum;
     ENUM_HAL_GPIO_InterrputPolarity e_interruptGpioPolarity;
-    ENUM_HAL_GPIO_InterrputLevel e_interruptGpioTypy;
+    ENUM_HAL_GPIO_InterrputLevel e_interruptGpioType;
 } STRU_HDMI_GPIOCONFIGURE;
 
 typedef struct

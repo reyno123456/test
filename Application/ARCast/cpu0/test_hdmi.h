@@ -1,2 +1,2 @@
 
-void command_hdmi(char *index);
+void command_hdmiHandler(uint8_t *index);

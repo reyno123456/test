@@ -452,6 +452,7 @@ static _CODE struct IT6602_REG_INI  IT6602_HDMI_INIT_TABLE[] = {
 
 	{REG_RX_011,	0xFF,	0x1F},	//Port 0�G[4]EQ Reset [3]CLKD5 Reset [2]CDR Reset [1]HDCP Reset [0]All logic Reset
 	{REG_RX_018,	0xFF,	0x1F},	//Port 1�G[4]EQ Reset [3]CLKD5 Reset [2]CDR Reset [1]HDCP Reset [0]All logic Reset
+	{REG_RX_012,	0xFF,	0xF8},
 
 	{REG_RX_012,	0xFF,	0xF8},	//Port 0�G[7:3] MHL Logic reset
 
@@ -664,7 +665,7 @@ static _CODE struct IT6602_REG_INI  IT6602_HDMI_INIT_TABLE[] = {
 //FIX_ID_002 xxxxx
 
 //	{REG_RX_014,0xFF,0xFF},		//for enable interrupt output Pin
-	{REG_RX_063,0xFF,0x3F},		//for enable interrupt output Pin
+//	{REG_RX_063,0xFF,0x3F},		//for enable interrupt output Pin MZY 17/5/5
 	{REG_RX_073, 0x08, 0x00},		// for HDCPIntKey = false
 
 	{REG_RX_060, 0x40, 0x00},		// disable interrupt mask for NoGenPkt_Rcv
@@ -1644,6 +1645,16 @@ static void hdmirxbwr( unsigned char offset, unsigned char byteno, _CODE unsigne
     IT_66021_WriteBytes(HdmiI2cAddr, offset, byteno, rddata);
 }
 
+static unsigned char mhlrxrd( unsigned char offset )
+{
+	return IT_66021_ReadByte(MHL_ADDR,offset);	
+}
+
+static unsigned char mhlrxwr( unsigned char offset, unsigned char ucdata )
+{
+	return IT_66021_WriteByte(MHL_ADDR, offset, ucdata);
+}
+
 //FIX_ID_036	xxxxx //Enable MHL Function for IT68XX
 #ifdef _ENABLE_IT68XX_MHL_FUNCTION_
 //===============================================================================//
@@ -2151,7 +2162,7 @@ void IT6602_fsm_init(void)
 //FIX_ID_041 xxxxx Add EDID reset
 	// fo IT6803 EDID fail issue
 	hdmirxset(REG_RX_0C0, 0x20, 0x20);	//xxxxx 2014-0731 [5] 1 for  reset edid
-	msleep(1);
+	IT_Delay(1);
 	hdmirxset(REG_RX_0C0, 0x20, 0x00);
 	// fo IT6803 EDID fail issue
 //FIX_ID_041 xxxxx
@@ -5125,7 +5136,7 @@ void it6602PortSelect(unsigned char ucPortSel)
 			hdmirxset(REG_RX_1B0, 0x03, 0x01); //clear port 0 HPD=1 for EDID update
 			chgbank(0);
 
-			msleep(300);
+			IT_Delay(300);
 
 			//set port 0 HPD=1
 			chgbank(1);
@@ -5138,7 +5149,7 @@ void it6602PortSelect(unsigned char ucPortSel)
 		{
 			HotPlug(0);
 
-			msleep(300);
+			IT_Delay(300);
 
 			//set port 1 HPD=1
 			HotPlug(1);
@@ -5234,7 +5245,7 @@ static void hdmirx_ECCTimingOut(unsigned char ucport)
 		// disable -> 		{
 		// disable -> 		mhlrxset(MHL_RX_28,0x40,0x40);
 		// disable -> 		//it6602HPDCtrl(0,1);
-		// disable -> 		msleep(100);
+		// disable -> 		IT_Delay(100);
 		// disable -> 		//it6602HPDCtrl(0,0);
 		// disable -> 		mhlrxset(MHL_RX_28,0x40,0x00);
 		// disable ->
@@ -5250,7 +5261,7 @@ static void hdmirx_ECCTimingOut(unsigned char ucport)
 		it6602HPDCtrl(0,0);	// MHL port , set HPD = 0
 
 		hdmirxset(REG_RX_011,(B_P0_DCLKRST|B_P0_CDRRST|B_P0_HDCPRST|B_P0_SWRST),(B_P0_DCLKRST|B_P0_CDRRST|B_P0_HDCPRST|B_P0_SWRST));
-		msleep(300);
+		IT_Delay(300);
 		hdmirxset(REG_RX_011,(B_P0_DCLKRST|B_P0_CDRRST|B_P0_HDCPRST|B_P0_SWRST),0x00);
 
 		//set port 0 HPD=1
@@ -5264,7 +5275,7 @@ static void hdmirx_ECCTimingOut(unsigned char ucport)
 
 
 		hdmirxset(REG_RX_018,(B_P1_DCLKRST|B_P1_CDRRST|B_P1_HDCPRST|B_P1_SWRST),(B_P1_DCLKRST|B_P1_CDRRST|B_P1_HDCPRST|B_P1_SWRST));
-		msleep(300);
+		IT_Delay(300);
 		hdmirxset(REG_RX_018,(B_P1_DCLKRST|B_P1_CDRRST|B_P1_HDCPRST|B_P1_SWRST),0x00);
 
 		//set port 1 HPD=1
@@ -5681,7 +5692,7 @@ void ITEHDMI_RxHDCPmodeChangeRequest(unsigned char bHDCPmode)
 	// Disable HDMI DDC Bus to access ITEHDMI EDID RAM
 	hdmirxset(REG_RX_0C0, 0x01, 0x01);                            // HDMI RegC0[1:0]=11 for disable HDMI DDC bus to access EDID RAM
 
-	msleep(100);
+	IT_Delay(100);
 //bug !!!	hdmirxwr(REG_RX_P0_BCAPS,0x00);		// Clear Rx Bcaps
 	hdmirxwr(REG_RX_P0_BCAPS,B_BCAPS_7B);	// set Bcaps bit 7 HDMI_RESERVED = 1
 
@@ -5799,13 +5810,15 @@ static void aud_fiforst( void )
 {
     unsigned char uc ;
 //FIX_ID_033 xxxxx for fix audio noise issue
+
 #ifndef _FIX_ID_028_
 //FIX_ID_025 xxxxx		//Adjust H/W Mute time
 	hdmirxset(REG_RX_074,0x0c,0x0c);	// enable Mute i2s and ws	and s/pdif
-	msleep(100);
+	//IT_Delay(100);
 	hdmirxset(REG_RX_074,0x0c,0x00);	// disable Mute i2s and ws	and s/pdif
 //FIX_ID_025 xxxxx
 #endif
+
 //xxxxx 2014-0421
 //FIX_ID_033 xxxxx
 
@@ -6367,7 +6380,7 @@ static void IT6602_AFE_Rst( void )
 	{
 		DLOG_INFO("=== port 1 IT6602_AFE_Rst() === \r\n");
 		hdmirxset(REG_RX_018, 0x01, 0x01);
-		msleep(1);
+		IT_Delay(1);
 		hdmirxset(REG_RX_018, 0x01, 0x00);
 		#ifdef _SUPPORT_AUTO_EQ_
 		DisableOverWriteRS(1);	//2013-1129
@@ -6377,7 +6390,7 @@ static void IT6602_AFE_Rst( void )
 	{
 		DLOG_INFO("=== port 0 IT6602_AFE_Rst() === \r\n");
 		hdmirxset(REG_RX_011, 0x01, 0x01);
-		msleep(1);
+		IT_Delay(1);
 		hdmirxset(REG_RX_011, 0x01, 0x00);
 		#ifdef _SUPPORT_AUTO_EQ_
 		DisableOverWriteRS(0);	//2013-1129 for MHL unplug detected
@@ -6682,6 +6695,7 @@ static void IT6602SwitchVideoState(struct it6602_dev_data *it6602,Video_State_Ty
 
 				get_vid_info();
 				show_vid_info();
+				dlog_output(1000);
 				hdmirxwr(0x84, 0x8F);	//2011/06/17 xxxxx, for enable Rx Chip count
 
 				#ifdef Enable_Vendor_Specific_packet
@@ -6719,7 +6733,7 @@ static void IT6602SwitchVideoState(struct it6602_dev_data *it6602,Video_State_Ty
 static void IT6602VideoHandler(struct it6602_dev_data *it6602)
 {
 //	unsigned char uc;
-
+	IT_Delay(500);
 	if(it6602->m_VideoCountingTimer > MS_LOOP)
 	{
 	it6602->m_VideoCountingTimer -= MS_LOOP;
@@ -6915,7 +6929,7 @@ static void hdmirx_INT_P0_ECC(struct it6602_dev_data *it6602)
 		// disable ->{
 		// disable ->mhlrxset(MHL_RX_28,0x40,0x40);
 		// disable ->//it6602HPDCtrl(0,1);
-		// disable ->msleep(100);
+		// disable ->IT_Delay(100);
 		// disable ->//it6602HPDCtrl(0,0);
 		// disable ->mhlrxset(MHL_RX_28,0x40,0x00);
 		// disable ->
@@ -6926,7 +6940,7 @@ static void hdmirx_INT_P0_ECC(struct it6602_dev_data *it6602)
 		// disable ->}
 		// disable ->
 		// disable ->hdmirxset(REG_RX_011,(B_P0_DCLKRST|B_P0_CDRRST|B_P0_SWRST),(B_P0_DCLKRST|B_P0_CDRRST|B_P0_SWRST));
-		// disable ->msleep(300);
+		// disable ->IT_Delay(300);
 		// disable ->hdmirxset(REG_RX_011,(B_P0_DCLKRST|B_P0_CDRRST|B_P0_SWRST),0x00);
 		// disable ->
 		// disable ->
@@ -6962,7 +6976,7 @@ static void hdmirx_INT_P1_ECC(struct it6602_dev_data *it6602)
 		// disable ->//xxxxx
 		// disable ->
 		// disable ->hdmirxset(REG_RX_018,(B_P1_DCLKRST|B_P1_CDRRST|B_P1_SWRST),(B_P1_DCLKRST|B_P1_CDRRST|B_P1_SWRST));
-		// disable ->msleep(200);
+		// disable ->IT_Delay(200);
 		// disable ->hdmirxset(REG_RX_018,(B_P1_DCLKRST|B_P1_CDRRST|B_P1_SWRST),0x00);
 		// disable ->
 		// disable ->//set port 1 HPD=1
@@ -7601,7 +7615,7 @@ static void mhl_read_mscmsg( struct it6602_dev_data *it6602 )
 						}
 
 						//DLOG_INFO(" mhlrxrd(0x04)= 0x%02X !!!\n",(int)   MHL04);
-						msleep(1);
+						IT_Delay(1);
 					}
 					while(cbuswaitcnt<CBUSWAITNUM);
 
@@ -7676,7 +7690,7 @@ static int mscWait( void )
 	do
 	{
 		cbuswaitcnt++;
-		msleep(CBUSWAITTIME);
+		IT_Delay(CBUSWAITTIME);
 		MHL05 = mhlrxrd(MHL_RX_05);
 		//printf("MSC Wait %X !!!\n",MHL05);
 		if(MHL05 & 0x03) break;
@@ -8755,7 +8769,7 @@ static void Cal_oclk( void )
 	{
 //FIX_ID_037 xxxxx //Allion MHL compliance issue !!!
 		mhlrxset(MHL_RX_01,0x01, 0x01);
-		msleep(99);
+		IT_Delay(99);
 		mhlrxset(MHL_RX_01,0x01, 0x00);
 //FIX_ID_037 xxxxx
 
@@ -8878,13 +8892,13 @@ static unsigned char UpdateEDIDRAM(unsigned char *pEDID,unsigned char BlockNUM)
 		sum += *(pEDID+offset);
 		offset ++;
 //		pEDID++;
-
+/*		MZY 17/5/5
 	        if((i % 16) == 15)
 	        {
 	        DLOG_INFO("\r\n");
 	        }
 
-
+*/
 	}
 	sum = 0x00- sum;
 //    EDID_RAM_Write(offset,1,&sum);
@@ -9457,7 +9471,7 @@ static void WaitRCPresponse(struct it6602_dev_data *it6602)
 		{
 			cbuswaitcnt++;
 			// DLOG_INFO("IT6602-SwitchRCPStatus() MSC RX MSC_MSG Interrupt ...\n");
-			msleep(CBUSWAITTIME);
+			IT_Delay(CBUSWAITTIME);
 			MHL04 = mhlrxrd(MHL_RX_04);
 			if( MHL04&0x10 )
 			{
@@ -9800,7 +9814,7 @@ static void IT6602_WakeupProcess(void)
 			DLOG_INFO("WakeUp Interrupt %d \n",(int) wakeupcnt);
 			mhlrxset(MHL_RX_28,0x40,0x40);
 			//it6602HPDCtrl(0,1);
-			msleep(200);
+			IT_Delay(200);
 			//it6602HPDCtrl(0,0);
 			mhlrxset(MHL_RX_28,0x40,0x00);
 		}
@@ -9984,7 +9998,7 @@ static void IT6602HDMIEventManager(struct it6602_dev_data *it6602)
 // disable -> 			DLOG_INFO("WakeUp Interrupt %d \n",(int) wakeupcnt);
 // disable -> 			mhlrxset(MHL_RX_28,0x40,0x40);
 // disable -> 			//it6602HPDCtrl(0,1);
-// disable -> 			msleep(200);
+// disable -> 			IT_Delay(200);
 // disable -> 			//it6602HPDCtrl(0,0);
 // disable -> 			mhlrxset(MHL_RX_28,0x40,0x00);
 // disable -> 		}
@@ -10095,7 +10109,7 @@ static void IT6602MHLInterruptHandler(struct it6602_dev_data *it6602)
 //FIX_ID_008 xxxxx	//Add SW reset when HDMI / MHL device un-plug  !!!
 		rddata=hdmirxrd(REG_RX_P0_SYS_STATUS);
 		DLOG_INFO("IT6602- Port 0 MHL unplug detect = %X !!! \n",(int) rddata);
-		//msleep(10);
+		//IT_Delay(10);
 		//if((rddata & (B_P0_SCDT|B_P0_RXCK_VALID))== 0)
 		if((rddata & (B_P0_SCDT))== 0)
 		{
@@ -10108,7 +10122,7 @@ static void IT6602MHLInterruptHandler(struct it6602_dev_data *it6602)
 			else
 			{
 				hdmirxset(REG_RX_011, 0x01, 0x01);
-				msleep(1);
+				IT_Delay(1);
 				hdmirxset(REG_RX_011, 0x01, 0x00);
 #ifdef _SUPPORT_AUTO_EQ_
 				DisableOverWriteRS(0);	//2013-1129 for MHL unplug detected		ss
@@ -10372,7 +10386,7 @@ static void IT6602MHLInterruptHandler(struct it6602_dev_data *it6602)
 
 #if 0	// disable trigger EQ
 		hdmirxset(0x26, 0x80, 0x00);
-		msleep(1);
+		IT_Delay(1);
 		hdmirxset(0x26, 0x80, 0x80);
 		hdmirxset(0x22, 0x04, 0x04);
 #endif
@@ -10565,16 +10579,30 @@ static void IT6602MHLInterruptHandler(struct it6602_dev_data *it6602)
 
 static void IT6602HDMIInterruptHandler(struct it6602_dev_data *it6602)
 {
-	unsigned char Reg05h;
-	unsigned char Reg06h;
-	unsigned char Reg07h;
-	unsigned char Reg08h;
-	unsigned char Reg09h;
-	unsigned char Reg0Ah;
-//	unsigned char Reg0Bh;
-	unsigned char RegD0h;
+	volatile unsigned char Reg05h;
+	volatile unsigned char Reg06h;
+	volatile unsigned char Reg07h;
+	volatile unsigned char Reg08h;
+	volatile unsigned char Reg09h;
+	volatile unsigned char Reg0Ah;
+//	volatile unsigned char Reg0Bh;
+	volatile unsigned char RegD0h;
+
+	unsigned char MHL04;
+	unsigned char MHL05;
+	unsigned char MHL06;
+	unsigned char MHLA0;
+	unsigned char MHLA1;
+	unsigned char MHLA2;
+	unsigned char MHLA3;
 
 	chgbank(0);
+/*	
+	for (unsigned int i = 0; i < 0xffffff; i++)
+	{
+		;
+	}*/
+
 
 	Reg05h = hdmirxrd(REG_RX_005);
 	Reg06h = hdmirxrd(REG_RX_006);
@@ -10586,6 +10614,7 @@ static void IT6602HDMIInterruptHandler(struct it6602_dev_data *it6602)
 //	Reg0Bh = hdmirxrd(REG_RX_P1_SYS_STATUS);
 	RegD0h = hdmirxrd(REG_RX_0D0);
 
+
 	hdmirxwr(REG_RX_005, Reg05h);
 	hdmirxwr(REG_RX_006, Reg06h);
 	hdmirxwr(REG_RX_007, Reg07h);
@@ -10593,6 +10622,50 @@ static void IT6602HDMIInterruptHandler(struct it6602_dev_data *it6602)
 	hdmirxwr(REG_RX_009, Reg09h);
 //2013-0606 disable ==>
 	hdmirxwr(REG_RX_0D0, RegD0h&0x0F);
+	dlog_info("ite interrupt");
+	dlog_info("Reg05 = %X",(int) Reg05h);
+	dlog_info("Reg06 = %X",(int) Reg06h);
+	dlog_info("Reg07 = %X",(int) Reg07h);
+	dlog_info("Reg08 = %X",(int) Reg08h);
+	dlog_info("Reg09 = %X",(int) Reg09h);
+	dlog_info("Reg0A = %X",(int) Reg0Ah);
+	dlog_info("RegD0 = %X",(int) RegD0h);
+	MHL04 = mhlrxrd(0x04);
+	MHL05 = mhlrxrd(0x05);
+	MHL06 = mhlrxrd(0x06);
+
+	mhlrxwr(0x04,MHL04);
+	mhlrxwr(0x05,MHL05);
+	mhlrxwr(0x06,MHL06);
+
+	MHLA0 = mhlrxrd(0xA0);
+	MHLA1 = mhlrxrd(0xA1);
+	MHLA2 = mhlrxrd(0xA2);
+	MHLA3 = mhlrxrd(0xA3);
+
+	mhlrxwr(0xA0,MHLA0);
+	mhlrxwr(0xA1,MHLA1);
+	mhlrxwr(0xA2,MHLA2);
+	mhlrxwr(0xA3,MHLA3);
+
+	unsigned char ClearReg05h = hdmirxrd(REG_RX_005);
+	unsigned char ClearReg06h = hdmirxrd(REG_RX_006);
+	unsigned char ClearReg07h = hdmirxrd(REG_RX_007);
+	unsigned char ClearReg08h = hdmirxrd(REG_RX_008);
+	unsigned char ClearReg09h = hdmirxrd(REG_RX_009);
+
+	unsigned char ClearReg0Ah = hdmirxrd(REG_RX_P0_SYS_STATUS);
+//	Reg0Bh = hdmirxrd(REG_RX_P1_SYS_STATUS);
+	unsigned char ClearRegD0h = hdmirxrd(REG_RX_0D0);
+
+	dlog_info("ite clear interrupt");
+	dlog_info("ClearReg05 = %X",(int) ClearReg05h);
+	dlog_info("ClearReg06 = %X",(int) ClearReg06h);
+	dlog_info("ClearReg07 = %X",(int) ClearReg07h);
+	dlog_info("ClearReg08 = %X",(int) ClearReg08h);
+	dlog_info("ClearReg09 = %X",(int) ClearReg09h);
+	dlog_info("ClearReg0A = %X",(int) ClearReg0Ah);
+	dlog_info("ClearRegD0 = %X",(int) ClearRegD0h);
 
 
 //	DLOG_INFO("111111111111111111111111 STATUS 111111111111111111111= %X \r\n",hdmirxrd(REG_RX_P0_SYS_STATUS));
@@ -10600,7 +10673,7 @@ static void IT6602HDMIInterruptHandler(struct it6602_dev_data *it6602)
 	{
 
 		DLOG_INFO("Reg05 = %X \r\n",(int) Reg05h);
-
+		//dlog_info("Reg05 = %X",(int) Reg05h);
 		 if( Reg05h&0x80 ) {
 			 DLOG_INFO("#### Port 0 HDCP Off Detected ###\r\n");
 			it6602->m_ucEccCount_P0=0;
@@ -10843,6 +10916,7 @@ static void IT6602HDMIInterruptHandler(struct it6602_dev_data *it6602)
 
      if( Reg06h!=0x00 )
 	 {
+		 //dlog_info("Reg06h = %X",(int) Reg06h);
 		 if( Reg06h&0x80 ) {
 			DLOG_INFO("#### Port 1 HDCP Off Detected ###\r\n");
 			it6602->m_ucEccCount_P1=0;
@@ -11030,6 +11104,7 @@ static void IT6602HDMIInterruptHandler(struct it6602_dev_data *it6602)
 
 	 if( Reg07h!=0x00)
 	 {
+		 //dlog_info("Reg07h = %X",(int) Reg07h);
 		 if( Reg07h&0x80 ) {
 			 DLOG_INFO("#### Audio FIFO Error ####\r\n");
 			 aud_fiforst();
@@ -11118,6 +11193,7 @@ static void IT6602HDMIInterruptHandler(struct it6602_dev_data *it6602)
 
 	 if( Reg08h!=0x00)
 	 {
+		 //dlog_info("Reg08h = %X",(int) Reg08h);
 		 if( Reg08h&0x80 ) {
 			//			 DLOG_INFO("#### No General Packet 2 Received ####\n");
 		 }
@@ -11163,6 +11239,7 @@ static void IT6602HDMIInterruptHandler(struct it6602_dev_data *it6602)
 
 	 if( Reg09h!=0x00 )
 	 {
+        	 //dlog_info("Reg09h = %X",(int) Reg09h);
         	 if( Reg09h&0x80 )
 		{
 			 DLOG_INFO("#### H2V Buffer Skew Fail ####\r\n");
@@ -11227,6 +11304,7 @@ static void IT6602HDMIInterruptHandler(struct it6602_dev_data *it6602)
 // disable		{
 // disable			DLOG_INFO("#### Port 0 Rx Clock change detect Interrupt ####\n");
 // disable		}
+	 //dlog_info("RegD0h = %X",(int) RegD0h);
 	 if( RegD0h&0x10 )
 	 {
 
@@ -11304,7 +11382,13 @@ static void IT6602HDMIInterruptHandler(struct it6602_dev_data *it6602)
 	}
 
 }
-
+void IT6602_Interrupt(void)
+{
+	struct it6602_dev_data *it6602data = get_it6602_dev_data();
+//	dlog_output(1000);
+	IT6602HDMIInterruptHandler(it6602data);
+//	dlog_output(1000);
+}
 void IT6602_fsm(void)
 {
 	struct it6602_dev_data *it6602data = get_it6602_dev_data();
@@ -11327,7 +11411,7 @@ void IT6602_fsm(void)
 #endif
 //FIX_ID_036	xxxxx
 
-	IT6602HDMIInterruptHandler(it6602data);
+	//IT6602HDMIInterruptHandler(it6602data); MZY 17/5/5
 	IT6602VideoHandler(it6602data);
 #ifndef _FIX_ID_028_
 //FIX_ID_028 xxxxx //For Debug Audio error with S2
@@ -12426,7 +12510,7 @@ chgbank(0);
 // disable ->
 // disable ->
 // disable -> 	}
-// disable -> 	msleep(500);
+// disable -> 	IT_Delay(500);
 // disable -> #endif
 // disable -> }
 // disable ->
@@ -12529,7 +12613,21 @@ void it66021_init(void)
 {
 
     it6602HPDCtrl(1,0); // HDMI port , set HPD = 0
-    msleep(10); //for power sequence
+    IT_Delay(10); //for power sequence
     IT6602_fsm_init();
     it6602HPDCtrl(1,1);
+	
+	mhlrxwr(MHL_RX_0A,0xFF);
+	mhlrxwr(MHL_RX_08,0xFF);
+	mhlrxwr(MHL_RX_09,0xFF);
+
+    hdmirxset(REG_RX_063,0xFF,0x3F);
+    hdmirxset(REG_RX_012,0xFF,0xF8);
+
+    dlog_info("REG_RX_012=%2x",hdmirxrd(REG_RX_012));
+    dlog_info("REG_RX_063=%2x",hdmirxrd(REG_RX_063));
+    dlog_info("MHL_RX_0A=%2x", mhlrxrd(MHL_RX_0A));
+    dlog_info("MHL_RX_08=%2x", mhlrxrd(MHL_RX_08));
+    dlog_info("MHL_RX_09=%2x", mhlrxrd(MHL_RX_09));
+    //IT_Delay(1000); //for power sequence
 }

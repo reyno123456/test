@@ -116,7 +116,23 @@ static unsigned char hdmi_default_settings[][4] =
     {0xFF, 0xFF, 0xFF, 0xFF}
 
 };
-
+void IT_Delay(uint32_t delay)
+{
+    if (40*delay>0xffffffff)
+    {
+        for(uint32_t i = 0; i < 0xffffffff; i++)
+        {
+            ;
+        }
+    }
+    else
+    {
+        for(uint32_t i = 0; i < 40*delay; i++)
+        {
+            ;
+        }        
+    }
+}
 static unsigned char adv_i2c_addr_table[][3] =
 {
     //{0x98, 0xFF, 0x80},                       //I2C reset
@@ -235,7 +251,7 @@ static void IT_66021_I2CInitial(void)
     static uint8_t i2c_initialized = 0;
     if (i2c_initialized == 0)
     {
-        I2C_Init(IT_66021_I2C_COMPONENT_NUM, I2C_Master_Mode, RX_I2C_IO_MAP_ADDR >> 1, I2C_Fast_Speed);
+        I2C_Init(IT_66021_I2C_COMPONENT_NUM, I2C_Master_Mode, RX_I2C_IO_MAP_ADDR >> 1, I2C_Standard_Speed);
         INTR_NVIC_SetIRQPriority(I2C_INTR2_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_I2C_DEFAULT,0));
         reg_IrqHandle(I2C_INTR2_VECTOR_NUM, I2C_Master_IntrSrvc, NULL);
         INTR_NVIC_EnableIRQ(I2C_INTR2_VECTOR_NUM);
@@ -614,33 +630,20 @@ void IT_66021_DumpOutDefaultSettings(uint8_t index)
     }
 }
 
-#if 1
+
 uint8_t IT_66021_IrqHandler0(void)
 {
-    unsigned char val = 0;    
-    val = IT_66021_ReadByte(0x98, 0x6B);
-    if ((val & (IT_66021_V_LOCKED_SET_INTERRUPT_MASK << IT_66021_V_LOCKED_SET_INTERRUPT_POS)))        
-    {
-        IT_66021_WriteByte(0x98, 0x6C, (IT_66021_V_LOCKED_CLEAR_INTERRUPT_MASK << IT_66021_V_LOCKED_CLEAR_INTERRUPT_POS));        
-        return 1;
-    }
-    return 0;
- 
+        IT6602_Interrupt();
+        IT6602_fsm();    
 }
 
 uint8_t IT_66021_IrqHandler1(void)
 {
-    unsigned char val = 0;        
-    val = 0;
-    val = IT_66021_ReadByte((0x98+2), 0x6B);
-    if ((val & (IT_66021_V_LOCKED_SET_INTERRUPT_MASK << IT_66021_V_LOCKED_SET_INTERRUPT_POS)))        
-    {
-        IT_66021_WriteByte((0x98+2), 0x6C, (IT_66021_V_LOCKED_CLEAR_INTERRUPT_MASK << IT_66021_V_LOCKED_CLEAR_INTERRUPT_POS));
-        return 1;
-    }
-    return 0; 
+    IT6602_Interrupt();
+    IT6602_fsm(); 
+    //IT6602_fsm();
 }
-#endif
+
 
 void InitMessage()
 {

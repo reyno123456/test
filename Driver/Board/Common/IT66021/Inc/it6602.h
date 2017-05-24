@@ -863,7 +863,7 @@ void show_vid_info( void );
 void get_vid_info( void );
 void it66021_init(void);
 struct it6602_dev_data* get_it6602_dev_data(void);
-
+void IT6602_Interrupt(void);
 #ifdef SUPPORT_UART_CMD
 extern unsigned char m_UartCmd;
 #endif

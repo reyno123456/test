@@ -29,7 +29,7 @@
 void CONSOLE_Init(void)
 {
     HAL_UART_Init(DEBUG_LOG_UART_PORT, HAL_UART_BAUDR_115200, NULL);
-    dlog_init(command_run, DLOG_SERVER_PROCESSOR);
+    DLOG_Init(command_run, DLOG_SERVER_PROCESSOR);
 }
 
 void HDMI_powerOn(void)
@@ -74,11 +74,12 @@ int main(void)
     st_audioConfig.u8_channel = 2;
     HAL_MP3EncodePcmInit(&st_audioConfig, ENUM_HAL_SRAM_DATA_PATH_REVERSE);
     
+
     STRU_HDMI_CONFIGURE        st_configure;
-    st_configure.e_getFormatMethod = HAL_HDMI_POLLING;
+    st_configure.e_getFormatMethod = HAL_HDMI_INTERRUPT;
     st_configure.st_interruptGpio.e_interruptGpioNum = HAL_GPIO_NUM98;
     st_configure.st_interruptGpio.e_interruptGpioPolarity = HAL_GPIO_ACTIVE_LOW;
-    st_configure.st_interruptGpio.e_interruptGpioTypy = HAL_GPIO_LEVEL_SENUMSITIVE;
+    st_configure.st_interruptGpio.e_interruptGpioType = HAL_GPIO_LEVEL_SENUMSITIVE;
     st_configure.u8_hdmiToEncoderCh = 1;
     HAL_HDMI_RX_Init(HAL_HDMI_RX_1, &st_configure);
 
@@ -88,12 +89,11 @@ int main(void)
 
     HAL_NV_Init();
     Wireless_TaskInit(WIRELESS_NO_RTOS);
-    Common_AVFORMATSysEventSKYInit();
+    //Common_AVFORMATSysEventSKYInit();
 
     for( ;; )
     {
-        //HAL_USB_HostProcess();     
-        HAL_MP3EncodePcm();
+        //HAL_MP3EncodePcm();
         Wireless_MessageProcess();
         SYS_EVENT_Process();
     }

@@ -298,7 +298,6 @@ static void HDMI_RX_IdleCallback0(void *paramPtr)
     #endif
 
         HDMI_RX_CheckFormatStatus(HAL_HDMI_RX_0, HAL_FALSE);
-        dlog_output(1000);
     }
 }
 
@@ -312,7 +311,6 @@ static void HDMI_RX_IdleCallback1(void *paramPtr)
         HDMI_RX_CheckAudioStatus(HAL_HDMI_RX_1);
     #endif    
         HDMI_RX_CheckFormatStatus(HAL_HDMI_RX_1, HAL_FALSE);
-        dlog_output(1000);
     }
 }
 
@@ -335,21 +333,22 @@ HAL_RET_T HAL_HDMI_RX_Init(ENUM_HAL_HDMI_RX e_hdmiIndex, STRU_HDMI_CONFIGURE *ps
 
     if (s_st_hdmiRxStatus[e_hdmiIndex].st_configure.e_getFormatMethod == HAL_HDMI_INTERRUPT)
     {
-        HAL_NVIC_SetPriority(GPIO_INTR_N0_VECTOR_NUM + ((pst_hdmiConfigure->st_interruptGpio.e_interruptGpioNum)>>5),5,0);
+        HAL_NVIC_SetPriority(GPIO_INTR_N0_VECTOR_NUM + ((pst_hdmiConfigure->st_interruptGpio.e_interruptGpioNum)>>5),INTR_NVIC_PRIORITY_HDMI_GPIO,0);
         switch (e_hdmiIndex)
         {
             case HAL_HDMI_RX_0:
             {
                 HAL_GPIO_RegisterInterrupt(s_st_hdmiRxStatus[e_hdmiIndex].st_configure.st_interruptGpio.e_interruptGpioNum, 
-                                           s_st_hdmiRxStatus[e_hdmiIndex].st_configure.st_interruptGpio.e_interruptGpioPolarity, 
-                                           s_st_hdmiRxStatus[e_hdmiIndex].st_configure.st_interruptGpio.e_interruptGpioTypy, HAL_HDMI_RX_IrqHandler0);
+                                           s_st_hdmiRxStatus[e_hdmiIndex].st_configure.st_interruptGpio.e_interruptGpioType, 
+                                           s_st_hdmiRxStatus[e_hdmiIndex].st_configure.st_interruptGpio.e_interruptGpioPolarity, HAL_HDMI_RX_IrqHandler0);
                 break;
             }
             case HAL_HDMI_RX_1:
             {
                  HAL_GPIO_RegisterInterrupt(s_st_hdmiRxStatus[e_hdmiIndex].st_configure.st_interruptGpio.e_interruptGpioNum, 
-                                           s_st_hdmiRxStatus[e_hdmiIndex].st_configure.st_interruptGpio.e_interruptGpioPolarity, 
-                                           s_st_hdmiRxStatus[e_hdmiIndex].st_configure.st_interruptGpio.e_interruptGpioTypy, HAL_HDMI_RX_IrqHandler1);
+                                           s_st_hdmiRxStatus[e_hdmiIndex].st_configure.st_interruptGpio.e_interruptGpioType, 
+                                           s_st_hdmiRxStatus[e_hdmiIndex].st_configure.st_interruptGpio.e_interruptGpioPolarity, HAL_HDMI_RX_IrqHandler1);
+                
                 break;
             }
             default :
@@ -375,7 +374,7 @@ HAL_RET_T HAL_HDMI_RX_Init(ENUM_HAL_HDMI_RX e_hdmiIndex, STRU_HDMI_CONFIGURE *ps
     #ifdef USE_IT66021_EDID_CONFIG_BIN
         IT_66021_Initial(HDMI_RX_MapToDeviceIndex(e_hdmiIndex));
     #endif
-    
+
     return HAL_OK;
 }
 
@@ -441,6 +440,7 @@ HAL_RET_T HAL_HDMI_RX_GetAudioSampleRate(ENUM_HAL_HDMI_RX e_hdmiIndex, uint32_t 
 
 static void HAL_HDMI_RX_IrqHandler0(uint32_t u32_vectorNum)
 {
+
     #ifdef USE_ADV7611_EDID_CONFIG_BIN
         if (ADV_7611_IrqHandler0())
         {
@@ -448,19 +448,14 @@ static void HAL_HDMI_RX_IrqHandler0(uint32_t u32_vectorNum)
         }
     #endif
 
-    #ifdef USE_IT66021_EDID_CONFIG_BIN
-        if (IT_66021_IrqHandler0())
-        {
-            HDMI_RX_IdleCallback0(NULL);
-        }
+    #ifdef USE_IT66021_EDID_CONFIG_BIN        
+        //IT_66021_IrqHandler0();
+        HDMI_RX_IdleCallback0(NULL);
     #endif
-
- 
 }
 
 static void HAL_HDMI_RX_IrqHandler1(uint32_t u32_vectorNum)
 {
-
     #ifdef USE_ADV7611_EDID_CONFIG_BIN
         if (ADV_7611_IrqHandler1())
         {
@@ -469,9 +464,7 @@ static void HAL_HDMI_RX_IrqHandler1(uint32_t u32_vectorNum)
     #endif
 
     #ifdef USE_IT66021_EDID_CONFIG_BIN
-        if (IT_66021_IrqHandler1())
-        {
-            HDMI_RX_IdleCallback1(NULL);
-        }
+    IT_66021_IrqHandler1();
+    HDMI_RX_IdleCallback1(NULL);
     #endif
 }

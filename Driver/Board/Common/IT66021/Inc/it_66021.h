@@ -33,7 +33,7 @@ uint8_t IT_66021_ReadByte(uint8_t slv_addr, uint8_t sub_addr);
 uint8_t IT_66021_WriteBytes(uint8_t slv_addr, uint8_t sub_addr, uint8_t byteno, uint8_t *p_data);
 void IT_66021_Set(unsigned char slv_addr, unsigned char sub_addr, unsigned char mask, unsigned char val);
 void IT_66021_ChangeBank(uint8_t index, uint8_t bank);
-
+void IT_Delay(uint32_t delay);
 
 #endif
 

@@ -133,6 +133,7 @@ typedef enum
 #define INTR_NVIC_PRIORITY_SRAM0                (7)
 #define INTR_NVIC_PRIORITY_SRAM1                (7)
 #define INTR_NVIC_PRIORITY_SD                   (6)
+#define INTR_NVIC_PRIORITY_HDMI_GPIO            (6)
 //cpu1 interrupt priority use 5-10,
 #define INTR_NVIC_PRIORITY_UART1                (5)
 //cpu2 interrupt priority use 5-10,
