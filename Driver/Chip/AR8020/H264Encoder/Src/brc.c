@@ -639,6 +639,7 @@ void my_rc_ac_br(int view) {
         case 16: ac_br = 13000000; break; // 13Mbps
         case 17: ac_br = 14000000; break; // 14Mbps
         case 18: ac_br = 15000000; break; // 15Mbps
+#if 0
         case 19: ac_br = 16000000; break; // 16Mbps
         case 20: ac_br = 17000000; break; // 17Mbps
         case 21: ac_br = 18000000; break; // 18Mbps
@@ -654,6 +655,7 @@ void my_rc_ac_br(int view) {
         case 31: ac_br = 28000000; break; // 28Mbps
         case 32: ac_br = 29000000; break; // 29Mbps
         case 33: ac_br = 30000000; break; // 30Mbps
+#endif
         default: ac_br = 8000000 ; break; // 8Mbps
     }
     if (view==0) {
@@ -666,7 +668,124 @@ void my_rc_ac_br(int view) {
         rca.v1_prev_ac_br_index = v1_ac_br_index;
     }
 }
+
+static unsigned char log10_lookup_table[]=
+{
+    0,
+    3,
+    4,
+    6,
+    6,
+    7,
+    8,
+    9,
+    9,
+    10,
+    10,
+    10,
+    11,
+    11,
+    11,
+    12,
+    12,
+    12,
+    12,
+    13,
+    13,
+    13,
+    13,
+    13,
+    13,
+    14,
+    14,
+    14,
+    14,
+    14,
+    14,
+    15,
+    15,
+    15,
+    15,
+    15,
+    15,
+    15,
+    15,
+    16,
+    16,
+    16,
+    16,
+    16,
+    16,
+    16,
+    16,
+    16,
+    16,
+    16,
+    17,
+    17,
+    17,
+    17,
+    17,
+    17,
+    17,
+    17,
+    17,
+    17,
+    17,
+    17,
+    17,
+    18,
+    18,
+    18,
+    18,
+    18,
+    18,
+    18,
+    18,
+    18,
+    18,
+    18,
+    18,
+    18,
+    18,
+    18,
+    18,
+    19,
+    19,
+    19,
+    19,
+    19,
+    19,
+    19,
+    19,
+    19,
+    19,
+    19,
+    19,
+    19,
+    19,
+    19,
+    19,
+    19,
+    19,
+    19,
+    19,
+};
+
+
+static unsigned short get_10log10(unsigned int data)
+{
+    unsigned char result = 0;
+    while(data >= 100)
+    {
+        result += 10;
+        data = data / 10;
+    }
+    return (result + log10_lookup_table[data]);
+}
+#if 0
 unsigned short my_divider2psnr(int my_divider) {
+    
     unsigned short my_psnr;
     if      (my_divider>=1000000)                      my_psnr = 60;// 10^6.0=10000
     else if (my_divider>=794328 && my_divider<1000000) my_psnr = 59;// 10^5.9=794328
@@ -719,6 +838,7 @@ unsigned short my_divider2psnr(int my_divider) {
     
     return my_psnr;
 }
+#endif
 // compare two consecutive P frame's psnr, if it drop sharply and the degree of drop is greater than psnr_drop_level, I frame should be inserted afterward.
 unsigned char my_trace_PSNRDropSharply(unsigned char psnr_drop_level, unsigned char view) {
     long long whm255square,m;
@@ -733,8 +853,8 @@ unsigned char my_trace_PSNRDropSharply(unsigned char psnr_drop_level, unsigned c
         prev_frame_divider = (int)(whm255square/rca.v1_frm_ymse[1]);
         curr_frame_divider = (int)(whm255square/rca.v1_frm_ymse[0]);
     }
-    prev_frame_psnr = my_divider2psnr(prev_frame_divider);
-    curr_frame_psnr = my_divider2psnr(curr_frame_divider);
+    prev_frame_psnr = get_10log10(prev_frame_divider);
+    curr_frame_psnr = get_10log10(curr_frame_divider);
     if ( (prev_frame_psnr>curr_frame_psnr) && ((prev_frame_psnr-curr_frame_psnr)>=psnr_drop_level) ) {
         if (view==0) rca.v0_PSNRDropSharply = 1;
         else         rca.v1_PSNRDropSharply = 1;
@@ -843,8 +963,8 @@ void my_ac_RCISliceBitRatio(unsigned char RCISliceBitRatioMax, int view) {
         iframe_divider = (int)(whm255square/rca.v1_ifrm_ymse);
         lastpframe_divider = (int)(whm255square/rca.v1_lastpfrm_ymse);
     }
-    iframe_psnr = my_divider2psnr(iframe_divider);
-    lastpframe_psnr = my_divider2psnr(lastpframe_divider);
+    iframe_psnr = get_10log10(iframe_divider);
+    lastpframe_psnr = get_10log10(lastpframe_divider);
 
     diffpsnr_PI = lastpframe_psnr - iframe_psnr;
     if (view==0) RCISliceBitRatio_currGOP = rca.v0_RCISliceBitRatio;
