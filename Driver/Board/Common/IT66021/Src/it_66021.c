@@ -146,6 +146,7 @@ uint8_t IT_66021_WriteByte(uint8_t slv_addr, uint8_t sub_addr, uint8_t val)
 {
     uint8_t flag;
     uint8_t data[2] = {sub_addr, val};
+    I2C_Master_WaitTillIdle(IT_66021_I2C_COMPONENT_NUM, IT_66021_I2C_I2C_MAX_DELAY_MS);
     flag = I2C_Master_WriteData(IT_66021_I2C_COMPONENT_NUM, slv_addr >> 1, data, 2);
     if(flag==0)
     {
@@ -166,6 +167,7 @@ uint8_t IT_66021_ReadByte(uint8_t slv_addr, uint8_t sub_addr)
 {
     uint8_t sub_addr_tmp = sub_addr;
     uint8_t val = 0;
+    I2C_Master_WaitTillIdle(IT_66021_I2C_COMPONENT_NUM, IT_66021_I2C_I2C_MAX_DELAY_MS);
     I2C_Master_ReadData(IT_66021_I2C_COMPONENT_NUM, slv_addr >> 1, &sub_addr_tmp, 1, &val, 1);
     I2C_Master_WaitTillIdle(IT_66021_I2C_COMPONENT_NUM, IT_66021_I2C_I2C_MAX_DELAY_MS);
     return val;
@@ -181,6 +183,7 @@ uint8_t IT_66021_WriteBytes(uint8_t slv_addr, uint8_t sub_addr, uint8_t byteno, 
         memcpy(pdata+1, p_data, byteno);
         if( byteno>0 )
         {
+            I2C_Master_WaitTillIdle(IT_66021_I2C_COMPONENT_NUM, IT_66021_I2C_I2C_MAX_DELAY_MS);
             flag = I2C_Master_WriteData(IT_66021_I2C_COMPONENT_NUM, slv_addr >> 1, pdata, byteno+1);
         }        
         if(flag==0)

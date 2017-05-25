@@ -6,7 +6,7 @@
 #include "hal_hdmi_rx.h"
 #include "hal_adc.h"
 #include "hal_i2c.h"
-#include "typedef.h"
+#include "it_typedef.h"
 #include "it6602.h"
 #include "it_66021.h"
 
