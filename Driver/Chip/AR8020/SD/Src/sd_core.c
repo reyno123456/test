@@ -105,7 +105,7 @@ SDMMC_Status Core_SDMMC_WaiteCardBusy(SDMMC_REG *SDMMCx)
     card_busy = (get_val & SDMMC_STATUS_DATA_BUSY); 
     // dlog_info("card_busy?\n");
     // dlog_info("CARD_BUSY STATUS = %x", get_val);
-    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 100)
+    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 1000)
     {
         dlog_error("time out");
     }
@@ -124,7 +124,7 @@ SDMMC_Status Core_SDMMC_WaiteCmdStart(SDMMC_REG *SDMMCx)
     cmd_start = (get_val & SDMMC_CMD_START_CMD);
     // dlog_info("cmd_start?\n");
     // dlog_info("CMD_START CMD = %x", get_val);
-    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 100)
+    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 1000)
     {
         dlog_error("time out");
         return SDMMC_BUSY;
@@ -144,7 +144,7 @@ SDMMC_Status Core_SDMMC_WaiteVoltSwitchInt(SDMMC_REG *SDMMCx)
     volt_switch_int = (get_val & SDMMC_RINTSTS_HTO);
     // dlog_info("volt_switch_int\n");
     // dlog_output(50);
-    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 100)
+    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 1000)
     {
         dlog_error("time out");
     }

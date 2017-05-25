@@ -445,6 +445,9 @@ SDMMC_Status Core_SDMMC_WaiteVoltSwitchInt(SDMMC_REG *SDMMCx);
 /* SDMMC Cards mode management functions */
 SDMMC_Status Core_SDMMC_SetSDMMCReadWaitMode(SDMMC_REG *SDMMCx, uint32_t SDMMC_ReadWaitMode);
 
+#define getCardPresence (read_reg32((uint32_t *)(SDMMC_BASE + 0x50)) & (1<<0))
+#define CARD_IN 0
+#define CARD_OUT 1
 
 #ifdef __cplusplus
 }
