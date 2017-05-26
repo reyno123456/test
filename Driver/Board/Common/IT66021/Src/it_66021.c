@@ -184,7 +184,7 @@ uint8_t IT_66021_WriteBytes(uint8_t slv_addr, uint8_t sub_addr, uint8_t byteno, 
         if( byteno>0 )
         {
             I2C_Master_WaitTillIdle(IT_66021_I2C_COMPONENT_NUM, IT_66021_I2C_I2C_MAX_DELAY_MS);
-            flag = I2C_Master_WriteData(IT_66021_I2C_COMPONENT_NUM, slv_addr >> 1, pdata, byteno+1);
+			flag = I2C_Master_WriteData(IT_66021_I2C_COMPONENT_NUM, slv_addr >> 1, pdata, byteno+1);
         }        
         if(flag==0)
         {
@@ -537,7 +537,14 @@ void IT_66021_GetVideoFormat(uint8_t index, uint16_t* widthPtr, uint16_t* hightP
 void IT_66021_GetAudioSampleRate(uint8_t index, uint32_t* sampleRate)
 {
     struct it6602_dev_data *it6602data = get_it6602_dev_data();
-    *sampleRate = (int)it6602data->m_RxAudioCaps.SampleFreq;
+    if (ASTATE_AudioOn == it6602data->m_AState)
+    {
+        *sampleRate = (int)it6602data->m_RxAudioCaps.SampleFreq;
+    }
+    else
+    {
+        *sampleRate = 1;
+    }
 }
 
 void IT_66021_DumpOutEdidData(uint8_t index)

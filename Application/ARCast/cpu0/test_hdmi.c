@@ -103,7 +103,7 @@ void command_dump(void)
 void command_hdmiHandler(uint8_t *index)
 {
     uint32_t u32_index = strtoul(index, NULL, 0);
-    switch (u32_index)
+    /*switch (u32_index)
     {
         case 0:
             IT6602_fsm();
@@ -121,7 +121,8 @@ void command_hdmiHandler(uint8_t *index)
         case 4:
             command_dump();
             break;
-    }
+    }*/
     //HDMI_RX_IdleCallback1(NULL);
+    command_hdmi();
     dlog_info("command_hdmiHandler");
 }

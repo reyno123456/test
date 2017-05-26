@@ -238,16 +238,9 @@ static HAL_BOOL_T HDMI_RX_CheckAudioSampleRateChangeOrNot(ENUM_HAL_HDMI_RX e_hdm
         (s_e_hdmiRxAudioSampleRateStatus != (ENUM_HAL_I2S_IEC_SAMPLERATE)u32_sampleRate))
     {
         u32_audioSampleRateChangeCount++;
-        if (u32_audioSampleRateChangeCount > 3)
-        {
-            u32_audioSampleRateChangeCount = 0;
-            s_e_hdmiRxAudioSampleRateStatus = (ENUM_HAL_I2S_IEC_SAMPLERATE)u32_sampleRate;
-            return HAL_TRUE;    
-        }
-        else
-        {
-            return HAL_FALSE;        
-        }
+        u32_audioSampleRateChangeCount = 0;
+        s_e_hdmiRxAudioSampleRateStatus = (ENUM_HAL_I2S_IEC_SAMPLERATE)u32_sampleRate;
+        return HAL_TRUE;
     }
     else
     {

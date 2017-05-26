@@ -24,8 +24,8 @@ void CONSOLE_Init(void)
 
 static void GenericInitial(void const *argument)
 {
-    Pmu_Rtp5903Configure();
-    //Common_AVFORMATSysEventGroundInit();
+    //Pmu_Rtp5903Configure();
+    Common_AVFORMATSysEventGroundInit();
     vTaskDelete(NULL);
 }
 

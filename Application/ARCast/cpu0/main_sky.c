@@ -54,7 +54,7 @@ int main(void)
     CONSOLE_Init();
     dlog_info("cpu0 start!!! \n");
     
-    Pmu_Rtp5903Configure();
+    //Pmu_Rtp5903Configure();
     
     HAL_GPIO_InPut(HAL_GPIO_NUM99);
 
@@ -89,11 +89,12 @@ int main(void)
 
     HAL_NV_Init();
     Wireless_TaskInit(WIRELESS_NO_RTOS);
-    //Common_AVFORMATSysEventSKYInit();
 
+    Common_AVFORMATSysEventSKYInit();
+    
     for( ;; )
     {
-        //HAL_MP3EncodePcm();
+        HAL_MP3EncodePcm();
         Wireless_MessageProcess();
         SYS_EVENT_Process();
     }
