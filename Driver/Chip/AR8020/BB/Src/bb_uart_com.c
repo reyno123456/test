@@ -400,10 +400,9 @@ uint8_t BB_UARTComSendMsg(ENUM_BBUARTCOMSESSIONID session_id, uint8_t* data_buf,
             data[iTotalCntTmp++] = 0;
         }
         
-        Uart10_WaitTillIdle(BBCOM_UART_INDEX,iTotalCntTmp);
+        Uart_WaitTillIdle(BBCOM_UART_INDEX,iTotalCntTmp);
         uart_putdata(BBCOM_UART_INDEX,  data, iTotalCntTmp);
         
-
         if (align_block_num > 0)
         {
             data_buf_tmp += BBCOM_UART_RX_BUF_SIZE;

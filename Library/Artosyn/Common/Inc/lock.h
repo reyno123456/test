@@ -10,7 +10,6 @@ typedef volatile uint32_t lock_type;
 
 static inline void Lock(lock_type* lock)
 {
-#if 0
     uint32_t tmp;
     
     __asm volatile (
@@ -22,18 +21,15 @@ static inline void Lock(lock_type* lock)
         :"=&r" (tmp)
         :"r" (lock), "r"(1)
         :"cc");
-#endif
 }
 
 static inline void UnLock(lock_type* lock)
 {
-#if 0
     __asm volatile (
         "str %1, [%0] \n"
         :
         :"r" (lock), "r"(0)
         :"cc");
-#endif
 }
 
 static inline void Lock_IRQ(lock_type* lock)

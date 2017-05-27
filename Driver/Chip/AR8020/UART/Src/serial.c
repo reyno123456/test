@@ -163,6 +163,7 @@ uint8_t uart_checkoutFifoStatus(unsigned char index)
     }
 }
 
+#if 0
 int32_t Uart10_WaitTillIdle(unsigned char index, uint16_t datalen)
 {
 
@@ -174,6 +175,7 @@ int32_t Uart10_WaitTillIdle(unsigned char index, uint16_t datalen)
     
     return 0;    
 }
+#endif
 
 int32_t Uart_WaitTillIdle(unsigned char index, uint32_t timeOut)
 {
