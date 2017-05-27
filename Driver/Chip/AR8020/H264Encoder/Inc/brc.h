@@ -55,6 +55,7 @@ struct my_rc{
   int    v0_PrevBitRate;// lhumod
   unsigned char v0_cmadequ0;// lhumod
   int    v0_TotalFrameMAD;// lhumod
+  unsigned char v0_ac_br_index;// @lhu
   unsigned char v0_prev_ac_br_index;// @lhu
   unsigned char v0_wireless_screen;// @lhu
   unsigned char v0_changeToIFrame;// @lhu
@@ -68,7 +69,8 @@ struct my_rc{
   int    v0_RCISliceTargetBits;// @lhu
   unsigned char v0_PrevRCMinQP;// lhupsnr
   unsigned char v0_PSNRDropSharply;
-  long long v0_ifrm_ymse, v0_lastpfrm_ymse;
+  unsigned char v0_1stpfrm_coming;
+  long long v0_ifrm_ymse, v0_min_pfrm_ymse;
   long long v0_frm_ymse[2];
   int    v0_frm_fbits[2];
   int    v0_frm_hbits[2];
@@ -224,6 +226,7 @@ struct my_rc{
   unsigned char v1_cmadequ0;// lhumod
   int    v1_PrevBitRate;// lhumod
   int    v1_TotalFrameMAD;// lhumod
+  unsigned char v1_ac_br_index;// @lhu
   unsigned char v1_prev_ac_br_index;// @lhu
   unsigned char v1_wireless_screen;// @lhu
   unsigned char v1_changeToIFrame;// @lhu
@@ -237,7 +240,8 @@ struct my_rc{
   int    v1_RCISliceTargetBits;// @lhu
   unsigned char v1_PrevRCMinQP;// lhupsnr
   unsigned char v1_PSNRDropSharply;
-  long long v1_ifrm_ymse, v1_lastpfrm_ymse;
+  unsigned char v1_1stpfrm_coming;
+  long long v1_ifrm_ymse, v1_min_pfrm_ymse;
   long long v1_frm_ymse[2];
   int    v1_frm_fbits[2];
   int    v1_frm_hbits[2];

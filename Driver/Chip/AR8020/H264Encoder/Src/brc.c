@@ -239,10 +239,11 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
                     rca.v0_RCSliceBits = (rca.v0_type==P_SLICE)? rca.v0_RCPSliceBits:rca.v0_RCISliceBits; // lhu, 2017/03/27
                     rca.v0_frm_hbits[0] = rca.v0_frame_hbits; // lhu, 2017/03/27
                     rca.v0_frm_abits[0] = rca.v0_frame_abits; // lhu, 2017/03/27
-                    if (rca.v0_fd_iframe==1) rca.v0_ifrm_ymse = v0_ymse_frame; // lhu, 2017/04/13
-                    else {
+                    if (rca.v0_fd_iframe==1) {rca.v0_ifrm_ymse = v0_ymse_frame; rca.v0_1stpfrm_coming = 1;}
+                    else { // obtain the mininum ymse value for all the P Slice, lhu, 2017/05/26
+                    	if (rca.v0_1stpfrm_coming==1) {rca.v0_min_pfrm_ymse = v0_ymse_frame; rca.v0_1stpfrm_coming = 0;}
+                        rca.v0_min_pfrm_ymse = my_iequmin(v0_ymse_frame, rca.v0_min_pfrm_ymse);
                         if (rca.v0_fd_last_p==1) {
-                            rca.v0_lastpfrm_ymse = v0_ymse_frame;
                             READ_WORD(V0_ZW_BSINFO_ADDR,i);
                             if ((i>>1)&0x1) my_ac_RCISliceBitRatio(rca.v0_RCISliceBitRatioMax,0);
                             else {READ_WORD(V0_RCSET2_ADDR,i); rca.v0_RCISliceBitRatio = (i>>24)&0xf;}
@@ -303,10 +304,11 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
                     rca.v1_RCSliceBits = (rca.v1_type==P_SLICE)? rca.v1_RCPSliceBits:rca.v1_RCISliceBits; // lhu, 2017/03/27
                     rca.v1_frm_hbits[0] = rca.v1_frame_hbits; // lhu, 2017/03/27
                     rca.v1_frm_abits[0] = rca.v1_frame_abits; // lhu, 2017/03/27
-                    if (rca.v1_fd_iframe==1) rca.v1_ifrm_ymse = v1_ymse_frame; // lhu, 2017/04/13
-                    else {
+                    if (rca.v1_fd_iframe==1) {rca.v1_ifrm_ymse = v1_ymse_frame; rca.v1_1stpfrm_coming = 1;}
+                    else { // obtain the mininum ymse value for all the P Slice, lhu, 2017/05/26
+                    	if (rca.v1_1stpfrm_coming==1) {rca.v1_min_pfrm_ymse = v1_ymse_frame; rca.v1_1stpfrm_coming = 0;}
+                    	rca.v1_min_pfrm_ymse = my_iequmin(v1_ymse_frame, rca.v1_min_pfrm_ymse);
                         if (rca.v1_fd_last_p==1) {
-                            rca.v1_lastpfrm_ymse = v1_ymse_frame;
                             READ_WORD(V1_ZW_BSINFO_ADDR,i);
                             if ((i>>1)&0x1) my_ac_RCISliceBitRatio(rca.v1_RCISliceBitRatioMax,1);
                             else {READ_WORD(V1_RCSET2_ADDR,i); rca.v1_RCISliceBitRatio = (i>>24)&0xf;}
@@ -367,10 +369,11 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
     	            rca.v1_RCSliceBits = (rca.v1_type==P_SLICE)? rca.v1_RCPSliceBits:rca.v1_RCISliceBits; // lhu, 2017/03/27
                     rca.v1_frm_hbits[0] = rca.v1_frame_hbits; // lhu, 2017/03/27
                     rca.v1_frm_abits[0] = rca.v1_frame_abits; // lhu, 2017/03/27
-                    if (rca.v1_fd_iframe==1) rca.v1_ifrm_ymse = v1_ymse_frame; // lhu, 2017/04/13
-                    else {
+                    if (rca.v1_fd_iframe==1) {rca.v1_ifrm_ymse = v1_ymse_frame; rca.v1_1stpfrm_coming = 1;}
+                    else { // obtain the mininum ymse value for all the P Slice, lhu, 2017/05/26
+                    	if (rca.v1_1stpfrm_coming==1) {rca.v1_min_pfrm_ymse = v1_ymse_frame; rca.v1_1stpfrm_coming = 0;}
+                    	rca.v1_min_pfrm_ymse = my_iequmin(v1_ymse_frame, rca.v1_min_pfrm_ymse);
                         if (rca.v1_fd_last_p==1) {
-                            rca.v1_lastpfrm_ymse = v1_ymse_frame;
                             READ_WORD(V1_ZW_BSINFO_ADDR,i);
                             if ((i>>1)&0x1) my_ac_RCISliceBitRatio(rca.v1_RCISliceBitRatioMax,1);
                             else {READ_WORD(V1_RCSET2_ADDR,i); rca.v1_RCISliceBitRatio = (i>>24)&0xf;}
@@ -609,15 +612,15 @@ void my_rc_params( ) {
 //===== Auto-config Bit-Rate =====
 void my_rc_ac_br(int view) {
     int m,ac_br;
-    unsigned char ac_br_index,v0_ac_br_index,v1_ac_br_index;
+    unsigned char ac_br_index;
     if (view==0) {
         READ_WORD(V0_RC_ACBR_ADDR,m);
-        v0_ac_br_index = (m>>26)&0x3f;
+        rca.v0_ac_br_index = (m>>26)&0x3f;
     } else {
         READ_WORD(V1_RC_ACBR_ADDR,m);
-        v1_ac_br_index = (m>>26)&0x3f;
+        rca.v1_ac_br_index = (m>>26)&0x3f;
     }
-    ac_br_index = (view==0)? v0_ac_br_index: v1_ac_br_index;
+    ac_br_index = (view==0)? rca.v0_ac_br_index: rca.v1_ac_br_index;
 
     switch(ac_br_index) {
         case 0 : ac_br = 8000000 ; break; // 8Mbps
@@ -659,16 +662,15 @@ void my_rc_ac_br(int view) {
         default: ac_br = 8000000 ; break; // 8Mbps
     }
     if (view==0) {
-        if (v0_ac_br_index != rca.v0_prev_ac_br_index)
+        if (rca.v0_ac_br_index != rca.v0_prev_ac_br_index)
             WRITE_WORD(V0_BR_ADDR, ac_br);
-        rca.v0_prev_ac_br_index = v0_ac_br_index;
+            rca.v0_prev_ac_br_index = rca.v0_ac_br_index;
     } else {
-        if (v1_ac_br_index != rca.v1_prev_ac_br_index)
+        if (rca.v1_ac_br_index != rca.v1_prev_ac_br_index)
             WRITE_WORD(V1_BR_ADDR, ac_br);
-        rca.v1_prev_ac_br_index = v1_ac_br_index;
+            rca.v1_prev_ac_br_index = rca.v1_ac_br_index;
     }
 }
-
 static unsigned char log10_lookup_table[]=
 {
     0,
@@ -785,7 +787,6 @@ static unsigned short get_10log10(unsigned int data)
 }
 #if 0
 unsigned short my_divider2psnr(int my_divider) {
-    
     unsigned short my_psnr;
     if      (my_divider>=1000000)                      my_psnr = 60;// 10^6.0=10000
     else if (my_divider>=794328 && my_divider<1000000) my_psnr = 59;// 10^5.9=794328
@@ -934,7 +935,7 @@ void my_decide_backtoNormalGOP(int view) {
     }
 }
 /*===== Criteria for auto-config of RCISliceBitRatio=====
-1> Depend on comparsion of I frame's psnr(Ipsnr) and last P frame's psnr(Ppsnr) in current GOP.
+1> Depend on comparsion of I frame's psnr(Ipsnr) and P frame's MAX psnr(Ppsnr) in current GOP.
 2> Ppsnr-Ipsnr and RCISliceBitRatio_nextGOP and RCISliceBitRatio_currGOP's relation:
     ||                       ||
     \/                       \/
@@ -950,23 +951,23 @@ void my_decide_backtoNormalGOP(int view) {
 3> Finally use RCISliceBitRatioMax value to clamp final output RCISliceBitRatio value.*/
 void my_ac_RCISliceBitRatio(unsigned char RCISliceBitRatioMax, int view) {
     long long whm255square,m;
-    int i,iframe_divider,lastpframe_divider;
-    unsigned short iframe_psnr, lastpframe_psnr;
+    int i,iframe_divider,pframe_divider_max;
+    unsigned short iframe_psnr, pframe_psnr_max;
     signed short diffpsnr_PI;
     unsigned char RCISliceBitRatio_currGOP, RCISliceBitRatio_nextGOP;
     if (view==0) {
         whm255square = (long long)(rca.v0_width*255)*(long long)(rca.v0_height*255);
         iframe_divider = (int)(whm255square/rca.v0_ifrm_ymse);
-        lastpframe_divider = (int)(whm255square/rca.v0_lastpfrm_ymse);
+        pframe_divider_max = (int)(whm255square/rca.v0_min_pfrm_ymse);
     } else {
         whm255square = (long long)(rca.v1_width*255)*(long long)(rca.v1_height*255);
         iframe_divider = (int)(whm255square/rca.v1_ifrm_ymse);
-        lastpframe_divider = (int)(whm255square/rca.v1_lastpfrm_ymse);
+        pframe_divider_max = (int)(whm255square/rca.v1_min_pfrm_ymse);
     }
     iframe_psnr = get_10log10(iframe_divider);
-    lastpframe_psnr = get_10log10(lastpframe_divider);
+    pframe_psnr_max = get_10log10(pframe_divider_max);
 
-    diffpsnr_PI = lastpframe_psnr - iframe_psnr;
+    diffpsnr_PI = pframe_psnr_max - iframe_psnr;
     if (view==0) RCISliceBitRatio_currGOP = rca.v0_RCISliceBitRatio;
     else         RCISliceBitRatio_currGOP = rca.v1_RCISliceBitRatio;
     
@@ -1144,19 +1145,114 @@ void my_v0_rc_init_GOP(int np)
     //if(rca.v0_RCUpdateMode != RC_MODE_0) {// lhugop
     //  my_v0_rc_init_seq( );
     //}
+    //Compute InitialQp for each GOP
+    rca.v0_TotalPFrame = np;
+    if(rca.v0_gop_cnt==0)
+    {
+        rca.v0_QPLastGOP   = rca.v0_MyInitialQp;
+        rca.v0_PAveFrameQP = rca.v0_MyInitialQp;
+        rca.v0_PAverageQp  = rca.v0_MyInitialQp;
+        rca.v0_m_Qc        = rca.v0_MyInitialQp;
+    }
+    else
+    {
+        //compute the average QP of P frames in the previous GOP
+        rca.v0_PAverageQp=(rca.v0_TotalQpforPPicture+(np>>1))/np;// + 0.5);
+        #ifdef JM_RC_DUMP
+        #ifdef USE_MY_RC
+        // rc-related debugging info dump, lhulhu
+        {
+          jm_rc_info_dump = fopen("jm_rc_info_dump.txt","a+");
+          fprintf(jm_rc_info_dump, "(init_GOP_s1)PAverageQp:%-d \t", rca.PAverageQp);
+          fclose (jm_rc_info_dump);
+        }
+        #endif
+        #endif
+        if     (np>=22) GOPDquant=2; // GOPDquant=(int)((1.0*(np+1)/15.0) + 0.5);
+        else if(np>=7 ) GOPDquant=1; // if(GOPDquant>2)
+        else            GOPDquant=0; // GOPDquant=2;
+
+        rca.v0_PAverageQp -= GOPDquant;
+
+        if(rca.v0_PAverageQp > (rca.v0_QPLastPFrame-2))
+            rca.v0_PAverageQp--;
+
+        if(rca.v0_RCUpdateMode == RC_MODE_3) {
+            //69 gop_bits = rca.v0_no_frm_base * rca.v0_frame_bs;
+            gop_bits = (!rca.v0_intra_period? 1:rca.v0_intra_period)*(rca.v0_bit_rate/rca.v0_framerate);
+            if (rca.v0_IFduration==1 && rca.v0_insertOneIFrame==1) {
+                // Initial QP value should be fixed to certain value when decide to insert I Frame, lhu, 2017/05/26
+                switch(rca.v0_ac_br_index) {
+                    case 0 : if (rca.v0_width>1280 || rca.v0_height>720) rca.v0_PAverageQp = 30; else rca.v0_PAverageQp = 28; break; // 8Mbps
+                    case 1 : if (rca.v0_width>1280 || rca.v0_height>720) rca.v0_PAverageQp = 38; else rca.v0_PAverageQp = 36; break; // 600kps
+                    case 2 : if (rca.v0_width>1280 || rca.v0_height>720) rca.v0_PAverageQp = 37; else rca.v0_PAverageQp = 35; break; // 1.2Mbps
+                    case 3 : if (rca.v0_width>1280 || rca.v0_height>720) rca.v0_PAverageQp = 36; else rca.v0_PAverageQp = 34; break; // 2.4Mbps
+                    case 4 : if (rca.v0_width>1280 || rca.v0_height>720) rca.v0_PAverageQp = 35; else rca.v0_PAverageQp = 33; break; // 3Mbps
+                    case 5 : if (rca.v0_width>1280 || rca.v0_height>720) rca.v0_PAverageQp = 35; else rca.v0_PAverageQp = 33; break; // 3.5Mbps
+                    case 6 : if (rca.v0_width>1280 || rca.v0_height>720) rca.v0_PAverageQp = 34; else rca.v0_PAverageQp = 32; break; // 4Mbps
+                    case 7 : if (rca.v0_width>1280 || rca.v0_height>720) rca.v0_PAverageQp = 33; else rca.v0_PAverageQp = 31; break; // 4.8Mbps
+                    case 8 : if (rca.v0_width>1280 || rca.v0_height>720) rca.v0_PAverageQp = 33; else rca.v0_PAverageQp = 31; break; // 5Mbps
+                    case 9 : if (rca.v0_width>1280 || rca.v0_height>720) rca.v0_PAverageQp = 32; else rca.v0_PAverageQp = 30; break; // 6Mbps
+                    case 10: if (rca.v0_width>1280 || rca.v0_height>720) rca.v0_PAverageQp = 31; else rca.v0_PAverageQp = 29; break; // 7Mbps
+                    case 11: if (rca.v0_width>1280 || rca.v0_height>720) rca.v0_PAverageQp = 30; else rca.v0_PAverageQp = 28; break; // 7.5Mbps
+                    case 12: if (rca.v0_width>1280 || rca.v0_height>720) rca.v0_PAverageQp = 29; else rca.v0_PAverageQp = 27; break; // 9Mbps
+                    case 13: if (rca.v0_width>1280 || rca.v0_height>720) rca.v0_PAverageQp = 28; else rca.v0_PAverageQp = 26; break; // 10Mbps
+                    default: if (rca.v0_width>1280 || rca.v0_height>720) rca.v0_PAverageQp = 30; else rca.v0_PAverageQp = 28; break; // 8Mbps
+                }
+            } else {
+                // Use the Previous ISliceBitRatio to calculate the initial QP value of current I Slice, lhu, 2017/05/25
+                rca.v0_RCISliceTargetBits = gop_bits * rca.v0_RCISliceBitRatio/(rca.v0_RCISliceBitRatio+(rca.v0_intra_period-1));
+                v0_RCISliceBitsLow    = rca.v0_RCISliceTargetBits*9/10;
+                v0_RCISliceBitsHigh   = rca.v0_RCISliceTargetBits*11/10;
+                v0_RCISliceBitsLow2   = rca.v0_RCISliceTargetBits*8/10;
+                v0_RCISliceBitsHigh2  = rca.v0_RCISliceTargetBits*12/10;
+                v0_RCISliceBitsLow4   = rca.v0_RCISliceTargetBits*6/10;
+                v0_RCISliceBitsHigh4  = rca.v0_RCISliceTargetBits*14/10;
+                v0_RCISliceBitsLow8   = rca.v0_RCISliceTargetBits*2/10;
+                v0_RCISliceBitsHigh8  = rca.v0_RCISliceTargetBits*18/10;
+                if(rca.v0_RCISliceActualBits  <= v0_RCISliceBitsLow8)                                                              rca.v0_PAverageQp = rca.v0_QPLastGOP-6;
+                else if((v0_RCISliceBitsLow8  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsLow4))  rca.v0_PAverageQp = rca.v0_QPLastGOP-4;
+                else if((v0_RCISliceBitsLow4  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsLow2))  rca.v0_PAverageQp = rca.v0_QPLastGOP-2;
+                else if((v0_RCISliceBitsLow2  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsLow))   rca.v0_PAverageQp = rca.v0_QPLastGOP-1;
+                else if((v0_RCISliceBitsLow   < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsHigh))  rca.v0_PAverageQp = rca.v0_QPLastGOP;
+                else if((v0_RCISliceBitsHigh  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsHigh2)) rca.v0_PAverageQp = rca.v0_QPLastGOP+1;
+                else if((v0_RCISliceBitsHigh2 < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsHigh4)) rca.v0_PAverageQp = rca.v0_QPLastGOP+2;
+                else if((v0_RCISliceBitsHigh4 < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsHigh8)) rca.v0_PAverageQp = rca.v0_QPLastGOP+4;
+                else if(rca.v0_RCISliceActualBits > v0_RCISliceBitsHigh8)                                                          rca.v0_PAverageQp = rca.v0_QPLastGOP+6;
+            }
+        } else {
+            // QP is constrained by QP of previous QP
+            rca.v0_PAverageQp = my_iClip3(rca.v0_QPLastGOP-2, rca.v0_QPLastGOP+2, rca.v0_PAverageQp);
+        }
+        #ifdef JM_RC_DUMP
+        #ifdef USE_MY_RC
+        // rc-related debugging info dump, lhulhu
+        {
+          jm_rc_info_dump = fopen("jm_rc_info_dump.txt","a+");
+          fprintf(jm_rc_info_dump, "(init_GOP_s2)PAverageQp:%-d \n", rca.PAverageQp);
+          fclose (jm_rc_info_dump);
+        }
+        #endif
+        #endif
+        // Also clipped within range.
+        rca.v0_PAverageQp = my_iClip3(rca.v0_RCMinQP,  rca.v0_RCMaxQP,  rca.v0_PAverageQp);
+
+        rca.v0_MyInitialQp = rca.v0_PAverageQp;
+        rca.v0_Pm_Qp       = rca.v0_PAverageQp;
+        rca.v0_PAveFrameQP = rca.v0_PAverageQp; //(13)
+        rca.v0_QPLastGOP   = rca.v0_PAverageQp;
+    }
+
+    rca.v0_TotalQpforPPicture=0;//(13)
+
     // bit allocation for RC_MODE_3
     if(rca.v0_RCUpdateMode == RC_MODE_3) // running this only once !!!
     {
         // calculate allocated bits for each type of frame
-        //69 gop_bits = rca.v0_no_frm_base * rca.v0_frame_bs;
-        gop_bits = (!rca.v0_intra_period? 1:rca.v0_intra_period)*(rca.v0_bit_rate/rca.v0_framerate);
-        //69 denom = 1;
-        //69
-        //69 if(rca.intra_period>=1)
-        //69 {
-        //69     denom *= rca.intra_period;
-        //69     denom += rca.RCISliceBitRatio - 1;
-        //69 }
+        // Fix the ISliceBitRatio when decide to insert I Frame and calculate bit target for I/P frame, lhu, 2017/05/25
+        if (rca.v0_IFduration==1 && rca.v0_insertOneIFrame==1)
+            rca.v0_RCISliceBitRatio = 4;
+
         denom = (!rca.v0_intra_period? 1:rca.v0_intra_period) + rca.v0_RCISliceBitRatio - 1;
 
         // set bit targets for each type of frame
@@ -1194,83 +1290,6 @@ void my_v0_rc_init_GOP(int np)
 
     //  OverDuantQp=(int)(8 * OverBits/gop_bits+0.5);
     rca.v0_GOPOverdue=FALSE;
-
-    //Compute InitialQp for each GOP
-    rca.v0_TotalPFrame = np;
-    if(rca.v0_gop_cnt==0)
-    {
-        rca.v0_QPLastGOP   = rca.v0_MyInitialQp;
-        rca.v0_PAveFrameQP = rca.v0_MyInitialQp;
-        rca.v0_PAverageQp  = rca.v0_MyInitialQp;
-        rca.v0_m_Qc        = rca.v0_MyInitialQp;
-    }
-    else
-    {
-        //compute the average QP of P frames in the previous GOP
-        rca.v0_PAverageQp=(rca.v0_TotalQpforPPicture+(np>>1))/np;// + 0.5);
-        #ifdef JM_RC_DUMP
-        #ifdef USE_MY_RC
-        // rc-related debugging info dump, lhulhu
-        {
-          jm_rc_info_dump = fopen("jm_rc_info_dump.txt","a+");
-          fprintf(jm_rc_info_dump, "(init_GOP_s1)PAverageQp:%-d \t", rca.PAverageQp);
-          fclose (jm_rc_info_dump);
-        }
-        #endif
-        #endif
-        if     (np>=22) GOPDquant=2; // GOPDquant=(int)((1.0*(np+1)/15.0) + 0.5);
-        else if(np>=7 ) GOPDquant=1; // if(GOPDquant>2)
-        else            GOPDquant=0; // GOPDquant=2;
-
-        rca.v0_PAverageQp -= GOPDquant;
-
-        if(rca.v0_PAverageQp > (rca.v0_QPLastPFrame-2))
-            rca.v0_PAverageQp--;
-
-        if(rca.v0_RCUpdateMode == RC_MODE_3) {
-            // lhuqu1, Determine the threshold windows for ISliceBits based on RCISliceBitRatio value
-            rca.v0_RCISliceTargetBits = gop_bits * rca.v0_RCISliceBitRatio/(rca.v0_RCISliceBitRatio+(rca.v0_intra_period-1));
-            v0_RCISliceBitsLow    = rca.v0_RCISliceTargetBits*9/10;
-            v0_RCISliceBitsHigh   = rca.v0_RCISliceTargetBits*11/10;
-            v0_RCISliceBitsLow2   = rca.v0_RCISliceTargetBits*8/10;
-            v0_RCISliceBitsHigh2  = rca.v0_RCISliceTargetBits*12/10;
-            v0_RCISliceBitsLow4   = rca.v0_RCISliceTargetBits*6/10;
-            v0_RCISliceBitsHigh4  = rca.v0_RCISliceTargetBits*14/10;
-            v0_RCISliceBitsLow8   = rca.v0_RCISliceTargetBits*2/10;
-            v0_RCISliceBitsHigh8  = rca.v0_RCISliceTargetBits*18/10;
-            if(rca.v0_RCISliceActualBits  <= v0_RCISliceBitsLow8)                                                              rca.v0_PAverageQp = rca.v0_QPLastGOP-6;
-            else if((v0_RCISliceBitsLow8  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsLow4))  rca.v0_PAverageQp = rca.v0_QPLastGOP-4;
-            else if((v0_RCISliceBitsLow4  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsLow2))  rca.v0_PAverageQp = rca.v0_QPLastGOP-2;
-            else if((v0_RCISliceBitsLow2  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsLow))   rca.v0_PAverageQp = rca.v0_QPLastGOP-1;
-            else if((v0_RCISliceBitsLow   < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsHigh))  rca.v0_PAverageQp = rca.v0_QPLastGOP;
-            else if((v0_RCISliceBitsHigh  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsHigh2)) rca.v0_PAverageQp = rca.v0_QPLastGOP+1;
-            else if((v0_RCISliceBitsHigh2 < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsHigh4)) rca.v0_PAverageQp = rca.v0_QPLastGOP+2;
-            else if((v0_RCISliceBitsHigh4 < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsHigh8)) rca.v0_PAverageQp = rca.v0_QPLastGOP+4;
-            else if(rca.v0_RCISliceActualBits > v0_RCISliceBitsHigh8)                                                          rca.v0_PAverageQp = rca.v0_QPLastGOP+6;
-        } else {
-            // QP is constrained by QP of previous QP
-            rca.v0_PAverageQp = my_iClip3(rca.v0_QPLastGOP-2, rca.v0_QPLastGOP+2, rca.v0_PAverageQp);
-        }
-        #ifdef JM_RC_DUMP
-        #ifdef USE_MY_RC
-        // rc-related debugging info dump, lhulhu
-        {
-          jm_rc_info_dump = fopen("jm_rc_info_dump.txt","a+");
-          fprintf(jm_rc_info_dump, "(init_GOP_s2)PAverageQp:%-d \n", rca.PAverageQp);
-          fclose (jm_rc_info_dump);
-        }
-        #endif
-        #endif
-        // Also clipped within range.
-        rca.v0_PAverageQp = my_iClip3(rca.v0_RCMinQP,  rca.v0_RCMaxQP,  rca.v0_PAverageQp);
-
-        rca.v0_MyInitialQp = rca.v0_PAverageQp;
-        rca.v0_Pm_Qp       = rca.v0_PAverageQp;
-        rca.v0_PAveFrameQP = rca.v0_PAverageQp; //(13)
-        rca.v0_QPLastGOP   = rca.v0_PAverageQp;
-    }
-
-    rca.v0_TotalQpforPPicture=0;//(13)
 }
 
 
@@ -2498,14 +2517,18 @@ void my_v0_updateModelQPBU( int m_Qp )
       else                        rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+5, rca.v0_m_Qc); // lower QP change range for I slice, lhu, 2017/02/07
     } else {
       if (rca.v0_type == P_SLICE) rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+3, rca.v0_m_Qc); // change +6 to +3, lhu, 2017/04/25
-      else                        rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+2, rca.v0_m_Qc); // change +6 to +2 for I slice, lhu, 2017/04/25
+      else {
+        // Expand QP change range when decide to insert I Frame, lhu, 2017/05/26
+        if (rca.v0_IFduration==1 && rca.v0_insertOneIFrame==1) rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+6, rca.v0_m_Qc);
+        else                                                   rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+2, rca.v0_m_Qc); // change +6 to +2 for I slice, lhu, 2017/04/25
+      }
     }
   } else
     rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+3, rca.v0_m_Qc);
 
   if(rca.v0_c1_over==1)
     //rca.v0_m_Qc = my_imin(m_Qp-rca.v0_DDquant, rca.v0_RCMaxQP); // clipping
-    rca.v0_m_Qc = my_imin(m_Qp+rca.v0_DDquant, rca.v0_RCMaxQP-10); // not letting QP decrease when MAD equal 0, 2017/02/21
+    rca.v0_m_Qc = my_imin(m_Qp+rca.v0_DDquant, rca.v0_RCMaxQP); // not letting QP decrease when MAD equal 0, 2017/02/21
   else
     rca.v0_m_Qc = my_iClip3(m_Qp-rca.v0_DDquant, rca.v0_RCMaxQP, rca.v0_m_Qc); // clipping
 
@@ -2515,7 +2538,11 @@ void my_v0_updateModelQPBU( int m_Qp )
       else                        rca.v0_m_Qc = my_imax(rca.v0_PAveFrameQP-5, rca.v0_m_Qc); // lhu, 2017/04/18
     } else {
       if (rca.v0_type == P_SLICE) rca.v0_m_Qc = my_imax(rca.v0_PAveFrameQP-3, rca.v0_m_Qc); // lhu, 2017/04/25
-      else                        rca.v0_m_Qc = my_imax(rca.v0_PAveFrameQP-2, rca.v0_m_Qc); // lhu, 2017/04/25
+      else {
+        // Expand QP change range when decide to insert I Frame, lhu, 2017/05/26
+        if (rca.v0_IFduration==1 && rca.v0_insertOneIFrame==1) rca.v0_m_Qc = my_imax(rca.v0_PAveFrameQP-6, rca.v0_m_Qc);
+      	else                                                   rca.v0_m_Qc = my_imax(rca.v0_PAveFrameQP-2, rca.v0_m_Qc); // lhu, 2017/04/25
+      }
     }
   } else
     rca.v0_m_Qc = my_imax(rca.v0_PAveFrameQP-3, rca.v0_m_Qc);
@@ -2598,7 +2625,6 @@ void my_v0_rc_init_gop_params( )
         if(rca.v0_frame_cnt==0 && rca.v0_bu_cnt==0) {
             if (rca.v0_IFduration==1 && rca.v0_insertOneIFrame==1) {
                 rca.v0_intra_period = rca.v0_PrevIntraPeriod; // use previous intra_period to calculate GOP TargetBits, lhu, 2017/03/13
-                rca.v0_RCISliceBitRatio = 3; // fix the Ipratio when decide insert Intra Frame, lhu, 2017/04/26
             }
             my_v0_rc_init_GOP( rca.v0_intra_period - 1 );
         }
@@ -2985,19 +3011,115 @@ void my_v1_rc_init_GOP(int np)
     //if(rca.v1_RCUpdateMode != RC_MODE_0) {// lhugop
     //  my_v1_rc_init_seq( );
     //}
+    //Compute InitialQp for each GOP
+    rca.v1_TotalPFrame = np;
+    if(rca.v1_gop_cnt==0)
+    {
+        rca.v1_QPLastGOP   = rca.v1_MyInitialQp;
+        rca.v1_PAveFrameQP = rca.v1_MyInitialQp;
+        rca.v1_PAverageQp  = rca.v1_MyInitialQp;
+        rca.v1_m_Qc        = rca.v1_MyInitialQp;
+    }
+    else
+    {
+        //compute the average QP of P frames in the previous GOP
+        rca.v1_PAverageQp=(rca.v1_TotalQpforPPicture+(np>>1))/np;// + 0.5);
+        #ifdef JM_RC_DUMP
+        #ifdef USE_MY_RC
+        // rc-related debugging info dump, lhulhu
+        {
+          jm_rc_info_dump = fopen("jm_rc_info_dump.txt","a+");
+          fprintf(jm_rc_info_dump, "(init_GOP_s1)PAverageQp:%-d \t", rca.v1_PAverageQp);
+          fclose (jm_rc_info_dump);
+        }
+        #endif
+        #endif
+        if     (np>=22) GOPDquant=2; // GOPDquant=(int)((1.0*(np+1)/15.0) + 0.5);
+        else if(np>=7 ) GOPDquant=1; // if(GOPDquant>2)
+        else            GOPDquant=0; // GOPDquant=2;
+
+        rca.v1_PAverageQp -= GOPDquant;
+
+        if(rca.v1_PAverageQp > (rca.v1_QPLastPFrame-2))
+            rca.v1_PAverageQp--;
+
+        if(rca.v1_RCUpdateMode == RC_MODE_3) {
+            //69 gop_bits = rca.v1_no_frm_base * rca.v1_frame_bs;
+            gop_bits = (!rca.v1_intra_period? 1:rca.v1_intra_period)*(rca.v1_bit_rate/rca.v1_framerate);
+            if (rca.v1_IFduration==1 && rca.v1_insertOneIFrame==1) {
+                // Initial QP value should be fixed to certain value when decide to insert I Frame, lhu, 2017/05/26
+                switch(rca.v1_ac_br_index) {
+                    case 0 : if (rca.v1_width>1280 || rca.v1_height>720) rca.v1_PAverageQp = 30; else rca.v1_PAverageQp = 28; break; // 8Mbps
+                    case 1 : if (rca.v1_width>1280 || rca.v1_height>720) rca.v1_PAverageQp = 38; else rca.v1_PAverageQp = 36; break; // 600kps
+                    case 2 : if (rca.v1_width>1280 || rca.v1_height>720) rca.v1_PAverageQp = 37; else rca.v1_PAverageQp = 35; break; // 1.2Mbps
+                    case 3 : if (rca.v1_width>1280 || rca.v1_height>720) rca.v1_PAverageQp = 36; else rca.v1_PAverageQp = 34; break; // 2.4Mbps
+                    case 4 : if (rca.v1_width>1280 || rca.v1_height>720) rca.v1_PAverageQp = 35; else rca.v1_PAverageQp = 33; break; // 3Mbps
+                    case 5 : if (rca.v1_width>1280 || rca.v1_height>720) rca.v1_PAverageQp = 35; else rca.v1_PAverageQp = 33; break; // 3.5Mbps
+                    case 6 : if (rca.v1_width>1280 || rca.v1_height>720) rca.v1_PAverageQp = 34; else rca.v1_PAverageQp = 32; break; // 4Mbps
+                    case 7 : if (rca.v1_width>1280 || rca.v1_height>720) rca.v1_PAverageQp = 33; else rca.v1_PAverageQp = 31; break; // 4.8Mbps
+                    case 8 : if (rca.v1_width>1280 || rca.v1_height>720) rca.v1_PAverageQp = 33; else rca.v1_PAverageQp = 31; break; // 5Mbps
+                    case 9 : if (rca.v1_width>1280 || rca.v1_height>720) rca.v1_PAverageQp = 32; else rca.v1_PAverageQp = 30; break; // 6Mbps
+                    case 10: if (rca.v1_width>1280 || rca.v1_height>720) rca.v1_PAverageQp = 31; else rca.v1_PAverageQp = 29; break; // 7Mbps
+                    case 11: if (rca.v1_width>1280 || rca.v1_height>720) rca.v1_PAverageQp = 30; else rca.v1_PAverageQp = 28; break; // 7.5Mbps
+                    case 12: if (rca.v1_width>1280 || rca.v1_height>720) rca.v1_PAverageQp = 29; else rca.v1_PAverageQp = 27; break; // 9Mbps
+                    case 13: if (rca.v1_width>1280 || rca.v1_height>720) rca.v1_PAverageQp = 28; else rca.v1_PAverageQp = 26; break; // 10Mbps
+                    default: if (rca.v1_width>1280 || rca.v1_height>720) rca.v1_PAverageQp = 30; else rca.v1_PAverageQp = 28; break; // 8Mbps
+                }
+            } else {
+                // Use the Previous ISliceBitRatio to calculate the initial QP value of current I Slice, lhu, 2017/05/25
+                rca.v1_RCISliceTargetBits = gop_bits * rca.v1_RCISliceBitRatio/(rca.v1_RCISliceBitRatio+(rca.v1_intra_period-1));
+                v1_RCISliceBitsLow    = rca.v1_RCISliceTargetBits*9/10;
+                v1_RCISliceBitsHigh   = rca.v1_RCISliceTargetBits*11/10;
+                v1_RCISliceBitsLow2   = rca.v1_RCISliceTargetBits*8/10;
+                v1_RCISliceBitsHigh2  = rca.v1_RCISliceTargetBits*12/10;
+                v1_RCISliceBitsLow4   = rca.v1_RCISliceTargetBits*6/10;
+                v1_RCISliceBitsHigh4  = rca.v1_RCISliceTargetBits*14/10;
+                v1_RCISliceBitsLow8   = rca.v1_RCISliceTargetBits*2/10;
+                v1_RCISliceBitsHigh8  = rca.v1_RCISliceTargetBits*18/10;
+                if(rca.v1_RCISliceActualBits  <= v1_RCISliceBitsLow8)                                                              rca.v1_PAverageQp = rca.v1_QPLastGOP-6;
+                else if((v1_RCISliceBitsLow8  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsLow4))  rca.v1_PAverageQp = rca.v1_QPLastGOP-4;
+                else if((v1_RCISliceBitsLow4  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsLow2))  rca.v1_PAverageQp = rca.v1_QPLastGOP-2;
+                else if((v1_RCISliceBitsLow2  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsLow))   rca.v1_PAverageQp = rca.v1_QPLastGOP-1;
+                else if((v1_RCISliceBitsLow   < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsHigh))  rca.v1_PAverageQp = rca.v1_QPLastGOP;
+                else if((v1_RCISliceBitsHigh  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsHigh2)) rca.v1_PAverageQp = rca.v1_QPLastGOP+1;
+                else if((v1_RCISliceBitsHigh2 < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsHigh4)) rca.v1_PAverageQp = rca.v1_QPLastGOP+2;
+                else if((v1_RCISliceBitsHigh4 < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsHigh8)) rca.v1_PAverageQp = rca.v1_QPLastGOP+4;
+                else if(rca.v1_RCISliceActualBits > v1_RCISliceBitsHigh8)                                                          rca.v1_PAverageQp = rca.v1_QPLastGOP+6;
+            }
+        } else {
+            // QP is constrained by QP of previous QP
+            rca.v1_PAverageQp = my_iClip3(rca.v1_QPLastGOP-2, rca.v1_QPLastGOP+2, rca.v1_PAverageQp);
+        }
+        #ifdef JM_RC_DUMP
+        #ifdef USE_MY_RC
+        // rc-related debugging info dump, lhulhu
+        {
+          jm_rc_info_dump = fopen("jm_rc_info_dump.txt","a+");
+          fprintf(jm_rc_info_dump, "(init_GOP_s2)PAverageQp:%-d \n", rca.v1_PAverageQp);
+          fclose (jm_rc_info_dump);
+        }
+        #endif
+        #endif
+        // Also clipped within range.
+        rca.v1_PAverageQp = my_iClip3(rca.v1_RCMinQP,  rca.v1_RCMaxQP,  rca.v1_PAverageQp);
+
+        rca.v1_MyInitialQp = rca.v1_PAverageQp;
+        rca.v1_Pm_Qp       = rca.v1_PAverageQp;
+        rca.v1_PAveFrameQP = rca.v1_PAverageQp; //(13)
+        rca.v1_QPLastGOP   = rca.v1_PAverageQp;
+    }
+
+    rca.v1_TotalQpforPPicture=0;//(13)
+
     // bit allocation for RC_MODE_3
     if(rca.v1_RCUpdateMode == RC_MODE_3) // running this only once !!!
     {
         // calculate allocated bits for each type of frame
-        //69 gop_bits = rca.v1_no_frm_base * rca.v1_frame_bs;
-        gop_bits = (!rca.v1_intra_period? 1:rca.v1_intra_period)*(rca.v1_bit_rate/rca.v1_framerate);
-        //69 denom = 1;
-        //69
-        //69 if(rca.intra_period>=1)
-        //69 {
-        //69     denom *= rca.intra_period;
-        //69     denom += rca.RCISliceBitRatio - 1;
-        //69 }
+        // Fix the ISliceBitRatio when decide to insert I Frame and calculate bit target for I/P frame, lhu, 2017/05/25
+        if (rca.v1_IFduration==1 && rca.v1_insertOneIFrame==1) {
+            rca.v1_RCISliceBitRatio = 4;
+        }
+
         denom = (!rca.v1_intra_period? 1:rca.v1_intra_period) + rca.v1_RCISliceBitRatio - 1;
 
         // set bit targets for each type of frame
@@ -3035,83 +3157,6 @@ void my_v1_rc_init_GOP(int np)
 
     //  OverDuantQp=(int)(8 * OverBits/gop_bits+0.5);
     rca.v1_GOPOverdue=FALSE;
-
-    //Compute InitialQp for each GOP
-    rca.v1_TotalPFrame = np;
-    if(rca.v1_gop_cnt==0)
-    {
-        rca.v1_QPLastGOP   = rca.v1_MyInitialQp;
-        rca.v1_PAveFrameQP = rca.v1_MyInitialQp;
-        rca.v1_PAverageQp  = rca.v1_MyInitialQp;
-        rca.v1_m_Qc        = rca.v1_MyInitialQp;
-    }
-    else
-    {
-        //compute the average QP of P frames in the previous GOP
-        rca.v1_PAverageQp=(rca.v1_TotalQpforPPicture+(np>>1))/np;// + 0.5);
-        #ifdef JM_RC_DUMP
-        #ifdef USE_MY_RC
-        // rc-related debugging info dump, lhulhu
-        {
-          jm_rc_info_dump = fopen("jm_rc_info_dump.txt","a+");
-          fprintf(jm_rc_info_dump, "(init_GOP_s1)PAverageQp:%-d \t", rca.v1_PAverageQp);
-          fclose (jm_rc_info_dump);
-        }
-        #endif
-        #endif
-        if     (np>=22) GOPDquant=2; // GOPDquant=(int)((1.0*(np+1)/15.0) + 0.5);
-        else if(np>=7 ) GOPDquant=1; // if(GOPDquant>2)
-        else            GOPDquant=0; // GOPDquant=2;
-
-        rca.v1_PAverageQp -= GOPDquant;
-
-        if(rca.v1_PAverageQp > (rca.v1_QPLastPFrame-2))
-            rca.v1_PAverageQp--;
-
-        if(rca.v1_RCUpdateMode == RC_MODE_3) {
-            // lhuqu1, Determine the threshold windows for ISliceBits based on RCISliceBitRatio value
-            rca.v1_RCISliceTargetBits = gop_bits * rca.v1_RCISliceBitRatio/(rca.v1_RCISliceBitRatio+(rca.v1_intra_period-1));
-            v1_RCISliceBitsLow    = rca.v1_RCISliceTargetBits*9/10;
-            v1_RCISliceBitsHigh   = rca.v1_RCISliceTargetBits*11/10;
-            v1_RCISliceBitsLow2   = rca.v1_RCISliceTargetBits*8/10;
-            v1_RCISliceBitsHigh2  = rca.v1_RCISliceTargetBits*12/10;
-            v1_RCISliceBitsLow4   = rca.v1_RCISliceTargetBits*6/10;
-            v1_RCISliceBitsHigh4  = rca.v1_RCISliceTargetBits*14/10;
-            v1_RCISliceBitsLow8   = rca.v1_RCISliceTargetBits*2/10;
-            v1_RCISliceBitsHigh8  = rca.v1_RCISliceTargetBits*18/10;
-            if(rca.v1_RCISliceActualBits  <= v1_RCISliceBitsLow8)                                                              rca.v1_PAverageQp = rca.v1_QPLastGOP-6;
-            else if((v1_RCISliceBitsLow8  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsLow4))  rca.v1_PAverageQp = rca.v1_QPLastGOP-4;
-            else if((v1_RCISliceBitsLow4  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsLow2))  rca.v1_PAverageQp = rca.v1_QPLastGOP-2;
-            else if((v1_RCISliceBitsLow2  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsLow))   rca.v1_PAverageQp = rca.v1_QPLastGOP-1;
-            else if((v1_RCISliceBitsLow   < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsHigh))  rca.v1_PAverageQp = rca.v1_QPLastGOP;
-            else if((v1_RCISliceBitsHigh  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsHigh2)) rca.v1_PAverageQp = rca.v1_QPLastGOP+1;
-            else if((v1_RCISliceBitsHigh2 < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsHigh4)) rca.v1_PAverageQp = rca.v1_QPLastGOP+2;
-            else if((v1_RCISliceBitsHigh4 < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsHigh8)) rca.v1_PAverageQp = rca.v1_QPLastGOP+4;
-            else if(rca.v1_RCISliceActualBits > v1_RCISliceBitsHigh8)                                                          rca.v1_PAverageQp = rca.v1_QPLastGOP+6;
-        } else {
-            // QP is constrained by QP of previous QP
-            rca.v1_PAverageQp = my_iClip3(rca.v1_QPLastGOP-2, rca.v1_QPLastGOP+2, rca.v1_PAverageQp);
-        }
-        #ifdef JM_RC_DUMP
-        #ifdef USE_MY_RC
-        // rc-related debugging info dump, lhulhu
-        {
-          jm_rc_info_dump = fopen("jm_rc_info_dump.txt","a+");
-          fprintf(jm_rc_info_dump, "(init_GOP_s2)PAverageQp:%-d \n", rca.v1_PAverageQp);
-          fclose (jm_rc_info_dump);
-        }
-        #endif
-        #endif
-        // Also clipped within range.
-        rca.v1_PAverageQp = my_iClip3(rca.v1_RCMinQP,  rca.v1_RCMaxQP,  rca.v1_PAverageQp);
-
-        rca.v1_MyInitialQp = rca.v1_PAverageQp;
-        rca.v1_Pm_Qp       = rca.v1_PAverageQp;
-        rca.v1_PAveFrameQP = rca.v1_PAverageQp; //(13)
-        rca.v1_QPLastGOP   = rca.v1_PAverageQp;
-    }
-
-    rca.v1_TotalQpforPPicture=0;//(13)
 }
 
 
@@ -4340,14 +4385,18 @@ void my_v1_updateModelQPBU( int m_Qp )
       else                        rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+5, rca.v1_m_Qc); // lower QP change range for I slice, lhu, 2017/02/07
     } else {
       if (rca.v1_type == P_SLICE) rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+3, rca.v1_m_Qc); // change +6 to +3, lhu, 2017/04/25
-      else                        rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+2, rca.v1_m_Qc); // change +6 to +2 for I slice, lhu, 2017/04/25
+      else {
+        // Expand QP change range when decide to insert I Frame, lhu, 2017/05/26
+        if (rca.v1_IFduration==1 && rca.v1_insertOneIFrame==1) rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+6, rca.v1_m_Qc);
+        else                                                   rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+2, rca.v1_m_Qc); // change +6 to +2 for I slice, lhu, 2017/04/25
+      }
     }
   } else
     rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+3, rca.v1_m_Qc);
 
   if(rca.v1_c1_over==1)
     //rca.v1_m_Qc = my_imin(m_Qp-rca.v1_DDquant, rca.v1_RCMaxQP); // clipping
-    rca.v1_m_Qc = my_imin(m_Qp+rca.v1_DDquant, rca.v1_RCMaxQP-10); // not letting QP decrease when MAD equal 0, 2017/02/21
+    rca.v1_m_Qc = my_imin(m_Qp+rca.v1_DDquant, rca.v1_RCMaxQP); // not letting QP decrease when MAD equal 0, 2017/02/21
   else
     rca.v1_m_Qc = my_iClip3(m_Qp-rca.v1_DDquant, rca.v1_RCMaxQP, rca.v1_m_Qc); // clipping
 
@@ -4357,7 +4406,11 @@ void my_v1_updateModelQPBU( int m_Qp )
       else                        rca.v1_m_Qc = my_imax(rca.v1_PAveFrameQP-5, rca.v1_m_Qc); // lhu, 2017/04/18
     } else {
       if (rca.v1_type == P_SLICE) rca.v1_m_Qc = my_imax(rca.v1_PAveFrameQP-3, rca.v1_m_Qc); // lhu, 2017/04/25
-      else                        rca.v1_m_Qc = my_imax(rca.v1_PAveFrameQP-2, rca.v1_m_Qc); // lhu, 2017/04/25
+      else {
+        // Expand QP change range when decide to insert I Frame, lhu, 2017/05/26
+        if (rca.v1_IFduration==1 && rca.v1_insertOneIFrame==1) rca.v1_m_Qc = my_imax(rca.v1_PAveFrameQP-6, rca.v1_m_Qc);
+      	else                                                   rca.v1_m_Qc = my_imax(rca.v1_PAveFrameQP-2, rca.v1_m_Qc); // lhu, 2017/04/25
+      }
     }
   } else
     rca.v1_m_Qc = my_imax(rca.v1_PAveFrameQP-3, rca.v1_m_Qc);
@@ -4439,7 +4492,6 @@ void my_v1_rc_init_gop_params( )
         if(rca.v1_frame_cnt==0 && rca.v1_bu_cnt==0) {
             if (rca.v1_IFduration==1 && rca.v1_insertOneIFrame==1) {
                 rca.v1_intra_period = rca.v1_PrevIntraPeriod; // use previous intra_period to calculate GOP TargetBits, lhu, 2017/03/13
-                rca.v1_RCISliceBitRatio = 3; // fix the Ipratio when decide insert Intra Frame, lhu, 2017/04/26
             }
             my_v1_rc_init_GOP( rca.v1_intra_period - 1 );
         }
