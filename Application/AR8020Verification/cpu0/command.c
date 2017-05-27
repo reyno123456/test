@@ -794,6 +794,13 @@ void command_malloc(char *size)
 		dlog_info("0x%08x\n", malloc_addr);
 	}
 
+    extern    uint32_t read_reg32(uint32_t *addr);
+
+    dlog_info("INTMASK = 0x%08x", read_reg32((uint32_t *)(0x42000000 + 0x24)));
+    dlog_info("MINTSTS = 0x%08x", read_reg32((uint32_t *)(0x42000000 + 0x40)));
+    dlog_info("RINTSTS = 0x%08x", read_reg32((uint32_t *)(0x42000000 + 0x44)));
+    dlog_info("cdetect = 0x%08x", read_reg32((uint32_t *)(0x42000000 + 0x50)));
+
 	return;
 }
 

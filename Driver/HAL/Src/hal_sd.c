@@ -18,6 +18,7 @@ History:
 #include "reg_rw.h"
 #include "interrupt.h"
 #include "sys_event.h"
+#include "systicks.h"
 
 extern SDMMC_DMATransTypeDef dma;
 extern SD_HandleTypeDef sdhandle;
@@ -40,8 +41,9 @@ HAL_RET_T HAL_SD_Init(void)
     {
         sdhandle.Instance = SDMMC_ADDR;
         SDMMC_Status e_errorState = SDMMC_OK;
-        sdhandle.SpeedMode = 2;
+        sdhandle.SpeedMode = CARD_SDR50;
         dlog_info("speedMode = %x!", sdhandle.SpeedMode);
+        SysTicks_DelayMS(100);
         e_errorState = Card_SD_Init(&sdhandle, &cardinfo);
         if (e_errorState != SDMMC_OK) 
         {
@@ -105,8 +107,8 @@ HAL_RET_T HAL_SD_Write(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uin
 		dlog_info("Write SD Failed!\n");
 		return HAL_SD_ERR_ERROR;
 	}
-	// dlog_info("Write SD %d Sectors Done. From Sector %d to Sector %d\n", \
-		         st_dma.SectorNum, st_dma.DstAddr, (st_dma.DstAddr + st_dma.SectorNum - 1));
+	// dlog_info("Write SD %d Sectors Done. From Sector %d to Sector %d\n", 
+	//	         st_dma.SectorNum, st_dma.DstAddr, (st_dma.DstAddr + st_dma.SectorNum - 1));
 	return HAL_OK;
 }
 
@@ -142,8 +144,8 @@ HAL_RET_T HAL_SD_Read(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uint
 		dlog_info("Read SD Failed!\n");
 		return HAL_SD_ERR_ERROR;
 	}
-	// dlog_info("Read SD %d Sectors Done. From Sector %d to Sector %d\n", \
-		         st_dma.SectorNum, st_dma.SrcAddr, (st_dma.SrcAddr + st_dma.SectorNum - 1));
+	// dlog_info("Read SD %d Sectors Done. From Sector %d to Sector %d\n", 
+	//	         st_dma.SectorNum, st_dma.SrcAddr, (st_dma.SrcAddr + st_dma.SectorNum - 1));
 	return HAL_OK;
 }
 
@@ -162,8 +164,8 @@ HAL_RET_T HAL_SD_Erase(uint32_t u32_startAddr, uint32_t u32_sectorNum)
 		dlog_info("Erase SD failed!\n");
 		return HAL_SD_ERR_ERROR;
 	}
-	// dlog_info("Erase %d Sectors Done. From Sector %d to Sector %d\n", \
-		         u32_sectorNum, u32_startAddr, (u32_startAddr + u32_sectorNum - 1));
+	// dlog_info("Erase %d Sectors Done. From Sector %d to Sector %d\n", 
+	//	         u32_sectorNum, u32_startAddr, (u32_startAddr + u32_sectorNum - 1));
 	return HAL_OK;
 }
 
