@@ -57,7 +57,7 @@ HAL_RET_T HAL_SD_Init(void)
     }
     else
     {
-        write_reg32((uint32_t *)(SDMMC_BASE + 0x50), 0xFFFFFFFF);
+        write_reg32((uint32_t *)(SDMMC_BASE + 0x50), 0x00000001);
         write_reg32((uint32_t *)(SDMMC_BASE + 0x24), 0x00000001);
         write_reg32((uint32_t *)(SDMMC_BASE), 0x00000010);
     }
