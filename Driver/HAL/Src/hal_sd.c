@@ -40,14 +40,19 @@ HAL_RET_T HAL_SD_Init(void)
     if (getCardPresence == CARD_IN)
     {
         sdhandle.Instance = SDMMC_ADDR;
-        SDMMC_Status e_errorState = SDMMC_OK;
         sdhandle.SpeedMode = CARD_SDR50;
+        SDMMC_Status e_errorState = SDMMC_OK;
         dlog_info("speedMode = %x!", sdhandle.SpeedMode);
         SysTicks_DelayMS(100);
         e_errorState = Card_SD_Init(&sdhandle, &cardinfo);
         if (e_errorState != SDMMC_OK) 
         {
+            sdhandle.inited = 0;
             return HAL_SD_ERR_ERROR;
+        }
+        else
+        {
+            sdhandle.inited = 1;
         }
     }
     else

@@ -63,24 +63,6 @@ SD_ErrorTypedef Card_SD_Init(SD_HandleTypeDef *hsd, SD_CardInfoTypedef *SDCardIn
 {
   __IO SD_ErrorTypedef errorstate = SD_OK;
   uint32_t get_val;
-#if 0
-  /* To identify if card is powered on */
-  Core_SDMMC_SetPWREN(hsd->Instance, SDMMC_PWREN_0 | 
-                                     SDMMC_PWREN_1 | 
-                                     SDMMC_PWREN_2 | 
-                                     SDMMC_PWREN_3);    
-  delay_ms(100);
-  
-  get_val = Core_SDMMC_GetPWREN(hsd->Instance);
-  if (!get_val)
-  {
-    Core_SDMMC_SetPWREN(hsd->Instance, SDMMC_PWREN_0 | 
-                                       SDMMC_PWREN_1 | 
-                                       SDMMC_PWREN_2 | 
-                                       SDMMC_PWREN_3);    
-    delay_ms(1);
-  }
-#endif
 
   errorstate = PowerOnCard(hsd);
   if (errorstate != SD_OK)
@@ -1139,16 +1121,9 @@ static SD_ErrorTypedef IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef
                                         SDMMC_CMD_RESP_CRC     | 
                                         SDMMC_CMD_RESP_LONG    | 
                                         SDMMC_CMD_RESP_EXP;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
     Core_SDMMC_WaiteCmdDone(hsd->Instance);
-    /* Check for error conditions */
-    errorstate = wait_cmd_done();
-    if (errorstate != SD_OK)
-    {
-      return errorstate;
-    }
-    /* Get Card identification number data */
     hsd->CID[0] = Core_SDMMC_GetResponse(hsd->Instance, SDMMC_RESP0);
     hsd->CID[1] = Core_SDMMC_GetResponse(hsd->Instance, SDMMC_RESP1);
     hsd->CID[2] = Core_SDMMC_GetResponse(hsd->Instance, SDMMC_RESP2);
@@ -1170,52 +1145,15 @@ static SD_ErrorTypedef IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef
         SDMMC_CMD_PRV_DAT_WAIT | 
         SDMMC_CMD_RESP_CRC | 
         SDMMC_CMD_RESP_EXP;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
     Core_SDMMC_WaiteCmdDone(hsd->Instance);
-    /* Check for error conditions */
-    errorstate = wait_cmd_done();
-    if (errorstate != SD_OK)
-    {
-      return errorstate;
-    }
     response = Core_SDMMC_GetResponse(hsd->Instance, SDMMC_RESP0);
     sd_rca = (uint32_t)(response >> 16) & 0x0000FFFF;
 
     dlog_info("Card Relative Address = 0x%x", sd_rca);
     hsd->RCA = sd_rca;
   }
-
-  /* switch clock */
-  // Core_SDMMC_SetCLKSRC(hsd->Instance, 0x00000000);
-  // Core_SDMMC_SetCLKENA(hsd->Instance, 0x00000000);
-  // sdmmc_cmdinitstructure.Argument  = 0x00000000;
-  // sdmmc_cmdinitstructure.CmdIndex  = SD_CMD_GO_IDLE_STATE;
-  // sdmmc_cmdinitstructure.Response  = SDMMC_RESPONSE_NO;
-  // sdmmc_cmdinitstructure.Attribute = SDMMC_CMD_START_CMD | \
-  //                                    SDMMC_CMD_USE_HOLD_REG | \
-  //                                    SDMMC_CMD_PRV_DAT_WAIT | \
-  //                                    SDMMC_CMD_UPDATE_CLK;
-  // Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
-  // Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-  // Core_SDMMC_WaiteCmdStart(hsd->Instance);
-
-  // //delay_ms(100);
-  // delay_ms(10);
-  // Core_SDMMC_SetCLKDIV(hsd->Instance, 0x00000002);  //switch frequency from 400Khz to 100Mhz
-
-  // Core_SDMMC_SetCLKSRC(hsd->Instance, 0x00000000);
-  // Core_SDMMC_SetCLKENA(hsd->Instance, 0x00000001);
-  // sdmmc_cmdinitstructure.Argument  = 0x00000000;
-  // sdmmc_cmdinitstructure.CmdIndex  = SD_CMD_GO_IDLE_STATE;
-  // sdmmc_cmdinitstructure.Response  = SDMMC_RESPONSE_NO;
-  // sdmmc_cmdinitstructure.Attribute = SDMMC_CMD_START_CMD | \
-  //                                    SDMMC_CMD_USE_HOLD_REG | \
-  //                                    SDMMC_CMD_PRV_DAT_WAIT | \
-  //                                    SDMMC_CMD_UPDATE_CLK;
-  // Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
-  // Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-  // Core_SDMMC_WaiteCmdStart(hsd->Instance);
 
   if (hsd->CardType != SECURE_DIGITAL_IO_CARD)
   {
@@ -1233,16 +1171,9 @@ static SD_ErrorTypedef IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef
                                               SDMMC_CMD_RESP_CRC     | 
                                               SDMMC_CMD_RESP_LONG    | 
                                               SDMMC_CMD_RESP_EXP;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
     Core_SDMMC_WaiteCmdDone(hsd->Instance);
-    /* Check for error conditions */
-    errorstate = wait_cmd_done();
-    if (errorstate != SD_OK)
-    {
-      return errorstate;
-    }
-    /* Get Card Specific Data */
     hsd->CID[3] = Core_SDMMC_GetResponse(hsd->Instance, SDMMC_RESP0);
     hsd->CID[2] = Core_SDMMC_GetResponse(hsd->Instance, SDMMC_RESP1);
     hsd->CID[1] = Core_SDMMC_GetResponse(hsd->Instance, SDMMC_RESP2);
@@ -1261,17 +1192,9 @@ static SD_ErrorTypedef IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef
                                               SDMMC_CMD_RESP_CRC     | 
                                               SDMMC_CMD_RESP_LONG    | 
                                               SDMMC_CMD_RESP_EXP;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
     Core_SDMMC_WaiteCmdDone(hsd->Instance);
-    /* Check for error conditions */
-    errorstate = wait_cmd_done();
-    if (errorstate != SD_OK)
-    {
-      return errorstate;
-    }
-    /* Get Card Specific Data */
-    /* Send CMD9 SEND_CSD with argument as card's RCA */
     hsd->CSD[0] = Core_SDMMC_GetResponse(hsd->Instance, SDMMC_RESP0);
     hsd->CSD[1] = Core_SDMMC_GetResponse(hsd->Instance, SDMMC_RESP1);
     hsd->CSD[2] = Core_SDMMC_GetResponse(hsd->Instance, SDMMC_RESP2);
@@ -1286,17 +1209,11 @@ static SD_ErrorTypedef IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef
                                               SDMMC_CMD_PRV_DAT_WAIT | 
                                               SDMMC_CMD_RESP_CRC    | 
                                               SDMMC_CMD_RESP_EXP;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
     /* waite for command finish*/
     Core_SDMMC_WaiteCmdDone(hsd->Instance);
 
-    get_val = Core_SDMMC_GetRESP0(hsd->Instance);
-    // dlog_info("CMD7 RESP0 = %x\n", get_val);
-    get_val = Core_SDMMC_GetRINTSTS(hsd->Instance);
-    // dlog_info("CMD7 RINTSTS = %x\n", get_val);
-
-    /* Send CMD55*/
   #ifdef ECHO
     dlog_info("Send CMD55");
   #endif
@@ -1308,14 +1225,9 @@ static SD_ErrorTypedef IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef
                                               SDMMC_CMD_PRV_DAT_WAIT | 
                                               SDMMC_CMD_RESP_CRC | 
                                               SDMMC_CMD_RESP_EXP;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-    /* Check for error conditions */
     Core_SDMMC_WaiteCmdDone(hsd->Instance);
-    get_val = Core_SDMMC_GetRESP0(hsd->Instance);
-    // dlog_info("CMD55 RESP0 = %x\n", get_val);
-    get_val = Core_SDMMC_GetRINTSTS(hsd->Instance);
-    // dlog_info("CMD55 RINTSTS = %x\n", get_val);
 
     /* Send ACMD6 */
   #ifdef ECHO
@@ -1330,15 +1242,10 @@ static SD_ErrorTypedef IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef
                                               SDMMC_CMD_PRV_DAT_WAIT | 
                                               SDMMC_CMD_RESP_CRC | 
                                               SDMMC_CMD_RESP_EXP;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
     /* Check for error conditions */
     Core_SDMMC_WaiteCmdDone(hsd->Instance);
-    get_val = Core_SDMMC_GetRESP0(hsd->Instance);
-    // dlog_info("ACMD6 RESP0 = %x\n", get_val);
-    get_val = Core_SDMMC_GetRINTSTS(hsd->Instance);
-    // dlog_info("ACMD6 RINTSTS = %x\n", get_val);
-
 #if 0
     /* Send CMD16*/
   #ifdef ECHO
@@ -1366,14 +1273,6 @@ static SD_ErrorTypedef IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef
     Core_SDMMC_WaiteCmdDone(hsd->Instance);
 #endif
 
-    // get_val = Core_SDMMC_GetRESP0(hsd->Instance);
-    // dlog_info("CMD16 RESP0 = %x\n", get_val);
-    // get_val = Core_SDMMC_GetRINTSTS(hsd->Instance);
-    // dlog_info("CMD16 RINTSTS = %x\n", get_val);
-    /* All cards are initialized */
-
-    /* Send CMD6*/
-/*     if (flag_init_once == 0) */
 #ifdef ECHO
     dlog_info("Send CMD6");
 #endif
@@ -1410,7 +1309,7 @@ static SD_ErrorTypedef IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef
                                               SDMMC_CMD_DAT_EXP      | 
                                               SDMMC_CMD_RESP_CRC     | 
                                               SDMMC_CMD_RESP_EXP;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
     Core_SDMMC_WaiteCmdDone(hsd->Instance);
 
@@ -1446,7 +1345,6 @@ static SD_ErrorTypedef IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef
                                        SDMMC_CMD_USE_HOLD_REG | 
                                        SDMMC_CMD_PRV_DAT_WAIT | 
                                        SDMMC_CMD_UPDATE_CLK;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
     if (SDMMC_OK == Core_SDMMC_WaiteCmdStart(hsd->Instance))
     {
@@ -1490,7 +1388,6 @@ static SD_ErrorTypedef IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef
                                        SDMMC_CMD_USE_HOLD_REG | 
                                        SDMMC_CMD_PRV_DAT_WAIT | 
                                        SDMMC_CMD_UPDATE_CLK;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
     Core_SDMMC_WaiteCmdStart(hsd->Instance);
 
@@ -1541,7 +1438,7 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
                                             SDMMC_CMD_USE_HOLD_REG | 
                                             SDMMC_CMD_PRV_DAT_WAIT;
   /* clear intreq status */
-  Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+  Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
   Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
   /* Check for error conditions */
   errorstate = wait_cmd_done();
@@ -1562,7 +1459,7 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
                                             SDMMC_CMD_PRV_DAT_WAIT | 
                                             SDMMC_CMD_RESP_CRC | 
                                             SDMMC_CMD_RESP_EXP;
-  Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+  Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
   Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
   /* Check for error conditions */
   errorstate = wait_cmd_done();
@@ -1576,10 +1473,6 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
   {
     dlog_info("CMD8: SD_UNSUPPORTED_VOLTAGE\n");
   }
-  // get_val = Core_SDMMC_GetRESP0(hsd->Instance);
-  // dlog_info("CMD8 RESP0 = %x\n", get_val);
-  // get_val = Core_SDMMC_GetRINTSTS(hsd->Instance);
-  // dlog_info("CMD8 RINTSTS = %x\n", get_val);
 
   /* Send CMD55 */
 #ifdef ECHO
@@ -1593,7 +1486,7 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
                                             SDMMC_CMD_PRV_DAT_WAIT | 
                                             SDMMC_CMD_RESP_CRC | 
                                             SDMMC_CMD_RESP_EXP;
-  Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+  Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
   Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
   /* Check for error conditions */
   errorstate = wait_cmd_done();
@@ -1602,10 +1495,6 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
     /* CMD Response Timeout (wait for CMDSENT flag) */
     return errorstate;
   }
-  //get_val = Core_SDMMC_GetRESP0(hsd->Instance);
-  // dlog_info("CMD55 RESP0 = %x\n", get_val);
-  //get_val = Core_SDMMC_GetRINTSTS(hsd->Instance);
-  // dlog_info("CMD55 RINTSTS = %x\n", get_val);
 
   /* Send ACMD41 */
 #ifdef ECHO
@@ -1621,7 +1510,7 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
                                             SDMMC_CMD_USE_HOLD_REG | 
                                             SDMMC_CMD_PRV_DAT_WAIT | 
                                             SDMMC_CMD_RESP_EXP;
-  Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+  Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
   Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
   /* Check for error conditions */
   errorstate = wait_cmd_done();
@@ -1630,9 +1519,6 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
     /* CMD Response Timeout (wait for CMDSENT flag) */
     return errorstate;
   }
-  /* Get command get_val */
-  // get_val = Core_SDMMC_GetRINTSTS(hsd->Instance);
-  // dlog_info("ACMD41 RINTSTS = 0x%x\n", get_val);
   response = Core_SDMMC_GetRESP0(hsd->Instance);
   dlog_info("ACMD41 RESP0 = 0x%x", response);
 
@@ -1642,8 +1528,6 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
     dlog_info("ACMD41 Loop Start:");
     do 
     {
-/*         dlog_info("loop %d: Send CMD55", loop); */
-/*       delay_ms(100); */
       SysTicks_DelayMS(1);
       /* Send CMD55 */
       sdmmc_cmdinitstructure.Argument         = 0;
@@ -1654,7 +1538,7 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
                                                 SDMMC_CMD_PRV_DAT_WAIT | 
                                                 SDMMC_CMD_RESP_CRC | 
                                                 SDMMC_CMD_RESP_EXP;
-      Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+      Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
       Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
       /* Check for error conditions */
       errorstate = wait_cmd_done();
@@ -1664,32 +1548,20 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
         return errorstate;
       }
 
-      //response = Core_SDMMC_GetRESP0(hsd->Instance);
-      // dlog_info("CMD55 RESP0 = %x\n", response);
-      //get_val = Core_SDMMC_GetRINTSTS(hsd->Instance);
-      // dlog_info("CMD55 RINTSTS = %x\n", get_val);
-      /* Send ACMD41 */
       sdmmc_cmdinitstructure.Argument         = 0x51FF8000;
-      //sdmmc_cmdinitstructure.Argument         = SD_ACMD41_HCS | \
-      //                                          SD_ACMD41_XPC | \
-      //                                          SD_ACMD41_S18R |\
-      //                                          0xFFF000;
       sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_APP_SD_SEND_OP_COND;
       sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R3;
       sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | 
                                                 SDMMC_CMD_USE_HOLD_REG | 
                                                 SDMMC_CMD_PRV_DAT_WAIT | 
                                                 SDMMC_CMD_RESP_EXP;
-      Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+      Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
       Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
       /* Get command get_val */
       response = Core_SDMMC_GetResponse(hsd->Instance, SDMMC_RESP0);
       vs_busy = (response & SD_ACMD41_BUSY);
 
-      // get_val = Core_SDMMC_GetRINTSTS(hsd->Instance);
-      // dlog_info("ACMD41 RINTSTS = %x\n", get_val);
       response = Core_SDMMC_GetRESP0(hsd->Instance);
-      // dlog_info("ACMD41 RESP0 = %x\n", response);
       if (loop == 1000) 
       {
         dlog_info("ACMD41 Loop Fail");
@@ -1726,13 +1598,12 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
                                        SDMMC_CMD_PRV_DAT_WAIT | 
                                        SDMMC_CMD_RESP_EXP  | 
                                        SDMMC_CMD_RESP_CRC;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE | SDMMC_RINTSTS_HTO);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
 #ifdef ECHO
     dlog_info("1.8v Switch Start");
 #endif
     dlog_output(100);
-    // Core_SDMMC_WaiteCmdStart(hsd->Instance);
 /*
     31 start_cmd 0 Start command. Once command is taken by CIU, bit is cleared.
     When bit is set, host should not attempt to write to any command
@@ -1746,15 +1617,11 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
     Core_SDMMC_WaiteVoltSwitchInt(hsd->Instance);
     // delay_ms(1);
     dlog_info("CMD11 RESP 1.8v Switch Success");
-    //get_val = Core_SDMMC_GetRESP0(hsd->Instance);
-    // dlog_info("CMD11 RESP0 = %x\n", get_val);
-    //get_val = Core_SDMMC_GetRINTSTS(hsd->Instance);
-    // dlog_info("CMD11 RINTSTS = %x\n", get_val);
-
 
     /* disable all the clock */
     Core_SDMMC_SetCLKENA(hsd->Instance, 0x00000000);
-    Core_SDMMC_SetUHSREG(hsd->Instance, 0x0000FFFF);
+    Core_SDMMC_SetUHSREG(hsd->Instance, 0x00000001); // to avoid 16G card direct read issue
+    SysTicks_DelayMS(10);
 
     sdmmc_cmdinitstructure.Argument  = 0x00000000;
     sdmmc_cmdinitstructure.CmdIndex  = SD_CMD_GO_IDLE_STATE;
@@ -1764,7 +1631,7 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
                                        SDMMC_CMD_VOLT_SWITCH  | 
                                        SDMMC_CMD_PRV_DAT_WAIT | 
                                        SDMMC_CMD_UPDATE_CLK;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+/*     Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF); */
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
     delay_ms(500);
     dlog_info("Host Supply 1.8v Clock");
@@ -1779,8 +1646,9 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
                                        SDMMC_CMD_VOLT_SWITCH  | 
                                        SDMMC_CMD_PRV_DAT_WAIT | 
                                        SDMMC_CMD_UPDATE_CLK;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE | SDMMC_RINTSTS_HTO);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
+    wait_cmd_done();
     Core_SDMMC_WaiteVoltSwitchInt(hsd->Instance);
     dlog_info("Voltage Switching Success!");
     dlog_output(100);
@@ -1802,14 +1670,17 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
 static SD_ErrorTypedef PowerOnCard(SD_HandleTypeDef *hsd)
 {
     Core_SDMMC_SetPWREN(hsd->Instance, SDMMC_PWREN_0);
-    
+
+    Core_SDMMC_SetRST_N(hsd->Instance, 0x0);
+    Core_SDMMC_SetRST_N(hsd->Instance, 0x1);
+
     SysTicks_DelayMS(100);
     
-    Core_SDMMC_SetCTRL(hsd->Instance, SDMMC_CTRL_CONTROLLER_RESET);
-  //Core_SDMMC_SetINTMASK(hsd->Instance, 0xFFFFFFFF);
-  Core_SDMMC_SetINTMASK(hsd->Instance, SDMMC_INTMASK_CARD_DETECT);
-  /* clear intreq status */
-  Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SetCTRL(hsd->Instance, SDMMC_CTRL_CONTROLLER_RESET |
+                                    SDMMC_CTRL_FIFO_RESET |
+                                    SDMMC_CTRL_DMA_RESET);
+    Core_SDMMC_SetINTMASK(hsd->Instance, SDMMC_INTMASK_CARD_DETECT);
+    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
 /*   Core_SDMMC_SetCTRL(hsd->Instance, SDMMC_CTRL_INT_ENABLE ); */
   // SD clock = 50MHz
   // Core_SDMMC_SetCLKDIV(hsd->Instance, SDMMC_CLKDIV_BIT1);
@@ -1827,6 +1698,8 @@ static SD_ErrorTypedef PowerOnCard(SD_HandleTypeDef *hsd)
   Core_SDMMC_SetCLKSRC(hsd->Instance, SDMMC_CLKSRC_CLKDIV0);
   Core_SDMMC_SetCLKENA(hsd->Instance, 0x00000001);
 
+  
+  Core_SDMMC_SetUHSREG(hsd->Instance, 0x0);
   return 0;
 }
 /**
@@ -1839,23 +1712,6 @@ static SD_ErrorTypedef PowerOffCard(SD_HandleTypeDef *hsd)
   SD_ErrorTypedef errorstate = SD_OK;
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
 
-  //   /* Send CMD7 SDMMC_SEL_DESEL_CARD */
-  // sdmmc_cmdinitstructure.Argument         = (uint32_t)(hsd->RCA << 16);
-  // sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_GO_INACTIVE_STATE;
-  // sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
-  // sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
-  //     SDMMC_CMD_USE_HOLD_REG | \
-  //     SDMMC_CMD_PRV_DAT_WAIT | \
-  //     SDMMC_CMD_RESP_CRC    | \
-  //     SDMMC_CMD_RESP_EXP;
-  // Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
-  // Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-  // /* waite for command finish*/
-  // Core_SDMMC_WaiteCmdDone(hsd->Instance);
-
-
-  /* Set Power State to OFF */
-/*   sdmmc_cmdinitstructure.Argument         = 0xFFFFFFFF; */
   sdmmc_cmdinitstructure.Argument         = hsd->RCA << 16 & 0xFFFFFFFF;
   sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_SEL_DESEL_CARD;
   sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
@@ -1871,42 +1727,13 @@ static SD_ErrorTypedef PowerOffCard(SD_HandleTypeDef *hsd)
   {
     return errorstate;
   }
-  /* disable all mmc interrupt first */
-  // Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
-  // Core_SDMMC_SetINTMASK(hsd->Instance, 0x0);
-  // /* disable clock to CIU */
   Core_SDMMC_SetCLKENA(hsd->Instance, 0x0);
-  Core_SDMMC_SetCLKSRC(hsd->Instance, 0x0);
-
-  Core_SDMMC_SetBMOD(hsd->Instance, SDMMC_BMOD_SWRESET);
-  Core_SDMMC_SetCTRL(hsd->Instance, SDMMC_CTRL_CONTROLLER_RESET |
-                                    SDMMC_CTRL_FIFO_RESET |
-                                    SDMMC_CTRL_DMA_RESET);
-  Core_SDMMC_SetUHSREG(hsd->Instance, 0x0);
-  Core_SDMMC_SetRST_N(hsd->Instance, 0x0);
   Core_SDMMC_SetPWREN(hsd->Instance, 0x0);
   delay_ms(1);
-  // uint32_t get_val;
-  // dlog_info("Following are the SD register status\n");
-  // get_val = Core_SDMMC_GetRINTSTS(hsd->Instance);
-  // dlog_info("RINTSTS = 0x%08x\n", get_val);
-  // get_val = Core_SDMMC_GetSTATUS(hsd->Instance);
-  // dlog_info("STATUS = 0x%08x\n", get_val);
-  // get_val = Core_SDMMC_GetDBADDR(hsd->Instance);
-  // dlog_info("DBADDR = 0x%08x\n", get_val);
-  // get_val = Core_SDMMC_GetCTRL(hsd->Instance);
-  // dlog_info("CTRL = 0x%08x\n", get_val);
-  // get_val = Core_SDMMC_GetPWREN(hsd->Instance);
-  // dlog_info("PWREN = 0x%08x\n", get_val);
-  // get_val = Core_SDMMC_GetINTMASK(hsd->Instance);
-  // dlog_info("INTMASK = 0x%08x\n", get_val);
-  // get_val = Core_SDMMC_GetMINTSTS(hsd->Instance);
-  // dlog_info("MINTSTS = 0x%08x\n", get_val);
-  //Core_SDMMC_SetPWREN(hsd->Instance, SDMMC_PWREN_0 | SDMMC_PWREN_1);
   Core_SDMMC_SetINTMASK(hsd->Instance, SDMMC_INTMASK_CARD_DETECT);
   /* clear intreq status */
   Core_SDMMC_SetCTRL(hsd->Instance, SDMMC_CTRL_INT_ENABLE );
-  Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+  Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CARD_DETECT);
 
   return errorstate;
 }
@@ -2322,7 +2149,7 @@ void SD_IRQHandler(uint32_t vectorNum)
 
     uint32_t status, pending, cdetect;
 
-    static uint8_t flag_plug_out = 0;
+    static uint32_t flag_plug_out = 0;
 
     status  = read_reg32((uint32_t *)(SDMMC_BASE + 0x44));  /* RINTSTS */
     // pending = read_reg32((uint32_t *)(SDMMC_BASE + 0x40));  /* MINTSTS */
@@ -2532,27 +2359,50 @@ void SD_init_deInit_Callback(void *p)
 
     dlog_info("into SD_init_deInit_Callback");
 
-    if (getCardPresence == CARD_IN)
+    uint8_t first_state;
+    uint8_t sec_state;
+
+    SysTicks_DelayMS(10);
+
+    for (int i = 0;i < 10;i++)
     {
-        dlog_info("Initializing the SD Card...\n");
-        sdhandle.Instance = SDMMC_ADDR;
-        Card_SD_Init(&sdhandle, &cardinfo);
+        first_state = getCardPresence;
+        SysTicks_DelayMS(1);
+        sec_state = getCardPresence;
+        if (sec_state != first_state)
+        {
+            dlog_info("not stable trigger");            
+            return;
+        }
+    }
+    
+    if (first_state == CARD_IN)
+    {
+        if (sdhandle.inited == 0)
+        {
+            dlog_info("Initializing the SD Card...\n");
+/*             sdhandle.Instance = SDMMC_ADDR; */
+            Card_SD_Init(&sdhandle, &cardinfo);
+            sdhandle.inited = 1;
+            dlog_info("Inited SD Card...\n");                    
+        }
     }
     else
     {
-        
-        dlog_info("Removing the SD Card...\n");
-        SDMMC_Status errorstate = SDMMC_OK;
-        if (SD_OK == Card_SD_DeInit(&sdhandle))
+        if (sdhandle.inited == 1)
         {
-            dlog_info("Remove SD Success!\n");
-            flag_card_state = 0;
+            dlog_info("Removing the SD Card...\n");
+            SDMMC_Status errorstate = SDMMC_OK;
+            if (SD_OK == Card_SD_DeInit(&sdhandle))
+            {
+                sdhandle.inited = 0;
+                dlog_info("Remove SD Success!\n");
+            }
+            else
+            {
+                dlog_info("Remove SD fail!\n");
+            }
         }
-        else
-        {
-            dlog_info("Remove SD fail!\n");
-        }
-        
     }
 #if 0
     if (getCardPresence == CARD_IN && flag_card_state == 0)

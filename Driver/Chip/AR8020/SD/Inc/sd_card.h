@@ -71,6 +71,7 @@ typedef struct
 	uint32_t              		 SdOperation;      /* SD transfer operation (read/write)             */
 	uint32_t                     Response;         /* SD response */
     SpeedModeTypedef             SpeedMode;
+    uint8_t                      inited;
 } SD_HandleTypeDef;
 
 
