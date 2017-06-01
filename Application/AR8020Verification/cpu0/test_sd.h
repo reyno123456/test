@@ -22,5 +22,6 @@ void OS_TestRawWR_Handler(void const * argument);
 void OS_TestRawWR();
 void OS_TestSD_Erase_Handler(void const * argument);
 void OS_TestSD_Erase();
+void Test_hal_read();
 
 #endif

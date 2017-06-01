@@ -653,7 +653,12 @@ void command_readSdcard(char *Dstaddr, char *BlockNum)
 
 /*     readSdcardBuff = m7_malloc(iBlockNum * 512); */
     readSdcardBuff = malloc(iBlockNum * 512);
-    memset(readSdcardBuff, '\0', iBlockNum * 512);
+    if (readSdcardBuff == 0)
+    {
+        dlog_info("malloc error");
+        return;
+    }
+    memset(readSdcardBuff, 0, iBlockNum * 512);
     bufferPos = readSdcardBuff;
 
     // dlog_info("iSrcBlock = 0x%08x\n", iSrcAddr);

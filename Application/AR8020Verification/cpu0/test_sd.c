@@ -339,6 +339,10 @@ void command_SdcardFatFs(char *argc)
 			OS_TestSD_Erase();
 		break;
 
+		case 6:
+		    Test_hal_read();
+		break;
+
 		default: break;
 	}
 }
@@ -440,3 +444,10 @@ void OS_TestSD_Erase()
 	osThreadCreate(osThread(TestSD_Erase), NULL);
 }
 
+void Test_hal_read()
+{
+    if (HAL_OK == HAL_SD_Read(0x81000000 - DTCM_CPU0_DMA_ADDR_OFFSET, 0, 13))
+    {
+        dlog_info("read done");
+    }
+}

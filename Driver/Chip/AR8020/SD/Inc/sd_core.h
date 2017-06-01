@@ -234,7 +234,9 @@ typedef struct
 #define SDMMC_CTYPE_1BIT                           (uint32_t)0x00
 /* Command register defines */
 #define SDMMC_CMD_START_CMD                        (uint32_t)BIT(31)
-#define SDMMC_CMD_USE_HOLD_REG                     (uint32_t)BIT(29)
+/* #define SDMMC_CMD_USE_HOLD_REG                     (uint32_t)BIT(29) */
+#define SDMMC_CMD_USE_HOLD_REG 0
+
 #define SDMMC_CMD_VOLT_SWITCH                      (uint32_t)BIT(28)
 #define SDMMC_CMD_BOOT_MODE                        (uint32_t)BIT(27)
 #define SDMMC_CMD_DISABLE_BOOT                     (uint32_t)BIT(26)
