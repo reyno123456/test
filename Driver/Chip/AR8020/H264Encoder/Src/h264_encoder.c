@@ -303,7 +303,7 @@ static int H264_Encoder_UpdateMinAndMaxQP(unsigned char view, unsigned char br)
     	addr_arcast = ENC_REG_ADDR+(0x31<<2);
     }
     switch( br ) { // update minqp value, lhu, 2017/04/21
-        case 0 : {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x10; else minqp = 0x12 ;} break; // 8Mbps
+        case 0 : {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x11; else minqp = 0x13 ;} break; // 8Mbps
         case 1 : {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x17; else minqp = 0x19 ;} break; // 600kbps
         case 2 : {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x16; else minqp = 0x18 ;} break; // 1.2Mbps
         case 3 : {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x15; else minqp = 0x17 ;} break; // 2.4Mbps
@@ -316,7 +316,7 @@ static int H264_Encoder_UpdateMinAndMaxQP(unsigned char view, unsigned char br)
         case 10: {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x12; else minqp = 0x14 ;} break; // 7Mbps
         case 11: {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x11; else minqp = 0x13 ;} break; // 7.5Mbps
         case 12: {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x10; else minqp = 0x12 ;} break; // 9Mbps
-        case 13: {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x0e; else minqp = 0x10 ;} break; // 10Mbps
+        case 13: {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x10; else minqp = 0x12 ;} break; // 10Mbps
         default: {if (((Reg_Read32(addr_arcast))>>2)&0x01) minqp = 0x15; else minqp = 0x17 ;} break; // 3Mbps
     }
     Reg_Write32_Mask(addr, (unsigned int)(minqp<<8), BIT(15)|BIT(14)|BIT(13)|BIT(12)|BIT(11)|BIT(10)|BIT(9)|BIT(8)); // set minqp, lhu

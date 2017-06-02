@@ -1140,7 +1140,8 @@ void my_v0_rc_init_GOP(int np)
   int OverBits,denom,i;
   int GOPDquant;
   int gop_bits;
-  int v0_RCISliceBitsLow,v0_RCISliceBitsHigh,v0_RCISliceBitsLow2,v0_RCISliceBitsHigh2,v0_RCISliceBitsLow4,v0_RCISliceBitsHigh4,v0_RCISliceBitsLow8,v0_RCISliceBitsHigh8; // lhuqu1
+  int v0_RCISliceBitsLow,v0_RCISliceBitsHigh,v0_RCISliceBitsLow2,v0_RCISliceBitsHigh2,v0_RCISliceBitsLow4,v0_RCISliceBitsHigh4;
+  int v0_RCISliceBitsLow8,v0_RCISliceBitsHigh8,v0_RCISliceBitsLow9,v0_RCISliceBitsHigh9; // lhuqu1
 
     //if(rca.v0_RCUpdateMode != RC_MODE_0) {// lhugop
     //  my_v0_rc_init_seq( );
@@ -1210,7 +1211,10 @@ void my_v0_rc_init_GOP(int np)
                 v0_RCISliceBitsHigh4  = rca.v0_RCISliceTargetBits*14/10;
                 v0_RCISliceBitsLow8   = rca.v0_RCISliceTargetBits*2/10;
                 v0_RCISliceBitsHigh8  = rca.v0_RCISliceTargetBits*18/10;
-                if(rca.v0_RCISliceActualBits  <= v0_RCISliceBitsLow8)                                                              rca.v0_PAverageQp = rca.v0_QPLastGOP-6;
+                v0_RCISliceBitsLow9   = rca.v0_RCISliceTargetBits*1/10;
+                v0_RCISliceBitsHigh9  = rca.v0_RCISliceTargetBits*19/10;
+                if(rca.v0_RCISliceActualBits  <= v0_RCISliceBitsLow9)                                                              rca.v0_PAverageQp = rca.v0_QPLastGOP-8;
+                else if((v0_RCISliceBitsLow9  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsLow8))  rca.v0_PAverageQp = rca.v0_QPLastGOP-6;
                 else if((v0_RCISliceBitsLow8  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsLow4))  rca.v0_PAverageQp = rca.v0_QPLastGOP-4;
                 else if((v0_RCISliceBitsLow4  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsLow2))  rca.v0_PAverageQp = rca.v0_QPLastGOP-2;
                 else if((v0_RCISliceBitsLow2  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsLow))   rca.v0_PAverageQp = rca.v0_QPLastGOP-1;
@@ -1218,7 +1222,8 @@ void my_v0_rc_init_GOP(int np)
                 else if((v0_RCISliceBitsHigh  < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsHigh2)) rca.v0_PAverageQp = rca.v0_QPLastGOP+1;
                 else if((v0_RCISliceBitsHigh2 < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsHigh4)) rca.v0_PAverageQp = rca.v0_QPLastGOP+2;
                 else if((v0_RCISliceBitsHigh4 < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsHigh8)) rca.v0_PAverageQp = rca.v0_QPLastGOP+4;
-                else if(rca.v0_RCISliceActualBits > v0_RCISliceBitsHigh8)                                                          rca.v0_PAverageQp = rca.v0_QPLastGOP+6;
+                else if((v0_RCISliceBitsHigh8 < rca.v0_RCISliceActualBits) && (rca.v0_RCISliceActualBits <= v0_RCISliceBitsHigh9)) rca.v0_PAverageQp = rca.v0_QPLastGOP+6;
+                else if(rca.v0_RCISliceActualBits > v0_RCISliceBitsHigh9)                                                          rca.v0_PAverageQp = rca.v0_QPLastGOP+8;
             }
         } else {
             // QP is constrained by QP of previous QP
@@ -2526,11 +2531,10 @@ void my_v0_updateModelQPBU( int m_Qp )
   } else
     rca.v0_m_Qc = my_imin(rca.v0_PAveFrameQP+3, rca.v0_m_Qc);
 
-  if(rca.v0_c1_over==1)
-    //rca.v0_m_Qc = my_imin(m_Qp-rca.v0_DDquant, rca.v0_RCMaxQP); // clipping
-    rca.v0_m_Qc = my_imin(m_Qp+rca.v0_DDquant, rca.v0_RCMaxQP); // not letting QP decrease when MAD equal 0, 2017/02/21
-  else
-    rca.v0_m_Qc = my_iClip3(m_Qp-rca.v0_DDquant, rca.v0_RCMaxQP, rca.v0_m_Qc); // clipping
+  /*if(rca.v0_c1_over==1)
+    rca.v0_m_Qc = my_imin(m_Qp+rca.v0_DDquant, rca.v0_RCMaxQP-10); // not letting QP decrease when MAD equal 0, 2017/02/21
+  else*/
+  rca.v0_m_Qc = my_iClip3(m_Qp-rca.v0_DDquant, rca.v0_RCMaxQP, rca.v0_m_Qc); // clipping
 
   if(rca.v0_basicunit>=rca.v0_MBPerRow) {
   	if (rca.v0_wireless_screen!=1) { // added by lhu, 2017/04/18
@@ -3006,7 +3010,8 @@ void my_v1_rc_init_GOP(int np)
   int OverBits,denom,i;
   int GOPDquant;
   int gop_bits;
-  int v1_RCISliceBitsLow,v1_RCISliceBitsHigh,v1_RCISliceBitsLow2,v1_RCISliceBitsHigh2,v1_RCISliceBitsLow4,v1_RCISliceBitsHigh4,v1_RCISliceBitsLow8,v1_RCISliceBitsHigh8; // lhuqu1
+  int v1_RCISliceBitsLow,v1_RCISliceBitsHigh,v1_RCISliceBitsLow2,v1_RCISliceBitsHigh2,v1_RCISliceBitsLow4,v1_RCISliceBitsHigh4; // lhuqu1
+  int v1_RCISliceBitsLow8,v1_RCISliceBitsHigh8,v1_RCISliceBitsLow9,v1_RCISliceBitsHigh9;
 
     //if(rca.v1_RCUpdateMode != RC_MODE_0) {// lhugop
     //  my_v1_rc_init_seq( );
@@ -3076,7 +3081,10 @@ void my_v1_rc_init_GOP(int np)
                 v1_RCISliceBitsHigh4  = rca.v1_RCISliceTargetBits*14/10;
                 v1_RCISliceBitsLow8   = rca.v1_RCISliceTargetBits*2/10;
                 v1_RCISliceBitsHigh8  = rca.v1_RCISliceTargetBits*18/10;
-                if(rca.v1_RCISliceActualBits  <= v1_RCISliceBitsLow8)                                                              rca.v1_PAverageQp = rca.v1_QPLastGOP-6;
+                v1_RCISliceBitsLow9   = rca.v1_RCISliceTargetBits*1/10;
+                v1_RCISliceBitsHigh9  = rca.v1_RCISliceTargetBits*19/10;
+                if(rca.v1_RCISliceActualBits  <= v1_RCISliceBitsLow9)                                                              rca.v1_PAverageQp = rca.v1_QPLastGOP-8;
+                else if((v1_RCISliceBitsLow9  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsLow8))  rca.v1_PAverageQp = rca.v1_QPLastGOP-6;
                 else if((v1_RCISliceBitsLow8  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsLow4))  rca.v1_PAverageQp = rca.v1_QPLastGOP-4;
                 else if((v1_RCISliceBitsLow4  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsLow2))  rca.v1_PAverageQp = rca.v1_QPLastGOP-2;
                 else if((v1_RCISliceBitsLow2  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsLow))   rca.v1_PAverageQp = rca.v1_QPLastGOP-1;
@@ -3084,7 +3092,8 @@ void my_v1_rc_init_GOP(int np)
                 else if((v1_RCISliceBitsHigh  < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsHigh2)) rca.v1_PAverageQp = rca.v1_QPLastGOP+1;
                 else if((v1_RCISliceBitsHigh2 < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsHigh4)) rca.v1_PAverageQp = rca.v1_QPLastGOP+2;
                 else if((v1_RCISliceBitsHigh4 < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsHigh8)) rca.v1_PAverageQp = rca.v1_QPLastGOP+4;
-                else if(rca.v1_RCISliceActualBits > v1_RCISliceBitsHigh8)                                                          rca.v1_PAverageQp = rca.v1_QPLastGOP+6;
+                else if((v1_RCISliceBitsHigh8 < rca.v1_RCISliceActualBits) && (rca.v1_RCISliceActualBits <= v1_RCISliceBitsHigh9)) rca.v1_PAverageQp = rca.v1_QPLastGOP+6;
+                else if(rca.v1_RCISliceActualBits > v1_RCISliceBitsHigh9)                                                          rca.v1_PAverageQp = rca.v1_QPLastGOP+8;
             }
         } else {
             // QP is constrained by QP of previous QP
@@ -4394,11 +4403,10 @@ void my_v1_updateModelQPBU( int m_Qp )
   } else
     rca.v1_m_Qc = my_imin(rca.v1_PAveFrameQP+3, rca.v1_m_Qc);
 
-  if(rca.v1_c1_over==1)
-    //rca.v1_m_Qc = my_imin(m_Qp-rca.v1_DDquant, rca.v1_RCMaxQP); // clipping
-    rca.v1_m_Qc = my_imin(m_Qp+rca.v1_DDquant, rca.v1_RCMaxQP); // not letting QP decrease when MAD equal 0, 2017/02/21
-  else
-    rca.v1_m_Qc = my_iClip3(m_Qp-rca.v1_DDquant, rca.v1_RCMaxQP, rca.v1_m_Qc); // clipping
+  /*if(rca.v1_c1_over==1)
+    rca.v1_m_Qc = my_imin(m_Qp+rca.v1_DDquant, rca.v1_RCMaxQP-10); // not letting QP decrease when MAD equal 0, 2017/02/21
+  else*/
+  rca.v1_m_Qc = my_iClip3(m_Qp-rca.v1_DDquant, rca.v1_RCMaxQP, rca.v1_m_Qc); // clipping
 
   if(rca.v1_basicunit>=rca.v1_MBPerRow) {
   	if (rca.v1_wireless_screen!=1) {// added by lhu, 2017/04/18
