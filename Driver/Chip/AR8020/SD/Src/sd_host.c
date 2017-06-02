@@ -452,7 +452,14 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransType
 
       DstAddr = TmpAddr + dma->BlockSize * BlockIndex;
 
-      if (BlockIndex == 0)
+      if (BlockIndex == 0 && SectorRmd == 1)
+      {
+          desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH | SDMMC_DES0_LD;
+          desc[BlockIndex].des1 = dma->BlockSize;
+          desc[BlockIndex].des2 = DstAddr;
+          desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex]);
+      }
+      else if (BlockIndex == 0)
       {
 
         desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH;
@@ -491,7 +498,6 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransType
                                               SDMMC_CMD_RESP_EXP;
     Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE | SDMMC_RINTSTS_DATA_OVER);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-    /* Check for error conditions */
     Core_SDMMC_WaiteCmdDone(hsd->Instance);
     Core_SDMMC_WaiteDataOver(hsd->Instance);
 /*     Core_SDMMC_WaiteCardBusy(hsd->Instance); */
@@ -844,7 +850,7 @@ EMU_SD_RTN Card_SD_Erase(SD_HandleTypeDef *hsd, uint32_t startaddr, uint32_t blo
 
 	/* Wait until the card is in programming state */
 
-#if 0
+#if 1
     errorstate = SD_IsCardProgramming(hsd, &cardstate);
     uint8_t tmp_state = cardstate;
     while ( cardstate == SD_CARD_TRANSFER ||  cardstate == SD_CARD_PROGRAMMING)
