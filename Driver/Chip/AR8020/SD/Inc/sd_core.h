@@ -1,6 +1,6 @@
 /**
-  * @file    sd_core.h
-  * @author  Minzhao
+  * @file    sd_host.h
+  * @author  Minzhao & min.wu
   * @version V1.0.0
   * @date    7-7-2016
   * @brief   Header file of sd core.
@@ -250,7 +250,7 @@ typedef struct
 #define SDMMC_CMD_PRV_DAT_WAIT                     (uint32_t)BIT(13)
 #define SDMMC_CMD_SEND_STOP                        (uint32_t)BIT(12)
 #define SDMMC_CMD_TRANSFER_MODE                    (uint32_t)BIT(11)
-#define SDMMC_CMD_DAT_READ_WRITE                   (uint32_t)BIT(10)
+#define SDMMC_CMD_DAT_WRITE                        (uint32_t)BIT(10)
 #define SDMMC_CMD_DAT_EXP                          (uint32_t)BIT(9)
 #define SDMMC_CMD_RESP_CRC                         (uint32_t)BIT(8)
 #define SDMMC_CMD_RESP_LONG                        (uint32_t)BIT(7)

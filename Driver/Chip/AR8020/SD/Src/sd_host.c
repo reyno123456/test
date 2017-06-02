@@ -1,6 +1,6 @@
 /**
-  * @file    sd_card.c
-  * @author  Minzhao
+  * @file    sd_host.c
+  * @author  Minzhao & wu.min
   * @version V1.0.0
   * @date    7-10-2016
   * @brief   Header file of sd card.
@@ -17,8 +17,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "reg_rw.h"
+#include "sd_host.h"
 #include "sd_core.h"
-#include "sd_card.h"
 #include "debuglog.h"
 #include "systicks.h"
 #include "sys_event.h"
@@ -30,28 +30,23 @@ SDMMC_DMATransTypeDef dma;
 SD_HandleTypeDef sdhandle;
 SD_CardInfoTypedef cardinfo;
 
-#define USE_MALLOC_DESC
-
-#ifndef USE_MALLOC_DESC
-  IDMAC_DescTypeDef desc[32] = {0};
-#endif
 /** @defgroup SD_Private_Functions SD Private Functions
   * @{
   */
-static SD_ErrorTypedef IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef *pCardInfo);
-static SD_ErrorTypedef PowerOnCard(SD_HandleTypeDef *hsd);
-static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd);
-static SD_ErrorTypedef PowerOffCard(SD_HandleTypeDef *hsd);
-static SD_ErrorTypedef SD_CmdError(SD_HandleTypeDef *hsd);
-static SD_ErrorTypedef SD_CmdResp1Error(SD_HandleTypeDef *hsd, uint32_t SD_CMD);
-static SD_ErrorTypedef SD_CmdResp7(SD_HandleTypeDef *hsd);
-static SD_ErrorTypedef SD_DMAConfig(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
-static SD_ErrorTypedef SD_ENUM(SD_HandleTypeDef *hsd);
-static SD_ErrorTypedef SD_IsCardProgramming(SD_HandleTypeDef *hsd, uint8_t *status);
+static EMU_SD_RTN IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef *pCardInfo);
+static EMU_SD_RTN PowerOnCard(SD_HandleTypeDef *hsd);
+static EMU_SD_RTN InitializeCard(SD_HandleTypeDef *hsd);
+static EMU_SD_RTN PowerOffCard(SD_HandleTypeDef *hsd);
+static EMU_SD_RTN SD_CmdError(SD_HandleTypeDef *hsd);
+static EMU_SD_RTN SD_CmdResp1Error(SD_HandleTypeDef *hsd, uint32_t SD_CMD);
+static EMU_SD_RTN SD_CmdResp7(SD_HandleTypeDef *hsd);
+static EMU_SD_RTN SD_DMAConfig(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
+static EMU_SD_RTN SD_ENUM(SD_HandleTypeDef *hsd);
+static EMU_SD_RTN SD_IsCardProgramming(SD_HandleTypeDef *hsd, uint8_t *status);
 static SD_STATUS sd_getState(SD_HandleTypeDef *hsd);
-static SD_ErrorTypedef wait_cmd_busy(void);
-static SD_ErrorTypedef wait_cmd_done(void);
-static SD_ErrorTypedef convert_to_transfer(SD_HandleTypeDef *hsd);
+static EMU_SD_RTN wait_cmd_busy(void);
+static EMU_SD_RTN wait_cmd_done(void);
+static EMU_SD_RTN convert_to_transfer(SD_HandleTypeDef *hsd);
 
 static void delay_ms(uint32_t num)
 {
@@ -59,9 +54,9 @@ static void delay_ms(uint32_t num)
     for (i = 0; i < num * 100; i++);
 }
 
-SD_ErrorTypedef Card_SD_Init(SD_HandleTypeDef *hsd, SD_CardInfoTypedef *SDCardInfo)
+EMU_SD_RTN Card_SD_Init(SD_HandleTypeDef *hsd, SD_CardInfoTypedef *SDCardInfo)
 {
-  __IO SD_ErrorTypedef errorstate = SD_OK;
+  __IO EMU_SD_RTN errorstate = SD_OK;
   uint32_t get_val;
 
   errorstate = PowerOnCard(hsd);
@@ -105,19 +100,19 @@ SD_ErrorTypedef Card_SD_Init(SD_HandleTypeDef *hsd, SD_CardInfoTypedef *SDCardIn
   * @param  hsd: SD handle
   * @retval HAL status
   */
-SD_ErrorTypedef Card_SD_DeInit(SD_HandleTypeDef *hsd)
+EMU_SD_RTN Card_SD_DeInit(SD_HandleTypeDef *hsd)
 {
-  SD_ErrorTypedef errorstate = SD_OK;
+  EMU_SD_RTN errorstate = SD_OK;
   /* Set SD power state to off */
   errorstate = PowerOffCard(hsd);
 
   return errorstate;
 }
 
-SD_ErrorTypedef Card_SD_CMD6(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma)
+EMU_SD_RTN Card_SD_CMD6(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma)
 {
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
-  SD_ErrorTypedef errorstate = SD_OK;
+  EMU_SD_RTN errorstate = SD_OK;
   IDMAC_DescTypeDef desc = {0};
   /* Initialize handle flags */
   hsd->SdTransferCplt  = 0;
@@ -168,10 +163,10 @@ SD_ErrorTypedef Card_SD_CMD6(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma)
   return errorstate;
 }
 
-SD_ErrorTypedef Card_SD_CMD19(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma)
+EMU_SD_RTN Card_SD_CMD19(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma)
 {
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
-  SD_ErrorTypedef errorstate = SD_OK;
+  EMU_SD_RTN errorstate = SD_OK;
   IDMAC_DescTypeDef desc = {0};
   /* Initialize handle flags */
   hsd->SdTransferCplt  = 0;
@@ -241,10 +236,10 @@ SD_ErrorTypedef Card_SD_CMD19(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma)
 
 
 
-SD_ErrorTypedef Card_SD_ReadBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma)
+EMU_SD_RTN Card_SD_ReadBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma)
 {
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
-  SD_ErrorTypedef errorstate = SD_OK;
+  EMU_SD_RTN errorstate = SD_OK;
   IDMAC_DescTypeDef desc = {0};
   
 /*   convert_to_transfer(hsd); */
@@ -318,10 +313,10 @@ SD_ErrorTypedef Card_SD_ReadBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeD
 
 
 
-SD_ErrorTypedef Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma)
+EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma)
 {
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
-  SD_ErrorTypedef errorstate = SD_OK;
+  EMU_SD_RTN errorstate = SD_OK;
   uint32_t BlockIndex, TmpAddr = dma->DstAddr, DstAddr = dma->DstAddr;
   uint32_t BuffSize = BUFFSIZE8;
   uint32_t SectorDivid = dma->SectorNum / BuffSize;
@@ -502,10 +497,7 @@ SD_ErrorTypedef Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATran
 /*     Core_SDMMC_WaiteCardBusy(hsd->Instance); */
   }
 
-  /* free the space applied from heap */
-#ifdef USE_MALLOC_DESC
   free(desc);
-#endif
 
     #ifdef ECHO
     dlog_info("Stop: send CMD12\n");
@@ -528,10 +520,10 @@ SD_ErrorTypedef Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATran
 }
 
 
-SD_ErrorTypedef Card_SD_WriteBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma)
+EMU_SD_RTN Card_SD_WriteBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma)
 {
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
-  SD_ErrorTypedef errorstate = SD_OK;
+  EMU_SD_RTN errorstate = SD_OK;
   IDMAC_DescTypeDef desc = {0};
   
   dlog_info("%d state = %d", __LINE__, sd_getState(hsd));
@@ -570,17 +562,15 @@ SD_ErrorTypedef Card_SD_WriteBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransType
   sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | 
                                             SDMMC_CMD_USE_HOLD_REG | 
                                             SDMMC_CMD_PRV_DAT_WAIT | 
-/* 											SDMMC_CMD_TRANSFER_MODE | */
-                                            SDMMC_CMD_DAT_READ_WRITE | 
+                                            SDMMC_CMD_DAT_WRITE | 
                                             SDMMC_CMD_DAT_EXP      | 
                                             SDMMC_CMD_RESP_CRC     | 
                                             SDMMC_CMD_RESP_EXP;
-  Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+  Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE | SDMMC_RINTSTS_DATA_OVER);
   Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
    /* Check for error conditions */
   Core_SDMMC_WaiteCmdDone(hsd->Instance);
   Core_SDMMC_WaiteDataOver(hsd->Instance);
-  Core_SDMMC_WaiteCardBusy(hsd->Instance); 
   
   // #ifdef ECHO
   dlog_info("Stop: send CMD12\n");
@@ -592,7 +582,7 @@ SD_ErrorTypedef Card_SD_WriteBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransType
                                             SDMMC_CMD_PRV_DAT_WAIT | 
                                             SDMMC_CMD_RESP_CRC | 
                                             SDMMC_CMD_RESP_EXP;
-  Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+  Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
   Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
   Core_SDMMC_WaiteCmdDone(hsd->Instance);
   /* Update the SD transfer error in SD handle */
@@ -601,10 +591,10 @@ SD_ErrorTypedef Card_SD_WriteBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransType
 }
 
 
-SD_ErrorTypedef Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma)
+EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma)
 {
     SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
-    SD_ErrorTypedef errorstate = SD_OK;
+    EMU_SD_RTN errorstate = SD_OK;
     uint32_t BlockIndex, TmpAddr = dma->SrcAddr, SrcAddr = dma->SrcAddr;
     uint32_t BuffSize = BUFFSIZE8;
     uint32_t SectorDivid = dma->SectorNum / BuffSize;
@@ -613,17 +603,13 @@ SD_ErrorTypedef Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATra
     dlog_info("%d state = %d", __LINE__, sd_getState(hsd));
 
     convert_to_transfer(hsd);
-    
-#ifdef USE_MALLOC_DESC
-  // dlog_info("Ues malloc\n");
-  /* malloc the space for descriptor */
+
   IDMAC_DescTypeDef *desc = (IDMAC_DescTypeDef *)malloc(sizeof(IDMAC_DescTypeDef) * (SectorDivid + SectorRmd));
   if (!desc){
     dlog_info("malloc failed! Exit writing\n");
     errorstate = SD_ERROR;
     return errorstate;
   }
-#endif
 
   /* Initialize handle flags */
   hsd->SdTransferCplt  = 0;
@@ -682,30 +668,7 @@ SD_ErrorTypedef Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATra
         desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);
       }
     }
-      /* Send CMD55 */
-    //sdmmc_cmdinitstructure.Argument         = 0;
-    //sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_APP_CMD;
-    //sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
-    //    SDMMC_CMD_USE_HOLD_REG | \
-    //    SDMMC_CMD_PRV_DAT_WAIT | \
-    //    SDMMC_CMD_RESP_CRC | \
-    //    SDMMC_CMD_RESP_EXP;
-    //Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
-    //Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-    /* Send ACMD23 */
-    //sdmmc_cmdinitstructure.Argument         = BuffSize * SectorDivid;
-    //sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_APP_SET_WR_BLK_ERASE_COUNT;
-    //sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
-    //sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | \
-    //    SDMMC_CMD_USE_HOLD_REG | \
-    //    SDMMC_CMD_PRV_DAT_WAIT | \
-    //    SDMMC_CMD_RESP_EXP;
-    //Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
-    //Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
 
-    // dlog_info("\n");
-    //delay_ms(1);
-    /* send CMD25 */
     sdmmc_cmdinitstructure.Argument         = dma->DstAddr;
     sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_WRITE_MULTIPLE_BLOCK;
     sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
@@ -713,23 +676,21 @@ SD_ErrorTypedef Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATra
                                               SDMMC_CMD_USE_HOLD_REG | 
                                               SDMMC_CMD_PRV_DAT_WAIT | 
                                               SDMMC_CMD_SEND_STOP    | 
-/*                                       		  SDMMC_CMD_TRANSFER_MODE | */
-                                              SDMMC_CMD_DAT_READ_WRITE | 
+                                              SDMMC_CMD_DAT_WRITE | 
                                               SDMMC_CMD_DAT_EXP      | 
                                               SDMMC_CMD_RESP_CRC     | 
                                               SDMMC_CMD_RESP_EXP;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    
+    Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE | SDMMC_RINTSTS_DATA_OVER);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-
-
-    /* Check for error conditions */
     Core_SDMMC_WaiteCmdDone(hsd->Instance);
     Core_SDMMC_WaiteDataOver(hsd->Instance);
-    Core_SDMMC_WaiteCardBusy(hsd->Instance);
+    //Core_SDMMC_WaiteCardBusy(hsd->Instance);
 
     // #ifdef ECHO
     //     dlog_info("Stop: send CMD12\n");
     // #endif
+    sdmmc_cmdinitstructure.Argument         = (uint32_t)(hsd->RCA << 16);
     sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_STOP_TRANSMISSION;
     sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
     sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | 
@@ -737,7 +698,7 @@ SD_ErrorTypedef Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATra
                                               SDMMC_CMD_PRV_DAT_WAIT | 
                                               SDMMC_CMD_RESP_CRC | 
                                               SDMMC_CMD_RESP_EXP;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
     Core_SDMMC_WaiteCmdDone(hsd->Instance);
   }
@@ -783,22 +744,19 @@ SD_ErrorTypedef Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATra
                                               SDMMC_CMD_USE_HOLD_REG | 
                                               SDMMC_CMD_PRV_DAT_WAIT | 
                                               SDMMC_CMD_SEND_STOP    | 
-                                              SDMMC_CMD_DAT_READ_WRITE | 
+                                              SDMMC_CMD_DAT_WRITE | 
                                               SDMMC_CMD_DAT_EXP      | 
                                               SDMMC_CMD_RESP_CRC     | 
                                               SDMMC_CMD_RESP_EXP;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE | SDMMC_RINTSTS_DATA_OVER);    
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-
-
-    /* Check for error conditions */
     Core_SDMMC_WaiteCmdDone(hsd->Instance);
     Core_SDMMC_WaiteDataOver(hsd->Instance);
-    Core_SDMMC_WaiteCardBusy(hsd->Instance);
 
     // #ifdef ECHO
     //     dlog_info("Stop: send CMD12\n");
     // #endif
+    sdmmc_cmdinitstructure.Argument         = (uint32_t)(hsd->RCA << 16);
     sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_STOP_TRANSMISSION;
     sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
     sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | 
@@ -806,14 +764,13 @@ SD_ErrorTypedef Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATra
                                               SDMMC_CMD_PRV_DAT_WAIT | 
                                               SDMMC_CMD_RESP_CRC | 
                                               SDMMC_CMD_RESP_EXP;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
     Core_SDMMC_WaiteCmdDone(hsd->Instance);
   }
-  /* free the space applied from heap */
-#ifdef USE_MALLOC_DESC
+
   free(desc);
-#endif
+
   /* Update the SD transfer error in SD handle */
   hsd->SdTransferErr = errorstate;
   return errorstate;
@@ -826,9 +783,9 @@ SD_ErrorTypedef Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATra
   * @param  blocknum: End byte address
   * @retval SD Card error state
   */
-SD_ErrorTypedef Card_SD_Erase(SD_HandleTypeDef *hsd, uint32_t startaddr, uint32_t blocknum)
+EMU_SD_RTN Card_SD_Erase(SD_HandleTypeDef *hsd, uint32_t startaddr, uint32_t blocknum)
 {
-    SD_ErrorTypedef errorstate = SD_OK;
+    EMU_SD_RTN errorstate = SD_OK;
     SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
     uint32_t get_val, cmd_done, data_over, card_busy;
     uint8_t cardstate = 0;
@@ -847,11 +804,11 @@ SD_ErrorTypedef Card_SD_Erase(SD_HandleTypeDef *hsd, uint32_t startaddr, uint32_
                                            SDMMC_CMD_PRV_DAT_WAIT | 
                                            SDMMC_CMD_RESP_CRC     | 
                                            SDMMC_CMD_RESP_EXP;
-        Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+        Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
         Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
         /* Check for error conditions */
         Core_SDMMC_WaiteCmdDone(hsd->Instance);
-        Core_SDMMC_WaiteCardBusy(hsd->Instance);
+//        Core_SDMMC_WaiteCardBusy(hsd->Instance);
 
 
         /* Send CMD33 SD_ERASE_GRP_END with argument as addr  */
@@ -863,28 +820,31 @@ SD_ErrorTypedef Card_SD_Erase(SD_HandleTypeDef *hsd, uint32_t startaddr, uint32_
                                            SDMMC_CMD_PRV_DAT_WAIT | 
                                            SDMMC_CMD_RESP_CRC     | 
                                            SDMMC_CMD_RESP_EXP;
-        Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+        Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
         Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
         /* Check for error conditions */
         Core_SDMMC_WaiteCmdDone(hsd->Instance);
-        Core_SDMMC_WaiteCardBusy(hsd->Instance);
+//        Core_SDMMC_WaiteCardBusy(hsd->Instance);
     }
 
     /* Send CMD38 ERASE */
     sdmmc_cmdinitstructure.Argument = 0;
     sdmmc_cmdinitstructure.CmdIndex = SD_CMD_ERASE;
     sdmmc_cmdinitstructure.Response = SDMMC_RESPONSE_R1;
-    sdmmc_cmdinitstructure.Attribute = SDMMC_CMD_START_CMD | 
+    sdmmc_cmdinitstructure.Attribute = SDMMC_CMD_START_CMD    | 
                                        SDMMC_CMD_USE_HOLD_REG | 
                                        SDMMC_CMD_PRV_DAT_WAIT | 
+                                       SDMMC_CMD_SEND_STOP    |
                                        SDMMC_CMD_RESP_CRC     | 
                                        SDMMC_CMD_RESP_EXP;
-    Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
+    Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-
+    Core_SDMMC_WaiteCmdDone(hsd->Instance);
+    Core_SDMMC_WaiteCardBusy(hsd->Instance);
 
 	/* Wait until the card is in programming state */
 
+#if 0
     errorstate = SD_IsCardProgramming(hsd, &cardstate);
     uint8_t tmp_state = cardstate;
     while ( cardstate == SD_CARD_TRANSFER ||  cardstate == SD_CARD_PROGRAMMING)
@@ -903,6 +863,7 @@ SD_ErrorTypedef Card_SD_Erase(SD_HandleTypeDef *hsd, uint32_t startaddr, uint32_
     		break;
     	}
     }
+#endif
 
     return errorstate;
 }
@@ -914,9 +875,9 @@ SD_ErrorTypedef Card_SD_Erase(SD_HandleTypeDef *hsd, uint32_t startaddr, uint32_
   *         contains all SD cardinformation
   * @retval SD Card error state
   */
-SD_ErrorTypedef Card_SD_Get_CardInfo(SD_HandleTypeDef *hsd, SD_CardInfoTypedef *pCardInfo)
+EMU_SD_RTN Card_SD_Get_CardInfo(SD_HandleTypeDef *hsd, SD_CardInfoTypedef *pCardInfo)
 {
-  SD_ErrorTypedef errorstate = SD_OK;
+  EMU_SD_RTN errorstate = SD_OK;
 
   uint32_t tmp = 0;
   pCardInfo->CardType = (uint32_t)(hsd->CardType);
@@ -1135,10 +1096,10 @@ SD_ErrorTypedef Card_SD_Get_CardInfo(SD_HandleTypeDef *hsd, SD_CardInfoTypedef *
   * @param  hsd: SD handle
   * @retval SD Card error state
   */
-static SD_ErrorTypedef IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef *SDCardInfo)
+static EMU_SD_RTN IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef *SDCardInfo)
 {
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
-  SD_ErrorTypedef errorstate = SD_OK;
+  EMU_SD_RTN errorstate = SD_OK;
   uint16_t sd_rca = 1;
   uint32_t cmd_done, response, get_val;
   if (hsd->CardType != SECURE_DIGITAL_IO_CARD)
@@ -1430,11 +1391,11 @@ static SD_ErrorTypedef IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef
     return errorstate;
 }
 
-static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
+static EMU_SD_RTN InitializeCard(SD_HandleTypeDef *hsd)
 {
 
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
-  __IO SD_ErrorTypedef errorstate = SD_OK;
+  __IO EMU_SD_RTN errorstate = SD_OK;
   uint32_t get_val = 0, vs_busy = 0, loop = 0;
   uint32_t response;
 
@@ -1703,7 +1664,7 @@ static SD_ErrorTypedef InitializeCard(SD_HandleTypeDef *hsd)
   * @param  hsd: SD handle
   * @retval SD Card error state
   */
-static SD_ErrorTypedef PowerOnCard(SD_HandleTypeDef *hsd)
+static EMU_SD_RTN PowerOnCard(SD_HandleTypeDef *hsd)
 {
     Core_SDMMC_SetPWREN(hsd->Instance, SDMMC_PWREN_0);
 
@@ -1743,9 +1704,9 @@ static SD_ErrorTypedef PowerOnCard(SD_HandleTypeDef *hsd)
   * @param  hsd: SD handle
   * @retval SD Card error state
   */
-static SD_ErrorTypedef PowerOffCard(SD_HandleTypeDef *hsd)
+static EMU_SD_RTN PowerOffCard(SD_HandleTypeDef *hsd)
 {
-  SD_ErrorTypedef errorstate = SD_OK;
+  EMU_SD_RTN errorstate = SD_OK;
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
 
   sdmmc_cmdinitstructure.Argument         = hsd->RCA << 16 & 0xFFFFFFFF;
@@ -1781,10 +1742,10 @@ static SD_ErrorTypedef PowerOffCard(SD_HandleTypeDef *hsd)
   *         status (Card Status register)
   * @retval SD Card error state
   */
-SD_ErrorTypedef SD_GetState(SD_HandleTypeDef *hsd, uint32_t *CardStatus)
+EMU_SD_RTN SD_GetState(SD_HandleTypeDef *hsd, uint32_t *CardStatus)
 {
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
-  SD_ErrorTypedef errorstate = SD_OK;
+  EMU_SD_RTN errorstate = SD_OK;
 
   /* Send Status command */
   sdmmc_cmdinitstructure.Argument         = (uint32_t)(hsd->RCA << 16);
@@ -1814,9 +1775,9 @@ SD_ErrorTypedef SD_GetState(SD_HandleTypeDef *hsd, uint32_t *CardStatus)
   * @param  hsd: SD handle
   * @retval SD Card error state
   */
-static SD_ErrorTypedef SD_CmdError(SD_HandleTypeDef *hsd)
+static EMU_SD_RTN SD_CmdError(SD_HandleTypeDef *hsd)
 {
-  SD_ErrorTypedef errorstate = SD_OK;
+  EMU_SD_RTN errorstate = SD_OK;
   uint32_t RINTSTS_val, cmd_done, endBitErr, startBitErr, hdLockErr, datStarvTo, resp_to;
   uint32_t datCrcErr, resp_crc_err, datTranOver, resp_err, errHappen;
     uint32_t start = SysTicks_GetTickCount();
@@ -1855,9 +1816,9 @@ static SD_ErrorTypedef SD_CmdError(SD_HandleTypeDef *hsd)
   * @param  hsd: SD handle
   * @retval SD Card error state
   */
-static SD_ErrorTypedef SD_CmdResp7(SD_HandleTypeDef *hsd)
+static EMU_SD_RTN SD_CmdResp7(SD_HandleTypeDef *hsd)
 {
-  SD_ErrorTypedef errorstate = SD_OK;
+  EMU_SD_RTN errorstate = SD_OK;
   uint32_t RESP_val;
   RESP_val = Core_SDMMC_GetResponse(hsd->Instance, SDMMC_RESP0);
 // #ifdef ECHO
@@ -1883,9 +1844,9 @@ static SD_ErrorTypedef SD_CmdResp7(SD_HandleTypeDef *hsd)
   * @param  SD_CMD: The sent command index
   * @retval SD Card error state
   */
-static SD_ErrorTypedef SD_CmdResp1Error(SD_HandleTypeDef *hsd, uint32_t SD_CMD)
+static EMU_SD_RTN SD_CmdResp1Error(SD_HandleTypeDef *hsd, uint32_t SD_CMD)
 {
-  SD_ErrorTypedef errorstate = SD_OK;
+  EMU_SD_RTN errorstate = SD_OK;
   uint32_t response_r1;
 
   /* We have received response, retrieve it for analysis  */
@@ -1991,11 +1952,11 @@ static SD_ErrorTypedef SD_CmdResp1Error(SD_HandleTypeDef *hsd, uint32_t SD_CMD)
   * @param  pStatus: pointer to the variable that will contain the SD card state
   * @retval SD Card error state
   */
-static SD_ErrorTypedef SD_IsCardProgramming(SD_HandleTypeDef * hsd, uint8_t *status)
+static EMU_SD_RTN SD_IsCardProgramming(SD_HandleTypeDef * hsd, uint8_t *status)
 {
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
   uint32_t responseR1 = 0;
-  SD_ErrorTypedef errorstate = SD_OK;
+  EMU_SD_RTN errorstate = SD_OK;
   sdmmc_cmdinitstructure.Argument         = (uint32_t)(hsd->RCA << 16);
   sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_SEND_STATUS;
   sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
@@ -2075,10 +2036,10 @@ static SD_ErrorTypedef SD_IsCardProgramming(SD_HandleTypeDef * hsd, uint8_t *sta
 /**
   * @brief: identify if it is a sd card
   */
-static SD_ErrorTypedef SD_ENUM(SD_HandleTypeDef * hsd)
+static EMU_SD_RTN SD_ENUM(SD_HandleTypeDef * hsd)
 {
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
-  __IO SD_ErrorTypedef errorstate = SD_OK;
+  __IO EMU_SD_RTN errorstate = SD_OK;
   uint32_t cmd_done, RINTSTS_val, RINTSTS_to, RINTSTS_crc_err, RINTSTS_err, RINTSTS_fail, RINTSTS_rto;
   uint32_t RESP_val, cmd_illegal, sdio_mem, sd_mem;
   sdmmc_cmdinitstructure.Argument         = 0;
@@ -2143,9 +2104,9 @@ static SD_ErrorTypedef SD_ENUM(SD_HandleTypeDef * hsd)
 /**
   * @ configuration the register for dma
   */
-static SD_ErrorTypedef SD_DMAConfig(SD_HandleTypeDef * hsd, SDMMC_DMATransTypeDef * dma)
+static EMU_SD_RTN SD_DMAConfig(SD_HandleTypeDef * hsd, SDMMC_DMATransTypeDef * dma)
 {
-  SD_ErrorTypedef errorstate = SD_OK;
+  EMU_SD_RTN errorstate = SD_OK;
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
 
 /*   Core_SDMMC_SetUHSREG(hsd->Instance, 0x0000FFFF); */
@@ -2478,7 +2439,7 @@ static SD_STATUS sd_getState(SD_HandleTypeDef *hsd)
 {
     SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
     uint32_t responseR1 = 0;
-    SD_ErrorTypedef errorstate = SD_OK;
+    EMU_SD_RTN errorstate = SD_OK;
     sdmmc_cmdinitstructure.Argument         = (uint32_t)(hsd->RCA << 16);
     sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_SEND_STATUS;
     sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
@@ -2495,7 +2456,7 @@ static SD_STATUS sd_getState(SD_HandleTypeDef *hsd)
     return responseR1>>9;
 }
 
-static SD_ErrorTypedef wait_cmd_busy(void)
+static EMU_SD_RTN wait_cmd_busy(void)
 {
     uint32_t start = SysTicks_GetTickCount();
 
@@ -2511,7 +2472,7 @@ static SD_ErrorTypedef wait_cmd_busy(void)
     return SD_OK;
 }
 
-static SD_ErrorTypedef wait_cmd_done(void)
+static EMU_SD_RTN wait_cmd_done(void)
 {   
     uint32_t start = SysTicks_GetTickCount();
 
@@ -2527,34 +2488,26 @@ static SD_ErrorTypedef wait_cmd_done(void)
     return SD_OK;
 }
 
-static SD_ErrorTypedef convert_to_transfer(SD_HandleTypeDef *hsd)
+static EMU_SD_RTN convert_to_transfer(SD_HandleTypeDef *hsd)
 {
     SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
-    SD_ErrorTypedef errorstate = SD_OK;
-    SD_STATUS cardstate;
-    cardstate = sd_getState(hsd);
-    if (cardstate != SD_CARD_TRANSFER)
-    {
-        // not in transfer state
-        dlog_info("%d, cardstate = 0x%02x", __LINE__, cardstate);
-        if (cardstate == SD_CARD_STANDBY)
-        {
-            dlog_info("%d, send CMD7", __LINE__);
-            sdmmc_cmdinitstructure.Argument         = (uint32_t)(hsd->RCA << 16);
-            sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_SEL_DESEL_CARD;
-            sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
-            sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | 
-                                                      SDMMC_CMD_USE_HOLD_REG | 
-                                                      SDMMC_CMD_PRV_DAT_WAIT | 
-                                                      SDMMC_CMD_RESP_CRC    | 
-                                                      SDMMC_CMD_RESP_EXP;
-            Core_SDMMC_SetRINTSTS(hsd->Instance, 0xFFFFFFFF);
-            Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-            /* waite for command finish*/
-            Core_SDMMC_WaiteCmdDone(hsd->Instance);
-        }
-    }        
+    EMU_SD_RTN errorstate = SD_OK;
+    SD_STATUS cardstate;    
+    uint32_t start;
 
-    return SD_OK;
+    start = SysTicks_GetTickCount();
+
+    do{
+        cardstate = sd_getState(hsd);
+        
+        if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 1000)
+        {
+            dlog_error("time out");
+            errorstate = SD_FAIL;
+            return errorstate;
+        }
+    }while(cardstate == SD_CARD_RECEIVE || cardstate == SD_CARD_PROGRAMMING);  
+
+    return errorstate;
 }
 

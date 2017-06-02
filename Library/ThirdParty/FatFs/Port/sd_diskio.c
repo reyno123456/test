@@ -30,7 +30,7 @@
 #include "ff_gen_drv.h"
 #include "debuglog.h"
 #include "hal_sd.h"
-#include "sd_card.h"
+#include "sd_host.h"
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 

@@ -11,7 +11,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
          UART/Src/serial.c \
          CAN/Src/can.c \
          SD/Src/sd_core.c \
-         SD/Src/sd_card.c \
+         SD/Src/sd_host.c \
          I2C/Src/i2c_ll.c \
          I2C/Src/i2c.c \
          SRAM/Src/sram.c \

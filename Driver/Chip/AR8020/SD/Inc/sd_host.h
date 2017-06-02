@@ -1,6 +1,6 @@
 /**
   * @file    sd_card.h
-  * @author  Minzhao
+  * @author  Minzhao & min.wu
   * @version V1.0.0
   * @date    7-10-2016
   * @brief   Header file of sd card.
@@ -255,7 +255,7 @@ typedef enum
 	SD_NOTCARD                         = (42), /* sdcard is not detected */
 	SD_UNSUPPORTED_VOLTAGE             = (43)
 
-} SD_ErrorTypedef;
+} EMU_SD_RTN;
 
 
 
@@ -442,17 +442,17 @@ typedef enum
 /** @defgroup SD_Exported_Functions_Group1 Initialization and de-initialization functions
   * @{
   */
-SD_ErrorTypedef Card_SD_Init(SD_HandleTypeDef *hsd, SD_CardInfoTypedef *SDCardInfo);
-SD_ErrorTypedef Card_SD_DeInit (SD_HandleTypeDef *hsd);
+EMU_SD_RTN Card_SD_Init(SD_HandleTypeDef *hsd, SD_CardInfoTypedef *SDCardInfo);
+EMU_SD_RTN Card_SD_DeInit (SD_HandleTypeDef *hsd);
 
 
 /** @defgroup SD_Exported_Functions_Group2 Input and Output operation functions
   * @{
   */
 /* Blocking mode: Polling */
-SD_ErrorTypedef Card_SD_ReadBlocks(SD_HandleTypeDef *hsd, uint32_t *pReadBuffer, uint64_t ReadAddr, uint32_t BlockSize, uint32_t NumberOfBlocks);
-SD_ErrorTypedef Card_SD_WriteBlocks(SD_HandleTypeDef *hsd, uint32_t *pWriteBuffer, uint64_t WriteAddr, uint32_t BlockSize, uint32_t NumberOfBlocks);
-SD_ErrorTypedef Card_SD_Erase(SD_HandleTypeDef *hsd, uint32_t startaddr, uint32_t endaddr);
+EMU_SD_RTN Card_SD_ReadBlocks(SD_HandleTypeDef *hsd, uint32_t *pReadBuffer, uint64_t ReadAddr, uint32_t BlockSize, uint32_t NumberOfBlocks);
+EMU_SD_RTN Card_SD_WriteBlocks(SD_HandleTypeDef *hsd, uint32_t *pWriteBuffer, uint64_t WriteAddr, uint32_t BlockSize, uint32_t NumberOfBlocks);
+EMU_SD_RTN Card_SD_Erase(SD_HandleTypeDef *hsd, uint32_t startaddr, uint32_t endaddr);
 /* Non-Blocking mode: Interrupt */
 void Card_SD_IRQHandler(SD_HandleTypeDef *hsd);
 
@@ -461,29 +461,29 @@ void Card_SD_XferCpltCallback(SD_HandleTypeDef *hsd);
 void Card_SD_XferErrorCallback(SD_HandleTypeDef *hsd);
 
 /* Non-Blocking mode: DMA */
-SD_ErrorTypedef Card_SD_ReadBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
-SD_ErrorTypedef Card_SD_WriteBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
-SD_ErrorTypedef Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
-SD_ErrorTypedef Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
-SD_ErrorTypedef Card_SD_CheckWriteOperation(SD_HandleTypeDef *hsd, uint32_t Timeout);
-SD_ErrorTypedef Card_SD_CheckReadOperation(SD_HandleTypeDef *hsd, uint32_t Timeout);
+EMU_SD_RTN Card_SD_ReadBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
+EMU_SD_RTN Card_SD_WriteBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
+EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
+EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
+EMU_SD_RTN Card_SD_CheckWriteOperation(SD_HandleTypeDef *hsd, uint32_t Timeout);
+EMU_SD_RTN Card_SD_CheckReadOperation(SD_HandleTypeDef *hsd, uint32_t Timeout);
 
 /** @defgroup SD_Exported_Functions_Group3 Peripheral Control functions
   * @{
   */
-SD_ErrorTypedef Card_SD_Get_CardInfo(SD_HandleTypeDef *hsd, SD_CardInfoTypedef *pCardInfo);
-SD_ErrorTypedef Card_SD_WideBusOperation_Config(SD_HandleTypeDef *hsd, uint32_t WideMode);
-SD_ErrorTypedef Card_SD_StopTransfer(SD_HandleTypeDef *hsd);
-SD_ErrorTypedef Card_SD_HighSpeed (SD_HandleTypeDef *hsd);
-SD_ErrorTypedef SD_GetState(SD_HandleTypeDef *hsd, uint32_t *CardStatus);
+EMU_SD_RTN Card_SD_Get_CardInfo(SD_HandleTypeDef *hsd, SD_CardInfoTypedef *pCardInfo);
+EMU_SD_RTN Card_SD_WideBusOperation_Config(SD_HandleTypeDef *hsd, uint32_t WideMode);
+EMU_SD_RTN Card_SD_StopTransfer(SD_HandleTypeDef *hsd);
+EMU_SD_RTN Card_SD_HighSpeed (SD_HandleTypeDef *hsd);
+EMU_SD_RTN SD_GetState(SD_HandleTypeDef *hsd, uint32_t *CardStatus);
 /* Peripheral State functions  ************************************************/
 /** @defgroup SD_Exported_Functions_Group4 Peripheral State functions
   * @{
   */
-SD_ErrorTypedef Card_SD_SendSDStatus(SD_HandleTypeDef *hsd, uint32_t *pSDstatus);
+EMU_SD_RTN Card_SD_SendSDStatus(SD_HandleTypeDef *hsd, uint32_t *pSDstatus);
 void SD_IRQHandler(uint32_t vectorNum);
 SD_TRANSFER_STATUS SD_CardStatus(SD_STATUS *e_cardStatus);
-//SD_ErrorTypedef Card_SD_GetCardStatus(SD_HandleTypeDef *hsd, HAL_SD_CardStatusTypedef *pCardStatus);
+//EMU_SD_RTN Card_SD_GetCardStatus(SD_HandleTypeDef *hsd, HAL_SD_CardStatusTypedef *pCardStatus);
 void SD_init_deInit_Callback(void* p);
 
 #endif

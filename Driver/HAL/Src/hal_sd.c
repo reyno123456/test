@@ -12,8 +12,8 @@ History:
 #include "memory_config.h"
 #include "hal_sd.h"
 #include "hal_nvic.h"
-#include "sd_card.h"
 #include "sd_core.h"
+#include "sd_host.h"
 #include "debuglog.h"
 #include "reg_rw.h"
 #include "interrupt.h"
@@ -42,7 +42,7 @@ HAL_RET_T HAL_SD_Init(void)
         sdhandle.Instance = SDMMC_ADDR;
         sdhandle.SpeedMode = CARD_SDR50;
         SDMMC_Status e_errorState = SDMMC_OK;
-        dlog_info("speedMode = %x!", sdhandle.SpeedMode);
+        dlog_info("speedMode = SDR50");
         SysTicks_DelayMS(100);
         e_errorState = Card_SD_Init(&sdhandle, &cardinfo);
         if (e_errorState != SDMMC_OK) 
