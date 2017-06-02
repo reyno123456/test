@@ -6,6 +6,8 @@
 #include "hal_bb.h"
 #include "hal.h"
 
+extern int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2);
+
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
     dlog_init(command_run, DLOG_CLIENT_PROCESSOR);
@@ -26,6 +28,8 @@ int main(void)
     dlog_info("main ground function start \n");
     
     HAL_BB_InitGround();
+    
+    BB_add_cmds(14,0x80, 0x56, 0x0e);
 
     /* We should never get here as control is now taken by the scheduler */
     for( ;; )
