@@ -255,7 +255,7 @@ static void IT_66021_I2CInitial(void)
     if (i2c_initialized == 0)
     {
         I2C_Init(IT_66021_I2C_COMPONENT_NUM, I2C_Master_Mode, RX_I2C_IO_MAP_ADDR >> 1, I2C_Standard_Speed);
-        INTR_NVIC_SetIRQPriority(I2C_INTR2_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_I2C_DEFAULT,0));
+        INTR_NVIC_SetIRQPriority(I2C_INTR2_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,4,0));
         reg_IrqHandle(I2C_INTR2_VECTOR_NUM, I2C_Master_IntrSrvc, NULL);
         INTR_NVIC_EnableIRQ(I2C_INTR2_VECTOR_NUM);
         msleep(100);
