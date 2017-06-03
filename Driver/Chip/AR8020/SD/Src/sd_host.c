@@ -13,6 +13,14 @@
   *           + some for stability improvement (wumin) 2017-5-21
   */
 
+/*
+ * updated 2017-6-3
+1. improve SD driver PowerOFF stability, seperated into two stage
+2. according to the specification, added DAT0 checking before SD read, program, erase
+3. take away Core_SDMMC_SetCTYPE from SD_DMAConfig to init
+*/
+
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -241,7 +249,8 @@ EMU_SD_RTN Card_SD_ReadBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *d
   SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
   EMU_SD_RTN errorstate = SD_OK;
   IDMAC_DescTypeDef desc = {0};
-  
+
+    Core_SDMMC_WaiteCardBusy(hsd->Instance);  
 /*   convert_to_transfer(hsd); */
   /* Initialize handle flags */
   SD_STATUS current_state;
@@ -323,6 +332,7 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransType
   uint32_t SectorRmd = dma->SectorNum % BuffSize;
 
   SD_STATUS current_state;
+  Core_SDMMC_WaiteCardBusy(hsd->Instance);  
   current_state = sd_getState(hsd);
   dlog_info("%d state = %d", __LINE__, current_state);
   if (current_state == SD_CARD_PROGRAMMING)
@@ -534,6 +544,7 @@ EMU_SD_RTN Card_SD_WriteBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *
   
   dlog_info("%d state = %d", __LINE__, sd_getState(hsd));
 
+  Core_SDMMC_WaiteCardBusy(hsd->Instance);  
   convert_to_transfer(hsd);
   
   /* Initialize handle flags */
@@ -608,6 +619,7 @@ EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTyp
 
     dlog_info("%d state = %d", __LINE__, sd_getState(hsd));
 
+    Core_SDMMC_WaiteCardBusy(hsd->Instance);  
     convert_to_transfer(hsd);
 
   IDMAC_DescTypeDef *desc = (IDMAC_DescTypeDef *)malloc(sizeof(IDMAC_DescTypeDef) * (SectorDivid + SectorRmd));
@@ -796,6 +808,7 @@ EMU_SD_RTN Card_SD_Erase(SD_HandleTypeDef *hsd, uint32_t startaddr, uint32_t blo
     uint32_t get_val, cmd_done, data_over, card_busy;
     uint8_t cardstate = 0;
 
+    Core_SDMMC_WaiteCardBusy(hsd->Instance);  
     convert_to_transfer(hsd);
 
   /* According to sd-card spec 3.0 ERASE_GROUP_START (CMD32) and erase_group_end(CMD33) */
@@ -1394,6 +1407,8 @@ static EMU_SD_RTN IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef *SDC
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
     Core_SDMMC_WaiteCmdStart(hsd->Instance);
 
+    Core_SDMMC_SetCTYPE(hsd->Instance, SDMMC_CTYPE_4BIT);
+    
     return errorstate;
 }
 
@@ -1712,33 +1727,38 @@ static EMU_SD_RTN PowerOnCard(SD_HandleTypeDef *hsd)
   */
 static EMU_SD_RTN PowerOffCard(SD_HandleTypeDef *hsd)
 {
-  EMU_SD_RTN errorstate = SD_OK;
-  SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
+    EMU_SD_RTN errorstate = SD_OK;
+    SDMMC_CmdInitTypeDef sdmmc_cmdinitstructure;
 
-  sdmmc_cmdinitstructure.Argument         = hsd->RCA << 16 & 0xFFFFFFFF;
-  sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_SEL_DESEL_CARD;
-  sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
-  sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | 
-                                            SDMMC_CMD_USE_HOLD_REG | 
-                                            SDMMC_CMD_PRV_DAT_WAIT | 
-                                            SDMMC_CMD_RESP_CRC | 
-                                            SDMMC_CMD_RESP_EXP;
-  Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-  /* Check for error conditions */
-  errorstate = wait_cmd_done();
-  if (errorstate != SD_OK)
-  {
+    if(SD_CARD_TRANSFER == sd_getState(hsd))
+    {
+        sdmmc_cmdinitstructure.Argument         = hsd->RCA << 16;
+        sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_SEL_DESEL_CARD;
+        sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
+        sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | 
+                                                  SDMMC_CMD_USE_HOLD_REG | 
+                                                  SDMMC_CMD_PRV_DAT_WAIT | 
+                                                  SDMMC_CMD_RESP_CRC | 
+                                                  SDMMC_CMD_RESP_EXP;
+        Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
+        Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
+        /* waite for command finish*/
+        Core_SDMMC_WaiteCmdDone(hsd->Instance);
+        errorstate = wait_cmd_done();
+        if (errorstate != SD_OK)
+        {
+        return errorstate;
+        }
+        dlog_info("deselect card");
+    }
+    
+    Core_SDMMC_SetCLKENA(hsd->Instance, 0x0);
+    Core_SDMMC_SetPWREN(hsd->Instance, 0x0);
+    delay_ms(1);
+    Core_SDMMC_SetINTMASK(hsd->Instance, SDMMC_INTMASK_CARD_DETECT);
+    Core_SDMMC_SetCTRL(hsd->Instance, SDMMC_CTRL_INT_ENABLE );
+    Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CARD_DETECT);
     return errorstate;
-  }
-  Core_SDMMC_SetCLKENA(hsd->Instance, 0x0);
-  Core_SDMMC_SetPWREN(hsd->Instance, 0x0);
-  delay_ms(1);
-  Core_SDMMC_SetINTMASK(hsd->Instance, SDMMC_INTMASK_CARD_DETECT);
-  /* clear intreq status */
-  Core_SDMMC_SetCTRL(hsd->Instance, SDMMC_CTRL_INT_ENABLE );
-  Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CARD_DETECT);
-
-  return errorstate;
 }
 
 /**
@@ -2144,7 +2164,7 @@ static EMU_SD_RTN SD_DMAConfig(SD_HandleTypeDef * hsd, SDMMC_DMATransTypeDef * d
   /* set up idma descriptor */
   Core_SDMMC_SetBMOD(hsd->Instance, SDMMC_BMOD_ENABLE | SDMMC_BMOD_FB);
   Core_SDMMC_SetIDINTEN(hsd->Instance, 0x0);
-  Core_SDMMC_SetCTYPE(hsd->Instance, SDMMC_CTYPE_4BIT);
+/*   Core_SDMMC_SetCTYPE(hsd->Instance, SDMMC_CTYPE_4BIT); */
   Core_SDMMC_SetCTRL(hsd->Instance, SDMMC_CTRL_USE_INTERNAL_IDMAC |
                                     SDMMC_CTRL_INT_ENABLE | 
                                     SDMMC_CTRL_FIFO_RESET);
