@@ -41,11 +41,11 @@ HAL_RET_T HAL_SD_Init(void)
     {
         sdhandle.Instance = SDMMC_ADDR;
         sdhandle.SpeedMode = CARD_SDR50;
-        SDMMC_Status e_errorState = SDMMC_OK;
+        EMU_SD_RTN e_errorState = SD_OK;
         dlog_info("speedMode = SDR50");
         SysTicks_DelayMS(100);
         e_errorState = Card_SD_Init(&sdhandle, &cardinfo);
-        if (e_errorState != SDMMC_OK) 
+        if (e_errorState != SD_OK) 
         {
             sdhandle.inited = 0;
             return HAL_SD_ERR_ERROR;
@@ -91,7 +91,7 @@ HAL_RET_T HAL_SD_Init(void)
 */
 HAL_RET_T HAL_SD_Write(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uint32_t u32_sectorNum)
 {
-	SDMMC_Status e_errorState = SDMMC_OK;
+	EMU_SD_RTN e_errorState = SD_OK;
 	SDMMC_DMATransTypeDef st_dma;
 	st_dma.BlockSize = 512;
 	st_dma.SrcAddr = (uint32_t )DTCMBUSADDR(u32_srcStartAddr);
@@ -108,7 +108,7 @@ HAL_RET_T HAL_SD_Write(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uin
 		e_errorState = Card_SD_WriteMultiBlocks_DMA(&sdhandle, &st_dma);
 	}
 	
-	if (e_errorState != SDMMC_OK) {
+	if (e_errorState != SD_OK) {
 		dlog_info("Write SD Failed!\n");
 		return HAL_SD_ERR_ERROR;
 	}
@@ -128,7 +128,7 @@ HAL_RET_T HAL_SD_Write(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uin
 */
 HAL_RET_T HAL_SD_Read(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uint32_t u32_sectorNum)
 {
-	SDMMC_Status e_errorState = SDMMC_OK;
+	EMU_SD_RTN e_errorState = SD_OK;
 	SDMMC_DMATransTypeDef st_dma;
 	st_dma.BlockSize = 512;
 	st_dma.SrcAddr = (uint32_t )u32_srcStartAddr;                     /* [block units] */
@@ -145,7 +145,7 @@ HAL_RET_T HAL_SD_Read(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uint
 		e_errorState = Card_SD_ReadMultiBlocks_DMA(&sdhandle, &st_dma);
 	}
 	
-	if (e_errorState != SDMMC_OK) {
+	if (e_errorState != SD_OK) {
 		dlog_info("Read SD Failed!\n");
 		return HAL_SD_ERR_ERROR;
 	}
@@ -163,9 +163,9 @@ HAL_RET_T HAL_SD_Read(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uint
 */
 HAL_RET_T HAL_SD_Erase(uint32_t u32_startAddr, uint32_t u32_sectorNum)
 {
-	SDMMC_Status e_errorState = SDMMC_OK;
+	EMU_SD_RTN e_errorState = SD_OK;
 	e_errorState = Card_SD_Erase(&sdhandle, u32_startAddr, u32_sectorNum);  /* [block units] */
-	if (e_errorState != SDMMC_OK) {
+	if (e_errorState != SD_OK) {
 		dlog_info("Erase SD failed!\n");
 		return HAL_SD_ERR_ERROR;
 	}
@@ -183,9 +183,9 @@ HAL_RET_T HAL_SD_Erase(uint32_t u32_startAddr, uint32_t u32_sectorNum)
 HAL_RET_T HAL_SD_Deinit()
 {
 	
-	SDMMC_Status e_errorState = SDMMC_OK;
+	EMU_SD_RTN e_errorState = SD_OK;
 	e_errorState = Card_SD_DeInit(&sdhandle);
-	if (e_errorState != SDMMC_OK) {
+	if (e_errorState != SD_OK) {
 		dlog_info("Deinit SD Failed!\n");
 		return HAL_SD_ERR_ERROR;
 	}
@@ -267,13 +267,13 @@ static float SD_SpeedTimesConvert(unsigned char times)
 */
 HAL_RET_T HAL_SD_Ioctl(ENUM_HAL_SD_CTRL e_sdCtrl, uint32_t *pu32_info)
 {
-    SDMMC_Status e_errorState = SDMMC_OK;
+    EMU_SD_RTN e_errorState = SD_OK;
     uint32_t u32_tmpValue = 0;
     float tran_speed = 0;
 /*     long long int CardCapacity = 0; */
 	e_errorState = Card_SD_Get_CardInfo(&sdhandle, &cardinfo);
     
-	if (e_errorState != SDMMC_OK) 
+	if (e_errorState != SD_OK) 
 	{
 		dlog_info("Get SD Info failed!\n");
 		return HAL_SD_ERR_ERROR;
