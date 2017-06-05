@@ -56,13 +56,10 @@ static EMU_SD_RTN wait_cmd_busy(void);
 static EMU_SD_RTN wait_cmd_done(void);
 static EMU_SD_RTN convert_to_transfer(SD_HandleTypeDef *hsd);
 
-typedef enum
-{
-	SD_READ_SINGLE_BLOCK    = 0,  /*!< Read single block operation      */
-	SD_READ_MULTIPLE_BLOCK  = 1,  /*!< Read multiple blocks operation   */
-	SD_WRITE_SINGLE_BLOCK   = 2,  /*!< Write single block operation     */
-	SD_WRITE_MULTIPLE_BLOCK = 3   /*!< Write multiple blocks operation  */
-} SD_BlockOperationTypedef;
+#define SD_READ_SINGLE_BLOCK 0 
+#define	SD_READ_MULTIPLE_BLOCK 1
+#define SD_WRITE_SINGLE_BLOCK 2
+#define SD_WRITE_MULTIPLE_BLOCK 3
 
 static void delay_ms(uint32_t num)
 {
@@ -1370,7 +1367,7 @@ static EMU_SD_RTN IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef *SDC
                                        SDMMC_CMD_PRV_DAT_WAIT | 
                                        SDMMC_CMD_UPDATE_CLK;
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-    if (SDMMC_OK == Core_SDMMC_WaiteCmdStart(hsd->Instance))
+    if (SD_OK == Core_SDMMC_WaiteCmdStart(hsd->Instance))
     {
         delay_ms(10);
     }
@@ -2363,9 +2360,9 @@ SD_TRANSFER_STATUS SD_CardStatus(SD_STATUS *e_cardStatus)
   //dlog_info("Get Card Status\n");
   uint32_t RespState = 0;
   SD_STATUS e_cardStatusTmp = SD_CARD_IDLE;
-  SDMMC_Status errorstate = SDMMC_OK;
+  EMU_SD_RTN errorstate = SD_OK;
   errorstate = SD_GetState(&sdhandle, (uint32_t *)&RespState);
-  if (errorstate != SDMMC_OK)
+  if (errorstate != SD_OK)
   {
     dlog_info("Get SD Status Failed!\n");
     return SD_CARD_ERROR;
@@ -2428,7 +2425,7 @@ void SD_init_deInit_Callback(void *p)
         if (sdhandle.inited == 1)
         {
             dlog_info("Removing the SD Card...\n");
-            SDMMC_Status errorstate = SDMMC_OK;
+            EMU_SD_RTN errorstate = SD_OK;
             if (SD_OK == Card_SD_DeInit(&sdhandle))
             {
                 sdhandle.inited = 0;
@@ -2453,7 +2450,7 @@ void SD_init_deInit_Callback(void *p)
         if (flag_card_state == 1)
         {
             dlog_info("Removing the SD Card...\n");
-            SDMMC_Status errorstate = SDMMC_OK;
+            EMU_SD_RTN errorstate = SD_OK;
             if (SD_OK == Card_SD_DeInit(&sdhandle))
             {
                 dlog_info("Remove SD Success!\n");

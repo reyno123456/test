@@ -28,7 +28,7 @@
   *            - 0x00: Power OFF
   *            - 0x01: Power ON
   */
-uint32_t Core_SDMMC_GetPowerState(SDMMC_REG *SDMMCx)
+uint32_t Core_SDMMC_GetPowerState(HOST_REG *SDMMCx)
 {
   return (SDMMCx->PWREN & SDMMC_PWREN_0); //for card one
 }
@@ -41,7 +41,7 @@ uint32_t Core_SDMMC_GetPowerState(SDMMC_REG *SDMMCx)
   *         the configuration information for the SDMMC command
   * @retval HAL status
   */
-SDMMC_Status Core_SDMMC_SendCommand(SDMMC_REG *SDMMCx, SDMMC_CmdInitTypeDef *Command)
+EMU_SD_RTN Core_SDMMC_SendCommand(HOST_REG *SDMMCx, SDMMC_CmdInitTypeDef *Command)
 {
   uint32_t tmpreg = 0;
   /* Set the SDMMC Argument value */
@@ -52,10 +52,10 @@ SDMMC_Status Core_SDMMC_SendCommand(SDMMC_REG *SDMMCx, SDMMC_CmdInitTypeDef *Com
   Core_SDMMC_SetCMD(SDMMCx, tmpreg);
   //dlog_info("CMD%d = 0x%x\n", Command->CmdIndex, tmpreg);
   //dlog_info("CMD%dARG = 0x%x\n", Command->CmdIndex, Command->Argument);
-  return SDMMC_OK;
+  return SD_OK;
 }
 
-SDMMC_Status Core_SDMMC_WaiteCmdDone(SDMMC_REG *SDMMCx)
+EMU_SD_RTN Core_SDMMC_WaiteCmdDone(HOST_REG *SDMMCx)
 {
   uint32_t get_val, cmd_done;
   
@@ -72,10 +72,10 @@ SDMMC_Status Core_SDMMC_WaiteCmdDone(SDMMC_REG *SDMMCx)
     }
     // dlog_info("CMD_DONE RINTSTS = %x", get_val);
   } while (!cmd_done);
-  return SDMMC_OK;
+  return SD_OK;
 }
 
-SDMMC_Status Core_SDMMC_WaiteDataOver(SDMMC_REG *SDMMCx)
+EMU_SD_RTN Core_SDMMC_WaiteDataOver(HOST_REG *SDMMCx)
 {
   uint32_t get_val, data_over;
   uint32_t start;
@@ -91,10 +91,10 @@ SDMMC_Status Core_SDMMC_WaiteDataOver(SDMMC_REG *SDMMCx)
         dlog_error("time out");
     }
   } while (!data_over);
-  return SDMMC_OK;
+  return SD_OK;
 }
 
-SDMMC_Status Core_SDMMC_WaiteCardBusy(SDMMC_REG *SDMMCx)
+EMU_SD_RTN Core_SDMMC_WaiteCardBusy(HOST_REG *SDMMCx)
 {
   uint32_t get_val, card_busy;
   uint32_t start;
@@ -110,10 +110,10 @@ SDMMC_Status Core_SDMMC_WaiteCardBusy(SDMMC_REG *SDMMCx)
         dlog_error("time out");
     }
   } while (card_busy);
-  return SDMMC_OK;
+  return SD_OK;
 }
 
-SDMMC_Status Core_SDMMC_WaiteCmdStart(SDMMC_REG *SDMMCx)
+EMU_SD_RTN Core_SDMMC_WaiteCmdStart(HOST_REG *SDMMCx)
 {
   uint32_t get_val, cmd_start;
   uint32_t start;
@@ -127,13 +127,13 @@ SDMMC_Status Core_SDMMC_WaiteCmdStart(SDMMC_REG *SDMMCx)
     if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 1000)
     {
         dlog_error("time out");
-        return SDMMC_BUSY;
+        return SD_FAIL;
     }
   } while (cmd_start);
-  return SDMMC_OK;
+  return SD_OK;
 }
 
-SDMMC_Status Core_SDMMC_WaiteVoltSwitchInt(SDMMC_REG *SDMMCx) 
+EMU_SD_RTN Core_SDMMC_WaiteVoltSwitchInt(HOST_REG *SDMMCx) 
 {
   uint32_t get_val, volt_switch_int;
   uint32_t start;
@@ -149,7 +149,7 @@ SDMMC_Status Core_SDMMC_WaiteVoltSwitchInt(SDMMC_REG *SDMMCx)
         dlog_error("time out");
     }
   } while (!volt_switch_int);
-  return SDMMC_OK;
+  return SD_OK;
 }
 
 
@@ -164,7 +164,7 @@ SDMMC_Status Core_SDMMC_WaiteVoltSwitchInt(SDMMC_REG *SDMMCx)
   *            @arg SDMMC_RESP3: Response Register 3
   * @retval The Corresponding response register value
   */
-uint32_t Core_SDMMC_GetResponse(SDMMC_REG *SDMMCx, uint32_t Response)
+uint32_t Core_SDMMC_GetResponse(HOST_REG *SDMMCx, uint32_t Response)
 {
   __IO uint32_t tmp = 0;
   switch (Response) {
