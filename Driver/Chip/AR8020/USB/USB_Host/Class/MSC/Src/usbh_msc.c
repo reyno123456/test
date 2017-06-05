@@ -122,6 +122,7 @@ USBH_ClassTypeDef  USBH_msc =
 
 MSC_HandleTypeDef    g_mscHandleTypeDef;
 
+uint8_t              g_mscPortId = USBH_PORT_NUM;
 
 /**
   * @}
@@ -225,6 +226,12 @@ static USBH_StatusTypeDef USBH_MSC_InterfaceInit (USBH_HandleTypeDef *phost)
     
     USBH_LL_SetToggle  (phost, MSC_Handle->InPipe,0);
     USBH_LL_SetToggle  (phost, MSC_Handle->OutPipe,0);
+
+    if (phost->id < USBH_PORT_NUM)
+    {
+        g_mscPortId = phost->id;
+    }
+
     status = USBH_OK; 
   }
   return status;
@@ -259,7 +266,12 @@ USBH_StatusTypeDef USBH_MSC_InterfaceDeInit (USBH_HandleTypeDef *phost)
     //USBH_free (phost->pActiveClass->pData);
     phost->pActiveClass->pData = 0;
   }
-  
+
+  if (phost->id < USBH_PORT_NUM)
+  {
+      g_mscPortId = USBH_PORT_NUM;
+  }
+
   return USBH_OK;
 }
 

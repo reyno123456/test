@@ -35,7 +35,7 @@
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-extern USBH_HandleTypeDef  hUSBHost;
+extern USBH_HandleTypeDef  hUSBHost[USBH_PORT_NUM];
 #if _USE_BUFF_WO_ALIGNMENT == 0
 /* Local buffer use to handle buffer not aligned 32bits*/
 static DWORD scratch[_MAX_SS / 4];
@@ -87,13 +87,14 @@ DSTATUS USBH_initialize(BYTE lun)
 DSTATUS USBH_status(BYTE lun)
 {
   DRESULT res = RES_ERROR;
-  
-  if(USBH_MSC_UnitIsReady(&hUSBHost, lun))
+
+  if(USBH_MSC_UnitIsReady(&hUSBHost[g_mscPortId&0x01], lun))
   {
     res = RES_OK;
   }
   else
   {
+    dlog_error("USBH_MSC_UnitIsReady error: %d", g_mscPortId);
     res = RES_ERROR;
   }
   
@@ -119,13 +120,14 @@ DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 #if _USE_BUFF_WO_ALIGNMENT == 0
     while ((count--)&&(status == USBH_OK))
     {
-      status = USBH_MSC_Read(&hUSBHost, lun, sector + count, (uint8_t *)scratch, 1);
+      status = USBH_MSC_Read(&hUSBHost[g_mscPortId&0x01], lun, sector + count, (uint8_t *)scratch, 1);
       if(status == USBH_OK)
       {
         memcpy (&buff[count * _MAX_SS] ,scratch, _MAX_SS);
       }
       else
       {
+        dlog_error("USBH_MSC_Read error: %d", g_mscPortId);
         break;
       }
     }
@@ -135,7 +137,7 @@ DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
   }
   else
   {
-    status = USBH_MSC_Read(&hUSBHost, lun, sector, buff, count);
+    status = USBH_MSC_Read(&hUSBHost[g_mscPortId&0x01], lun, sector, buff, count);
   }
   
   if(status == USBH_OK)
@@ -144,7 +146,9 @@ DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
   }
   else
   {
-    USBH_MSC_GetLUNInfo(&hUSBHost, lun, &info); 
+    USBH_MSC_GetLUNInfo(&hUSBHost[g_mscPortId&0x01], lun, &info); 
+
+    dlog_error("USBH_MSC_Read error: %d", g_mscPortId);
     
     switch (info.sense.asc)
     {
@@ -186,9 +190,11 @@ DRESULT USBH_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
     {
       memcpy (scratch, &buff[count * _MAX_SS], _MAX_SS);
       
-      status = USBH_MSC_Write(&hUSBHost, lun, sector + count, (BYTE *)scratch, 1) ;
+      status = USBH_MSC_Write(&hUSBHost[g_mscPortId&0x01], lun, sector + count, (BYTE *)scratch, 1) ;
       if(status == USBH_FAIL)
       {
+        dlog_error("USBH_MSC_Write error: %d", g_mscPortId);
+
         break;
       }
     }
@@ -198,7 +204,7 @@ DRESULT USBH_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
   }
   else
   {
-    status = USBH_MSC_Write(&hUSBHost, lun, sector, (BYTE *)buff, count);
+    status = USBH_MSC_Write(&hUSBHost[g_mscPortId&0x01], lun, sector, (BYTE *)buff, count);
   }
   
   if(status == USBH_OK)
@@ -207,8 +213,10 @@ DRESULT USBH_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
   }
   else
   {
-    USBH_MSC_GetLUNInfo(&hUSBHost, lun, &info); 
-    
+    USBH_MSC_GetLUNInfo(&hUSBHost[g_mscPortId&0x01], lun, &info); 
+
+    dlog_error("USBH_MSC_Write error: %d", g_mscPortId);
+
     switch (info.sense.asc)
     {
     case SCSI_ASC_WRITE_PROTECTED:
@@ -255,26 +263,28 @@ DRESULT USBH_ioctl(BYTE lun, BYTE cmd, void *buff)
     
   /* Get number of sectors on the disk (DWORD) */  
   case GET_SECTOR_COUNT : 
-    if(USBH_MSC_GetLUNInfo(&hUSBHost, lun, &info) == USBH_OK)
+    if(USBH_MSC_GetLUNInfo(&hUSBHost[g_mscPortId&0x01], lun, &info) == USBH_OK)
     {
       *(DWORD*)buff = info.capacity.block_nbr;
       res = RES_OK;
     }
     else
     {
+      dlog_error("USBH_MSC_GetLUNInfo GET_SECTOR_COUNT error: %d", g_mscPortId);
       res = RES_ERROR;
     }
     break;
     
   /* Get R/W sector size (WORD) */  
   case GET_SECTOR_SIZE :	
-    if(USBH_MSC_GetLUNInfo(&hUSBHost, lun, &info) == USBH_OK)
+    if(USBH_MSC_GetLUNInfo(&hUSBHost[g_mscPortId&0x01], lun, &info) == USBH_OK)
     {
       *(DWORD*)buff = info.capacity.block_size;
       res = RES_OK;
     }
     else
     {
+      dlog_error("USBH_MSC_GetLUNInfo GET_SECTOR_SIZE error: %d", g_mscPortId);
       res = RES_ERROR;
     }
     break;
@@ -282,13 +292,14 @@ DRESULT USBH_ioctl(BYTE lun, BYTE cmd, void *buff)
     /* Get erase block size in unit of sector (DWORD) */ 
   case GET_BLOCK_SIZE : 
     
-    if(USBH_MSC_GetLUNInfo(&hUSBHost, lun, &info) == USBH_OK)
+    if(USBH_MSC_GetLUNInfo(&hUSBHost[g_mscPortId&0x01], lun, &info) == USBH_OK)
     {
       *(DWORD*)buff = info.capacity.block_size;
       res = RES_OK;
     }
     else
     {
+      dlog_error("USBH_MSC_GetLUNInfo GET_BLOCK_SIZE error: %d", g_mscPortId);
       res = RES_ERROR;
     }
     break;

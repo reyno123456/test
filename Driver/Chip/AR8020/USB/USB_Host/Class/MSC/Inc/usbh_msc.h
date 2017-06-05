@@ -205,6 +205,8 @@ USBH_StatusTypeDef USBH_MSC_Write(USBH_HandleTypeDef *phost,
   * @}
   */ 
 
+extern uint8_t g_mscPortId;
+
 #ifdef __cplusplus
 }
 #endif

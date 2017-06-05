@@ -73,7 +73,7 @@ typedef struct
 * @retval   void
 * @note  
 */
-void HAL_USB_SetHostAppState(ENUM_HAL_USB_HOST_STATE e_usbHostAppState);
+void HAL_USB_SetHostAppState(ENUM_HAL_USB_HOST_STATE e_usbHostAppState, uint8_t port_id);
 
 /**
 * @brief  Get the USB Host State for Application use.
@@ -83,7 +83,7 @@ void HAL_USB_SetHostAppState(ENUM_HAL_USB_HOST_STATE e_usbHostAppState);
 *               HAL_USB_STATE_DISCONNECT   indicate the usb is DISCONNECT
 * @note  
 */
-ENUM_HAL_USB_HOST_STATE HAL_USB_GetHostAppState(void);
+ENUM_HAL_USB_HOST_STATE HAL_USB_GetHostAppState(uint8_t port_id);
 
 /**
 * @brief  polling the usb state-machine 
@@ -112,7 +112,8 @@ void HAL_USB_InitHost(ENUM_HAL_USB_PORT e_usbPort);
 */
 HAL_RET_T HAL_USB_StartUVC(uint16_t u16_width,
                            uint16_t u16_height,
-                           uint32_t *u32_frameSize);
+                           uint32_t *u32_frameSize,
+                           uint8_t u8_uvcPortId);
 
 /**
 * @brief  get the latest frame buffer
@@ -180,8 +181,11 @@ void HAL_USB_TransferUVCToGrd(uint8_t *buff,
                              uint16_t height,
                              ENUM_HAL_USB_UVC_DATA_TYPE e_UVCDataType);
 
-ENUM_HAL_USB_HOST_CLASS HAL_USB_CurUsbClassType(void);
+ENUM_HAL_USB_HOST_CLASS HAL_USB_CurUsbClassType(uint8_t port_id);
 
+uint8_t HAL_USB_GetUVCPortId(void);
+
+uint8_t HAL_USB_GetMSCPort(void);
 
 #ifdef __cplusplus
 }

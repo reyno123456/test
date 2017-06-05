@@ -64,6 +64,7 @@ extern HCD_HandleTypeDef hhcd[2];
 #define USBH_MAX_DATA_BUFFER                  0x1000
 #define USBH_DEBUG_LEVEL                      2
 #define USBH_USE_OS                           0
+#define USBH_PORT_NUM                         2
 
 /** @defgroup USBH_Exported_Macros
   * @{

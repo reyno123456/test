@@ -21,8 +21,8 @@ History:
 #include "systicks.h"
 #include "hal.h"
 
-static ENUM_HAL_USB_HOST_STATE   s_eUSBHostAppState;
-USBH_HandleTypeDef               hUSBHost;
+static ENUM_HAL_USB_HOST_STATE   s_eUSBHostAppState[HAL_USB_PORT_NUM];
+USBH_HandleTypeDef               hUSBHost[USBH_PORT_NUM];
 uint8_t                          u8_header[12];
 
 
@@ -32,9 +32,9 @@ uint8_t                          u8_header[12];
 * @retval   void
 * @note  
 */
-void HAL_USB_SetHostAppState(ENUM_HAL_USB_HOST_STATE e_usbHostAppState)
+void HAL_USB_SetHostAppState(ENUM_HAL_USB_HOST_STATE e_usbHostAppState, uint8_t port_id)
 {
-    s_eUSBHostAppState = e_usbHostAppState;
+    s_eUSBHostAppState[port_id] = e_usbHostAppState;
 }
 
 
@@ -46,9 +46,9 @@ void HAL_USB_SetHostAppState(ENUM_HAL_USB_HOST_STATE e_usbHostAppState)
 *               HAL_USB_STATE_DISCONNECT   indicate the usb is DISCONNECT
 * @note  
 */
-ENUM_HAL_USB_HOST_STATE HAL_USB_GetHostAppState(void)
+ENUM_HAL_USB_HOST_STATE HAL_USB_GetHostAppState(uint8_t port_id)
 {
-    return s_eUSBHostAppState;
+    return s_eUSBHostAppState[port_id];
 }
 
 
@@ -60,7 +60,12 @@ ENUM_HAL_USB_HOST_STATE HAL_USB_GetHostAppState(void)
 */
 void HAL_USB_HostProcess(void)
 {
-    USBH_Process(&hUSBHost);
+    uint8_t         i;
+
+    for (i = 0; i < HAL_USB_PORT_NUM; i++)
+    {
+        USBH_Process(&hUSBHost[i]);
+    }
 }
 
 
@@ -79,11 +84,11 @@ static void USB_HostAppState(USBH_HandleTypeDef *phost, uint8_t id)
             break;
 
         case HOST_USER_DISCONNECTION:
-            HAL_USB_SetHostAppState(HAL_USB_HOST_STATE_DISCONNECT);
+            HAL_USB_SetHostAppState(HAL_USB_HOST_STATE_DISCONNECT, phost->id);
             break;
 
         case HOST_USER_CLASS_ACTIVE:
-            HAL_USB_SetHostAppState(HAL_USB_HOST_STATE_READY);
+            HAL_USB_SetHostAppState(HAL_USB_HOST_STATE_READY, phost->id);
             break;
 
         case HOST_USER_CONNECTION:
@@ -116,15 +121,15 @@ void HAL_USB_InitHost(ENUM_HAL_USB_PORT e_usbPort)
         INTR_NVIC_SetIRQPriority(OTG_INTR1_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_OTG_INITR1,0));
     }
 
-    USBH_Init(&hUSBHost, USB_HostAppState, (uint8_t)e_usbPort);
+    USBH_Init(&hUSBHost[e_usbPort], USB_HostAppState, (uint8_t)e_usbPort);
 
     //support MSC
-    USBH_RegisterClass(&hUSBHost, USBH_MSC_CLASS);
+    USBH_RegisterClass(&hUSBHost[e_usbPort], USBH_MSC_CLASS);
 
     //support UVC
-    USBH_RegisterClass(&hUSBHost, USBH_UVC_CLASS);
+    USBH_RegisterClass(&hUSBHost[e_usbPort], USBH_UVC_CLASS);
 
-    USBH_Start(&hUSBHost);
+    USBH_Start(&hUSBHost[e_usbPort]);
 }
 
 
@@ -136,7 +141,8 @@ void HAL_USB_InitHost(ENUM_HAL_USB_PORT e_usbPort)
 */
 HAL_RET_T HAL_USB_StartUVC(uint16_t u16_width,
                            uint16_t u16_height,
-                           uint32_t *u32_frameSize)
+                           uint32_t *u32_frameSize,
+                           uint8_t u8_uvcPortId)
 {
     HAL_RET_T           u8_ret = HAL_OK;
     uint8_t             u8_frameIndex;
@@ -165,7 +171,7 @@ HAL_RET_T HAL_USB_StartUVC(uint16_t u16_width,
 
         dlog_info("u8_frameIndex, u32_frameSize: %d, %d", u8_frameIndex, *u32_frameSize);
 
-        if (0 == USBH_UVC_StartView(&hUSBHost, u8_frameIndex))
+        if (0 == USBH_UVC_StartView(&hUSBHost[u8_uvcPortId], u8_frameIndex))
         {
             dlog_info("START UVC OK");
         }
@@ -245,8 +251,18 @@ HAL_RET_T HAL_USB_UVCCheckFrameReady(uint32_t *u32_frameNum,
 void HAL_USB_UVCGetVideoFormats(STRU_UVC_VIDEO_FRAME_FORMAT *stVideoFrameFormat)
 {
     uint8_t         i;
+    uint8_t         u8_uvcPortId;
 
-    USBH_UVC_GetVideoFormatList(&hUSBHost);
+    u8_uvcPortId    = HAL_USB_GetUVCPortId();
+
+    if (u8_uvcPortId > HAL_USB_PORT_NUM)
+    {
+        dlog_error("invalid usb port number");
+
+        return;
+    }
+
+    USBH_UVC_GetVideoFormatList(&hUSBHost[u8_uvcPortId]);
 
     for (i = 0; i < HAL_USB_UVC_MAX_FRAME_FORMATS_NUM; i++)
     {
@@ -303,7 +319,18 @@ uint32_t HAL_USB_GetUVCExtUnitControls(void)
 */
 uint32_t HAL_USB_GetProcUnitParam(uint8_t index, uint8_t type)
 {
-    USBH_UVC_ProcUnitParamHandler(&hUSBHost, index, type);
+    uint8_t         u8_uvcPortId;
+
+    u8_uvcPortId    = HAL_USB_GetUVCPortId();
+
+    if (u8_uvcPortId > HAL_USB_PORT_NUM)
+    {
+        dlog_error("invalid usb port number");
+
+        return 0xFFFFFFFF;
+    }
+
+    USBH_UVC_ProcUnitParamHandler(&hUSBHost[u8_uvcPortId], index, type);
 }
 
 
@@ -404,12 +431,18 @@ void HAL_USB_TransferUVCToGrd(uint8_t *buff,
 }
 
 
-ENUM_HAL_USB_HOST_CLASS HAL_USB_CurUsbClassType(void)
+ENUM_HAL_USB_HOST_CLASS HAL_USB_CurUsbClassType(uint8_t port_id)
 {
-    USBH_ClassTypeDef           *activeClass;
-    ENUM_HAL_USB_HOST_CLASS      enHostClass;
+    USBH_ClassTypeDef           *activeClass = NULL;
+    ENUM_HAL_USB_HOST_CLASS      enHostClass = HAL_USB_HOST_CLASS_NONE;
 
-    activeClass            = hUSBHost.pActiveClass;
+    activeClass            = hUSBHost[port_id].pActiveClass;
+
+    if (NULL == activeClass)
+    {
+        dlog_error("active class is NULL");
+        return enHostClass;
+    }
 
     switch (activeClass->ClassCode)
     {
@@ -429,6 +462,35 @@ ENUM_HAL_USB_HOST_CLASS HAL_USB_CurUsbClassType(void)
     return enHostClass;
 }
 
+
+uint8_t HAL_USB_GetUVCPortId(void)
+{
+    USBH_ClassTypeDef      *activeClass = NULL;
+    uint8_t                 u8_uvcPortId = HAL_USB_PORT_NUM;
+
+    if (g_u8UVCPortId > HAL_USB_PORT_NUM)
+    {
+        return HAL_USB_PORT_NUM;
+    }
+
+    activeClass             = hUSBHost[g_u8UVCPortId].pActiveClass;
+
+    if (activeClass != NULL)
+    {
+        if (activeClass->ClassCode == UVC_CLASS)
+        {
+            u8_uvcPortId = g_u8UVCPortId;
+        }
+    }
+
+    return u8_uvcPortId;
+}
+
+
+uint8_t HAL_USB_GetMSCPort(void)
+{
+    return g_mscPortId;
+}
 
 
 

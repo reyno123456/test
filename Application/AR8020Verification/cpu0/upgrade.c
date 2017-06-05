@@ -108,7 +108,22 @@ void UPGRADE_Upgrade(void const *argument)
     dlog_output(100);
     SysTicks_DelayMS(500);
 
-    while (HAL_USB_HOST_STATE_READY != HAL_USB_GetHostAppState())
+    while (1)
+    {
+        i = HAL_USB_GetMSCPort();
+
+        if (i < HAL_USB_PORT_NUM)
+        {
+            dlog_info("usb port %d is valid", i);
+            break;
+        }
+        else
+        {
+            dlog_error("usb port is not valid");
+        }
+    }
+
+    while (HAL_USB_HOST_STATE_READY != HAL_USB_GetHostAppState(i))
     {
         dlog_info("finding mass storage\n");
         SysTicks_DelayMS(500);

@@ -107,6 +107,14 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_startUVC(cmdArray[1], cmdArray[2]);
     }
+    else if ((memcmp(cmdArray[0], "saveuvc", strlen("saveuvc")) == 0))
+    {
+        command_saveUVC();
+    }
+    else if ((memcmp(cmdArray[0], "stopsaveuvc", strlen("stopsaveuvc")) == 0))
+    {
+        command_stopSaveUVC();
+    }
     /* error command */
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
@@ -128,6 +136,9 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("NvSetBbRcId <id1> <id2> <id3> <id4> <id5>");
         dlog_error("viewuvc");
         dlog_error("top");
+        dlog_error("startuvc <width> <height>");
+        dlog_error("saveuvc");
+        dlog_error("stopsaveuvc");
         dlog_output(1000);
     }
 }

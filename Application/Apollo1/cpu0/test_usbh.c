@@ -21,6 +21,9 @@ USBH_UVC_TASK_STATE             g_eUVCTaskState = USBH_UVC_TASK_IDLE;
 uint16_t                        g_u16UVCWidth = 0;
 uint16_t                        g_u16UVCHeight = 0;
 volatile uint8_t                g_u8UserSelectPixel = 0;
+volatile uint8_t                g_u8SaveUVC = 0;
+FIL                             uvcFile;
+
 
 void USBH_USBHostStatus(void const *argument)
 {
@@ -30,7 +33,7 @@ void USBH_USBHostStatus(void const *argument)
     {
         HAL_USB_HostProcess();
 
-        osDelay(10);
+        osDelay(5);
     }
 }
 
@@ -40,6 +43,9 @@ void USBH_BypassVideo(void const *argument)
     FRESULT             fileResult;
     uint32_t            bytesread;
     uint8_t            *videoBuff;
+    static FIL          usbhAppFile;
+    uint8_t             i;
+    static uint8_t      u8_usbPortId;
 
     fileResult          = FR_OK;
     bytesread           = 0;
@@ -51,60 +57,105 @@ void USBH_BypassVideo(void const *argument)
     {
         if (osOK == osSemaphoreWait(g_usbhBypassVideoCtrl.semID, osWaitForever))
         {
-            while (1)
+            for ( ;; )
             {
-                if ((HAL_USB_HOST_STATE_READY == HAL_USB_GetHostAppState())
-                  &&(1 == g_usbhBypassVideoCtrl.taskActivate))
+                if (g_usbhBypassVideoCtrl.taskActivate == 1)
                 {
-                    if (g_usbhBypassVideoCtrl.fileOpened == 0)
+                    switch (g_usbhBypassVideoCtrl.taskState)
                     {
-                        g_usbhBypassVideoCtrl.fileOpened = 1;
+                    case USBH_VIDEO_BYPASS_TASK_IDLE:
+                        u8_usbPortId = HAL_USB_GetMSCPort();
 
-                        fileResult = f_open(&(g_usbhAppCtrl.usbhAppFile), "0:usbtest.264", FA_READ);
-
-                        if(fileResult != FR_OK)
+                        if (u8_usbPortId < HAL_USB_PORT_NUM)
                         {
-                            dlog_error("open file error: %d\n", (uint32_t)fileResult);
+                            dlog_info("use MSC Port: %d", u8_usbPortId);
 
-                            break;
+                            g_usbhBypassVideoCtrl.taskState = USBH_VIDEO_BYPASS_TASK_START;
                         }
-                    }
 
-                    fileResult = f_read(&(g_usbhAppCtrl.usbhAppFile), videoBuff, USB_VIDEO_BYPASS_SIZE_ONCE, (void *)&bytesread);
+                        break;
 
-                    if(fileResult != FR_OK)
-                    {
-                        g_usbhBypassVideoCtrl.fileOpened    = 0;
-                        f_close(&(g_usbhAppCtrl.usbhAppFile));
+                    case USBH_VIDEO_BYPASS_TASK_START:
+                        if ((HAL_USB_HOST_STATE_READY == HAL_USB_GetHostAppState(u8_usbPortId))&&
+                            (1 == g_usbhBypassVideoCtrl.taskActivate))
+                        {
+                            if (g_usbhBypassVideoCtrl.fileOpened == 0)
+                            {
+                                fileResult = f_open(&usbhAppFile, "0:usbtest.264", FA_READ);
 
-                        dlog_error("Cannot Read from the file \n");
+                                if(fileResult == FR_OK)
+                                {
+                                    g_usbhBypassVideoCtrl.fileOpened = 1;
 
-                        continue;
-                    }
+                                    g_usbhBypassVideoCtrl.taskState = USBH_VIDEO_BYPASS_TASK_TRANS;
+                                }
+                                else
+                                {
+                                    g_usbhBypassVideoCtrl.taskState = USBH_VIDEO_BYPASS_TASK_STOP;
 
-                    osDelay(10);
+                                    dlog_error("open file error: %d\n", (uint32_t)fileResult);
+                                }
+                            }
+                            else
+                            {
+                                g_usbhBypassVideoCtrl.taskState = USBH_VIDEO_BYPASS_TASK_TRANS;
+                            }
+                        }
+                        else
+                        {
+                            g_usbhBypassVideoCtrl.taskState = USBH_VIDEO_BYPASS_TASK_STOP;
+                        }
 
-                    if (bytesread < USB_VIDEO_BYPASS_SIZE_ONCE)
-                    {
-                        dlog_info("a new round!\n");
-                        g_usbhBypassVideoCtrl.fileOpened    = 0;
-                        f_close(&(g_usbhAppCtrl.usbhAppFile));
+                        break;
+
+                    case USBH_VIDEO_BYPASS_TASK_TRANS:
+                        if ((HAL_USB_HOST_STATE_READY == HAL_USB_GetHostAppState(u8_usbPortId))&&
+                            (1 == g_usbhBypassVideoCtrl.taskActivate))
+                        {
+                            fileResult = f_read((&usbhAppFile), videoBuff, USB_VIDEO_BYPASS_SIZE_ONCE, (void *)&bytesread);
+
+                            if(fileResult != FR_OK)
+                            {
+                                g_usbhBypassVideoCtrl.fileOpened    = 0;
+                                f_close(&usbhAppFile);
+
+                                dlog_error("Cannot Read from the file \n");
+                            }
+
+                            osDelay(10);
+
+                            if (bytesread < USB_VIDEO_BYPASS_SIZE_ONCE)
+                            {
+                                dlog_info("a new round!\n");
+                                g_usbhBypassVideoCtrl.fileOpened    = 0;
+                                f_close(&usbhAppFile);
+
+                                g_usbhBypassVideoCtrl.taskState = USBH_VIDEO_BYPASS_TASK_START;
+                            }
+                        }
+                        else
+                        {
+                            g_usbhBypassVideoCtrl.taskState = USBH_VIDEO_BYPASS_TASK_STOP;
+                        }
+
+                        break;
+
+                    case USBH_VIDEO_BYPASS_TASK_STOP:
+                        g_usbhBypassVideoCtrl.taskState = USBH_VIDEO_BYPASS_TASK_IDLE;
+
+                        break;
+
+                    default:
+                        g_usbhBypassVideoCtrl.taskActivate  = 0;
+
+                        break;
                     }
                 }
                 else
                 {
-                    if (1 == g_usbhBypassVideoCtrl.fileOpened)
-                    {
-                        g_usbhBypassVideoCtrl.fileOpened    = 0;
-                        f_close(&(g_usbhAppCtrl.usbhAppFile));
-                    }
-
                     break;
                 }
-
             }
-
-            g_usbhBypassVideoCtrl.taskActivate  = 0;
         }
     }
 }
@@ -112,16 +163,26 @@ void USBH_BypassVideo(void const *argument)
 
 void USBH_MountUSBDisk(void)
 {
-    FRESULT   fileResult;
+    FRESULT             fileResult;
+    static uint8_t      s_u8MountFlag = 0;
 
-    FATFS_LinkDriver(&USBH_Driver, "0:/");
-
-    fileResult = f_mount(&(g_usbhAppCtrl.usbhAppFatFs), "0:/", 0);
-
-    if (fileResult != FR_OK)
+    if (s_u8MountFlag == 0)
     {
-        dlog_error("mount fatfs error: %d\n", fileResult);
+        FATFS_LinkDriver(&USBH_Driver, "0:/");
 
+        fileResult = f_mount(&(g_usbhAppCtrl.usbhAppFatFs), "0:/", 0);
+
+        if (fileResult != FR_OK)
+        {
+            dlog_error("mount fatfs error: %d\n", fileResult);
+
+            return;
+        }
+
+        s_u8MountFlag = 1;
+    }
+    else
+    {
         return;
     }
 }
@@ -208,9 +269,13 @@ void USBH_ProcUVC(void)
     static uint16_t                 u16_UVCHeight;
     static uint32_t                 u32_UVCFrameSize;
     static uint8_t                  u8_UVCFrameIndex;
-    uint32_t                        i;
+    uint8_t                         i;
+    static uint8_t                  u8_uvcPortId;
+    static uint8_t                  u8_udiskPortId = HAL_USB_PORT_NUM;
+    uint32_t                        u32_savedSize;
 
-    if (HAL_USB_GetHostAppState() == HAL_USB_HOST_STATE_DISCONNECT)
+    if ((HAL_USB_GetHostAppState(u8_uvcPortId) == HAL_USB_HOST_STATE_DISCONNECT)&&
+        (g_eUVCTaskState != USBH_UVC_TASK_IDLE))
     {
         g_eUVCTaskState = USBH_UVC_TASK_DISCONNECT;
     }
@@ -218,8 +283,14 @@ void USBH_ProcUVC(void)
     switch (g_eUVCTaskState)
     {
     case USBH_UVC_TASK_IDLE:
-        if ((HAL_USB_HOST_STATE_READY == HAL_USB_GetHostAppState())&&
-            (HAL_USB_HOST_CLASS_UVC == HAL_USB_CurUsbClassType()))
+        u8_uvcPortId = HAL_USB_GetUVCPortId();
+
+        if (u8_uvcPortId >= HAL_USB_PORT_NUM)
+        {
+            return;
+        }
+
+        if (HAL_USB_HOST_STATE_READY == HAL_USB_GetHostAppState(u8_uvcPortId))
         {
             // get supported formats first
             HAL_USB_UVCGetVideoFormats(&stVideoFrameFormat);
@@ -260,7 +331,10 @@ void USBH_ProcUVC(void)
         break;
 
     case USBH_UVC_TASK_START:
-        if (HAL_OK == HAL_USB_StartUVC(u16_UVCWidth, u16_UVCHeight, &u32_UVCFrameSize))
+        if (HAL_OK == HAL_USB_StartUVC(u16_UVCWidth,
+                                       u16_UVCHeight,
+                                       &u32_UVCFrameSize,
+                                       u8_uvcPortId))
         {
             dlog_info("start UVC OK!");
         }
@@ -293,6 +367,28 @@ void USBH_ProcUVC(void)
             {
                 HAL_USB_TransferUVCToGrd(u8_FrameBuff, u32_UVCFrameSize, u16_UVCWidth, u16_UVCHeight, ENUM_UVC_DATA_YUV);
             }
+
+            if (g_u8SaveUVC == 1)
+            {
+                if (u8_udiskPortId >= HAL_USB_PORT_NUM)
+                {
+                    u8_udiskPortId = HAL_USB_GetMSCPort();
+
+                    if (u8_udiskPortId >= HAL_USB_PORT_NUM)
+                    {
+                        dlog_error("udisk is not ready to save UVC data");
+
+                        break;
+                    }
+                }
+
+                f_write(&uvcFile, u8_FrameBuff, u32_UVCFrameSize, (void *)&u32_savedSize);
+
+                if (u32_savedSize < u32_UVCFrameSize)
+                {
+                    dlog_error("save UVC data error: %d, %d", u32_savedSize, u32_UVCFrameSize);
+                }
+            }
         }
 
         break;
@@ -320,6 +416,7 @@ void command_startUVC(char *width, char *height)
     uint32_t                        u32_width = strtoul(width, NULL, 0);
     uint32_t                        u32_height = strtoul(height, NULL, 0);
     STRU_UVC_VIDEO_FRAME_FORMAT     stVideoFrameFormat;
+    uint8_t                         u8_uvcPortId;
 
     HAL_USB_UVCGetVideoFormats(&stVideoFrameFormat);
 
@@ -342,5 +439,35 @@ void USBH_UVCTask(void const *argument)
 
         HAL_Delay(1);
     }
+}
+
+
+void command_saveUVC(void)
+{
+    FRESULT fileResult;
+
+    USBH_MountUSBDisk();
+
+    fileResult = f_open(&uvcFile, "0:uvcdata.yuv", FA_CREATE_ALWAYS | FA_WRITE | FA_READ);
+
+    if (fileResult != FR_OK)
+    {
+        dlog_error("create uvc file error: %d", fileResult);
+        return;
+    }
+
+    dlog_info("start to save UVC data");
+
+    g_u8SaveUVC = 1;
+}
+
+
+void command_stopSaveUVC(void)
+{
+    f_close(&uvcFile);
+
+    dlog_info("save uvc data succeed");
+
+    g_u8SaveUVC = 0;
 }
 

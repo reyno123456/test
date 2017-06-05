@@ -15,6 +15,16 @@ typedef enum
 }USBH_APP_EVENT_DEF;
 
 
+
+typedef enum
+{
+    USBH_VIDEO_BYPASS_TASK_IDLE         = 0,
+    USBH_VIDEO_BYPASS_TASK_START        = 1,
+    USBH_VIDEO_BYPASS_TASK_TRANS        = 2,
+    USBH_VIDEO_BYPASS_TASK_STOP         = 3,
+} USBH_VIDEO_BYPASS_TASK_STATE;
+
+
 typedef struct
 {
     volatile uint8_t        taskActivate;
@@ -23,15 +33,16 @@ typedef struct
     uint8_t                 reserved;
     osThreadId              threadID;
     osSemaphoreId           semID;
+    USBH_VIDEO_BYPASS_TASK_STATE taskState;
 } USBH_BypassVideoCtrl;
 
 
 typedef struct
 {
     osMessageQId            usbhAppEvent;
-    FIL                     usbhAppFile;
     FATFS                   usbhAppFatFs;
 } USBH_AppCtrl;
+
 
 
 void USBH_USBHostStatus(void const *argument);

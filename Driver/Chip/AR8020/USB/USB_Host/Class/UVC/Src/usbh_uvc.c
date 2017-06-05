@@ -32,6 +32,7 @@ uint8_t                 g_cur_mem[28];
 uint8_t                 g_max_mem[28];
 uint8_t                 g_min_mem[28];
 
+uint8_t                 g_u8UVCPortId;
 
 static USBH_UVC_PARAM_HANDLER hUsbhUVCParamHandler[16] = 
 {
@@ -129,7 +130,9 @@ static USBH_StatusTypeDef USBH_UVC_InterfaceInit (USBH_HandleTypeDef *phost)
         USBH_LL_SetToggle(phost, UVC_Handle->CtrlPipe, 0);
         USBH_LL_SetToggle(phost, UVC_Handle->VideoPipe, 0);
 
-        phost->isocURBDone = USBH_UVC_UrbDone;
+        phost->isocURBDone  = USBH_UVC_UrbDone;
+
+        g_u8UVCPortId       = phost->id;
 
         status = USBH_OK;
     }

@@ -363,7 +363,7 @@ __ALIGN_BEGIN uint8_t HID_USER_INTERFACE_DESC[48]  __ALIGN_END;
 
 
 USBD_HID_HandleTypeDef        g_usbdHidData;
-uint8_t                       g_u32USBDeviceRecv[512];
+uint8_t                       g_u32USBDeviceRecv[HID_EPOUT_SIZE];
 uint8_t                       g_u8CustomerOut[HID_CUSTOMER_OUT_SIZE];
 uint32_t                      g_u32CustomerOutSize;
 

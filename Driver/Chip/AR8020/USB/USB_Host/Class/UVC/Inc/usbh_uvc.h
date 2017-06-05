@@ -316,7 +316,7 @@ uint8_t *USBH_GetRecvBuffer(void);
 
 
 extern USBH_UVCUserInterface    g_stUVCUserInterface;
-
+extern uint8_t                  g_u8UVCPortId;
 
 
 #endif /* __USBH_AUDIO_H */
