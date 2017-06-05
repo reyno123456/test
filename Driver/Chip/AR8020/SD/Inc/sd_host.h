@@ -204,7 +204,7 @@ typedef enum
 	/**
 	  * @brief  SD specific error defines
 	  */
-	  SD_FAIL                   =  (-1),
+    SD_FAIL                            = (-1),
 	SD_OK                              = (0),
 	SD_CMD_CRC_FAIL                    = (1),   /*!< Command response received (but CRC check failed)              */
 	SD_DATA_CRC_FAIL                   = (2),   /*!< Data block sent/received (CRC check failed)                   */
@@ -240,10 +240,6 @@ typedef enum
 	SD_SDMMC_FUNCTION_BUSY             = (31),
 	SD_SDMMC_FUNCTION_FAILED           = (32),
 	SD_SDMMC_UNKNOWN_FUNCTION          = (33),
-
-	/**
-	  * @brief  Standard error defines
-	  */
 	SD_INTERNAL_ERROR                  = (34),
 	SD_NOT_CONFIGURED                  = (35),
 	SD_REQUEST_PENDING                 = (36),
@@ -254,22 +250,7 @@ typedef enum
 	SD_ERROR                           = (41),
 	SD_NOTCARD                         = (42), /* sdcard is not detected */
 	SD_UNSUPPORTED_VOLTAGE             = (43)
-
 } EMU_SD_RTN;
-
-
-
-/** @defgroup SD_Exported_Types_Group9 SD Operation enumeration structure
-  * @{
-  */
-typedef enum
-{
-	SD_READ_SINGLE_BLOCK    = 0,  /*!< Read single block operation      */
-	SD_READ_MULTIPLE_BLOCK  = 1,  /*!< Read multiple blocks operation   */
-	SD_WRITE_SINGLE_BLOCK   = 2,  /*!< Write single block operation     */
-	SD_WRITE_MULTIPLE_BLOCK = 3   /*!< Write multiple blocks operation  */
-
-} SD_BlockOperationTypedef;
 
 /**
   * @brief SD Commands Index
@@ -347,6 +328,7 @@ typedef enum
   * @brief Following commands are SD Card Specific security commands.
   *        SD_CMD_APP_CMD should be sent before sending these commands.
   */
+#if 0
 #define SD_CMD_SD_APP_GET_MKB                      ((uint8_t)43)  /*!< For SD card only */
 #define SD_CMD_SD_APP_GET_MID                      ((uint8_t)44)  /*!< For SD card only */
 #define SD_CMD_SD_APP_SET_CER_RN1                  ((uint8_t)45)  /*!< For SD card only */
@@ -358,6 +340,7 @@ typedef enum
 #define SD_CMD_SD_APP_SECURE_ERASE                 ((uint8_t)38)  /*!< For SD card only */
 #define SD_CMD_SD_APP_CHANGE_SECURE_AREA           ((uint8_t)49)  /*!< For SD card only */
 #define SD_CMD_SD_APP_SECURE_WRITE_MKB             ((uint8_t)48)  /*!< For SD card only */
+#endif
 
 /**
   * @brief Supported SD Memory Cards
@@ -425,19 +408,6 @@ typedef enum
 /**
   * check the response is long or short
   */
-#define IS_SDMMC_RESPONSE(RESPONSE)     (((RESPONSE) == SDMMC_RESPONSE_NO)    || \
-                                        ((RESPONSE)  == SDMMC_RESPONSE_R1)  || \
-                                        ((RESPONSE)  == SDMMC_RESPONSE_R2)   || \
-                                        ((RESPONSE)  == SDMMC_RESPONSE_R3)   || \
-                                        ((RESPONSE)  == SDMMC_RESPONSE_R6)   || \
-                                        ((RESPONSE)  == SDMMC_RESPONSE_R7))
-
-
-#define IS_SDMMC_RESP(RESP)             (((RESP) == SDMMC_RESP0) || \
-		                                ((RESP) == SDMMC_RESP1)  || \
-		                                ((RESP) == SDMMC_RESP2)  || \
-		                                ((RESP) == SDMMC_RESP3))
-
 
 /** @defgroup SD_Exported_Functions_Group1 Initialization and de-initialization functions
   * @{
@@ -445,42 +415,28 @@ typedef enum
 EMU_SD_RTN Card_SD_Init(SD_HandleTypeDef *hsd, SD_CardInfoTypedef *SDCardInfo);
 EMU_SD_RTN Card_SD_DeInit (SD_HandleTypeDef *hsd);
 
-
-/** @defgroup SD_Exported_Functions_Group2 Input and Output operation functions
-  * @{
-  */
-/* Blocking mode: Polling */
-EMU_SD_RTN Card_SD_ReadBlocks(SD_HandleTypeDef *hsd, uint32_t *pReadBuffer, uint64_t ReadAddr, uint32_t BlockSize, uint32_t NumberOfBlocks);
-EMU_SD_RTN Card_SD_WriteBlocks(SD_HandleTypeDef *hsd, uint32_t *pWriteBuffer, uint64_t WriteAddr, uint32_t BlockSize, uint32_t NumberOfBlocks);
-EMU_SD_RTN Card_SD_Erase(SD_HandleTypeDef *hsd, uint32_t startaddr, uint32_t endaddr);
-/* Non-Blocking mode: Interrupt */
-void Card_SD_IRQHandler(SD_HandleTypeDef *hsd);
-
-/* Callback in non blocking modes (DMA) */
-void Card_SD_XferCpltCallback(SD_HandleTypeDef *hsd);
-void Card_SD_XferErrorCallback(SD_HandleTypeDef *hsd);
-
 /* Non-Blocking mode: DMA */
+EMU_SD_RTN Card_SD_Erase(SD_HandleTypeDef *hsd, uint32_t startaddr, uint32_t endaddr);
 EMU_SD_RTN Card_SD_ReadBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
 EMU_SD_RTN Card_SD_WriteBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
 EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
 EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
-EMU_SD_RTN Card_SD_CheckWriteOperation(SD_HandleTypeDef *hsd, uint32_t Timeout);
-EMU_SD_RTN Card_SD_CheckReadOperation(SD_HandleTypeDef *hsd, uint32_t Timeout);
 
 /** @defgroup SD_Exported_Functions_Group3 Peripheral Control functions
   * @{
   */
-EMU_SD_RTN Card_SD_Get_CardInfo(SD_HandleTypeDef *hsd, SD_CardInfoTypedef *pCardInfo);
-EMU_SD_RTN Card_SD_WideBusOperation_Config(SD_HandleTypeDef *hsd, uint32_t WideMode);
-EMU_SD_RTN Card_SD_StopTransfer(SD_HandleTypeDef *hsd);
-EMU_SD_RTN Card_SD_HighSpeed (SD_HandleTypeDef *hsd);
-EMU_SD_RTN SD_GetState(SD_HandleTypeDef *hsd, uint32_t *CardStatus);
+//EMU_SD_RTN Card_SD_WideBusOperation_Config(SD_HandleTypeDef *hsd, uint32_t WideMode);
+//EMU_SD_RTN Card_SD_StopTransfer(SD_HandleTypeDef *hsd);
+//EMU_SD_RTN Card_SD_HighSpeed (SD_HandleTypeDef *hsd);
+//EMU_SD_RTN SD_GetState(SD_HandleTypeDef *hsd, uint32_t *CardStatus);
 /* Peripheral State functions  ************************************************/
 /** @defgroup SD_Exported_Functions_Group4 Peripheral State functions
   * @{
   */
-EMU_SD_RTN Card_SD_SendSDStatus(SD_HandleTypeDef *hsd, uint32_t *pSDstatus);
+//EMU_SD_RTN Card_SD_SendSDStatus(SD_HandleTypeDef *hsd, uint32_t *pSDstatus);
+
+/* this called from hal layer */
+EMU_SD_RTN Card_SD_Get_CardInfo(SD_HandleTypeDef *hsd, SD_CardInfoTypedef *pCardInfo);
 void SD_IRQHandler(uint32_t vectorNum);
 SD_TRANSFER_STATUS SD_CardStatus(SD_STATUS *e_cardStatus);
 //EMU_SD_RTN Card_SD_GetCardStatus(SD_HandleTypeDef *hsd, HAL_SD_CardStatusTypedef *pCardStatus);

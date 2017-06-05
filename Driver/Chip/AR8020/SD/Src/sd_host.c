@@ -56,6 +56,14 @@ static EMU_SD_RTN wait_cmd_busy(void);
 static EMU_SD_RTN wait_cmd_done(void);
 static EMU_SD_RTN convert_to_transfer(SD_HandleTypeDef *hsd);
 
+typedef enum
+{
+	SD_READ_SINGLE_BLOCK    = 0,  /*!< Read single block operation      */
+	SD_READ_MULTIPLE_BLOCK  = 1,  /*!< Read multiple blocks operation   */
+	SD_WRITE_SINGLE_BLOCK   = 2,  /*!< Write single block operation     */
+	SD_WRITE_MULTIPLE_BLOCK = 3   /*!< Write multiple blocks operation  */
+} SD_BlockOperationTypedef;
+
 static void delay_ms(uint32_t num)
 {
     volatile int i;
