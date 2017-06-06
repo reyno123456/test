@@ -76,18 +76,30 @@ Diskio_drvTypeDef  SD_Driver =
   * @brief  Initializes a Drive
   * @param  lun : not used
   * @retval DSTATUS: Operation status
-  */
+  */  
+extern SD_HandleTypeDef sdhandle;
 DSTATUS SD_initialize(BYTE lun)
 {
   Stat = STA_NOINIT;
 
   /* Configure the uSD device */
+#if 0
   if (HAL_SD_Init() == MSD_OK)
   {
     Stat &= ~STA_NOINIT;
   }
-  // dlog_info("SD initializa success!\n");
-  return Stat;
+#endif
+
+  if(sdhandle.inited == 1)
+  { 
+    dlog_info("SD initializa success!");
+    return 0;
+  }
+  else
+  {
+      dlog_info("SD initializa error!");
+      return 1;
+  }
 }
 
 /**

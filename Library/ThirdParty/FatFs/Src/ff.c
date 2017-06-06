@@ -2315,7 +2315,7 @@ FRESULT find_volume (	/* FR_OK(0): successful, !=0: any error occurred */
 	fs->fs_type = 0;					/* Clear the file system object */
 	fs->drv = LD2PD(vol);				/* Bind the logical drive and a physical drive */
 
-	dlog_info("fs->drv = %d\n", fs->drv);
+	dlog_info("fs->drv = %d", fs->drv);
 
 	stat = disk_initialize(fs->drv);	/* Initialize the physical drive */
 	if (stat & STA_NOINIT)				/* Check if the initialization succeeded */
@@ -2330,7 +2330,7 @@ FRESULT find_volume (	/* FR_OK(0): successful, !=0: any error occurred */
 	bsect = 0;
 	fmt = check_fs(fs, bsect);					/* Load sector 0 and check if it is an FAT boot sector as SFD */
 
-	dlog_info("fmt = %d\n", fmt);
+	dlog_info("fmt = %d", fmt);
 
 	if (fmt == 1 || (!fmt && (LD2PT(vol)))) {	/* Not an FAT boot sector or forced partition number */
 		for (i = 0; i < 4; i++) {			/* Get partition offset */

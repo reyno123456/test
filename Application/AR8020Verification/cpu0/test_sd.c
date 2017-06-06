@@ -5,9 +5,9 @@
 #include "cmsis_os.h"
 #include "hal.h"
 #include "systicks.h"
+#include <string.h>
+#include <stdlib.h>
 
-
-uint8_t pcm_buffer[2048];
 FIL outFile, inFile;
 extern unsigned int command_str2uint(char *str);
 
@@ -75,6 +75,8 @@ void TestFatFs()
 	uint32_t u32_start; 
 
 	/*##-1- Link the micro SD disk I/O driver ##################################*/
+
+    dlog_info("SDPath = 0x%02x 0x%02x 0x%02x 0x%02x", SDPath[3], SDPath[2], SDPath[1], SDPath[0]);
 
 	if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)
 	{
@@ -180,64 +182,85 @@ void TestFatFs1()
 	uint32_t byteswritten, bytesread;                     /* File write/read counts */
 
     int read, write;
-
+    uint8_t *pcm_buffer = malloc(2048);
+    memset(pcm_buffer, 0, 2048);
 
 	/*##-1- Link the micro SD disk I/O driver ##################################*/
 	if (FATFS_LinkDriver(&SD_Driver, SDPath) == 0)
 	{
-		dlog_info("Link success!\n");
+		dlog_info("Link success!");
 		/*##-2- Register the file system object to the FatFs module ##############*/
 		if ((res = f_mount(&SDFatFs, (TCHAR const*)SDPath, 1)) != FR_OK)
 		{
 			/* FatFs Initialization Error */
-			dlog_info("f_mount = %d\n", res);
-			dlog_info("f_mount error!\n");
+			dlog_info("f_mount = %d", res);
+			dlog_info("f_mount error!");
 		}
 		else
 		{
-			dlog_info("f_mount success!\n");
+			dlog_info("f_mount success!");
 			// res = f_mkfs((TCHAR const*)SDPath, 0, 0);
 			// dlog_info("f_mkfs = %d\n", res);
 			/*##-4- Create and Open a new text file object with write access #####*/
-			if (f_open(&outFile, "a.mp3", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+/* 			if (f_open(&outFile, "a.mp3", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) */
+            if (f_open(&outFile, "a.mp3", FA_WRITE) != FR_OK)
 			{
-				/* 'STM32.TXT' file Open for write Error */
-				dlog_info("f_open out error!\n");
+				dlog_info("f_open out error!");
+			}
+			else
+			{
+                dlog_info("f_open a.mp3 success!");                
 			}
 
 			if (f_open(&inFile, "a.wav", FA_READ) != FR_OK)
 			{
-				/* 'STM32.TXT' file Open for write Error */
-				dlog_info("f_open in error!\n");
+				dlog_info("f_open in error!");
 			}
-
+            else
+            {
+                dlog_info("f_open a.wav success!");                
+            }
 			
-			dlog_info("f_open success!\n");
+			dlog_info("f_open success!");
 			/*##-5- Write data to the text file ################################*/
 			
-			do
-			{
-				res = f_read(&inFile, pcm_buffer, 4096, &read);
+			//do
+			//{
+				res = f_read(&inFile, pcm_buffer, 10, &read);
+                dlog_info("%d res = %d", __LINE__, res);
+                
+                dlog_info("pcm_buffer = %s", pcm_buffer);
 
+                if ((read == 0) || (res != FR_OK))
+                {
+                    //break;
+                }
+#if 0
 				if ((read == 0) || (res != FR_OK))
 				{
-					dlog_info("f_read error!\n");
+					dlog_info("f_read error!");
 				}
 				else
 				{
-					// dlog_info("read %d!\n",read);
+					dlog_info("read %d",read);
 					res = f_write(&outFile, pcm_buffer, read, (void *)&write);
 				}
-			} while(read > 0);
+#endif
+                res = f_write(&outFile, pcm_buffer, read, (void *)&write);
+                dlog_info("%d res = %d", __LINE__, res);
+			//} while(read > 0);
 
-			dlog_info("complete!\n");
-			f_close(&inFile);
-			f_close(&outFile);
-		
+			res = f_close(&inFile);
+            dlog_info("%d res = %d", __LINE__, res);
+			res = f_close(&outFile);
+            dlog_info("%d res = %d", __LINE__, res);
+
+			dlog_info("complete!");		
 		}
 	}
 
 	/*##-11- Unlink the micro SD disk I/O driver ###############################*/
+	free(pcm_buffer);
 	res = FATFS_UnLinkDriver(SDPath);
 }
 

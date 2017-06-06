@@ -306,9 +306,6 @@ EMU_SD_RTN Card_SD_ReadBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *d
   Core_SDMMC_WaiteDataOver(hsd->Instance);
 //  Core_SDMMC_WaiteCardBusy(hsd->Instance);
   
-  #ifdef ECHO
-    dlog_info("Stop: send CMD12\n");
-  #endif
   sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_STOP_TRANSMISSION;
   sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
   sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | 
@@ -520,9 +517,6 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransType
 
   free(desc);
 
-    #ifdef ECHO
-    dlog_info("Stop: send CMD12\n");
-  #endif
   sdmmc_cmdinitstructure.Argument         = (uint32_t)(hsd->RCA << 16);
   sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_STOP_TRANSMISSION;
   sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
@@ -594,9 +588,6 @@ EMU_SD_RTN Card_SD_WriteBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *
   Core_SDMMC_WaiteCmdDone(hsd->Instance);
   Core_SDMMC_WaiteDataOver(hsd->Instance);
   
-  // #ifdef ECHO
-  dlog_info("Stop: send CMD12\n");
-  // #endif
   sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_STOP_TRANSMISSION;
   sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
   sdmmc_cmdinitstructure.Attribute        = SDMMC_CMD_START_CMD | 
@@ -710,9 +701,6 @@ EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTyp
     Core_SDMMC_WaiteDataOver(hsd->Instance);
     //Core_SDMMC_WaiteCardBusy(hsd->Instance);
 
-    // #ifdef ECHO
-    //     dlog_info("Stop: send CMD12\n");
-    // #endif
     sdmmc_cmdinitstructure.Argument         = (uint32_t)(hsd->RCA << 16);
     sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_STOP_TRANSMISSION;
     sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
@@ -776,9 +764,6 @@ EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTyp
     Core_SDMMC_WaiteCmdDone(hsd->Instance);
     Core_SDMMC_WaiteDataOver(hsd->Instance);
 
-    // #ifdef ECHO
-    //     dlog_info("Stop: send CMD12\n");
-    // #endif
     sdmmc_cmdinitstructure.Argument         = (uint32_t)(hsd->RCA << 16);
     sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_STOP_TRANSMISSION;
     sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_R1;
@@ -2156,7 +2141,7 @@ static EMU_SD_RTN SD_DMAConfig(SD_HandleTypeDef * hsd, SDMMC_DMATransTypeDef * d
                                             SDMMC_CMD_RESP_EXP;
 
   
-  dlog_info("RINTSTS = 0x%08x", read_reg32((uint32_t *)(0x42000000 + 0x44)));
+/*   dlog_info("RINTSTS = 0x%08x", read_reg32((uint32_t *)(0x42000000 + 0x44))); */
   Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
   Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
   /* Check for error conditions */

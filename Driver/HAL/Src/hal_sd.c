@@ -146,7 +146,7 @@ HAL_RET_T HAL_SD_Read(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uint
 	}
 	
 	if (e_errorState != SD_OK) {
-		dlog_info("Read SD Failed!\n");
+		dlog_info("Read SD Failed!");
 		return HAL_SD_ERR_ERROR;
 	}
 	// dlog_info("Read SD %d Sectors Done. From Sector %d to Sector %d\n", 
