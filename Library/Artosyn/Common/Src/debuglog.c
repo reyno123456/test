@@ -301,9 +301,10 @@ unsigned int DLOG_InputParse(char *buf, unsigned int byte_max)
         }
     }
 
+    *p_src = src;
+    
     if (u8_dataValid == 1)
     {
-        *p_src = src;
         return iByte;
     }
     else
