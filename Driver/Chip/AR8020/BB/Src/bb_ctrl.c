@@ -175,6 +175,8 @@ void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
     BB_uart10_spi_sel(0x00000003);
     BB_SPI_init();
 
+    context.u8_bbStartMcs = boardCfg->u8_bbStartMcs;
+
     BB_regs_init(en_mode, boardCfg);
     RF8003s_init(RF1_8003s_regs, RF2_8003s_regs, boardCfg, en_mode);
 

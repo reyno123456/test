@@ -26,7 +26,9 @@ extern volatile uint32_t g_u32_audioRightInterruptAddr;
 #if (CPU0_CPU1_CORE_PLL_CLK == 200) 
 void RightAudio_44p1K(void) 
 {      
-    __asm volatile (      
+    __asm volatile (
+    "cpsid i \n" /* Errata workaround. */ 
+    "stmdb sp!, {r4-r11} \n"      
     "ldr  r0, =g_u32_audioRightInterruptAddr\n"
     "ldr  r1, [r0]\n" //clear interrupt
     "mov  r3, #0xff\n"
@@ -362,6 +364,8 @@ void RightAudio_44p1K(void)
     "str  r4, [r0]\n"
     "CountGpioInterruptRightZero44:\n"
     "str  r4, [r5]\n"
+    "ldmia sp!, {r4-r11} \n"
+    "cpsie i\n" /* Errata workaround. */
     );
     //dlog_info("%d %x \n",g_u32_audioDataReady,g_u32_audioDataConut);
 }
@@ -371,7 +375,9 @@ void RightAudio_44p1K(void)
 #if (CPU0_CPU1_CORE_PLL_CLK == 100)
 void RightAudio_44p1K(void) 
 {      
-    __asm volatile (      
+    __asm volatile (
+    "cpsid i \n" /* Errata workaround. */ 
+    "stmdb sp!, {r4-r11} \n"       
     "ldr  r0, =g_u32_audioRightInterruptAddr\n"
     "ldr  r1, [r0]\n" //clear interrupt
     "mov  r3, #0xff\n"
@@ -579,6 +585,8 @@ void RightAudio_44p1K(void)
     "str  r4, [r0]\n"
     "CountGpioInterruptRightZero44:\n"
     "str  r4, [r5]\n"
+    "ldmia sp!, {r4-r11} \n"
+    "cpsie i\n" /* Errata workaround. */
     );
     //dlog_info("%d %x \n",g_u32_audioDataReady,g_u32_audioDataConut);
 }

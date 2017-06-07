@@ -154,6 +154,8 @@ typedef struct
     STRU_FRQ_CHANNEL    stru_itRegs;
     ENUM_BB_MODE        en_bbmode;
     uint8_t             agclevel;
+
+    uint8_t             u8_bbStartMcs;
 }CONTEXT;
 
 

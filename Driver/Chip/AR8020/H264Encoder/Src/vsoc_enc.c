@@ -115,7 +115,27 @@ void vsoc_enc_enable(){
     WRITE_WORD(VSOC_ENC_REG_BASE + (0<<2), rd_enc_reg) ;
 }
 
-
+const int bridx2br[19] = { // update brindex_2_br look-up table, lhu, 2017/06/06
+    8000000 ,
+    600000  ,
+    1200000 ,
+    2400000 ,
+    3000000 ,
+    3500000 ,
+    4000000 ,
+    4800000 ,
+    5000000 ,
+    6000000 ,
+    7000000 ,
+    7500000 ,
+    9000000 ,
+    10000000,
+    11000000,
+    12000000,
+    13000000,
+    14000000,
+    15000000
+};
 void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsigned int fps, unsigned int br, ENUM_ENCODER_INPUT_SRC src) {
     if ((src >= ENCODER_INPUT_SRC_HDMI_0) && (src <= ENCODER_INPUT_SRC_DVP_1))
     {
@@ -173,12 +193,7 @@ void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsig
     else
         WRITE_WORD((ENC_REG_ADDR+(0x06<<2)),0x20300806);
 
-    if ( br == 8)
-        WRITE_WORD((ENC_REG_ADDR+(0x07<<2)),500000); //500kbps
-    else if ( br == 0)
-        WRITE_WORD((ENC_REG_ADDR+(0x07<<2)),8000000); //8Mbps
-    else
-        WRITE_WORD((ENC_REG_ADDR+(0x07<<2)),(br*1000000));
+    WRITE_WORD((ENC_REG_ADDR+(0x07<<2)),bridx2br[br]);
     WRITE_WORD((ENC_REG_ADDR+(0x08<<2)),0x04040f00); // default ipratiomax=15, lhu
     WRITE_WORD((ENC_REG_ADDR+(0x09<<2)),0x00005900);
     if ((src >= ENCODER_INPUT_SRC_HDMI_0) && (src <= ENCODER_INPUT_SRC_DVP_1))
@@ -290,12 +305,7 @@ void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsig
     else
         WRITE_WORD((ENC_REG_ADDR+(0x1f<<2)),0x20300806);
 
-    if ( br == 8)
-        WRITE_WORD((ENC_REG_ADDR+(0x20<<2)),500000); //500kbps
-    else if ( br == 0)
-        WRITE_WORD((ENC_REG_ADDR+(0x20<<2)),8000000); //8Mbps
-    else
-        WRITE_WORD((ENC_REG_ADDR+(0x20<<2)),(br*1000000));
+    WRITE_WORD((ENC_REG_ADDR+(0x20<<2)),bridx2br[br]);
     WRITE_WORD((ENC_REG_ADDR+(0x21<<2)),0x04040f00); // default ipratiomax=15, lhu
     WRITE_WORD((ENC_REG_ADDR+(0x22<<2)),0x00003000);
     if ((src >= ENCODER_INPUT_SRC_HDMI_0) && (src <= ENCODER_INPUT_SRC_DVP_1))

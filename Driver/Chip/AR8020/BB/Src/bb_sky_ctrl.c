@@ -88,7 +88,7 @@ void BB_SKY_start(void)
     INTR_NVIC_SetIRQPriority(BB_RX_ENABLE_VECTOR_NUM, INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_BB_RX,0));
     INTR_NVIC_EnableIRQ(BB_RX_ENABLE_VECTOR_NUM);
 
-    context.qam_ldpc = 0;
+    context.qam_ldpc = context.u8_bbStartMcs;
     sky_set_McsByIndex(context.qam_ldpc);
 
     BB_UARTComInit( NULL ); 
@@ -508,8 +508,8 @@ void sky_physical_link_process(void)
             
             if ( context.brc_mode == AUTO )
             {
-                context.qam_ldpc = 0;
-                sky_set_McsByIndex(0);
+                context.qam_ldpc = context.u8_bbStartMcs;
+                sky_set_McsByIndex( context.qam_ldpc );
             }
             
             context.dev_state = CHECK_ID_MATCH;

@@ -48,7 +48,7 @@ STRU_CALC_DIST_DATA s_st_calcDistData =
 void BB_GRD_start(void)
 {
     context.dev_state = INIT_DATA;
-    context.qam_ldpc = 0;
+    context.qam_ldpc = context.u8_bbStartMcs;
     context.flag_mrs = 0;
 
     grd_set_txmsg_mcs_change(context.qam_ldpc);
@@ -224,7 +224,7 @@ void grd_fec_judge(void)
                     context.qam_mode= MOD_BPSK;
                     context.ldpc    = LDPC_1_2;
 
-                    context.qam_ldpc = 0;
+                    context.qam_ldpc = context.u8_bbStartMcs;
                     grd_set_txmsg_mcs_change(context.qam_ldpc);
                 }
             }
@@ -835,7 +835,7 @@ static void grd_handle_MCS_mode_cmd(ENUM_RUN_MODE mode)
 	        context.qam_ldpc = 5;
 	    }
     
-        grd_set_txmsg_mcs_change( context.qam_ldpc );        
+        grd_set_txmsg_mcs_change( context.qam_ldpc );
     }
 }
 
@@ -995,7 +995,7 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 if ( context.brc_mode == MANUAL)
                 {
                     context.brc_bps[0] = BB_get_bitrateByMcs(context.qam_ldpc);
-                    context.brc_bps[1] = BB_get_bitrateByMcs(context.qam_ldpc);                
+                    context.brc_bps[1] = BB_get_bitrateByMcs(context.qam_ldpc);
                 }
             }
     

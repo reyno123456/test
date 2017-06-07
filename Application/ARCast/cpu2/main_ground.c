@@ -29,8 +29,6 @@ int main(void)
     
     HAL_BB_InitGround();
     
-    BB_add_cmds(14,0x80, 0x56, 0x0e);
-
     /* We should never get here as control is now taken by the scheduler */
     for( ;; )
     {

@@ -43,7 +43,7 @@ static int8_t UsbSendFormat(STRU_ARCAST_AVFORMAT_SKY_TO_GROUND *p_format)
     st_usbSendFormat.u16_videoWidth = p_format->u16_videoWidth;
     st_usbSendFormat.u8_videoFrameRate = p_format->u8_videoFrameRate;
 
-    HAL_USB_CustomerSendData((uint8_t*)(&st_usbSendFormat), sizeof(st_usbSendFormat));
+    HAL_USB_CustomerSendData((uint8_t*)(&st_usbSendFormat), sizeof(STRU_ARCAST_AVFORMAT_USB_SEND));
 }
 
 static void rcvFormatHandler_ground(void *p)
@@ -84,8 +84,11 @@ void Common_AVFORMAT_VideoSysEventCallBack(void* p)
         DLOG_INFO("video width=%d hight=%d framerate=%d ",  g_st_formatChange.u16_videoWidth, 
                                                             g_st_formatChange.u16_videoHight, 
                                                             g_st_formatChange.u8_videoFrameRate);
-
-        HAL_BB_UartComSendMsg(BB_UART_COM_SESSION_3, (uint8_t*)(&g_st_formatChange), sizeof(STRU_ARCAST_AVFORMAT_SKY_TO_GROUND)); 
+        
+        if ((0 != g_st_formatChange.u16_videoWidth) || (0 != g_st_formatChange.u16_videoHight) || (0 != g_st_formatChange.u8_videoFrameRate))
+        {
+            HAL_BB_UartComSendMsg(BB_UART_COM_SESSION_3, (uint8_t*)(&g_st_formatChange), sizeof(STRU_ARCAST_AVFORMAT_SKY_TO_GROUND)); 
+        }
     }
 }
 

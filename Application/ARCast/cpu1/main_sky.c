@@ -22,12 +22,10 @@ int main(void)
 
     CONSOLE_Init();        
     dlog_info("cpu1 start!!!\n"); 
-/*    
     while (1)
     {
       SYS_EVENT_Process();
     }
- */   
     STRU_HAL_SOFTI2S_INIT st_audioConfig = {AUDIO_DATA_START,HAL_GPIO_NUM35,HAL_GPIO_NUM70,HAL_GPIO_NUM20};
     HAL_SOFTI2S_Init(&st_audioConfig);
     HAL_SOFTI2S_Funct();

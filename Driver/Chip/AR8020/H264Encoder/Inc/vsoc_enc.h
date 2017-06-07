@@ -2,7 +2,7 @@
 #define _VSOC_ENC_
 
 #include "sys_event.h"
-
+extern const int bridx2br[19];
 
 typedef struct ENC_REG_STRUCT {
    

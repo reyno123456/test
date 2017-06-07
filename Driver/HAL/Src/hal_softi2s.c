@@ -69,8 +69,8 @@ HAL_RET_T HAL_SOFTI2S_Init(STRU_HAL_SOFTI2S_INIT *st_i2sInit)
 
     HAL_GPIO_InPut(st_i2sInit->e_audioDataGpioNum);    
     //left
-    HAL_NVIC_SetPriority(HAL_NVIC_GPIO_INTR_N0_VECTOR_NUM + (st_i2sInit->e_audioLeftGpioNum>>5),5,0);
-    HAL_NVIC_SetPriority(HAL_NVIC_GPIO_INTR_N0_VECTOR_NUM + (st_i2sInit->e_audioRightGpioNum>>5),5,0);
+    HAL_NVIC_SetPriority(HAL_NVIC_GPIO_INTR_N0_VECTOR_NUM + (st_i2sInit->e_audioLeftGpioNum>>5),4,0);
+    HAL_NVIC_SetPriority(HAL_NVIC_GPIO_INTR_N0_VECTOR_NUM + (st_i2sInit->e_audioRightGpioNum>>5),4,0);
 
     HAL_GPIO_RegisterInterrupt(st_i2sInit->e_audioLeftGpioNum, HAL_GPIO_EDGE_SENUMSITIVE, HAL_GPIO_ACTIVE_LOW, NULL);
 

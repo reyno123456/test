@@ -26,7 +26,9 @@ extern volatile uint32_t g_u32_audioLeftInterruptAddr;
 #if (CPU0_CPU1_CORE_PLL_CLK == 200) 
 void LeftAudio_48K(void) 
 {      
-    __asm volatile (      
+    __asm volatile (
+    "cpsid i \n" /* Errata workaround. */ 
+    "stmdb sp!, {r4-r11} \n"       
     "ldr  r0, =g_u32_audioLeftInterruptAddr\n"
     "ldr  r1, [r0]\n" //clear interrupt
     "mov  r3, #0xff\n"
@@ -327,6 +329,8 @@ void LeftAudio_48K(void)
     "str  r4, [r0]\n"
     "CountGpioInterruptLeftZero48:\n"
     "str  r4, [r5]\n"
+    "ldmia sp!, {r4-r11} \n"
+    "cpsie i\n" /* Errata workaround. */
     );
     //dlog_info("%d %x \n",g_u32_audioDataReady,g_u32_audioDataConut);
 }
@@ -335,7 +339,9 @@ void LeftAudio_48K(void)
 #if (CPU0_CPU1_CORE_PLL_CLK == 100)
 void LeftAudio_48K(void) 
 {      
-    __asm volatile (      
+    __asm volatile (
+    "cpsid i \n" /* Errata workaround. */ 
+    "stmdb sp!, {r4-r11} \n"       
     "ldr  r0, =g_u32_audioLeftInterruptAddr\n"
     "ldr  r1, [r0]\n" //clear interrupt
     "mov  r3, #0xff\n"
@@ -524,6 +530,8 @@ void LeftAudio_48K(void)
     "str  r4, [r0]\n"
     "CountGpioInterruptLeftZero44:\n"
     "str  r4, [r5]\n"
+    "ldmia sp!, {r4-r11} \n"
+    "cpsie i\n" /* Errata workaround. */
     );
     //dlog_info("%d %x \n",g_u32_audioDataReady,g_u32_audioDataConut);
 }

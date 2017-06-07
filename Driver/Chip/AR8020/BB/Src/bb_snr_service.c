@@ -586,7 +586,7 @@ void grd_judge_qam_mode(void)
         context.qam_ldpc++;
     }
     else if ( ( QAMDOWN == snr_qamupdown || QAMDOWN == ldpc_qamupdown )  //SNR or LDPC error 
-               && context.qam_ldpc > 0 )
+               && context.qam_ldpc > context.u8_bbStartMcs)
     {
         context.qam_ldpc--;
     }
