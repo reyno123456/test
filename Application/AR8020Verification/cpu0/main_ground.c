@@ -24,6 +24,8 @@ static void IO_Task(void const *argument)
 {
     while (1)
     {
+        HAL_SRAM_CheckChannelTimeout();
+
         SYS_EVENT_Process();
     }
 }

@@ -4,11 +4,14 @@
 #include "usbd_def.h"
 #include "usbd_hid.h"
 #include "reg_rw.h"
+#include "bb_types.h"
+#include "systicks.h"
 
 volatile uint32_t               sramReady0;
 volatile uint32_t               sramReady1;
 extern USBD_HandleTypeDef       USBD_Device[USBD_PORT_NUM];
 volatile uint8_t                g_u8DataPathReverse = 0;
+uint32_t                        g_TickRecord[2];
 
 void SRAM_Ready0IRQHandler(uint32_t u32_vectorNum)
 {
@@ -56,6 +59,7 @@ void SRAM_Ready0IRQHandler(uint32_t u32_vectorNum)
         }
         else
         {
+            g_TickRecord[0] = SysTicks_GetTickCount();
             sramReady0 = 1;
         }
     }
@@ -108,6 +112,7 @@ void SRAM_Ready1IRQHandler(uint32_t u32_vectorNum)
         }
         else
         {
+            g_TickRecord[1] = SysTicks_GetTickCount();
             sramReady1 = 1;
         }
     }
@@ -195,6 +200,30 @@ void SRAM_SKY_DisableBypassVideoConfig(uint32_t channel)
         regValue   &= ~SRAM_VIEW1_ENABLE;
 
         Reg_Write32(SRAM_VIEW1_ENABLE_ADDR, regValue);
+    }
+}
+
+
+void SRAM_CheckTimeout(void)
+{
+    if (sramReady0)
+    {
+        if ((SysTicks_GetDiff(g_TickRecord[0], SysTicks_GetTickCount())) >= SRAM_TIMEOUT_THRESHOLD)
+        {
+            dlog_error("channel 0 timeout");
+
+            SRAM_Ready0Confirm();
+        }
+    }
+
+    if (sramReady1)
+    {
+        if ((SysTicks_GetDiff(g_TickRecord[1], SysTicks_GetTickCount())) >= SRAM_TIMEOUT_THRESHOLD)
+        {
+            dlog_error("channel 1 timeout");
+
+            SRAM_Ready1Confirm();
+        }
     }
 }
 

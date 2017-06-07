@@ -80,6 +80,8 @@ void HAL_SRAM_OpenVideo(void);
 */
 void HAL_SRAM_CloseVideo(void);
 
+void HAL_SRAM_CheckChannelTimeout(void);
+
 #ifdef __cplusplus
 }
 #endif

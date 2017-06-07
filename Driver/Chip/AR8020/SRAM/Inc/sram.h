@@ -28,12 +28,14 @@
 #define SRAM_BUFF_0_ADDRESS             SRAM_BB_VIDEO_BUFFER_0_ST_ADDRESS
 #define SRAM_BUFF_1_ADDRESS             SRAM_BB_VIDEO_BUFFER_1_ST_ADDRESS
 
+#define SRAM_TIMEOUT_THRESHOLD          100
+
 void SRAM_Ready0IRQHandler(uint32_t u32_vectorNum);
 void SRAM_Ready1IRQHandler(uint32_t u32_vectorNum);
 void SRAM_Ready0Confirm(void);
 void SRAM_Ready1Confirm(void);
 void SRAM_GROUND_ReceiveVideoConfig(void);
-
+void SRAM_CheckTimeout(void);
 
 extern volatile uint32_t  sramReady0;
 extern volatile uint32_t  sramReady1;

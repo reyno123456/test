@@ -656,7 +656,11 @@ uint8_t USBD_HID_SendReport(USBD_HandleTypeDef  *pdev,
         {
             ret = USBD_BUSY;
 
-            USBD_HID_ErrorDetect(pdev);
+            if (((ep_addr | 0x80) != HID_EPIN_VIDEO_ADDR)&&
+                ((ep_addr | 0x80) != HID_EPIN_AUDIO_ADDR))
+            {
+                USBD_HID_ErrorDetect(pdev);
+            }
         }
     }
     else

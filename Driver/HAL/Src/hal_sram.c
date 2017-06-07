@@ -83,4 +83,8 @@ HAL_RET_T HAL_SRAM_DisableSkyBypassVideo(ENUM_HAL_SRAM_VIDEO_CHANNEL e_sramVideo
 }
 
 
+void HAL_SRAM_CheckChannelTimeout(void)
+{
+    SRAM_CheckTimeout();
+}
 
