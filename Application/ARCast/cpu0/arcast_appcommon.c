@@ -24,26 +24,26 @@
 
 static STRU_ARCAST_AVFORMAT_SKY_TO_GROUND g_st_formatChange;
 static STRU_ARCAST_AVFORMAT_SKY_TO_GROUND g_st_formatChangeTmp;
+static STRU_ARCAST_AVFORMAT_USB_SEND      g_st_usbSendFormat;
 
 static int8_t UsbSendFormat(STRU_ARCAST_AVFORMAT_SKY_TO_GROUND *p_format)
 {
-    STRU_ARCAST_AVFORMAT_USB_SEND st_usbSendFormat;
-    st_usbSendFormat.u8_headArray[0] = 'a';
-    st_usbSendFormat.u8_headArray[1] = 'r';
-    st_usbSendFormat.u8_headArray[2] = 'c';
-    st_usbSendFormat.u8_headArray[3] = 'a';
-    st_usbSendFormat.u8_headArray[4] = 's';
-    st_usbSendFormat.u8_headArray[5] = 't';
-    st_usbSendFormat.u16_version = 0x0001;
-    st_usbSendFormat.u8_audioOnOrOff = 1;
-    st_usbSendFormat.u8_audioChannel = 2;
-    st_usbSendFormat.u8_audioBitRate = 128;
-    st_usbSendFormat.u16_audioSamplerate = p_format->u16_audioSamplerate;
-    st_usbSendFormat.u16_videoHight = p_format->u16_videoHight;
-    st_usbSendFormat.u16_videoWidth = p_format->u16_videoWidth;
-    st_usbSendFormat.u8_videoFrameRate = p_format->u8_videoFrameRate;
-
-    HAL_USB_CustomerSendData((uint8_t*)(&st_usbSendFormat), sizeof(STRU_ARCAST_AVFORMAT_USB_SEND));
+    g_st_usbSendFormat.u8_headArray[0] = 'a';
+    g_st_usbSendFormat.u8_headArray[1] = 'r';
+    g_st_usbSendFormat.u8_headArray[2] = 'c';
+    g_st_usbSendFormat.u8_headArray[3] = 'a';
+    g_st_usbSendFormat.u8_headArray[4] = 's';
+    g_st_usbSendFormat.u8_headArray[5] = 't';
+    g_st_usbSendFormat.u16_version = 0x0001;
+    g_st_usbSendFormat.u8_audioOnOrOff = 1;
+    g_st_usbSendFormat.u8_audioChannel = 2;
+    g_st_usbSendFormat.u8_audioBitRate = 128;
+    g_st_usbSendFormat.u16_audioSamplerate = p_format->u16_audioSamplerate;
+    g_st_usbSendFormat.u16_videoHight = p_format->u16_videoHight;
+    g_st_usbSendFormat.u16_videoWidth = p_format->u16_videoWidth;
+    g_st_usbSendFormat.u8_videoFrameRate = p_format->u8_videoFrameRate;
+    
+	HAL_USB_CustomerSendData((uint8_t*)(&g_st_usbSendFormat), sizeof(STRU_ARCAST_AVFORMAT_USB_SEND));
 }
 
 static void rcvFormatHandler_ground(void *p)
@@ -116,8 +116,7 @@ void Common_AVFORMAT_AudioSysEventCallBack(void* p)
     st_audioConfig.u32_newPcmDataFlagAddr = SRAM_MODULE_SHARE_AUDIO_PCM;
     st_audioConfig.u8_channel = 2;
     HAL_MP3EncodePcmInit(&st_audioConfig, ENUM_HAL_SRAM_DATA_PATH_REVERSE);
-    
-    
+        
     HAL_BB_UartComSendMsg(BB_UART_COM_SESSION_3, (uint8_t*)(&g_st_formatChange), sizeof(STRU_ARCAST_AVFORMAT_SKY_TO_GROUND));
 }
 
