@@ -1,6 +1,8 @@
 #ifndef __ARCAST_APPCOMMON_H__
 #define __ARCAST_APPCOMMON_H__
 
+#define ARCAST_COMMAND_STATUS                   (1)
+
 typedef struct 
 {
     uint8_t  u8_headArray[6];
