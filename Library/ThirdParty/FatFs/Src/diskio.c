@@ -155,10 +155,18 @@ DRESULT disk_ioctl (
   */
 __attribute__((weak)) DWORD get_fattime (void)
 {
+#if 0
     dlog_info("%d time = %d", __LINE__, SysTicks_GetTickCount());
     return (DWORD)SysTicks_GetTickCount();
+#endif
+    return ((2017UL-1980) << 25) /* Year = 2017 */  
+            | (11UL << 21) /* Month = 11 */  
+            | (2UL << 16) /* Day = 2 */  
+            | (15U << 11) /* Hour = 15 */  
+            | (0U << 5) /* Min = 0 */  
+            | (0U >> 1) /* Sec = 0 */  
+    ;  
 /*   return 0; */
 }
-
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
 
