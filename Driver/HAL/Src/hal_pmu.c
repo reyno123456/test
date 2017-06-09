@@ -17,7 +17,9 @@ History:
 #include "hal_ret_type.h"
 #include "hal_pmu.h"
 
+#ifdef ARCAST
 #include "pmu_rtp5903.h"
+#endif
 
 HAL_RET_T HAL_PMU_Init(void)
 {
