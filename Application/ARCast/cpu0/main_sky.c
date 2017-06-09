@@ -23,7 +23,7 @@
 #include "it6602.h"
 #include "hal_sram.h"
 #include "arcast_appcommon.h"
-#include "pmu_rtp5903.h"
+#include "hal_pmu.h"
 
 
 void CONSOLE_Init(void)
@@ -54,7 +54,7 @@ int main(void)
     CONSOLE_Init();
     dlog_info("cpu0 start!!! \n");
     
-    //Pmu_Rtp5903Configure();
+    //HAL_PMU_Init();
     
     HAL_GPIO_InPut(HAL_GPIO_NUM99);
 

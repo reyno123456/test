@@ -14,7 +14,7 @@
 #include "hal_gpio.h"
 #include "hal_uart.h"
 #include "arcast_appcommon.h"
-#include "pmu_rtp5903.h"
+#include "hal_pmu.h"
 
 void CONSOLE_Init(void)
 {
@@ -24,7 +24,7 @@ void CONSOLE_Init(void)
 
 static void GenericInitial(void const *argument)
 {
-    //Pmu_Rtp5903Configure();
+    //HAL_PMU_Init();
     Common_AVFORMATSysEventGroundInit();
     vTaskDelete(NULL);
 }
