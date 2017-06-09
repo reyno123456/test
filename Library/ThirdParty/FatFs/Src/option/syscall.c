@@ -4,9 +4,12 @@
 /*------------------------------------------------------------------------*/
 
 #include <stdlib.h>		/* ANSI memory controls */
-#include "../ff.h"
+/* #include "../ff.h" */
+#include "ffconf.h"
+#include "integer.h"
+#include "cmsis_os.h"
 
-#if _FS_REENTRANT
+#if FF_FS_REENTRANT
 /*-----------------------------------------------------------------------
  Create a Synchronization Object
 ------------------------------------------------------------------------
@@ -17,7 +20,7 @@
 
 int ff_cre_syncobj (	/* TRUE:Function succeeded, FALSE:Could not create due to any error */
 	BYTE vol,			/* Corresponding logical drive being processed */
-	_SYNC_t *sobj		/* Pointer to return the created sync object */
+	osSemaphoreId *sobj		/* Pointer to return the created sync object */
 )
 {
   int ret;
@@ -40,7 +43,7 @@ int ff_cre_syncobj (	/* TRUE:Function succeeded, FALSE:Could not create due to a
 */
 
 int ff_del_syncobj (	/* TRUE:Function succeeded, FALSE:Could not delete due to any error */
-	_SYNC_t sobj		/* Sync object tied to the logical drive to be deleted */
+	osSemaphoreId sobj		/* Sync object tied to the logical drive to be deleted */
 )
 {
   osSemaphoreDelete (sobj);
@@ -57,12 +60,12 @@ int ff_del_syncobj (	/* TRUE:Function succeeded, FALSE:Could not delete due to a
 */
 
 int ff_req_grant (	/* TRUE:Got a grant to access the volume, FALSE:Could not get a grant */
-	_SYNC_t sobj	/* Sync object to wait */
+	osSemaphoreId sobj	/* Sync object to wait */
 )
 {
   int ret = 0;
   
-  if(osSemaphoreWait(sobj, _FS_TIMEOUT) == osOK)
+  if(osSemaphoreWait(sobj, FF_FS_TIMEOUT) == osOK)
   {
     ret = 1;
   }
@@ -79,7 +82,7 @@ int ff_req_grant (	/* TRUE:Got a grant to access the volume, FALSE:Could not get
 */
 
 void ff_rel_grant (
-	_SYNC_t sobj	/* Sync object to be signaled */
+	osSemaphoreId sobj	/* Sync object to be signaled */
 )
 {
   osSemaphoreRelease(sobj);

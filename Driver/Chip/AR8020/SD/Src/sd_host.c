@@ -260,12 +260,14 @@ EMU_SD_RTN Card_SD_ReadBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *d
   /* Initialize handle flags */
   SD_STATUS current_state;
   current_state = sd_getState(hsd);
-  dlog_info("%d state = %d", __LINE__, current_state);
+/*   dlog_info("%d state = %d", __LINE__, current_state); */
+#if 0
   if (current_state == SD_CARD_PROGRAMMING)
   {
     dlog_error("error");
     return SD_FAIL;
   }
+#endif
   
   hsd->SdTransferCplt  = 0;
   hsd->SdTransferErr   = SD_OK;
@@ -336,7 +338,7 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransType
   SD_STATUS current_state;
   Core_SDMMC_WaiteCardBusy(hsd->Instance);  
   current_state = sd_getState(hsd);
-  dlog_info("%d state = %d", __LINE__, current_state);
+/*   dlog_info("%d state = %d", __LINE__, current_state); */
   if (current_state == SD_CARD_PROGRAMMING)
   {
     dlog_error("error");
@@ -541,7 +543,7 @@ EMU_SD_RTN Card_SD_WriteBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *
   EMU_SD_RTN errorstate = SD_OK;
   IDMAC_DescTypeDef desc = {0};
   
-  dlog_info("%d state = %d", __LINE__, sd_getState(hsd));
+/*   dlog_info("%d state = %d", __LINE__, sd_getState(hsd)); */
 
   Core_SDMMC_WaiteCardBusy(hsd->Instance);  
   convert_to_transfer(hsd);
@@ -613,7 +615,7 @@ EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTyp
     uint32_t SectorDivid = dma->SectorNum / BuffSize;
     uint32_t SectorRmd = dma->SectorNum % BuffSize;    
 
-    dlog_info("%d state = %d", __LINE__, sd_getState(hsd));
+/*     dlog_info("%d state = %d", __LINE__, sd_getState(hsd)); */
 
     Core_SDMMC_WaiteCardBusy(hsd->Instance);  
     convert_to_transfer(hsd);
@@ -1344,6 +1346,7 @@ static EMU_SD_RTN IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef *SDC
 #endif
 
     /*switch frequency*/
+#if 0
     sdmmc_cmdinitstructure.Argument  = 0x00000000;
     sdmmc_cmdinitstructure.CmdIndex  = SD_CMD_GO_IDLE_STATE;
     sdmmc_cmdinitstructure.Response  = SDMMC_RESPONSE_NO;
@@ -1360,6 +1363,7 @@ static EMU_SD_RTN IdentificateCard(SD_HandleTypeDef *hsd,SD_CardInfoTypedef *SDC
     {
         return -1;
     }
+#endif
 
     switch(hsd->SpeedMode)
     {

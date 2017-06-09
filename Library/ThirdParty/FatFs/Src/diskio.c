@@ -38,6 +38,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "diskio.h"
 #include "ff_gen_drv.h"
+#include "systicks.h"
+#include "debuglog.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -151,9 +153,11 @@ DRESULT disk_ioctl (
   * @param  None
   * @retval Time in DWORD
   */
-__weak DWORD get_fattime (void)
+__attribute__((weak)) DWORD get_fattime (void)
 {
-  return 0;
+    dlog_info("%d time = %d", __LINE__, SysTicks_GetTickCount());
+    return (DWORD)SysTicks_GetTickCount();
+/*   return 0; */
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

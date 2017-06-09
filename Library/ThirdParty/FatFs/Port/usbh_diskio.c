@@ -38,7 +38,7 @@
 extern USBH_HandleTypeDef  hUSBHost[USBH_PORT_NUM];
 #if _USE_BUFF_WO_ALIGNMENT == 0
 /* Local buffer use to handle buffer not aligned 32bits*/
-static DWORD scratch[_MAX_SS / 4];
+static DWORD scratch[FF_MAX_SS / 4];
 #endif
 
 /* Private function prototypes -----------------------------------------------*/
@@ -123,7 +123,7 @@ DRESULT USBH_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
       status = USBH_MSC_Read(&hUSBHost[g_mscPortId&0x01], lun, sector + count, (uint8_t *)scratch, 1);
       if(status == USBH_OK)
       {
-        memcpy (&buff[count * _MAX_SS] ,scratch, _MAX_SS);
+        memcpy (&buff[count * FF_MAX_SS] ,scratch, FF_MAX_SS);
       }
       else
       {
@@ -188,7 +188,7 @@ DRESULT USBH_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
 #if _USE_BUFF_WO_ALIGNMENT == 0
     while (count--)
     {
-      memcpy (scratch, &buff[count * _MAX_SS], _MAX_SS);
+      memcpy (scratch, &buff[count * FF_MAX_SS], FF_MAX_SS);
       
       status = USBH_MSC_Write(&hUSBHost[g_mscPortId&0x01], lun, sector + count, (BYTE *)scratch, 1) ;
       if(status == USBH_FAIL)

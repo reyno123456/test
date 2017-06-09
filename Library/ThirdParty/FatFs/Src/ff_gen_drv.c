@@ -83,7 +83,7 @@ uint8_t FATFS_LinkDriverEx(Diskio_drvTypeDef *drv, char *path, uint8_t lun)
   path[1] = ':';
   path[2] = '/';
   path[3] = 0;
-  dlog_info("\npath = %s", path);
+  dlog_info("path = %s", path);
   ret = 0;
 
   return ret;

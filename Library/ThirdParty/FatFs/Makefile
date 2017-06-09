@@ -34,8 +34,9 @@ endif
 SRC_C   := Src/ff.c \
            Src/ff_gen_drv.c \
            Src/diskio.c \
+           Src/option/syscall.c \
            Port/sd_diskio.c \
-           Port/usbh_diskio.c
+           Port/usbh_diskio.c \
 
 
 INCDIRS := -IInc \
@@ -48,7 +49,10 @@ INCDIRS := -IInc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SD/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc \
            -I$(TOP_DIR)/Driver/HAL/Inc/ \
-           -I$(TOP_DIR)/Library/Artosyn/Common/Inc
+           -I$(TOP_DIR)/Library/Artosyn/Common/Inc \
+           -I$(TOP_DIR)/Kernel/FreeRTOS/CMSIS_RTOS \
+           -I$(TOP_DIR)/Kernel/FreeRTOS/include \
+           -I$(TOP_DIR)/Kernel/FreeRTOS/portable/GCC/ARM_CM7/r0p1
 
 # object file(s)
 OBJ_C   := $(patsubst %.c,%.o,$(SRC_C))

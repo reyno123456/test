@@ -9,7 +9,31 @@
 #include <stdlib.h>
 
 FIL outFile, inFile;
+FATFS SDFatFs;  /* File system object for SD card logical drive */
+FIL MyFile, MyFileIn;     /* File object */
+char SDPath[4] = {'0', ':', '/', 0}; 
+
+extern Diskio_drvTypeDef  SD_Driver;
 extern unsigned int command_str2uint(char *str);
+
+static FRESULT open_append (
+    FIL* fp,            /* [OUT] File object to create */
+    const char* path    /* [IN]  File name to be opened */
+)
+{
+    FRESULT fr;
+
+    /* Opens an existing file. If not exist, creates a new file. */
+    fr = f_open(fp, path, FA_WRITE | FA_OPEN_ALWAYS);
+    if (fr == FR_OK) {
+        /* Seek to end of the file to append data */
+        fr = f_lseek(fp, f_size(fp));
+        dlog_info("%d, f_size(fp) = %d", __LINE__, f_size(fp));
+        if (fr != FR_OK)
+            f_close(fp);
+    }
+    return fr;
+}
 
 void TestWR()
 {
@@ -73,11 +97,7 @@ void TestFatFs()
 	static char name[] = "myfile1.txt";
 
 	uint32_t u32_start; 
-
-	/*##-1- Link the micro SD disk I/O driver ##################################*/
-
-    dlog_info("SDPath = 0x%02x 0x%02x 0x%02x 0x%02x", SDPath[3], SDPath[2], SDPath[1], SDPath[0]);
-
+    
 	if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)
 	{
 		dlog_info("Link error!");
@@ -85,18 +105,17 @@ void TestFatFs()
 	}
 	
 	dlog_info("Link success!");
-	/*##-2- Register the file system object to the FatFs module ##############*/
+
 	if ((res = f_mount(&SDFatFs, (TCHAR const*)SDPath, 1)) != FR_OK)
 	{
-		/* FatFs Initialization Error */
 		dlog_info("f_mount = %d", res);
 		dlog_info("f_mount error!");
 	}
 	else
 	{
 		dlog_info("%d f_mount success!", __LINE__);
-		// res = f_mkfs((TCHAR const*)SDPath, 0, 0);
-		// dlog_info("f_mkfs = %d\n", res);
+		//res = f_mkfs((TCHAR const*)SDPath, 0, 0);
+		//dlog_info("f_mkfs = %d\n", res);
 		/*##-4- Create and Open a new text file object with write access #####*/
 /* 		if (f_open(&MyFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) */
 		name[6] += 1;
@@ -203,13 +222,15 @@ void TestFatFs1()
 			// dlog_info("f_mkfs = %d\n", res);
 			/*##-4- Create and Open a new text file object with write access #####*/
 /* 			if (f_open(&outFile, "a.mp3", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) */
-            if (f_open(&outFile, "a.mp3", FA_WRITE) != FR_OK)
+            if (f_open(&outFile, "a.mp3", FA_WRITE | FA_OPEN_APPEND) != FR_OK)
+            // if (open_append(&outFile, "a.mp3"))
 			{
 				dlog_info("f_open out error!");
 			}
 			else
 			{
-                dlog_info("f_open a.mp3 success!");                
+                dlog_info("f_open a.mp3 success!");
+/*                 f_printf(&outFile, "%s %s\n", __TIME__, __DATE__); */
 			}
 
 			if (f_open(&inFile, "a.wav", FA_READ) != FR_OK)
