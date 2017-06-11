@@ -11,7 +11,7 @@
 FIL outFile, inFile;
 FATFS SDFatFs;  /* File system object for SD card logical drive */
 FIL MyFile, MyFileIn;     /* File object */
-char SDPath[4] = {'0', ':', '/', 0}; 
+char *SDPath = "SD2:/"; 
 
 extern Diskio_drvTypeDef  SD_Driver;
 extern unsigned int command_str2uint(char *str);
@@ -94,7 +94,7 @@ void TestFatFs()
 	uint32_t byteswritten, bytesread;                     /* File write/read counts */
 	uint8_t wtext[] = "This is STM32 working with FatFs"; /* File write buffer */
 	uint8_t rtext[100];                                   /* File read buffer */
-	static char name[] = "myfile1.txt";
+	static char name[] = "myfile1";
 
 	uint32_t u32_start; 
     
