@@ -5,6 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////
 #include "data_type.h"
 #include "brc.h"
+#include "vsoc_enc.h"
 
 #ifdef ARMCM7_RC  //###########
     #include "enc_internal.h"
@@ -166,7 +167,7 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
         if (rca.v0_fd_last_p==1 && rca.v0_fd_iframe!=1) { // fix the false decision when inserting OneIFrame
             READ_WORD(V0_GOPFPS_ADDR,i); //read view0 gop
             if (rca.v0_fd_row_cnt==0) v0_last_p_prev_gop = (i>>24)&0xff;
-            if (((i>>24)&0xff)!=v0_last_p_prev_gop) v0_last_p_gop_change = TRUE; // check view0's GOP change or not at last_p_frame
+            if (((i>>24)&0xff)!=v0_last_p_prev_gop) v0_last_p_gop_change = TRUE; else v0_last_p_gop_change = FALSE;// check view0's GOP change or not at last_p_frame
             v0_last_p_prev_gop = (i>>24)&0xff;
         }
     }
@@ -186,7 +187,7 @@ int VEBRC_IRQ_Handler(unsigned int view0_feedback, unsigned int view1_feedback)
             if (rca.v1_fd_last_p==1 && rca.v1_fd_iframe!=1) { // fix the false decision when inserting OneIFrame
                 READ_WORD(V1_GOPFPS_ADDR,i); //read view1 gop
                 if (rca.v1_fd_row_cnt==0) v1_last_p_prev_gop = (i>>24)&0xff;
-                if (((i>>24)&0xff)!=v1_last_p_prev_gop) v1_last_p_gop_change = TRUE; // check view1's GOP change or not at last_p_frame
+                if (((i>>24)&0xff)!=v1_last_p_prev_gop) v1_last_p_gop_change = TRUE; else v1_last_p_gop_change = FALSE;// check view1's GOP change or not at last_p_frame
                 v1_last_p_prev_gop = (i>>24)&0xff;
             }
         }
@@ -621,46 +622,8 @@ void my_rc_ac_br(int view) {
         rca.v1_ac_br_index = (m>>26)&0x3f;
     }
     ac_br_index = (view==0)? rca.v0_ac_br_index: rca.v1_ac_br_index;
-
-    switch(ac_br_index) {
-        case 0 : ac_br = 8000000 ; break; // 8Mbps
-        case 1 : ac_br = 600000  ; break; // 600kps
-        case 2 : ac_br = 1200000 ; break; // 1.2Mbps
-        case 3 : ac_br = 2400000 ; break; // 2.4Mbps
-        case 4 : ac_br = 3000000 ; break; // 3Mbps
-        case 5 : ac_br = 3500000 ; break; // 3.5Mbps
-        case 6 : ac_br = 4000000 ; break; // 4Mbps
-        case 7 : ac_br = 4800000 ; break; // 4.8Mbps
-        case 8 : ac_br = 5000000 ; break; // 5Mbps
-        case 9 : ac_br = 6000000 ; break; // 6Mbps
-        case 10: ac_br = 7000000 ; break; // 7Mbps
-        case 11: ac_br = 7500000 ; break; // 7.5Mbps
-        case 12: ac_br = 9000000 ; break; // 9Mbps
-        case 13: ac_br = 10000000; break; // 10Mbps
-        case 14: ac_br = 11000000; break; // 11Mbps
-        case 15: ac_br = 12000000; break; // 12Mbps
-        case 16: ac_br = 13000000; break; // 13Mbps
-        case 17: ac_br = 14000000; break; // 14Mbps
-        case 18: ac_br = 15000000; break; // 15Mbps
-#if 0
-        case 19: ac_br = 16000000; break; // 16Mbps
-        case 20: ac_br = 17000000; break; // 17Mbps
-        case 21: ac_br = 18000000; break; // 18Mbps
-        case 22: ac_br = 19000000; break; // 19Mbps
-        case 23: ac_br = 20000000; break; // 20Mbps
-        case 24: ac_br = 21000000; break; // 21Mbps
-        case 25: ac_br = 22000000; break; // 22Mbps
-        case 26: ac_br = 23000000; break; // 23Mbps
-        case 27: ac_br = 24000000; break; // 24Mbps
-        case 28: ac_br = 25000000; break; // 25Mbps
-        case 29: ac_br = 26000000; break; // 26Mbps
-        case 30: ac_br = 27000000; break; // 27Mbps
-        case 31: ac_br = 28000000; break; // 28Mbps
-        case 32: ac_br = 29000000; break; // 29Mbps
-        case 33: ac_br = 30000000; break; // 30Mbps
-#endif
-        default: ac_br = 8000000 ; break; // 8Mbps
-    }
+    ac_br = bridx2br[ac_br_index]; // use look-up table for bitrate generation, lhu, 2017/06/12
+    
     if (view==0) {
         if (rca.v0_ac_br_index != rca.v0_prev_ac_br_index)
             WRITE_WORD(V0_BR_ADDR, ac_br);
