@@ -67,8 +67,8 @@ static int8_t UsbSendFormat(STRU_ARCAST_AVFORMAT_SKY_TO_GROUND *p_format)
     g_st_usbSendFormat.u16_videoHight = p_format->u16_videoHight;
     g_st_usbSendFormat.u16_videoWidth = p_format->u16_videoWidth;
     g_st_usbSendFormat.u8_videoFrameRate = p_format->u8_videoFrameRate;
-    
-    HAL_USB_CustomerSendData((uint8_t*)(&g_st_usbSendFormat), sizeof(STRU_ARCAST_AVFORMAT_USB_SEND));
+
+    HAL_USB_CustomerSendData((uint8_t*)(&g_st_usbSendFormat), sizeof(STRU_ARCAST_AVFORMAT_USB_SEND), 0);
 }
 
 static void rcvFormatHandler_ground(void *p)
@@ -148,8 +148,9 @@ void Common_AVFORMAT_AudioSysEventCallBack(void* p)
     st_audioConfig.u32_encodeDataAddr = MPE3_ENCODER_DATA_ADDR;
     st_audioConfig.u32_newPcmDataFlagAddr = SRAM_MODULE_SHARE_AUDIO_PCM;
     st_audioConfig.u8_channel = 2;
-    HAL_MP3EncodePcmInit(&st_audioConfig, ENUM_HAL_SRAM_DATA_PATH_REVERSE);
-        
+    HAL_MP3EncodePcmInit(&st_audioConfig, 0);
+    
+    
     HAL_BB_UartComSendMsg(BB_UART_COM_SESSION_3, (uint8_t*)(&g_st_formatChange), sizeof(STRU_ARCAST_AVFORMAT_SKY_TO_GROUND));
 }
 
@@ -189,7 +190,7 @@ void Common_AVFORMATSysEventGroundInit(void)
         else
         {
             dlog_info("format OK");
-            if (HAL_OK != HAL_USB_CustomerSendData((uint8_t*)(&g_st_usbSendFormat), sizeof(STRU_ARCAST_AVFORMAT_USB_SEND)))
+            if (HAL_OK != HAL_USB_CustomerSendData((uint8_t*)(&g_st_usbSendFormat), sizeof(STRU_ARCAST_AVFORMAT_USB_SEND), 0))
             {
                 dlog_info("usb send format error");
                 HAL_Delay(1000);

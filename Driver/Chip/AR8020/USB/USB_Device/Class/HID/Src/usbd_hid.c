@@ -768,7 +768,7 @@ static uint8_t USBD_HID_DataOut (USBD_HandleTypeDef *pdev,
         {
             if (((USBD_HID_ItfTypeDef *)pdev->pUserData)->dataOut)
             {
-                ((USBD_HID_ItfTypeDef *)pdev->pUserData)->dataOut(g_u32USBDeviceRecv);
+                ((USBD_HID_ItfTypeDef *)pdev->pUserData)->dataOut(g_u32USBDeviceRecv, pdev->id);
             }
         }
 
@@ -787,7 +787,7 @@ static uint8_t USBD_HID_DataOut (USBD_HandleTypeDef *pdev,
             {
                 g_u32CustomerOutSize = USBD_LL_GetRxDataSize(pdev, epnum);
 
-                ((USBD_HID_ItfTypeDef *)pdev->pUserData)->customerOut(g_u8CustomerOut, &g_u32CustomerOutSize);
+                ((USBD_HID_ItfTypeDef *)pdev->pUserData)->customerOut(g_u8CustomerOut, g_u32CustomerOutSize, pdev->id);
             }
         }
 

@@ -14,6 +14,9 @@
 #define DMA_READY_1                     0x40B0003C
 
 
+#define SRAM_CHANNEL_NUM                0x2
+
+
 #define SRAM_DMA_READY_LEN              0x800           /* threshold for BaseBand to trigger READY_IRQ:128 word or others */
 #define SRAM_WR_ADDR_OFFSET_0           0x40B00028
 #define SRAM_WR_ADDR_OFFSET_1           0x40B0002C     /* this value should not smaller than SRAM_WR_MAX_LEN_0 */
@@ -30,6 +33,13 @@
 
 #define SRAM_TIMEOUT_THRESHOLD          100
 
+
+typedef struct
+{
+    uint8_t     u8_usbEp;
+    uint8_t     u8_usbPort;
+} STRU_CHANNEL_PORT_CONFIG;
+
 void SRAM_Ready0IRQHandler(uint32_t u32_vectorNum);
 void SRAM_Ready1IRQHandler(uint32_t u32_vectorNum);
 void SRAM_Ready0Confirm(void);
@@ -39,7 +49,7 @@ void SRAM_CheckTimeout(void);
 
 extern volatile uint32_t  sramReady0;
 extern volatile uint32_t  sramReady1;
-extern volatile uint8_t   g_u8DataPathReverse;
+extern STRU_CHANNEL_PORT_CONFIG  g_stChannelPortConfig[SRAM_CHANNEL_NUM];
 
 
 /*

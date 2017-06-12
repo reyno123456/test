@@ -21,8 +21,6 @@
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
 void command_upgrade(void);
-void command_startBypassVideo(void);
-void command_stopBypassVideo(void);
 void command_malloc(char *size);
 
 
@@ -94,7 +92,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     }
     else if (memcmp(cmdArray[0], "startbypassvideo", strlen("startbypassvideo")) == 0)
     {
-        command_startBypassVideo();
+        command_startBypassVideo(cmdArray[1]);
     }
     else if (memcmp(cmdArray[0], "stopbypassvideo", strlen("stopbypassvideo")) == 0)
     {
@@ -228,40 +226,6 @@ void delay_ms(uint32_t num)
 {
     volatile int i;
     for (i = 0; i < num * 100; i++);
-}
-
-void command_startBypassVideo(void)
-{
-    USBH_APP_EVENT_DEF  usbhAppType;
-
-    usbhAppType = USBH_APP_START_BYPASS_VIDEO;
-
-    if (0 == g_usbhBypassVideoCtrl.taskActivate)
-    {
-        g_usbhBypassVideoCtrl.taskActivate  = 1;
-        osMessagePut(g_usbhAppCtrl.usbhAppEvent, usbhAppType, 0);
-    }
-    else
-    {
-        dlog_error("Bypass Video Task is running\n");
-    }
-}
-
-void command_stopBypassVideo(void)
-{
-    USBH_APP_EVENT_DEF  usbhAppType;
-
-    usbhAppType = USBH_APP_STOP_BYPASS_VIDEO;
-
-    if (1 == g_usbhBypassVideoCtrl.taskActivate)
-    {
-        g_usbhBypassVideoCtrl.taskActivate  = 0;
-        osMessagePut(g_usbhAppCtrl.usbhAppEvent, usbhAppType, 0);
-    }
-    else
-    {
-        dlog_error("Bypass Video Task is not running\n");
-    }
 }
 
 void command_malloc(char *size)

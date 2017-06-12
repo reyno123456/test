@@ -52,7 +52,15 @@ int main(void)
 
     HAL_USB_InitOTG(HAL_USB_PORT_1);
 
-    HAL_SRAM_ReceiveVideoConfig(ENUM_HAL_SRAM_DATA_PATH_NORMAL);
+    HAL_SRAM_ReceiveVideoConfig();
+
+    HAL_SRAM_ChannelConfig(ENUM_HAL_SRAM_CHANNEL_TYPE_VIDEO0,
+                           HAL_USB_PORT_0,
+                           0);
+
+    HAL_SRAM_ChannelConfig(ENUM_HAL_SRAM_CHANNEL_TYPE_VIDEO1,
+                           HAL_USB_PORT_0,
+                           1);
 
     HAL_NV_Init();
 

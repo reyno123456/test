@@ -22,8 +22,6 @@ void command_initSdcard();
 void command_readSdcard(char *Dstaddr, char *BlockNum);
 void command_writeSdcard(char *Dstaddr, char *BlockNum, char *SrcAddr);
 void command_eraseSdcard(char *startBlock, char *blockNum);
-void command_startBypassVideo(void);
-void command_stopBypassVideo(void);
 void command_upgrade(void);
 void command_sendCtrl(void);
 void command_sendVideo(void);

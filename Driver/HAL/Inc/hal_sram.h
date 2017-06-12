@@ -19,21 +19,23 @@ extern "C"
 
 #include <stdint.h>
 #include "hal_ret_type.h"
+#include "hal_usb_otg.h"
 
 
 typedef enum
 {
-    ENUM_HAL_SRAM_DATA_PATH_NORMAL    = 0,
-    ENUM_HAL_SRAM_DATA_PATH_REVERSE   = 1,
-} ENUM_HAL_SRAM_DATA_PATH;
-
-
-typedef enum
-{
-    HAL_SRAM_VIDEO_CHANNEL_0 = 0,
-    HAL_SRAM_VIDEO_CHANNEL_1,
+    HAL_SRAM_VIDEO_CHANNEL_0    = 0,
+    HAL_SRAM_VIDEO_CHANNEL_1    = 1,
+    HAL_SRAM_VIDEO_CHANNEL_NUM  = 2,
 } ENUM_HAL_SRAM_VIDEO_CHANNEL;
 
+
+typedef enum
+{
+    ENUM_HAL_SRAM_CHANNEL_TYPE_VIDEO0  = 0,
+    ENUM_HAL_SRAM_CHANNEL_TYPE_VIDEO1  = 1,
+    ENUM_HAL_SRAM_CHANNEL_TYPE_AUDIO   = 2,
+} ENUM_HAL_SRAM_CHANNEL_TYPE;
 
 
 /**
@@ -42,7 +44,7 @@ typedef enum
 * @retval   void
 * @note  
 */
-void HAL_SRAM_ReceiveVideoConfig(ENUM_HAL_SRAM_DATA_PATH e_dataPathReverse);
+void HAL_SRAM_ReceiveVideoConfig(void);
 
 /**
 * @brief  Enable Sky Video Bypass Function
@@ -81,6 +83,16 @@ void HAL_SRAM_OpenVideo(void);
 void HAL_SRAM_CloseVideo(void);
 
 void HAL_SRAM_CheckChannelTimeout(void);
+
+/**
+* @brief  config the BB channel for video or audio
+* @param  void
+* @retval   void
+* @note  
+*/
+void HAL_SRAM_ChannelConfig(ENUM_HAL_SRAM_CHANNEL_TYPE e_channelType,
+                           ENUM_HAL_USB_PORT e_usbPort,
+                           uint8_t u8_channel);
 
 #ifdef __cplusplus
 }

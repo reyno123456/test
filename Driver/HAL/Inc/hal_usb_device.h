@@ -46,7 +46,7 @@ void HAL_USB_ResetDevice(void * p);
 * @retval   void
 * @note
 */
-HAL_RET_T HAL_USB_DeviceSendCtrl(uint8_t *buff, uint32_t u32_len);
+HAL_RET_T HAL_USB_DeviceSendCtrl(uint8_t *buff, uint32_t u32_len, uint8_t u8_portId);
 
 /**
 * @brief   register the user callback function to receive host data
@@ -54,10 +54,10 @@ HAL_RET_T HAL_USB_DeviceSendCtrl(uint8_t *buff, uint32_t u32_len);
 * @retval   void
 * @note
 */
-void HAL_USB_RegisterUserProcess(void (*pUsrFunc)(void *), void (*pInitFunc)(void));
+void HAL_USB_RegisterUserProcess(void (*pUsrFunc)(void *, uint8_t), void (*pInitFunc)(void));
 
 
-uint8_t HAL_USB_DeviceGetConnState(void);
+uint8_t HAL_USB_DeviceGetConnState(uint8_t u8_usbPortId);
 
 
 /**
@@ -66,7 +66,7 @@ uint8_t HAL_USB_DeviceGetConnState(void);
 * @retval   void
 * @note  
 */
-void HAL_USB_OpenVideo(void);
+void HAL_USB_OpenVideo(uint8_t u8_usbPortId);
 
 
 /**
@@ -75,7 +75,7 @@ void HAL_USB_OpenVideo(void);
 * @retval   void
 * @note  
 */
-void HAL_USB_CloseVideo(void);
+void HAL_USB_CloseVideo(uint8_t u8_usbPortId);
 
 
 /**
@@ -84,7 +84,7 @@ void HAL_USB_CloseVideo(void);
 * @retval   void
 * @note  
 */
-void HAL_USB_RegisterCustomerRecvData(void (*customerRecv)(void *, uint32_t *));
+void HAL_USB_RegisterCustomerRecvData(void (*customerRecv)(void *, uint32_t, uint8_t));
 
 
 /**
@@ -94,7 +94,9 @@ void HAL_USB_RegisterCustomerRecvData(void (*customerRecv)(void *, uint32_t *));
 * @retval   void
 * @note  
 */
-HAL_RET_T HAL_USB_CustomerSendData(uint8_t *buff, uint32_t u32_len);
+HAL_RET_T HAL_USB_CustomerSendData(uint8_t *buff,
+                                   uint32_t u32_len,
+                                   uint8_t u8_portId);
 
 #ifdef __cplusplus
 }

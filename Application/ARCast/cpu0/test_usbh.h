@@ -8,6 +8,11 @@
 #include "usbh_diskio.h"
 
 
+#define USB_VIDEO_BYPASS_SIZE_ONCE              (8192)
+#define USB_VIDEO_BYPASS_CHANNEL_0_DEST_ADDR    (0xB1000000)
+#define USB_VIDEO_BYPASS_CHANNEL_1_DEST_ADDR    (0xB1800000)
+
+
 typedef enum
 {
     USBH_APP_START_BYPASS_VIDEO = 0,
@@ -30,7 +35,7 @@ typedef struct
     volatile uint8_t        taskActivate;
     volatile uint8_t        taskExist;
     volatile uint8_t        fileOpened;
-    uint8_t                 reserved;
+    volatile uint8_t        bypassChannel;
     osThreadId              threadID;
     osSemaphoreId           semID;
     USBH_VIDEO_BYPASS_TASK_STATE taskState;
@@ -49,6 +54,8 @@ void USBH_USBHostStatus(void const *argument);
 void USBH_BypassVideo(void const *argument);
 void USBH_MountUSBDisk(void);
 void USB_MainTask(void const *argument);
+void command_startBypassVideo(uint8_t *bypassChannel);
+void command_stopBypassVideo(void);
 
 
 extern USBH_AppCtrl             g_usbhAppCtrl;

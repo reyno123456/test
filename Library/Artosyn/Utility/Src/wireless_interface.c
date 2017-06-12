@@ -13,12 +13,12 @@
 STRU_WIRELESS_INFO_DISPLAY             *g_pstWirelessInfoDisplay;        //OSD Info in SRAM
 STRU_WIRELESS_INFO_DISPLAY              g_stWirelessInfoSend;            //send OSD to PAD or PC
 STRU_WIRELESS_MESSAGE_BUFF              g_stWirelessParamConfig;     //receive from PAD or PC
-STRU_WIRELESS_MESSAGE_BUFF              g_stWirelessReply;     //send to PAD or PC
-
+STRU_WIRELESS_MESSAGE_BUFF              g_stWirelessReply;           //send to PAD or PC
 
 uint8_t eventFlag = 0;
 
 volatile uint8_t                        g_u8OSDToggle = 0;
+volatile uint8_t                        g_u8OSDEnable[HAL_USB_PORT_NUM] = {0, 0};
 
 WIRELESS_CONFIG_HANDLER g_stWirelessMsgHandler[MAX_PID_NUM] = 
 {
@@ -136,7 +136,7 @@ uint8_t WIRELESS_GetOSDInfo(void)
 }
 
 /* Send to PAD or PC */
-uint8_t WIRELESS_SendOSDInfo(void)
+uint8_t WIRELESS_SendOSDInfo(uint8_t usbPortId)
 {
     uint8_t               *u8_sendBuff;
     uint32_t               u32_sendLength;
@@ -154,7 +154,7 @@ uint8_t WIRELESS_SendOSDInfo(void)
     g_stWirelessInfoSend.messageId  = WIRELESS_INTERFACE_OSD_DISPLAY;
     g_stWirelessInfoSend.paramLen   = u32_sendLength;
 
-    if (HAL_OK != HAL_USB_DeviceSendCtrl(u8_sendBuff, u32_sendLength))
+    if (HAL_OK != HAL_USB_DeviceSendCtrl(u8_sendBuff, u32_sendLength, usbPortId))
     {
         dlog_error("send osd info error");
 
@@ -165,7 +165,7 @@ uint8_t WIRELESS_SendOSDInfo(void)
 }
 
 
-void UpgradeFirmwareFromPCTool(void *upgradeData)
+void UpgradeFirmwareFromPCTool(void *upgradeData, uint8_t u8_usbPortId)
 {
     uint8_t             u8_replyToHost;
     uint8_t             u8_finalPacket;
@@ -285,7 +285,7 @@ void UpgradeFirmwareFromPCTool(void *upgradeData)
         dlog_info("upgrade app success");
     }
 
-    while(HAL_OK != (HAL_USB_DeviceSendCtrl((uint8_t *)upgradeData, 4)))
+    while(HAL_OK != (HAL_USB_DeviceSendCtrl((uint8_t *)upgradeData, 4, u8_usbPortId)))
     {
         dlog_error("upgrade reply to host fail");
     }
@@ -294,7 +294,7 @@ void UpgradeFirmwareFromPCTool(void *upgradeData)
  
 
 
-uint8_t WIRELESS_INTERFACE_UPGRADE_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_UPGRADE_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE   st_replyMessage;
 
@@ -305,13 +305,13 @@ uint8_t WIRELESS_INTERFACE_UPGRADE_Handler(void *param)
     st_replyMessage.messageId   = WIRELESS_INTERFACE_UPGRADE;
     st_replyMessage.paramLen    = 0;
 
-    HAL_USB_DeviceSendCtrl((uint8_t *)&st_replyMessage, sizeof(STRU_WIRELESS_PARAM_CONFIG_MESSAGE));
+    HAL_USB_DeviceSendCtrl((uint8_t *)&st_replyMessage, sizeof(STRU_WIRELESS_PARAM_CONFIG_MESSAGE), id);
 
     return 0;
 }
 
 
-uint8_t WIRELESS_INTERFACE_ENTER_TEST_MODE_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_ENTER_TEST_MODE_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_ENTER_TEST_MODE_Handler\n"); 
 
@@ -331,7 +331,7 @@ uint8_t WIRELESS_INTERFACE_ENTER_TEST_MODE_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_SYNCHRONIZE_FREQ_CHANNEL_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SYNCHRONIZE_FREQ_CHANNEL_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SYNCHRONIZE_FREQ_CHANNEL_Handler\n");
 
@@ -339,7 +339,7 @@ uint8_t WIRELESS_INTERFACE_SYNCHRONIZE_FREQ_CHANNEL_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_AUTO_MODE_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_AUTO_MODE_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_AUTO_MODE_Handler\n");
 
@@ -347,7 +347,7 @@ uint8_t WIRELESS_INTERFACE_AUTO_MODE_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_SELF_ADAPTION_MODE_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SELF_ADAPTION_MODE_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SELF_ADAPTION_MODE_Handler\n");
 
@@ -355,7 +355,7 @@ uint8_t WIRELESS_INTERFACE_SELF_ADAPTION_MODE_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_SWITCH_TX_MODE_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SWITCH_TX_MODE_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SWITCH_TX_MODE_Handler\n");
 
@@ -363,7 +363,7 @@ uint8_t WIRELESS_INTERFACE_SWITCH_TX_MODE_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_SWITCH_RX_MODE_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SWITCH_RX_MODE_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SWITCH_RX_MODE_Handler\n");
 
@@ -371,7 +371,7 @@ uint8_t WIRELESS_INTERFACE_SWITCH_RX_MODE_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_SWITCH_USB1_MODE_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SWITCH_USB1_MODE_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SWITCH_USB1_MODE_Handler\n");
 
@@ -379,7 +379,7 @@ uint8_t WIRELESS_INTERFACE_SWITCH_USB1_MODE_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_SWITCH_USB2_MODE_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SWITCH_USB2_MODE_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SWITCH_USB2_MODE_Handler\n");
 
@@ -387,7 +387,7 @@ uint8_t WIRELESS_INTERFACE_SWITCH_USB2_MODE_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_ALL_RESET_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_ALL_RESET_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_ALL_RESET_Handler\n");
 
@@ -395,7 +395,7 @@ uint8_t WIRELESS_INTERFACE_ALL_RESET_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_RX_RESET_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_RX_RESET_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_RX_RESET_Handler\n");
 
@@ -403,7 +403,7 @@ uint8_t WIRELESS_INTERFACE_RX_RESET_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_TX_RESET_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_TX_RESET_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_TX_RESET_Handler\n");
 
@@ -411,7 +411,7 @@ uint8_t WIRELESS_INTERFACE_TX_RESET_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_MIMO_1T2R_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_MIMO_1T2R_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_MIMO_1T2R_Handler\n");
 
@@ -419,7 +419,7 @@ uint8_t WIRELESS_INTERFACE_MIMO_1T2R_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_WRITE_BB_REG_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_WRITE_BB_REG_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
     recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
@@ -439,14 +439,14 @@ uint8_t WIRELESS_INTERFACE_WRITE_BB_REG_Handler(void *param)
         recvMessage->messageId = 0x0e;
         recvMessage->paramLen = 0;
 
-        Wireless_InsertMsgIntoReplyBuff(recvMessage);
+        Wireless_InsertMsgIntoReplyBuff(recvMessage, id);
     }
 
     return 0;
 }
 
 
-uint8_t WIRELESS_INTERFACE_READ_BB_REG_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_READ_BB_REG_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
     recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
@@ -458,21 +458,21 @@ uint8_t WIRELESS_INTERFACE_READ_BB_REG_Handler(void *param)
         recvMessage->paramData[0] = recvMessage->paramData[0];
         HAL_BB_CurPageReadByte(recvMessage->paramData[0], &recvMessage->paramData[1]);
 
-        Wireless_InsertMsgIntoReplyBuff(recvMessage);
+        Wireless_InsertMsgIntoReplyBuff(recvMessage, id);
     }
     else
     {   
         recvMessage->messageId = 0x0f;
         recvMessage->paramLen = 0;
 
-        Wireless_InsertMsgIntoReplyBuff(recvMessage);
+        Wireless_InsertMsgIntoReplyBuff(recvMessage, id);
     }
 
     return 0;
 }
 
 
-uint8_t WIRELESS_INTERFACE_MIMO_2T2R_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_MIMO_2T2R_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_MIMO_1T2R_Handler\n");
 
@@ -480,32 +480,46 @@ uint8_t WIRELESS_INTERFACE_MIMO_2T2R_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_OSD_DISPLAY_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_OSD_DISPLAY_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
 
     recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
 
+    if (id > HAL_USB_PORT_NUM)
+    {
+        dlog_error("error usb port id");
+
+        return 1;
+    }
+
     g_pstWirelessInfoDisplay  = (STRU_WIRELESS_INFO_DISPLAY *)OSD_STATUS_SHM_ADDR;
 
     if (recvMessage->paramData[0] == 0)
     {
-        dlog_info("close osd");
+        dlog_info("close osd: %d", id);
 
-        g_pstWirelessInfoDisplay->osd_enable    = 0;
+        g_u8OSDEnable[id] = 0;
+
+        if ((g_u8OSDEnable[0] == 0)&&
+            (g_u8OSDEnable[1] == 0))
+        {
+            g_pstWirelessInfoDisplay->osd_enable = 0;
+        }
     }
     else
     {
-        dlog_info("open osd");
+        dlog_info("open osd: %d", id);
 
-        g_pstWirelessInfoDisplay->osd_enable    = 1;
+        g_u8OSDEnable[id] = 1;
+        g_pstWirelessInfoDisplay->osd_enable = 1;
     }
 
     return 0;
 }
 
 
-uint8_t WIRELESS_INTERFACE_GET_ID_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_GET_ID_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_GET_ID_Handler\n");
 
@@ -513,7 +527,7 @@ uint8_t WIRELESS_INTERFACE_GET_ID_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_GET_GROUND_TX_PWR_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_GET_GROUND_TX_PWR_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_GET_GROUND_TX_PWR_Handler\n");
 
@@ -521,7 +535,7 @@ uint8_t WIRELESS_INTERFACE_GET_GROUND_TX_PWR_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_GET_SKY_TX_PWR_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_GET_SKY_TX_PWR_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_GET_SKY_TX_PWR_Handler\n");
 
@@ -529,7 +543,7 @@ uint8_t WIRELESS_INTERFACE_GET_SKY_TX_PWR_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_GET_RC_FREQ_CHANNEL_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_GET_RC_FREQ_CHANNEL_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_GET_RC_FREQ_CHANNEL_Handler\n");
 
@@ -537,7 +551,7 @@ uint8_t WIRELESS_INTERFACE_GET_RC_FREQ_CHANNEL_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_GET_VIDEO_FREQ_CHANNEL_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_GET_VIDEO_FREQ_CHANNEL_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_GET_VIDEO_FREQ_CHANNEL_Handler\n");
 
@@ -545,7 +559,7 @@ uint8_t WIRELESS_INTERFACE_GET_VIDEO_FREQ_CHANNEL_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_GET_SOFTWARE_VERSION_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_GET_SOFTWARE_VERSION_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_GET_SOFTWARE_VERSION_Handler\n");
 
@@ -553,7 +567,7 @@ uint8_t WIRELESS_INTERFACE_GET_SOFTWARE_VERSION_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_GET_DEV_INFO_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_GET_DEV_INFO_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE        *stDeviceInfo;
 
@@ -564,13 +578,13 @@ uint8_t WIRELESS_INTERFACE_GET_DEV_INFO_Handler(void *param)
 
     dlog_info("WIRELESS_INTERFACE_GET_DEV_INFO_Handler\n");
 
-    Wireless_InsertMsgIntoReplyBuff(stDeviceInfo);
+    Wireless_InsertMsgIntoReplyBuff(stDeviceInfo, id);
 
     return 0;
 }
 
 
-uint8_t WIRELESS_INTERFACE_SET_RC_FREQ_CHANNEL_MASK_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SET_RC_FREQ_CHANNEL_MASK_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SET_RC_FREQ_CHANNEL_MASK_Handler\n");
 
@@ -578,7 +592,7 @@ uint8_t WIRELESS_INTERFACE_SET_RC_FREQ_CHANNEL_MASK_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_SET_VIDEO_FREQ_CHANNEL_MASK_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SET_VIDEO_FREQ_CHANNEL_MASK_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SET_VIDEO_FREQ_CHANNEL_MASK_Handler\n");
 
@@ -586,7 +600,7 @@ uint8_t WIRELESS_INTERFACE_SET_VIDEO_FREQ_CHANNEL_MASK_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_SELECT_VIDEO_FREQ_CHANNEL_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SELECT_VIDEO_FREQ_CHANNEL_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
     recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
@@ -614,7 +628,7 @@ uint8_t WIRELESS_INTERFACE_SELECT_VIDEO_FREQ_CHANNEL_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_SWITCH_QAM_MODE_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SWITCH_QAM_MODE_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SWITCH_QAM_MODE_Handler\n");
 
@@ -622,7 +636,7 @@ uint8_t WIRELESS_INTERFACE_SWITCH_QAM_MODE_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_SET_RC_FREQ_CHANNEL_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SET_RC_FREQ_CHANNEL_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
     recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
@@ -650,7 +664,7 @@ uint8_t WIRELESS_INTERFACE_SET_RC_FREQ_CHANNEL_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_SET_TX_PWR_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SET_TX_PWR_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SET_TX_PWR_Handler\n");
 
@@ -658,7 +672,7 @@ uint8_t WIRELESS_INTERFACE_SET_TX_PWR_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_SET_VIDEO_TX_ID_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SET_VIDEO_TX_ID_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SET_VIDEO_TX_ID_Handler\n");
 
@@ -666,7 +680,7 @@ uint8_t WIRELESS_INTERFACE_SET_VIDEO_TX_ID_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_SET_CTRL_ID_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SET_CTRL_ID_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SET_CTRL_ID_Handler\n");
 
@@ -674,7 +688,7 @@ uint8_t WIRELESS_INTERFACE_SET_CTRL_ID_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_SWITCH_WORKING_FREQ_BAND_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SWITCH_WORKING_FREQ_BAND_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE  *recvMessage;
     ENUM_RF_BAND                         enRfBand;
@@ -698,7 +712,7 @@ uint8_t WIRELESS_INTERFACE_SWITCH_WORKING_FREQ_BAND_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_RC_SCAN_ALL_BAND_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_RC_SCAN_ALL_BAND_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_RC_SCAN_ALL_BAND_Handler\n");
 
@@ -706,7 +720,7 @@ uint8_t WIRELESS_INTERFACE_RC_SCAN_ALL_BAND_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_RC_SCAN_WORKING_BAND_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_RC_SCAN_WORKING_BAND_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_RC_SCAN_WORKING_BAND_Handler\n");
 
@@ -714,7 +728,7 @@ uint8_t WIRELESS_INTERFACE_RC_SCAN_WORKING_BAND_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_VIDEO_SCAN_ALL_BAND_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_VIDEO_SCAN_ALL_BAND_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_VIDEO_SCAN_ALL_BAND_Handler\n");
 
@@ -722,7 +736,7 @@ uint8_t WIRELESS_INTERFACE_VIDEO_SCAN_ALL_BAND_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_VIDEO_SCAN_WORKING_BAND_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_VIDEO_SCAN_WORKING_BAND_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_VIDEO_SCAN_WORKING_BAND_Handler\n");
 
@@ -730,7 +744,7 @@ uint8_t WIRELESS_INTERFACE_VIDEO_SCAN_WORKING_BAND_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_RECOVER_TO_FACTORY_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_RECOVER_TO_FACTORY_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_RECOVER_TO_FACTORY_Handler\n");
 
@@ -738,7 +752,7 @@ uint8_t WIRELESS_INTERFACE_RECOVER_TO_FACTORY_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_RC_HOPPING_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_RC_HOPPING_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE  *recvMessage;
     ENUM_RUN_MODE                        e_mode;
@@ -764,21 +778,21 @@ uint8_t WIRELESS_INTERFACE_RC_HOPPING_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_SAVE_CONFIGURE_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SAVE_CONFIGURE_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SAVE_CONFIGURE_Handler\n");
 
     return 0;
 }
 
-uint8_t WIRELESS_INTERFACE_READ_MCU_ID_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_READ_MCU_ID_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_READ_MCU_ID_Handler\n");
 
     return 0;
 }
 
-uint8_t WIRELESS_INTERFACE_SWITCH_DEBUG_MODE_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SWITCH_DEBUG_MODE_Handler(void *param, uint8_t id)
 {
     uint8_t inDebugFlag = 0;
 
@@ -813,12 +827,12 @@ uint8_t WIRELESS_INTERFACE_SWITCH_DEBUG_MODE_Handler(void *param)
     /*send to PC*/
     recvMessage->paramData[1] = inDebugFlag;
 
-    Wireless_InsertMsgIntoReplyBuff(recvMessage);
+    Wireless_InsertMsgIntoReplyBuff(recvMessage, id);
 
     return 0;
 }
 
-uint8_t WIRELESS_INTERFACE_WRITE_RF_REG_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_WRITE_RF_REG_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
     recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
@@ -840,30 +854,30 @@ uint8_t WIRELESS_INTERFACE_WRITE_RF_REG_Handler(void *param)
         recvMessage->messageId = 0x0e;
         recvMessage->paramLen = 0;
 
-        Wireless_InsertMsgIntoReplyBuff(recvMessage);
+        Wireless_InsertMsgIntoReplyBuff(recvMessage, id);
     }
 
     return 0;
 }
 
 
-uint8_t WIRELESS_INTERFACE_OPEN_VIDEO_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_OPEN_VIDEO_Handler(void *param, uint8_t id)
 {
-    HAL_USB_OpenVideo();
+    HAL_USB_OpenVideo(id);
 
     return 0;
 }
 
 
-uint8_t WIRELESS_INTERFACE_CLOSE_VIDEO_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_CLOSE_VIDEO_Handler(void *param, uint8_t id)
 {
-    HAL_USB_CloseVideo();
+    HAL_USB_CloseVideo(id);
 
     return 0;
 }
 
 
-uint8_t WIRELESS_INTERFACE_READ_RF_REG_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_READ_RF_REG_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
     recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
@@ -882,91 +896,91 @@ uint8_t WIRELESS_INTERFACE_READ_RF_REG_Handler(void *param)
             return 1;
         }
 
-        Wireless_InsertMsgIntoReplyBuff(recvMessage);
+        Wireless_InsertMsgIntoReplyBuff(recvMessage, id);
     }
     else
     {
         recvMessage->messageId = 0x0f;
         recvMessage->paramLen = 0;
 
-        Wireless_InsertMsgIntoReplyBuff(recvMessage);
+        Wireless_InsertMsgIntoReplyBuff(recvMessage, id);
     }
 
     return 0;
 }
-uint8_t WIRELESS_INTERFACE_LOAD_SKY_REG_TABLE_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_LOAD_SKY_REG_TABLE_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_LOAD_SKY_REG_TABLE_Handler\n");
 
     return 0;
 }
-uint8_t WIRELESS_INTERFACE_LOAD_GRD_REG_TABLE_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_LOAD_GRD_REG_TABLE_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_LOAD_GRD_REG_TABLE_Handler\n");
 
     return 0;
 }
-uint8_t WIRELESS_INTERFACE_SWITCH_BB_POWER_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SWITCH_BB_POWER_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SWITCH_BB_POWER_Handler\n");
 
     return 0;
 }
-uint8_t WIRELESS_INTERFACE_SKY_ONLY_RX_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SKY_ONLY_RX_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SKY_ONLY_RX_Handler\n");
 
     return 0;
 }
-uint8_t WIRELESS_INTERFACE_SWITCH_RF_PWR_0_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SWITCH_RF_PWR_0_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SWITCH_RF_PWR_0_Handler\n");
 
     return 0;
 }
-uint8_t WIRELESS_INTERFACE_SWITCH_RF_PWR_1_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SWITCH_RF_PWR_1_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SWITCH_RF_PWR_1_Handler\n");
 
     return 0;
 }
-uint8_t WIRELESS_INTERFACE_EXT_ONEKEY_IT_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_EXT_ONEKEY_IT_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_EXT_ONEKEY_IT_Handler\n");
 
     return 0;
 }
-uint8_t WIRELESS_INTERFACE_SWITCH_IT_CHAN_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SWITCH_IT_CHAN_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SWITCH_IT_CHAN_Handler\n");
 
     return 0;
 }
-uint8_t WIRELESS_INTERFACE_SWITCH_RMT_CHAN_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SWITCH_RMT_CHAN_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SWITCH_RMT_CHAN_Handler\n");
 
     return 0;
 }
-uint8_t WIRELESS_INTERFACE_SET_PWR_CAL_0_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SET_PWR_CAL_0_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SET_PWR_CAL_0_Handler\n");
 
     return 0;
 }
-uint8_t WIRELESS_INTERFACE_SET_PWR_CAL_1_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SET_PWR_CAL_1_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_SET_PWR_CAL_1_Handler\n");
 
     return 0;
 }
-uint8_t WIRELESS_INTERFACE_RST_MCU_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_RST_MCU_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_RST_MCU_Handler\n");
 
     return 0;
 }
-uint8_t WIRELESS_INTERFACE_RF_PWR_AUTO_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_RF_PWR_AUTO_Handler(void *param, uint8_t id)
 {
     dlog_info("WIRELESS_INTERFACE_RF_PWR_AUTO_Handler\n");
 
@@ -974,7 +988,7 @@ uint8_t WIRELESS_INTERFACE_RF_PWR_AUTO_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_OPEN_ADAPTION_BIT_STREAM_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_OPEN_ADAPTION_BIT_STREAM_Handler(void *param, uint8_t id)
 {
     ENUM_RUN_MODE                        enRunMode;
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE  *recvMessage;
@@ -1000,7 +1014,7 @@ uint8_t WIRELESS_INTERFACE_OPEN_ADAPTION_BIT_STREAM_Handler(void *param)
     return 0;
 }
 
-uint8_t WIRELESS_INTERFACE_SWITCH_CH1_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SWITCH_CH1_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE  *recvMessage;
     recvMessage     = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
@@ -1024,7 +1038,7 @@ uint8_t WIRELESS_INTERFACE_SWITCH_CH1_Handler(void *param)
     return 0;
 }
 
-uint8_t WIRELESS_INTERFACE_SWITCH_CH2_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SWITCH_CH2_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE  *recvMessage;
     recvMessage     = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
@@ -1048,7 +1062,7 @@ uint8_t WIRELESS_INTERFACE_SWITCH_CH2_Handler(void *param)
     return 0;
 }
 
-uint8_t WIRELESS_INTERFACE_SET_CH1_BIT_RATE_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SET_CH1_BIT_RATE_Handler(void *param, uint8_t id)
 {
     dlog_info("set ch1 bit rate");
 
@@ -1057,7 +1071,7 @@ uint8_t WIRELESS_INTERFACE_SET_CH1_BIT_RATE_Handler(void *param)
     return 0;
 }
 
-uint8_t WIRELESS_INTERFACE_SET_CH2_BIT_RATE_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_SET_CH2_BIT_RATE_Handler(void *param, uint8_t id)
 {
     dlog_info("set ch2 bit rate");
 
@@ -1066,7 +1080,7 @@ uint8_t WIRELESS_INTERFACE_SET_CH2_BIT_RATE_Handler(void *param)
     return 0;
 }
 
-uint8_t WIRELESS_INTERFACE_VIDEO_QAM_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_VIDEO_QAM_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE  *recvMessage;
     ENUM_BB_QAM                          enBBQAM;
@@ -1082,7 +1096,7 @@ uint8_t WIRELESS_INTERFACE_VIDEO_QAM_Handler(void *param)
     return 0;
 }
 
-uint8_t WIRELESS_INTERFACE_VIDEO_CODE_RATE_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_VIDEO_CODE_RATE_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE  *recvMessage;
     ENUM_BB_LDPC                         enldpc;
@@ -1098,7 +1112,7 @@ uint8_t WIRELESS_INTERFACE_VIDEO_CODE_RATE_Handler(void *param)
     return 0;
 }
 
-uint8_t WIRELESS_INTERFACE_RC_QAM_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_RC_QAM_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE  *recvMessage;
     ENUM_BB_QAM                          enBBQAM;
@@ -1114,7 +1128,7 @@ uint8_t WIRELESS_INTERFACE_RC_QAM_Handler(void *param)
     return 0;
 }
 
-uint8_t WIRELESS_INTERFACE_RC_CODE_RATE_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_RC_CODE_RATE_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE  *recvMessage;
     ENUM_BB_LDPC                         e_ldpc;
@@ -1143,7 +1157,7 @@ uint8_t WIRELESS_INTERFACE_RC_CODE_RATE_Handler(void *param)
     return 0;
 }
 
-uint8_t WIRELESS_INTERFACE_VIDEO_AUTO_HOPPING_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_VIDEO_AUTO_HOPPING_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE  *recvMessage;
     ENUM_RUN_MODE                        e_mode;
@@ -1168,7 +1182,7 @@ uint8_t WIRELESS_INTERFACE_VIDEO_AUTO_HOPPING_Handler(void *param)
     return 0;
 }
 
-uint8_t WIRELESS_INTERFACE_VIDEO_BAND_WIDTH_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_VIDEO_BAND_WIDTH_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE  *recvMessage;
     ENUM_CH_BW                           enBandWidth;
@@ -1192,7 +1206,7 @@ uint8_t WIRELESS_INTERFACE_VIDEO_BAND_WIDTH_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_RESET_BB_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_RESET_BB_Handler(void *param, uint8_t id)
 {
     dlog_info("reset bb");
     HAL_BB_SoftResetProxy();
@@ -1200,7 +1214,7 @@ uint8_t WIRELESS_INTERFACE_RESET_BB_Handler(void *param)
 }
 
 
-uint8_t WIRELESS_INTERFACE_OPERATE_REG_Handler(void *param)
+uint8_t WIRELESS_INTERFACE_OPERATE_REG_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE  *recvMessage;
     uint32_t                            *regAddr;
@@ -1245,13 +1259,13 @@ uint8_t WIRELESS_INTERFACE_OPERATE_REG_Handler(void *param)
         return 1;
     }
 
-    Wireless_InsertMsgIntoReplyBuff(recvMessage);
+    Wireless_InsertMsgIntoReplyBuff(recvMessage, id);
 
     return 0;
 }
 
 
-uint8_t PAD_FREQUENCY_BAND_WIDTH_SELECT_Handler(void *param)
+uint8_t PAD_FREQUENCY_BAND_WIDTH_SELECT_Handler(void *param, uint8_t id)
 {
 	HAL_BB_SetFreqBandwidthSelectionProxy( (ENUM_CH_BW)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 
@@ -1259,7 +1273,7 @@ uint8_t PAD_FREQUENCY_BAND_WIDTH_SELECT_Handler(void *param)
 }
 
 
-uint8_t PAD_FREQUENCY_BAND_OPERATION_MODE_Handler(void *param)
+uint8_t PAD_FREQUENCY_BAND_OPERATION_MODE_Handler(void *param, uint8_t id)
 {
 	HAL_BB_SetFreqBandSelectionModeProxy( (ENUM_RUN_MODE)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 
@@ -1267,7 +1281,7 @@ uint8_t PAD_FREQUENCY_BAND_OPERATION_MODE_Handler(void *param)
 }
 
 
-uint8_t PAD_FREQUENCY_BAND_SELECT_Handler(void *param)
+uint8_t PAD_FREQUENCY_BAND_SELECT_Handler(void *param, uint8_t id)
 {
 	HAL_BB_SetFreqBandProxy( (ENUM_RF_BAND)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 
@@ -1275,7 +1289,7 @@ uint8_t PAD_FREQUENCY_BAND_SELECT_Handler(void *param)
 }
 
 
-uint8_t PAD_FREQUENCY_CHANNEL_OPERATION_MODE_Handler(void *param)
+uint8_t PAD_FREQUENCY_CHANNEL_OPERATION_MODE_Handler(void *param, uint8_t id)
 {
 	HAL_BB_SetItChannelSelectionModeProxy( (ENUM_RUN_MODE)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 
@@ -1283,7 +1297,7 @@ uint8_t PAD_FREQUENCY_CHANNEL_OPERATION_MODE_Handler(void *param)
 }
 
 
-uint8_t PAD_FREQUENCY_CHANNEL_SELECT_Handler(void *param)
+uint8_t PAD_FREQUENCY_CHANNEL_SELECT_Handler(void *param, uint8_t id)
 {	
 	HAL_BB_SetItChannelProxy( (uint8_t)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 
@@ -1291,7 +1305,7 @@ uint8_t PAD_FREQUENCY_CHANNEL_SELECT_Handler(void *param)
 }
 
 
-uint8_t PAD_MCS_OPERATION_MODE_Handler(void *param)
+uint8_t PAD_MCS_OPERATION_MODE_Handler(void *param, uint8_t id)
 {
 	HAL_BB_SetMcsModeProxy( (ENUM_RUN_MODE)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 
@@ -1299,7 +1313,7 @@ uint8_t PAD_MCS_OPERATION_MODE_Handler(void *param)
 }
 
 
-uint8_t PAD_MCS_MODULATION_MODE_Handler(void *param)
+uint8_t PAD_MCS_MODULATION_MODE_Handler(void *param, uint8_t id)
 {
 	HAL_BB_SetItQamProxy( (ENUM_BB_QAM)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 
@@ -1307,7 +1321,7 @@ uint8_t PAD_MCS_MODULATION_MODE_Handler(void *param)
 }
 
 
-uint8_t PAD_ENCODER_DYNAMIC_BITRATE_MODE_Handler(void *param)
+uint8_t PAD_ENCODER_DYNAMIC_BITRATE_MODE_Handler(void *param, uint8_t id)
 {
     HAL_BB_SetEncoderBrcModeProxy( (ENUM_RUN_MODE)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 
@@ -1315,7 +1329,7 @@ uint8_t PAD_ENCODER_DYNAMIC_BITRATE_MODE_Handler(void *param)
 }
 
 
-uint8_t PAD_ENCODER_DYNAMIC_BITRATE_SELECT_Handler(void *param)
+uint8_t PAD_ENCODER_DYNAMIC_BITRATE_SELECT_Handler(void *param, uint8_t id)
 {
     HAL_BB_SetEncoderBitrateProxy(0, (uint8_t)(((STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param)->paramData[0]));
 
@@ -1323,7 +1337,7 @@ uint8_t PAD_ENCODER_DYNAMIC_BITRATE_SELECT_Handler(void *param)
 }
 
 
-uint8_t PAD_WIRELESS_OSD_DISPLAY_Handler(void *param)
+uint8_t PAD_WIRELESS_OSD_DISPLAY_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
 
@@ -1347,7 +1361,7 @@ uint8_t PAD_WIRELESS_OSD_DISPLAY_Handler(void *param)
     return 0;
 }
 
-void WIRELESS_ParseParamConfig(void *param)
+void WIRELESS_ParseParamConfig(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *pstWirelessParamConfig;
 
@@ -1358,6 +1372,7 @@ void WIRELESS_ParseParamConfig(void *param)
            (void *)pstWirelessParamConfig,
            sizeof(STRU_WIRELESS_PARAM_CONFIG_MESSAGE));
 
+    g_stWirelessParamConfig.u8_usbPortId[g_stWirelessParamConfig.u8_buffTail] = id;
     g_stWirelessParamConfig.u8_buffTail++;
     g_stWirelessParamConfig.u8_buffTail &= (WIRELESS_INTERFACE_MAX_MESSAGE_NUM - 1);
 
@@ -1377,10 +1392,12 @@ void Wireless_MessageProcess(void)
     uint8_t                                 debugMode = 0;
     uint32_t                                u32_sendLength;
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *pstWirelessParamConfig;
+    uint8_t                                 u8_usbPortId;
 
     g_pstWirelessInfoDisplay  = (STRU_WIRELESS_INFO_DISPLAY *)OSD_STATUS_SHM_ADDR;
 
-    if (HAL_USB_DeviceGetConnState() == 0)
+    if ((HAL_USB_DeviceGetConnState(0) == 0)&&
+         (HAL_USB_DeviceGetConnState(1) == 0))
     {
         return;
     }
@@ -1388,13 +1405,13 @@ void Wireless_MessageProcess(void)
     if (g_stWirelessReply.u8_buffTail != g_stWirelessReply.u8_buffHead)
     {
         pstWirelessParamConfig = &g_stWirelessReply.stMsgPool[g_stWirelessReply.u8_buffHead];
-    
+
         messageId              = pstWirelessParamConfig->messageId;
-    
+
         u8_sendBuff         = (uint8_t *)pstWirelessParamConfig;
         u32_sendLength      = (uint32_t)sizeof(STRU_WIRELESS_PARAM_CONFIG_MESSAGE);
-    
-        if (HAL_OK != HAL_USB_DeviceSendCtrl(u8_sendBuff, u32_sendLength))
+
+        if (HAL_OK != HAL_USB_DeviceSendCtrl(u8_sendBuff, u32_sendLength, g_stWirelessReply.u8_usbPortId[g_stWirelessReply.u8_buffHead]))
         {
             dlog_error("send wireless info fail");
         }
@@ -1406,31 +1423,38 @@ void Wireless_MessageProcess(void)
     }
     else if (g_pstWirelessInfoDisplay->osd_enable)
     {
-        if (g_u8OSDToggle == 0)
+        g_u8OSDToggle  ^= 1;
+
+        if (g_u8OSDToggle == 1)
         {
-            if (0 == WIRELESS_SendOSDInfo())
+            if (g_u8OSDEnable[0])
             {
-                g_u8OSDToggle  ^= 1;
+                WIRELESS_SendOSDInfo(0);
             }
         }
         else
         {
-            g_u8OSDToggle  ^= 1;
+            if (g_u8OSDEnable[1])
+            {
+                WIRELESS_SendOSDInfo(1);
+            }
         }
     }
-    
+
     if (g_stWirelessParamConfig.u8_buffTail != g_stWirelessParamConfig.u8_buffHead)
     {
         // get the head node from the buffer
         pstWirelessParamConfig = &g_stWirelessParamConfig.stMsgPool[g_stWirelessParamConfig.u8_buffHead];
-    
+
         messageId = pstWirelessParamConfig->messageId;
-    
+
         if (messageId < MAX_PID_NUM)
         {
             if (g_stWirelessMsgHandler[messageId])
             {
-                (g_stWirelessMsgHandler[messageId])(pstWirelessParamConfig);
+                u8_usbPortId = g_stWirelessParamConfig.u8_usbPortId[g_stWirelessParamConfig.u8_buffHead];
+            
+                (g_stWirelessMsgHandler[messageId])(pstWirelessParamConfig, u8_usbPortId);
             }
             else
             {
@@ -1495,12 +1519,14 @@ void Wireless_TaskInit(uint8_t u8_useRTOS)
 }
 
 
-static void Wireless_InsertMsgIntoReplyBuff(STRU_WIRELESS_PARAM_CONFIG_MESSAGE *pstMessage)
+static void Wireless_InsertMsgIntoReplyBuff(STRU_WIRELESS_PARAM_CONFIG_MESSAGE *pstMessage, uint8_t u8_usbPortId)
 {
     // insert message to the buffer tail
     memcpy((void *)&g_stWirelessReply.stMsgPool[g_stWirelessReply.u8_buffTail],
            (void *)pstMessage,
            sizeof(STRU_WIRELESS_PARAM_CONFIG_MESSAGE));
+
+    g_stWirelessReply.u8_usbPortId[g_stWirelessReply.u8_buffTail] = u8_usbPortId;
 
     g_stWirelessReply.u8_buffTail++;
     g_stWirelessReply.u8_buffTail &= (WIRELESS_INTERFACE_MAX_MESSAGE_NUM - 1);

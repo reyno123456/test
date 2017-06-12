@@ -72,7 +72,7 @@ int main(void)
     st_audioConfig.u32_encodeDataAddr = MPE3_ENCODER_DATA_ADDR;
     st_audioConfig.u32_newPcmDataFlagAddr = SRAM_MODULE_SHARE_AUDIO_PCM;
     st_audioConfig.u8_channel = 2;
-    HAL_MP3EncodePcmInit(&st_audioConfig, ENUM_HAL_SRAM_DATA_PATH_REVERSE);
+    HAL_MP3EncodePcmInit(&st_audioConfig, 0);
     
 
     STRU_HDMI_CONFIGURE        st_configure;

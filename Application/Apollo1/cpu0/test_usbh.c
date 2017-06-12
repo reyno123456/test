@@ -8,9 +8,6 @@
 #include "hal.h"
 
 
-#define USB_VIDEO_BYPASS_SIZE_ONCE      (8192)
-#define USB_VIDEO_BYPASS_DEST_ADDR      (0xB1000000)
-
 
 /* USB Host Global Variables */
 USBH_BypassVideoCtrl            g_usbhBypassVideoCtrl;
@@ -49,7 +46,6 @@ void USBH_BypassVideo(void const *argument)
 
     fileResult          = FR_OK;
     bytesread           = 0;
-    videoBuff           = (uint8_t *)USB_VIDEO_BYPASS_DEST_ADDR;
 
     dlog_info("enter USBH_BypassVideo Task!\n");
 
@@ -57,6 +53,15 @@ void USBH_BypassVideo(void const *argument)
     {
         if (osOK == osSemaphoreWait(g_usbhBypassVideoCtrl.semID, osWaitForever))
         {
+            if (g_usbhBypassVideoCtrl.bypassChannel == 0)
+            {
+                videoBuff           = (uint8_t *)USB_VIDEO_BYPASS_CHANNEL_0_DEST_ADDR;
+            }
+            else
+            {
+                videoBuff           = (uint8_t *)USB_VIDEO_BYPASS_CHANNEL_1_DEST_ADDR;
+            }
+
             for ( ;; )
             {
                 if (g_usbhBypassVideoCtrl.taskActivate == 1)
@@ -236,7 +241,14 @@ void USB_MainTask(void const *argument)
                     }
 
                     /* activate the task */
-                    HAL_SRAM_EnableSkyBypassVideo(HAL_SRAM_VIDEO_CHANNEL_0);
+                    if (g_usbhBypassVideoCtrl.bypassChannel == 0)
+                    {
+                        HAL_SRAM_EnableSkyBypassVideo(HAL_SRAM_VIDEO_CHANNEL_0);
+                    }
+                    else
+                    {
+                        HAL_SRAM_EnableSkyBypassVideo(HAL_SRAM_VIDEO_CHANNEL_1);
+                    }
 
                     osSemaphoreRelease(g_usbhBypassVideoCtrl.semID);
 
@@ -247,7 +259,14 @@ void USB_MainTask(void const *argument)
                 {
                     dlog_info("stop bypassvideo task!\n");
 
-                    HAL_SRAM_DisableSkyBypassVideo(HAL_SRAM_VIDEO_CHANNEL_0);
+                    if (g_usbhBypassVideoCtrl.bypassChannel == 0)
+                    {
+                        HAL_SRAM_DisableSkyBypassVideo(HAL_SRAM_VIDEO_CHANNEL_0);
+                    }
+                    else
+                    {
+                        HAL_SRAM_DisableSkyBypassVideo(HAL_SRAM_VIDEO_CHANNEL_1);
+                    }
 
                     break;
                 }
@@ -470,4 +489,42 @@ void command_stopSaveUVC(void)
 
     g_u8SaveUVC = 0;
 }
+
+
+void command_startBypassVideo(uint8_t *bypassChannel)
+{
+    USBH_APP_EVENT_DEF  usbhAppType;
+
+    usbhAppType = USBH_APP_START_BYPASS_VIDEO;
+
+    if (0 == g_usbhBypassVideoCtrl.taskActivate)
+    {
+        g_usbhBypassVideoCtrl.taskActivate  = 1;
+        g_usbhBypassVideoCtrl.bypassChannel = strtoul(bypassChannel, NULL, 0);
+        osMessagePut(g_usbhAppCtrl.usbhAppEvent, usbhAppType, 0);
+    }
+    else
+    {
+        dlog_error("Bypass Video Task is running\n");
+    }
+}
+
+
+void command_stopBypassVideo(void)
+{
+    USBH_APP_EVENT_DEF  usbhAppType;
+
+    usbhAppType = USBH_APP_STOP_BYPASS_VIDEO;
+
+    if (1 == g_usbhBypassVideoCtrl.taskActivate)
+    {
+        g_usbhBypassVideoCtrl.taskActivate  = 0;
+        osMessagePut(g_usbhAppCtrl.usbhAppEvent, usbhAppType, 0);
+    }
+    else
+    {
+        dlog_error("Bypass Video Task is not running\n");
+    }
+}
+
 

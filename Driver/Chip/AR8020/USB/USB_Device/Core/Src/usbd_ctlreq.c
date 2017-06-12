@@ -822,21 +822,6 @@ void USBD_RmvValidPortNum(uint8_t id)
 }
 
 
-/**
-  * @}
-  */
-uint8_t USBD_GetActivePortNum(void)
-{
-    if (g_u8ActiveUSBDevicePort > 2)
-    {
-        dlog_error("erro port num");
-
-        return 0;
-    }
-
-    return g_u8ActiveUSBDevicePort;
-}
-
 
 /**
   * @}

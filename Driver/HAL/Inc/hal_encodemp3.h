@@ -43,7 +43,7 @@ typedef struct
 * @retval   HAL_FALSE   paramenter error.
 * @note     none
 */
-HAL_BOOL_T HAL_MP3EncodePcmInit(const STRU_MP3_ENCODE_CONFIGURE_WAVE *st_mp3EncodeConfg, uint8_t dataPathReverse);
+HAL_BOOL_T HAL_MP3EncodePcmInit(const STRU_MP3_ENCODE_CONFIGURE_WAVE *st_mp3EncodeConfg, uint8_t dataPath);
 
 /**
 * @brief    mp3 encoder un-initialization

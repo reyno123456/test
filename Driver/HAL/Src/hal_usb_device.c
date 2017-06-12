@@ -110,12 +110,9 @@ void HAL_USB_ResetDevice(void * p)
 * @retval   void
 * @note
 */
-HAL_RET_T HAL_USB_DeviceSendCtrl(uint8_t *buff, uint32_t u32_len)
+HAL_RET_T HAL_USB_DeviceSendCtrl(uint8_t *buff, uint32_t u32_len, uint8_t u8_portId)
 {
     uint8_t         ret;
-    uint8_t         u8_portId;
-
-    u8_portId       = USBD_GetActivePortNum();
 
     ret = USBD_HID_SendReport(&USBD_Device[u8_portId], buff, u32_len, HID_EPIN_CTRL_ADDR);
 
@@ -123,13 +120,13 @@ HAL_RET_T HAL_USB_DeviceSendCtrl(uint8_t *buff, uint32_t u32_len)
     {
         if (USBD_BUSY == ret)
         {
-            dlog_error("send ctrl busy");
+            dlog_error("send ctrl busy, port: %d", u8_portId);
 
             return HAL_USB_ERR_DEVICE_BUSY;
         }
         else
         {
-            dlog_error("send ctrl not configured");
+            dlog_error("send ctrl not configured, port: %d", u8_portId);
 
             return HAL_USB_ERR_DEVICE_NOT_CONGIURED;
         }
@@ -145,7 +142,7 @@ HAL_RET_T HAL_USB_DeviceSendCtrl(uint8_t *buff, uint32_t u32_len)
 * @retval   void
 * @note
 */
-void HAL_USB_RegisterUserProcess(void (*pUsrFunc)(void *),
+void HAL_USB_RegisterUserProcess(void (*pUsrFunc)(void *, uint8_t),
                                void (*pInitFunc)(void))
 {
     g_stUsbdHidItf.dataOut  = pUsrFunc;
@@ -156,12 +153,10 @@ void HAL_USB_RegisterUserProcess(void (*pUsrFunc)(void *),
 }
 
 
-uint8_t HAL_USB_DeviceGetConnState(void)
+uint8_t HAL_USB_DeviceGetConnState(uint8_t u8_usbPortId)
 {
-    uint8_t                 u8_usbPortId;
     USBD_HandleTypeDef     *pdev;
 
-    u8_usbPortId            = USBD_GetActivePortNum();
     pdev                    = &USBD_Device[u8_usbPortId];
 
     return pdev->u8_connState;
@@ -174,12 +169,10 @@ uint8_t HAL_USB_DeviceGetConnState(void)
 * @retval   void
 * @note  
 */
-void HAL_USB_OpenVideo(void)
+void HAL_USB_OpenVideo(uint8_t u8_usbPortId)
 {
-    uint8_t                 u8_usbPortId;
-    USBD_HandleTypeDef     *pdev;
+    USBD_HandleTypeDef      *pdev;
 
-    u8_usbPortId            = USBD_GetActivePortNum();
     pdev                    = &USBD_Device[u8_usbPortId];
 
     USBD_HID_OpenVideoDisplay(pdev);
@@ -192,12 +185,10 @@ void HAL_USB_OpenVideo(void)
 * @retval   void
 * @note  
 */
-void HAL_USB_CloseVideo(void)
+void HAL_USB_CloseVideo(uint8_t u8_usbPortId)
 {
-    uint8_t                 u8_usbPortId;
-    USBD_HandleTypeDef     *pdev;
+    USBD_HandleTypeDef      *pdev;
 
-    u8_usbPortId            = USBD_GetActivePortNum();
     pdev                    = &USBD_Device[u8_usbPortId];
 
     USBD_HID_CloseVideoDisplay(pdev);
@@ -210,7 +201,7 @@ void HAL_USB_CloseVideo(void)
 * @retval   void
 * @note  
 */
-void HAL_USB_RegisterCustomerRecvData(void (*customerRecv)(void *, uint32_t *))
+void HAL_USB_RegisterCustomerRecvData(void (*customerRecv)(void *, uint32_t, uint8_t))
 {
     g_stUsbdHidItf.customerOut  = customerRecv;
 
@@ -226,12 +217,11 @@ void HAL_USB_RegisterCustomerRecvData(void (*customerRecv)(void *, uint32_t *))
 * @retval   void
 * @note  
 */
-HAL_RET_T HAL_USB_CustomerSendData(uint8_t *buff, uint32_t u32_len)
+HAL_RET_T HAL_USB_CustomerSendData(uint8_t *buff,
+                                   uint32_t u32_len,
+                                   uint8_t u8_portId)
 {
     uint8_t             ret;
-    uint8_t             u8_portId;
-
-    u8_portId           = USBD_GetActivePortNum();
 
     ret = USBD_HID_SendReport(&USBD_Device[u8_portId], buff, u32_len, HID_CUSTOMER_IN_ADDR);
 

@@ -14,6 +14,10 @@ History:
 #include "hal_sram.h"
 #include "hal_nvic.h"
 #include "interrupt.h"
+#include "hal_usb_otg.h"
+#include "debuglog.h"
+#include "usbd_hid.h"
+
 
 /**
 * @brief  Config the Buffer in SRAM to Receive Video Data from SKY.
@@ -21,7 +25,7 @@ History:
 * @retval   void
 * @note  
 */
-void HAL_SRAM_ReceiveVideoConfig(ENUM_HAL_SRAM_DATA_PATH e_dataPathReverse)
+void HAL_SRAM_ReceiveVideoConfig(void)
 {
     SRAM_GROUND_ReceiveVideoConfig();
 
@@ -38,8 +42,6 @@ void HAL_SRAM_ReceiveVideoConfig(ENUM_HAL_SRAM_DATA_PATH e_dataPathReverse)
 
     /* enable the SRAM_READY_1 IRQ */
     INTR_NVIC_EnableIRQ(BB_SRAM_READY_IRQ_1_VECTOR_NUM);
-
-    g_u8DataPathReverse = e_dataPathReverse;
 }
 
 
@@ -87,4 +89,46 @@ void HAL_SRAM_CheckChannelTimeout(void)
 {
     SRAM_CheckTimeout();
 }
+
+
+void HAL_SRAM_ChannelConfig(ENUM_HAL_SRAM_CHANNEL_TYPE e_channelType,
+                           ENUM_HAL_USB_PORT e_usbPort,
+                           uint8_t u8_channel)
+{
+    uint8_t         u8_sramChannel;
+    uint8_t         u8_usbEp;
+    uint8_t         u8_usbPort;
+
+    if (u8_channel > SRAM_CHANNEL_NUM)
+    {
+        dlog_error("u8_channel should not exceed 2");
+
+        u8_sramChannel = 0;
+    }
+    else
+    {
+        u8_sramChannel = u8_channel;
+    }
+
+    u8_usbPort      = (uint8_t)e_usbPort;
+
+    if (e_channelType == ENUM_HAL_SRAM_CHANNEL_TYPE_VIDEO0)
+    {
+        u8_usbEp    = HID_EPIN_VIDEO_ADDR;
+    }
+    else
+    {
+        /* video & audio use the same endpoint,
+                  because BB has only two physical channel,
+                  the first is occupied by Video0
+                */
+        u8_usbEp    = HID_EPIN_AUDIO_ADDR;
+    }
+
+    g_stChannelPortConfig[u8_sramChannel].u8_usbPort = u8_usbPort;
+    g_stChannelPortConfig[u8_sramChannel].u8_usbEp = u8_usbEp;
+
+    return;
+}
+
 

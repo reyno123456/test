@@ -4,7 +4,6 @@
 #include "usbd_def.h"
 #include "usbd_hid.h"
 #include "reg_rw.h"
-#include "bb_types.h"
 #include "systicks.h"
 
 volatile uint32_t               sramReady0;
@@ -12,6 +11,8 @@ volatile uint32_t               sramReady1;
 extern USBD_HandleTypeDef       USBD_Device[USBD_PORT_NUM];
 volatile uint8_t                g_u8DataPathReverse = 0;
 uint32_t                        g_TickRecord[2];
+STRU_CHANNEL_PORT_CONFIG        g_stChannelPortConfig[SRAM_CHANNEL_NUM];
+
 
 void SRAM_Ready0IRQHandler(uint32_t u32_vectorNum)
 {
@@ -21,7 +22,7 @@ void SRAM_Ready0IRQHandler(uint32_t u32_vectorNum)
     USBD_HandleTypeDef     *pdev;
     uint8_t                 u8_endPoint;
 
-    u8_usbPortId            = USBD_GetActivePortNum();
+    u8_usbPortId            = g_stChannelPortConfig[0].u8_usbPort;
     pdev                    = &USBD_Device[u8_usbPortId];
 
     if (pdev->u8_videoDisplay == 0)
@@ -36,14 +37,7 @@ void SRAM_Ready0IRQHandler(uint32_t u32_vectorNum)
     dataLen                 = SRAM_DATA_VALID_LEN_0;
     dataLen                 = (dataLen << 2);
 
-    if (g_u8DataPathReverse)
-    {
-        u8_endPoint         = HID_EPIN_AUDIO_ADDR;
-    }
-    else
-    {
-        u8_endPoint         = HID_EPIN_VIDEO_ADDR;
-    }
+    u8_endPoint             = g_stChannelPortConfig[0].u8_usbEp;
 
     if (USBD_OK != USBD_HID_SendReport(pdev, buff, dataLen, u8_endPoint))
     {
@@ -74,7 +68,7 @@ void SRAM_Ready1IRQHandler(uint32_t u32_vectorNum)
     USBD_HandleTypeDef     *pdev;
     uint8_t                 u8_endPoint;
 
-    u8_usbPortId            = USBD_GetActivePortNum();
+    u8_usbPortId            = g_stChannelPortConfig[1].u8_usbPort;
     pdev                    = &USBD_Device[u8_usbPortId];
 
     if (pdev->u8_videoDisplay == 0)
@@ -89,14 +83,7 @@ void SRAM_Ready1IRQHandler(uint32_t u32_vectorNum)
     dataLen                 = SRAM_DATA_VALID_LEN_1;
     dataLen                 = (dataLen << 2);
 
-    if (g_u8DataPathReverse)
-    {
-        u8_endPoint         = HID_EPIN_VIDEO_ADDR;
-    }
-    else
-    {
-        u8_endPoint         = HID_EPIN_AUDIO_ADDR;
-    }
+    u8_endPoint             = g_stChannelPortConfig[1].u8_usbEp;
 
     if (USBD_OK != USBD_HID_SendReport(pdev, buff, dataLen, u8_endPoint))
     {

@@ -120,9 +120,9 @@ HID_DataTypeDef;
 
 typedef struct _USBD_HID_Itf
 {
-    void (* dataOut)(void *);
+    void (* dataOut)(void *, uint8_t);
     void (* userInit)(void);
-    void (* customerOut)(void *, uint32_t *);
+    void (* customerOut)(void *, uint32_t, uint8_t);
 }USBD_HID_ItfTypeDef;
 
 
