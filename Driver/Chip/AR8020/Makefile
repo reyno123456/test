@@ -72,6 +72,7 @@ install:
 	@cp -f SysCtl/Inc/gpio.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/cpu_info.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/interrupt.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f SysCtl/Inc/mpu.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f QuadSPI/Inc/quad_spi_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f MIPI/Inc/mipi.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f H264Encoder/Inc/h264_encoder.h $(OUTPUT_HEADER_STAGING_DIR)

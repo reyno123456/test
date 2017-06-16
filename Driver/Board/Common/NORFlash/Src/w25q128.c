@@ -3,9 +3,11 @@
 #include "quad_spi_ctrl.h"
 #include "w25q128.h"
 #include "debuglog.h"
+#include "mpu.h"
 
 void W25Q128_Init(void)
 {
+    MPU_QuadspiProtectDisable();
     //05h
     QUAD_SPI_UpdateInstruct(QUAD_SPI_INSTR_0, 0x001c14, 0x700);
     //35h
@@ -32,5 +34,7 @@ void W25Q128_Init(void)
     QUAD_SPI_UpdateInstruct(QUAD_SPI_INSTR_21, 0x609f60, 0x17);
     //4Bh
     QUAD_SPI_UpdateInstruct(QUAD_SPI_INSTR_7, 0x601D2C, 0xf83f00);
+
+    MPU_QuadspiProtectEnable();
 }
 
