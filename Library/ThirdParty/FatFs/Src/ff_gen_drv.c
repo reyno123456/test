@@ -1,37 +1,18 @@
 /**
   ******************************************************************************
   * @file    ff_gen_drv.c
-  * @author  MCD Application Team
-  * @version V1.3.0
-  * @date    08-May-2015
+  * @author  Artosyn Software Team
+  * @version follow open source version fatfs 0.13
+  * @date    15-Jun-2017
   * @brief   FatFs generic low level driver.
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; COPYRIGHT 2015 STMicroelectronics</center></h2>
-  *
-  * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
-  * You may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at:
-  *
-  *        http://www.st.com/software_license_agreement_liberty_v2
-  *
-  * Unless required by applicable law or agreed to in writing, software
-  * distributed under the License is distributed on an "AS IS" BASIS,
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
-  *
   ******************************************************************************
   */
 
-/* Includes ------------------------------------------------------------------*/
 #include "ff_gen_drv.h"
 #include "debuglog.h"
+#include <string.h>
+#include <stdlib.h>
 
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
 Disk_drvTypeDef disk = {{0}, {0}, {0}, 0};
 
 /* Private function prototypes -----------------------------------------------*/
@@ -49,46 +30,44 @@ Disk_drvTypeDef disk = {{0}, {0}, {0}, 0};
   */
 uint8_t FATFS_LinkDriverEx(Diskio_drvTypeDef *drv, char *path, uint8_t lun)
 {
-  uint8_t ret = 1;
-  uint8_t DiskNum = 0;
+    int vol;
+    char tmp_path[FF_MAX_LFN];              // force to use 4 Byte alined
+    char *p_tmp_path = tmp_path;
 
-  dlog_info("disk.nbr = %d", disk.nbr);
-  /*  if (disk.nbr <= _VOLUMES)
+#if 1
+    memcpy(tmp_path, path, strlen(path));
+#endif
+
+/*     strcpy(tmp_path,path); */
+// test
+#if 0
+    strcpy(tmp_path,"test");
+    strcpy(tmp_path,(const char *)(path));
+    strcpy(tmp_path,path);
+#endif
+// test end
+    tmp_path[strlen(path)] = 0;
+    dlog_info("path = %s", path);
+    dlog_info("tmp_path = %s", tmp_path);
+    vol = get_ldnumber((TCHAR const**)(&p_tmp_path));
+    dlog_info("%d, vol = %d", __LINE__, vol);
+    if (vol < 0)
     {
-      disk.is_initialized[disk.nbr] = 0;
-      disk.drv[disk.nbr] = drv;
-      disk.lun[disk.nbr] = lun;
-      DiskNum = disk.nbr++;
-      dlog_info("DiskNum = ");
-      print_str(DiskNum);
-      serial_putc('\n');
-      path[0] = DiskNum + '0';
-      path[1] = ':';
-      path[2] = '/';
-      path[3] = 0;
-      dlog_info("\npath = ");
-      serial_putc(path[0]);
-      serial_putc(path[1]);
+        return FR_INVALID_DRIVE;
+    }
 
-      serial_putc(path[2]);
-      serial_putc('\n');
-      ret = 0;
-    }*/
-  disk.nbr = 0;
-  disk.is_initialized[disk.nbr] = 0;
-  disk.drv[disk.nbr] = drv;
-  disk.lun[disk.nbr] = lun;
-  DiskNum = disk.nbr++;
-/*
-  path[0] = DiskNum + '0';
-  path[1] = ':';
-  path[2] = '/';
-  path[3] = 0;
-*/
-  dlog_info("path = %s", path);
-  ret = 0;
+    if (FR_OK == f_chdrive(path))
+    {
+        dlog_info("%d chdrive to %s\\ error", __LINE__, path);
+    }
+    disk.nbr = vol;
 
-  return ret;
+    dlog_info("disk.nbr = %d", disk.nbr);
+    disk.is_initialized[disk.nbr] = 0;
+    disk.drv[disk.nbr] = drv;
+    disk.lun[disk.nbr] = lun;
+
+    return 0;
 }
 
 /**
@@ -116,6 +95,7 @@ uint8_t FATFS_UnLinkDriverEx(char *path, uint8_t lun)
   uint8_t DiskNum = 0;
   uint8_t ret = 1;
 
+#if 0
   if (disk.nbr >= 1)
   {
     DiskNum = path[0] - '0';
@@ -128,6 +108,20 @@ uint8_t FATFS_UnLinkDriverEx(char *path, uint8_t lun)
     }
   }
   return ret;
+#endif
+
+    if (disk.nbr >= 1)
+    {
+        DiskNum = disk.nbr - 1;
+        if (disk.drv[DiskNum] != 0)
+        {
+            disk.drv[DiskNum] = 0;
+            disk.lun[DiskNum] = 0;
+            disk.nbr--;
+            ret = 0;
+        }
+    }
+    return ret;
 }
 
 /**

@@ -101,7 +101,7 @@ static unsigned char wave_open(const char *fname, wave_t *wave, shine_config_t *
   uint32_t fmt_data, fmt_length;
   int chunk_read;
 
-  if (f_open(file, fname, FA_READ) != FR_OK)
+  if (f_open(file, (const TCHAR*)fname, FA_READ) != FR_OK)
   {
     dlog_info("f_open in error!\n");
     return 1;
@@ -233,7 +233,7 @@ static int test_pcm(void)
     FIL inFile;
     shine_t        s;
 
-    if(f_open(&outFile, "0:filep.mp3", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+    if(f_open(&outFile, (const TCHAR*)("0:filep.mp3"), FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
     {
         dlog_info("open outfile fail!\n");
         return 1;
@@ -242,7 +242,7 @@ static int test_pcm(void)
     /* Set the default MPEG encoding paramters - basically init the struct */
     shine_set_config_mpeg_defaults(&(config.mpeg));
 
-    if (f_open(&inFile, "0:file.pcm", FA_READ) != FR_OK)
+    if (f_open(&inFile, (const TCHAR*)("0:file.pcm"), FA_READ) != FR_OK)
     {
         dlog_info("f_open infile error!\n");
         return 1;
@@ -302,7 +302,7 @@ static int test_wav(void)
     FIL inFile;
     shine_t s;
 
-    if(f_open(&outFile, "0:filew.mp3", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+    if(f_open(&outFile, (const TCHAR*)("0:filew.mp3"), FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
     {
         dlog_info("open outfile fail!\n");
         return 1;

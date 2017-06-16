@@ -81,6 +81,8 @@ int main(void)
 
 	HAL_SD_Init();
 
+	HAL_SD_Fatfs_Init();
+
     portDISABLE_INTERRUPTS();
 
     /* Create Main Task */

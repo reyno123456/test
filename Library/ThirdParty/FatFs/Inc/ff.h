@@ -383,6 +383,9 @@ int ff_del_syncobj (FF_SYNC_t sobj);	/* Delete a sync object */
 #define AM_DIR	0x10	/* Directory */
 #define AM_ARC	0x20	/* Archive */
 
+int get_ldnumber (		/* Returns logical drive number (-1:invalid drive) */
+	const TCHAR** path	/* Pointer to pointer to the path name */
+);
 
 #ifdef __cplusplus
 }

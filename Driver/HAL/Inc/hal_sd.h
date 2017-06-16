@@ -94,6 +94,8 @@ HAL_RET_T HAL_SD_Ioctl(ENUM_HAL_SD_CTRL e_sdCtrl, uint32_t *pu32_info);
 */
 HAL_RET_T HAL_SD_Deinit();
 
+HAL_RET_T HAL_SD_Fatfs_Init(void);
+
 #ifdef __cplusplus
 }
 #endif

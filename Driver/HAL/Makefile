@@ -70,7 +70,9 @@ SRC_C := Src/hal.c \
 INCDIRS := -IInc \
            -I$(TOP_DIR)/Configure/Include \
            -I$(TOP_DIR)/Library/Artosyn/Common/Inc \
-           -I$(TOP_DIR)/Library/ThirdParty/MP3Encoder/shine-3.1.0 \
+           -I$(TOP_DIR)/Library/ThirdParty/FatFs/Port \
+           -I$(TOP_DIR)/Library/ThirdParty/FatFs/Inc \
+		   -I$(TOP_DIR)/Library/ThirdParty/MP3Encoder/shine-3.1.0 \
            -I$(TOP_DIR)/Driver/Chip/AR8020/I2C/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/SysCtl/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/BB/Inc \

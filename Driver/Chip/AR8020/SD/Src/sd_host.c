@@ -1416,12 +1416,14 @@ static EMU_SD_RTN InitializeCard(SD_HandleTypeDef *hsd)
 
   hsd->CardType = STD_CAPACITY_SD_CARD;
 
+#if 0
   get_val = Core_SDMMC_GetCDETECT(hsd->Instance);
   if (get_val != 0)
   {
     dlog_info("No Card Detected!\n");
     return SD_NOTCARD;
   }
+#endif
   Core_SDMMC_SetTMOUT(hsd->Instance, SDMMC_TMOUT_DEFAULT);
   Core_SDMMC_SetCTYPE(hsd->Instance, SDMMC_CTYPE_1BIT);
   /* FIFO_DEPTH = 16 words */
@@ -2402,8 +2404,13 @@ void SD_init_deInit_Callback(void *p)
     {
         if (sdhandle.inited == 0)
         {
-            dlog_info("Initializing the SD Card...\n");
+            dlog_info("%d, Initializing the SD Card...\n", __LINE__);
 /*             sdhandle.Instance = SDMMC_ADDR; */
+            sdhandle.Instance = SDMMC_ADDR;
+            sdhandle.SpeedMode = CARD_SDR50;
+/*             EMU_SD_RTN e_errorState = SD_OK; */
+            dlog_info("speedMode = SDR50");
+            SysTicks_DelayMS(100);
             Card_SD_Init(&sdhandle, &cardinfo);
             sdhandle.inited = 1;
             dlog_info("Inited SD Card...\n");                    

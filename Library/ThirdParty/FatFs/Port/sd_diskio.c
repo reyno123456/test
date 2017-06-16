@@ -110,13 +110,25 @@ DSTATUS SD_initialize(BYTE lun)
 DSTATUS SD_status(BYTE lun)
 {
   Stat = STA_NOINIT;
+#if 0
   SD_STATUS *e_cardStatus;
   if (SD_CardStatus(e_cardStatus) == SD_TRANSFER_READY)
   {
     Stat &= ~STA_NOINIT;
   }
-
-  return Stat;
+#endif
+    
+  if(sdhandle.inited == 1)
+  { 
+    dlog_info("SD initializa success!");
+    return 0;
+  }
+  else
+  {
+      dlog_info("SD initializa error!");
+      return 1;
+  }
+  // return Stat;
 }
 
 /**

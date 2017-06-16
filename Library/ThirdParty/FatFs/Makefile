@@ -37,6 +37,7 @@ SRC_C   := Src/ff.c \
            Src/option/syscall.c \
            Port/sd_diskio.c \
            Port/usbh_diskio.c \
+           Src/option/ffunicode.c
 
 
 INCDIRS := -IInc \

@@ -7,18 +7,19 @@
 #include "systicks.h"
 #include <string.h>
 #include <stdlib.h>
+#include "../../../Driver/Chip/AR8020/SD/Inc/sd_host.h"
 
 FIL outFile, inFile;
 FATFS SDFatFs;  /* File system object for SD card logical drive */
-FIL MyFile, MyFileIn;     /* File object */
-char *SDPath = "SD2:/"; 
+// FIL MyFile, MyFileIn;     /* File object */
+char *SDPath = "SD:/"; 
 
 extern Diskio_drvTypeDef  SD_Driver;
 extern unsigned int command_str2uint(char *str);
 
 static FRESULT open_append (
     FIL* fp,            /* [OUT] File object to create */
-    const char* path    /* [IN]  File name to be opened */
+    const TCHAR* path    /* [IN]  File name to be opened */
 )
 {
     FRESULT fr;
@@ -90,109 +91,89 @@ void TestWR()
 
 void TestFatFs()
 {
-	FRESULT res;                                          /* FatFs function common result code */
-	uint32_t byteswritten, bytesread;                     /* File write/read counts */
-	uint8_t wtext[] = "This is STM32 working with FatFs"; /* File write buffer */
-	uint8_t rtext[100];                                   /* File read buffer */
-	static char name[] = "myfile1";
+	FRESULT res;
+	uint32_t byteswritten, bytesread;
+	static char *name;
 
+	name = malloc(128);
+	memset(name, 0, 128);
+	memcpy(name, "test.txt", strlen("test.txt"));
+    FIL MyFile, MyFileIn;
 	uint32_t u32_start; 
     
-	if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)
+	if (FR_OK == f_chdrive("SD:"))
 	{
-		dlog_info("Link error!");
-		return;
-	}
-	
-	dlog_info("Link success!");
+		dlog_info("%d chdrive to SD:\\", __LINE__);
+    }
+    
+    res = f_open(&MyFile, (const TCHAR*)(name), FA_CREATE_ALWAYS | FA_WRITE | FA_OPEN_APPEND);
+    if (res != FR_OK) 
+    {
+    	dlog_info("f_open error, res = %d", res);
+    }
+    else
+    {
+    	dlog_info("%d f_open success!", __LINE__);
+    	u32_start = SysTicks_GetTickCount();
+        if (FR_OK == f_chdrive("SD:"))
+        {
+            dlog_info("%d chdrive to SD:\\", __LINE__);
+        }
+    	res = f_write(&MyFile, (const void*)(0x81000000 - DTCM_CPU0_DMA_ADDR_OFFSET), 
+    				0x1000000, (void *)&byteswritten);
+    	dlog_info("%d, write %d ms", __LINE__, SysTicks_GetTickCount() - u32_start);
+    	
+    	if ((byteswritten == 0) || (res != FR_OK))
+    	{
+    		dlog_info("f_write error!");
+    	}
+    	else
+    	{
+    		dlog_info("f_write success!");
+    		f_close(&MyFile);
+            if (FR_OK == f_chdrive("SD:"))
+            {
+                dlog_info("%d chdrive to SD:\\", __LINE__);
+            }
+    		if (f_open(&MyFile, (const TCHAR*)name, FA_READ) != FR_OK)
+    		{
+    			dlog_info("f_open error!");
+    		}
+    		else
+    		{
+    			bytesread = 0x1000000;
+    			u32_start = SysTicks_GetTickCount();
+                if (FR_OK == f_chdrive("SD:"))
+                {
+                    dlog_info("%d chdrive to SD:\\", __LINE__);
+                }
+    			res = f_read(&MyFile, (void*)(0x81000000 - DTCM_CPU0_DMA_ADDR_OFFSET), 
+    						bytesread, (UINT*)&bytesread);
+    			dlog_info("%d, read %d ms", __LINE__, SysTicks_GetTickCount() - u32_start);
 
-	if ((res = f_mount(&SDFatFs, (TCHAR const*)SDPath, 1)) != FR_OK)
-	{
-		dlog_info("f_mount = %d", res);
-		dlog_info("f_mount error!");
-	}
-	else
-	{
-		dlog_info("%d f_mount success!", __LINE__);
-		//res = f_mkfs((TCHAR const*)SDPath, 0, 0);
-		//dlog_info("f_mkfs = %d\n", res);
-		/*##-4- Create and Open a new text file object with write access #####*/
-/* 		if (f_open(&MyFile, "STM32.TXT", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) */
-		name[6] += 1;
-		if (f_open(&MyFile, name, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) 
-		{
-			/* 'STM32.TXT' file Open for write Error */
-			dlog_info("f_open error!");
-		}
-		else
-		{
-			dlog_info("%d f_open success!", __LINE__);
-			/*##-5- Write data to the text file ################################*/
-/* 			res = f_write(&MyFile, wtext, sizeof(wtext), (void *)&byteswritten); */
-	
-			u32_start = SysTicks_GetTickCount();
-			res = f_write(&MyFile, (const void*)(0x81000000 - DTCM_CPU0_DMA_ADDR_OFFSET), 
-						0x1000000, (void *)&byteswritten);
-			dlog_info("%d, write %d ms", __LINE__, SysTicks_GetTickCount() - u32_start);
-			
-			if ((byteswritten == 0) || (res != FR_OK))
-			{
-				/* 'STM32.TXT' file Write or EOF Error */
-				dlog_info("f_write error!");
-			}
-			else
-			{
-				dlog_info("f_write success!");
-				/*##-6- Close the open text file #################################*/
-				f_close(&MyFile);
+    			if ((bytesread == 0) || (res != FR_OK))
+    			{
+    				dlog_info("f_read error!");
+    			}
+    			else
+    			{
+    				dlog_info("f_read success!");
+    				f_close(&MyFile);
 
-				/*##-7- Open the text file object with read access ###############*/
-				if (f_open(&MyFile, name, FA_READ) != FR_OK)
-				{
-					/* 'STM32.TXT' file Open for read Error */
-					dlog_info("f_open error!");
-				}
-				else
-				{
-					/*##-8- Read data from the text file ###########################*/
-/* 					res = f_read(&MyFile, rtext, sizeof(rtext), (UINT*)&bytesread); */
-					bytesread = 0x1000000;
-					u32_start = SysTicks_GetTickCount();
-					res = f_read(&MyFile, (void*)(0x81000000 - DTCM_CPU0_DMA_ADDR_OFFSET), 
-								bytesread, (UINT*)&bytesread);
-					dlog_info("%d, read %d ms", __LINE__, SysTicks_GetTickCount() - u32_start);
-
-					if ((bytesread == 0) || (res != FR_OK))
-					{
-						/* 'STM32.TXT' file Read or EOF Error */
-						dlog_info("f_read error!");
-					}
-					else
-					{
-						dlog_info("f_read success!");
-						/*##-9- Close the open text file #############################*/
-						f_close(&MyFile);
-
-						/*##-10- Compare read data with the expected data ############*/
-						if ((bytesread != byteswritten))
-						{
-							/* Read data is different from the expected data */
-							dlog_info("f_close error!");
-						}
-						else
-						{
-							/* Success of the demo: no error occurrence */
-							dlog_info("f_close success!");
-						}
-					}
-				}
-			}
-		}
-	
+    				if ((bytesread != byteswritten))
+    				{
+    					dlog_info("f_close error!");
+    				}
+    				else
+    				{
+    					dlog_info("f_close success!");
+    				}
+    			}
+    		}
+    	}
 	}
 
-	/*##-11- Unlink the micro SD disk I/O driver ###############################*/
-	res = FATFS_UnLinkDriver(SDPath);
+	free(name);
 }
 
 void TestFatFs1()
@@ -222,7 +203,7 @@ void TestFatFs1()
 			// dlog_info("f_mkfs = %d\n", res);
 			/*##-4- Create and Open a new text file object with write access #####*/
 /* 			if (f_open(&outFile, "a.mp3", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) */
-            if (f_open(&outFile, "a.mp3", FA_WRITE | FA_OPEN_APPEND) != FR_OK)
+            if (f_open(&outFile, (const TCHAR*)"a.mp3", FA_WRITE | FA_OPEN_APPEND) != FR_OK)
             // if (open_append(&outFile, "a.mp3"))
 			{
 				dlog_info("f_open out error!");
@@ -233,7 +214,7 @@ void TestFatFs1()
 /*                 f_printf(&outFile, "%s %s\n", __TIME__, __DATE__); */
 			}
 
-			if (f_open(&inFile, "a.wav", FA_READ) != FR_OK)
+			if (f_open(&inFile, (const TCHAR*)"a.wav", FA_READ) != FR_OK)
 			{
 				dlog_info("f_open in error!");
 			}
@@ -314,7 +295,7 @@ void TestFatFs2()
 			// 	/* 'STM32.TXT' file Open for write Error */
 			// 	dlog_info("f_open error!\n");
 			// }
-			if (f_open(&fileIn, "a.wav", FA_READ) != FR_OK)
+			if (f_open(&fileIn, (const TCHAR*)("a.wav"), FA_READ) != FR_OK)
 			{
 				/* 'STM32.TXT' file Open for write Error */
 				dlog_info("f_open error!\n");
@@ -385,6 +366,10 @@ void command_SdcardFatFs(char *argc)
 
 		case 6:
 		    Test_hal_read();
+		break;
+
+		case 7:
+		    TestFatFs_with_usb();
 		break;
 
 		default: break;
@@ -494,4 +479,101 @@ void Test_hal_read()
     {
         dlog_info("read done");
     }
+}
+
+extern SD_HandleTypeDef sdhandle;
+void TestFatFs_with_usb()
+{
+	FRESULT res;                                          /* FatFs function common result code */
+	uint32_t byteswritten, bytesread;                     /* File write/read counts */
+	uint8_t wtext[] = "This is STM32 working with FatFs"; /* File write buffer */
+	uint8_t rtext[100];                                   /* File read buffer */
+	static char name[] = "myfile1";
+
+	uint32_t u32_start; 
+
+	dlog_info("%d, sdhandle.inited = %d", __LINE__, sdhandle.inited);
+    
+	if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)
+	{
+		dlog_info("Link error!");
+		return;
+	}
+	
+	dlog_info("Link success!");
+
+	if ((res = f_mount(&SDFatFs, (TCHAR const*)SDPath, 1)) != FR_OK)
+	{
+		dlog_info("f_mount = %d", res);
+		dlog_info("f_mount error!");
+	}
+	else
+	{
+		dlog_info("%d f_mount success!", __LINE__);
+		dlog_output(1000);
+#if 0
+		name[6] += 1;
+		if (f_open(&MyFile, name, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) 
+		{
+			dlog_info("f_open error!");
+		}
+		else
+		{
+			dlog_info("%d f_open success!", __LINE__);
+	
+			u32_start = SysTicks_GetTickCount();
+			res = f_write(&MyFile, (const void*)(0x81000000 - DTCM_CPU0_DMA_ADDR_OFFSET), 
+						0x1000000, (void *)&byteswritten);
+			dlog_info("%d, write %d ms", __LINE__, SysTicks_GetTickCount() - u32_start);
+			
+			if ((byteswritten == 0) || (res != FR_OK))
+			{
+				dlog_info("f_write error!");
+			}
+			else
+			{
+				dlog_info("f_write success!");
+				f_close(&MyFile);
+
+				if (f_open(&MyFile, name, FA_READ) != FR_OK)
+				{
+					dlog_info("f_open error!");
+				}
+				else
+				{
+					bytesread = 0x1000000;
+					u32_start = SysTicks_GetTickCount();
+					res = f_read(&MyFile, (void*)(0x81000000 - DTCM_CPU0_DMA_ADDR_OFFSET), 
+								bytesread, (UINT*)&bytesread);
+					dlog_info("%d, read %d ms", __LINE__, SysTicks_GetTickCount() - u32_start);
+
+					if ((bytesread == 0) || (res != FR_OK))
+					{
+						dlog_info("f_read error!");
+					}
+					else
+					{
+						dlog_info("f_read success!");
+						f_close(&MyFile);
+
+						if ((bytesread != byteswritten))
+						{
+							dlog_info("f_close error!");
+						}
+						else
+						{
+							dlog_info("f_close success!");
+						}
+					}
+				}
+			}
+		}
+#endif
+	
+	}
+
+    
+	dlog_info("%d, sdhandle.inited = %d", __LINE__, sdhandle.inited);
+
+	res = FATFS_UnLinkDriver(SDPath);
 }

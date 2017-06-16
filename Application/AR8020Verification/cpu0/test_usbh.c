@@ -4,6 +4,7 @@
 #include "hal_usb_host.h"
 #include "hal_usb_device.h"
 #include "hal_sram.h"
+#include "systicks.h"
 
 
 
@@ -76,7 +77,7 @@ void USBH_BypassVideo(void const *argument)
                         {
                             if (g_usbhBypassVideoCtrl.fileOpened == 0)
                             {
-                                fileResult = f_open(&usbhAppFile, "0:usbtest.264", FA_READ);
+                                fileResult = f_open(&usbhAppFile, (const TCHAR*)("usbtest.264"), FA_READ);
 
                                 if(fileResult == FR_OK)
                                 {
@@ -107,11 +108,26 @@ void USBH_BypassVideo(void const *argument)
                         if ((HAL_USB_HOST_STATE_READY == HAL_USB_GetHostAppState(u8_usbPortId))&&
                             (1 == g_usbhBypassVideoCtrl.taskActivate))
                         {
+                            
+                            if (FR_OK != f_chdrive("USB:"))
+                            {
+                                dlog_error("%d chdrive to USB:\\ error", __LINE__);
+                            }
+                            
                             fileResult = f_read((&usbhAppFile), videoBuff, USB_VIDEO_BYPASS_SIZE_ONCE, (void *)&bytesread);
 
+                            if ((SysTicks_GetTickCount() % 100) == 0)
+                            {
+                                dlog_info("%d reyno fileResult = %d", __LINE__, fileResult);
+                            }
+                            
                             if(fileResult != FR_OK)
                             {
                                 g_usbhBypassVideoCtrl.fileOpened    = 0;
+                                if (FR_OK != f_chdrive("USB:"))
+                                {
+                                    dlog_error("%d chdrive to USB:\\ error", __LINE__);
+                                }
                                 f_close(&usbhAppFile);
 
                                 dlog_error("Cannot Read from the file \n");
@@ -123,6 +139,10 @@ void USBH_BypassVideo(void const *argument)
                             {
                                 dlog_info("a new round!\n");
                                 g_usbhBypassVideoCtrl.fileOpened    = 0;
+                                if (FR_OK != f_chdrive("USB:"))
+                                {
+                                    dlog_error("%d chdrive to USB:\\ error", __LINE__);
+                                }
                                 f_close(&usbhAppFile);
 
                                 g_usbhBypassVideoCtrl.taskState = USBH_VIDEO_BYPASS_TASK_START;
@@ -163,15 +183,19 @@ void USBH_MountUSBDisk(void)
 
     if (s_u8MountFlag == 0)
     {
-        FATFS_LinkDriver(&USBH_Driver, "0:/");
+        FATFS_LinkDriver(&USBH_Driver, "USB:/");
 
-        fileResult = f_mount(&(g_usbhAppCtrl.usbhAppFatFs), "0:/", 0);
+        fileResult = f_mount(&(g_usbhAppCtrl.usbhAppFatFs), (const TCHAR*)("USB:/"), 1);
 
         if (fileResult != FR_OK)
         {
             dlog_error("mount fatfs error: %d\n", fileResult);
 
             return;
+        }
+        else
+        {
+            dlog_info("%d success", __LINE__);
         }
 
         s_u8MountFlag = 1;

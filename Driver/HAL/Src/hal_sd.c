@@ -19,6 +19,9 @@ History:
 #include "interrupt.h"
 #include "sys_event.h"
 #include "systicks.h"
+#include "sd_diskio.h"
+#include "ff_gen_drv.h"
+#include "hal.h"
 
 extern SDMMC_DMATransTypeDef dma;
 extern SD_HandleTypeDef sdhandle;
@@ -57,6 +60,7 @@ HAL_RET_T HAL_SD_Init(void)
     }
     else
     {
+        sdhandle.inited = 0;
         write_reg32((uint32_t *)(SDMMC_BASE + 0x50), 0x00000001);
         write_reg32((uint32_t *)(SDMMC_BASE + 0x24), 0x00000001);
         write_reg32((uint32_t *)(SDMMC_BASE), 0x00000010);
@@ -77,6 +81,9 @@ HAL_RET_T HAL_SD_Init(void)
     }
     
 	dlog_info("Initialize SD Success!\n");
+	
+    SysTicks_DelayMS(500);  // wait for stable
+
 	return HAL_OK;
 }
 
@@ -406,4 +413,31 @@ HAL_RET_T HAL_SD_Ioctl(ENUM_HAL_SD_CTRL e_sdCtrl, uint32_t *pu32_info)
 	}
 
 	return HAL_OK;
+}
+
+HAL_RET_T HAL_SD_Fatfs_Init(void)
+{
+	FRESULT res;
+    char *path = "SD:/";
+    static FATFS fatfs;
+
+	if (FATFS_LinkDriver(&SD_Driver, path) != 0)
+	{
+		dlog_error("Link error!");
+		return HAL_FALSE;
+	}
+	
+	dlog_info("Link success!");
+
+	if ((res = f_mount(&fatfs, (TCHAR const*)path, 1)) != FR_OK)
+	{
+		dlog_error("f_mount = %d", res);
+		dlog_error("f_mount error!");
+	}
+	else
+	{
+	
+    }
+    
+    return HAL_OK;
 }
