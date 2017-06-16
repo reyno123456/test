@@ -382,7 +382,7 @@ void OS_TestRawWR_Handler(void const * argument)
 	uint32_t u32_start; 
 	uint32_t totol_sects;
 
-        #define NUM_OF_BLOCK 30000
+    #define NUM_OF_BLOCK 30000
 
 	totol_sects = 30541 * 1024;
 	u32_start = SysTicks_GetTickCount();
@@ -404,11 +404,15 @@ void OS_TestRawWR_Handler(void const * argument)
 	{
 		u32_start = SysTicks_GetTickCount();
 		if ( HAL_OK == HAL_SD_Write(sect_multi * NUM_OF_BLOCK, 
-		                                                    0x81000000 - DTCM_CPU0_DMA_ADDR_OFFSET, 
-		                                                    NUM_OF_BLOCK) )
+		                            0x81000000 - DTCM_CPU0_DMA_ADDR_OFFSET, 
+		                            NUM_OF_BLOCK) )
+/*         if ( HAL_OK == HAL_SD_Write(0, 0x20000000, NUM_OF_BLOCK) ) */
 		{
-			dlog_info("write 30000 sects, sect_multi = %d, used %d ms", sect_multi, 
-						SysTicks_GetTickCount() - u32_start);
+			dlog_info("write %d sects, sect_multi = %d, used %d ms, speed = %d kB/S", 
+			            NUM_OF_BLOCK, 
+			            sect_multi, 
+						SysTicks_GetTickCount() - u32_start, 
+						NUM_OF_BLOCK*512/(SysTicks_GetTickCount() - u32_start));
 		}
 		else
 		{
@@ -423,8 +427,11 @@ void OS_TestRawWR_Handler(void const * argument)
 									sect_multi * NUM_OF_BLOCK, 
 									NUM_OF_BLOCK))
 		{
-			dlog_info("read 30000 sects, sect_multi = %d, used %d ms", sect_multi, 
-						SysTicks_GetTickCount() - u32_start);			
+			dlog_info("read %d sects, sect_multi = %d, used %d ms, speed = %d kB/S", 
+			            NUM_OF_BLOCK, 
+			            sect_multi, 
+						SysTicks_GetTickCount() - u32_start,
+						NUM_OF_BLOCK*512/(SysTicks_GetTickCount() - u32_start));			
 		}
 		else
 		{

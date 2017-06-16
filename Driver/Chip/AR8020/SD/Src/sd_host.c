@@ -719,30 +719,64 @@ EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTyp
 
   if (SectorRmd)
   {
+    if (SectorDivid)
+    {
+        Core_SDMMC_WaiteCardBusy(hsd->Instance);  
+        convert_to_transfer(hsd);
+
+        hsd->SdTransferCplt  = 0;
+        hsd->SdTransferErr   = SD_OK;
+        hsd->SdOperation = SD_WRITE_MULTIPLE_BLOCK;
+
+        if (hsd->CardType == HIGH_CAPACITY_SD_CARD)
+        {
+            dma->BlockSize = 512;
+        }
+
+        Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc[0]));
+        errorstate = SD_DMAConfig(hsd, dma);
+        if (errorstate != SD_OK) {
+            dlog_info("SD_DMAConfig Fail\n");
+            free(desc);
+            return errorstate;
+        }
+    }
+    
+    memset(desc, 0, sizeof(IDMAC_DescTypeDef) * (SectorDivid + SectorRmd));    
     Core_SDMMC_SetBYCTNT(hsd->Instance, SectorRmd * dma->BlockSize);
-    // dlog_info("------------write rmd-----------------\n");
-    for (BlockIndex = 0; BlockIndex < SectorRmd; ++BlockIndex)
+    
+    for (BlockIndex = 0; BlockIndex < SectorRmd; BlockIndex++)
     {
       SrcAddr = TmpAddr + dma->BlockSize * BlockIndex;
-      // dlog_info("BlockIndex = %d\n",BlockIndex);
-      // dlog_info("SrcAddr = %x\n",SrcAddr);
-      if ((BlockIndex ==  SectorRmd - 1) && (SectorRmd == 1))
+      if ((BlockIndex == 0) && (SectorRmd == 1))
       {
-        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_LD | SDMMC_DES0_FS | SDMMC_DES0_CH;
+        // first and last
+        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH | SDMMC_DES0_LD;
         desc[BlockIndex].des1 = dma->BlockSize;
         desc[BlockIndex].des2 = SrcAddr;
-        desc[BlockIndex].des3 = 0x0;
+        desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex]);
+      }
+      else if (BlockIndex == 0)
+      {
+        // first
+        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH;
+        desc[BlockIndex].des1 = dma->BlockSize;
+        desc[BlockIndex].des2 = SrcAddr;
+        desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);
+
       }
       else if (BlockIndex ==  SectorRmd - 1)
       {
-        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_LD | SDMMC_DES0_CH;
+        // last
+        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH | SDMMC_DES0_LD;
         desc[BlockIndex].des1 = dma->BlockSize;
         desc[BlockIndex].des2 = SrcAddr;
         desc[BlockIndex].des3 = 0x0;
       }
       else
       {
-        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH;
+        // middle
+        desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH;
         desc[BlockIndex].des1 = dma->BlockSize;
         desc[BlockIndex].des2 = SrcAddr;
         desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);
