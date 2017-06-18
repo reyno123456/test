@@ -427,16 +427,14 @@ HAL_RET_T HAL_SD_Fatfs_Init(void)
 		return HAL_FALSE;
 	}
 	
-	dlog_info("Link success!");
-
 	if ((res = f_mount(&fatfs, (TCHAR const*)path, 1)) != FR_OK)
 	{
 		dlog_error("f_mount = %d", res);
-		dlog_error("f_mount error!");
+		return HAL_FALSE;
 	}
 	else
 	{
-	
+        dlog_info("mount to fat32 success");	
     }
     
     return HAL_OK;

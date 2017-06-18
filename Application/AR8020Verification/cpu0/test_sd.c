@@ -100,13 +100,15 @@ void TestFatFs()
 	memcpy(name, "test.txt", strlen("test.txt"));
     FIL MyFile, MyFileIn;
 	uint32_t u32_start; 
+
+	uint32_t rw_size = 0x1000000;
     
-	if (FR_OK == f_chdrive("SD:"))
+	if (FR_OK != f_chdrive("SD:"))
 	{
-		dlog_info("%d chdrive to SD:\\", __LINE__);
+		dlog_info("%d chdrive to SD:\\ fail", __LINE__);
     }
     
-    res = f_open(&MyFile, (const TCHAR*)(name), FA_CREATE_ALWAYS | FA_WRITE | FA_OPEN_APPEND);
+    res = f_open(&MyFile, (const TCHAR*)(name), FA_OPEN_ALWAYS | FA_WRITE | FA_OPEN_APPEND);
     if (res != FR_OK) 
     {
     	dlog_info("f_open error, res = %d", res);
@@ -115,14 +117,18 @@ void TestFatFs()
     {
     	dlog_info("%d f_open success!", __LINE__);
     	u32_start = SysTicks_GetTickCount();
-        if (FR_OK == f_chdrive("SD:"))
+        if (FR_OK != f_chdrive("SD:"))
         {
-            dlog_info("%d chdrive to SD:\\", __LINE__);
+            dlog_info("%d chdrive to SD:\\ fail", __LINE__);
         }
     	res = f_write(&MyFile, (const void*)(0x81000000 - DTCM_CPU0_DMA_ADDR_OFFSET), 
-    				0x1000000, (void *)&byteswritten);
-    	dlog_info("%d, write %d ms", __LINE__, SysTicks_GetTickCount() - u32_start);
-    	
+    				rw_size, (void *)&byteswritten);    	
+
+        dlog_info("write %d byte, used %d ms, speed = %d kB/S", 
+                    rw_size, 
+                    SysTicks_GetTickCount() - u32_start, 
+                    rw_size/(SysTicks_GetTickCount() - u32_start));
+
     	if ((byteswritten == 0) || (res != FR_OK))
     	{
     		dlog_info("f_write error!");
@@ -131,9 +137,9 @@ void TestFatFs()
     	{
     		dlog_info("f_write success!");
     		f_close(&MyFile);
-            if (FR_OK == f_chdrive("SD:"))
+            if (FR_OK != f_chdrive("SD:"))
             {
-                dlog_info("%d chdrive to SD:\\", __LINE__);
+                dlog_info("%d chdrive to SD:\\ fail", __LINE__);
             }
     		if (f_open(&MyFile, (const TCHAR*)name, FA_READ) != FR_OK)
     		{
@@ -141,15 +147,18 @@ void TestFatFs()
     		}
     		else
     		{
-    			bytesread = 0x1000000;
+    			bytesread = rw_size;
     			u32_start = SysTicks_GetTickCount();
-                if (FR_OK == f_chdrive("SD:"))
+                if (FR_OK != f_chdrive("SD:"))
                 {
-                    dlog_info("%d chdrive to SD:\\", __LINE__);
+                    dlog_info("%d chdrive to SD:\\ fail", __LINE__);
                 }
     			res = f_read(&MyFile, (void*)(0x81000000 - DTCM_CPU0_DMA_ADDR_OFFSET), 
     						bytesread, (UINT*)&bytesread);
-    			dlog_info("%d, read %d ms", __LINE__, SysTicks_GetTickCount() - u32_start);
+                dlog_info("read %d byte, used %d ms, speed = %d kB/S", 
+                            rw_size, 
+                            SysTicks_GetTickCount() - u32_start, 
+                            rw_size/(SysTicks_GetTickCount() - u32_start));
 
     			if ((bytesread == 0) || (res != FR_OK))
     			{

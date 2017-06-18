@@ -56,10 +56,11 @@ uint8_t FATFS_LinkDriverEx(Diskio_drvTypeDef *drv, char *path, uint8_t lun)
         return FR_INVALID_DRIVE;
     }
 
-    if (FR_OK == f_chdrive(path))
+    if (FR_OK != f_chdrive(path))
     {
-        dlog_info("%d chdrive to %s\\ error", __LINE__, path);
+        dlog_info("%d chdrive to %s// error", __LINE__, path);
     }
+    
     disk.nbr = vol;
 
     dlog_info("disk.nbr = %d", disk.nbr);
