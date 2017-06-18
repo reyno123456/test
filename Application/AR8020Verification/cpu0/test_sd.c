@@ -136,12 +136,17 @@ void TestFatFs()
     	else
     	{
     		dlog_info("f_write success!");
-    		f_close(&MyFile);
+    		if ( FR_OK == f_close(&MyFile))
+    		{
+        		dlog_info("f_close success");
+    		}
+    		
             if (FR_OK != f_chdrive("SD:"))
             {
                 dlog_info("%d chdrive to SD:\\ fail", __LINE__);
             }
-    		if (f_open(&MyFile, (const TCHAR*)name, FA_READ) != FR_OK)
+/*     		if (f_open(&MyFile, (const TCHAR*)name, FA_READ) != FR_OK) */
+            if(FR_OK != f_open(&MyFile, (const TCHAR*)(name), FA_OPEN_EXISTING | FA_READ))
     		{
     			dlog_info("f_open error!");
     		}
