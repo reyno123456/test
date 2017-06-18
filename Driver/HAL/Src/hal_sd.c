@@ -43,7 +43,7 @@ HAL_RET_T HAL_SD_Init(void)
     if (getCardPresence == CARD_IN)
     {
         sdhandle.Instance = SDMMC_ADDR;
-        sdhandle.SpeedMode = CARD_SDR104;
+        sdhandle.SpeedMode = CARD_SDR50;
         EMU_SD_RTN e_errorState = SD_OK;
         dlog_info("speedMode = SDR50");
         SysTicks_DelayMS(100);

@@ -3368,7 +3368,6 @@ FRESULT f_open (
 #endif
 	DEF_NAMBUF
 
-    dlog_info("get_fattime = %d", get_fattime());
     
 	if (!fp) return FR_INVALID_OBJECT;
 
