@@ -18,6 +18,7 @@ History:
 #include "interrupt.h"
 #include "hal_nvic.h"
 #include "debuglog.h"
+#include "hal.h"
 
 USBD_HandleTypeDef          USBD_Device[USBD_PORT_NUM];
 USBD_HID_ItfTypeDef         g_stUsbdHidItf;
@@ -244,5 +245,33 @@ HAL_RET_T HAL_USB_CustomerSendData(uint8_t *buff,
     return HAL_OK;
 }
 
+
+HAL_RET_T HAL_USB_SendData(uint8_t *buff, uint32_t data_len, uint8_t portId, uint8_t ep)
+{
+    USBD_HID_HandleTypeDef     *hhid = (USBD_HID_HandleTypeDef*)USBD_Device[portId].pClassData;
+    uint32_t                    timeout = 0;
+
+    while (hhid->state[0x7F & ep] != HID_IDLE)
+    {
+        timeout++;
+        HAL_Delay(1);
+
+        /* 50ms timeout */
+        if (timeout >= 50)
+        {
+            dlog_error("usb device send data timeout");
+            return HAL_USB_ERR_DEVICE_TIMEOUT;
+        }
+    }
+
+    hhid->state[0x7F & ep] = HID_BUSY;
+
+    USBD_LL_Transmit (&USBD_Device[portId],
+                      ep,
+                      buff,
+                      data_len);
+
+    return HAL_OK;
+}
 
 

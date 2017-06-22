@@ -20,7 +20,8 @@ uint16_t                        g_u16UVCHeight = 0;
 volatile uint8_t                g_u8UserSelectPixel = 0;
 volatile uint8_t                g_u8SaveUVC = 0;
 FIL                             uvcFile;
-
+volatile uint8_t                g_u8ShowUVC = 0;
+uint8_t                         g_u8UVCHeader[12];
 
 void USBH_USBHostStatus(void const *argument)
 {
@@ -292,6 +293,9 @@ void USBH_ProcUVC(void)
     static uint8_t                  u8_uvcPortId;
     static uint8_t                  u8_udiskPortId = HAL_USB_PORT_NUM;
     uint32_t                        u32_savedSize;
+    uint8_t                        *u8_buff;
+    uint8_t                         u8_buffCount;
+    uint32_t                        u32_lastPacketLen;
 
     if ((HAL_USB_GetHostAppState(u8_uvcPortId) == HAL_USB_HOST_STATE_DISCONNECT)&&
         (g_eUVCTaskState != USBH_UVC_TASK_IDLE))
@@ -324,6 +328,25 @@ void USBH_ProcUVC(void)
                 u16_UVCHeight       = g_u16UVCHeight;
                 u16_UVCWidth        = g_u16UVCWidth;
             }
+
+            // set header of image
+            // header format:
+            // byte0 byte1 byte2 byte3 byte4 byte5 byte6 byte7 byte8   byte9   byte10 byte11
+            // 0x00  0x00  0x00  0x00  0xFF  0xFF  0xFF  0xFF  format  pixel     reserved
+            // format:  1: YUV       2: Y only
+            // pixel:   1: 160*120   2: 320*240
+            g_u8UVCHeader[0]            = 0x00;
+            g_u8UVCHeader[1]            = 0x00;
+            g_u8UVCHeader[2]            = 0x00;
+            g_u8UVCHeader[3]            = 0x00;
+            g_u8UVCHeader[4]            = 0xFF;
+            g_u8UVCHeader[5]            = 0xFF;
+            g_u8UVCHeader[6]            = 0xFF;
+            g_u8UVCHeader[7]            = 0xFF;
+            g_u8UVCHeader[8]            = 0x01;
+            g_u8UVCHeader[9]            = 0x02;
+            g_u8UVCHeader[10]           = 0x00;
+            g_u8UVCHeader[11]           = 0x00;
 
             for (i = 0; i < HAL_USB_UVC_MAX_FRAME_FORMATS_NUM; i++)
             {
@@ -408,6 +431,29 @@ void USBH_ProcUVC(void)
                     dlog_error("save UVC data error: %d, %d", u32_savedSize, u32_UVCFrameSize);
                 }
             }
+
+            if (g_u8ShowUVC == 1)
+            {
+                /* usb transfer 8K Byte */
+                u8_buffCount        = (u32_UVCFrameSize >> 13);
+                u32_lastPacketLen   = (u32_UVCFrameSize & (UVC_TRANSFER_SIZE_ONCE - 1));
+
+                HAL_USB_SendData(g_u8UVCHeader, sizeof(g_u8UVCHeader), (HAL_USB_PORT_1 - u8_uvcPortId), UVC_ENDPOINT_FOR_TRANSFER);
+
+                u8_buff = u8_FrameBuff;
+
+                for (i = 0; i < u8_buffCount; i++)
+                {
+                    HAL_USB_SendData(u8_buff, UVC_TRANSFER_SIZE_ONCE, (HAL_USB_PORT_1 - u8_uvcPortId), UVC_ENDPOINT_FOR_TRANSFER);
+
+                    u8_buff += UVC_TRANSFER_SIZE_ONCE;
+                }
+
+                if (u32_lastPacketLen > 0)
+                {
+                    HAL_USB_SendData(u8_buff, u32_lastPacketLen, (HAL_USB_PORT_1 - u8_uvcPortId), UVC_ENDPOINT_FOR_TRANSFER);
+                }
+            }
         }
 
         break;
@@ -488,6 +534,17 @@ void command_stopSaveUVC(void)
     dlog_info("save uvc data succeed");
 
     g_u8SaveUVC = 0;
+}
+
+
+void command_showUVC(void)
+{
+    g_u8ShowUVC++;
+
+    if (g_u8ShowUVC >= 2)
+    {
+        g_u8ShowUVC = 0;
+    }
 }
 
 

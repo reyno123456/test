@@ -69,7 +69,8 @@ typedef uint8_t HAL_BOOL_T;
 #define HAL_USB_ERR_USBH_UVC_INVALID_PARAM          (HAL_USB_ERR_MASK | 0x6)
 #define HAL_USB_ERR_USBH_UVC_START_ERROR            (HAL_USB_ERR_MASK | 0x7)
 #define HAL_USB_ERR_USBH_UVC_FRAME_NOT_READY        (HAL_USB_ERR_MASK | 0x8)
-#define HAL_USB_ERR_UVC_LAST_FRAME_PREPARING        (HAL_USB_ERR_MASK | 0x2)
+#define HAL_USB_ERR_UVC_LAST_FRAME_PREPARING        (HAL_USB_ERR_MASK | 0x9)
+#define HAL_USB_ERR_DEVICE_TIMEOUT                  (HAL_USB_ERR_MASK | 0xA)
 
 
 #define HAL_SPI_ERR_MASK                            (0xA0000)

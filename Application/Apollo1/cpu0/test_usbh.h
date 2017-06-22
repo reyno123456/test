@@ -12,6 +12,10 @@
 #define USB_VIDEO_BYPASS_CHANNEL_0_DEST_ADDR    (0xB1000000)
 #define USB_VIDEO_BYPASS_CHANNEL_1_DEST_ADDR    (0xB1800000)
 
+#define UVC_TRANSFER_SIZE_ONCE                  (8192)
+#define UVC_ENDPOINT_FOR_TRANSFER               (0x85)
+
+
 
 typedef enum
 {
@@ -71,6 +75,7 @@ void USBH_UVCTask(void const *argument);
 void command_startUVC(char *width, char *height);
 void command_saveUVC(void);
 void command_stopSaveUVC(void);
+void command_showUVC(void);
 
 
 extern USBH_AppCtrl             g_usbhAppCtrl;

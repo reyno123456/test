@@ -98,6 +98,8 @@ HAL_RET_T HAL_USB_CustomerSendData(uint8_t *buff,
                                    uint32_t u32_len,
                                    uint8_t u8_portId);
 
+HAL_RET_T HAL_USB_SendData(uint8_t *buff, uint32_t data_len, uint8_t portId, uint8_t ep);
+
 #ifdef __cplusplus
 }
 #endif

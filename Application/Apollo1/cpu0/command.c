@@ -113,6 +113,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_stopSaveUVC();
     }
+    else if ((memcmp(cmdArray[0], "showuvc", strlen("showuvc")) == 0))
+    {
+        command_showUVC();
+    }
     /* error command */
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
