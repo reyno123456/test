@@ -115,13 +115,13 @@ void TestFatFs()
     }
     else
     {
-    	dlog_info("%d f_open success!", __LINE__);
+/*     	dlog_info("%d f_open success!", __LINE__); */
     	u32_start = SysTicks_GetTickCount();
         if (FR_OK != f_chdrive("SD:"))
         {
             dlog_info("%d chdrive to SD:\\ fail", __LINE__);
         }
-    	res = f_write(&MyFile, (const void*)(0x81000000 - DTCM_CPU0_DMA_ADDR_OFFSET), 
+    	res = f_write(&MyFile, (const void*)(0x81000000), 
     				rw_size, (void *)&byteswritten);    	
 
         dlog_info("write %d byte, used %d ms, speed = %d kB/S", 
@@ -135,7 +135,7 @@ void TestFatFs()
     	}
     	else
     	{
-    		dlog_info("f_write success!");
+/*     		dlog_info("f_write success!"); */
     		if ( FR_OK == f_close(&MyFile))
     		{
         		dlog_info("f_close success");
@@ -158,7 +158,7 @@ void TestFatFs()
                 {
                     dlog_info("%d chdrive to SD:\\ fail", __LINE__);
                 }
-    			res = f_read(&MyFile, (void*)(0x81000000 - DTCM_CPU0_DMA_ADDR_OFFSET), 
+    			res = f_read(&MyFile, (void*)(0x81000000), 
     						bytesread, (UINT*)&bytesread);
                 dlog_info("read %d byte, used %d ms, speed = %d kB/S", 
                             rw_size, 
@@ -171,16 +171,16 @@ void TestFatFs()
     			}
     			else
     			{
-    				dlog_info("f_read success!");
+/*     				dlog_info("f_read success!"); */
     				f_close(&MyFile);
 
     				if ((bytesread != byteswritten))
     				{
-    					dlog_info("f_close error!");
+    					dlog_error("f_close error!");
     				}
     				else
     				{
-    					dlog_info("f_close success!");
+/*     					dlog_info("f_close success!"); */
     				}
     			}
     		}
@@ -346,60 +346,20 @@ void command_initSdcard()
 
 }
 
-
-void command_SdcardFatFs(char *argc)
-{	
-	uint8_t choise;
-	choise = command_str2uint(argc);
-
-	switch (choise)
-	{
-		case 0:
-			TestWR();
-		break;
-
-		case 1:
-			TestFatFs();
-		break;
-
-		case 2:
-			TestFatFs1();
-		break;
-
-		case 3:
-			TestFatFs2();
-		break;
-
-		case 4:
-			OS_TestRawWR();
-		break;
-
-		case 5:
-			OS_TestSD_Erase();
-		break;
-
-		case 6:
-		    Test_hal_read();
-		break;
-
-		case 7:
-		    TestFatFs_with_usb();
-		break;
-
-		default: break;
-	}
-}
-
 void OS_TestRawWR_Handler(void const * argument)
 {
 	uint32_t sect;
 	uint32_t u32_start; 
+	uint32_t u32_end; 
+	uint32_t u32_diff; 
 	uint32_t totol_sects;
 
-    #define NUM_OF_BLOCK 30000
-
+    uint32_t NUM_OF_BLOCK = 64;
+    uint32_t TIMES = 10000;
+    uint32_t START_BLOCK = 1000;
+    
+	uint32_t sect_multi;
 	totol_sects = 30541 * 1024;
-	u32_start = SysTicks_GetTickCount();
 	
 #if 0
 	if (HAL_OK == HAL_SD_Erase(0, totol_sects) )
@@ -411,16 +371,66 @@ void OS_TestRawWR_Handler(void const * argument)
 		dlog_info("error");
 	}
 #endif
-	
-	uint32_t sect_multi = 0;
 
+    dlog_info("in testing, please wait for several seconds...");
+	
+    u32_start = SysTicks_GetTickCount();
+    for (sect_multi = 0; sect_multi < TIMES; sect_multi++)
+    {
+        if ( HAL_OK == HAL_SD_Write(START_BLOCK + sect_multi * NUM_OF_BLOCK, 
+                                    0x21006000, 
+                                    NUM_OF_BLOCK))
+        {       
+/*          dlog_info("times = %d", sect_multi); */
+        }
+        else
+        {
+            dlog_error("error");
+        }
+    }
+    
+    u32_diff = SysTicks_GetTickCount() - u32_start;
+    dlog_info("write %d sects, used %d ms, speed = %d kB/S", 
+                NUM_OF_BLOCK * TIMES, 
+                u32_diff,
+                NUM_OF_BLOCK * TIMES * 512/u32_diff);
+
+    u32_start = SysTicks_GetTickCount();
+	for (sect_multi = 0; sect_multi < TIMES; sect_multi++)
+	{
+		if ( HAL_OK == HAL_SD_Read(0x21006000, 
+									START_BLOCK + sect_multi * NUM_OF_BLOCK, 
+									NUM_OF_BLOCK))
+/*
+		if ( HAL_OK == HAL_SD_Read(0x81000000 - DTCM_CPU0_DMA_ADDR_OFFSET, 
+									sect_multi * NUM_OF_BLOCK, 
+									NUM_OF_BLOCK))
+*/
+		{		
+/* 			dlog_info("times = %d", sect_multi); */
+		}
+		else
+		{
+			dlog_error("error");
+		}
+	}
+	
+	u32_diff = SysTicks_GetTickCount() - u32_start;
+    dlog_info("read %d sects, used %d ms, speed = %d kB/S", 
+                NUM_OF_BLOCK * TIMES, 
+                u32_diff,
+                NUM_OF_BLOCK * TIMES * 512/u32_diff);
+    
+#if 0
 	for (sect_multi = 0; sect_multi < 10; sect_multi++)
 	{
 		u32_start = SysTicks_GetTickCount();
+/*
 		if ( HAL_OK == HAL_SD_Write(sect_multi * NUM_OF_BLOCK, 
 		                            0x81000000 - DTCM_CPU0_DMA_ADDR_OFFSET, 
 		                            NUM_OF_BLOCK) )
-/*         if ( HAL_OK == HAL_SD_Write(0, 0x20000000, NUM_OF_BLOCK) ) */
+*/
+        if ( HAL_OK == HAL_SD_Write(0, 0x21000000, NUM_OF_BLOCK) )              // sram
 		{
 			dlog_info("write %d sects, sect_multi = %d, used %d ms, speed = %d kB/S", 
 			            NUM_OF_BLOCK, 
@@ -437,9 +447,14 @@ void OS_TestRawWR_Handler(void const * argument)
 	for (sect_multi = 0; sect_multi < 10; sect_multi++)
 	{
 		u32_start = SysTicks_GetTickCount();
+		if ( HAL_OK == HAL_SD_Read(0x21000000, 
+									sect_multi * NUM_OF_BLOCK, 
+									NUM_OF_BLOCK))
+/*
 		if ( HAL_OK == HAL_SD_Read(0x81000000 - DTCM_CPU0_DMA_ADDR_OFFSET, 
 									sect_multi * NUM_OF_BLOCK, 
 									NUM_OF_BLOCK))
+*/
 		{
 			dlog_info("read %d sects, sect_multi = %d, used %d ms, speed = %d kB/S", 
 			            NUM_OF_BLOCK, 
@@ -452,6 +467,7 @@ void OS_TestRawWR_Handler(void const * argument)
 			dlog_info("error");
 		}
 	}
+#endif
 
 	dlog_info("task finished");
 	
@@ -598,3 +614,115 @@ void TestFatFs_with_usb()
 
 	res = FATFS_UnLinkDriver(SDPath);
 }
+
+void TestRawWR_SDRAM()
+{
+    uint32_t sect;
+	uint32_t u32_start; 
+	uint32_t u32_end; 
+	uint32_t u32_diff; 
+	uint32_t totol_sects;
+
+    uint32_t NUM_OF_BLOCK = 30000;
+    uint32_t TIMES = 10;
+    uint32_t START_BLOCK = 1000;
+    
+	uint32_t sect_multi;
+	totol_sects = 30541 * 1024;
+	
+    
+	for (sect_multi = 0; sect_multi < TIMES; sect_multi++)
+	{
+		u32_start = SysTicks_GetTickCount();
+		if ( HAL_OK == HAL_SD_Write(START_BLOCK + sect_multi * NUM_OF_BLOCK, 
+		                            0x81000000, 
+		                            NUM_OF_BLOCK) )
+		{
+		    u32_diff = SysTicks_GetTickCount() - u32_start;
+			dlog_info("write %d sects, sect_multi = %d, used %d ms, speed = %d kB/S", 
+			            NUM_OF_BLOCK, 
+			            sect_multi, 
+						u32_diff, 
+						NUM_OF_BLOCK*512/u32_diff);
+		}
+		else
+		{
+			dlog_info("error");
+		}
+	}
+
+	for (sect_multi = 0; sect_multi < TIMES; sect_multi++)
+	{
+		u32_start = SysTicks_GetTickCount();
+		if ( HAL_OK == HAL_SD_Read(0x81000000, 
+									START_BLOCK + sect_multi * NUM_OF_BLOCK, 
+									NUM_OF_BLOCK))
+		{
+		    u32_diff = SysTicks_GetTickCount() - u32_start;
+			dlog_info("read %d sects, sect_multi = %d, used %d ms, speed = %d kB/S", 
+			            NUM_OF_BLOCK, 
+			            sect_multi, 
+						u32_diff,
+						NUM_OF_BLOCK*512/u32_diff);			
+		}
+		else
+		{
+			dlog_info("error");
+		}
+	}
+
+	dlog_info("task finished");	
+}
+
+void command_SdcardFatFs(char *argc)
+{	
+	uint8_t choise;
+	choise = command_str2uint(argc);
+    uint32_t i;
+    
+	switch (choise)
+	{
+		case 0:
+			TestWR();
+		break;
+
+		case 1:
+		    for (i = 0; i < 10;i++)
+		    {
+			    dlog_info("time = %d", i);
+			    TestFatFs();
+			}
+		break;
+
+		case 2:
+			TestFatFs1();
+		break;
+
+		case 3:
+			TestFatFs2();
+		break;
+
+		case 4:
+			OS_TestRawWR();
+		break;
+
+		case 5:
+			OS_TestSD_Erase();
+		break;
+
+		case 6:
+		    Test_hal_read();
+		break;
+
+		case 7:
+		    TestFatFs_with_usb();
+		break;
+
+		case 8:
+		    TestRawWR_SDRAM();
+		break;
+
+		default: break;
+	}
+}
+

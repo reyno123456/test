@@ -97,7 +97,7 @@ DSTATUS SD_initialize(BYTE lun)
   }
   else
   {
-      dlog_info("SD initializa error!");
+      dlog_error("SD initializa error!");
       return 1;
   }
 }
@@ -120,12 +120,12 @@ DSTATUS SD_status(BYTE lun)
     
   if(sdhandle.inited == 1)
   { 
-    dlog_info("SD initializa success!");
+/*     dlog_info("SD initializa success!"); */
     return 0;
   }
   else
   {
-      dlog_info("SD initializa error!");
+      dlog_error("error");
       return 1;
   }
   // return Stat;

@@ -22,11 +22,13 @@ History:
 #include "sd_diskio.h"
 #include "ff_gen_drv.h"
 #include "hal.h"
+#include "cpu_info.h"
 
 extern SDMMC_DMATransTypeDef dma;
 extern SD_HandleTypeDef sdhandle;
 extern SD_CardInfoTypedef cardinfo;
 
+static uint32_t addrConvert(uint32_t addr);
 
 /**
 * @brief  Initializes the SD card according to the specified parameters in the 
@@ -101,7 +103,9 @@ HAL_RET_T HAL_SD_Write(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uin
 	EMU_SD_RTN e_errorState = SD_OK;
 	SDMMC_DMATransTypeDef st_dma;
 	st_dma.BlockSize = 512;
-	st_dma.SrcAddr = (uint32_t )DTCMBUSADDR(u32_srcStartAddr);
+/* 	st_dma.SrcAddr = (uint32_t )(u32_srcStartAddr); */
+/* 	st_dma.SrcAddr = (uint32_t )DTCMBUSADDR(u32_srcStartAddr); */
+    st_dma.SrcAddr = addrConvert(u32_srcStartAddr);
 	st_dma.DstAddr = (uint32_t )u32_dstStartAddr;                        /* [block units] */
 	st_dma.SectorNum = u32_sectorNum;
 
@@ -139,7 +143,10 @@ HAL_RET_T HAL_SD_Read(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uint
 	SDMMC_DMATransTypeDef st_dma;
 	st_dma.BlockSize = 512;
 	st_dma.SrcAddr = (uint32_t )u32_srcStartAddr;                     /* [block units] */
-	st_dma.DstAddr = (uint32_t )DTCMBUSADDR(u32_dstStartAddr);
+/* 	st_dma.DstAddr = (uint32_t )(u32_dstStartAddr);                 // sram */
+/* 	st_dma.DstAddr = (uint32_t )DTCMBUSADDR(u32_dstStartAddr); */
+    st_dma.DstAddr = addrConvert(u32_dstStartAddr);
+
 	st_dma.SectorNum = u32_sectorNum;
 	
 
@@ -438,4 +445,28 @@ HAL_RET_T HAL_SD_Fatfs_Init(void)
     }
     
     return HAL_OK;
+}
+
+static uint32_t addrConvert(uint32_t addr)
+{
+    if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId())
+    {
+        if((addr >= 0 && addr <= 0x7FFFF) ||                // ITCM
+           (addr >= 0x20000000 && addr <= 0x2007FFFF))      // DTCM
+        {
+            return addr + DTCM_CPU0_DMA_ADDR_OFFSET;
+        }
+    }
+    else if (ENUM_CPU1_ID == CPUINFO_GetLocalCpuId())
+    {    
+        if((addr >= 0 && addr <= 0x3FFFF) ||                // ITCM
+           (addr >= 0x20000000 && addr <= 0x2003FFFF))      // DTCM
+        {
+            return addr + DTCM_CPU1_DMA_ADDR_OFFSET;
+        }
+    }
+    else
+    {
+        return HAL_FALSE;
+    }
 }
