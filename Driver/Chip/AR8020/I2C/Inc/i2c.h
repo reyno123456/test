@@ -50,6 +50,7 @@ uint8_t I2C_Master_ReadData(EN_I2C_COMPONENT en_component, uint16_t u16_i2cAddr,
 void I2C_Master_IntrSrvc(uint32_t u32_vectorNum);
 int I2C_Master_GetBusyStatus(EN_I2C_COMPONENT en_component);
 int32_t I2C_Master_WaitTillIdle(EN_I2C_COMPONENT en_component, uint32_t timeOut);
+int8_t I2C_Master_ClrTxAbrt(EN_I2C_COMPONENT en_component);
 
 #endif
 

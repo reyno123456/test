@@ -11,6 +11,7 @@ void SysTicks_IncTickCount(void);
 uint32_t SysTicks_GetTickCount(void);
 uint64_t SysTicks_GetUsTickCount(void);
 void SysTicks_DelayMS(uint32_t msDelay);
+void SysTicks_DelayUS(uint64_t usDelay);
 
 void msleep(uint32_t millisecs);
 void ssleep(uint32_t seconds);

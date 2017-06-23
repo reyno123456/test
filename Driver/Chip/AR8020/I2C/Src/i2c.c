@@ -523,4 +523,28 @@ static int8_t I2C_Master_SetRxTl(EN_I2C_COMPONENT en_component, uint8_t tl)
     return FALSE;
 }
 
+int8_t I2C_Master_ClrTxAbrt(EN_I2C_COMPONENT en_component) 
+{
+    STRU_I2C_Controller* dev = I2C_LL_GetI2CController(en_component);
+    
+    if (dev)
+    {
+        uint32_t value;
+        if (I2C_LL_IOCtl(dev, I2C_CMD_GET_IC_CLR_TX_ABRT, &value) == TRUE)
+        {
+            return TRUE;
+        }
+        else
+        {
+            dlog_error("I2C_CMD_GET_IC_CLR_TX_ABRT error!");
+            return FALSE;
+        }
+    }
+    else
+    {
+        dlog_error("Can not get right i2c controller!");
+    }
+
+    return FALSE;
+}
 

@@ -113,6 +113,41 @@ void SysTicks_DelayMS(uint32_t msDelay)
 }
 
 /**
+  * @brief This function provides delay based on variable incremented.
+  * @note In the default implementation , SysTick timer is the source of time base.
+  *       It is used to generate interrupts at regular time intervals where u32_Tick
+  *       is incremented.
+  *       call vTaskDelay instead if the FreeRTOS is running.  
+  * @param Delay: specifies the delay time length, in microseconds.
+  * @retval None
+  */
+void SysTicks_DelayUS(uint64_t usDelay)
+{
+    uint64_t tickstart = 0;
+    uint64_t tickcurrent = 0;
+    tickstart = SysTicks_GetUsTickCount();
+    while(1)
+    {
+        tickcurrent = SysTicks_GetUsTickCount();
+        if (tickcurrent >= tickstart)
+        {
+            if ((tickcurrent - tickstart) >= usDelay)
+            {
+                break;
+            }
+        }
+        else
+        {
+            if (((((uint64_t)0xFFFFFFFFFFFFFFFF) - tickstart) + tickcurrent) >= usDelay)
+            {
+                break;
+            }
+        }
+    }
+}
+
+
+/**
   * @brief Standard millisecond sleep API.
   * @note
   * @retval None

@@ -149,6 +149,8 @@ HAL_RET_T HAL_I2C_MasterWriteData(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
             return HAL_I2C_ERR_WRITE_DATA;
     }
 
+    I2C_Master_ClrTxAbrt(en_component);
+
     if (I2C_Master_GetBusyStatus(en_component))
     {
         return HAL_BUSY;
@@ -223,6 +225,8 @@ HAL_RET_T HAL_I2C_MasterReadData(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
             return HAL_I2C_ERR_READ_DATA;
     }
 
+    I2C_Master_ClrTxAbrt(en_component);
+    
     if (I2C_Master_GetBusyStatus(en_component))
     {
         return HAL_BUSY;

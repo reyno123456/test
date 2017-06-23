@@ -7,6 +7,7 @@
 #include "debuglog.h"
 #include "pll_ctrl.h"
 #include "cpu_info.h"
+#include "systicks.h"
 
 static STRU_I2C_Controller stru_i2cControllerArray[MAX_I2C_CONTOLLER_NUMBER] = 
 {
@@ -133,6 +134,7 @@ static void I2C_LL_RefreshConfigRegisters(STRU_I2C_Controller* ptr_i2cController
             i2c_reg->IC_ENABLE |= 0x1;                  // enable i2c
         }
     }
+    SysTicks_DelayUS(500);
 }
 
 STRU_I2C_Controller* I2C_LL_GetI2CController(EN_I2C_COMPONENT en_i2cComponent)
@@ -279,6 +281,8 @@ uint8_t I2C_LL_IOCtl(STRU_I2C_Controller* ptr_i2cController, ENUM_I2C_CMD_ID en_
         case I2C_CMD_SET_S_SLAVE_ADDRESS:
             ptr_i2cController->parameter.slave.addr = (uint16_t)(*ptr_i2cCommandVal);
             break;
+        case I2C_CMD_GET_IC_CLR_TX_ABRT:
+            *ptr_i2cCommandVal = i2c_reg->IC_CLR_TX_ABRT; // Clear TX_ABRT Interrupt Register
         default:
             return FALSE;
     }

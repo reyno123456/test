@@ -73,6 +73,7 @@ typedef enum
     I2C_CMD_GET_M_RX_FIFO_DATA,
     I2C_CMD_GET_M_IDLE,
     I2C_CMD_GET_INTR_STAT,
+	I2C_CMD_GET_IC_CLR_TX_ABRT,
 } ENUM_I2C_CMD_ID;
 
 typedef enum
