@@ -56,7 +56,7 @@ HAL_RET_T HAL_SD_Init(void);
 * @retval HAL_OK            write to sd card succeed
 *         HAL_SD_ERR_ERROR  means some error happens during the writing
 */
-HAL_RET_T HAL_SD_Write(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uint32_t u32_sectorNum);
+HAL_RET_T HAL_SD_Write(uint32_t u32_dstBlkAddr, uint32_t u32_srcStartAddr, uint32_t u32_sectorNum);
 
 /**
 * @brief  Reads block(s) from a specified address in a card. The Data transfer 
@@ -67,7 +67,7 @@ HAL_RET_T HAL_SD_Write(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uin
 * @retval HAL_OK             read from sd card succeed
 *         HAL_SD_ERR_ERROR   means some error happens during the reading
 */
-HAL_RET_T HAL_SD_Read(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uint32_t u32_sectorNum);
+HAL_RET_T HAL_SD_Read(uint32_t u32_dstStartAddr, uint32_t u32_srcBlkAddr, uint32_t u32_sectorNum);
 /**
 * @brief  Erases the specified memory area of the given SD card
 * @param  u32_startBlock    start byte address

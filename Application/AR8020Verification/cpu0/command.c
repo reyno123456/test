@@ -54,6 +54,8 @@ void command_sendVideo(void);
 void command_adc(char * channel);
 void command_usbHostEnterTestMode(void);
 void command_malloc(char *size);
+void command_sdMount(void);
+
 
 
 void command_run(char *cmdArray[], uint32_t cmdNum)
@@ -100,6 +102,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     else if (memcmp(cmdArray[0], "test_sd", 7) == 0 && (cmdNum == 2))
     {
         command_SdcardFatFs(cmdArray[1]);
+    }
+    else if (memcmp(cmdArray[0], "mount_sd", 8) == 0 && (cmdNum == 1))
+    {
+        command_sdMount();
     }
     else if (memcmp(cmdArray[0], "startbypassvideo", strlen("startbypassvideo")) == 0)
     {
@@ -465,6 +471,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("writesd <DstAddr:0x> <SectorNum:0x> <Srcaddr:0x>");
         dlog_error("erasesd <startSector> <SectorNum>");
         dlog_error("test_sd <choise>");
+        dlog_error("mount_sd");
         dlog_error("hdmiinit <index>");
         dlog_error("hdmidump <index>");
         dlog_error("hdmigetvideoformat <index>");
@@ -635,18 +642,18 @@ void command_writeMemory_array(char *addr, char *value, char *len)
 }
 
 
-void command_readSdcard(char *Dstaddr, char *BlockNum)
+void command_readSdcard(char *DstBlkaddr, char *BlockNum)
 {
     unsigned int iDstAddr;
     unsigned int iBlockNum;
-    unsigned int iSrcAddr;
+    unsigned int iSrcBlkAddr;
     unsigned int rowIndex;
     unsigned int columnIndex;
     unsigned int blockIndex;
     char *readSdcardBuff;
     char *bufferPos;
 
-    iSrcAddr   = command_str2uint(Dstaddr);
+    iSrcBlkAddr   = command_str2uint(DstBlkaddr);
     iBlockNum  = command_str2uint(BlockNum);
 
 /*     readSdcardBuff = m7_malloc(iBlockNum * 512); */
@@ -664,10 +671,10 @@ void command_readSdcard(char *Dstaddr, char *BlockNum)
     // dlog_info("readSdcardBuff = 0x%08x\n", readSdcardBuff);
 
     /* read from sdcard */
-    HAL_SD_Read((uint32_t)bufferPos, iSrcAddr, iBlockNum);
+    HAL_SD_Read((uint32_t)bufferPos, iSrcBlkAddr, iBlockNum);
 
     /* print to serial */
-    for (blockIndex = iSrcAddr; blockIndex < (iSrcAddr + iBlockNum); blockIndex++)
+    for (blockIndex = iSrcBlkAddr; blockIndex < (iSrcBlkAddr + iBlockNum); blockIndex++)
     {
         dlog_info("==================block: %d=================",blockIndex);
         for (rowIndex = 0; rowIndex < 16; rowIndex++)
@@ -695,18 +702,18 @@ void command_readSdcard(char *Dstaddr, char *BlockNum)
 
 }
 
-void command_writeSdcard(char *Dstaddr, char *BlockNum, char *SrcAddr)
+void command_writeSdcard(char *DstBlkAddr, char *BlockNum, char *SrcAddr)
 {
-    unsigned int iDstAddr;
+    unsigned int iDstBlkAddr;
     unsigned int iBlockNum;
     unsigned int iSrcAddr;
 
-    iDstAddr    = command_str2uint(Dstaddr);
+    iDstBlkAddr    = command_str2uint(DstBlkAddr);
     iBlockNum   = command_str2uint(BlockNum);
     iSrcAddr    = command_str2uint(SrcAddr);
 
     /* write to sdcard */
-    HAL_SD_Write(iDstAddr, iSrcAddr, iBlockNum);
+    HAL_SD_Write(iDstBlkAddr, iSrcAddr, iBlockNum);
 
 }
 
@@ -774,6 +781,10 @@ void command_malloc(char *size)
 	return;
 }
 
+void command_sdMount(void)
+{
+    HAL_SD_Fatfs_Init();
+}
 
 
 

@@ -92,7 +92,7 @@ DSTATUS SD_initialize(BYTE lun)
 
   if(sdhandle.inited == 1)
   { 
-    dlog_info("SD initializa success!");
+    // dlog_info("SD initializa success!");
     return 0;
   }
   else

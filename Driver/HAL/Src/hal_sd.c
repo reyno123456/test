@@ -45,9 +45,9 @@ HAL_RET_T HAL_SD_Init(void)
     if (getCardPresence == CARD_IN)
     {
         sdhandle.Instance = SDMMC_ADDR;
-        sdhandle.SpeedMode = CARD_SDR50;
+        sdhandle.SpeedMode = SDR104;
         EMU_SD_RTN e_errorState = SD_OK;
-        dlog_info("speedMode = SDR50");
+        dlog_info("speedMode = %d", sdhandle.SpeedMode);
         SysTicks_DelayMS(100);
         e_errorState = Card_SD_Init(&sdhandle, &cardinfo);
         if (e_errorState != SD_OK) 
@@ -82,7 +82,7 @@ HAL_RET_T HAL_SD_Init(void)
         dlog_info("SYS_EVENT_Register success");
     }
     
-	dlog_info("Initialize SD Success!\n");
+	dlog_info("Initialize SD Success!");
 	
     SysTicks_DelayMS(500);  // wait for stable
 
@@ -98,7 +98,7 @@ HAL_RET_T HAL_SD_Init(void)
 * @retval HAL_OK            write to sd card succeed
 *         HAL_SD_ERR_ERROR  means some error happens during the writing
 */
-HAL_RET_T HAL_SD_Write(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uint32_t u32_sectorNum)
+HAL_RET_T HAL_SD_Write(uint32_t u32_dstBlkAddr, uint32_t u32_srcStartAddr, uint32_t u32_sectorNum)
 {
 	EMU_SD_RTN e_errorState = SD_OK;
 	SDMMC_DMATransTypeDef st_dma;
@@ -106,7 +106,7 @@ HAL_RET_T HAL_SD_Write(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uin
 /* 	st_dma.SrcAddr = (uint32_t )(u32_srcStartAddr); */
 /* 	st_dma.SrcAddr = (uint32_t )DTCMBUSADDR(u32_srcStartAddr); */
     st_dma.SrcAddr = addrConvert(u32_srcStartAddr);
-	st_dma.DstAddr = (uint32_t )u32_dstStartAddr;                        /* [block units] */
+	st_dma.DstAddr = (uint32_t )u32_dstBlkAddr;                        /* [block units] */
 	st_dma.SectorNum = u32_sectorNum;
 
 
@@ -137,14 +137,12 @@ HAL_RET_T HAL_SD_Write(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uin
 * @retval HAL_OK             read from sd card succeed
 *         HAL_SD_ERR_ERROR   means some error happens during the reading
 */
-HAL_RET_T HAL_SD_Read(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uint32_t u32_sectorNum)
+HAL_RET_T HAL_SD_Read(uint32_t u32_dstStartAddr, uint32_t u32_srcBlkAddr, uint32_t u32_sectorNum)
 {
 	EMU_SD_RTN e_errorState = SD_OK;
 	SDMMC_DMATransTypeDef st_dma;
 	st_dma.BlockSize = 512;
-	st_dma.SrcAddr = (uint32_t )u32_srcStartAddr;                     /* [block units] */
-/* 	st_dma.DstAddr = (uint32_t )(u32_dstStartAddr);                 // sram */
-/* 	st_dma.DstAddr = (uint32_t )DTCMBUSADDR(u32_dstStartAddr); */
+	st_dma.SrcAddr = u32_srcBlkAddr;                     /* [block units] */
     st_dma.DstAddr = addrConvert(u32_dstStartAddr);
 
 	st_dma.SectorNum = u32_sectorNum;
@@ -175,10 +173,10 @@ HAL_RET_T HAL_SD_Read(uint32_t u32_dstStartAddr, uint32_t u32_srcStartAddr, uint
 * @retval HAL_OK            erase SD card succeed
 *         HAL_SD_ERR_ERROR  means some error happens during the erasing
 */
-HAL_RET_T HAL_SD_Erase(uint32_t u32_startAddr, uint32_t u32_sectorNum)
+HAL_RET_T HAL_SD_Erase(uint32_t u32_startBlkAddr, uint32_t u32_sectorNum)
 {
 	EMU_SD_RTN e_errorState = SD_OK;
-	e_errorState = Card_SD_Erase(&sdhandle, u32_startAddr, u32_sectorNum);  /* [block units] */
+	e_errorState = Card_SD_Erase(&sdhandle, u32_startBlkAddr, u32_sectorNum);  /* [block units] */
 	if (e_errorState != SD_OK) {
 		dlog_info("Erase SD failed!\n");
 		return HAL_SD_ERR_ERROR;
@@ -428,6 +426,12 @@ HAL_RET_T HAL_SD_Fatfs_Init(void)
     char *path = "SD:/";
     static FATFS fatfs;
 
+    if( sdhandle.inited == 0 )
+    {
+        dlog_error("SD card not initilized");
+        return HAL_FALSE;
+    }
+    
 	if (FATFS_LinkDriver(&SD_Driver, path) != 0)
 	{
 		dlog_error("Link error!");

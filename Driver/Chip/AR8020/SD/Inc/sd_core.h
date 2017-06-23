@@ -120,8 +120,8 @@ extern "C"
 	/* Command register defines */
 #define 	SDMMC_CMD_START_CMD 	(uint32_t)BIT(31)
 
-	/* #define SDMMC_CMD_USE_HOLD_REG					  (uint32_t)BIT(29) */
-#define 	SDMMC_CMD_USE_HOLD_REG	0
+#define SDMMC_CMD_USE_HOLD_REG					  (uint32_t)BIT(29)
+/* #define 	SDMMC_CMD_USE_HOLD_REG	0 */
 
 #define 	SDMMC_CMD_VOLT_SWITCH	(uint32_t)BIT(28)
 #define 	SDMMC_CMD_BOOT_MODE 	(uint32_t)BIT(27)

@@ -48,9 +48,7 @@ uint8_t FATFS_LinkDriverEx(Diskio_drvTypeDef *drv, char *path, uint8_t lun)
 // test end
     tmp_path[strlen(path)] = 0;
     dlog_info("path = %s", path);
-    dlog_info("tmp_path = %s", tmp_path);
     vol = get_ldnumber((TCHAR const**)(&p_tmp_path));
-    dlog_info("%d, vol = %d", __LINE__, vol);
     if (vol < 0)
     {
         return FR_INVALID_DRIVE;

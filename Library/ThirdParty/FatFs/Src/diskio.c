@@ -80,7 +80,6 @@ DSTATUS disk_initialize (
     disk.is_initialized[pdrv] = 1;
     stat = disk.drv[pdrv]->disk_initialize(disk.lun[pdrv]);
   }
-  dlog_info("%d, disk.nbr = %d", __LINE__, disk.nbr);
   return stat;
 }
 

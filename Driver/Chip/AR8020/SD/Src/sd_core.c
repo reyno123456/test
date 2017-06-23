@@ -84,8 +84,6 @@ EMU_SD_RTN Core_SDMMC_WaiteDataOver(HOST_REG *SDMMCx)
   do {
     get_val = Core_SDMMC_GetRINTSTS(SDMMCx);
     data_over = (get_val & SDMMC_RINTSTS_DATA_OVER);
-    // dlog_info("data_over?\n");
-    // dlog_info("DATA_OVER RINTSTS = %x", get_val);
     if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 1000)
     {
         dlog_error("time out");
