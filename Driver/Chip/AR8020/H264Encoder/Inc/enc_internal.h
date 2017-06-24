@@ -7,6 +7,8 @@
 #define VSOC_GLOBAL2_BASE       0xA0030000
 #define SDRAM_INIT_DONE         0x24    //sdram init done
 
+#define REG_BASE_ADDR           0xA0010000
+
 //Write or Read Byte_Word
 #define REG8(add)  *((volatile unsigned char *)  (add))
 #define REG16(add) *((volatile unsigned short *) (add))
@@ -31,6 +33,16 @@
 #define READ_BYTE(addr, value) \
         do { \
                 (  value = (*(volatile unsigned char *) (addr)) ); \
+           } while(0)
+
+#define WRITE_WORD_ENC(addr, value) \
+        do { \
+              ((*(volatile unsigned int *) (REG_BASE_ADDR + addr)) = (value)); \
+           } while(0)
+
+#define READ_WORD_ENC(addr, value) \
+        do { \
+                ( value = (*(volatile unsigned int *) (REG_BASE_ADDR + addr)) ); \
            } while(0)
 
 // Internal APIs

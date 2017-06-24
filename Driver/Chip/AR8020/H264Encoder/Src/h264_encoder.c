@@ -12,6 +12,7 @@
 #include "reg_rw.h"
 #include "bb_types.h"
 
+extern RC_DATA rca[];
 #define H264_ENCODER_BUFFER_HIGH_LEVEL    (1<<19)
 #define H264_ENCODER_BUFFER_LOW_LEVEL     (1<<17)
 
@@ -31,13 +32,13 @@ static int H264_Encoder_StartView(unsigned char view, unsigned int resW, unsigne
     if (view == 0)
     {
         init_view0(resW, resH, gop, framerate, bitrate, src);
-        my_v0_initial_all( );
+        my_initial_all( view );
         open_view0(g_stEncoderStatus[view].brc_enable);
     }
     else if (view == 1)
     {
         init_view1(resW, resH, gop, framerate, bitrate, src);
-        my_v1_initial_all( );
+        my_initial_all( view );
         open_view1(g_stEncoderStatus[view].brc_enable);
     }
 
@@ -224,6 +225,7 @@ static void H264_Encoder_IdleCallback(void* p)
             g_stEncoderStatus[0].over_flow = 0;
             
             dlog_info("Buffer level %d, open view 0", buf_level);
+
         }
     }
     else if ((g_stEncoderStatus[1].over_flow == 1) && (g_stEncoderStatus[1].running == 0))
@@ -480,7 +482,7 @@ static void VEBRC_IRQ_Wrap_Handler(uint32_t u32_vectorNum)
         {
             // View0 encoder error, then do channel reset.
             Reg_Write32_Mask(ENC_REG_ADDR+(0x00<<2), 0, BIT(24));
-            my_v0_initial_all( );
+            my_initial_all( 0 );
             Reg_Write32_Mask(ENC_REG_ADDR+(0x00<<2), BIT(24), BIT(24));
             Reg_Write32_Mask(ENC_REG_ADDR+(0x34<<2), 0, (BIT(24)|BIT(25)|BIT(26)|BIT(27)));
             chReset = 1;
@@ -491,7 +493,7 @@ static void VEBRC_IRQ_Wrap_Handler(uint32_t u32_vectorNum)
         {
             // View1 encoder error, then do channel reset.
             Reg_Write32_Mask(ENC_REG_ADDR+(0x19<<2), 0, BIT(24));
-            my_v1_initial_all( );
+            my_initial_all( 1 );
             Reg_Write32_Mask(ENC_REG_ADDR+(0x19<<2), BIT(24), BIT(24));
             Reg_Write32_Mask(ENC_REG_ADDR+(0x34<<2), 0, (BIT(28)|BIT(29)|BIT(30)|BIT(31)));
             chReset = 1;
@@ -522,12 +524,12 @@ int H264_Encoder_Init(uint8_t gop0, uint8_t br0, uint8_t brc0_e, uint8_t gop1, u
     g_stEncoderStatus[0].gop = gop0;
     g_stEncoderStatus[0].bitrate = br0;
     g_stEncoderStatus[0].brc_enable = brc0_e;
-    v0_poweron_rc_params_set = 1;
+    rca[0].poweron_rc_params_set = 1;
 
     g_stEncoderStatus[1].gop = gop1;
     g_stEncoderStatus[1].bitrate = br1;
     g_stEncoderStatus[1].brc_enable = brc1_e;
-    v1_poweron_rc_params_set = 1;
+    rca[1].poweron_rc_params_set = 1;
 
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_IDLE, H264_Encoder_IdleCallback);
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_H264_INPUT_FORMAT_CHANGE, H264_Encoder_InputVideoFormatChangeCallback);
@@ -546,18 +548,18 @@ void H264_Encoder_DumpFrameCount(void)
     static int saved_view1_frame_cnt_lyu=0;
 
     /* printf gop_cnt & frame_cnt */
-    if(rca.v0_frame_cnt != saved_view0_frame_cnt_lyu) 
+    if(rca[0].frame_cnt != saved_view0_frame_cnt_lyu) 
     {
-        dlog_info("G: %d\n", rca.v0_gop_cnt);
-        dlog_info("F: %d\n", rca.v0_frame_cnt);
-        saved_view0_frame_cnt_lyu=rca.v0_frame_cnt;
+        dlog_info("G: %d\n", rca[0].gop_cnt);
+        dlog_info("F: %d\n", rca[0].frame_cnt);
+        saved_view0_frame_cnt_lyu=rca[0].frame_cnt;
     }
 
-    if(rca.v1_frame_cnt != saved_view1_frame_cnt_lyu) 
+    if(rca[1].frame_cnt != saved_view1_frame_cnt_lyu) 
     {
-        dlog_info("G: %d\n", rca.v1_gop_cnt);
-        dlog_info("F: %d\n", rca.v1_frame_cnt);
-        saved_view1_frame_cnt_lyu=rca.v1_frame_cnt;
+        dlog_info("G: %d\n", rca[1].gop_cnt);
+        dlog_info("F: %d\n", rca[1].frame_cnt);
+        saved_view1_frame_cnt_lyu=rca[1].frame_cnt;
     }
     // update_aof();
 }

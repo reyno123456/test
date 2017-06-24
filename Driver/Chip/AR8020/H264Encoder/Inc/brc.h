@@ -23,169 +23,167 @@
 #define MAX_INT   0x7fffffff
 
 //// generic rate control variables
-struct my_rc{
+typedef struct my_rc{
 //// top set(img,params)
-  unsigned char v0_enable;
-  unsigned char v0_rc_enable;
-  int    v0_height;
-  int    v0_width;
-  int    v0_basicunit;
-  unsigned char v0_RCUpdateMode;
-  int    v0_bit_rate;
-  unsigned char v0_framerate;
-  unsigned char v0_PMaxQpChange;
-  int    v0_size;
-  unsigned char v0_intra_period;
-  unsigned char v0_RCISliceBitRatio;
-  unsigned char v0_RCISliceBitRatioMax;
-  int    v0_no_frm_base;
-  unsigned char v0_RCMinQP;
-  unsigned char v0_RCMaxQP;
-  int    v0_FrameSizeInMbs;  
-  int    v0_FrameHeightInMbs;
-  int    v0_type;
-  int    v0_BasicUnit;
-  int    v0_MBPerRow;
-  int    v0_qp;
-  unsigned char v0_RCIoverPRatio;
-  int    v0_header_bits;
-  unsigned char v0_c1_over; //
-  unsigned char v0_re_bitrate;
-  int    v0_new_bitrate;
-  int    v0_PrevBitRate;// lhumod
-  unsigned char v0_cmadequ0;// lhumod
-  int    v0_TotalFrameMAD;// lhumod
-  unsigned char v0_ac_br_index;// @lhu
-  unsigned char v0_prev_ac_br_index;// @lhu
-  unsigned char v0_wireless_screen;// @lhu
-  unsigned char v0_changeToIFrame;// @lhu
-  unsigned char v0_insertOneIFrame;// @lhu
-  unsigned char v0_PrevFrmPSNRLow; // @lhu
-  unsigned char v0_HBitsRatioABits_level; // @lhu
-  unsigned char v0_PrevIntraPeriod;// @lhu
-  unsigned char v0_gop_change_NotResetRC;// @lhu
-  unsigned char v0_nextPFgotoIF;// @lhu
-  unsigned char v0_IFduration;// @lhu
-  int    v0_RCISliceTargetBits;// @lhu
-  unsigned char v0_PrevRCMinQP;// lhupsnr
-  unsigned char v0_PSNRDropSharply;
-  unsigned char v0_1stpfrm_coming;
-  long long v0_ifrm_ymse, v0_min_pfrm_ymse;
-  long long v0_frm_ymse[2];
-  int    v0_frm_fbits[2];
-  int    v0_frm_hbits[2];
-  int    v0_frm_abits[2];
-  int    v0_RCSliceBits;
-  int    v0_PrevFbits;
+  unsigned char     enable;                  // 0x00
+  unsigned char     rc_enable;
+  unsigned char     RCUpdateMode;
+  unsigned char     framerate;
+  int               height;                  // 0x04
+  int               width;                   // 0x08
+  int               basicunit;               // 0x0c
+  int               bit_rate;                // 0x10
+  int               size;                    // 0x14
+  unsigned char     PMaxQpChange;            // 0x18
+  unsigned char     intra_period;
+  unsigned char     RCISliceBitRatio;
+  unsigned char     RCISliceBitRatioMax;
+  int               no_frm_base;             // 0x1c
+  unsigned char     RCMinQP;                 // 0x20
+  unsigned char     RCMaxQP;             
+  unsigned char     RCIoverPRatio;
+  unsigned char     c1_over;                 //
+  int               FrameSizeInMbs;          // 0x24
+  int               FrameHeightInMbs;        // 0x28
+  int               type;                    // 0x2c
+  int               BasicUnit;               // 0x30
+  int               MBPerRow;                // 0x34
+  int               qp;                      // 0x38
+  int               header_bits;             // 0x3c
+  int               new_bitrate;             // 0x40
+  int               PrevBitRate;// lhumod    // 0x44
+  int               TotalFrameMAD;// lhumod  // 0x48
+  int               RCISliceTargetBits;//@lhu// 0x4c
+  unsigned char     re_bitrate;              // 0x50
+  unsigned char     cmadequ0;// lhumod
+  unsigned char     prev_ac_br_index;// @lhu
+  unsigned char     wireless_screen;// @lhu  
+  unsigned char     changeToIFrame;// @lhu   // 0x54
+  unsigned char     insertOneIFrame;// @lhu  
+  unsigned char     PrevFrmPSNRLow; // @lhu
+  unsigned char     HBitsRatioABits_level; // @lhu
+  unsigned char     PrevIntraPeriod;// @lhu  // 0x58
+  unsigned char     gop_change_NotResetRC;// @lhu
+  unsigned char     nextPFgotoIF;// @lhu
+  unsigned char     IFduration;// @lhu
+  unsigned char     PrevRCMinQP;// lhupsnr   	 // 0x5c
+  unsigned char     PSNRDropSharply;
+  long long         ifrm_ymse, min_pfrm_ymse;    // 0x60
+  long long         frm_ymse[2];                 // 0x70
+  int               frm_fbits[2];                // 0x80
+  int               frm_hbits[2];                // 0x88
+  int               frm_abits[2];                // 0x90
+  int               RCSliceBits;                 // 0x98
+  int               PrevFbits;                   // 0x9c
 //
-  int    v0_gop_cnt;
-  int    v0_frame_cnt;
-  int    v0_bu_cnt;
-  int    v0_mb_cnt;
-  int    v0_frame_mad;
-  int    v0_frame_tbits;
-  int    v0_frame_hbits;
-  int    v0_frame_abits;
+  int               gop_cnt;                     // 0xa0
+  int               frame_cnt;                   // 0xa4
+  int               bu_cnt;                      // 0xa8
+  int               mb_cnt;                      // 0xac
+  int               frame_mad;                   // 0xb0
+  int               frame_tbits;                 // 0xb4
+  int               frame_hbits;                 // 0xb8
+  int               frame_abits;                 // 0xbc
   
-  int    v0_frame_bs;
-  int    v0_slice_qp;
-  int    v0_codedbu_cnt;
-  int    v0_NumberofHeaderBits;
-  int    v0_NumberofTextureBits;
-  int    v0_NumberofBasicUnitHeaderBits;
-  int    v0_NumberofBasicUnitTextureBits;
-  int    v0_NumberofGOP;
-  int    v0_TotalMADBasicUnit;
-  int    v0_CurrentBufferFullness; //LIZG 25/10/2002
-  int    v0_RemainingBits;
-  int    v0_RCPSliceBits;
-  int    v0_RCISliceBits;
-  int    v0_NPSlice;
-  int    v0_NISlice;
-  int    v0_GAMMAP_1p;                //LIZG, JVT019r1
-  int    v0_BETAP_1p;                 //LIZG, JVT019r1
-  int    v0_TargetBufferLevel;     //LIZG 25/10/2002
-  int    v0_MyInitialQp;
-  int    v0_PAverageQp;
-  int    v0_PreviousPictureMAD_8p;
-  int    v0_MADPictureC1_12p;
-  int    v0_MADPictureC2_12p;
-  int    v0_PMADPictureC1_12p;
-  int    v0_PMADPictureC2_12p;
+  int               frame_bs;                    // 0xc0
+  int               slice_qp;                    // 0xc4
+  int               codedbu_cnt;                 // 0xc8
+  int               NumberofHeaderBits;          // 0xcc
+  int               NumberofTextureBits;         // 0xd0
+  int               NumberofBasicUnitHeaderBits; // 0xd4
+  int               NumberofBasicUnitTextureBits;// 0xd8
+  int               NumberofGOP;                 // 0xdc
+  int               TotalMADBasicUnit;           // 0xe0
+  int               CurrentBufferFullness;       // 0xe4        //LIZG 25/10/2002
+  int               RemainingBits;               // 0xe8
+  int               RCPSliceBits;                // 0xec
+  int               RCISliceBits;                // 0xf0
+  int               NPSlice;                     // 0xf4
+  int               NISlice;                     // 0xf8
+  int               GAMMAP_1p;                   // 0xfc         //LIZG, JVT019r1
+  int               BETAP_1p;                    // 0x100        //LIZG, JVT019r1
+  int               TargetBufferLevel;           // 0x104        //LIZG 25/10/2002
+  int               MyInitialQp;                 // 0x108
+  int               PAverageQp;                  // 0x10c
+  int               PreviousPictureMAD_8p;       // 0x110
+  int               MADPictureC1_12p;            // 0x114
+  int               MADPictureC2_12p;            // 0x118
+  int               PMADPictureC1_12p;           // 0x11c
+  int               PMADPictureC2_12p;           // 0x120
 
-  int    v0_PPictureMAD_8p;
-  int    v0_PictureMAD_8p  [20];
-  int    v0_ReferenceMAD_8p[20];
-  int    v0_mad_tmp0 [20];
-  int    v0_mad_tmp0_valid [20];
-  int    v0_mad_tmp1 [20];
-  int    v0_mad_tmp2 [20];
-  int    v0_m_rgQp_8p [20];
-  int    v0_m_rgRp_8p [20];
-  int    v0_m_rgRp_8prr8 [20];
-  int    v0_rc_tmp0 [20];
-  int    v0_rc_tmp1 [20];
-  int    v0_rc_tmp2 [20];
-  int    v0_rc_tmp3 [20];
-  int    v0_rc_tmp4 [20];
+  int               PPictureMAD_8p;              // 0x124
+  int               PictureMAD_8p  [20];         // 0x174
+  int               ReferenceMAD_8p[20];         // 0x1c4
+  int               mad_tmp0 [20];               // 0x214
+  int               mad_tmp0_valid [20];         // 0x264
+  int               mad_tmp1 [20];               // 0x2b4
+  int               mad_tmp2 [20];               // 0x304
+  int               m_rgQp_8p [20];              // 0x354
+  int               m_rgRp_8p [20];              // 0x3A4
+  int               m_rgRp_8prr8 [20];           // 0x3f4
+  int               rc_tmp0 [20];                // 0x444
+  int               rc_tmp1 [20];                // 0x494
+  int               rc_tmp2 [20];                // 0x4d4
+  int               rc_tmp3 [20];                // 0x534
+  int               rc_tmp4 [20];                // 0x584
   
-  unsigned char v0_rc_hold;
-  unsigned char v0_mad_hold;
+  unsigned char     rc_hold;                     // 0x5d4
+  unsigned char     mad_hold;                    // 0x5d5
 
-  char   v0_rc_rgRejected [20];
-  char   v0_mad_rgRejected [20];
-  int    v0_m_X1_8p;
-  int    v0_m_X2_8p;
-  int    v0_Pm_X1_8p;
-  int    v0_Pm_X2_8p;
-  int    v0_Pm_Qp;
-  int    v0_Pm_Hp;
-  int    v0_MADm_windowSize;
-  int    v0_m_windowSize;
-  int    v0_m_Qc;
-  int    v0_PPreHeader;
-  int    v0_PrevLastQP; // QP of the second-to-last coded frame in the primary layer
-  int    v0_CurrLastQP; // QP of the last coded frame in the primary layer
-  int    v0_TotalFrameQP;
-  int    v0_PAveHeaderBits1;
-  int    v0_PAveHeaderBits2;
-  int    v0_PAveHeaderBits3;
-  int    v0_PAveFrameQP;
-  int    v0_TotalNumberofBasicUnit;
-  int    v0_NumberofCodedPFrame;
-  int    v0_TotalQpforPPicture;
-  int    v0_CurrentMAD_8p;
-  int    v0_TotalBUMAD_12p;
-  int    v0_PreviousMAD_8p;
-  int    v0_PreviousWholeFrameMAD_8p;
-  int    v0_DDquant;
-  int    v0_QPLastPFrame;
-  int    v0_QPLastGOP;
-  int    v0_FrameQPBuffer;
-  int    v0_FrameAveHeaderBits;
-  int    v0_BUPFMAD_8p[70];// lhumod
-  int    v0_BUCFMAD_8p[70];// lhumod
-  int    v0_RCISliceActualBits;// lhugop
+  char              rc_rgRejected [20];          // 0x5d6
+  char              mad_rgRejected [20];         // 0x5ea
+  int               m_X1_8p;                     // 0x600
+  int               m_X2_8p;                     // 0x604
+  int               Pm_X1_8p;                    // 0x608
+  int               Pm_X2_8p;                    // 0x60c
+  int               Pm_Qp;                       // 0x610
+  int               Pm_Hp;                       // 0x614
+  int               MADm_windowSize;             // 0x618
+  int               m_windowSize;                // 0x61c
+  int               m_Qc;                        // 0x620
+  int               PPreHeader;                  // 0x624
+  int               PrevLastQP;                  // 0x628    // QP of the second-to-last coded frame in the primary layer
+  int               CurrLastQP;                  // 0x62c        // QP of the last coded frame in the primary layer
+  int               TotalFrameQP;                // 0x630
+  int               PAveHeaderBits1;             // 0x634
+  int               PAveHeaderBits2;             // 0x638
+  int               PAveHeaderBits3;             // 0x63c
+  int               PAveFrameQP;                 // 0x640
+  int               TotalNumberofBasicUnit;      // 0x644
+  int               NumberofCodedPFrame;         // 0x648
+  int               TotalQpforPPicture;          // 0x64c
+  int               CurrentMAD_8p;               // 0x650
+  int               TotalBUMAD_12p;              // 0x654
+  int               PreviousMAD_8p;              // 0x658
+  int               PreviousWholeFrameMAD_8p;    // 0x65c
+  int               DDquant;                     // 0x660
+  int               QPLastPFrame;                // 0x664
+  int               QPLastGOP;                   // 0x668
+  int               FrameQPBuffer;               // 0x66c
+  int               FrameAveHeaderBits;          // 0x670
+  int               BUPFMAD_8p[70];// lhumod     // 0x674
+  int               BUCFMAD_8p[70];// lhumod     // 0x78c
+  int               RCISliceActualBits;// lhugop // 0x8a4
   
-  int    v0_GOPOverdue;
+  int               GOPOverdue;                  // 0x8a8
   // rate control variables
-  int    v0_Xp;
-  int    v0_Xb;
-  int    v0_Target;
-  int    v0_Np;
-  int    v0_UpperBound1;
-  int    v0_UpperBound2;
-  int    v0_LowerBound;
-  int    v0_DeltaP;
-  int    v0_TotalPFrame;
+  int               Xp;                          // 0x8ac
+  int               Xb;                          // 0x8b0
+  int               Target;                      // 0x8b4
+  int               Np;                          // 0x8b8
+  int               UpperBound1;                 // 0x8bc
+  int               UpperBound2;                 // 0x8c0
+  int               LowerBound;                  // 0x8c4
+  int               DeltaP;                      // 0x8c8
+  int               TotalPFrame;                 // 0x8cc
 //// for feedback
-  int    v0_aof_inc_qp;
-  unsigned char v0_fd_row_cnt;
-  unsigned char v0_fd_last_row;
-  unsigned char v0_fd_last_p;
-  unsigned char v0_fd_iframe;
-  unsigned char v0_fd_reset;  
-  unsigned char v0_fd_irq_en;
+  int               aof_inc_qp;                  // 0x8d0
+  unsigned char     fd_row_cnt;                  // 0x8d4
+  unsigned char     fd_last_row;                 
+  unsigned char     fd_last_p;
+  unsigned char     fd_iframe;
+  unsigned char     fd_reset;                    // 0x8d8 
+  unsigned char     fd_irq_en;                   
 //int    fd_cpu_test;
 //// for test
 // int    v0_PrevImgType;// added by lhulhu
@@ -195,191 +193,24 @@ struct my_rc{
 // int    v0_PrevFrmBits; // added by lhusc
 // int    v0_TargetBitsPerFrm;// added by lhusc
 
-// second view global parameters
-  unsigned char v1_enable;
-  unsigned char v1_rc_enable;
-  int    v1_height;
-  int    v1_width;
-  int    v1_basicunit;
-  unsigned char v1_RCUpdateMode;
-  int    v1_bit_rate;
-  unsigned char v1_framerate;
-  unsigned char v1_PMaxQpChange;
-  int    v1_size;
-  unsigned char v1_intra_period;
-  unsigned char v1_RCISliceBitRatio;
-  unsigned char v1_RCISliceBitRatioMax;
-  int    v1_no_frm_base;
-  unsigned char v1_RCMinQP;
-  unsigned char v1_RCMaxQP;
-  int    v1_FrameSizeInMbs;  
-  int    v1_FrameHeightInMbs;
-  int    v1_type;
-  int    v1_BasicUnit;
-  int    v1_MBPerRow;
-  int    v1_qp;
-  unsigned char v1_RCIoverPRatio;
-  int    v1_header_bits;
-  unsigned char v1_c1_over; //
-  unsigned char v1_re_bitrate;
-  int    v1_new_bitrate;
-  unsigned char v1_cmadequ0;// lhumod
-  int    v1_PrevBitRate;// lhumod
-  int    v1_TotalFrameMAD;// lhumod
-  unsigned char v1_ac_br_index;// @lhu
-  unsigned char v1_prev_ac_br_index;// @lhu
-  unsigned char v1_wireless_screen;// @lhu
-  unsigned char v1_changeToIFrame;// @lhu
-  unsigned char v1_insertOneIFrame;// @lhu
-  unsigned char v1_PrevFrmPSNRLow; // @lhu
-  unsigned char v1_HBitsRatioABits_level; // @lhu
-  unsigned char v1_PrevIntraPeriod;// @lhu
-  unsigned char v1_gop_change_NotResetRC;// @lhu
-  unsigned char v1_nextPFgotoIF;// @lhu
-  unsigned char v1_IFduration;// @lhu
-  int    v1_RCISliceTargetBits;// @lhu
-  unsigned char v1_PrevRCMinQP;// lhupsnr
-  unsigned char v1_PSNRDropSharply;
-  unsigned char v1_1stpfrm_coming;
-  long long v1_ifrm_ymse, v1_min_pfrm_ymse;
-  long long v1_frm_ymse[2];
-  int    v1_frm_fbits[2];
-  int    v1_frm_hbits[2];
-  int    v1_frm_abits[2];
-  int    v1_RCSliceBits;
-  int    v1_PrevFbits;
-//
-  int    v1_gop_cnt;
-  int    v1_frame_cnt;
-  int    v1_bu_cnt;
-  int    v1_mb_cnt;
+  //s int *pp_BUPFMAD_8p;                                        
+  //s int *pp_BUCFMAD_8p;                                        
+  int tbits_tmp;                                 // 0x8dc
+  int hbits_tmp;                                 // 0x8e0
+  int fbits_tmp;                                 // 0x8e4
+  int mad_tmp;                                   // 0x8e8
   
-  int    v1_frame_mad;
-  int    v1_frame_tbits;
-  int    v1_frame_hbits;
-  int    v1_frame_abits;
-  
-  int    v1_frame_bs;
-  int    v1_slice_qp;
-  int    v1_codedbu_cnt;
-  int    v1_NumberofHeaderBits;
-  int    v1_NumberofTextureBits;
-  int    v1_NumberofBasicUnitHeaderBits;
-  int    v1_NumberofBasicUnitTextureBits;
-  int    v1_NumberofGOP;
-  int    v1_TotalMADBasicUnit;
-  int    v1_CurrentBufferFullness; //LIZG 25/10/2002
-  int    v1_RemainingBits;
-  int    v1_RCPSliceBits;
-  int    v1_RCISliceBits;
-  int    v1_NPSlice;
-  int    v1_NISlice;
-  int    v1_GAMMAP_1p;                //LIZG, JVT019r1
-  int    v1_BETAP_1p;                 //LIZG, JVT019r1
-  int    v1_TargetBufferLevel;     //LIZG 25/10/2002
-  int    v1_MyInitialQp;
-  int    v1_PAverageQp;
-  int    v1_PreviousPictureMAD_8p;
-  int    v1_MADPictureC1_12p;
-  int    v1_MADPictureC2_12p;
-  int    v1_PMADPictureC1_12p;
-  int    v1_PMADPictureC2_12p;
+//  int qp;                                        // 0x8ec        
+  int ymsel_tmp;                                 // 0x8f0
+  int ymseh_tmp; // @lhu                         // 0x8f4
+  long long ymse_frame;                          // 0x8f8
+  Boolean last_p_gop_change;                     // 0x900     
+  int last_p_prev_gop;                           // 0x904                         
+  int poweron_rc_params_set;                     // 0x908
+  unsigned char firstpframe_coming;				 // 
+  unsigned char ac_br_index;
+} RC_DATA;
 
-  int    v1_PPictureMAD_8p;
-  int    v1_PictureMAD_8p  [20];
-  int    v1_ReferenceMAD_8p[20];
-  int    v1_mad_tmp0 [20];
-  int    v1_mad_tmp0_valid [20];
-  int    v1_mad_tmp1 [20];
-  int    v1_mad_tmp2 [20];
-  int    v1_m_rgQp_8p [20];
-  int    v1_m_rgRp_8p [20];
-  int    v1_m_rgRp_8prr8 [20];
-  int    v1_rc_tmp0 [20];
-  int    v1_rc_tmp1 [20];
-  int    v1_rc_tmp2 [20];
-  int    v1_rc_tmp3 [20];
-  int    v1_rc_tmp4 [20];
-  
-  unsigned char v1_rc_hold;
-  unsigned char v1_mad_hold;
-
-  char   v1_rc_rgRejected [20];
-  char   v1_mad_rgRejected [20];
-  int    v1_m_X1_8p;
-  int    v1_m_X2_8p;
-  int    v1_Pm_X1_8p;
-  int    v1_Pm_X2_8p;
-  int    v1_Pm_Qp;
-  int    v1_Pm_Hp;
-  int    v1_MADm_windowSize;
-  int    v1_m_windowSize;
-  int    v1_m_Qc;
-  int    v1_PPreHeader;
-  int    v1_PrevLastQP; // QP of the second-to-last coded frame in the primary layer
-  int    v1_CurrLastQP; // QP of the last coded frame in the primary layer
-  int    v1_TotalFrameQP;
-  int    v1_PAveHeaderBits1;
-  int    v1_PAveHeaderBits2;
-  int    v1_PAveHeaderBits3;
-  int    v1_PAveFrameQP;
-  int    v1_TotalNumberofBasicUnit;
-  int    v1_NumberofCodedPFrame;
-  int    v1_TotalQpforPPicture;
-  int    v1_CurrentMAD_8p;
-  int    v1_TotalBUMAD_12p;
-  int    v1_PreviousMAD_8p;
-  int    v1_PreviousWholeFrameMAD_8p;
-  int    v1_DDquant;
-  int    v1_QPLastPFrame;
-  int    v1_QPLastGOP;
-  int    v1_FrameQPBuffer;
-  int    v1_FrameAveHeaderBits;
-  int    v1_BUPFMAD_8p[70];// lhumod
-  int    v1_BUCFMAD_8p[70];// lhumod
-  int    v1_RCISliceActualBits;// lhugop
-  
-  int    v1_GOPOverdue;
-  // rate control variables
-  int    v1_Xp;
-  int    v1_Xb;
-  int    v1_Target;
-  int    v1_Np;
-  int    v1_UpperBound1;
-  int    v1_UpperBound2;
-  int    v1_LowerBound;
-  int    v1_DeltaP;
-  int    v1_TotalPFrame;
-//// for feedback
-  int    v1_aof_inc_qp;
-  unsigned char v1_fd_row_cnt;
-  unsigned char v1_fd_last_row;
-  unsigned char v1_fd_last_p;
-  unsigned char v1_fd_iframe;
-  unsigned char v1_fd_reset;  
-  unsigned char v1_fd_irq_en;
-//// for test
-// int    v1_PrevImgType;// added by lhulhu
-// int    v1_RCInitialQP;// added by lhulhu
-// int    v1_NumberofBasicUnit;// added by lhumod
-// int    v1_SceneChange_Simp2Comp;// added by lhusc
-// int    v1_PrevFrmBits; // added by lhusc
-// int    v1_TargetBitsPerFrm;// added by lhusc
-} rca;
-
-//s int *pp_BUPFMAD_8p;
-//s int *pp_BUCFMAD_8p;
-int v0_tbits_tmp,v0_hbits_tmp,v0_fbits_tmp,v0_mad_tmp;
-int v1_tbits_tmp,v1_hbits_tmp,v1_fbits_tmp,v1_mad_tmp;
-int qp;
-int ymsel_tmp, ymseh_tmp; // @lhu
-long long v0_ymse_frame;
-long long v1_ymse_frame;
-Boolean v0_last_p_gop_change;
-Boolean v1_last_p_gop_change;
-int v0_last_p_prev_gop;
-int v1_last_p_prev_gop;
-int v0_poweron_rc_params_set,v1_poweron_rc_params_set; //lhuemu
 
 int aof_v0_frame;
 int aof_v1_frame;
@@ -400,72 +231,38 @@ void my_criteria_decide_changeToIFrame(unsigned char HBitsRatioABits_level, unsi
 void my_decide_backtoNormalGOP(int view);
 void my_ac_RCISliceBitRatio(unsigned char RCISliceBitRatioMax, int view);
 
-void my_v0_rc_params( );
-void my_v0_rc_init_seq( );
-void my_v0_rc_init_GOP(int np);
-void my_v0_rc_init_pict(int mult);
-void my_v0_rc_update_pict(int nbits);
-void my_v0_updatePparams( );
-void my_v0_rc_update_pict_frame( );
-void my_v0_updateRCModel( );
-void my_v0_RCModelEstimator(int n_realSize, int n_windowSize, char *rc_rgRejected);
-void my_v0_updateMADModel( );
-void my_v0_MADModelEstimator(int n_realSize, int n_windowSize, char *mad_rgRejected);
-void my_v0_updateQPNonPicAFF( );
-int  my_v0_updateFirstP( );
-int  my_v0_updateNegativeTarget(int m_Qp);
-int  my_v0_updateFirstBU( );
-void my_v0_updateLastBU( );
-void my_v0_predictCurrPicMAD( );
-void my_v0_updateModelQPBU(int m_Qp);
-void my_v0_updateModelQPFrame(int m_Bits);
-int  my_v0_rc_handle_mb( );
-void my_v0_rc_update_bu_stats( );
-void my_v0_rc_update_frame_stats( );
-void my_v0_rc_init_gop_params( );
-void my_v0_rc_init_frame( );
-void my_v0_rc_store_header_bits( );
-//int  my_v0_updateQPRC1( );
-int  my_v0_updateQPRC3( );
-//int  my_v0_updateQPRC0( );
-void my_v0_initial_all( );
-void my_v0_feedback( );
-void my_v0_hold( );
-int  (*my_v0_updateQP)( );
-
-// second view sub-function
-void my_v1_rc_params( );
-void my_v1_rc_init_seq( );
-void my_v1_rc_init_GOP(int np);
-void my_v1_rc_init_pict(int mult);
-void my_v1_rc_update_pict(int nbits);
-void my_v1_updatePparams( );
-void my_v1_rc_update_pict_frame( );
-void my_v1_updateRCModel( );
-void my_v1_RCModelEstimator(int n_realSize, int n_windowSize, char *rc_rgRejected);
-void my_v1_updateMADModel( );
-void my_v1_MADModelEstimator(int n_realSize, int n_windowSize, char *mad_rgRejected);
-void my_v1_updateQPNonPicAFF( );
-int  my_v1_updateFirstP( );
-int  my_v1_updateNegativeTarget(int m_Qp);
-int  my_v1_updateFirstBU( );
-void my_v1_updateLastBU( );
-void my_v1_predictCurrPicMAD( );
-void my_v1_updateModelQPBU(int m_Qp);
-void my_v1_updateModelQPFrame(int m_Bits);
-int  my_v1_rc_handle_mb( );
-void my_v1_rc_update_bu_stats( );
-void my_v1_rc_update_frame_stats( );
-void my_v1_rc_init_gop_params( );
-void my_v1_rc_init_frame( );
-void my_v1_rc_store_header_bits( );
-//int  my_v1_updateQPRC1( );
-int  my_v1_updateQPRC3( );
-//int  my_v1_updateQPRC0( );
-void my_v1_initial_all( );
-void my_v1_feedback( );
-void my_v1_hold( );
-int  (*my_v1_updateQP)( );
+void my_rc_params( unsigned int view_idx );
+void my_rc_init_seq( unsigned int view_idx );
+void my_rc_init_GOP( unsigned int view_idx, int np);
+void my_rc_init_pict( unsigned int view_idx, int mult);
+void my_rc_update_pict(unsigned int view_idx, int nbits);
+void my_updatePparams( unsigned int view_idx );
+void my_rc_update_pict_frame( unsigned int view_idx );
+void my_updateRCModel( unsigned int view_idx );
+void my_RCModelEstimator(unsigned int view_idx, int n_realSize, int n_windowSize, char *rc_rgRejected);
+void my_updateMADModel( unsigned int view_idx );
+void my_MADModelEstimator(unsigned int view_idx, int n_realSize, int n_windowSize, char *mad_rgRejected);
+void my_updateQPNonPicAFF( unsigned int view_idx );
+int  my_updateFirstP( unsigned int view_idx );
+int  my_updateNegativeTarget(unsigned int view_idx, int m_Qp);
+int  my_updateFirstBU( unsigned int view_idx );
+void my_updateLastBU( unsigned int view_idx );
+void my_predictCurrPicMAD( unsigned int view_idx );
+void my_updateModelQPBU( unsigned int view_idx, int m_Qp);
+void my_updateModelQPFrame( unsigned int view_idx, int m_Bits);
+int  my_rc_handle_mb( unsigned int view_idx );
+void my_rc_update_bu_stats( unsigned int view_idx );
+void my_rc_update_frame_stats( unsigned int view_idx );
+void my_rc_init_gop_params( unsigned int view_idx );
+void my_rc_init_frame( unsigned int view_idx );
+void my_rc_store_header_bits( unsigned int view_idx );
+//int  my_updateQPRC1( );
+int  my_updateQPRC3( unsigned int view_idx );
+//int  my_updateQPRC0( );
+void my_initial_all( unsigned int view_idx );
+void my_feedback(unsigned int view_idx, unsigned int feedback);
+void my_hold( unsigned int view_idx );
+int  (*my_updateQP)( unsigned int view_idx );
 
 void update_aof_cycle();
 void update_aof();
