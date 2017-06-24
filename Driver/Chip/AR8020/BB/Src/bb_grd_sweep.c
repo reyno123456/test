@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <math.h>
 #include <stdlib.h>
 #include "systicks.h"
 #include "debuglog.h"
 #include "bb_ctrl_internal.h"
 #include "bb_grd_sweep.h"
 #include "bb_regs.h"
+#include "log10.h"
 
 
 #define SWEEP_FREQ_BLOCK_ROWS           (6)
@@ -33,29 +35,27 @@
 #define MAX(a,b) (((a) > (b)) ?  (a) :  (b) )
 #define MIN(a,b) (((a) < (b)) ?  (a) :  (b) )
 
-#define BAND_SWEEP_CH(band) ( (band == RF_2G)?  MAX_2G_IT_FRQ_SIZE : MAX_5G_IT_FRQ_SIZE )
 #define GET_IT_TOTAL_CH(band) ( (band == RF_2G)?  MAX_2G_IT_FRQ_SIZE : MAX_5G_IT_FRQ_SIZE )
 
 #define CLEAR_MAIN_CNT  (1000)
+#define GRD_AGC_BLOCK_THRESH            (0x4c)
+
+#define GRD_BACK_TO_2G_UNLOCK_CNT       (5)
+
+
 static int flaglog = 0;
+
+typedef enum
+{
+    EQUAL_2G_5G = 0,
+    BETTER_2G   = 1,
+    BETTER_5G   = 2,
+}ENUM_RF_select;
+
 
 typedef struct
 {
-    int16_t     s16_2G_slicePower[SWEEP_FREQ_BLOCK_ROWS][MAX_2G_IT_FRQ_SIZE*8];            //1.5M bandwidth noise in channels for 2G
-    int16_t     s16_5G_slicePower[SWEEP_FREQ_BLOCK_ROWS][MAX_5G_IT_FRQ_SIZE *8];        //1.5M bandwidth noise in channels for 5G
-
-    int16_t     s16_2G_power_average[SWEEP_FREQ_BLOCK_ROWS][MAX_2G_IT_FRQ_SIZE];           //channel power: 10M bandwidth
-    int16_t     s16_5G_power_average[SWEEP_FREQ_BLOCK_ROWS][MAX_5G_IT_FRQ_SIZE];        //channel power: 10M bandwidth
-
-    //////////////////For 2G time-domain power
-    int32_t         i32_2G_noisePower[SWEEP_FREQ_BLOCK_ROWS][MAX_2G_IT_FRQ_SIZE];
-    int32_t         i32_2G_noisepower_average[MAX_2G_IT_FRQ_SIZE];
-    int32_t         i32_2G_variance[MAX_2G_IT_FRQ_SIZE];
-
-    //////////////////For 5G time-domain power
-    int32_t         i32_5G_noisePower[SWEEP_FREQ_BLOCK_ROWS][MAX_5G_IT_FRQ_SIZE];
-    int32_t         i32_5G_noisepower_average[MAX_5G_IT_FRQ_SIZE];
-    int32_t         i32_5G_variance[MAX_5G_IT_FRQ_SIZE];
+    ENUM_RF_BAND e_bandsupport;
 
     //////////////////
     int32_t         i32_2G_power[SWEEP_FREQ_BLOCK_ROWS][MAX_2G_IT_FRQ_SIZE];
@@ -68,7 +68,7 @@ typedef struct
     ENUM_RF_BAND e_curBand;
     ENUM_CH_BW   e_bw;
     uint8_t      u8_mainCh;          //current VT channel
-    uint8_t      u8_mainSweeepRow;
+    uint8_t      u8_mainSweepRow;
     uint8_t      u8_mainSweepCh;
 
     uint8_t      u8_optCh;           //optional VT channel
@@ -77,15 +77,21 @@ typedef struct
     uint8_t      u8_best2GChCnt[MAX_2G_IT_FRQ_SIZE];
     uint8_t      u8_best5GChCnt[MAX_5G_IT_FRQ_SIZE];
 
-    uint8_t      u8_otherSweepCh;    //channel number
-    uint8_t      u8_otherSweepRow;
+    uint8_t      u8_spareSweepCh;      //channel number
+    uint8_t      u8_optBandSweepCh;  //use to sweep another band channel.
 
+    uint8_t      u8_cur2GRow;
+    uint8_t      u8_cur5GRow;
+    ENUM_RF_BAND e_prevSweepBand;      //previous sweep band
     uint8_t      u8_prevSweepCh;     //previous sweep channel, main channel and optional channel may change
 
     uint8_t      u8_cycleCnt;
+    uint8_t      u8_totalCyc;
     uint8_t      u8_preMainCh;
     uint16_t     u16_preMainCount;   //if cycle >= u16_preMainCount, clear the u8_preMainCh
 
+    ENUM_RF_select band_sel[15];
+    uint8_t      u8_bandSelCnt;
     uint8_t      u8_isFull;
 } STRU_SWEEP_NOISE_POWER;
 
@@ -94,7 +100,7 @@ STRU_SWEEP_NOISE_POWER stru_sweepPower;
 
 
 static int calc_power_db(ENUM_RF_BAND e_rfBand, uint8_t bw, uint32_t power_td,
-                         int16_t *power_fd, int16_t *power_db, int32_t *power_sum, 
+                         int16_t *power_fd, int32_t *power_sum, 
                          uint8_t cnt, uint8_t sweep_ch, int flaglog);
 
 static void calc_average_and_fluct(ENUM_RF_BAND e_rfBand, uint8_t u8_ItCh);
@@ -109,72 +115,37 @@ static void BB_GetItMinMaxCh(ENUM_RF_BAND e_rfBand, ENUM_CH_BW e_bw, uint8_t *mi
 
 static void BB_GetItAdjacentFrequency(uint8_t ch, uint8_t *pre, uint8_t *next);
 
+ENUM_RF_select BB_grd_cmpBandNoise( void );
+
 /*
  * to start sweep
  */
 void BB_SweepStart(ENUM_RF_BAND e_rfBand, ENUM_CH_BW e_bw)
 {
-    stru_sweepPower.u8_otherSweepCh =  0;
-    stru_sweepPower.u8_otherSweepRow     =  0;
+    stru_sweepPower.u8_spareSweepCh =  0;
+    stru_sweepPower.u8_optBandSweepCh = 0;
+    stru_sweepPower.u8_cur2GRow   =  0;
+    stru_sweepPower.u8_cur5GRow   =  0;
     stru_sweepPower.u8_isFull     =  0;
     stru_sweepPower.u8_cycleCnt   =  0;
-    stru_sweepPower.u8_mainSweeepRow =  0;
+    stru_sweepPower.u8_mainSweepRow =  0;
     stru_sweepPower.u8_optSweepRow  =  0;
     stru_sweepPower.u8_preMainCh  =  0xff;
     stru_sweepPower.u8_mainCh     =  0xff;
     stru_sweepPower.e_bw          =  e_bw;
-    stru_sweepPower.e_curBand     =  e_rfBand;
     stru_sweepPower.u8_prevSweepCh  = 0x0;
     stru_sweepPower.u16_preMainCount= 0x0;
 
+    stru_sweepPower.e_bandsupport = context.e_bandsupport;
+    stru_sweepPower.u8_totalCyc =  (stru_sweepPower.e_bandsupport == RF_2G_5G) ? 0x04 : 0x03;
+    stru_sweepPower.e_curBand   =  e_rfBand;  //current rf band for sweep
+
+    stru_sweepPower.u8_bandSelCnt  =  0;
     BB_set_sweepfrq( e_rfBand, e_bw, 0 );   
+    dlog_info("stru_sweepPower.u8_totalCyc %d", stru_sweepPower.u8_totalCyc);
 }
 
 
-static int16_t* BB_GetOneBlockNoiseAver(ENUM_RF_BAND e_rfBand, int16_t *ps16_dstNoise)
-{
-    uint8_t u8_colNum;
-    uint8_t col;
-
-    u8_colNum = BAND_SWEEP_CH(e_rfBand) * 8;
-    for(col = 0; col < u8_colNum; col++)
-    {
-        int16_t  sum  = 0;
-        int16_t  aver = 0;
-        uint16_t row;
-
-        for(row = 0; row < SWEEP_FREQ_BLOCK_ROWS; row++)
-        {
-            sum += (e_rfBand == RF_2G) ? stru_sweepPower.s16_2G_slicePower[row][col] : 
-                                         stru_sweepPower.s16_5G_slicePower[row][col];
-        }
-        aver  = (sum / SWEEP_FREQ_BLOCK_ROWS);
-
-        sum = 0;
-        for(row = 0; row < SWEEP_FREQ_BLOCK_ROWS; row++)
-        {   
-            int16_t power = (e_rfBand == RF_2G)? stru_sweepPower.s16_2G_slicePower[row][col] : 
-                                                 stru_sweepPower.s16_5G_slicePower[row][col];
-            if ( power - aver >= 3 )
-            {
-                sum += (aver + 3);
-            }
-            else if( power - aver <= -3)
-            {
-                sum += (aver - 3);
-            }
-            else
-            {
-                sum += power;
-            }
-        }
-
-        *ps16_dstNoise = (sum / SWEEP_FREQ_BLOCK_ROWS);
-        ps16_dstNoise++;
-    }
-
-    return ps16_dstNoise;
-}
 
 void BB_GetSweepNoise(int16_t *ptr_noise_power)
 {
@@ -182,7 +153,6 @@ void BB_GetSweepNoise(int16_t *ptr_noise_power)
     uint8_t i;
     int16_t value;
 
-    
     for(col = 0; col < MAX_2G_IT_FRQ_SIZE; col++)
     {
         value = (int16_t)(stru_sweepPower.i32_2G_power_average[col]);
@@ -216,7 +186,6 @@ static uint8_t BB_GetSweepPower(ENUM_RF_BAND e_rfBand, uint8_t bw, uint8_t row, 
     uint8_t  offset = sweep_ch;
 
     uint16_t ch_fd_power[16];
-    uint32_t start = SysTicks_GetTickCount();
     uint8_t  power_fd_addr = 0x60;
     uint8_t u8_maxCh = BB_GetSweepTotalCh( e_rfBand, bw);
                                        
@@ -230,7 +199,6 @@ static uint8_t BB_GetSweepPower(ENUM_RF_BAND e_rfBand, uint8_t bw, uint8_t row, 
                                      (BB_ReadReg(PAGE2, SWEEP_ENERGY_MID) << 8)  |
                                      (BB_ReadReg(PAGE2, SWEEP_ENERGY_LOW)));
     
-    //pu32_power_td[offset] = power_td;
     if(power_td == 0)
     {
         return 0;
@@ -253,18 +221,10 @@ static uint8_t BB_GetSweepPower(ENUM_RF_BAND e_rfBand, uint8_t bw, uint8_t row, 
 
     flaglog = 0;
 
-    {
-        static int loop = 0;
-        static int prech = 0;
-    }
-
-    int16_t *ps16_slicePower = (e_rfBand == RF_2G) ? stru_sweepPower.s16_2G_slicePower[row] : 
-                                                     stru_sweepPower.s16_5G_slicePower[row];
-    int32_t *ps32_power = (e_rfBand == RF_2G) ? stru_sweepPower.i32_2G_power[row] : 
-                                                     stru_sweepPower.i32_5G_power[row];
+    int32_t *ps32_power = (e_rfBand == RF_2G) ? stru_sweepPower.i32_2G_power[row] : stru_sweepPower.i32_5G_power[row];
                                                      
     ret = calc_power_db(e_rfBand, bw, power_td, 
-                        ch_fd_power, ps16_slicePower, ps32_power,
+                        ch_fd_power,  ps32_power,
                         num, sweep_ch, flag);
 
     num = GET_IT_TOTAL_CH(e_rfBand);
@@ -273,17 +233,12 @@ static uint8_t BB_GetSweepPower(ENUM_RF_BAND e_rfBand, uint8_t bw, uint8_t row, 
         calc_average_and_fluct(e_rfBand, i);
     }
 
-    uint32_t spend = SysTicks_GetTickCount() - start;
-    if( spend >= 1 )
-    {
-        dlog_info("!!spend %d", spend);
-    }
 
     return ret;
 }
 
 
-int BB_Sweep_updateCh(uint8_t mainch)
+int32_t BB_Sweep_updateCh(ENUM_RF_BAND e_rfBand, uint8_t mainch)
 {
     uint8_t opt;
     stru_sweepPower.u8_preMainCh     = stru_sweepPower.u8_mainCh;
@@ -293,7 +248,7 @@ int BB_Sweep_updateCh(uint8_t mainch)
     stru_sweepPower.u8_mainCh      = mainch;
 
     //re-select the option channel
-    BB_selectBestCh(SELECT_OPT, NULL, &opt, NULL, 0);
+    BB_selectBestCh(e_rfBand, SELECT_OPT, NULL, &opt, NULL, 0);
 
     stru_sweepPower.u8_optCh = opt;
     stru_sweepPower.u8_optSweepCh = (BW_10M == (stru_sweepPower.e_bw)) ? (opt) : (opt / 2);
@@ -301,29 +256,58 @@ int BB_Sweep_updateCh(uint8_t mainch)
     memset(stru_sweepPower.u8_best2GChCnt, 0, sizeof(stru_sweepPower.u8_best2GChCnt));
     memset(stru_sweepPower.u8_best5GChCnt, 0, sizeof(stru_sweepPower.u8_best5GChCnt));
     //dlog_info("update main opt: %d %d", mainch, opt);    
+    return 0;
 }
 
 
 static int BB_SweepBeforeFull( void )
 {
     uint8_t u8_maxCh = BB_GetSweepTotalCh( stru_sweepPower.e_curBand, stru_sweepPower.e_bw);
-    uint8_t result   = BB_GetSweepPower( stru_sweepPower.e_curBand,
-                                         stru_sweepPower.e_bw, 
-                                         stru_sweepPower.u8_otherSweepRow, 
-                                         stru_sweepPower.u8_prevSweepCh, 
-                                         0);
-    //dlog_info("u8_prevSweepCh = %d row=%d %d", stru_sweepPower.u8_prevSweepCh, stru_sweepPower.u8_curRow, SWEEP_FREQ_BLOCK_ROWS);
+    uint8_t result = 0;
+    if ( stru_sweepPower.e_curBand == RF_2G )
+    {
+        result   = BB_GetSweepPower( RF_2G,
+                                     stru_sweepPower.e_bw,
+                                     stru_sweepPower.u8_cur2GRow,
+                                     stru_sweepPower.u8_prevSweepCh,
+                                     0 );
+    }
+    else
+    {
+        result   = BB_GetSweepPower( RF_5G,
+                                     stru_sweepPower.e_bw,
+                                     stru_sweepPower.u8_cur5GRow,
+                                     stru_sweepPower.u8_prevSweepCh,
+                                     0 );
+    }
     if( result )
     {
         uint8_t nextch = NEXT_NUM(stru_sweepPower.u8_prevSweepCh, u8_maxCh);
         if ( nextch < stru_sweepPower.u8_prevSweepCh )
         {
-            stru_sweepPower.u8_otherSweepRow = NEXT_NUM(stru_sweepPower.u8_otherSweepRow, SWEEP_FREQ_BLOCK_ROWS);
-            if( stru_sweepPower.u8_otherSweepRow == 0 )
+            uint8_t flag = 0;
+            if( stru_sweepPower.e_curBand == RF_2G )
+            {
+                stru_sweepPower.u8_cur2GRow = NEXT_NUM(stru_sweepPower.u8_cur2GRow, SWEEP_FREQ_BLOCK_ROWS);
+                if ( stru_sweepPower.u8_cur2GRow == 0)
+                {
+                    stru_sweepPower.u8_isFull |= 0x01;
+                }
+            }
+            else
+            {
+                stru_sweepPower.u8_cur5GRow = NEXT_NUM(stru_sweepPower.u8_cur5GRow, SWEEP_FREQ_BLOCK_ROWS);
+                if ( stru_sweepPower.u8_cur5GRow == 0)
+                {
+                    stru_sweepPower.u8_isFull |= 0x01;
+                }
+            }
+
+            if( stru_sweepPower.u8_isFull )
             {
                 uint8_t mainch = 0, opt = 0;
-                stru_sweepPower.u8_isFull = 1;
-                BB_selectBestCh(SELECT_MAIN_OPT, &mainch, &opt, NULL, 0);
+
+                BB_selectBestCh( stru_sweepPower.e_curBand, SELECT_MAIN_OPT, &mainch, &opt, NULL, 0 );
 
                 stru_sweepPower.u8_mainSweepCh = (BW_10M == (stru_sweepPower.e_bw)) ? (mainch) : (mainch / 2);
                 stru_sweepPower.u8_mainCh      = mainch;
@@ -333,6 +317,7 @@ static int BB_SweepBeforeFull( void )
                 stru_sweepPower.u8_optCh = opt;
                 stru_sweepPower.u8_optSweepCh = (BW_10M == (stru_sweepPower.e_bw)) ? (opt) : (opt / 2);
                 stru_sweepPower.u8_cycleCnt = MAIN_CH_CYCLE;
+
                 return result;
             }
             else
@@ -354,45 +339,74 @@ static int BB_SweepBeforeFull( void )
 
 static int BB_set_sweepChannel( void )
 {
-    uint8_t cycle = (stru_sweepPower.u8_cycleCnt % 0x03);
-    ENUM_RF_BAND e_rfBand = stru_sweepPower.e_curBand;
-    ENUM_CH_BW   e_bw = stru_sweepPower.e_bw;
-    uint8_t u8_maxCh = BB_GetSweepTotalCh( e_rfBand, e_bw );
+    uint8_t u8_maxCh;
+    uint8_t cycle = (stru_sweepPower.u8_cycleCnt % stru_sweepPower.u8_totalCyc);
+    ENUM_RF_BAND e_curBand = stru_sweepPower.e_curBand;
+    ENUM_CH_BW   e_bw      = stru_sweepPower.e_bw;
+
     if( cycle == OTHER_CH_CYCLE )
     {
+        u8_maxCh = BB_GetSweepTotalCh( e_curBand, e_bw);
         uint8_t u8_nextch = 0;
         do
         {
-            u8_nextch = NEXT_NUM(stru_sweepPower.u8_otherSweepCh, u8_maxCh);
-            if( u8_nextch < stru_sweepPower.u8_otherSweepCh )
+            u8_nextch = NEXT_NUM(stru_sweepPower.u8_spareSweepCh, u8_maxCh);
+            if( u8_nextch < stru_sweepPower.u8_spareSweepCh )
             {
-                stru_sweepPower.u8_otherSweepRow = NEXT_NUM(stru_sweepPower.u8_otherSweepRow, SWEEP_FREQ_BLOCK_ROWS);
+                if ( e_curBand == RF_2G )  //2G mode: switch to 2G next row
+                {
+                    stru_sweepPower.u8_cur2GRow = NEXT_NUM(stru_sweepPower.u8_cur2GRow, SWEEP_FREQ_BLOCK_ROWS);
+                }
+                else    //5G mode: switch to 5G next row
+                {
+                    stru_sweepPower.u8_cur5GRow = NEXT_NUM(stru_sweepPower.u8_cur5GRow, SWEEP_FREQ_BLOCK_ROWS);
+                }
             }
-            stru_sweepPower.u8_otherSweepCh = u8_nextch;
+            stru_sweepPower.u8_spareSweepCh = u8_nextch;
         } while( u8_nextch == stru_sweepPower.u8_mainSweepCh || u8_nextch == stru_sweepPower.u8_optSweepCh );
 
-        stru_sweepPower.u8_prevSweepCh = stru_sweepPower.u8_otherSweepCh;
+        stru_sweepPower.e_prevSweepBand  = e_curBand;
+        stru_sweepPower.u8_prevSweepCh = stru_sweepPower.u8_spareSweepCh;
     }
     else if( cycle == MAIN_CH_CYCLE )
     {
-        stru_sweepPower.u8_prevSweepCh = stru_sweepPower.u8_mainSweepCh;
+        stru_sweepPower.e_prevSweepBand  = e_curBand;
+        stru_sweepPower.u8_prevSweepCh   = stru_sweepPower.u8_mainSweepCh;
+        stru_sweepPower.u8_mainSweepRow  = NEXT_NUM(stru_sweepPower.u8_mainSweepRow, SWEEP_FREQ_BLOCK_ROWS);
     }
     else if( cycle == OPT_CH_CYCLE )
     {
-        stru_sweepPower.u8_prevSweepCh = stru_sweepPower.u8_optSweepCh;
+        stru_sweepPower.e_prevSweepBand  = e_curBand;
+        stru_sweepPower.u8_prevSweepCh   = stru_sweepPower.u8_optSweepCh;
+        stru_sweepPower.u8_optSweepRow   = NEXT_NUM(stru_sweepPower.u8_optSweepRow, SWEEP_FREQ_BLOCK_ROWS);    
+    }
+    else if( cycle == OTHER_BAND_CH_CYCLE )  // if RF_2G or RF_5G only, no OTHER_BAND_CH_CYCLE
+    {
+        ENUM_RF_BAND newband = OTHER_BAND( stru_sweepPower.e_curBand );
+        u8_maxCh = BB_GetSweepTotalCh(newband, e_bw);
+
+        stru_sweepPower.u8_optBandSweepCh = NEXT_NUM( stru_sweepPower.u8_optBandSweepCh, u8_maxCh ); 
+        stru_sweepPower.u8_prevSweepCh      = stru_sweepPower.u8_optBandSweepCh;
+        stru_sweepPower.e_prevSweepBand     = newband;
+
+        if ( stru_sweepPower.u8_prevSweepCh == 0 ) //start channel from 0, new row.
+        {
+            if ( newband == RF_2G )
+            {
+                stru_sweepPower.u8_cur2GRow = NEXT_NUM(stru_sweepPower.u8_cur2GRow, SWEEP_FREQ_BLOCK_ROWS);
+            }
+            else
+            {
+                stru_sweepPower.u8_cur5GRow = NEXT_NUM(stru_sweepPower.u8_cur5GRow, SWEEP_FREQ_BLOCK_ROWS);
+            }
+        }
     }
 
-    BB_set_sweepfrq( e_rfBand, e_bw, stru_sweepPower.u8_prevSweepCh );
+    BB_set_sweepfrq( stru_sweepPower.e_prevSweepBand, e_bw, stru_sweepPower.u8_prevSweepCh );
 
-    STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
-    if ( RF_2G == context.freq_band )
     {
-        osdptr->IT_channel  = stru_sweepPower.u8_mainCh;
-        osdptr->u8_optCh    = stru_sweepPower.u8_optCh;        
-    }
-    else
-    {
-        uint8_t shift = BAND_SWEEP_CH(RF_2G);
+        STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
+        uint8_t shift = (e_curBand == RF_2G) ? 0 : GET_IT_TOTAL_CH(RF_2G);
         osdptr->IT_channel  = stru_sweepPower.u8_mainCh + shift;
         osdptr->u8_optCh    = stru_sweepPower.u8_optCh  + shift;
     }
@@ -403,51 +417,112 @@ static int BB_set_sweepChannel( void )
 
 static int BB_SweepAfterFull( uint8_t flag )
 {
-    uint8_t result = 0;
-    uint8_t u8_maxCh = GET_IT_TOTAL_CH( stru_sweepPower.e_curBand );
-    uint8_t cycle  = (stru_sweepPower.u8_cycleCnt % 0x03);
-
-    ENUM_RF_BAND e_rfBand = stru_sweepPower.e_curBand;
+    ENUM_RF_BAND e_curBand   = stru_sweepPower.e_curBand;
+    ENUM_RF_BAND e_sweepBand = stru_sweepPower.e_prevSweepBand;
     ENUM_CH_BW   e_bw = stru_sweepPower.e_bw;
+
+    uint8_t result   = 0;
+    uint8_t cycle  = (stru_sweepPower.u8_cycleCnt % stru_sweepPower.u8_totalCyc);
+    uint8_t flag_checkBandSwitch = 0;
 
     uint8_t u8_mainSweepCh = stru_sweepPower.u8_mainSweepCh;
     uint8_t u8_optSweepCh  = stru_sweepPower.u8_optSweepCh;
     uint8_t u8_prevSweepCh = stru_sweepPower.u8_prevSweepCh;
 
-    if( u8_prevSweepCh == u8_mainSweepCh )
-    { 
-        result = BB_GetSweepPower( e_rfBand,
-                                   e_bw, 
-                                   stru_sweepPower.u8_mainSweeepRow,
-                                   u8_prevSweepCh,
-                                   flag);
-        stru_sweepPower.u8_mainSweeepRow  = NEXT_NUM(stru_sweepPower.u8_mainSweeepRow, SWEEP_FREQ_BLOCK_ROWS);
+    uint8_t u8_sweepRow;
+    if( e_sweepBand == e_curBand && u8_prevSweepCh == u8_mainSweepCh )  //main channel sweep result
+    {
+        u8_sweepRow = stru_sweepPower.u8_mainSweepRow;    
     }
-    else if ( u8_prevSweepCh == u8_optSweepCh)
-    {    
-        result = BB_GetSweepPower( e_rfBand,
-                                   e_bw, 
-                                   stru_sweepPower.u8_optSweepRow, 
-                                   u8_prevSweepCh,
-                                   flag); //
-        stru_sweepPower.u8_optSweepRow  = NEXT_NUM(stru_sweepPower.u8_optSweepRow, SWEEP_FREQ_BLOCK_ROWS);
+    else if ( e_sweepBand == e_curBand && u8_prevSweepCh == u8_optSweepCh ) //opt channel sweep result
+    {
+        u8_sweepRow = stru_sweepPower.u8_optSweepRow;    
     }
     else
     {  
-        result = BB_GetSweepPower( e_rfBand,
-                                   e_bw, 
-                                   stru_sweepPower.u8_otherSweepRow, 
-                                   u8_prevSweepCh,
-                                   flag);
+        if ( e_sweepBand == RF_2G )
+        {
+            u8_sweepRow = stru_sweepPower.u8_cur2GRow;
+        }
+        else
+        {
+            u8_sweepRow = stru_sweepPower.u8_cur5GRow;
+        }
 
-        BB_UpdateOptCh(e_rfBand, e_bw, u8_prevSweepCh);
+        if ( e_sweepBand != e_curBand &&  (u8_prevSweepCh + 1) == BB_GetSweepTotalCh( e_sweepBand, e_bw ) ) //last channel
+        {
+            if ( (u8_sweepRow + 1) == SWEEP_FREQ_BLOCK_ROWS && ( stru_sweepPower.u8_isFull & 0x10 )!= 0x10 ) //last row
+            {
+                stru_sweepPower.u8_isFull |= 0x10;
+                dlog_info("option band sweep is full !!");
+            }
+
+            if ( stru_sweepPower.u8_isFull & 0x10 ) //both band sweep is ready, and sweep last channel
+            {
+                flag_checkBandSwitch = 1;
+            }
+        }
     }
+    result = BB_GetSweepPower( e_sweepBand, e_bw, u8_sweepRow, u8_prevSweepCh, flag ); 
+    if ( 0 == result )
+    {
+        return 0;
+    }
+    BB_UpdateOptCh(e_sweepBand, e_bw, u8_prevSweepCh);
 
-    stru_sweepPower.u8_cycleCnt ++;
+    //check if band switch need
+    if ( flag_checkBandSwitch )
+    {
+        uint8_t i = 0;
+        uint8_t flag_bandChange = 0, mainch = 0, optch = 0;
+        
+        ENUM_RF_BAND optband;
 
-    //set next channel to sweep
+        stru_sweepPower.band_sel[stru_sweepPower.u8_bandSelCnt] = BB_grd_cmpBandNoise();
+        stru_sweepPower.u8_bandSelCnt ++;
+
+        //check whether switch is necessary
+        uint8_t cnt = sizeof(stru_sweepPower.band_sel);
+
+
+        if ( stru_sweepPower.u8_bandSelCnt >= cnt )
+        {
+            uint8_t better_2g_count = 0;
+            uint8_t better_5g_count = 0;
+
+            for( i = 0; i < cnt; i++)
+            {
+                better_2g_count += ( stru_sweepPower.band_sel[i] == BETTER_2G );
+                better_5g_count += ( stru_sweepPower.band_sel[i] == BETTER_5G );
+            }
+
+            if ( stru_sweepPower.e_curBand == RF_2G && better_5g_count * 3 > (cnt << 1) )
+            {
+                flag_bandChange = 1;
+                optband = RF_5G;
+                dlog_info("sweep: change to 5G");
+            }
+            else if ( stru_sweepPower.e_curBand == RF_5G && better_2g_count * 3 > (cnt << 1) )
+            {
+                flag_bandChange = 1;
+                optband = RF_2G;
+                dlog_info("sweep: change to 2G");
+            }
+
+            if ( 1 == flag_bandChange && 1 == context.locked )
+            {
+                BB_selectBestCh( optband, SELECT_MAIN_OPT, &mainch, &optch, NULL, 0 );    //get best main channel
+                grd_notifyRfbandChange( optband, mainch, optch, BAND_CHANGE_DELAY );      //start delay and notify sky to change
+            }
+            
+            stru_sweepPower.u8_bandSelCnt = 0;
+        }
+
+    }
+    //if get the right cycle result, do next cycle sweep
     if( result )
     {
+        stru_sweepPower.u8_cycleCnt ++;
         BB_set_sweepChannel();
     }
 
@@ -455,10 +530,9 @@ static int BB_SweepAfterFull( uint8_t flag )
 }
 
 
-uint8_t BB_GetSweepResult( uint8_t flag )
+uint8_t BB_GetSweepedChResult( uint8_t flag )
 {
     uint8_t  ret = 0;
-    uint32_t start = SysTicks_GetTickCount();
     if ( !stru_sweepPower.u8_isFull )
     {
         ret = BB_SweepBeforeFull( );
@@ -475,11 +549,6 @@ uint8_t BB_GetSweepResult( uint8_t flag )
         //stru_sweepPower.u8_preMainCh     = 0xFF;
     }
     
-    uint32_t spend = SysTicks_GetTickCount() - start;
-    if( spend >= 1)
-    {
-        dlog_info("spend=%d\n", spend);
-    }
 
     return ret;
 }
@@ -510,7 +579,7 @@ int32_t BB_CompareCh1Ch2ByPowerAver(ENUM_RF_BAND e_rfBand, uint8_t u8_itCh1, uin
     int32_t value = 0;
 
     int32_t * pi32_power_average = (e_rfBand == RF_2G) ? stru_sweepPower.i32_2G_power_average :
-                                                     stru_sweepPower.i32_5G_power_average;
+                                                         stru_sweepPower.i32_5G_power_average;
                                                 
     if (pi32_power_average[u8_itCh1] < (pi32_power_average[u8_itCh2] - level))
     {
@@ -535,7 +604,7 @@ int32_t BB_CompareCh1Ch2ByPower(ENUM_RF_BAND e_rfBand, uint8_t u8_itCh1, uint8_t
     for( row = 0; row < SWEEP_FREQ_BLOCK_ROWS; row++)
     {
         pu32_power = (e_rfBand == RF_2G) ? stru_sweepPower.i32_2G_power[row] : 
-                                              stru_sweepPower.i32_5G_power[row];
+                                           stru_sweepPower.i32_5G_power[row];
         
         tmpCnt += ((pu32_power[u8_itCh1] < pu32_power[u8_itCh2]) ? (1) : (0));
     }
@@ -564,6 +633,7 @@ static uint8_t find_best(uint8_t *pu8_exlude, uint8_t u8_exclude_cnt, ENUM_RF_BA
     uint8_t ch = 0;
     int16_t aver, fluct;
     uint8_t num = GET_IT_TOTAL_CH(e_rfBand);
+
 
     for ( u8_start; 
           u8_start < num && is_inlist( u8_start, pu8_exlude, u8_exclude_cnt );  //channel in the excluding list
@@ -601,7 +671,7 @@ static void BB_GetItMinMaxCh(ENUM_RF_BAND e_rfBand, ENUM_CH_BW e_bw, uint8_t *mi
 
 static void BB_GetItAdjacentFrequency(uint8_t ch, uint8_t *pre, uint8_t *next)
 {
-    *pre = ch - 1;
+    *pre  = ch - 1;
     *next = ch + 1;
 }
 
@@ -615,14 +685,15 @@ static void BB_GetItAdjacentFrequency(uint8_t ch, uint8_t *pre, uint8_t *next)
  *         0: no suggest main and opt channel
  *         1: get main and opt channel
 */
-uint8_t BB_selectBestCh(ENUM_CH_SEL_OPT e_opt, uint8_t *u8_mainCh, uint8_t *u8_optCh, uint8_t *u8_other, uint8_t log)
+uint8_t BB_selectBestCh(ENUM_RF_BAND e_band, ENUM_CH_SEL_OPT e_opt,
+                        uint8_t *pu8_mainCh, uint8_t *pu8_optCh, uint8_t *pu8_other,
+                        uint8_t log)
 {
     uint8_t  ch = 0;
     int16_t  aver, fluct;
     uint32_t start = SysTicks_GetTickCount();
     uint8_t  exclude[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     uint8_t  excludecnt = 0;
-    ENUM_RF_BAND e_band = stru_sweepPower.e_curBand;
     ENUM_CH_BW e_bw = stru_sweepPower.e_bw;
     uint8_t bestCh  = 0xff;         //select one from all the channels
     uint8_t betterCh= 0xff;
@@ -655,9 +726,9 @@ uint8_t BB_selectBestCh(ENUM_CH_SEL_OPT e_opt, uint8_t *u8_mainCh, uint8_t *u8_o
 		    excludecnt = 0;
 		}
         bestCh = find_best(exclude, excludecnt, e_band, log);
-        if ( u8_mainCh )
+        if ( pu8_mainCh )
         {
-            *u8_mainCh = bestCh;
+            *pu8_mainCh = bestCh;
         }
     }
 
@@ -696,9 +767,9 @@ uint8_t BB_selectBestCh(ENUM_CH_SEL_OPT e_opt, uint8_t *u8_mainCh, uint8_t *u8_o
             }
         }
         
-        if ( u8_optCh )
+        if ( pu8_optCh )
         {
-            *u8_optCh= betterCh;
+            *pu8_optCh= betterCh;
         }
     }
 
@@ -711,9 +782,9 @@ uint8_t BB_selectBestCh(ENUM_CH_SEL_OPT e_opt, uint8_t *u8_mainCh, uint8_t *u8_o
 
         other = find_best(exclude, excludecnt, e_band, log);
 
-        if (u8_other)
+        if (pu8_other)
         {
-            *u8_other = other;
+            *pu8_other = other;
         }
     }
 
@@ -740,7 +811,7 @@ uint8_t get_opt_channel( void )
     uint8_t ret = stru_sweepPower.u8_optCh;
     ENUM_RF_BAND e_band = stru_sweepPower.e_curBand;
 
-    BB_selectBestCh(SELECT_OTHER, NULL, NULL, &other, 0);
+    BB_selectBestCh(e_band, SELECT_OTHER, NULL, NULL, &other, 0);
     
     if ( context.agclevel >= AGC_LEVEL_1 )
     {
@@ -765,122 +836,6 @@ uint8_t get_opt_channel( void )
 }
 
 
-static int8_t log10_lookup_table[]=
-{
-    0,
-    3,
-    4,
-    6,
-    6,
-    7,
-    8,
-    9,
-    9,
-    10,
-    10,
-    10,
-    11,
-    11,
-    11,
-    12,
-    12,
-    12,
-    12,
-    13,
-    13,
-    13,
-    13,
-    13,
-    13,
-    14,
-    14,
-    14,
-    14,
-    14,
-    14,
-    15,
-    15,
-    15,
-    15,
-    15,
-    15,
-    15,
-    15,
-    16,
-    16,
-    16,
-    16,
-    16,
-    16,
-    16,
-    16,
-    16,
-    16,
-    16,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-};
-
-
-static int get_10log10(uint32_t data)
-{
-    uint8_t result = 0;
-    while(data >= 100)
-    {
-        result += 10;
-        data = data / 10;
-    }
-    return (result + log10_lookup_table[data]);
-}
-
-
 /*
  * get the dbm noise power
  * power_td: total power in time domain
@@ -888,7 +843,7 @@ static int get_10log10(uint32_t data)
  * power_db: the power in dbm in each 1.56M
 */
 static int calc_power_db(ENUM_RF_BAND e_rfBand, uint8_t bw, uint32_t power_td,
-                         int16_t *power_fd, int16_t *power_db, int32_t *power_sum, 
+                         int16_t *power_fd, int32_t *power_sum, 
                          uint8_t cnt, uint8_t sweep_ch, int flaglog)
 {
     uint8_t  i = 0;
@@ -957,12 +912,6 @@ static int calc_power_db(ENUM_RF_BAND e_rfBand, uint8_t bw, uint32_t power_td,
     }
 #endif
 
-    if( flaglog )
-    {
-        dlog_info("%d %d %d %d %d %d",  power_db[0], power_db[1], power_db[2],
-                                        power_db[3], power_db[4], power_db[5]);
-    }
-
     return 1;
 }
 
@@ -989,7 +938,6 @@ static void calc_average_and_fluct(ENUM_RF_BAND e_rfBand, uint8_t u8_ItCh)
 static uint8_t BB_GetSweepTotalCh(ENUM_RF_BAND e_rfBand, ENUM_CH_BW e_bw)
 {
     uint8_t value;
-    //(band == RF_2G)?  MAX_2G_IT_FRQ_SIZE : MAX_5G_IT_FRQ_SIZE 
     if (RF_2G == e_rfBand)
     {
         value = MAX_2G_IT_FRQ_SIZE;
@@ -1090,4 +1038,290 @@ static uint8_t BB_UpdateOptCh(ENUM_RF_BAND e_rfBand, ENUM_CH_BW e_bw, uint8_t sw
     {
         pu8_bestChCnt[tmpCh] = 0;
     }
+}
+/*
+ * round: round of the loop
+ * sort the noise from Low -> High
+*/
+void bubble_sort(int * data, int datasize, int round)
+{
+    uint8_t i;
+    uint8_t j;
+
+    for ( i = 0 ; i < round; i++)
+    {
+        for( j = i+1; j < datasize; j++ )
+        {
+            if ( data[i] > data[j] )
+            {
+                int tmp = data[i];  //do swap
+                data[i] = data[j];
+                data[j] = tmp;
+            }
+        }
+    }
+}
+
+
+/*
+ *  start to sweep another band
+ */
+static void BB_SweepChangeBand(ENUM_RF_BAND e_toRfBand, uint8_t u8_mainCh, uint8_t u8_optCh)
+{
+    stru_sweepPower.u8_spareSweepCh   =  0;
+    stru_sweepPower.u8_optBandSweepCh =  0;
+
+    stru_sweepPower.u8_cur2GRow   =  0;
+    stru_sweepPower.u8_cur5GRow   =  0;
+
+    stru_sweepPower.u8_cycleCnt      =  MAIN_CH_CYCLE;
+    stru_sweepPower.u8_mainSweepRow  =  0;
+    stru_sweepPower.u8_optSweepRow   =  0;
+
+    stru_sweepPower.u8_preMainCh  =  0xff;
+
+    stru_sweepPower.u8_mainCh     =  u8_mainCh;
+
+    stru_sweepPower.u8_prevSweepCh   = 0x0;
+    stru_sweepPower.u16_preMainCount = 0x0;
+
+    stru_sweepPower.u8_mainSweepCh = u8_mainCh;
+    stru_sweepPower.u8_prevSweepCh = u8_mainCh;
+
+    stru_sweepPower.u8_optCh       = u8_optCh;
+    stru_sweepPower.u8_optSweepCh  = u8_optCh;
+
+    stru_sweepPower.e_curBand      =  e_toRfBand;  //current rf band for sweep
+    stru_sweepPower.u8_bandSelCnt  =  0;
+
+    BB_set_sweepfrq( e_toRfBand, stru_sweepPower.e_bw ,u8_mainCh );
+}
+
+
+/*
+ * function to compare the 2G/5G band noise
+*/
+ENUM_RF_select BB_grd_cmpBandNoise( void )
+{
+    /*5G is better: if 2G band 2/3 channel average >= 5G channel 2/3 channel average + 6dbm
+      2G is better: if 2G band 2/3 channel average <= 5G channel 2/3 channel average
+      else the same
+    */
+    int i32_2G_noisepower_average[MAX_2G_IT_FRQ_SIZE];
+    int i32_5G_noisepower_average[MAX_5G_IT_FRQ_SIZE];
+    int i32_2GAverage = 0;
+    int i32_5GAverage = 0;
+    int count1 = 3;             //get 3 best channel from 2G
+    int count2 = 5;             //get 5 best channel from 5G
+
+    uint8_t bad_2G_cnt = 0, bad_5G_cnt = 0;
+    uint8_t tmp = 0;
+
+    memcpy(i32_2G_noisepower_average, stru_sweepPower.i32_2G_power_average, sizeof(stru_sweepPower.i32_2G_power_average));
+    memcpy(i32_5G_noisepower_average, stru_sweepPower.i32_5G_power_average, sizeof(stru_sweepPower.i32_5G_power_average));
+
+    //bubble sort the Noise power, get the best channels
+    bubble_sort( i32_2G_noisepower_average, MAX_2G_IT_FRQ_SIZE, count1 );
+    bubble_sort( i32_5G_noisepower_average, MAX_5G_IT_FRQ_SIZE, count2 );
+
+    //IT is interference
+    for (tmp = 0; tmp < count1; tmp++)
+    {
+        i32_2GAverage += i32_2G_noisepower_average[tmp];
+    }
+    i32_2GAverage /= count1;
+
+    for (tmp = 0; tmp < count2; tmp++)
+    {
+        i32_5GAverage += i32_5G_noisepower_average[tmp];
+    }
+    i32_5GAverage /= count2;
+
+    //check 2G other frq > best 2G frq + 7db, RC is interference
+    for (tmp = 0; tmp < MAX_2G_IT_FRQ_SIZE; tmp++)
+    {
+        if ( ( i32_2G_noisepower_average[tmp] > i32_5GAverage + 7 && context.flag_signalBlock == 0 ) ||
+             ( i32_2G_noisepower_average[tmp] > i32_5GAverage + 17 && context.flag_signalBlock == 1 ))
+        {
+            bad_2G_cnt ++;
+        }
+    }
+#if 0
+    for (tmp = 0; tmp < MAX_5G_IT_FRQ_SIZE; tmp++)
+    {
+        if ( ( i32_5G_noisepower_average[tmp] > i32_2GAverage *  6 && context.flag_signalBlock == 0 ) ||
+             ( i32_5G_noisepower_average[tmp] > i32_2GAverage * 17 && context.flag_signalBlock == 1 ))
+        {
+            bad_5G_cnt ++;
+        }
+    }
+#endif
+    //compare result.
+    if ( ( i32_2GAverage >= i32_5GAverage + 17 && context.flag_signalBlock  == 1) ||    //Noise(2G) > Noise(5G)+17db( 10 * log51)
+         ( i32_2GAverage >= i32_5GAverage + 7  && context.flag_signalBlock  == 0) ||    //Noise(2G) > Noise(5G)+ 7db( 10 * log6) )  
+         bad_2G_cnt >= ( MAX_2G_IT_FRQ_SIZE * 2 / 3 ))
+    {
+        dlog_info("!5G block = %d %d", context.flag_signalBlock, bad_2G_cnt);
+        return BETTER_5G;
+    }
+    else if( (( i32_2GAverage <= i32_5GAverage && context.flag_signalBlock == 0 ) ||          //Noise(2G) < Noise(5G)
+              ( i32_2GAverage <= i32_5GAverage + 10  && context.flag_signalBlock == 1 ))      //Noise(2G) < Noise(5G) + 10db
+               && ( bad_2G_cnt <= ( MAX_2G_IT_FRQ_SIZE * 1 / 2 )))                            // and 
+    {
+        dlog_info("!2G block = %d %d", context.flag_signalBlock, bad_2G_cnt);
+        return BETTER_2G;
+    }
+    else
+    {
+        return EQUAL_2G_5G;
+    }
+}
+
+/*
+void grd_initRfband( ENUM_RF_BAND e_band )
+{
+    BB_WriteReg(PAGE2, RF_BAND_CHANGE_0, e_band);
+    BB_WriteReg(PAGE2, RF_BAND_CHANGE_1, e_band);
+}
+*/
+
+uint8_t agc_level_min[50];
+uint8_t agc_idx = 0;
+
+void grd_checkBlockMode(void)
+{
+    int      dist   = 0;
+    uint16_t agcsum = 0;
+    uint8_t  num    = sizeof(agc_level_min);
+
+    context.u8_agc[0] = BB_ReadReg(PAGE2, AAGC_2_RD);
+    context.u8_agc[1] = BB_ReadReg(PAGE2, AAGC_3_RD);
+
+    agc_level_min[agc_idx] = (context.u8_agc[0] < context.u8_agc[1]) ? context.u8_agc[0] : context.u8_agc[1];
+    agc_idx ++;
+
+    if ( agc_idx == num )
+    {    
+        uint8_t  i      = 0;
+        agc_idx = 0;
+        for( ; i < num; i++ )
+        {
+            agcsum += agc_level_min[i];
+        }
+        context.agclevel = agcsum / num;
+        //dlog_info("Agc level: %d", context.agclevel);
+
+        if ( context.agclevel >= GRD_AGC_BLOCK_THRESH )
+        {
+            int ret = grd_GetDistAverage(&dist);
+            if (ret == 0 ||  (ret == 1 && dist <= 200) )    //Fail to get the distance or dist <= 200
+            {
+                context.flag_signalBlock = 1;
+            }
+            else
+            {
+                context.flag_signalBlock = 0;
+            }
+        }
+        else
+        {
+            context.flag_signalBlock = 0;
+            //dlog_info("Non-Block 0x%x", context.agclevel);
+        }
+    }
+}
+
+
+
+/**
+ * @brief: notify sky to change band by spi
+ */
+void grd_notifyRfbandChange( ENUM_RF_BAND e_band, uint8_t u8_itCh, uint8_t u8_optCh, uint8_t u8_delayCnt )
+{
+    uint8_t data0 = (u8_delayCnt << 2) | ((uint8_t)e_band);
+    uint8_t data1 = (u8_itCh     << 2) | ((uint8_t)e_band);
+
+    BB_WriteReg(PAGE2, RF_BAND_CHANGE_0, data0);
+    BB_WriteReg(PAGE2, RF_BAND_CHANGE_1, data1);
+
+    context.stru_bandChange.flag_bandchange = 1;
+    context.stru_bandChange.u8_bandChangecount = u8_delayCnt;
+    context.stru_bandChange.u8_ItCh   = u8_itCh;
+    context.stru_bandChange.u8_optCh  = u8_optCh;
+}
+
+extern uint8_t grd_rc_channel;
+
+/**
+ * @brief: down count, and change band
+ */
+int32_t grd_doRfbandChange( uint8_t *pu8_mainCh, uint8_t *pu8_optCh )
+{
+    if ( 1 == context.stru_bandChange.flag_bandchange )
+    {
+        context.stru_bandChange.u8_bandChangecount --;
+        if ( 0 == context.stru_bandChange.u8_bandChangecount )  //count to 0, time to change band
+        {            
+            context.stru_bandChange.flag_bandchange = 0;
+            context.e_curBand = OTHER_BAND(context.e_curBand);  //switch to another band
+
+            BB_set_RF_Band(BB_GRD_MODE, context.e_curBand);
+
+            BB_SweepChangeBand(context.e_curBand, context.stru_bandChange.u8_ItCh, context.stru_bandChange.u8_optCh);
+            BB_set_sweepChannel(); //re-set the sweepChannel            
+
+            if ( pu8_mainCh )
+            {
+                *pu8_mainCh = context.stru_bandChange.u8_ItCh;
+            }
+
+            if ( pu8_optCh )
+            {
+                *pu8_optCh = context.stru_bandChange.u8_optCh;
+            }
+
+            //clear the band change request after do band change
+            BB_WriteReg(PAGE2, RF_BAND_CHANGE_0, 0);
+            BB_WriteReg(PAGE2, RF_BAND_CHANGE_1, 0);
+
+#if 0
+            BB_WriteReg(PAGE1, 0x1d, context.stru_bandChange.u8_frqoffset[0]);
+            BB_WriteReg(PAGE1, 0x1c, context.stru_bandChange.u8_frqoffset[1]);
+            BB_WriteReg(PAGE1, 0x1b, context.stru_bandChange.u8_frqoffset[2]);
+
+            BB_WriteRegMask(PAGE1, 0X1a, 0x40, 0x40);
+            context.stru_bandChange.u8_softfrqoffset = 1;
+            dlog_info("write %x %x %x ", context.stru_bandChange.u8_frqoffset[0], context.stru_bandChange.u8_frqoffset[1], 
+                                         context.stru_bandChange.u8_frqoffset[2]);
+
+#endif
+            //clear the result, re-start statistic again
+            stru_sweepPower.u8_bandSelCnt = 0;
+
+            //dlog_info("Band switch: %d %d %d %d", grd_rc_channel, context.stru_bandChange.u8_bandChangecount, 
+            //                                      context.stru_bandChange.u8_ItCh, context.e_curBand);
+            return 1;
+        }
+        else
+        {
+            uint8_t data0 = (context.stru_bandChange.u8_bandChangecount << 2) | (OTHER_BAND(context.e_curBand));
+            BB_WriteReg(PAGE2, RF_BAND_CHANGE_0, data0);
+        }
+    }
+
+    return 0;
+}
+
+int32_t grd_checkBackTo2G(void)
+{
+    context.stru_bandChange.u8_unlockLoopCnt++;
+    if ( context.stru_bandChange.u8_unlockLoopCnt >= GRD_BACK_TO_2G_UNLOCK_CNT && 
+         ( context.e_curBand == RF_5G && context.e_bandsupport == RF_2G_5G ) )
+    {
+        context.stru_bandChange.u8_unlockLoopCnt = 0;
+        grd_notifyRfbandChange(RF_2G, 0, 1, BAND_CHANGE_DELAY);
+        return 1;
+    }
+
+    return 0;
 }

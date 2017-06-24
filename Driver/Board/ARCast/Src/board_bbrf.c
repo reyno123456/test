@@ -83,6 +83,7 @@ STRU_BoardCfg stru_boardCfg =
     .u8_rf2GrdRegsCnt   = 0,
     .pstru_rf2GrdRegs   = NULL,
 
+    .e_bandsupport      = RF_2G,
     //after calibration
     .u8_bbSkyRegsCntAfterCali    = sizeof(arcast_bb_skyregs_afterCali) / sizeof(STRU_BB_REG),
     .pstru_bbSkyRegsAfterCali    = arcast_bb_skyregs_afterCali,

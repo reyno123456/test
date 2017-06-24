@@ -56,8 +56,6 @@
 #define     ENCODER_BRC_CHAGE_0_CH1	        (0x70)
 #define     ENCODER_BRC_CHAGE_1_CH1	        (0x71)
 
-#define     NTF_TEST_MODE_0		            (0x72)
-#define     NTF_TEST_MODE_1		            (0x73)
 
 #define     MCS_INDEX_MODE_0		        (0x74)
 #define     MCS_INDEX_MODE_1		        (0x75)
@@ -65,25 +63,31 @@
 #define     ENCODER_BRC_CHAGE_0_CH2	        (0x76)
 #define     ENCODER_BRC_CHAGE_1_CH2	        (0x77)
 
-#define     RF_CH_LDPC_CHANGE_0		        (0x77)
-#define     RF_CH_LDPC_CHANGE_1		        (0x78)
+#define     RF_CH_LDPC_CHANGE_0             (0x78)
+#define     RF_CH_LDPC_CHANGE_1             (0x79)
 
-#define     RF_CH_QAM_CHANGE_0	            (0x79)
-#define     RF_CH_QAM_CHANGE_1	            (0x7A)
+#define     RF_CH_QAM_CHANGE_0              (0x7A)
+#define     RF_CH_QAM_CHANGE_1              (0x80)
 
-#define     RC_FRQ_0                        (0x80)
-#define     RC_FRQ_1                        (0x81)
-#define     RC_FRQ_2                        (0x82)
-#define     RC_FRQ_3                        (0x83)
+#define     RC_FRQ_0                        (0x81)
+#define     RC_FRQ_1                        (0x82)
+#define     RC_FRQ_2                        (0x83)
+#define     RC_FRQ_3                        (0x84)
 
-#define     IT_FRQ_0                        (0x84)
-#define     IT_FRQ_1                        (0x85)
-#define     IT_FRQ_2                        (0x86)
-#define     IT_FRQ_3                        (0x87)
+#define     IT_FRQ_0                        (0x85)
+#define     IT_FRQ_1                        (0x86)
+#define     IT_FRQ_2                        (0x87)
+#define     IT_FRQ_3                        (0x88)
 
-#define     GRD_RC_CHANNEL                  (0x88)
-#define     GRD_MASK_CODE                   (0x89)          // 8 byte, 0x89 ~ 0x90
+#define     GRD_RC_CHANNEL                  (0x89)
+#define     GRD_MASK_CODE                   (0x90)          // 8 byte, 0x89 ~ 0x90
 
+
+#define     FRE_OFFSET_0                    (0x91)
+#define     FRE_OFFSET_1                    (0x92)
+#define     FRE_OFFSET_2                    (0x93)
+#define     FRE_OFFSET_3                    (0x94)
+#define     FRE_OFFSET_4                    (0x95)
 /****end of ground - > sky registers Fro    m 0x60 -> 0x9F */
 
 #define     SWEEP_ENERGY_HIGH               (0xa2)
@@ -258,4 +262,25 @@
 #define     SDRAM_BLOCK_SIZE                (0xcc)
 #define     USB_BYPASS_MODE                 (0x56)
 
+#define    INTEGER_OFFSET                   (0xc5)
+
+#define    FRACTION_OFFSET_0                (0xbf)
+#define    FRACTION_OFFSET_1                (0xbe)
+#define    FRACTION_OFFSET_2                (0xbd)
+#define    FRACTION_OFFSET_3                (0xbc)
+
+#define    TRACK_OFFSET_0                   (0xbb)
+#define    TRACK_OFFSET_1                   (0xba)
+#define    TRACK_OFFSET_2                   (0xb9)
+#define    TRACK_OFFSET_3                   (0xb8)
+
+
+#define    HW_OFFSET_0                      (0xb3)
+#define    HW_OFFSET_1                      (0xb2)
+#define    HW_OFFSET_2                      (0xb1)
+
+
+#define   SW_OFFSET_0                       (0x1d)
+#define   SW_OFFSET_1                       (0x1c)
+#define   SW_OFFSET_2                       (0x1b)
 #endif

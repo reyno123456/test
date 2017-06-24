@@ -6,6 +6,7 @@
 #include "data_type.h"
 #include "brc.h"
 #include "vsoc_enc.h"
+#include "log10.h"
 
 #ifdef ARMCM7_RC  //###########
     #include "enc_internal.h"
@@ -634,120 +635,8 @@ void my_rc_ac_br(int view) {
             rca.v1_prev_ac_br_index = rca.v1_ac_br_index;
     }
 }
-static unsigned char log10_lookup_table[]=
-{
-    0,
-    3,
-    4,
-    6,
-    6,
-    7,
-    8,
-    9,
-    9,
-    10,
-    10,
-    10,
-    11,
-    11,
-    11,
-    12,
-    12,
-    12,
-    12,
-    13,
-    13,
-    13,
-    13,
-    13,
-    13,
-    14,
-    14,
-    14,
-    14,
-    14,
-    14,
-    15,
-    15,
-    15,
-    15,
-    15,
-    15,
-    15,
-    15,
-    16,
-    16,
-    16,
-    16,
-    16,
-    16,
-    16,
-    16,
-    16,
-    16,
-    16,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    17,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    18,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-    19,
-};
 
 
-static unsigned short get_10log10(unsigned int data)
-{
-    unsigned char result = 0;
-    while(data >= 100)
-    {
-        result += 10;
-        data = data / 10;
-    }
-    return (result + log10_lookup_table[data]);
-}
 #if 0
 unsigned short my_divider2psnr(int my_divider) {
     unsigned short my_psnr;

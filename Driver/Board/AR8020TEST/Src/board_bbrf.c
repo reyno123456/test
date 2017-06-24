@@ -52,6 +52,7 @@ STRU_BoardCfg stru_boardCfg =
     .u8_rf2GrdRegsCnt   = 0,
     .pstru_rf2GrdRegs   = NULL,
 
+    .e_bandsupport      = RF_2G_5G,
      //after calibration
     .u8_bbSkyRegsCntAfterCali 	 = sizeof(AR8020TEST_bb_skyregsAfterCali) / sizeof(STRU_BB_REG),
     .pstru_bbSkyRegsAfterCali    = AR8020TEST_bb_skyregsAfterCali,

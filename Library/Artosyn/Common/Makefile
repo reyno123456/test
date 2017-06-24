@@ -33,7 +33,8 @@ endif
 # source file(s), including c file(s)
 SRC_C   := Src/sys_event.c \
            Src/debuglog.c \
-           Src/md5.c
+           Src/md5.c \
+           Src/log10.c
 
 INCDIRS :=  -IInc \
             -I$(TOP_DIR)/Library/Artosyn/SimpleC/Inc \

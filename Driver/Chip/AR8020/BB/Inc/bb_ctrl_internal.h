@@ -18,6 +18,8 @@
 #define RF_FRQ_MAX_NUM              ((MAX_2G_RC_FRQ_SIZE>=MAX_5G_RC_FRQ_SIZE)?MAX_2G_RC_FRQ_SIZE:MAX_5G_RC_FRQ_SIZE)
 
 
+#define OTHER_BAND(band)    ( (band == RF_2G)?  RF_5G : RF_2G )
+#define BAND_CHANGE_DELAY   (40)
 typedef enum
 {
     IDLE,
@@ -62,6 +64,7 @@ typedef enum
 #define  SKY_LOCK_STATUS        (0)
 #define  RC_MASK_CODE           (1)
 #define  SKY_AGC_STATUS         (2)
+#define  RF_BAND_SWITCH         (3)
 
 typedef struct _SysEvent_SkyStatus
 {
@@ -95,6 +98,17 @@ typedef struct
 
 #define QAM_CHANGE_THRESHOLD_COUNT (6)
 
+typedef struct _STRU_BandChange
+{
+    uint8_t             flag_bandchange;
+    uint8_t             u8_bandChangecount;
+    uint8_t             u8_ItCh;
+    uint8_t             u8_optCh;
+    uint8_t             u8_unlockLoopCnt;
+    //uint8_t             u8_frqoffset[3];   //3bytes frequency offset
+    //uint8_t             u8_softfrqoffset;
+}STRU_BandChange;
+
 typedef struct
 {
     uint8_t             cur_IT_ch;
@@ -109,9 +123,10 @@ typedef struct
     ENUM_RUN_MODE       qam_skip_mode;
     ENUM_RUN_MODE       brc_mode;
     ENUM_TRX_CTRL       trx_ctrl;
-    uint8_t             brc_bps[2];           //unit: Mbps
+    uint8_t             brc_bps[2];             //unit: Mbps
 
-    ENUM_RF_BAND        freq_band;       //2.5G, 5.8G
+    ENUM_RF_BAND        e_bandsupport;          //2.4G, 5.8G
+    ENUM_RF_BAND        e_curBand;              //current band: 2.4G, 5.8G
     ENUM_CH_BW          CH_bandwidth;    //10M, 20M
     ENUM_BB_QAM         qam_mode;
     ENUM_BB_QAM         rc_qam_mode;
@@ -134,7 +149,7 @@ typedef struct
     uint8_t             bb_power;    
     ENUM_RUN_MODE       rf_power_mode;
     uint8_t             enable_freq_offset;
-    uint8_t             flag_mrs;
+    uint8_t             flag_mrc;
     uint8_t             flag_updateRc; //need to update Remote controller frequency
 
     uint16_t            cycle_count; 
@@ -156,12 +171,16 @@ typedef struct
     uint8_t             agclevel;
 
     uint8_t             u8_bbStartMcs;
+    uint8_t             u8_harqcnt_lock;
+
+    uint8_t             flag_signalBlock;
+    uint8_t             u8_agc[4];
+    STRU_BandChange     stru_bandChange;
 }CONTEXT;
 
 
 typedef struct param
 {
-    ENUM_RF_BAND    freq_band;
     ENUM_RUN_MODE   it_skip_freq_mode;
     ENUM_RUN_MODE   rc_skip_freq_mode;
     ENUM_RUN_MODE   qam_skip_mode;
@@ -256,5 +275,9 @@ void sky_set_McsByIndex(ENUM_CH_BW bw, uint8_t idx);
 int BB_WriteRegMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t data, uint8_t mask);
 
 PARAM * BB_get_sys_param(void);
+
+int grd_cal_frqOffset( uint8_t ch, ENUM_RF_BAND e_band );
+
+int grd_GetDistAverage(int *pDist);
 
 #endif

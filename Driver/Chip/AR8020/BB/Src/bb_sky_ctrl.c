@@ -16,8 +16,9 @@
 
 static uint32_t s_lockFlag = 0;
 
-#define MAX_SEARCH_ID_NUM  (5)
-#define SEARCH_ID_TIMEOUT  (2000) //ms
+#define MAX_SEARCH_ID_NUM               (5)
+#define SEARCH_ID_TIMEOUT               (2000)   //ms
+#define	SKY_BACK_TO_2G_UNLOCK_CNT       (7)
 
 typedef struct
 {
@@ -32,6 +33,15 @@ typedef struct
     uint8_t count;
 }SEARCH_IDS_LIST;
 
+typedef struct
+{
+    int64_t  ll_offset;
+    int      basefrq;
+    int      baseOffset;
+    uint8_t  u8_flagOffset;  //offset have got
+    uint8_t  u8_softEnable;
+    uint32_t u32_cyclecnt;
+}STRU_SKY_FREQ_OFFSET;
 
 static SEARCH_IDS_LIST search_id_list;
 static uint32_t start_time_cnt = 0;
@@ -41,9 +51,9 @@ static enum EN_AGC_MODE en_agcmode = UNKOWN_AGC;
 
 static init_timer_st sky_timer2_6;
 static init_timer_st sky_timer2_7;
-static int switch_5G_count = 0;
 static STRU_RC_FRQ_MASK s_st_rcFrqMask;
 
+static STRU_SKY_FREQ_OFFSET stru_skyfrqOffst;
 
 static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd);
 static void sky_handle_all_cmds(void);
@@ -52,7 +62,7 @@ static int32_t sky_write_id(uint8_t *u8_idArray);
 static int32_t cal_chk_sum(uint8_t *pu8_data, uint32_t u32_len, uint8_t *u8_check);
 extern int BB_WriteRegMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t data, uint8_t mask);
 
-static void BB_sky_SendStatus(void *p);
+static void BB_sky_SendUartData(void *p);
 static void sky_calc_dist(void);
 
 static uint16_t sky_get_rc_snr( void );
@@ -60,6 +70,11 @@ static uint16_t sky_get_snr_average(void);
 
 static void sky_init_rc_frq_mask_func(void);
 static void sky_rc_frq_status_statistics(void);
+
+static void sky_send_session( void );
+static void sky_doRfBandChange( void );
+void sky_clearFrqOffset(void);
+static void sky_backTo2GCheck(void);
 
 void BB_SKY_start(void)
 {   
@@ -157,6 +172,7 @@ void sky_notify_encoder_brc(uint8_t u8_ch, uint8_t br)
 
 void sky_set_McsByIndex(ENUM_CH_BW bw, uint8_t idx)
 {
+    uint8_t value;
     uint8_t mcs_idx_reg0x0f_map[] = 
     {
         0x4f,
@@ -369,34 +385,29 @@ void Sky_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
     sky_get_rc_snr();
     sky_calc_dist();
     
+
+    sky_physical_link_process();
+
     sky_handle_all_cmds();
+    sky_rc_frq_status_statistics();
 
+    //count == 0, then change RF band
+    sky_doRfBandChange();
+
+    if (0 == (u32_cnt++ % 2))
     {
-        sky_physical_link_process();
-
-        sky_rc_frq_status_statistics();
-        
-        //patch for 5G switch: For demo test only.
-        if(context.freq_band == RF_5G && switch_5G_count < 5)
-        {
-            switch_5G_count++;
-            sky_soft_reset();
-        }
-        if (0 == (u32_cnt++ % 2))
-        {
-            BB_sky_GatherOSDInfo();
-        }
-        else
-        {
-            BB_GetDevInfo();
-        }
+        BB_sky_GatherOSDInfo();
     }
-}
+    else
+    {
+        BB_GetDevInfo();
+    }
+    }
 
 
 void sky_rc_hopfreq(void)
 {
-    uint8_t max_ch_size = (context.freq_band == RF_2G) ? (MAX_2G_RC_FRQ_SIZE):(MAX_5G_RC_FRQ_SIZE);
+    uint8_t max_ch_size = (context.e_curBand == RF_2G) ? (MAX_2G_RC_FRQ_SIZE):(MAX_5G_RC_FRQ_SIZE);
     
     sky_rc_channel++;
     if(sky_rc_channel >=  max_ch_size)
@@ -406,10 +417,54 @@ void sky_rc_hopfreq(void)
 
     if ( !((s_st_rcFrqMask.u64_rcvGrdMask) & (((uint64_t)1) << sky_rc_channel)) )
     {
-        BB_set_Rcfrq(context.freq_band, sky_rc_channel);
+        BB_set_Rcfrq(context.e_curBand, sky_rc_channel);
+/*        
+        if ( stru_skyfrqOffst.u8_flagOffset && context.locked == 1)
+        {
+            int curRcfrq;
+            int fraction, tracking, integer;
+#if 1
+            curRcfrq = ((context.e_curBand == RF_2G)? 2410 : 5750) + (sky_rc_channel * 2);
+#else
+            curRcfrq = ((context.e_curBand == RF_2G)? 2410 : 5750);
+#endif
+            int64_t sw_frqOffset = -stru_skyfrqOffst.ll_offset * curRcfrq / stru_skyfrqOffst.basefrq - stru_skyfrqOffst.baseOffset;
+
+            integer  = BB_ReadReg(PAGE2, INTEGER_OFFSET);
+            
+            fraction = (BB_ReadReg(PAGE2, FRACTION_OFFSET_0) << 24) | (BB_ReadReg(PAGE2, FRACTION_OFFSET_1) << 16) |
+                       (BB_ReadReg(PAGE2, FRACTION_OFFSET_2) <<  8) | (BB_ReadReg(PAGE2, FRACTION_OFFSET_3));
+                       
+            tracking = (BB_ReadReg(PAGE2, TRACK_OFFSET_0) << 24) | (BB_ReadReg(PAGE2, TRACK_OFFSET_1) << 16) |
+                       (BB_ReadReg(PAGE2, TRACK_OFFSET_2) <<  8) | (BB_ReadReg(PAGE2, TRACK_OFFSET_3));
+
+            int curoffset = fraction + tracking - (integer << 19) ;
+            dlog_info("i f t: %d %d %d %d", stru_skyfrqOffst.baseOffset, curRcfrq, curoffset / 3067, (int)sw_frqOffset);
+
+#if 1
+            BB_WriteReg(PAGE1, SW_OFFSET_0, (sw_frqOffset >> 24)&0xff);
+            BB_WriteReg(PAGE1, SW_OFFSET_1, (sw_frqOffset >> 16)&0xff);
+            BB_WriteReg(PAGE1, SW_OFFSET_2, (sw_frqOffset >>  8)&0xff);
+#else
+            uint8_t hw1 = BB_ReadReg(PAGE2, HW_OFFSET_0), hw2 = BB_ReadReg(PAGE2, HW_OFFSET_1) , hw3 = BB_ReadReg(PAGE2, HW_OFFSET_2);
+            BB_WriteReg(PAGE1, SW_OFFSET_0, hw1);
+            BB_WriteReg(PAGE1, SW_OFFSET_1, hw2);
+            BB_WriteReg(PAGE1, SW_OFFSET_2, hw3);
+            dlog_info("%x %x %x", hw1, hw2, hw3);
+#endif
+            if ( stru_skyfrqOffst.u8_softEnable == 0 )
+            {
+                BB_WriteRegMask(PAGE1, 0x1a, 0x40, 0x40);
+                stru_skyfrqOffst.u8_softEnable = 1;
+            }
+        }   
+        else if ( stru_skyfrqOffst.u8_softEnable == 1 )
+        {
+            BB_WriteRegMask(PAGE1, 0x1a, 0x00, 0x40);
+            stru_skyfrqOffst.u8_softEnable = 0;
+        }*/
     }
 }
-
 
 void sky_set_it_freq(ENUM_RF_BAND band, uint8_t ch)
 {
@@ -449,7 +504,7 @@ void sky_soft_reset(void)
 void sky_physical_link_process(void)
 {
     uint8_t *p_id;
-    uint8_t max_ch_size = (context.freq_band == RF_2G) ? (MAX_2G_RC_FRQ_SIZE):(MAX_5G_RC_FRQ_SIZE);
+    uint8_t max_ch_size = (context.e_curBand == RF_2G) ? (MAX_2G_RC_FRQ_SIZE):(MAX_5G_RC_FRQ_SIZE);
 
     if(context.dev_state == SEARCH_ID)
     {
@@ -553,28 +608,18 @@ void sky_physical_link_process(void)
             if (0x80 == (data & 0x80))
             {
                 sky_soft_reset();
+                //sky_clearFrqOffset();
             }
         }
     }
 
-    if( (context.rc_unlock_cnt > (max_ch_size + 1)) && (context.dev_state == SEARCH_ID) )
+    if ( context.rc_unlock_cnt > (max_ch_size + 1) &&
+        (context.dev_state == SEARCH_ID || (context.dev_state == CHECK_ID_MATCH)) )
     {
         context.rc_unlock_cnt = 0;
         sky_search_id_timeout( 1 );
-    }
-    else if( (context.rc_unlock_cnt > (max_ch_size + 1)) && (context.dev_state == CHECK_ID_MATCH) )
-    {
-        context.rc_unlock_cnt = 0;
-        sky_search_id_timeout( 1 );
-        /*sky_search_id_timeout( !s_lockFlag );
-        if (s_lockFlag)
-        {
-            s_lockFlag++;
-            if (s_lockFlag > 25)
-            {
-                s_lockFlag = 0;
-            }
-        }*/
+
+        sky_backTo2GCheck();
     }
 }
 
@@ -728,7 +773,7 @@ void sky_Timer2_6_Init(void)
     TIM_RegisterTimer(sky_timer2_6, 3800);
 
     reg_IrqHandle(TIMER_INTR26_VECTOR_NUM, Sky_TIM2_6_IRQHandler, NULL);
-	INTR_NVIC_SetIRQPriority(TIMER_INTR26_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER00,0));
+    INTR_NVIC_SetIRQPriority(TIMER_INTR26_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_TIMER00,0));
 }
 
 
@@ -763,6 +808,7 @@ static void sky_handle_RC_cmd(void)
     }
 }
 
+
 static void sky_handle_IT_cmd(void)
 {
     uint8_t data0, data1, data2, data3;
@@ -783,25 +829,83 @@ static void sky_handle_IT_cmd(void)
 
 
 /*
- * handle 2G/5G switch 
+ * check if the spi command for band change when lock
 */
 static void sky_handle_RF_band_cmd(void)
 {
-    uint8_t data0 = BB_ReadReg(PAGE2, RF_BAND_CHANGE_0);
-    uint8_t data1 = BB_ReadReg(PAGE2, RF_BAND_CHANGE_1);
-    
-    if( (data0 == 0xc0 && data1 == 0xc1) || (data0 == 0xc1 && data1 == 0xc2))
+    if ( 0 == context.stru_bandChange.flag_bandchange )
     {
-        ENUM_RF_BAND band = (ENUM_RF_BAND)(data0 & 0x01);
-        if ((context.freq_band) != band)
+        uint8_t data0 = BB_ReadReg(PAGE2, RF_BAND_CHANGE_0);
+        uint8_t data1 = BB_ReadReg(PAGE2, RF_BAND_CHANGE_1);
+        
+        if ( (data0 & 0x03) == (data1 & 0x03) && (data0 != 0 ))
         {
-            BB_set_RF_Band(BB_SKY_MODE, band);
-            context.freq_band = band;
-            dlog_info("sky set band %d \r\n", band);
+            if ( context.e_curBand != (ENUM_RF_BAND)(data0 & 0x03) )
+            {
+                context.stru_bandChange.flag_bandchange = 1;
+                context.stru_bandChange.u8_bandChangecount = ((data0 & 0xFC) >> 2);
+                context.stru_bandChange.u8_ItCh = ((data1 & 0xFC) >> 2);
+            }
+         }
+    }
+
+}
+
+/*
+ * call every 14ms cycle in ID_MATCH_LOCK status
+*/
+static void sky_doRfBandChange( void )
+{
+    if ( context.stru_bandChange.flag_bandchange )
+    {
+        context.stru_bandChange.u8_bandChangecount--;
+        if ( 0 == context.stru_bandChange.u8_bandChangecount )
+        {
+            context.stru_bandChange.flag_bandchange = 0;
+            context.stru_bandChange.u8_bandChangecount = 0;
+            context.e_curBand = OTHER_BAND( context.e_curBand );
+
+            dlog_info("band: %d %d %d %d",  sky_rc_channel, context.stru_bandChange.u8_bandChangecount, 
+                                            context.stru_bandChange.u8_ItCh, context.e_curBand);
+
+            BB_set_RF_Band(BB_SKY_MODE, context.e_curBand);
+            sky_rc_channel = 0;
+            sky_rc_hopfreq();
+
+            BB_set_ITfrq( context.e_curBand, context.stru_bandChange.u8_ItCh);
         }
+        else
+        {
+            //dlog_info("!! ch: %d %d", sky_rc_channel, context.stru_bandChange.u8_bandChangecount);
+        }   
     }
 }
 
+static uint16_t rc_unlock_loop = 0;
+
+static void sky_backTo2GCheck(void)
+{
+    //5G: 6 * 40 * 17ms = 4080ms
+    if ( context.e_bandsupport == RF_2G_5G && context.e_curBand == RF_5G )
+    {
+        if ( rc_unlock_loop ++ >= SKY_BACK_TO_2G_UNLOCK_CNT )
+        {
+            //set band
+            context.e_curBand = RF_2G;
+            BB_set_RF_Band(BB_SKY_MODE, context.e_curBand);
+
+            //set RC
+            sky_rc_channel = 0;
+            sky_rc_hopfreq();
+
+            //set IT
+            BB_set_ITfrq( context.e_curBand, 0);
+    
+            rc_unlock_loop = 0;
+        }
+    }
+
+}
 
 /*
  *  handle command for 10M, 20M
@@ -953,7 +1057,7 @@ static void sky_handle_rc_rcv_grd_mask_code_cmd(void)
 static void sky_handle_rc_channel_sync_cmd(void)
 {
     uint8_t data0 = BB_ReadReg(PAGE2, GRD_RC_CHANNEL);
-    uint8_t max_ch_size = (context.freq_band == RF_2G) ? (MAX_2G_RC_FRQ_SIZE):(MAX_5G_RC_FRQ_SIZE);
+    uint8_t max_ch_size = (context.e_curBand == RF_2G) ? (MAX_2G_RC_FRQ_SIZE):(MAX_5G_RC_FRQ_SIZE);
     
     data0 += 1;
     data0 %= max_ch_size;
@@ -966,6 +1070,84 @@ static void sky_handle_rc_channel_sync_cmd(void)
 }
 
 
+static void sky_handle_frqOffset(void)
+{    
+    int frqoffset = (BB_ReadReg(PAGE2, FRE_OFFSET_0) << 24) | (BB_ReadReg(PAGE2, FRE_OFFSET_1) << 16) | 
+                    (BB_ReadReg(PAGE2, FRE_OFFSET_2) <<  8) |  BB_ReadReg(PAGE2, FRE_OFFSET_3);
+    uint8_t tmp = BB_ReadReg(PAGE2, FRE_OFFSET_4);
+
+    if ( frqoffset == 0)
+    {
+        return;
+    }
+
+    if ( stru_skyfrqOffst.u32_cyclecnt == 0)   //17 * 200 = 3.4s
+    {
+        int integer, fraction, tracking;
+        ENUM_RF_BAND e_band;
+        int basefrq;
+        uint8_t ch;
+
+        e_band = (ENUM_RF_BAND)(tmp >> 6);
+        ch = tmp & 0x3f;
+
+        if ( stru_skyfrqOffst.baseOffset == 0)
+        {
+            integer  = BB_ReadReg(PAGE2, INTEGER_OFFSET);
+            
+            fraction = (BB_ReadReg(PAGE2, FRACTION_OFFSET_0) << 24) | (BB_ReadReg(PAGE2, FRACTION_OFFSET_1) << 16) |
+                       (BB_ReadReg(PAGE2, FRACTION_OFFSET_2) <<  8) | (BB_ReadReg(PAGE2, FRACTION_OFFSET_3));
+                       
+            tracking = (BB_ReadReg(PAGE2, TRACK_OFFSET_0) << 24) | (BB_ReadReg(PAGE2, TRACK_OFFSET_1) << 16) |
+                       (BB_ReadReg(PAGE2, TRACK_OFFSET_2) <<  8) | (BB_ReadReg(PAGE2, TRACK_OFFSET_3));
+        }
+
+        if ( e_band == RF_2G && context.CH_bandwidth == BW_10M )
+        {
+            basefrq = 2406 + ch * 10;
+        }
+        else if( e_band == RF_2G && context.CH_bandwidth == BW_20M )
+        {
+        }
+        else if ( e_band == RF_5G && context.CH_bandwidth == BW_10M )
+        {
+            basefrq = 5730 + ch * 10;
+        }
+        else if( e_band == RF_2G && context.CH_bandwidth == BW_20M )
+        {
+        }
+
+        stru_skyfrqOffst.u8_flagOffset = 1;
+        stru_skyfrqOffst.baseOffset = ( fraction + tracking - (integer << 19) );
+        stru_skyfrqOffst.ll_offset  = frqoffset * 8;
+        stru_skyfrqOffst.basefrq    = basefrq;
+
+        dlog_info("base: %d %d %d", basefrq, frqoffset, stru_skyfrqOffst.baseOffset);
+    }
+
+    if ( stru_skyfrqOffst.u32_cyclecnt ++ > 1000)  
+    {
+        stru_skyfrqOffst.u32_cyclecnt = 0;
+    }
+};
+
+/*
+ * called the function if unlocked
+*/
+void sky_clearFrqOffset(void)
+{
+    if (stru_skyfrqOffst.u8_flagOffset)
+    {        
+        stru_skyfrqOffst.u8_flagOffset = 0;  //
+        stru_skyfrqOffst.u32_cyclecnt  = 0;
+
+        if ( stru_skyfrqOffst.u8_softEnable == 0 )
+        {
+            BB_WriteRegMask(PAGE1, 0x1a, 0x40, 0x40);
+            stru_skyfrqOffst.u8_softEnable = 1;
+        }
+    }
+}
 void sky_handle_all_spi_cmds(void)
 {
     sky_handle_RC_cmd();
@@ -991,6 +1173,7 @@ void sky_handle_all_spi_cmds(void)
     sky_handle_rc_rcv_grd_mask_code_cmd();
 
     sky_handle_rc_channel_sync_cmd();
+    //sky_handle_frqOffset();
 }
 
 static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
@@ -1007,9 +1190,9 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
         {
             case FREQ_BAND_SELECT:
             {
-                context.freq_band = (ENUM_RF_BAND)(value);
-                BB_set_RF_Band(BB_SKY_MODE, context.freq_band);
-                dlog_info("context.freq_band %d \r\n", context.freq_band);
+                context.e_curBand = (ENUM_RF_BAND)(value);
+                BB_set_RF_Band(BB_SKY_MODE, context.e_curBand);
+                dlog_info("context.e_curBand %d \r\n", context.e_curBand);
                 break;
             }
             case FREQ_CHANNEL_MODE: //auto manual
@@ -1019,7 +1202,7 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
             }
             case FREQ_CHANNEL_SELECT:
             {
-                sky_set_it_freq(context.freq_band, (uint8_t)value);
+                sky_set_it_freq(context.e_curBand, (uint8_t)value);
                 break;
             }
 
@@ -1032,7 +1215,7 @@ static void sky_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
             case RC_CHANNEL_SELECT:
             {
                 sky_rc_channel = (uint8_t)value;
-                BB_set_Rcfrq(context.freq_band, sky_rc_channel);
+                BB_set_Rcfrq(context.e_curBand, sky_rc_channel);
                 break;
             }
 
@@ -1379,7 +1562,7 @@ static void sky_rc_frq_status_statistics(void)
     uint8_t i = 0;
     uint64_t u64_mask;
     uint64_t u64_preMask = s_st_rcFrqMask.u64_mask;
-    int8_t max_ch_size = (context.freq_band == RF_2G) ? (MAX_2G_RC_FRQ_SIZE):(MAX_5G_RC_FRQ_SIZE);
+    int8_t max_ch_size = (context.e_curBand == RF_2G) ? (MAX_2G_RC_FRQ_SIZE):(MAX_5G_RC_FRQ_SIZE);
     
     if(context.dev_state == ID_MATCH_LOCK)
     {
@@ -1453,9 +1636,7 @@ static void sky_rc_frq_status_statistics(void)
             };
             
 #if 0
-            BB_UARTComSendMsg( BB_UART_COM_SESSION_0, 
-                       (uint8_t *)&stru_skycStatus, 
-                       sizeof(STRU_SysEventSkyStatus));
+            BB_UARTComSendMsg( BB_UART_COM_SESSION_0, (uint8_t *)&stru_skycStatus, sizeof(STRU_SysEventSkyStatus));
 #endif
             u16_txCnt = 0;
         }

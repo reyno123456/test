@@ -6,7 +6,6 @@
 */
 const PARAM default_sys_param =
 {
-    .freq_band         = RF_2G,
     .it_skip_freq_mode = AUTO,
     .rc_skip_freq_mode = AUTO,
     .qam_skip_mode     = AUTO,

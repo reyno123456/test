@@ -137,8 +137,6 @@ void BB_use_param_setting(PARAM *user_setting)
             (uint8_t *)((void *)(user_setting->qam_change_threshold)),
             sizeof(context.qam_threshold_range));
 
-    context.freq_band = user_setting->freq_band;
-
     context.it_skip_freq_mode = user_setting->it_skip_freq_mode;
     context.rc_skip_freq_mode = user_setting->rc_skip_freq_mode;
     context.qam_skip_mode = user_setting->qam_skip_mode;
@@ -175,6 +173,7 @@ void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
     Sweep_5G_10m_frq = (STRU_FRQ_CHANNEL *)(cfg_addr->IT_5G_frq);
     Sweep_5G_20m_frq = (STRU_FRQ_CHANNEL *)(cfg_addr->IT_5G_20M_sweep_frq);
     It_5G_frq = (STRU_FRQ_CHANNEL *)(cfg_addr->IT_5G_frq);
+    context.e_bandsupport = boardCfg->e_bandsupport;
 
     BB_GetNv();
 
@@ -196,7 +195,16 @@ void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
     BB_after_RF_cali(en_mode, boardCfg);
     RF8003s_afterCali(en_mode, boardCfg);
 
-    BB_set_RF_Band(en_mode, context.freq_band);
+    //choose the start band
+    if ( context.e_bandsupport == RF_2G_5G || context.e_bandsupport == RF_2G )
+    {
+        context.e_curBand = RF_2G;
+    }
+    else
+    {
+        context.e_curBand = RF_5G;
+    }
+    BB_set_RF_Band(en_mode, context.e_curBand);
     BB_set_RF_bandwitdh(en_mode, context.CH_bandwidth);
     BB_softReset(en_mode);
 
@@ -441,7 +449,7 @@ void BB_set_RF_Band(ENUM_BB_MODE sky_ground, ENUM_RF_BAND rf_band)
         BB_WriteRegMask(PAGE2, 0x20, 0x04, 0x04);
 
         //softreset
-        BB_softReset(sky_ground);
+        //BB_softReset(sky_ground);
 
     }
 
@@ -700,13 +708,18 @@ void BB_RF_2G_5G_switch(ENUM_RF_BAND rf_band)
 
     BB_WriteReg(PAGE0, 0x6d, regvalue);
     BB_WriteRegMask(PAGE0, 0x60, 0x02, 0x02);   //fix calibration result.
-
+#if 0
     data = BB_ReadReg(PAGE0, 0x00);
     data |= 0x01;
     BB_WriteReg(PAGE0, 0x00, data);
     
     data &= 0xfe;
-    BB_WriteReg(PAGE0, 0x00, data);     
+    BB_WriteReg(PAGE0, 0x00, data);  
+#endif
+
+    BB_WriteReg(PAGE2, RF_BAND_CHANGE_0, rf_band);
+    BB_WriteReg(PAGE2, RF_BAND_CHANGE_1, rf_band);
+    
 }
 
 
@@ -1324,7 +1337,7 @@ int BB_GetDevInfo(void)
     pst_devInfo->paramLen = sizeof(STRU_DEVICE_INFO);
 
     pst_devInfo->skyGround = context.en_bbmode;
-    pst_devInfo->band = context.freq_band;
+    pst_devInfo->band = context.e_curBand;
     
     //pst_devInfo->bandWidth = context.CH_bandwidth;
     pst_devInfo->itHopping = context.it_skip_freq_mode;

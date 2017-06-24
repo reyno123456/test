@@ -277,11 +277,9 @@ QAMUPDONW snr_static_for_qam_change(uint16_t threshod_left_section, uint16_t thr
     }
     else if( aver < threshod_left_section )
     {
-        //uint8_t cnt = 0;
         work_ch_snr.u16_downCount ++;
 
         work_ch_snr.snr_cmpResult[ work_ch_snr.u16_cmpCnt ] = QAMDOWN;
-        //cnt = count_num_inbuf( work_ch_snr.snr_cmpResult, SNR_CMP_CNT );     //QAMDOWN times in 100times statistics
 
         if (  ( context.qam_ldpc == 1 && work_ch_snr.u16_downCount >= MCS1_DOWN_CONT_SNR ) || 
               /*( context.qam_ldpc == 1 && cnt >= MCS1_DOWN_SNR ) ||*/
@@ -595,12 +593,12 @@ void grd_start_SnrHarqCnt( void )
     stru_ldpcErr.u8_idx = 0;   
 }
 
+
 void grd_judge_qam_mode(void)
 {
     QAMUPDONW snr_qamupdown  = QAMKEEP;
     QAMUPDONW harq_qamupdown = QAMKEEP;
     QAMUPDONW ldpc_qamupdown = QAMKEEP;
-    static uint32_t tmpCnt = 1;
     uint8_t thresh = ((BW_20M == (context.CH_bandwidth)) ? (QAM_CHANGE_THRESHOLD_COUNT - 2) : (QAM_CHANGE_THRESHOLD_COUNT - 1));
     
 
@@ -625,19 +623,19 @@ void grd_judge_qam_mode(void)
         return;
     }
 
-    if( (snr_qamupdown == QAMUP ) && ( context.qam_ldpc < thresh) && ( ( harq_qamupdown == QAMUP) || (ldpc_qamupdown == QAMUP) ) )
-    {
-        context.qam_ldpc++;
-    }
-    else if ( ( QAMDOWN == snr_qamupdown || QAMDOWN == ldpc_qamupdown )  //SNR or LDPC error 
-               && context.qam_ldpc > context.u8_bbStartMcs)
-    {
-        context.qam_ldpc--;
-    }
-    else
-    {
-        return;
-    }
+        if( (snr_qamupdown == QAMUP ) && ( context.qam_ldpc < thresh) && ( ( harq_qamupdown == QAMUP) || (ldpc_qamupdown == QAMUP) ) )
+        {
+            context.qam_ldpc++;
+        }
+        else if ( ( QAMDOWN == snr_qamupdown || QAMDOWN == ldpc_qamupdown )  //SNR or LDPC error 
+                   && context.qam_ldpc > context.u8_bbStartMcs)
+        {
+            context.qam_ldpc--;
+        }
+        else
+        {
+            return;
+        }
     
     grd_set_txmsg_mcs_change(context.CH_bandwidth, context.qam_ldpc);
     grd_start_SnrHarqCnt( );

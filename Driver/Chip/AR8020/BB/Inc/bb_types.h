@@ -28,8 +28,9 @@ typedef enum
 
 typedef enum _ENUM_RF_BAND
 {
-    RF_2G       = 0x00,
-    RF_5G       = 0x01,
+    RF_2G           = 0x01,     //support only 2G 
+    RF_5G           = 0x02,     //support only 5G 
+    RF_2G_5G        = (RF_2G | RF_5G)
 }ENUM_RF_BAND;
 
 
