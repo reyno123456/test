@@ -134,7 +134,7 @@ void BB_grd_notify_rc_skip_freq(uint32_t u32_rcfrq);
 
 void BB_grd_notify_it_skip_freq_1(void);
 
-uint8_t BB_get_bitrateByMcs(uint8_t u8_mcs);
+uint8_t BB_get_bitrateByMcs(ENUM_CH_BW bw, uint8_t u8_mcs);
 
 int BB_InsertCmd(STRU_WIRELESS_CONFIG_CHANGE *p);
 #endif

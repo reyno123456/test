@@ -90,7 +90,8 @@ STRU_BoardCfg stru_boardCfg =
     .u8_rf2GrdRegsCntAfterCali   = sizeof(ek2T4R_rf2_grdregs_afterCali) / sizeof(STRU_RF_REG),
     .pstru_rf2GrdRegsAfterCali   = ek2T4R_rf2_grdregs_afterCali,
 
-     .u8_bbStartMcs               = 0,
+    .u8_bbStartMcs10M               = 0,
+    .u8_bbStartMcs20M               = 0, 
 };
 
 #endif
@@ -168,6 +169,7 @@ STRU_BoardCfg stru_boardCfg =
     .u8_rf2GrdRegsCntAfterCali   = 0,
     .pstru_rf2GrdRegsAfterCali   = NULL,
 
-    .u8_bbStartMcs               = 0,    
+    .u8_bbStartMcs10M               = 0,
+    .u8_bbStartMcs20M               = 0,    
 };
 #endif

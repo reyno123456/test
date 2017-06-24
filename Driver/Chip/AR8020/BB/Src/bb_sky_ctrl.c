@@ -89,7 +89,7 @@ void BB_SKY_start(void)
     INTR_NVIC_EnableIRQ(BB_RX_ENABLE_VECTOR_NUM);
 
     context.qam_ldpc = context.u8_bbStartMcs;
-    sky_set_McsByIndex(context.qam_ldpc);
+    sky_set_McsByIndex(context.CH_bandwidth, context.qam_ldpc);
 
     BB_UARTComInit( NULL ); 
 
@@ -155,7 +155,7 @@ void sky_notify_encoder_brc(uint8_t u8_ch, uint8_t br)
     dlog_info("ch%d brc =%d \n", u8_ch, br);        
 }
 
-void sky_set_McsByIndex(uint8_t idx)
+void sky_set_McsByIndex(ENUM_CH_BW bw, uint8_t idx)
 {
     uint8_t mcs_idx_reg0x0f_map[] = 
     {
@@ -167,7 +167,7 @@ void sky_set_McsByIndex(uint8_t idx)
         0x2f
     };
     
-    uint8_t map_idx_to_mode[] = 
+    uint8_t map_idx_to_mode_10m[] = 
     {
         ((MOD_BPSK<<6)  | (BW_10M <<3)  | LDPC_1_2), //
         ((MOD_BPSK<<6)  | (BW_10M <<3)  | LDPC_1_2),
@@ -179,16 +179,31 @@ void sky_set_McsByIndex(uint8_t idx)
         ((MOD_64QAM<<6) | (BW_10M <<3)  | LDPC_2_3),
     };
 
-    //dlog_info("MCS Idx=>0x%x 0x%x", map_idx_to_mode[idx], BB_get_bitrateByMcs(idx));
+    uint8_t map_idx_to_mode_20m[] = 
+    {
+        ((MOD_BPSK<<6)  | (BW_20M <<3)  | LDPC_1_2), //
+        ((MOD_BPSK<<6)  | (BW_20M <<3)  | LDPC_1_2),
+        ((MOD_4QAM<<6)  | (BW_20M <<3)  | LDPC_1_2),
+        ((MOD_16QAM<<6) | (BW_20M <<3)  | LDPC_1_2),
+        ((MOD_16QAM<<6) | (BW_20M <<3)  | LDPC_2_3),
+    };
+
 
     BB_WriteReg( PAGE2, 0x0f, mcs_idx_reg0x0f_map[idx] );
-    BB_WriteReg( PAGE2, TX_2, map_idx_to_mode[idx]);
+    if (BW_10M == bw)
+    {
+        BB_WriteReg( PAGE2, TX_2, map_idx_to_mode_10m[idx]);
+    }
+    else
+    {
+        BB_WriteReg( PAGE2, TX_2, map_idx_to_mode_20m[idx]);
+    }
     
-	//if ( context.brc_mode == AUTO )
-	{
-        sky_notify_encoder_brc(0, BB_get_bitrateByMcs(idx) );
-        sky_notify_encoder_brc(1, BB_get_bitrateByMcs(idx) );
-	}
+    //if ( context.brc_mode == AUTO )
+    {
+        sky_notify_encoder_brc(0, BB_get_bitrateByMcs(bw, idx) );
+        sky_notify_encoder_brc(1, BB_get_bitrateByMcs(bw, idx) );
+    }
 }
 
 
@@ -509,7 +524,7 @@ void sky_physical_link_process(void)
             if ( context.brc_mode == AUTO )
             {
                 context.qam_ldpc = context.u8_bbStartMcs;
-                sky_set_McsByIndex( context.qam_ldpc );
+                sky_set_McsByIndex(context.CH_bandwidth, context.qam_ldpc );
             }
             
             context.dev_state = CHECK_ID_MATCH;
@@ -857,7 +872,7 @@ static void sky_handle_brc_mode_cmd(void)
         
         if ( mode == AUTO) //MANUAL - > AUTO
         {
-            sky_set_McsByIndex( context.qam_ldpc );
+            sky_set_McsByIndex( context.CH_bandwidth, context.qam_ldpc );
         }
     }
 }
@@ -913,7 +928,7 @@ static void sky_handle_MCS_cmd(void)
 
     if( data0+1==data1 && context.qam_ldpc != data0)
     {
-        sky_set_McsByIndex(data0);
+        sky_set_McsByIndex(context.CH_bandwidth, data0);
         context.qam_ldpc = data0;
     }
 }

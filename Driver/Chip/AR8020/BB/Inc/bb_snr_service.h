@@ -19,7 +19,7 @@ int grd_check_piecewiseSnrPass(uint8_t u8_flag_start, uint16_t u16_thld);
 
 int grd_check_piecewiseSnrPass(uint8_t u8_flag_start, uint16_t u16_thld);
 
-void grd_set_txmsg_mcs_change(uint8_t index );
+void grd_set_txmsg_mcs_change(ENUM_CH_BW bw, uint8_t index);
 
 void grd_judge_qam_mode(void);
 

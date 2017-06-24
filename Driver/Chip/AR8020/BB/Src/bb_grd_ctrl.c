@@ -44,14 +44,13 @@ STRU_CALC_DIST_DATA s_st_calcDistData =
     .u32_lockCnt = 0
 };
 
-
 void BB_GRD_start(void)
 {
     context.dev_state = INIT_DATA;
     context.qam_ldpc = context.u8_bbStartMcs;
     context.flag_mrs = 0;
 
-    grd_set_txmsg_mcs_change(context.qam_ldpc);
+    grd_set_txmsg_mcs_change(context.CH_bandwidth, context.qam_ldpc);
 
     GPIO_SetMode(RED_LED_GPIO, GPIO_MODE_2);
     GPIO_SetPinDirect(RED_LED_GPIO, GPIO_DATA_DIRECT_OUTPUT);
@@ -69,8 +68,8 @@ void BB_GRD_start(void)
     BB_set_Rcfrq(context.freq_band, 0);
 
     //do not notify sky until sweep end and get the best channel from sweep result
-    context.cur_IT_ch = 0;
-    BB_set_ITfrq(context.freq_band, 0);
+    context.cur_IT_ch = 1;
+    BB_set_ITfrq(context.freq_band, 1);
     BB_grd_notify_it_skip_freq(context.freq_band, 1); 
 
     BB_SweepStart(context.freq_band, context.CH_bandwidth);
@@ -148,19 +147,6 @@ void reset_it_span_cnt(void)
 
 void grd_fec_judge(void)
 {
-    if( context.flag_mrs == 1 )
-    {
-        context.flag_mrs = 2;
-        BB_WriteRegMask(PAGE1, 0x83, 0x01, 0x01); 
-        dlog_info("Disable %d\n", context.cycle_count);        
-    }
-    else if( context.flag_mrs == 2 )
-    {
-        context.flag_mrs = 0;
-        BB_WriteRegMask(PAGE1, 0x83, 0x00, 0x01);   
-        dlog_info("Enable %d\n", context.cycle_count);        
-    }
-
     if( context.dev_state == INIT_DATA )
     {
         context.locked = grd_is_bb_fec_lock();
@@ -225,7 +211,7 @@ void grd_fec_judge(void)
                     context.ldpc    = LDPC_1_2;
 
                     context.qam_ldpc = context.u8_bbStartMcs;
-                    grd_set_txmsg_mcs_change(context.qam_ldpc);
+                    grd_set_txmsg_mcs_change(context.CH_bandwidth, context.qam_ldpc);
                 }
             }
         }
@@ -275,10 +261,6 @@ void grd_fec_judge(void)
         context.dev_state = DELAY_14MS;
     }
 }
-
-
-
-
 
 
 const uint16_t snr_skip_threshold[] = { 0x23,    //bpsk 1/2
@@ -333,9 +315,8 @@ int grd_freq_skip_pre_judge(void)
     }
 
     optch = get_opt_channel();
-    int16_t cmp = compare_chNoisePower(context.freq_band, optch, context.cur_IT_ch, &aver, &fluct, 0);
-    //dlog_info("cmp:(%d:%d)result:(%d %d)", context.cur_IT_ch, optch, aver, fluct);
-    if ( ( aver >= 20 ) || ( aver >= 10 && fluct > 0 )  )
+    
+    if (BB_CompareCh1Ch2ByPowerAver(context.freq_band, optch, context.cur_IT_ch, CMP_POWER_AVR_LEVEL))
     {
         if( 0 == flag ) //already Fail
         {
@@ -348,7 +329,7 @@ int grd_freq_skip_pre_judge(void)
             dlog_info("Set Ch0:%d %d %d %x\n", 
                        context.cur_IT_ch, context.cycle_count, ((BB_ReadReg(PAGE2, FEC_5_RD)& 0xF0) >> 4), grd_get_it_snr());
             context.dev_state = DELAY_14MS;
-			return 0;
+            return 0;
         }
         else
         {
@@ -475,6 +456,19 @@ void wimax_vsoc_tx_isr(uint32_t u32_vectorNum)
 void Grd_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
 {
     Reg_Read32(BASE_ADDR_TIMER2 + TMRNEOI_6);
+
+    if( context.flag_mrs == 1 )
+    {
+        context.flag_mrs = 2;
+        BB_WriteRegMask(PAGE1, 0x83, 0x01, 0x01); 
+        dlog_info("Disable %d\n", context.cycle_count);        
+    }
+    else if( context.flag_mrs == 2 )
+    {
+        context.flag_mrs = 0;
+        BB_WriteRegMask(PAGE1, 0x83, 0x00, 0x01);   
+        dlog_info("Enable %d\n", context.cycle_count);        
+    }
 
     //Enable BB_TX intr
     INTR_NVIC_ClearPendingIRQ(BB_TX_ENABLE_VECTOR_NUM); //clear pending after TX Enable is LOW. MUST
@@ -835,7 +829,7 @@ static void grd_handle_MCS_mode_cmd(ENUM_RUN_MODE mode)
 	        context.qam_ldpc = 5;
 	    }
     
-        grd_set_txmsg_mcs_change( context.qam_ldpc );
+        grd_set_txmsg_mcs_change(context.CH_bandwidth, context.qam_ldpc);        
     }
 }
 
@@ -994,8 +988,8 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 //For osd information
                 if ( context.brc_mode == MANUAL)
                 {
-                    context.brc_bps[0] = BB_get_bitrateByMcs(context.qam_ldpc);
-                    context.brc_bps[1] = BB_get_bitrateByMcs(context.qam_ldpc);
+                    context.brc_bps[0] = BB_get_bitrateByMcs(context.CH_bandwidth, context.qam_ldpc);
+                    context.brc_bps[1] = BB_get_bitrateByMcs(context.CH_bandwidth, context.qam_ldpc);                
                 }
             }
     
@@ -1003,7 +997,8 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
 
             case MCS_MODULATION_SELECT:
             {
-                grd_set_txmsg_mcs_change(value);
+                context.qam_ldpc = value;
+                grd_set_txmsg_mcs_change(context.CH_bandwidth, value);
             }
             break;
 
@@ -1190,8 +1185,8 @@ static void BB_grd_GatherOSDInfo(void)
 
     if(context.brc_mode == AUTO)
     {
-        osdptr->encoder_bitrate[0] = BB_get_bitrateByMcs(context.qam_ldpc);
-        osdptr->encoder_bitrate[1] = BB_get_bitrateByMcs(context.qam_ldpc);
+        osdptr->encoder_bitrate[0] = BB_get_bitrateByMcs(context.CH_bandwidth, context.qam_ldpc);
+        osdptr->encoder_bitrate[1] = BB_get_bitrateByMcs(context.CH_bandwidth, context.qam_ldpc);
     }
     else
     {

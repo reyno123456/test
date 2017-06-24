@@ -219,7 +219,7 @@ uint8_t BB_set_Rcfrq(ENUM_RF_BAND band, uint8_t ch);
 
 uint8_t BB_set_ITfrq(ENUM_RF_BAND band, uint8_t ch);
 
-uint8_t BB_set_sweepfrq(ENUM_RF_BAND band, uint8_t ch);
+uint8_t BB_set_sweepfrq(ENUM_RF_BAND band, ENUM_CH_BW e_bw, uint8_t ch);
 
 uint8_t BB_ReadReg(ENUM_REG_PAGES page, uint8_t addr);
 
@@ -251,7 +251,7 @@ void BB_set_LDPC(ENUM_BB_LDPC ldpc);
 
 uint8_t BB_write_ItRegs(uint32_t u32_it);
 
-void sky_set_McsByIndex(uint8_t idx);
+void sky_set_McsByIndex(ENUM_CH_BW bw, uint8_t idx);
 
 int BB_WriteRegMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t data, uint8_t mask);
 

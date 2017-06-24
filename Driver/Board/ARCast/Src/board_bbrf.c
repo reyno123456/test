@@ -99,6 +99,7 @@ STRU_BoardCfg stru_boardCfg =
     .u8_rf2GrdRegsCntAfterCali   = 0,
     .pstru_rf2GrdRegsAfterCali   = NULL,
 
-    .u8_bbStartMcs               = 3,
+    .u8_bbStartMcs10M               = 3,
+    .u8_bbStartMcs20M               = 2,
 };
 

@@ -25,11 +25,14 @@ volatile CONTEXT context;
 static volatile ENUM_REG_PAGES en_curPage;
 
 
-STRU_FRQ_CHANNEL *Rc_frq    = NULL;
-STRU_FRQ_CHANNEL *Sweep_frq = NULL;
-STRU_FRQ_CHANNEL *It_frq    = NULL;
+STRU_FRQ_CHANNEL *Rc_2G_frq    = NULL;
+STRU_FRQ_CHANNEL *Sweep_2G_10m_frq = NULL;
+STRU_FRQ_CHANNEL *Sweep_2G_20m_frq = NULL;
+STRU_FRQ_CHANNEL *It_2G_frq    = NULL;
 
 STRU_FRQ_CHANNEL *Rc_5G_frq = NULL;
+STRU_FRQ_CHANNEL *Sweep_5G_10m_frq = NULL;
+STRU_FRQ_CHANNEL *Sweep_5G_20m_frq = NULL;
 STRU_FRQ_CHANNEL *It_5G_frq = NULL;
 
 
@@ -163,11 +166,14 @@ void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
     RF1_8003s_regs = &(cfg_addr->rf1_configure[0]);
     RF2_8003s_regs = &(cfg_addr->rf2_configure[0]);
     
-    Rc_frq    = (STRU_FRQ_CHANNEL *)(cfg_addr->RC_2_4G_frq);
-    Sweep_frq = (STRU_FRQ_CHANNEL *)(cfg_addr->IT_2_4G_frq);
-    It_frq    = (STRU_FRQ_CHANNEL *)(cfg_addr->IT_2_4G_frq);
+    Rc_2G_frq    = (STRU_FRQ_CHANNEL *)(cfg_addr->RC_2_4G_frq);
+    Sweep_2G_10m_frq = (STRU_FRQ_CHANNEL *)(cfg_addr->IT_2_4G_frq);
+    Sweep_2G_20m_frq = (STRU_FRQ_CHANNEL *)(cfg_addr->IT_2_4G_20M_sweep_frq);
+    It_2G_frq    = (STRU_FRQ_CHANNEL *)(cfg_addr->IT_2_4G_frq);
 
     Rc_5G_frq = (STRU_FRQ_CHANNEL *)(cfg_addr->RC_5G_frq);
+    Sweep_5G_10m_frq = (STRU_FRQ_CHANNEL *)(cfg_addr->IT_5G_frq);
+    Sweep_5G_20m_frq = (STRU_FRQ_CHANNEL *)(cfg_addr->IT_5G_20M_sweep_frq);
     It_5G_frq = (STRU_FRQ_CHANNEL *)(cfg_addr->IT_5G_frq);
 
     BB_GetNv();
@@ -175,7 +181,7 @@ void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
     BB_uart10_spi_sel(0x00000003);
     BB_SPI_init();
 
-    context.u8_bbStartMcs = boardCfg->u8_bbStartMcs;
+    context.u8_bbStartMcs = ((context.CH_bandwidth == BW_20M) ? (boardCfg->u8_bbStartMcs20M) : (boardCfg->u8_bbStartMcs10M));
 
     BB_regs_init(en_mode, boardCfg);
     RF8003s_init(RF1_8003s_regs, RF2_8003s_regs, boardCfg, en_mode);
@@ -191,6 +197,7 @@ void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
     RF8003s_afterCali(en_mode, boardCfg);
 
     BB_set_RF_Band(en_mode, context.freq_band);
+    BB_set_RF_bandwitdh(en_mode, context.CH_bandwidth);
     BB_softReset(en_mode);
 
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USER_CFG_CHANGE, BB_HandleEventsCallback);
@@ -245,9 +252,18 @@ int BB_ReadRegMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t mask)
 }
 
 
-uint8_t BB_set_sweepfrq(ENUM_RF_BAND band, uint8_t ch)
+uint8_t BB_set_sweepfrq(ENUM_RF_BAND band, ENUM_CH_BW e_bw, uint8_t ch)
 {
-	STRU_FRQ_CHANNEL *ch_ptr = ((band == RF_2G)?Sweep_frq:It_5G_frq);
+    STRU_FRQ_CHANNEL *ch_ptr;
+
+    if (BW_10M == e_bw)
+    {
+        ch_ptr = ((band == RF_2G)?Sweep_2G_10m_frq:Sweep_5G_10m_frq);
+    }
+    else
+    {
+        ch_ptr = ((band == RF_2G)?Sweep_2G_20m_frq:Sweep_5G_20m_frq);
+    }
 
     //set sweep frequency
     if ( band == RF_2G )
@@ -260,16 +276,16 @@ uint8_t BB_set_sweepfrq(ENUM_RF_BAND band, uint8_t ch)
         BB_WriteRegMask(PAGE2, 0x20, 0x04, 0x04);   
     }
     
-	BB_WriteReg(PAGE2, SWEEP_FREQ_0, ch_ptr[ch].frq1);
-	BB_WriteReg(PAGE2, SWEEP_FREQ_1, ch_ptr[ch].frq2);
-	BB_WriteReg(PAGE2, SWEEP_FREQ_2, ch_ptr[ch].frq3);
-	BB_WriteReg(PAGE2, SWEEP_FREQ_3, ch_ptr[ch].frq4);
+    BB_WriteReg(PAGE2, SWEEP_FREQ_0, ch_ptr[ch].frq1);
+    BB_WriteReg(PAGE2, SWEEP_FREQ_1, ch_ptr[ch].frq2);
+    BB_WriteReg(PAGE2, SWEEP_FREQ_2, ch_ptr[ch].frq3);
+    BB_WriteReg(PAGE2, SWEEP_FREQ_3, ch_ptr[ch].frq4);
 }
 
 
 void BB_grd_notify_it_skip_freq(ENUM_RF_BAND band, uint8_t u8_ch)
 {
-	STRU_FRQ_CHANNEL *pstru_frq = ((band == RF_2G)?It_frq:It_5G_frq);
+    STRU_FRQ_CHANNEL *pstru_frq = ((band == RF_2G)?It_2G_frq:It_5G_frq);
 
     BB_WriteReg(PAGE2, IT_FRQ_0, pstru_frq[u8_ch].frq1);
     BB_WriteReg(PAGE2, IT_FRQ_1, pstru_frq[u8_ch].frq2);
@@ -278,7 +294,7 @@ void BB_grd_notify_it_skip_freq(ENUM_RF_BAND band, uint8_t u8_ch)
 }
 
 
-const uint8_t mcs_idx_bitrate_map[] = 
+const uint8_t mcs_idx_bitrate_map_10m[] = 
 {
     1,      //0.6Mbps BPSK 1/2
     2,      //1.2     BPSK 1/2
@@ -288,10 +304,25 @@ const uint8_t mcs_idx_bitrate_map[] =
     13,     //10      64QAM 2/3
 };
 
-
-uint8_t BB_get_bitrateByMcs(uint8_t u8_mcs)
+const uint8_t mcs_idx_bitrate_map_20m[] = 
 {
-    return mcs_idx_bitrate_map[u8_mcs];
+    2,      //1.2Mbps BPSK 1/2
+    3,      //2.4     BPSK 1/2
+    8,      //5.0     QPSK 1/2
+    11,      //7.5     16QAM 1/2
+    13,     //10     16QAM 2/3
+};
+
+uint8_t BB_get_bitrateByMcs(ENUM_CH_BW bw, uint8_t u8_mcs)
+{
+    if (BW_10M == bw)
+    {
+        return mcs_idx_bitrate_map_10m[u8_mcs];
+    }
+    else
+    {
+        return mcs_idx_bitrate_map_20m[u8_mcs];
+    }
 }
 
 void BB_grd_notify_it_skip_freq_1(void)
@@ -320,7 +351,7 @@ uint8_t BB_write_ItRegs(uint32_t u32_it)
 
 uint8_t BB_set_ITfrq(ENUM_RF_BAND band, uint8_t ch)
 {
-	STRU_FRQ_CHANNEL *it_ch_ptr = ((band == RF_2G)?It_frq:It_5G_frq);
+	STRU_FRQ_CHANNEL *it_ch_ptr = ((band == RF_2G)?It_2G_frq:It_5G_frq);
 
     context.stru_itRegs.frq1 = it_ch_ptr[ch].frq1;
     context.stru_itRegs.frq2 = it_ch_ptr[ch].frq2;
@@ -349,7 +380,7 @@ uint8_t BB_write_RcRegs(uint32_t u32_rc)
 
 uint8_t BB_set_Rcfrq(ENUM_RF_BAND band, uint8_t ch)
 {
-	STRU_FRQ_CHANNEL *pu8_rcRegs = ((band == RF_2G)?Rc_frq:Rc_5G_frq);
+	STRU_FRQ_CHANNEL *pu8_rcRegs = ((band == RF_2G)?Rc_2G_frq:Rc_5G_frq);
 
     context.stru_rcRegs.frq1 = pu8_rcRegs[ch].frq1;
     context.stru_rcRegs.frq2 = pu8_rcRegs[ch].frq2;
@@ -427,6 +458,10 @@ void BB_set_RF_bandwitdh(ENUM_BB_MODE sky_ground, ENUM_CH_BW rf_bw)
     if (sky_ground == BB_SKY_MODE)
     {
         BB_WriteRegMask(PAGE2, TX_2, (rf_bw << 3), 0x38); /*bit[5:3]*/
+        if (BW_20M == (context.CH_bandwidth))
+        {
+            BB_WriteRegMask(PAGE2, 0x05, 0x80, 0xC0);
+        }
     }
     else
     {
@@ -934,6 +969,13 @@ int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
             break;
         }
         
+        case 24:
+        {
+            cmd.u8_configClass  = WIRELESS_FREQ_CHANGE;
+            cmd.u8_configItem   = IT_CHANNEL_FREQ;
+            cmd.u32_configValue  = (param0);
+            break;
+        }
         default:
         {
             ret = 0;

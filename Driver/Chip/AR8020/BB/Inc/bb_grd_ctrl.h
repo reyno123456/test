@@ -62,7 +62,7 @@ static void grd_handle_all_cmds(void);
 
 static void BB_grd_GatherOSDInfo(void);
 
-void grd_set_txmsg_mcs_change(uint8_t index );
+void grd_set_txmsg_mcs_change(ENUM_CH_BW bw, uint8_t index);
 
 static void grd_handle_RC_mode_cmd(ENUM_RUN_MODE mode);
 

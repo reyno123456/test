@@ -59,7 +59,7 @@ int grd_check_piecewiseSnrPass(uint8_t u8_flag_start, uint16_t u16_thld)
 
     uint8_t loc = BB_ReadReg(PAGE2, 0xc4) & 0x0F;
     uint8_t startaddr = (0xE0 + stru_snr.u8_idx * 2);
-	uint8_t i = stru_snr.u8_idx;
+    uint8_t i = stru_snr.u8_idx;
 
     if(loc == WORK_FREQ_SNR_DAQ_CNT -2) //fix: the last one snr can't get at this time, get the snr in past 14ms
     {
@@ -277,11 +277,11 @@ QAMUPDONW snr_static_for_qam_change(uint16_t threshod_left_section, uint16_t thr
     }
     else if( aver < threshod_left_section )
     {
-        uint8_t cnt = 0;
+        //uint8_t cnt = 0;
         work_ch_snr.u16_downCount ++;
 
         work_ch_snr.snr_cmpResult[ work_ch_snr.u16_cmpCnt ] = QAMDOWN;
-        cnt = count_num_inbuf( work_ch_snr.snr_cmpResult, SNR_CMP_CNT );     //QAMDOWN times in 100times statistics
+        //cnt = count_num_inbuf( work_ch_snr.snr_cmpResult, SNR_CMP_CNT );     //QAMDOWN times in 100times statistics
 
         if (  ( context.qam_ldpc == 1 && work_ch_snr.u16_downCount >= MCS1_DOWN_CONT_SNR ) || 
               /*( context.qam_ldpc == 1 && cnt >= MCS1_DOWN_SNR ) ||*/
@@ -365,7 +365,7 @@ uint8_t grd_get_harqCnt( void )
 }
 
 
-static uint8_t mcs_registers[][12] = 
+static uint8_t mcs_10m_registers[][12] = 
 {
     {0xff, 0xff, 0xff, 0x4c, 0x71, 0x60, 0xff, 0xff, 0xff, 0x29, 0x00, 0x20},  //For mcs 0(BP 1/2),1(BP 1/2),2(QP 1/2), 3(16QAM 1/2)
     {0xff, 0xf5, 0x00, 0x38, 0x00, 0xC0, 0xff, 0xf1, 0x20, 0x0C, 0x00, 0x20},  //For (BP 2/3), (QP 2/3)
@@ -373,59 +373,102 @@ static uint8_t mcs_registers[][12] =
     {0x50, 0x02, 0x00, 0x0c, 0x00, 0x00, 0x12, 0x00, 0x60, 0x02, 0x00, 0x00},  //For mcs 5(64qam, 2/3)
 };
 
+static uint8_t mcs_20m_registers[][12] = 
+{
+    {0xff, 0xf5, 0x00, 0x22, 0x00, 0x30, 0xff, 0xf2, 0x20, 0x0C, 0x00, 0x10},  //For (BP 1/2),(BP 2/3), (QP 1/2),(QP 2/3),(16QAM 1/2),(64qam, 1/2)
+    {0xff, 0xf5, 0x00, 0x18, 0x00, 0x00, 0xff, 0xf1, 0x20, 0x05, 0x00, 0x00},  //For (16QAM 2/3),(64qam 2/3)
+};
 
 void grd_set_mcs_registers(ENUM_BB_QAM e_qam, ENUM_BB_LDPC e_ldpc, ENUM_CH_BW e_bw)
 {
     uint8_t addr = 0x66;
     uint8_t *regdata;
     uint8_t cnt;
+    uint8_t size;
 
-    if ( e_qam == MOD_64QAM && e_ldpc == LDPC_2_3)
+    if (BW_10M == e_bw)
     {
-        regdata = mcs_registers[3];
+        if ( e_qam == MOD_64QAM && e_ldpc == LDPC_2_3)
+        {
+            regdata = mcs_10m_registers[3];
+        }
+        else if ( (e_qam == MOD_64QAM && e_ldpc == LDPC_1_2)  || (e_qam == MOD_16QAM && e_ldpc == LDPC_2_3))
+        {
+            regdata = mcs_10m_registers[2];
+        }
+        else if ( (e_qam == MOD_BPSK && e_ldpc == LDPC_2_3)  || (e_qam == MOD_4QAM && e_ldpc == LDPC_2_3))
+        {
+            regdata = mcs_10m_registers[1];
+        }
+        else
+        {
+            regdata = mcs_10m_registers[0];
+        }
+
+        size = sizeof(mcs_10m_registers[0]);
     }
-    else if ( (e_qam == MOD_64QAM && e_ldpc == LDPC_1_2)  || (e_qam == MOD_16QAM && e_ldpc == LDPC_2_3))
+    else // 20M
     {
-        regdata = mcs_registers[2];
-    }
-    else if ( (e_qam == MOD_BPSK && e_ldpc == LDPC_2_3)  || (e_qam == MOD_4QAM && e_ldpc == LDPC_2_3))
-    {
-        regdata = mcs_registers[1];
-    }
-    else
-    {
-        regdata = mcs_registers[0];
+        if ((e_ldpc == LDPC_2_3) && ((e_qam == MOD_16QAM) || (e_qam == MOD_64QAM)))
+        {
+            regdata = mcs_20m_registers[1];
+        }
+        else
+        {
+            regdata = mcs_20m_registers[0];
+        }
+
+        size = sizeof(mcs_20m_registers[0]);
     }
 
-    for (cnt = 0; cnt < sizeof(mcs_registers[0]); cnt++)
+    for (cnt = 0; cnt < size; cnt++)
     {
         BB_WriteReg(PAGE1, (addr + cnt), regdata[cnt]);
     } 
 }
 
-void grd_set_txmsg_mcs_change(uint8_t index)
+void grd_set_txmsg_mcs_change(ENUM_CH_BW bw, uint8_t index)
 {
     uint8_t addr = 0x66;
     uint8_t *regdata;
     uint8_t cnt;
+    uint8_t size;
 
     BB_WriteReg(PAGE2, MCS_INDEX_MODE_0, index);
     BB_WriteReg(PAGE2, MCS_INDEX_MODE_1, index +1);
-    
-    if ( index <= 3 )
+
+    if (BW_10M == bw)
     {
-        regdata = mcs_registers[0];
+        if ( index <= 3 )
+        {
+            regdata = mcs_10m_registers[0];
+        }
+        else if( index == 4 )
+        {
+            regdata = mcs_10m_registers[2];
+        }    
+        else if( index == 5 )
+        {
+            regdata = mcs_10m_registers[3];
+        }
+        
+        size = sizeof(mcs_10m_registers[0]);
     }
-    else if( index == 4 )
+    else // 20M
     {
-        regdata = mcs_registers[2];
-    }    
-    else if( index == 5 )
-    {
-        regdata = mcs_registers[3];
+        if( index == 4 )
+        {
+            regdata = mcs_20m_registers[1];
+        }    
+        else
+        {
+            regdata = mcs_20m_registers[0];
+        }
+
+        size = sizeof(mcs_20m_registers[0]);
     }
 
-    for (cnt = 0; cnt < sizeof(mcs_registers[0]); cnt++)
+    for (cnt = 0; cnt < size; cnt++)
     {
         BB_WriteReg(PAGE1, (addr + cnt), regdata[cnt]);
     }
@@ -552,13 +595,14 @@ void grd_start_SnrHarqCnt( void )
     stru_ldpcErr.u8_idx = 0;   
 }
 
-
-
 void grd_judge_qam_mode(void)
 {
     QAMUPDONW snr_qamupdown  = QAMKEEP;
     QAMUPDONW harq_qamupdown = QAMKEEP;
     QAMUPDONW ldpc_qamupdown = QAMKEEP;
+    static uint32_t tmpCnt = 1;
+    uint8_t thresh = ((BW_20M == (context.CH_bandwidth)) ? (QAM_CHANGE_THRESHOLD_COUNT - 2) : (QAM_CHANGE_THRESHOLD_COUNT - 1));
+    
 
     grd_get_snr();
     snr_qamupdown = snr_static_for_qam_change( context.qam_threshold_range[context.qam_ldpc][0], 
@@ -580,8 +624,8 @@ void grd_judge_qam_mode(void)
 
         return;
     }
-    
-    if( (snr_qamupdown == QAMUP ) && ( context.qam_ldpc < QAM_CHANGE_THRESHOLD_COUNT - 1) && ( ( harq_qamupdown == QAMUP) || (ldpc_qamupdown == QAMUP) ) )
+
+    if( (snr_qamupdown == QAMUP ) && ( context.qam_ldpc < thresh) && ( ( harq_qamupdown == QAMUP) || (ldpc_qamupdown == QAMUP) ) )
     {
         context.qam_ldpc++;
     }
@@ -595,6 +639,6 @@ void grd_judge_qam_mode(void)
         return;
     }
     
-    grd_set_txmsg_mcs_change( context.qam_ldpc );
+    grd_set_txmsg_mcs_change(context.CH_bandwidth, context.qam_ldpc);
     grd_start_SnrHarqCnt( );
 }
