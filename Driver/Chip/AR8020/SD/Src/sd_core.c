@@ -20,6 +20,7 @@
 #include "debuglog.h"
 #include "systicks.h"
 
+#define SD_TIME_OUT 60000
 /**
   * @brief  Get SDMMC Power state.
   * @param  SDMMCx: Pointer to SDMMC register base
@@ -66,7 +67,7 @@ EMU_SD_RTN Core_SDMMC_WaiteCmdDone(HOST_REG *SDMMCx)
     get_val = Core_SDMMC_GetRINTSTS(SDMMCx);
     cmd_done = (get_val & SDMMC_RINTSTS_CMD_DONE); 
     // dlog_info("cmd_done?\n");
-    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 1000)
+    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > SD_TIME_OUT)
     {
         dlog_error("time out");
         return SD_DATA_TIMEOUT;
@@ -85,7 +86,7 @@ EMU_SD_RTN Core_SDMMC_WaiteDataOver(HOST_REG *SDMMCx)
   do {
     get_val = Core_SDMMC_GetRINTSTS(SDMMCx);
     data_over = (get_val & SDMMC_RINTSTS_DATA_OVER);
-    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 1000)
+    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > SD_TIME_OUT)
     {
         dlog_error("time out");
         return SD_DATA_TIMEOUT;
@@ -103,7 +104,7 @@ EMU_SD_RTN Core_SDMMC_WaiteCardBusy(HOST_REG *SDMMCx)
   do {
     get_val = Core_SDMMC_GetSTATUS(SDMMCx);
     card_busy = (get_val & SDMMC_STATUS_DATA_BUSY); 
-    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 1000)
+    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > SD_TIME_OUT)
     {
         dlog_error("time out");
         return SD_DATA_TIMEOUT;
@@ -121,7 +122,7 @@ EMU_SD_RTN Core_SDMMC_WaiteCmdStart(HOST_REG *SDMMCx)
   do {
     get_val = Core_SDMMC_GetCMD(SDMMCx); 
     cmd_start = (get_val & SDMMC_CMD_START_CMD);
-    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 1000)
+    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > SD_TIME_OUT)
     {
         dlog_error("time out");
         return SD_DATA_TIMEOUT;
@@ -139,7 +140,7 @@ EMU_SD_RTN Core_SDMMC_WaiteVoltSwitchInt(HOST_REG *SDMMCx)
   do {
     get_val = Core_SDMMC_GetRINTSTS(SDMMCx);
     volt_switch_int = (get_val & SDMMC_RINTSTS_HTO);
-    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 1000)
+    if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > SD_TIME_OUT)
     {
         dlog_error("time out");
         return SD_DATA_TIMEOUT;
