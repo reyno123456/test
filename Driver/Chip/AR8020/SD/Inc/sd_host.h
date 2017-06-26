@@ -390,4 +390,8 @@ SD_TRANSFER_STATUS SD_CardStatus(SD_STATUS *e_cardStatus);
 //EMU_SD_RTN Card_SD_GetCardStatus(SD_HandleTypeDef *hsd, HAL_SD_CardStatusTypedef *pCardStatus);
 void SD_init_deInit_Callback(void* p);
 
+EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA_test(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
+EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA_test(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *dma);
+
+
 #endif

@@ -96,6 +96,10 @@ HAL_RET_T HAL_SD_Deinit();
 
 HAL_RET_T HAL_SD_Fatfs_Init(void);
 
+HAL_RET_T HAL_SD_Write_test(uint32_t u32_dstBlkAddr, uint32_t u32_srcStartAddr, uint32_t u32_sectorNum);
+HAL_RET_T HAL_SD_Read_test(uint32_t u32_dstStartAddr, uint32_t u32_srcBlkAddr, uint32_t u32_sectorNum);
+
+
 #ifdef __cplusplus
 }
 #endif

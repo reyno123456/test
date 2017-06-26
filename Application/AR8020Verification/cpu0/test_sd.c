@@ -674,6 +674,51 @@ void TestRawWR_SDRAM()
 	dlog_info("task finished");	
 }
 
+static void test_multi_read()
+{
+	uint32_t sect;
+	uint32_t u32_start; 
+	uint32_t u32_end; 
+	uint32_t u32_diff; 
+	uint32_t totol_sects;
+
+    uint32_t NUM_OF_BLOCK = 64;
+    uint32_t TIMES = 100;
+    uint32_t START_BLOCK = 1000;
+    
+	uint32_t sect_multi;
+	totol_sects = 30541 * 1024;
+
+	if ( HAL_OK == HAL_SD_Read_test(0x21006000, 
+							START_BLOCK + NUM_OF_BLOCK, 
+							NUM_OF_BLOCK))
+	{
+        dlog_info("done");
+	}						
+}
+
+static void test_multi_write()
+{
+	uint32_t sect;
+	uint32_t u32_start; 
+	uint32_t u32_end; 
+	uint32_t u32_diff; 
+	uint32_t totol_sects;
+
+    uint32_t NUM_OF_BLOCK = 64;
+    uint32_t TIMES = 100;
+    uint32_t START_BLOCK = 1000;
+    
+	uint32_t sect_multi;
+	totol_sects = 30541 * 1024;
+
+    if ( HAL_OK == HAL_SD_Write_test(START_BLOCK, 0x21006000, NUM_OF_BLOCK))
+	{
+        dlog_info("done");
+	}						
+}
+
+
 void command_SdcardFatFs(char *argc)
 {	
 	uint8_t choise;
@@ -721,6 +766,14 @@ void command_SdcardFatFs(char *argc)
 		case 8:
 		    TestRawWR_SDRAM();
 		break;
+
+		case 9:
+		    test_multi_read();
+		break;
+
+        case 10:
+            test_multi_write();
+        break;
 
 		default: break;
 	}

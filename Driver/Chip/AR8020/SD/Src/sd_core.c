@@ -1,6 +1,6 @@
 /**
   * @file    sd_core.c
-  * @author  Minzhao
+  * @author  Minzha & min.wu
   * @version V1.0.0
   * @date    7-7-2016
   * @brief   source file of sd core.
@@ -69,6 +69,7 @@ EMU_SD_RTN Core_SDMMC_WaiteCmdDone(HOST_REG *SDMMCx)
     if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 1000)
     {
         dlog_error("time out");
+        return SD_DATA_TIMEOUT;
     }
     // dlog_info("CMD_DONE RINTSTS = %x", get_val);
   } while (!cmd_done);
@@ -87,6 +88,7 @@ EMU_SD_RTN Core_SDMMC_WaiteDataOver(HOST_REG *SDMMCx)
     if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 1000)
     {
         dlog_error("time out");
+        return SD_DATA_TIMEOUT;
     }
   } while (!data_over);
   return SD_OK;
@@ -101,11 +103,10 @@ EMU_SD_RTN Core_SDMMC_WaiteCardBusy(HOST_REG *SDMMCx)
   do {
     get_val = Core_SDMMC_GetSTATUS(SDMMCx);
     card_busy = (get_val & SDMMC_STATUS_DATA_BUSY); 
-    // dlog_info("card_busy?\n");
-    // dlog_info("CARD_BUSY STATUS = %x", get_val);
     if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 1000)
     {
         dlog_error("time out");
+        return SD_DATA_TIMEOUT;
     }
   } while (card_busy);
   return SD_OK;
@@ -120,12 +121,10 @@ EMU_SD_RTN Core_SDMMC_WaiteCmdStart(HOST_REG *SDMMCx)
   do {
     get_val = Core_SDMMC_GetCMD(SDMMCx); 
     cmd_start = (get_val & SDMMC_CMD_START_CMD);
-    // dlog_info("cmd_start?\n");
-    // dlog_info("CMD_START CMD = %x", get_val);
     if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 1000)
     {
         dlog_error("time out");
-        return SD_FAIL;
+        return SD_DATA_TIMEOUT;
     }
   } while (cmd_start);
   return SD_OK;
@@ -140,11 +139,10 @@ EMU_SD_RTN Core_SDMMC_WaiteVoltSwitchInt(HOST_REG *SDMMCx)
   do {
     get_val = Core_SDMMC_GetRINTSTS(SDMMCx);
     volt_switch_int = (get_val & SDMMC_RINTSTS_HTO);
-    // dlog_info("volt_switch_int\n");
-    // dlog_output(50);
     if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > 1000)
     {
         dlog_error("time out");
+        return SD_DATA_TIMEOUT;
     }
   } while (!volt_switch_int);
   return SD_OK;

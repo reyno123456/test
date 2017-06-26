@@ -474,3 +474,52 @@ static uint32_t addrConvert(uint32_t addr)
         return HAL_FALSE;
     }
 }
+
+HAL_RET_T HAL_SD_Write_test(uint32_t u32_dstBlkAddr, uint32_t u32_srcStartAddr, uint32_t u32_sectorNum)
+{
+	EMU_SD_RTN e_errorState = SD_OK;
+	SDMMC_DMATransTypeDef st_dma;
+	st_dma.BlockSize = 512;
+    st_dma.SrcAddr = addrConvert(u32_srcStartAddr);
+	st_dma.DstAddr = (uint32_t )u32_dstBlkAddr;                        /* [block units] */
+	st_dma.SectorNum = u32_sectorNum;
+
+    e_errorState = Card_SD_WriteMultiBlocks_DMA_test(&sdhandle, &st_dma);
+	
+	if (e_errorState != SD_OK) {
+		dlog_info("Write SD Failed!\n");
+		return HAL_SD_ERR_ERROR;
+	}
+
+	return HAL_OK;
+}
+
+HAL_RET_T HAL_SD_Read_test(uint32_t u32_dstStartAddr, uint32_t u32_srcBlkAddr, uint32_t u32_sectorNum)
+{
+	EMU_SD_RTN e_errorState = SD_OK;
+	SDMMC_DMATransTypeDef st_dma;
+	st_dma.BlockSize = 512;
+	st_dma.SrcAddr = u32_srcBlkAddr;                     /* [block units] */
+    st_dma.DstAddr = addrConvert(u32_dstStartAddr);
+
+	st_dma.SectorNum = u32_sectorNum;
+	
+
+	if (u32_sectorNum == 1)
+	{
+		e_errorState = Card_SD_ReadBlock_DMA(&sdhandle, &st_dma);
+	}
+	else
+	{
+		e_errorState = Card_SD_ReadMultiBlocks_DMA_test(&sdhandle, &st_dma);
+	}
+	
+	if (e_errorState != SD_OK) {
+		dlog_info("Read SD Failed!");
+		return HAL_SD_ERR_ERROR;
+	}
+	// dlog_info("Read SD %d Sectors Done. From Sector %d to Sector %d\n", 
+	//	         st_dma.SectorNum, st_dma.SrcAddr, (st_dma.SrcAddr + st_dma.SectorNum - 1));
+	return HAL_OK;
+}
+
