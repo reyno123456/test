@@ -564,7 +564,10 @@ void sky_physical_link_process(void)
         {
             uint8_t data0, data1;
             context.rc_unlock_cnt = 0;
-            sky_handle_all_spi_cmds();            
+            if (BB_ChkSpiFlag())
+            {
+                sky_handle_all_spi_cmds();     
+            }     
             GPIO_SetPin(BLUE_LED_GPIO, 0);  //BLUE LED ON
             GPIO_SetPin(RED_LED_GPIO, 1);   //RED LED OFF
             sky_auto_adjust_agc_gain();     //agc is valid value only when locked
@@ -737,12 +740,12 @@ void Sky_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
     static int Timer1_Delay2_Cnt = 0;    
 
     INTR_NVIC_ClearPendingIRQ(TIMER_INTR27_VECTOR_NUM);
-	
-	if(TRUE == context.u8_debugMode) 
-	{
-		return;
-	}  	
-	
+    
+    if(TRUE == context.u8_debugMode) 
+    {
+        return;
+    }   
+    
     if(Timer1_Delay2_Cnt < 560)
     {
         Timer1_Delay2_Cnt ++;
@@ -919,9 +922,8 @@ static void sky_handle_CH_bandwitdh_cmd(void)
     uint8_t data0, data1;
     
     data0 = BB_ReadReg(PAGE2, RF_CH_BW_CHANGE_0);
-    data1 = BB_ReadReg(PAGE2, RF_CH_BW_CHANGE_1);
 
-    if( data1==data0+1 && (data0&0xc0)==0xc0)
+    if((data0&0xc0)==0xc0)
     {
         ENUM_CH_BW bw = (ENUM_CH_BW)(data0&0x3F);
 
@@ -936,12 +938,11 @@ static void sky_handle_CH_bandwitdh_cmd(void)
 
 static void sky_handle_CH_qam_cmd(void)
 {   
-    uint8_t data0, data1;
+    uint8_t data0;
     
     data0 = BB_ReadReg(PAGE2, RF_CH_QAM_CHANGE_0);
-    data1 = BB_ReadReg(PAGE2, RF_CH_QAM_CHANGE_1);
 
-    if( data1==data0+1 && (data0&0xc0)==0xc0)
+    if((data0&0xc0)==0xc0)
     {
         ENUM_BB_QAM qam = (ENUM_BB_QAM)(data0 & 0x03);
 
@@ -958,9 +959,8 @@ static void sky_handle_CH_qam_cmd(void)
 static void sky_handle_CH_ldpc_cmd(void)
 {
     uint8_t data0 = BB_ReadReg(PAGE2, RF_CH_LDPC_CHANGE_0);
-    uint8_t data1 = BB_ReadReg(PAGE2, RF_CH_LDPC_CHANGE_1);
 
-    if(data0+1==data1 && context.ldpc != data0)
+    if((context.ldpc) != data0)
     {
         context.ldpc = data0;
         BB_set_LDPC(context.ldpc);
@@ -970,13 +970,12 @@ static void sky_handle_CH_ldpc_cmd(void)
 static void sky_handle_brc_mode_cmd(void)
 {
     uint8_t data0 = BB_ReadReg(PAGE2, ENCODER_BRC_MODE_0);
-	uint8_t data1 = BB_ReadReg(PAGE2, ENCODER_BRC_MODE_1);
     ENUM_RUN_MODE mode = (ENUM_RUN_MODE)(data0 & 0x1f);
 
-    if( (data1==data0+1) && ((data0&0xe0)==0xe0) && (context.brc_mode != mode))
+    if(((data0&0xe0)==0xe0) && (context.brc_mode != mode))
     {
         //dlog_info("brc_mode = %d \r\n", mode);
-    	context.brc_mode = mode;
+        context.brc_mode = mode;
         
         if ( mode == AUTO) //MANUAL - > AUTO
         {
@@ -992,13 +991,11 @@ static void sky_handle_brc_mode_cmd(void)
 static void sky_handle_brc_bitrate_cmd(void)
 {
     uint8_t data0;
-    uint8_t data1;
     uint8_t bps;
     data0 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_0_CH1);
-    data1 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_1_CH1);
     bps = data0&0x3F;
 
-    if( (data0+1==data1) && ( (data0&0xc0)==0xc0) && (context.brc_bps[0] != bps))
+    if(((data0&0xc0)==0xc0) && (context.brc_bps[0] != bps))
     {
         context.brc_bps[0] = bps;
         sky_notify_encoder_brc(0, bps);
@@ -1006,10 +1003,9 @@ static void sky_handle_brc_bitrate_cmd(void)
     }
 
     data0 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_0_CH2);
-    data1 = BB_ReadReg(PAGE2, ENCODER_BRC_CHAGE_1_CH2);
     bps = data0&0x3F;
 
-    if( (data0+1==data1) && ( (data0&0xc0)==0xc0) && (context.brc_bps[1] != bps))
+    if(((data0&0xc0)==0xc0) && (context.brc_bps[1] != bps))
     {
         context.brc_bps[1] = bps;
         sky_notify_encoder_brc(1, bps);
@@ -1021,9 +1017,8 @@ static void sky_handle_brc_bitrate_cmd(void)
 static void sky_handle_QAM_cmd(void)
 {
     uint8_t data0 = BB_ReadReg(PAGE2, QAM_CHANGE_0);
-    uint8_t data1 = BB_ReadReg(PAGE2, QAM_CHANGE_1);
 
-    if(data0+1==data1 && context.qam_ldpc != data0)
+    if((context.qam_ldpc) != data0)
     {
         BB_WriteReg(PAGE2, TX_2, data0);
     }
@@ -1032,9 +1027,8 @@ static void sky_handle_QAM_cmd(void)
 static void sky_handle_MCS_cmd(void)
 {
     uint8_t data0 = BB_ReadReg(PAGE2, MCS_INDEX_MODE_0);
-    uint8_t data1 = BB_ReadReg(PAGE2, MCS_INDEX_MODE_1);
 
-    if( data0+1==data1 && context.qam_ldpc != data0)
+    if((context.qam_ldpc) != data0)
     {
         sky_set_McsByIndex(context.CH_bandwidth, data0);
         context.qam_ldpc = data0;

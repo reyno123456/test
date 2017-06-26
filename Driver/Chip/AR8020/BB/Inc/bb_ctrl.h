@@ -137,4 +137,10 @@ void BB_grd_notify_it_skip_freq_1(void);
 uint8_t BB_get_bitrateByMcs(ENUM_CH_BW bw, uint8_t u8_mcs);
 
 int BB_InsertCmd(STRU_WIRELESS_CONFIG_CHANGE *p);
+
+int BB_WrSpiChkFlag(void);
+
+int BB_ChkSpiFlag(void);
+
+
 #endif

@@ -28,66 +28,52 @@
 #define     TX_6                            (0x5e)              //RC_id_bits[15:8]
 #define     TX_7                            (0x5f)              //RC_id_bits[7:0]
 
-//#define   IT_FREQ_TX_0                    (0x60)
-//#define   IT_FREQ_TX_1                    (0x61)
+/****start of ground - > sky registers Fro    m 0x60 -> 0x9F */
+#define     SPI_CHK1                        (0x60)
 
-#define     RC_FREQ_TX_0                    (0x62)
-#define     RC_FREQ_TX_1                    (0x63)
+#define     QAM_CHANGE_0                    (0x61)
 
-#define     QAM_ATUO_MANUAL                 (0x6b)
-#define     QAM_CHANGE_0                    (0x64)
-#define     QAM_CHANGE_1                    (0x65)
+#define     RC_CH_CHANGE_0                  (0x62)
 
-#define     RC_CH_CHANGE_0	                (0x66)
-#define     RC_CH_CHANGE_1	                (0x67)
+#define     RC_CH_MODE_0                    (0x63)
 
-#define     RC_CH_MODE_0		            (0x68)
-#define     RC_CH_MODE_1		            (0x69)
+#define     RF_BAND_CHANGE_0                (0x64)
+#define     RF_BAND_CHANGE_1                (0x65)
 
-#define     RF_BAND_CHANGE_0	            (0x6A)
-#define     RF_BAND_CHANGE_1	            (0x6B)
+#define     RF_CH_BW_CHANGE_0               (0x66)
 
-#define     RF_CH_BW_CHANGE_0	            (0x6C)
-#define     RF_CH_BW_CHANGE_1	            (0x6D)
+#define     ENCODER_BRC_MODE_0              (0x67)
 
-#define     ENCODER_BRC_MODE_0              (0x6E)
-#define     ENCODER_BRC_MODE_1              (0x6F)
+#define     ENCODER_BRC_CHAGE_0_CH1         (0x68)
 
-#define     ENCODER_BRC_CHAGE_0_CH1	        (0x70)
-#define     ENCODER_BRC_CHAGE_1_CH1	        (0x71)
+#define     MCS_INDEX_MODE_0                (0x69)
 
+#define     ENCODER_BRC_CHAGE_0_CH2         (0x6A)
 
-#define     MCS_INDEX_MODE_0		        (0x74)
-#define     MCS_INDEX_MODE_1		        (0x75)
+#define     RF_CH_LDPC_CHANGE_0             (0x6B)
 
-#define     ENCODER_BRC_CHAGE_0_CH2	        (0x76)
-#define     ENCODER_BRC_CHAGE_1_CH2	        (0x77)
+#define     RF_CH_QAM_CHANGE_0              (0x6C)
 
-#define     RF_CH_LDPC_CHANGE_0             (0x78)
-#define     RF_CH_LDPC_CHANGE_1             (0x79)
+#define     GRD_RC_CHANNEL                  (0x6D)
+#define     GRD_MASK_CODE                   (0x6E)          // 8 byte, 0x6E ~ 0x75
 
-#define     RF_CH_QAM_CHANGE_0              (0x7A)
-#define     RF_CH_QAM_CHANGE_1              (0x80)
+#define     RC_FRQ_0                        (0x76)
+#define     RC_FRQ_1                        (0x77)
+#define     RC_FRQ_2                        (0x78)
+#define     RC_FRQ_3                        (0x79)
 
-#define     RC_FRQ_0                        (0x81)
-#define     RC_FRQ_1                        (0x82)
-#define     RC_FRQ_2                        (0x83)
-#define     RC_FRQ_3                        (0x84)
+#define     IT_FRQ_0                        (0x7A)
+#define     IT_FRQ_1                        (0x7B)
+#define     IT_FRQ_2                        (0x7C)
+#define     IT_FRQ_3                        (0x7D)
 
-#define     IT_FRQ_0                        (0x85)
-#define     IT_FRQ_1                        (0x86)
-#define     IT_FRQ_2                        (0x87)
-#define     IT_FRQ_3                        (0x88)
+#define     FRE_OFFSET_0                    (0x7E)
+#define     FRE_OFFSET_1                    (0x7F)
+#define     FRE_OFFSET_2                    (0x80)
+#define     FRE_OFFSET_3                    (0x81)
+#define     FRE_OFFSET_4                    (0x82)
 
-#define     GRD_RC_CHANNEL                  (0x89)
-#define     GRD_MASK_CODE                   (0x90)          // 8 byte, 0x89 ~ 0x90
-
-
-#define     FRE_OFFSET_0                    (0x91)
-#define     FRE_OFFSET_1                    (0x92)
-#define     FRE_OFFSET_2                    (0x93)
-#define     FRE_OFFSET_3                    (0x94)
-#define     FRE_OFFSET_4                    (0x95)
+#define     SPI_CHK2                        (0x9F)
 /****end of ground - > sky registers Fro    m 0x60 -> 0x9F */
 
 #define     SWEEP_ENERGY_HIGH               (0xa2)

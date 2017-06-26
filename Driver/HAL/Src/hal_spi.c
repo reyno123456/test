@@ -144,7 +144,8 @@ HAL_RET_T HAL_SPI_MasterWriteRead(ENUM_HAL_SPI_COMPONENT e_spiComponent,
         {
             if ((SysTicks_GetDiff(start, SysTicks_GetTickCount())) >= u32_timeOut)
             {
-                 return HAL_TIME_OUT;
+                SPI_DisEnableInt(e_spiComponent, SPI_IMR_MASK);
+                return HAL_TIME_OUT;
             }
 
             HAL_Delay(1);

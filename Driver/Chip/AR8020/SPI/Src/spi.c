@@ -49,8 +49,6 @@ static int32_t SPI_SetMode(ENUM_SPI_COMPONENT en_id, uint32_t spi_mode);
 
 static int32_t SPI_EnableInt(ENUM_SPI_COMPONENT en_id, uint32_t data);
 
-static int32_t SPI_DisEnableInt(ENUM_SPI_COMPONENT en_id, uint32_t data);
-
 static int32_t SPI_SetDataFrameSize(ENUM_SPI_COMPONENT en_id, uint32_t spi_dfs);
 
 static uint32_t SPI_GetInputClockByIndex(ENUM_SPI_COMPONENT en_id);
@@ -69,9 +67,20 @@ static void SPI_SetReadDataLen(ENUM_SPI_COMPONENT en_id, uint16_t u16_len)
 
 void SPI_master_init(ENUM_SPI_COMPONENT en_id, STRU_SPI_InitTypes *st_settings)
 {
+    IRQ_type vct;
     uint32_t divider = SPI_CalcClkDiv(en_id, st_settings->clk_Mhz);
 
     SPI_DisEnableInt(en_id, SPI_IMR_MASK);
+
+    if (7 == en_id)
+    {
+        vct = VIDEO_SPI_INTR_BB_VECTOR_NUM;
+    }
+    else
+    {
+        vct = en_id + SSI_INTR_N0_VECTOR_NUM;
+    }
+    INTR_NVIC_ClearPendingIRQ(vct);
 
     Reg_Write32((SPI_BaseList[en_id]+SPI_SLAVE_EN), 0 );
     Reg_Write32((SPI_BaseList[en_id]+SPI_SSIENR),  0x00);          //disable ssi
@@ -365,7 +374,7 @@ static int32_t SPI_EnableInt(ENUM_SPI_COMPONENT en_id, uint32_t data)
     }
 }
 
-static int32_t SPI_DisEnableInt(ENUM_SPI_COMPONENT en_id, uint32_t data) 
+int32_t SPI_DisEnableInt(ENUM_SPI_COMPONENT en_id, uint32_t data) 
 {
     uint32_t u32_data;
     

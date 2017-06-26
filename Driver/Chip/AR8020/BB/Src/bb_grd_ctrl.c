@@ -401,7 +401,6 @@ void grd_set_txmsg_qam_change(ENUM_BB_QAM qam, ENUM_CH_BW bw, ENUM_BB_LDPC ldpc)
     dlog_info("MCS1=>%d", data);
 
     BB_WriteReg(PAGE2, QAM_CHANGE_0, data);
-    BB_WriteReg(PAGE2, QAM_CHANGE_1, data+1);
 }
 
 
@@ -448,6 +447,8 @@ void wimax_vsoc_tx_isr(uint32_t u32_vectorNum)
         INTR_NVIC_EnableIRQ(TIMER_INTR26_VECTOR_NUM);
     }
     context.cycle_count ++;
+
+    BB_WrSpiChkFlag();
 }
 
 
@@ -727,10 +728,9 @@ static void grd_handle_RC_mode_cmd(ENUM_RUN_MODE mode)
 
 static void grd_handle_RC_CH_cmd(uint8_t ch)
 {
-	BB_set_Rcfrq(context.e_curBand, ch);
+    BB_set_Rcfrq(context.e_curBand, ch);
 
     BB_WriteReg(PAGE2, RC_CH_CHANGE_0, 0x80+ch);
-    BB_WriteReg(PAGE2, RC_CH_CHANGE_1, 0x80+ch + 1);
 
     dlog_info("ch =%d", ch);
 }
@@ -759,8 +759,7 @@ static void grd_handle_CH_bandwitdh_cmd(ENUM_CH_BW bw)
     {
         BB_set_RF_bandwitdh(BB_GRD_MODE, bw);
 
-        BB_WriteReg(PAGE2, RF_CH_BW_CHANGE_0, 0xc0 | (uint8_t)bw);
-        BB_WriteReg(PAGE2, RF_CH_BW_CHANGE_1, 0xc0 | (uint8_t)bw + 1);       
+        BB_WriteReg(PAGE2, RF_CH_BW_CHANGE_0, 0xc0 | (uint8_t)bw);      
 
         context.CH_bandwidth = bw; 
     }
@@ -773,8 +772,7 @@ static void grd_handle_CH_qam_cmd(ENUM_BB_QAM qam)
     //set and soft-rest
     if(context.qam_mode != qam)
     {
-        BB_WriteReg(PAGE2, RF_CH_QAM_CHANGE_0, 0xc0 | (uint8_t)qam);
-        BB_WriteReg(PAGE2, RF_CH_QAM_CHANGE_1, 0xc0 | (uint8_t)qam + 1);       
+        BB_WriteReg(PAGE2, RF_CH_QAM_CHANGE_0, 0xc0 | (uint8_t)qam);      
 
         context.qam_mode = qam; 
         context.ldpc = grd_get_IT_LDPC();   
@@ -789,7 +787,6 @@ void grd_handle_CH_ldpc_cmd(ENUM_BB_LDPC e_ldpc)
     if(context.ldpc != e_ldpc)
     {
         BB_WriteReg(PAGE2, RF_CH_LDPC_CHANGE_0, e_ldpc);
-        BB_WriteReg(PAGE2, RF_CH_LDPC_CHANGE_1, e_ldpc +1);
         context.ldpc = e_ldpc;
         context.qam_mode = grd_get_IT_QAM();
 
@@ -853,7 +850,6 @@ static void grd_handle_brc_mode_cmd(ENUM_RUN_MODE mode)
     context.brc_mode = mode;
 
     BB_WriteReg(PAGE2, ENCODER_BRC_MODE_0, 0xe0+mode);
-    BB_WriteReg(PAGE2, ENCODER_BRC_MODE_1, 0xe0+mode+1);
 
     dlog_info("brc mode =%d", mode);
 }
@@ -867,7 +863,6 @@ static void grd_handle_brc_bitrate_cmd(uint8_t u8_ch, uint8_t brc_coderate)
     if (0 == u8_ch)
     {
         BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_0_CH1, (0xc0 | brc_coderate));
-        BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_1_CH1, (0xc0 | brc_coderate)+1);
         context.brc_bps[0] = brc_coderate;
 
         dlog_info("brc_coderate_ch1 = %d ", brc_coderate);
@@ -875,7 +870,6 @@ static void grd_handle_brc_bitrate_cmd(uint8_t u8_ch, uint8_t brc_coderate)
     else
     {
         BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_0_CH2, (0xc0 | brc_coderate));
-        BB_WriteReg(PAGE2, ENCODER_BRC_CHAGE_1_CH2, (0xc0 | brc_coderate)+1);
         context.brc_bps[1] = brc_coderate;
 
         dlog_info("brc_coderate_ch2 = %d ", brc_coderate);

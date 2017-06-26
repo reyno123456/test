@@ -433,7 +433,6 @@ void grd_set_txmsg_mcs_change(ENUM_CH_BW bw, uint8_t index)
     uint8_t size;
 
     BB_WriteReg(PAGE2, MCS_INDEX_MODE_0, index);
-    BB_WriteReg(PAGE2, MCS_INDEX_MODE_1, index +1);
 
     if (BW_10M == bw)
     {

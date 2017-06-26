@@ -140,5 +140,6 @@ int SPI_GetBusyStatus(ENUM_SPI_COMPONENT en_id);
 
 int SPI_WaitIdle(ENUM_SPI_COMPONENT en_id, uint32_t timeOut);
 
+int32_t SPI_DisEnableInt(ENUM_SPI_COMPONENT en_id, uint32_t data);
 
 #endif

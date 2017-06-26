@@ -1431,3 +1431,38 @@ int BB_SwtichOnOffCh(uint8_t u8_ch, uint8_t u8_data)
     {
     }
 }
+
+/** 
+ * @brief       
+ * @param   
+ * @retval      
+ * @note      
+ */
+int BB_WrSpiChkFlag(void)
+{
+    BB_WriteReg(PAGE2, SPI_CHK1, 0x55);
+    BB_WriteReg(PAGE2, SPI_CHK2, 0xAA);
+
+    return 0;
+}
+
+/** 
+ * @brief       
+ * @param   
+ * @retval      
+ * @note      
+ */
+int BB_ChkSpiFlag(void)
+{
+    if ((0x55 == BB_ReadReg(PAGE2, SPI_CHK1)) &&
+        (0xAA == BB_ReadReg(PAGE2, SPI_CHK2)))
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+
