@@ -137,6 +137,39 @@ extern "C" {
 
 //====================================================================
 //SRAM MEMORY MAP
+//        ------------------------------------------     <------ 0x21000000
+//                  8K            video buff (cached)
+//        ------------------------------------------     <------ 0x21002000
+//                  8K            video buff (cached)
+//        ------------------------------------------     <------ 0x21004000
+//                  256 Byte  inter core message (non cached)
+//        ------------------------------------------     <------ 0x21004100
+//                  256 Byte  module lock (non cached)
+//        ------------------------------------------     <------ 0x21004200
+//                  256 Byte  module share (non cached)
+//        ------------------------------------------     <------ 0x21004300
+//                  512 Byte  bb status (non cached)
+//        ------------------------------------------     <------ 0x21004500
+//                  1K            bb uart for session 1 RX buffer (non cached)
+//        ------------------------------------------     <------ 0x21004900
+//                  1K            bb uart for session 2 RX buffer (non cached)
+//        ------------------------------------------     <------ 0x21004D00
+//                  1K            bb uart for session 3 RX buffer (non cached)
+//        ------------------------------------------     <------ 0x21005100
+//                  1K            bb uart for session 4 RX buffer (non cached)
+//        ------------------------------------------     <------ 0x21005500
+//                  1K            bb uart tx buffer (non cached)
+//        ------------------------------------------     <------ 0x21005900
+//                  2K            bb uart high tx queue (non cached)
+//        ------------------------------------------     <------ 0x21006100
+//                  2K            bb uart low tx queue (non cached)
+//        ------------------------------------------     <------ 0x21006900
+//                  512 Byte  NV (non cached)
+//        ------------------------------------------     <------ 0x21006B00
+//                  not occupied
+//        ------------------------------------------     <------ 0x21008000
+//                  4K            System Configure (non cached)
+//        ------------------------------------------
 //====================================================================
 #define SRAM_BASE_ADDRESS                             0x21000000     /* start address of SRAM */
 #define SRAM_SIZE                                     (64 * 1024)    /* size of SRAM */
@@ -149,7 +182,7 @@ extern "C" {
 #define SRAM_BB_VIDEO_BUFFER_1_ST_ADDRESS             (SRAM_BB_VIDEO_BUFFER_0_ST_ADDRESS + SRAM_BB_VIDEO_BUFFER_0_SIZE)
 #define SRAM_BB_VIDEO_BUFFER_1_SIZE                   0x2000
 
-/* 4K non-cache start, initialized by inter core module.*/
+/* 16K non-cache start, initialized by inter core module.*/
 
 // 256 inter core message
 #define SRAM_INTER_CORE_MSG_SHARE_MEMORY_ST_ADDRESS   (SRAM_BB_VIDEO_BUFFER_1_ST_ADDRESS + SRAM_BB_VIDEO_BUFFER_1_SIZE)
@@ -174,26 +207,35 @@ extern "C" {
 #define SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR           (SRAM_MODULE_SHARE_ST_ADDRESS + SRAM_MODULE_SHARE_SIZE)
 #define SRAM_BB_STATUS_SHARE_MEMORY_SIZE              0x200
 
-// 1K bb uart com RX buffer
+// 1K bb uart com for each session RX buffer
 #define SRAM_BB_UART_COM_SESSION_1_SHARE_MEMORY_ST_ADDR    (SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR + SRAM_BB_STATUS_SHARE_MEMORY_SIZE)
-#define SRAM_BB_UART_COM_SESSION_1_SHARE_MEMORY_SIZE       0x100
+#define SRAM_BB_UART_COM_SESSION_1_SHARE_MEMORY_SIZE       0x400
 #define SRAM_BB_UART_COM_SESSION_2_SHARE_MEMORY_ST_ADDR    (SRAM_BB_UART_COM_SESSION_1_SHARE_MEMORY_ST_ADDR + SRAM_BB_UART_COM_SESSION_1_SHARE_MEMORY_SIZE)
-#define SRAM_BB_UART_COM_SESSION_2_SHARE_MEMORY_SIZE       0x100
+#define SRAM_BB_UART_COM_SESSION_2_SHARE_MEMORY_SIZE       0x400
 #define SRAM_BB_UART_COM_SESSION_3_SHARE_MEMORY_ST_ADDR    (SRAM_BB_UART_COM_SESSION_2_SHARE_MEMORY_ST_ADDR + SRAM_BB_UART_COM_SESSION_2_SHARE_MEMORY_SIZE)
-#define SRAM_BB_UART_COM_SESSION_3_SHARE_MEMORY_SIZE       0x100
+#define SRAM_BB_UART_COM_SESSION_3_SHARE_MEMORY_SIZE       0x400
 #define SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_ST_ADDR    (SRAM_BB_UART_COM_SESSION_3_SHARE_MEMORY_ST_ADDR + SRAM_BB_UART_COM_SESSION_3_SHARE_MEMORY_SIZE)
-#define SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_SIZE       0x100
+#define SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_SIZE       0x400
+
 //1K bb uart com TX buffer
-#define SRAM_BB_UART_COM_TX_SHARE_MEMORY_ST_ADDR           (SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_ST_ADDR + SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_SIZE)
-#define SRAM_BB_UART_COM_TX_SHARE_MEMORY_SIZE              0x400
+#define SRAM_BB_UART_COM_TX_SHARE_MEMORY_ST_ADDR            (SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_ST_ADDR + SRAM_BB_UART_COM_SESSION_4_SHARE_MEMORY_SIZE)
+#define SRAM_BB_UART_COM_TX_SHARE_MEMORY_SIZE               0x400
+
+//2K bb uart com TX buffer with High priority
+#define SRAM_BB_UART_COM_TX_HIGH_PRIO_SHARE_MEMORY_ST_ADDR  (SRAM_BB_UART_COM_TX_SHARE_MEMORY_ST_ADDR + SRAM_BB_UART_COM_TX_SHARE_MEMORY_SIZE)
+#define SRAM_BB_UART_COM_TX_HIGH_PRIO_SHARE_MEMORY_SIZE     0x800
+
+//2K bb uart com TX buffer with High priority
+#define SRAM_BB_UART_COM_TX_LOW_PRIO_SHARE_MEMORY_ST_ADDR   (SRAM_BB_UART_COM_TX_HIGH_PRIO_SHARE_MEMORY_ST_ADDR + SRAM_BB_UART_COM_TX_HIGH_PRIO_SHARE_MEMORY_SIZE)
+#define SRAM_BB_UART_COM_TX_LOW_PRIO_SHARE_MEMORY_SIZE      0x800
 
 // 512 bytes, nonvolatile variable,stored in flash
-#define SRAM_NV_MEMORY_ST_ADDR       (SRAM_BB_UART_COM_TX_SHARE_MEMORY_ST_ADDR + SRAM_BB_UART_COM_TX_SHARE_MEMORY_SIZE)
+#define SRAM_NV_MEMORY_ST_ADDR       (SRAM_BB_UART_COM_TX_LOW_PRIO_SHARE_MEMORY_ST_ADDR + SRAM_BB_UART_COM_TX_LOW_PRIO_SHARE_MEMORY_SIZE)
 #define SRAM_NV_MEMORY_SIZE          0x200
 
 /*4k system configure*/
 
-#define SRAM_CONFIGURE_MEMORY_ST_ADDR    (SRAM_BASE_ADDRESS + 0x5000)
+#define SRAM_CONFIGURE_MEMORY_ST_ADDR    (SRAM_BASE_ADDRESS + 0x8000)
 #define SRAM_CONFIGURE_MEMORY_SIZE       (0x1000)
 #define CONFIGURE_INIT_FLAG_VALUE        SRAM_CONFIGURE_MEMORY_ST_ADDR
 

@@ -104,7 +104,9 @@ static void COMTASK_Tx0Function(void const *argument)
     osMutexDef(tx_mutex0);
     tx_buf_mutex0_id = osMutexCreate (osMutex(tx_mutex0));
 
-    BB_UARTComRegisterSession(BB_UART_COM_SESSION_1);
+    BB_UARTComRegisterSession(BB_UART_COM_SESSION_1,
+                              BB_UART_SESSION_PRIORITY_HIGH,
+                              BB_UART_SESSION_DATA_NORMAL);
 
     while (1)
     {
@@ -134,7 +136,9 @@ static void COMTASK_Tx1Function(void const *argument)
     osMutexDef(tx_mutex1);
     tx_buf_mutex1_id = osMutexCreate (osMutex(tx_mutex1));
 
-    BB_UARTComRegisterSession(BB_UART_COM_SESSION_2);
+    BB_UARTComRegisterSession(BB_UART_COM_SESSION_2,
+                              BB_UART_SESSION_PRIORITY_HIGH,
+                              BB_UART_SESSION_DATA_NORMAL);
 
     while (1)
     {

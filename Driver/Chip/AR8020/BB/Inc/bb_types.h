@@ -136,6 +136,21 @@ typedef enum
 
 typedef enum
 {
+    BB_UART_SESSION_PRIORITY_HIGH = 0,
+    BB_UART_SESSION_PRIORITY_LOW  = 1,
+    BB_UART_SESSION_PRIORITY_MAX  = 2
+} ENUM_BB_UART_SESSION_PRIORITY;
+
+
+typedef enum
+{
+    BB_UART_SESSION_DATA_RT      = 0,
+    BB_UART_SESSION_DATA_NORMAL  = 1
+} ENUM_BB_UART_SESSION_DATA_TYPE;
+
+
+typedef enum
+{
     PAGE0 = 0x00,
     PAGE1 = 0x40,
     PAGE2 = 0x80,

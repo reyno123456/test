@@ -167,7 +167,10 @@ void Common_AVFORMATSysEventSKYInit(void)
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_AUDIO_INPUT_CHANGE, Common_AVFORMAT_AudioSysEventCallBack);
     
     HAL_BB_UartComRemoteSessionInit();        
-    HAL_BB_UartComRegisterSession(BB_UART_COM_SESSION_3, rcvFormatHandler_sky);
+    HAL_BB_UartComRegisterSession(BB_UART_COM_SESSION_3,
+                                  BB_UART_SESSION_PRIORITY_HIGH,
+                                  BB_UART_SESSION_DATA_NORMAL,
+                                  rcvFormatHandler_sky);
 }
 
 void Common_AVFORMATSysEventGroundInit(void)
@@ -175,7 +178,10 @@ void Common_AVFORMATSysEventGroundInit(void)
     uint8_t u8_GroundCommand = ARCAST_COMMAND_STATUS;
 
     HAL_BB_UartComRemoteSessionInit();        
-    HAL_BB_UartComRegisterSession(BB_UART_COM_SESSION_3, rcvFormatHandler_ground);
+    HAL_BB_UartComRegisterSession(BB_UART_COM_SESSION_3,
+                                  BB_UART_SESSION_PRIORITY_HIGH,
+                                  BB_UART_SESSION_DATA_NORMAL,
+                                  rcvFormatHandler_ground);
 
     while (1)
     {

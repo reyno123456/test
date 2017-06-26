@@ -31,7 +31,10 @@ void command_test_BB_uart(char *index_str)
     if (opt == 0)
     {
         HAL_BB_UartComRemoteSessionInit();
-        HAL_BB_UartComRegisterSession(BB_UART_COM_SESSION_2, rcvDataHandler);
+        HAL_BB_UartComRegisterSession(BB_UART_COM_SESSION_2,
+                                      BB_UART_SESSION_PRIORITY_HIGH,
+                                      BB_UART_SESSION_DATA_NORMAL,
+                                      rcvDataHandler);
         dlog_info("init");
     }
     else if (opt == 1)

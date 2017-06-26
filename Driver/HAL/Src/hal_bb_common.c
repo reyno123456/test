@@ -413,11 +413,14 @@ HAL_RET_T HAL_BB_UartComRemoteSessionInit(void)
  * @return  HAL_OK:                         means register session OK
  *          HAL_BB_ERR_SESSION_OCCUPIED:    session ID is already occupied
  */
-HAL_RET_T HAL_BB_UartComRegisterSession(ENUM_BBUARTCOMSESSIONID e_sessionId, SYS_Event_Handler rcvDataEventHandler)
+HAL_RET_T HAL_BB_UartComRegisterSession(ENUM_BBUARTCOMSESSIONID e_sessionId,
+                                      ENUM_BB_UART_SESSION_PRIORITY e_sessionPriority,
+                                      ENUM_BB_UART_SESSION_DATA_TYPE e_sessionDataType,
+                                      SYS_Event_Handler rcvDataEventHandler)
 {
     uint8_t u8_ret;
 
-    u8_ret = BB_UARTComRegisterSession(e_sessionId);
+    u8_ret = BB_UARTComRegisterSession(e_sessionId, e_sessionPriority, e_sessionDataType);
     if ( u8_ret == 1 )
     {
         uint32_t u32_rcv_event;

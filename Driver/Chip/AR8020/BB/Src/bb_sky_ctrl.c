@@ -402,7 +402,11 @@ void Sky_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
     {
         BB_GetDevInfo();
     }
-    }
+
+    //
+    BB_UARTComCycleMsgProcess();
+    BB_UARTComCycleSendMsg();
+}
 
 
 void sky_rc_hopfreq(void)

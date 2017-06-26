@@ -487,6 +487,9 @@ void Grd_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
     }
 
     Timer1_Delay1_Cnt = 0;
+    //
+    BB_UARTComCycleMsgProcess();
+    BB_UARTComCycleSendMsg();
 }
 
 
