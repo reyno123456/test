@@ -1177,6 +1177,12 @@ static void BB_grd_OSDPlot(void)
     osdptr->tail = 0xff;    //end of the writing
 }
 
+static void grd_set_IT_frq(ENUM_RF_BAND e_band, uint8_t ch)
+{
+    BB_set_ITfrq(e_band, ch);
+    context.flag_mrc = 1;
+}
+
 static void grd_calc_dist(void)
 {
     uint8_t u8_data2[3];

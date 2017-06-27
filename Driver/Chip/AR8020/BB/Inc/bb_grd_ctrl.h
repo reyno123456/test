@@ -71,7 +71,4 @@ void grd_calc_dist_zero_calibration(void);
 
 void grd_set_calc_dist_zero_point(uint32_t value);
 
-void grd_disable_enable_rc_frq_mask_func(uint8_t flag);
-
-
 #endif
