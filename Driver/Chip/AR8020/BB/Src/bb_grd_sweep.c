@@ -142,7 +142,6 @@ void BB_SweepStart(ENUM_RF_BAND e_rfBand, ENUM_CH_BW e_bw)
 
     stru_sweepPower.u8_bandSelCnt  =  0;
     BB_set_sweepfrq( e_rfBand, e_bw, 0 );   
-    dlog_info("stru_sweepPower.u8_totalCyc %d", stru_sweepPower.u8_totalCyc);
 }
 
 
@@ -407,8 +406,18 @@ static int BB_set_sweepChannel( void )
     {
         STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
         uint8_t shift = (e_curBand == RF_2G) ? 0 : GET_IT_TOTAL_CH(RF_2G);
+        {
+            static uint8_t itch_bak  = 0;
+            static uint8_t itopt_bak = 0;
         osdptr->IT_channel  = stru_sweepPower.u8_mainCh + shift;
         osdptr->u8_optCh    = stru_sweepPower.u8_optCh  + shift;
+            if ( osdptr->IT_channel != itch_bak ||  osdptr->u8_optCh != itopt_bak )
+            {
+                dlog_info("From:(%d %d) To:(%d %d)", itch_bak, itopt_bak, osdptr->IT_channel, osdptr->u8_optCh);
+                itch_bak  = osdptr->IT_channel;
+                itopt_bak = osdptr->u8_optCh;
+            }
+        }
     }
 
     return 0;
@@ -793,11 +802,6 @@ uint8_t BB_selectBestCh(ENUM_RF_BAND e_band, ENUM_CH_SEL_OPT e_opt,
         dlog_info("--ch--: %d %d %d", bestCh, betterCh, e_opt);
     }    
 
-    uint32_t spend = SysTicks_GetTickCount() - start;
-    if( spend >= 1 )
-    {
-        dlog_info("!!spend %d", spend);
-    }
 
     return 1;
 }
@@ -975,6 +979,10 @@ static uint8_t BB_UpdateOptCh(ENUM_RF_BAND e_rfBand, ENUM_CH_BW e_bw, uint8_t sw
     uint8_t *pu8_bestChCnt = ((RF_2G == (stru_sweepPower.e_curBand)) ? (stru_sweepPower.u8_best2GChCnt) : 
                                                                        (stru_sweepPower.u8_best5GChCnt));
 
+    if ( e_rfBand != stru_sweepPower.e_curBand || sweep_ch == stru_sweepPower.u8_mainCh || sweep_ch == stru_sweepPower.u8_optCh)
+    {
+        return 0;
+    }
     if (BW_10M == e_bw)
     {
         level = ((1 == BB_JudgeAdjacentFrequency(sweep_ch)) ? (2 * CMP_POWER_AVR_LEVEL) : (CMP_POWER_AVR_LEVEL));
@@ -1161,14 +1169,14 @@ ENUM_RF_select BB_grd_cmpBandNoise( void )
          ( i32_2GAverage >= i32_5GAverage + 7  && context.flag_signalBlock  == 0) ||    //Noise(2G) > Noise(5G)+ 7db( 10 * log6) )  
          bad_2G_cnt >= ( MAX_2G_IT_FRQ_SIZE * 2 / 3 ))
     {
-        dlog_info("!5G block = %d %d", context.flag_signalBlock, bad_2G_cnt);
+        //dlog_info("!5G block = %d %d", context.flag_signalBlock, bad_2G_cnt);
         return BETTER_5G;
     }
     else if( (( i32_2GAverage <= i32_5GAverage && context.flag_signalBlock == 0 ) ||          //Noise(2G) < Noise(5G)
               ( i32_2GAverage <= i32_5GAverage + 10  && context.flag_signalBlock == 1 ))      //Noise(2G) < Noise(5G) + 10db
                && ( bad_2G_cnt <= ( MAX_2G_IT_FRQ_SIZE * 1 / 2 )))                            // and 
     {
-        dlog_info("!2G block = %d %d", context.flag_signalBlock, bad_2G_cnt);
+        //dlog_info("!2G block = %d %d", context.flag_signalBlock, bad_2G_cnt);
         return BETTER_2G;
     }
     else
@@ -1284,22 +1292,11 @@ int32_t grd_doRfbandChange( uint8_t *pu8_mainCh, uint8_t *pu8_optCh )
             BB_WriteReg(PAGE2, RF_BAND_CHANGE_0, 0);
             BB_WriteReg(PAGE2, RF_BAND_CHANGE_1, 0);
 
-#if 0
-            BB_WriteReg(PAGE1, 0x1d, context.stru_bandChange.u8_frqoffset[0]);
-            BB_WriteReg(PAGE1, 0x1c, context.stru_bandChange.u8_frqoffset[1]);
-            BB_WriteReg(PAGE1, 0x1b, context.stru_bandChange.u8_frqoffset[2]);
-
-            BB_WriteRegMask(PAGE1, 0X1a, 0x40, 0x40);
-            context.stru_bandChange.u8_softfrqoffset = 1;
-            dlog_info("write %x %x %x ", context.stru_bandChange.u8_frqoffset[0], context.stru_bandChange.u8_frqoffset[1], 
-                                         context.stru_bandChange.u8_frqoffset[2]);
-
-#endif
             //clear the result, re-start statistic again
             stru_sweepPower.u8_bandSelCnt = 0;
 
-            //dlog_info("Band switch: %d %d %d %d", grd_rc_channel, context.stru_bandChange.u8_bandChangecount, 
-            //                                      context.stru_bandChange.u8_ItCh, context.e_curBand);
+            dlog_info("Band switch: %d %d %d %d", grd_rc_channel, context.stru_bandChange.u8_bandChangecount, 
+                                                  context.stru_bandChange.u8_ItCh, context.e_curBand);
             return 1;
         }
         else

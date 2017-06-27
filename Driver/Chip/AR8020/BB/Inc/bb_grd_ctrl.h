@@ -60,7 +60,6 @@ static void grd_handle_brc_cmd(uint8_t coderate);
 
 static void grd_handle_all_cmds(void);
 
-static void BB_grd_GatherOSDInfo(void);
 
 void grd_set_txmsg_mcs_change(ENUM_CH_BW bw, uint8_t index);
 

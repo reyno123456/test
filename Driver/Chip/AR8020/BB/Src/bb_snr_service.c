@@ -167,7 +167,7 @@ uint16_t grd_get_it_snr( void )
     snr = (((uint16_t)BB_ReadReg(PAGE2, SNR_REG_0)) << 8) | BB_ReadReg(PAGE2, SNR_REG_1);
 
     static uint32_t cnt = 0;
-    if( cnt++ > 500 )
+    if( cnt++ > 1000 )
     {
         cnt = 0;
         dlog_info("SNR1:%0.4x\n", snr);

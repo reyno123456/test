@@ -33,12 +33,6 @@ static uint8_t s_u8_rcMaskEnable = 0;
 static STRU_SkyStatus g_stru_skyStatus;
 uint8_t grd_rc_channel = 0;
 
-static void BB_grd_uartDataHandler(void *p);
-static void grd_calc_dist(void);
-static uint32_t grd_calc_dist_get_avg_value(uint32_t *u32_dist);
-static void grd_init_rc_frq_mask_func(void);
-static void grd_write_mask_code_to_sky(uint8_t enable, uint64_t *mask);
-int grd_GetDistAverage(int *pDist);
 
 STRU_CALC_DIST_DATA s_st_calcDistData = 
 {
@@ -48,7 +42,14 @@ STRU_CALC_DIST_DATA s_st_calcDistData =
     .u32_cnt = 0,
     .u32_lockCnt = 0
 };
-
+static void BB_grd_uartDataHandler(void *p);
+static uint32_t grd_calc_dist_get_avg_value(uint32_t *u32_dist);
+static void grd_disable_enable_rc_frq_mask_func(uint8_t flag);
+static void grd_init_rc_frq_mask_func(void);
+static void grd_write_mask_code_to_sky(uint8_t enable, uint64_t *mask);
+static void grd_set_IT_frq(ENUM_RF_BAND e_band, uint8_t ch);
+static void BB_grd_OSDPlot(void);
+static void grd_calc_dist(void);
 
 void BB_GRD_start(void)
 {
@@ -78,7 +79,7 @@ void BB_GRD_start(void)
 
     //do not notify sky until sweep end and get the best channel from sweep result
     context.cur_IT_ch = 1;
-    BB_set_ITfrq(context.e_curBand, 1);
+    grd_set_IT_frq(context.e_curBand, 1);
     BB_grd_notify_it_skip_freq(context.e_curBand, 1);
 
     BB_SweepStart(context.e_curBand, context.CH_bandwidth);    
@@ -166,7 +167,7 @@ void grd_fec_judge(void)
                     {
                         context.cur_IT_ch  = mainch;
                         BB_Sweep_updateCh(context.e_curBand, mainch);
-                        BB_set_ITfrq(context.e_curBand, mainch);
+                        grd_set_IT_frq(context.e_curBand, mainch);
                         //dlog_info("Select %d %d", mainch, optch);
                         BB_grd_notify_it_skip_freq(context.e_curBand, context.cur_IT_ch);
                     }
@@ -207,7 +208,7 @@ void grd_fec_judge(void)
                 
                     context.cur_IT_ch  = mainch;
                     BB_Sweep_updateCh(context.e_curBand, mainch);
-                    BB_set_ITfrq(context.e_curBand, mainch);
+                    grd_set_IT_frq(context.e_curBand, mainch);
                     BB_grd_notify_it_skip_freq(context.e_curBand, context.cur_IT_ch);
                     dlog_info("unlock: select channel %d %d", mainch, optch);
                 }
@@ -216,46 +217,18 @@ void grd_fec_judge(void)
 
                 if(context.qam_skip_mode == AUTO && context.qam_ldpc > context.u8_bbStartMcs)
                 {
-                    context.qam_mode= MOD_BPSK;
-                    context.ldpc    = LDPC_1_2;
-
                     context.qam_ldpc = context.u8_bbStartMcs;
                     grd_set_txmsg_mcs_change(context.CH_bandwidth, context.qam_ldpc);
                 }
             }
         }
     }
-    else if(context.dev_state == FEC_UNLOCK )
-    {
-        if(context.it_skip_freq_mode == AUTO )
-        {
-            BB_grd_notify_it_skip_freq(context.e_curBand, context.cur_IT_ch);
-            //dlog_info("Set Ch:%d %d %d %x %x %x\n", context.cur_IT_ch, context.cycle_count,  ((BB_ReadReg(PAGE2, FEC_5_RD)& 0xF0) >> 4), grd_get_it_snr(),
-            //            (((uint16_t)BB_ReadReg(PAGE2, 0xd7)) << 8) | BB_ReadReg(PAGE2, 0xd8)
-            //         );
-        }
-        context.dev_state = DELAY_14MS;
-    }
     else if(context.dev_state == DELAY_14MS)
     {
-        if( context.it_skip_freq_mode == AUTO )
-        {
-            if(context.it_manual_ch != 0xff)
-            {
-                BB_set_ITfrq(context.e_curBand, context.it_manual_ch);
-                context.it_manual_ch = 0xff;
-                context.flag_mrc = 1;
-            }
-            else
-            {
-                BB_set_ITfrq(context.e_curBand, context.cur_IT_ch);
-                dlog_info("Hop:%d \n", context.cycle_count);
-                context.flag_mrc = 1;
-            }
-
-        }
+        BB_set_ITfrq(context.e_curBand, context.cur_IT_ch);
         reset_it_span_cnt();
         context.dev_state = CHECK_FEC_LOCK;
+        dlog_info("Hop:%d \n", context.cycle_count);
     }
 
 }
@@ -590,7 +563,7 @@ void Grd_TIM2_7_IRQHandler(uint32_t u32_vectorNum)
 
         case 5:
             Timer1_Delay1_Cnt++;
-            BB_grd_GatherOSDInfo();
+            BB_grd_OSDPlot();
             break;
 
         case 6:
@@ -1136,7 +1109,7 @@ static void grd_handle_all_cmds(void)
 /*
  *
 */
-static void BB_grd_GatherOSDInfo(void)
+static void BB_grd_OSDPlot(void)
 {
     uint8_t u8_data;
     STRU_WIRELESS_INFO_DISPLAY *osdptr = (STRU_WIRELESS_INFO_DISPLAY *)(SRAM_BB_STATUS_SHARE_MEMORY_ST_ADDR);
@@ -1269,7 +1242,7 @@ static void grd_calc_dist(void)
                 grd_calc_dist_get_avg_value(&(s_st_calcDistData.u32_calcDistValue));
 
                 u32_cnt += 1;
-                if (0 == (u32_cnt % 300))
+                if (0 == (u32_cnt % 500))
                 {
                     dlog_info("Zero:%d value:%d", s_st_calcDistData.u32_calcDistZero, s_st_calcDistData.u32_calcDistValue);
                 } 
@@ -1340,7 +1313,7 @@ static void grd_init_rc_frq_mask_func(void)
     grd_write_mask_code_to_sky(s_u8_rcMaskEnable, &s_u64_rcMask);
 }
 
-void grd_disable_enable_rc_frq_mask_func(uint8_t flag)
+static void grd_disable_enable_rc_frq_mask_func(uint8_t flag)
 {
     if (flag)
     {

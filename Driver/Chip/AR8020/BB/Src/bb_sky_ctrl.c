@@ -130,7 +130,7 @@ uint8_t sky_id_match(void)
     lock_count += (( (data  & 0x03 )== 0x03) ? 1 : 0);
     nr_lock    += (  (data & 0x04) ? 1 : 0);
 
-    if(total_count > 100)
+    if(total_count > 1000)
     {   
         dlog_info("-L:%d-%d-", lock_count, nr_lock);
         pre_nrlockcnt = nr_lock;
@@ -1523,7 +1523,7 @@ static uint16_t sky_get_rc_snr( void )
 {
     static uint32_t cnt = 0;
     uint16_t snr = (((uint16_t)BB_ReadReg(PAGE2, SNR_REG_0)) << 8) | BB_ReadReg(PAGE2, SNR_REG_1);
-    if( cnt++ > 500 )
+    if( cnt++ > 1500 )
     {
         cnt = 0;
         dlog_info("SNR1:%0.4x\n", snr);

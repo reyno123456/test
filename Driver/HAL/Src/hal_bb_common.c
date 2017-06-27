@@ -343,33 +343,6 @@ HAL_RET_T HAL_BB_SetEncoderBitrateProxy(uint8_t u8_ch, uint8_t u8_bitrateMbps)
     }
 }
 
-/** 
- * @brief       Set the encoder bitrate Unit:Mbps
- * @param[in]   u8_bitrateMbps: select the bitrate unit: Mbps
- * @retval      HAL_OK,                  means command is sent sucessfully. 
- * @retval      HAL_BB_ERR_EVENT_NOTIFY  means error happens in sending the command to cpu2
- * @note        the function can only be called by cpu0,1
- */
-HAL_RET_T HAL_BB_SetEncoderBitrateProxyCh2(uint8_t u8_bitrateMbps)
-{
-    uint8_t u8_ret;
-    STRU_WIRELESS_CONFIG_CHANGE st_cmd;
-
-    st_cmd.u8_configClass  = WIRELESS_ENCODER_CHANGE;
-    st_cmd.u8_configItem   = ENCODER_DYNAMIC_BIT_RATE_SELECT_CH2;
-    st_cmd.u32_configValue = u8_bitrateMbps;
-
-    u8_ret = SYS_EVENT_Notify(SYS_EVENT_ID_USER_CFG_CHANGE, (void *)&st_cmd);
-    if( u8_ret )
-    {
-        return HAL_OK;
-    }
-    else
-    {
-        return HAL_BB_ERR_EVENT_NOTIFY;
-    }
-}
-
 
 /** 
  * @brief   Set board enter or out debug mode

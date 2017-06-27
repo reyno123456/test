@@ -141,7 +141,6 @@ void BB_use_param_setting(PARAM *user_setting)
     context.rc_skip_freq_mode = user_setting->rc_skip_freq_mode;
     context.qam_skip_mode = user_setting->qam_skip_mode;
 
-    context.it_manual_ch  = 0xff;
 
     context.CH_bandwidth      = BW_10M;
 
