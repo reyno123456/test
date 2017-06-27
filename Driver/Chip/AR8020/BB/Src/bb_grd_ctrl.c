@@ -17,7 +17,8 @@
 #define SNR_STATIC_START_VALUE          (100)
 #define SNR_STATIC_UP_THRESHOD          (5)
 #define SNR_STATIC_DOWN_THRESHOD        (2)
-#define DEFAULT_DIST_ZERO               (1560)
+#define DEFAULT_DIST_ZERO_10M           (1560)
+#define DEFAULT_DIST_ZERO_20M           (4386)
 
 
 static init_timer_st grd_timer2_6;
@@ -1224,7 +1225,7 @@ static void grd_calc_dist(void)
         {
             s_st_calcDistData.e_status = CALC_DIST_PREPARE;
             s_st_calcDistData.u32_cnt = 0;
-            s_st_calcDistData.u32_calcDistZero = DEFAULT_DIST_ZERO;
+            s_st_calcDistData.u32_calcDistZero = ((BW_20M == (context.CH_bandwidth)) ? (DEFAULT_DIST_ZERO_20M) : (DEFAULT_DIST_ZERO_10M));
             break;
         }
         case CALI_ZERO:
