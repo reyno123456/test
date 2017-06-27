@@ -30,6 +30,28 @@ extern SD_CardInfoTypedef cardinfo;
 
 static uint32_t addrConvert(uint32_t addr);
 
+static void speed_disp(SpeedModeTypedef speed)
+{
+    switch (speed)
+    {
+        case SDR12:
+            dlog_info("speedMode = SDR12");
+        break;
+
+        case SDR25:
+            dlog_info("speedMode = SDR25");
+        break;
+
+        case SDR50:
+            dlog_info("speedMode = SDR50");
+        break;
+
+        case SDR104:
+            dlog_info("speedMode = SDR104");
+        break;
+    }
+}
+
 /**
 * @brief  Initializes the SD card according to the specified parameters in the 
             SD_HandleTypeDef and create the associated handle
@@ -39,15 +61,13 @@ static uint32_t addrConvert(uint32_t addr);
 */
 HAL_RET_T HAL_SD_Init(void)
 {
+    EMU_SD_RTN e_errorState = SD_OK;
       
-    dlog_info("CDETECT = 0x%08x", read_reg32((uint32_t *)(SDMMC_BASE + 0x50)));
-    // if ((read_reg32((uint32_t *)(SDMMC_BASE + 0x50)) & (1<<0)) == 0)
     if (getCardPresence == CARD_IN)
     {
         sdhandle.Instance = SDMMC_ADDR;
-        sdhandle.SpeedMode = SDR104;
-        EMU_SD_RTN e_errorState = SD_OK;
-        dlog_info("speedMode = %d", sdhandle.SpeedMode);
+        sdhandle.SpeedMode = SDR50;
+        speed_disp(sdhandle.SpeedMode);
         SysTicks_DelayMS(100);
         e_errorState = Card_SD_Init(&sdhandle, &cardinfo);
         if (e_errorState != SD_OK) 
@@ -109,6 +129,12 @@ HAL_RET_T HAL_SD_Write(uint32_t u32_dstBlkAddr, uint32_t u32_srcStartAddr, uint3
 	st_dma.DstAddr = (uint32_t )u32_dstBlkAddr;                        /* [block units] */
 	st_dma.SectorNum = u32_sectorNum;
 
+    if (getCardPresence != CARD_IN)
+    {
+        dlog_error("card not pressent");
+        return SD_FAIL;
+    }
+
 
 	if (u32_sectorNum == 1)
 	{
@@ -144,9 +170,14 @@ HAL_RET_T HAL_SD_Read(uint32_t u32_dstStartAddr, uint32_t u32_srcBlkAddr, uint32
 	st_dma.BlockSize = 512;
 	st_dma.SrcAddr = u32_srcBlkAddr;                     /* [block units] */
     st_dma.DstAddr = addrConvert(u32_dstStartAddr);
-
 	st_dma.SectorNum = u32_sectorNum;
 	
+    if (getCardPresence != CARD_IN)
+    {
+        dlog_error("card not pressent");
+        return SD_FAIL;
+    }
+
 
 	if (u32_sectorNum == 1)
 	{
@@ -175,6 +206,12 @@ HAL_RET_T HAL_SD_Read(uint32_t u32_dstStartAddr, uint32_t u32_srcBlkAddr, uint32
 */
 HAL_RET_T HAL_SD_Erase(uint32_t u32_startBlkAddr, uint32_t u32_sectorNum)
 {
+    if (getCardPresence != CARD_IN)
+    {
+        dlog_error("card not pressent");
+        return SD_FAIL;
+    }
+
 	EMU_SD_RTN e_errorState = SD_OK;
 	e_errorState = Card_SD_Erase(&sdhandle, u32_startBlkAddr, u32_sectorNum);  /* [block units] */
 	if (e_errorState != SD_OK) {
@@ -460,6 +497,10 @@ static uint32_t addrConvert(uint32_t addr)
         {
             return addr + DTCM_CPU0_DMA_ADDR_OFFSET;
         }
+        else
+        {
+            return addr;
+        }
     }
     else if (ENUM_CPU1_ID == CPUINFO_GetLocalCpuId())
     {    
@@ -467,6 +508,10 @@ static uint32_t addrConvert(uint32_t addr)
            (addr >= 0x20000000 && addr <= 0x2003FFFF))      // DTCM
         {
             return addr + DTCM_CPU1_DMA_ADDR_OFFSET;
+        }
+        else
+        {
+            return addr;
         }
     }
     else
@@ -483,6 +528,12 @@ HAL_RET_T HAL_SD_Write_test(uint32_t u32_dstBlkAddr, uint32_t u32_srcStartAddr, 
     st_dma.SrcAddr = addrConvert(u32_srcStartAddr);
 	st_dma.DstAddr = (uint32_t )u32_dstBlkAddr;                        /* [block units] */
 	st_dma.SectorNum = u32_sectorNum;
+    
+    if (getCardPresence != CARD_IN)
+    {
+        dlog_error("card not pressent");
+        return SD_FAIL;
+    }
 
     e_errorState = Card_SD_WriteMultiBlocks_DMA_test(&sdhandle, &st_dma);
 	
@@ -501,9 +552,13 @@ HAL_RET_T HAL_SD_Read_test(uint32_t u32_dstStartAddr, uint32_t u32_srcBlkAddr, u
 	st_dma.BlockSize = 512;
 	st_dma.SrcAddr = u32_srcBlkAddr;                     /* [block units] */
     st_dma.DstAddr = addrConvert(u32_dstStartAddr);
-
 	st_dma.SectorNum = u32_sectorNum;
 	
+    if (getCardPresence != CARD_IN)
+    {
+        dlog_error("card not pressent");
+        return SD_FAIL;
+    }
 
 	if (u32_sectorNum == 1)
 	{
@@ -518,8 +573,6 @@ HAL_RET_T HAL_SD_Read_test(uint32_t u32_dstStartAddr, uint32_t u32_srcBlkAddr, u
 		dlog_info("Read SD Failed!");
 		return HAL_SD_ERR_ERROR;
 	}
-	// dlog_info("Read SD %d Sectors Done. From Sector %d to Sector %d\n", 
-	//	         st_dma.SectorNum, st_dma.SrcAddr, (st_dma.SrcAddr + st_dma.SectorNum - 1));
 	return HAL_OK;
 }
 
