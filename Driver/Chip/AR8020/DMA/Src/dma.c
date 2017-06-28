@@ -12,6 +12,7 @@ History:
                               universe func DMA_transfer
                               added single block transfer mode
                               channel cfg_low ip have been fixed by 0x18B1FFF5
+                 2017/6/28    remove some dump code
 *****************************************************************************/
 #include "dma.h"
 #include "debuglog.h"
@@ -91,29 +92,7 @@ static void DMA_irqISR(uint32_t vectorNum)
     {
         dlog_info("error!");
     }
-#if 0
-    uint32_t *tmp_ptr = NULL;
-    tmp_ptr = malloc(1);
-    if (tmp_ptr)
-    {
-        dlog_info("%d tmp_ptr = 0x%08x", __LINE__, tmp_ptr);
-        free(tmp_ptr);
-    }
-#endif
 
-#if 0
-    if( tmp_tfr != 0 )
-    {
-        u8_chanIndex = DMA_getChannel(tmp_tfr);
-        if (u8_chanIndex >= 8)
-        {
-            dlog_error("%d. error u8_chanIndex = %d", __LINE__, u8_chanIndex );
-            while(1) dmaIntRegDisplay();
-        }
-    }
-#endif
-
-#if 1
     for (index  = 0; index < 8; index++)
     {
         if (tmp_tfr & (1 << index))
@@ -149,45 +128,6 @@ static void DMA_irqISR(uint32_t vectorNum)
             }
         }
     }
-#endif
-
-#if 0
-    for (index  = 0; index < 8; index++)
-    {
-        if (tmp_tfr & (1 << index))
-        {
-            u8_chanIndex = index;
-
-            if (++flag >= 2)
-            {
-                dlog_info("%d flag = %d more channel interrupted\n", __LINE__, flag);
-                while(1) dmaIntRegDisplay();
-            }
-        }
-    }
-    
-    switch(s_st_transStatus[u8_chanIndex].e_transferType)
-    {
-        case SINGLE_BLOCK:
-        {
-            DMA_clearIRQ(u8_chanIndex);
-            s_st_dmaRegs->CH_EN &=~ ((1 << (u8_chanIndex)) | (1 << (u8_chanIndex +8)));
-            s_st_transStatus[u8_chanIndex].trans_complete = 1;
-            
-            break;
-        }
-        case LINK_LIST_ITEM:
-        {            
-            free(s_st_transStatus[u8_chanIndex].pst_lliMalloc);
-            DMA_clearIRQ(u8_chanIndex);
-            s_st_dmaRegs->CH_EN &=~ ((1 << (u8_chanIndex)) | (1 << (u8_chanIndex +8)));
-            s_st_transStatus[u8_chanIndex].trans_complete = 1;
-    
-            break;
-        }
-        default: break;
-    }
-#endif
 }
 
 static void assert_failed(uint8_t* file, uint32_t line)
@@ -409,7 +349,6 @@ int32_t DMA_Init(ENUM_Chan u8_channel, uint8_t u8_chanPriority)
         }
 
         s_st_transStatus[u8_chanIndex].trans_complete = 0;
-/*         dlog_info("AUTOchan = %d\n", u8_chanIndex); */
         return u8_chanIndex;
     }
     else 
