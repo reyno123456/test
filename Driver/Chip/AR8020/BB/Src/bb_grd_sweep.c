@@ -413,7 +413,7 @@ static int BB_set_sweepChannel( void )
         osdptr->u8_optCh    = stru_sweepPower.u8_optCh  + shift;
             if ( osdptr->IT_channel != itch_bak ||  osdptr->u8_optCh != itopt_bak )
             {
-                dlog_info("From:(%d %d) To:(%d %d)", itch_bak, itopt_bak, osdptr->IT_channel, osdptr->u8_optCh);
+                //dlog_info("From:(%d %d) To:(%d %d)", itch_bak, itopt_bak, osdptr->IT_channel, osdptr->u8_optCh);
                 itch_bak  = osdptr->IT_channel;
                 itopt_bak = osdptr->u8_optCh;
             }
@@ -763,14 +763,16 @@ uint8_t BB_selectBestCh(ENUM_RF_BAND e_band, ENUM_CH_SEL_OPT e_opt,
 
         if ((pre_ch >= min_ch) && (pre_ch <= max_ch))
         {
-            if (BB_CompareCh1Ch2ByPower(e_band, pre_ch, betterCh, SWEEP_FREQ_BLOCK_ROWS))
+            //if (BB_CompareCh1Ch2ByPower(e_band, pre_ch, betterCh, SWEEP_FREQ_BLOCK_ROWS))
+            if (BB_CompareCh1Ch2ByPowerAver(e_band, pre_ch, betterCh, 0))
             {
                 betterCh = pre_ch;
             }
         }
         if ((next_ch >= min_ch) && (next_ch <= max_ch))
         {
-            if (BB_CompareCh1Ch2ByPower(e_band, next_ch, betterCh, SWEEP_FREQ_BLOCK_ROWS))
+            //if (BB_CompareCh1Ch2ByPower(e_band, next_ch, betterCh, SWEEP_FREQ_BLOCK_ROWS))
+            if (BB_CompareCh1Ch2ByPowerAver(e_band, pre_ch, betterCh, 0))
             {
                 betterCh = next_ch;
             }
@@ -831,7 +833,8 @@ uint8_t get_opt_channel( void )
     }
 
     level = ((1 == BB_JudgeAdjacentFrequency(other)) ? (2 * level) : (level));
-    if (BB_CompareCh1Ch2ByPower(e_band, other, stru_sweepPower.u8_optCh, SWEEP_FREQ_BLOCK_ROWS))
+    //if (BB_CompareCh1Ch2ByPower(e_band, other, stru_sweepPower.u8_optCh, SWEEP_FREQ_BLOCK_ROWS))
+    if (BB_CompareCh1Ch2ByPowerAver(e_band, other, stru_sweepPower.u8_optCh, 0))
     {
         ret = other; 
     }
@@ -986,7 +989,8 @@ static uint8_t BB_UpdateOptCh(ENUM_RF_BAND e_rfBand, ENUM_CH_BW e_bw, uint8_t sw
     if (BW_10M == e_bw)
     {
         level = ((1 == BB_JudgeAdjacentFrequency(sweep_ch)) ? (2 * CMP_POWER_AVR_LEVEL) : (CMP_POWER_AVR_LEVEL));
-        if (BB_CompareCh1Ch2ByPower(e_rfBand, sweep_ch, tmpCh, SWEEP_FREQ_BLOCK_ROWS))
+        //if (BB_CompareCh1Ch2ByPower(e_rfBand, sweep_ch, tmpCh, SWEEP_FREQ_BLOCK_ROWS))
+        if (BB_CompareCh1Ch2ByPowerAver(e_rfBand, sweep_ch, tmpCh, 0))
         {
             tmpCh = sweep_ch;
         }
@@ -996,7 +1000,7 @@ static uint8_t BB_UpdateOptCh(ENUM_RF_BAND e_rfBand, ENUM_CH_BW e_bw, uint8_t sw
         if (0 == sweep_ch)
         {
             level = ((1 == BB_JudgeAdjacentFrequency(sweep_ch * 2 + 1)) ? (2 * CMP_POWER_AVR_LEVEL) : (CMP_POWER_AVR_LEVEL));
-            if (BB_CompareCh1Ch2ByPower(e_rfBand, sweep_ch * 2 + 1, tmpCh, SWEEP_FREQ_BLOCK_ROWS))
+            if (BB_CompareCh1Ch2ByPowerAver(e_rfBand, sweep_ch * 2 + 1, tmpCh, 0))
             {
                 tmpCh = sweep_ch * 2 + 1;
             }
@@ -1006,7 +1010,8 @@ static uint8_t BB_UpdateOptCh(ENUM_RF_BAND e_rfBand, ENUM_CH_BW e_bw, uint8_t sw
             if (RF_2G == e_rfBand)
             {
                 level = ((1 == BB_JudgeAdjacentFrequency(sweep_ch * 2)) ? (2 * CMP_POWER_AVR_LEVEL) : (CMP_POWER_AVR_LEVEL));
-                if (BB_CompareCh1Ch2ByPower(e_rfBand, sweep_ch * 2, tmpCh, SWEEP_FREQ_BLOCK_ROWS))
+                //if (BB_CompareCh1Ch2ByPower(e_rfBand, sweep_ch * 2, tmpCh, SWEEP_FREQ_BLOCK_ROWS))
+                if (BB_CompareCh1Ch2ByPowerAver(e_rfBand, sweep_ch * 2, tmpCh, 0))
                 {
                     tmpCh = sweep_ch * 2;
                 }
@@ -1019,13 +1024,15 @@ static uint8_t BB_UpdateOptCh(ENUM_RF_BAND e_rfBand, ENUM_CH_BW e_bw, uint8_t sw
         else
         {
             level = ((1 == BB_JudgeAdjacentFrequency(sweep_ch * 2)) ? (2 * CMP_POWER_AVR_LEVEL) : (CMP_POWER_AVR_LEVEL));
-            if (BB_CompareCh1Ch2ByPower(e_rfBand, sweep_ch * 2, tmpCh, SWEEP_FREQ_BLOCK_ROWS))
+            //if (BB_CompareCh1Ch2ByPower(e_rfBand, sweep_ch * 2, tmpCh, SWEEP_FREQ_BLOCK_ROWS))
+            if (BB_CompareCh1Ch2ByPowerAver(e_rfBand, sweep_ch * 2, tmpCh, 0))
             {
                 tmpCh = sweep_ch * 2;
             }
 
             level = ((1 == BB_JudgeAdjacentFrequency(sweep_ch * 2 + 1)) ? (2 * CMP_POWER_AVR_LEVEL) : (CMP_POWER_AVR_LEVEL));
-            if (BB_CompareCh1Ch2ByPower(e_rfBand, sweep_ch * 2 + 1, tmpCh, SWEEP_FREQ_BLOCK_ROWS)) 
+            //if (BB_CompareCh1Ch2ByPower(e_rfBand, sweep_ch * 2 + 1, tmpCh, SWEEP_FREQ_BLOCK_ROWS)) 
+            if (BB_CompareCh1Ch2ByPowerAver(e_rfBand, sweep_ch * 2 + 1, tmpCh, 0)) 
             {
                 tmpCh = sweep_ch * 2 + 1;
             }
@@ -1222,7 +1229,7 @@ void grd_checkBlockMode(void)
         if ( context.agclevel >= GRD_AGC_BLOCK_THRESH )
         {
             int ret = grd_GetDistAverage(&dist);
-            if (ret == 0 ||  (ret == 1 && dist <= 200) )    //Fail to get the distance or dist <= 200
+            if (ret == 0 ||  (ret == 1 && dist <= 400) )    //Fail to get the distance or dist <= 200
             {
                 context.flag_signalBlock = 1;
             }
