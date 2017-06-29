@@ -9,13 +9,10 @@ extern "C"
 
 #include <stdio.h>
 
-enum
-{
-    LOG_LEVEL_CRITICAL = 0,
-    LOG_LEVEL_ERROR,
-    LOG_LEVEL_WARNING,
-    LOG_LEVEL_INFO
-};
+#define LOG_LEVEL_CRITICAL 0
+#define LOG_LEVEL_ERROR 1
+#define LOG_LEVEL_WARNING 2
+#define LOG_LEVEL_INFO 3
 
 #define LOG_LEVEL_DEFAULT LOG_LEVEL_INFO
 
