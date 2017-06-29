@@ -29,6 +29,7 @@ History:
 #include "hal_usb_device.h"
 #include "hal_sram.h"
 #include "memory_config.h"
+#include "inter_core.h"
 
 volatile uint16_t g_u16_audioDataArray[ADUIO_DATA_BUFF_LENGHT]={0};
 volatile uint32_t g_u32_audioDataConut=0;
