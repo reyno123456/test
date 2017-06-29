@@ -21,7 +21,7 @@ History:
 #include "debuglog.h"
 #include "hal_ret_type.h"
 #include "cmsis_os.h"
-
+#include "systicks.h"
 
 #define LOCAL_MAX_TASK_NUM 20
 #define LOCAL_HAL_TIMER 21
@@ -98,7 +98,14 @@ void ar_top(void)
 
 void ar_osDelay(uint32_t u32_ms)
 {
-    osDelay(u32_ms);
+    if (osKernelRunning())
+    {
+        osDelay(u32_ms);
+    }
+    else
+    {
+        SysTicks_DelayMS(u32_ms);
+    }
 }
 
 static void createSysEventMsgQ(void)
