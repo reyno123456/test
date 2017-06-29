@@ -1367,13 +1367,7 @@ static EMU_SD_RTN InitializeCard(SD_HandleTypeDef *hsd)
     /* clear intreq status */
     Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-    /* Check for error conditions */
-    errorstate = wait_cmd_done();
-    if (errorstate != SD_OK)
-    {
-        /* CMD Response Timeout (wait for CMDSENT flag) */
-        return errorstate;
-    }
+    Core_SDMMC_WaiteCmdDone(hsd->Instance);
 
     dlog_info("Send CMD8");
     sdmmc_cmdinitstructure.Argument         = SD_CHECK_PATTERN;
@@ -1386,12 +1380,7 @@ static EMU_SD_RTN InitializeCard(SD_HandleTypeDef *hsd)
                                               SDMMC_CMD_RESP_EXP;
     Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-    /* Check for error conditions */
-    errorstate = wait_cmd_done();
-    if (errorstate != SD_OK)
-    {
-        return errorstate;
-    }
+    Core_SDMMC_WaiteCmdDone(hsd->Instance);
 
     errorstate = SD_CmdResp7(hsd);
     if (errorstate != SD_OK)
@@ -1411,11 +1400,7 @@ static EMU_SD_RTN InitializeCard(SD_HandleTypeDef *hsd)
                                               SDMMC_CMD_RESP_EXP;
     Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-    errorstate = wait_cmd_done();
-    if (errorstate != SD_OK)
-    {
-       return errorstate;
-    }
+    Core_SDMMC_WaiteCmdDone(hsd->Instance);
 
     dlog_info("Send ACMD41");
     //sdmmc_cmdinitstructure.Argument         = SD_ACMD41_HCS | 
@@ -1430,12 +1415,7 @@ static EMU_SD_RTN InitializeCard(SD_HandleTypeDef *hsd)
                                               SDMMC_CMD_RESP_EXP;
     Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
     Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-    /* Check for error conditions */
-    errorstate = wait_cmd_done();
-    if (errorstate != SD_OK)
-    {
-        return errorstate;
-    }
+    Core_SDMMC_WaiteCmdDone(hsd->Instance);
     response = Core_SDMMC_GetRESP0(hsd->Instance);
     dlog_info("ACMD41 RESP0 = 0x%x", response);
 
@@ -1457,12 +1437,7 @@ static EMU_SD_RTN InitializeCard(SD_HandleTypeDef *hsd)
                                                     SDMMC_CMD_RESP_EXP;
             Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE);
             Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-            /* Check for error conditions */
-            errorstate = wait_cmd_done();
-            if (errorstate != SD_OK)
-            {
-                return errorstate;
-            }
+            Core_SDMMC_WaiteCmdDone(hsd->Instance);
 
             sdmmc_cmdinitstructure.Argument         = 0x51FF8000;
             sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_APP_SD_SEND_OP_COND;
@@ -1535,7 +1510,8 @@ static EMU_SD_RTN InitializeCard(SD_HandleTypeDef *hsd)
     SD_MMC_CEATA cards, Command Done bit is set in raw interrupt
     register.
 */
-        wait_cmd_done();
+        // Core_SDMMC_WaiteCmdDone(hsd->Instance);
+
         Core_SDMMC_WaiteVoltSwitchInt(hsd->Instance);
         // delay_ms(1);
         dlog_info("CMD11 RESP 1.8v Switch Success");
@@ -1569,7 +1545,7 @@ static EMU_SD_RTN InitializeCard(SD_HandleTypeDef *hsd)
                                            SDMMC_CMD_UPDATE_CLK;
         Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CMD_DONE | SDMMC_RINTSTS_HTO);
         Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-        wait_cmd_done();
+        Core_SDMMC_WaiteCmdDone(hsd->Instance);
         Core_SDMMC_WaiteVoltSwitchInt(hsd->Instance);
         dlog_info("Voltage Switching Success!");
         dlog_output(100);
@@ -1886,11 +1862,6 @@ static EMU_SD_RTN PowerOffCard(SD_HandleTypeDef *hsd)
         Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
         /* waite for command finish*/
         Core_SDMMC_WaiteCmdDone(hsd->Instance);
-        errorstate = wait_cmd_done();
-        if (errorstate != SD_OK)
-        {
-        return errorstate;
-        }
         dlog_info("deselect card");
     }
     
@@ -1925,13 +1896,7 @@ EMU_SD_RTN SD_GetState(SD_HandleTypeDef *hsd, uint32_t *CardStatus)
       SDMMC_CMD_RESP_CRC | 
       SDMMC_CMD_RESP_EXP;
   Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-  /* Check for error conditions */
-  errorstate = wait_cmd_done();
-  if (errorstate != SD_OK)
-  {
-    return errorstate;
-  }
-  /* Get SD card status */
+  Core_SDMMC_WaiteCmdDone(hsd->Instance);
   *CardStatus = Core_SDMMC_GetRESP0(hsd->Instance);
   // dlog_info("Card State = %x\n", *CardStatus);
 

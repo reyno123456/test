@@ -45,14 +45,9 @@ uint32_t Core_SDMMC_GetPowerState(HOST_REG *SDMMCx)
 EMU_SD_RTN Core_SDMMC_SendCommand(HOST_REG *SDMMCx, SDMMC_CmdInitTypeDef *Command)
 {
   uint32_t tmpreg = 0;
-  /* Set the SDMMC Argument value */
   Core_SDMMC_SetCMDARG(SDMMCx, Command->Argument);
-  /* Set SDMMC command parameters */
   tmpreg |= (uint32_t)(Command->CmdIndex | Command->Attribute);
-  /* Write to SDMMC CMD register */
   Core_SDMMC_SetCMD(SDMMCx, tmpreg);
-  //dlog_info("CMD%d = 0x%x\n", Command->CmdIndex, tmpreg);
-  //dlog_info("CMD%dARG = 0x%x\n", Command->CmdIndex, Command->Argument);
   return SD_OK;
 }
 
@@ -66,13 +61,11 @@ EMU_SD_RTN Core_SDMMC_WaiteCmdDone(HOST_REG *SDMMCx)
   do {
     get_val = Core_SDMMC_GetRINTSTS(SDMMCx);
     cmd_done = (get_val & SDMMC_RINTSTS_CMD_DONE); 
-    // dlog_info("cmd_done?\n");
     if((SysTicks_GetDiff(start, SysTicks_GetTickCount())) > SD_TIME_OUT)
     {
         dlog_error("time out");
         return SD_DATA_TIMEOUT;
     }
-    // dlog_info("CMD_DONE RINTSTS = %x", get_val);
   } while (!cmd_done);
   return SD_OK;
 }
