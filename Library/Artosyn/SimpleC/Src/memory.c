@@ -381,7 +381,7 @@ __attribute__((weak)) void *realloc(void *ptr, size_t size)
     {
         return NULL;
     }
-
+	memcpy(new, ptr, size);
     if (ptr)    
     {
         free(ptr);

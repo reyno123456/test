@@ -3,12 +3,15 @@
 #include "sys_event.h"
 #include "hal.h"
 #include "hal_sys_ctl.h"
+#include "hal_uart.h"
 
 
 void CONSOLE_Init(void)
 {
-    dlog_init(command_run, DLOG_CLIENT_PROCESSOR);
+    HAL_UART_Init(DEBUG_LOG_UART_PORT, HAL_UART_BAUDR_115200, NULL);
+    DLOG_Init(command_run, DLOG_SERVER_PROCESSOR);
 }
+
 
 /**
   * @brief  Main program

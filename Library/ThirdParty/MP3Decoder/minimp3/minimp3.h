@@ -15,6 +15,8 @@
 #define libc_pow     pow
 
 #define MP3_MAX_SAMPLES_PER_FRAME (1152*2)
+#define M_PI          3.14159265358979
+
 
 typedef struct _mp3_info {
     int sample_rate;

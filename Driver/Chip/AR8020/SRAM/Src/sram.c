@@ -5,6 +5,8 @@
 #include "usbd_hid.h"
 #include "reg_rw.h"
 #include "systicks.h"
+#include "dma.h"
+#include "cpu_info.h"
 
 volatile uint32_t               sramReady0;
 volatile uint32_t               sramReady1;
@@ -12,7 +14,11 @@ extern USBD_HandleTypeDef       USBD_Device[USBD_PORT_NUM];
 volatile uint8_t                g_u8DataPathReverse = 0;
 uint32_t                        g_TickRecord[2];
 STRU_CHANNEL_PORT_CONFIG        g_stChannelPortConfig[SRAM_CHANNEL_NUM];
-
+#ifdef ARCAST
+uint8_t                         g_mp3DecodeBuff[SRAM_MP3_DECODE_BUFF_SIZE];
+uint32_t                        g_mp3DecodeBuffRdPos = 0;
+uint32_t                        g_mp3DecodeBuffWrPos = 0;
+#endif
 
 void SRAM_Ready0IRQHandler(uint32_t u32_vectorNum)
 {
@@ -38,6 +44,14 @@ void SRAM_Ready0IRQHandler(uint32_t u32_vectorNum)
     dataLen                 = (dataLen << 2);
 
     u8_endPoint             = g_stChannelPortConfig[0].u8_usbEp;
+
+    #ifdef ARCAST
+    SRAM_InsertMp3Buffer(dataLen, buff);
+
+    SRAM_Ready0Confirm();
+
+    return;
+    #endif
 
     if (USBD_OK != USBD_HID_SendReport(pdev, buff, dataLen, u8_endPoint))
     {
@@ -213,5 +227,103 @@ void SRAM_CheckTimeout(void)
         }
     }
 }
+
+
+#ifdef ARCAST
+
+uint32_t SRAM_GetMp3BufferLength(void)
+{
+    if (g_mp3DecodeBuffWrPos >= g_mp3DecodeBuffRdPos)
+    {
+        return g_mp3DecodeBuffWrPos - g_mp3DecodeBuffRdPos;
+    }
+    else
+    {
+        return ((SRAM_MP3_DECODE_BUFF_SIZE + g_mp3DecodeBuffWrPos) - g_mp3DecodeBuffRdPos);
+    }
+}
+
+
+void SRAM_InsertMp3Buffer(uint32_t dataLen, uint8_t *data)
+{
+    uint32_t         src;
+    uint32_t         dest;
+    uint32_t         dataLenTemp;
+
+    src     = (uint32_t)data;
+    dest    = (uint32_t)(g_mp3DecodeBuff) + g_mp3DecodeBuffWrPos;
+
+    if ((SRAM_MP3_DECODE_BUFF_SIZE - SRAM_GetMp3BufferLength()) < dataLen)
+    {
+        return;
+    }
+
+    if ((g_mp3DecodeBuffWrPos + dataLen) <= SRAM_MP3_DECODE_BUFF_SIZE)
+    {
+        memcpy((void *)dest, (void *)src, dataLen);
+
+        g_mp3DecodeBuffWrPos    += dataLen;
+
+        if (g_mp3DecodeBuffWrPos >= SRAM_MP3_DECODE_BUFF_SIZE)
+        {
+            g_mp3DecodeBuffWrPos -= SRAM_MP3_DECODE_BUFF_SIZE;
+        }
+
+    }
+    else
+    {
+        dataLenTemp     = (SRAM_MP3_DECODE_BUFF_SIZE - g_mp3DecodeBuffWrPos);
+
+        memcpy((void *)dest, (void *)src, dataLenTemp);
+
+        src             = (uint32_t)data + dataLenTemp;
+        dest            = (uint32_t)g_mp3DecodeBuff;
+        dataLenTemp     = dataLen - dataLenTemp;
+
+        memcpy((void *)dest, (void *)src, dataLenTemp);
+
+        g_mp3DecodeBuffWrPos    = dataLenTemp;
+
+
+        if (g_mp3DecodeBuffWrPos >= SRAM_MP3_DECODE_BUFF_SIZE)
+        {
+            g_mp3DecodeBuffWrPos -= SRAM_MP3_DECODE_BUFF_SIZE;
+        }
+    }
+
+    return;
+}
+
+
+uint32_t SRAM_GetMp3Data(uint32_t dataLen, uint8_t *dataBuff)
+{
+    uint32_t        i;
+    uint32_t        read_size = 0;
+
+    //dlog_info("read  pos: %d", g_mp3DecodeBuffRdPos);
+    /* ensure 4 bytes align */
+    dataLen   -= (dataLen & 0x3);
+
+    for (i = 0; i < dataLen; i+=4)
+    {
+
+        dataBuff[i]       = g_mp3DecodeBuff[g_mp3DecodeBuffRdPos+3];
+        dataBuff[i+1]     = g_mp3DecodeBuff[g_mp3DecodeBuffRdPos+2];
+        dataBuff[i+2]     = g_mp3DecodeBuff[g_mp3DecodeBuffRdPos+1];
+        dataBuff[i+3]     = g_mp3DecodeBuff[g_mp3DecodeBuffRdPos];
+
+        g_mp3DecodeBuffRdPos+=4;
+		read_size+=4;
+        if (g_mp3DecodeBuffRdPos >= SRAM_MP3_DECODE_BUFF_SIZE)
+        {
+            g_mp3DecodeBuffRdPos = 0;
+        }
+    }
+    return read_size;
+}
+
+
+#endif
+
 
 

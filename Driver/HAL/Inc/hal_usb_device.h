@@ -100,10 +100,11 @@ HAL_RET_T HAL_USB_CustomerSendData(uint8_t *buff,
 
 HAL_RET_T HAL_USB_SendData(uint8_t *buff, uint32_t data_len, uint8_t portId, uint8_t ep);
 
+HAL_RET_T HAL_USB_AudioDataSend(uint8_t *buff, uint16_t audioLen, uint8_t u8_portId);
+
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-
 

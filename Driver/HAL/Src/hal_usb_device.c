@@ -275,3 +275,39 @@ HAL_RET_T HAL_USB_SendData(uint8_t *buff, uint32_t data_len, uint8_t portId, uin
 }
 
 
+HAL_RET_T HAL_USB_AudioDataSend(uint8_t *buff, uint16_t audioLen, uint8_t u8_portId)
+{
+    uint8_t                     ret;
+    uint8_t                     retry = 0;
+    USBD_HID_HandleTypeDef     *hhid = (USBD_HID_HandleTypeDef*)USBD_Device[u8_portId].pClassData;
+
+    if (USBD_Device[u8_portId].u8_videoDisplay == 0)
+    {
+        return HAL_OK;
+    }
+
+    if (USBD_Device[u8_portId].dev_state != USBD_STATE_CONFIGURED)
+    {
+        return HAL_OK;
+    }
+
+    while (hhid->state[0x7F & HID_EPIN_AUDIO_ADDR]  != HID_IDLE)
+    {
+        retry++;
+
+        HAL_Delay(1);
+
+        if (retry >= 100)
+        {
+            dlog_error("audio device busy: %d", hhid->state[0x7F & HID_EPIN_AUDIO_ADDR]);
+
+            return HAL_USB_ERR_DEVICE_BUSY;
+        }
+    }
+
+    hhid->state[0x7F & HID_EPIN_AUDIO_ADDR]  = HID_BUSY;
+
+    USBD_LL_Transmit (&USBD_Device[u8_portId], HID_EPIN_AUDIO_ADDR, buff, audioLen);
+
+    return HAL_OK;
+}

@@ -665,7 +665,7 @@ uint8_t USBD_HID_SendReport(USBD_HandleTypeDef  *pdev,
     }
     else
     {
-        dlog_error("usb device not connected");
+        dlog_error("usb device not connected: %d", pdev->dev_state);
         ret = USBD_FAIL;
     }
 
@@ -730,8 +730,12 @@ static uint8_t  USBD_HID_DataIn (USBD_HandleTypeDef *pdev,
 
     pdev->u8_errorCount = 0;
 
-    if (((epnum | 0x80) == HID_EPIN_VIDEO_ADDR) ||
+    #ifdef ARCAST
+    if ((epnum | 0x80) == HID_EPIN_VIDEO_ADDR)
+    #else
+    if (((epnum | 0x80) == HID_EPIN_VIDEO_ADDR)||
         ((epnum | 0x80) == HID_EPIN_AUDIO_ADDR))
+    #endif
     {
         if (pdev->u8_connState== 1)
         {

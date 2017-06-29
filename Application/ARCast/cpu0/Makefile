@@ -75,7 +75,13 @@ $(TARGET): $(OBJ_S) $(OBJ_C) $(OBJ_CXX)
 else
 $(TARGET): $(OBJ_S) $(OBJ_C) $(OBJ_CXX) $(CRTBEGIN_OBJ) $(CRTEND_OBJ)
 endif
-	$(LD) $^ $(LDFLAGS) -Tar8020.lds -o $(TARGET).elf 
+ifeq ($(APPLICATION_SCENARIO), sky)
+	$(LD) $^ $(LDFLAGS) -Tar8020_sky.lds -o $(TARGET).elf 
+endif
+
+ifeq ($(APPLICATION_SCENARIO), ground)
+	$(LD) $^ $(LDFLAGS) -Tar8020_gnd.lds -o $(TARGET).elf 
+endif
 	$(OBJCOPY) -O binary $(TARGET).elf $@
 	$(OBJDUMP) -D $(TARGET).elf > $(TARGET).dis
 	$(NM) $(TARGET).elf > $(TARGET).map

@@ -33,6 +33,10 @@
 
 #define SRAM_TIMEOUT_THRESHOLD          100
 
+#ifdef ARCAST
+#define SRAM_MP3_DECODE_BUFF_SIZE       0x4000
+#endif
+
 
 typedef struct
 {
@@ -46,6 +50,12 @@ void SRAM_Ready0Confirm(void);
 void SRAM_Ready1Confirm(void);
 void SRAM_GROUND_ReceiveVideoConfig(void);
 void SRAM_CheckTimeout(void);
+#ifdef ARCAST
+uint32_t SRAM_GetMp3BufferLength(void);
+void SRAM_InsertMp3Buffer(uint32_t dataLen, uint8_t *data);
+uint32_t SRAM_GetMp3Data(uint32_t dataLen, uint8_t *dataBuff);
+#endif
+
 
 extern volatile uint32_t  sramReady0;
 extern volatile uint32_t  sramReady1;

@@ -109,7 +109,7 @@
 
 #endif
 
-#define IT_DEBUGE
+//#define IT_DEBUGE
 
 #ifdef IT_DEBUGE
 #define DLOG_INFO(...) dlog_info(__VA_ARGS__)

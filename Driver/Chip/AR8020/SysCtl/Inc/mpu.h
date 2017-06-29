@@ -77,7 +77,12 @@
                                                          (1  << 19) | \
                                                          (MPU_DEFS_RASR_SIZE_512B) | \
                                                          (MPU_RASR_ENABLE_Msk)
-
+#define SRAM_AV_MPU_REGION_NUMBER                       4
+#define SRAM_AV_MPU_REGION_ST_ADDR_4                    0x21000000
+#define SRAM_AV_MPU_REGION_ATTR_4                       (MPU_DEFS_RASE_AP_FULL_ACCESS) | \
+                                                         (1  << 19) | \
+                                                         (MPU_DEFS_RASR_SIZE_16KB) | \
+                                                         (MPU_RASR_ENABLE_Msk)                                                         
 int32_t MPU_QuadspiProtectDisable(void);
 int32_t MPU_QuadspiProtectEnable(void);
 int32_t MPU_SetUp(void);

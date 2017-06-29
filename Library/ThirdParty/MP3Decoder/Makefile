@@ -18,17 +18,13 @@ include $(BUILD_DIR)/config.mk
 # static library name
 LIB = libmp3dec.a
 
-CFLAGS = -Os
-CFLAGS += -ffast-math
-CFLAGS += -finline-functions-called-once
-CFLAGS += -fno-loop-optimize
-CFLAGS += -fexpensive-optimizations
-CFLAGS += -fpeephole2
+CFLAGS += -O3
 
 # source file(s), including c file(s)
 SRC_C   := ./minimp3/minimp3.c
 
-INCDIRS :=  -I./minimp3
+INCDIRS :=  -I./minimp3 \
+	    -I$(TOP_DIR)/Library/Artosyn/Common/Inc
 
 # object file(s)
 OBJ_C   := $(patsubst %.c,%.o,$(SRC_C))

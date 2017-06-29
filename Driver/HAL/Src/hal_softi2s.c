@@ -143,7 +143,7 @@ void HAL_SOFTI2S_Funct(void)
         else
         {
             uint32_t msg = 0; 
-            uint8_t buf[16];
+            uint8_t buf[INTER_CORE_MSG_SHARE_MEMORY_DATA_LENGTH];
             InterCore_GetMsg(&msg, buf,   sizeof(buf));
         }
         

@@ -68,7 +68,6 @@ HAL_BOOL_T HAL_MP3EncodePcmUnInit(void)
     dlog_info("encode mp3 uninit");
 }
 
-
 void HAL_MP3EncodePcm(void)
 {   
     if (0 != (*pu32_newPcmDataFlagAddr))
@@ -83,13 +82,23 @@ void HAL_MP3EncodePcm(void)
         uint32_t tick=0;
         uint32_t i=0;
         uint8_t ch[AUDIO_DATA_BUFF_COUNT*420]={0};
-
-        /*if ((MPE3_ENCODER_DATA_ADDR+192*5418) <= g_u32_dstAddress)
-        {
-            g_u32_dstAddress=MPE3_ENCODER_DATA_ADDR;
-        }*/
+        memset(ch, 0, AUDIO_DATA_BUFF_COUNT*420);
+        uint8_t g_u8_userDataArray[8]={0};
         
-		//tick = SysTicks_GetTickCount();
+        tick = SysTicks_GetTickCount();
+        g_u8_userDataArray[0] = 0x35;
+        g_u8_userDataArray[1] = 0x53;
+        g_u8_userDataArray[2] = 0x55;
+        g_u8_userDataArray[4] = (tick>>24)&0xff;
+        g_u8_userDataArray[5] = (tick>>16)&0xff;
+        g_u8_userDataArray[6] = (tick>>8)&0xff;
+        g_u8_userDataArray[7] = (tick)&0xff;
+
+        g_u8_userDataArray[3] += ((uint8_t)g_u8_userDataArray[0]+(uint8_t)g_u8_userDataArray[1]+
+                                  (uint8_t)g_u8_userDataArray[2]+(uint8_t)g_u8_userDataArray[4]+
+                                  (uint8_t)g_u8_userDataArray[5]+(uint8_t)g_u8_userDataArray[6]+
+                                  (uint8_t)g_u8_userDataArray[7]);
+        
         while (u32_tmpRawDataLenght)
         {
             
@@ -101,10 +110,10 @@ void HAL_MP3EncodePcm(void)
             i+=s32_encodeLenght;
         }
         
-        //DMA_transfer((uint32_t)ch+DTCM_CPU0_DMA_ADDR_OFFSET, AUDIO_BYPASS_START,i, CHAN0, LINK_LIST_ITEM); 
-
-        //memcpy((uint8_t *)g_u32_audioBypassAddr, pu16_rawDataAddr, u32_tmpRawDataLenght);
-        memcpy((uint8_t *)g_u32_audioBypassAddr,ch,i);                    
+        memcpy((uint8_t *)g_u32_audioBypassAddr, ch, 4);
+        memcpy((uint8_t *)g_u32_audioBypassAddr, g_u8_userDataArray, 8);     
+        memcpy((uint8_t *)g_u32_audioBypassAddr, &ch[4], i-4);
+        //memcpy((uint8_t *)g_u32_audioBypassAddr, ch, i);                  
         //dlog_info("encode mp3 ok %d %d %x\n", SysTicks_GetTickCount()-tick,(*pu32_newPcmDataFlagAddr),g_u32_dstAddress);
         
         g_u32_dstAddress+=i;

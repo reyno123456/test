@@ -132,3 +132,29 @@ void HAL_SRAM_ChannelConfig(ENUM_HAL_SRAM_CHANNEL_TYPE e_channelType,
 }
 
 
+#ifdef ARCAST
+uint32_t HAL_SRAM_GetMp3BufferLength(void)
+{
+    return SRAM_GetMp3BufferLength();
+}
+
+
+uint32_t HAL_SRAM_GetMp3Data(uint32_t dataLen, uint8_t *dataBuff)
+{
+    return SRAM_GetMp3Data(dataLen, dataBuff);
+}
+
+void HAL_SRAM_ResetAudioRecv(void)
+{
+    if (sramReady0 == 1)
+    {
+        SRAM_Ready0Confirm();
+    }
+}
+
+
+#endif
+
+
+
+
