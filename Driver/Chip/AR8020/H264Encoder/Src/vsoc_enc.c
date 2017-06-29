@@ -209,7 +209,7 @@ void init_view0(unsigned int width, unsigned int height, unsigned int gop, unsig
         ;
     }
     WRITE_WORD((ENC_REG_ADDR+(0x0b<<2)),0x12469422);
-    WRITE_WORD((ENC_REG_ADDR+(0x0c<<2)),0x00FFFF03); // bs_info enable, aciprato enable, lhu
+    WRITE_WORD((ENC_REG_ADDR+(0x0c<<2)),0x00FFFF02); // bs_info enable, aciprato enable, lhu
 
     if( height <= 720 ) {
         dlog_info("v0 <= 720p\n");
@@ -321,7 +321,7 @@ void init_view1(unsigned int width, unsigned int height, unsigned int gop, unsig
         ;
     }
     WRITE_WORD((ENC_REG_ADDR+(0x24<<2)),0x12469422);
-    WRITE_WORD((ENC_REG_ADDR+(0x25<<2)),0x01FFFF03); // bs_info enable, acipratio enable, lhu
+    WRITE_WORD((ENC_REG_ADDR+(0x25<<2)),0x01FFFF02); // bs_info enable, acipratio enable, lhu
 
     if( height <= 720 ) {
         dlog_info("v1 <= 720p\n");

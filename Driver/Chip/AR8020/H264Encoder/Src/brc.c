@@ -640,6 +640,9 @@ void my_rc_params( unsigned int view_idx ) {
         prca->RCISliceBitRatioMax= (i>>8)&0x3f;
         prca->RCIoverPRatio = (i>>16)&0xf;
         prca->RCISliceBitRatio = (i>>24)&0xf;
+        unsigned int width_in256 = ((prca->width + 255) & (~(0xFF)));
+        prca->dvp_lb_freesize = 24576 - (( (width_in256 << 2)  + (width_in256<< 1) )); // 24576 - picture width * 16*3/2/4
+        //dlog_info("dvp_lb_freesize %08x\n", prca->dvp_lb_freesize);
 }
 
 

@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "debuglog.h"
+#include "systicks.h"
 #include "data_type.h"
 #include "enc_internal.h"
 #include "brc.h"
@@ -407,13 +408,15 @@ static void H264_Encoder_BBModulationChangeCallback(void* p)
 
 static void VEBRC_IRQ_Wrap_Handler(uint32_t u32_vectorNum)
 {
+    uint32_t v0_last_row;
+	uint32_t v1_last_row;
     uint32_t view0_feedback = Reg_Read32(ENC_REG_ADDR+(0x09<<2));
     uint32_t view1_feedback = Reg_Read32(ENC_REG_ADDR+(0x22<<2));
 
     if(g_stEncoderStatus[0].running == 1)  // View0 is opened
     {
         // check if this is the last row
-        uint32_t v0_last_row = ((view0_feedback >> 8) & 0x01);
+        v0_last_row = ((view0_feedback >> 8) & 0x01);
 
         if(v0_last_row)
         {
@@ -433,7 +436,7 @@ static void VEBRC_IRQ_Wrap_Handler(uint32_t u32_vectorNum)
     if(g_stEncoderStatus[1].running == 1)  // View1 is opened
     {
         // check if this is the last row
-        uint32_t v1_last_row = ((view1_feedback >> 8) & 0x01);
+        v1_last_row = ((view1_feedback >> 8) & 0x01);
 
         if(v1_last_row)
         {
@@ -449,6 +452,43 @@ static void VEBRC_IRQ_Wrap_Handler(uint32_t u32_vectorNum)
                 g_stEncoderStatus[1].running = 0;
                 dlog_info("Buffer level %d, close view 1.", buf_level);
             }
+
+#ifdef ARCAST
+            if( ( (view1_feedback >> 1) & 0x01) == 1)   // Check if it is one I frame.
+            {
+                // Switch to DVP1 input debug register
+                //  WRITE_WORD( (ENC_REG_ADDR+ (0x37<<2)), 0x12000000);
+                //  unsigned int lb_freeblk = Reg_Read32( (unsigned int)(ENC_REG_ADDR + 0xE4) );
+
+                WRITE_WORD( (ENC_REG_ADDR+ (0x37<<2)), 0x0a000000);
+                unsigned int freespace = Reg_Read32( (unsigned int)(ENC_REG_ADDR + 0xFC) );
+
+                //dlog_info("xxx%08x %08x\n", lb_freeblk, freespace);
+                if( (freespace & 0xFFFF) == rca[1].dvp_lb_freesize ) 
+                {
+                    // insert timestamp data, not only consider view1.
+                    // close encoder channel
+                    uint32_t tick;
+                    uint32_t tmp;
+                    uint8_t  sum = 0;
+
+                    Reg_Write32( (unsigned int) 0xa003004c, 0x04);
+                    
+                    tick = SysTicks_GetTickCount();
+                    //head: 0x35 + 0x53 + 0x55 + sum
+                    sum += (0x35+0x53+0x55+((tick>>24)&0xff) + ((tick>>16) & 0xff) + ((tick>>8)& 0xff) + (tick& 0xff));
+                    tmp = (sum << 24) + (0x55 << 16) + (0x53 <<8) + 0x35;
+
+                    Reg_Write32( (unsigned int) 0xb1800000, tmp);
+                    tmp = ( ((tick & 0xff)<<24) + ((tick & 0xff00)<<8) + ((tick & 0xff0000)>>8) + ((tick & 0xff000000)<<24));
+                    Reg_Write32( (unsigned int) 0xb1800000, tmp);
+
+                    //
+                    Reg_Write32( (unsigned int) 0xa003004c, 0x00); // back to encoder channel
+                    //dlog_info("TS tick = 0x%08x 0x%02x\n", tick, sum);
+                }
+           }
+#endif
         }
     }
 

@@ -209,6 +209,7 @@ typedef struct my_rc{
   int poweron_rc_params_set;                     // 0x908
   unsigned char firstpframe_coming;				 // 
   unsigned char ac_br_index;
+  unsigned int dvp_lb_freesize;                
 } RC_DATA;
 
 
