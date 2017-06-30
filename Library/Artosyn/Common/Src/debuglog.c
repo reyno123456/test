@@ -9,7 +9,7 @@
 #include "interrupt.h"
 #include "hal_uart.h"
 
-uint8_t g_log_level = LOG_LEVEL_WARNING;
+volatile uint8_t g_log_level = LOG_LEVEL_WARNING;
 
 static uint8_t s_u8_dlogServerCpuId = 0xFF;
 
@@ -41,7 +41,7 @@ static uint8_t s_u8_dlogServerCpuId = 0xFF;
 
 #define DEBUG_LOG_END                    (0x1f)
 
-#define DLOG_INPUT_MAX_CMD_PAR           (6)
+#define DLOG_INPUT_MAX_CMD_PAR           (10)
 
 typedef struct
 {

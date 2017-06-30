@@ -24,6 +24,7 @@
 #include "hal_sram.h"
 #include "arcast_appcommon.h"
 #include "hal_pmu.h"
+#include "hal_rtc.h"
 
 
 void CONSOLE_Init(void)
@@ -62,6 +63,7 @@ int main(void)
 
     HDMI_powerOn();
     
+    HAL_RTC_INIT();
 
     *((uint8_t *)(SRAM_MODULE_SHARE_AUDIO_PCM)) = HAL_SOFTI2S_ENCODE_IEC_48000;
     STRU_MP3_ENCODE_CONFIGURE_WAVE st_audioConfig;

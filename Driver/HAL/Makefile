@@ -65,7 +65,8 @@ SRC_C := Src/hal.c \
          Src/hal_softi2s_left48.c \
          Src/hal_softi2s_right48.c \
          Src/hal_norflash.c \
-         Src/hal_pmu.c 
+         Src/hal_pmu.c \
+         Src/hal_rtc.c
 
 INCDIRS := -IInc \
            -I$(TOP_DIR)/Configure/Include \
@@ -148,6 +149,7 @@ install:
 	@cp -f Inc/hal_encodemp3.h $(OUTPUT_HEADER_STAGING_DIR) 
 	@cp -f Inc/hal_norflash.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f Inc/hal_pmu.h $(OUTPUT_HEADER_STAGING_DIR)
+	@cp -f Inc/hal_rtc.h $(OUTPUT_HEADER_STAGING_DIR)
 clean:
 	@echo "Cleaning..."
 	@$(RM) $(LIB) $(OBJ_C) .depend $(OUTPUT_LIB_STAGING_DIR)/$(CPU_NUMBER)/$(LIB)
@@ -172,6 +174,7 @@ clean:
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_softi2s.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_encodemp3.h
 	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_pmu.h
+	@$(RM) $(OUTPUT_HEADER_STAGING_DIR)/hal_rtc.h
 
 .PHONY: all clean install
 #########################################################################

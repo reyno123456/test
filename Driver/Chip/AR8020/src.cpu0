@@ -9,6 +9,7 @@ SRC_C := SysCtl/Src/reg_rw.c \
          SysCtl/Src/cpu_info.c \
          SysCtl/Src/interrupt.c \
          SysCtl/Src/mpu.c \
+         SysCtl/Src/rtc.c \
          UART/Src/serial.c \
          CAN/Src/can.c \
          SD/Src/sd_core.c \

@@ -24,6 +24,7 @@
 #include "hal_usb_device.h"
 #include "hal_sram.h"
 #include "hal_dma.h"
+#include "hal_rtc.h"
 
 
 void CONSOLE_Init(void)
@@ -35,7 +36,9 @@ void CONSOLE_Init(void)
 static void GenericInitial(void const *argument)
 {
     //HAL_PMU_Init();
-    Common_AVFORMATSysEventGroundInit();
+    //Common_AVFORMATSysEventGroundInit();
+    //HAL_RTC_INIT();
+    HAL_RTC_GlobalTimerINIT();
     vTaskDelete(NULL);
 }
 
@@ -97,7 +100,7 @@ static void Mp3Decoder(void const *argument)
                     }
                     else
                     {
-                        #if 0
+                        #if 1
                         k++;
                         if (k>100)
                         {
@@ -198,7 +201,7 @@ int main(void)
     HAL_SYS_CTL_GetConfig( &pst_cfg);
     pst_cfg->u8_workMode = 1;
     HAL_SYS_CTL_Init(pst_cfg);
-
+    g_log_level = 4;
     /* initialize the uart */
     CONSOLE_Init();
 	
@@ -236,7 +239,6 @@ int main(void)
 
 	osThreadDef(MP3_Task, Mp3Decoder, osPriorityBelowNormal, 0, 6 * 1024);
     osThreadCreate(osThread(MP3_Task), NULL);
-
 	
     osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 16 * 128);
     osThreadCreate(osThread(IOTask), NULL);

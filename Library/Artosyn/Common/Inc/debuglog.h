@@ -14,7 +14,7 @@ extern "C"
 #define LOG_LEVEL_WARNING 3
 #define LOG_LEVEL_INFO 4
 
-extern uint8_t g_log_level;
+extern volatile uint8_t g_log_level;
 
 #define DLOG_Critical(fmt, arg...) \
 do \
