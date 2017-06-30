@@ -9,6 +9,8 @@
 #include "test_bb.h"
 
 extern void BB_uart10_spi_sel(uint32_t sel_dat);
+static void command_set_loglevel(char* cpu, char* loglevel);
+
 
 unsigned int command_str2uint(char *str)
 {
@@ -90,13 +92,29 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         BB_uart10_spi_sel( strtoul(cmdArray[1], NULL, 0) );
     }
+    else if ((memcmp(cmdArray[0], "set_loglevel", strlen("set_loglevel")) == 0))
+    {
+        command_set_loglevel(cmdArray[1], cmdArray[2]);
+    }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0) 
     {
         dlog_error("Please use commands like:");
         dlog_error("BB_uart10_spi_sel <value>");
         dlog_error("read <address>");
         dlog_error("write <address> <data>");
+        dlog_error("set_loglevel <cpuid> <loglevel>");
         dlog_output(1000);
     }
+}
+
+static void command_set_loglevel(char* cpu, char* loglevel)
+{
+    uint8_t level = command_str2uint(loglevel);
+    if (memcmp(cpu, "cpu1", strlen("cpu1")) == 0)
+    {
+        g_log_level = level;
+    }
+
+    return;
 }
 

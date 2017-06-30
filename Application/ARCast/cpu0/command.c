@@ -15,6 +15,7 @@ void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
 static void command_dma(char * u32_src, char *u32_dst, char *u32_byteNum);
 static void command_test_dma_loop(char * u32_src, char *u32_dst, char *u32_byteNum);
+static void command_set_loglevel(char* cpu, char* loglevel);
 
 
 
@@ -70,6 +71,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_hdmiHandler(cmdArray[1]);
     }
+    else if ((memcmp(cmdArray[0], "set_loglevel", strlen("set_loglevel")) == 0))
+    {
+        command_set_loglevel(cmdArray[1], cmdArray[2]);
+    }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
         dlog_error("Please use the commands like:");
@@ -85,6 +90,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("hal_i2c_write <ch> <subAddr> <subAddrLen> <data> <dataLen>");
         dlog_error("bb_uart");
         dlog_error("hdmi <index>");
+        dlog_error("set_loglevel <cpuid> <loglevel>");
         dlog_output(1000);
     }
 }
@@ -232,5 +238,16 @@ static void command_test_dma_loop(char * u32_src, char *u32_dst, char *u32_byteN
         command_dma(u32_src, u32_dst, u32_byteNum);
         dlog_info("i = %d\n", i++);
     }
+}
+
+static void command_set_loglevel(char* cpu, char* loglevel)
+{
+    uint8_t level = command_str2uint(loglevel);
+    if (memcmp(cpu, "cpu1", strlen("cpu1")) == 0)
+    {
+        g_log_level = level;
+    }
+
+    return;
 }
 

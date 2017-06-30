@@ -25,6 +25,7 @@ void command_eraseSdcard(char *startBlock, char *blockNum);
 void command_upgrade(void);
 void command_sendCtrl(void);
 void command_sendVideo(void);
+static void command_set_loglevel(char* cpu, char* loglevel);
 
 void command_run(char *cmdArray[], uint32_t cmdNum)
 {
@@ -88,6 +89,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_dma(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
+    else if ((memcmp(cmdArray[0], "set_loglevel", strlen("set_loglevel")) == 0))
+    {
+        command_set_loglevel(cmdArray[1], cmdArray[2]);
+    }
     /* error command */
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
@@ -113,6 +118,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_TestGpioNormalRange <gpionum1> <gpionum2> <highorlow>");
         dlog_error("test_TestGpioInterrupt <gpionum> <inttype> <polarity>");
         dlog_error("test_dma_cpu1 <src> <dst> <byte_num>");
+        dlog_error("set_loglevel <cpuid> <loglevel>");
     }
 }
 
@@ -289,7 +295,16 @@ void delay_ms(uint32_t num)
     for (i = 0; i < num * 100; i++);
 }
 
+static void command_set_loglevel(char* cpu, char* loglevel)
+{
+    uint8_t level = command_str2uint(loglevel);
+    if (memcmp(cpu, "cpu1", strlen("cpu1")) == 0)
+    {
+        g_log_level = level;
+    }
 
+    return;
+}
 
 
 

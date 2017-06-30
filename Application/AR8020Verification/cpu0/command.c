@@ -55,6 +55,8 @@ void command_adc(char * channel);
 void command_usbHostEnterTestMode(void);
 void command_malloc(char *size);
 void command_sdMount(void);
+static void command_set_loglevel(char* cpu, char* loglevel);
+
 
 
 
@@ -454,6 +456,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     else if (memcmp(cmdArray[0], "test_local_irq", strlen("test_local_irq")) == 0)
     {
         command_TestLocalIrq();
+    }  
+    else if ((memcmp(cmdArray[0], "set_loglevel", strlen("set_loglevel")) == 0))
+    {
+        command_set_loglevel(cmdArray[1], cmdArray[2]);
     }
     else if ((memcmp(cmdArray[0], "top", strlen("top")) == 0))
     {
@@ -545,6 +551,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("NvSetBbRcId <id1> <id2> <id3> <id4> <id5>");
         dlog_error("test_local_irq");
         dlog_error("malloc <size>");
+        dlog_error("set_loglevel <cpuid> <loglevel>");
         dlog_error("top");
         dlog_output(1000);
     }
@@ -786,5 +793,14 @@ void command_sdMount(void)
     HAL_SD_Fatfs_Init();
 }
 
+static void command_set_loglevel(char* cpu, char* loglevel)
+{
+    uint8_t level = command_str2uint(loglevel);
+    if (memcmp(cpu, "cpu0", strlen("cpu0")) == 0)
+    {
+        g_log_level = level;
+    }
 
+    return;
+}
 

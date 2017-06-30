@@ -15,6 +15,9 @@
 #include "hal_nvic.h"
 #include "test_float.h"
 
+unsigned int command_str2uint(char *str);
+static void command_set_loglevel(char* cpu, char* loglevel);
+
 extern void BB_uart10_spi_sel(uint32_t sel_dat);
 
 void command_run(char *cmdArray[], uint32_t cmdNum)
@@ -33,12 +36,33 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
                     strtoul(cmdArray[4], NULL, 0)   //param2
                     );
     }
+    else if ((memcmp(cmdArray[0], "set_loglevel", strlen("set_loglevel")) == 0))
+    {
+        command_set_loglevel(cmdArray[1], cmdArray[2]);
+    }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0) 
     {
         dlog_error("Please use commands like:");
         dlog_error("BB_uart10_spi_sel <value>");
         dlog_error("BB_add_cmds <type> <param0> <param1> <param2>");		
+        dlog_error("set_loglevel <cpuid> <loglevel>");
         dlog_output(1000);	
     }
+}
+
+unsigned int command_str2uint(char *str)
+{
+    return strtoul(str, NULL, 0); 
+}
+
+static void command_set_loglevel(char* cpu, char* loglevel)
+{
+    uint8_t level = command_str2uint(loglevel);
+    if (memcmp(cpu, "cpu2", strlen("cpu2")) == 0)
+    {
+        g_log_level = level;
+    }
+
+    return;
 }
 

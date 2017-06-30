@@ -9,44 +9,40 @@ extern "C"
 
 #include <stdio.h>
 
-#define LOG_LEVEL_CRITICAL 0
-#define LOG_LEVEL_ERROR 1
-#define LOG_LEVEL_WARNING 2
-#define LOG_LEVEL_INFO 3
+#define LOG_LEVEL_CRITICAL 1
+#define LOG_LEVEL_ERROR 2
+#define LOG_LEVEL_WARNING 3
+#define LOG_LEVEL_INFO 4
 
-#define LOG_LEVEL_DEFAULT LOG_LEVEL_INFO
+extern uint8_t g_log_level;
 
-#define LOG_LEVEL LOG_LEVEL_DEFAULT
+#define DLOG_Critical(fmt, arg...) \
+do \
+{ \
+    {if (g_log_level >= LOG_LEVEL_CRITICAL) \
+    printf("CPU%d: %s\t" fmt "\n", *((int*)0x0000018C), __FUNCTION__, ##arg);} \
+}while(0)
 
-#define _print_log(fmt, arg...)  \
-    do \
-    { \
-        printf("CPU%d: %s\t" fmt "\n", *((int*)0x0000018C), __FUNCTION__, ##arg);   \
-    }while(0)
+#define DLOG_Error(fmt, arg...) \
+do \
+{ \
+    {if (g_log_level >= LOG_LEVEL_ERROR) \
+    printf("CPU%d: %s\t" fmt "\n", *((int*)0x0000018C), __FUNCTION__, ##arg);} \
+}while(0)
 
-#if(LOG_LEVEL_CRITICAL <= LOG_LEVEL)
-    #define DLOG_Critical(fmt, arg...)    _print_log(fmt, ##arg)
-#else
-    #define DLOG_Critical(fmt, arg...)    do{} while(0)
-#endif
- 
-#if(LOG_LEVEL_ERROR <= LOG_LEVEL)
-    #define DLOG_Error(fmt, arg...)   _print_log(fmt, ##arg)
-#else
-    #define DLOG_Error(fmt, arg...)   do{} while(0)
-#endif
+#define DLOG_Warning(fmt, arg...) \
+do \
+{ \
+    {if (g_log_level >= LOG_LEVEL_WARNING)  \
+    printf("CPU%d: %s\t" fmt "\n", *((int*)0x0000018C), __FUNCTION__, ##arg);} \
+}while(0)
 
-#if(LOG_LEVEL_WARNING <= LOG_LEVEL)
-    #define DLOG_Warning(fmt, arg...)   _print_log(fmt, ##arg)
-#else
-    #define DLOG_Warning(fmt, arg...)   do{} while(0)
-#endif
-
-#if(LOG_LEVEL_INFO <= LOG_LEVEL)
-    #define DLOG_Info(fmt, arg...)   _print_log(fmt, ##arg)
-#else
-    #define DLOG_Info(fmt, arg...)   do{} while(0)
-#endif
+#define DLOG_Info(fmt, arg...) \
+do \
+{ \
+    {if (g_log_level >= LOG_LEVEL_INFO) \
+    printf("CPU%d: %s\t" fmt "\n", *((int*)0x0000018C), __FUNCTION__, ##arg);} \
+}while(0)
 
 #define DEBUG_LOG_USE_SRAM_OUTPUT_BUFFER
 #define DEBUG_LOG_OUTPUT_CPU_AFTER_CPU

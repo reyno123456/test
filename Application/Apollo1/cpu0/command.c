@@ -17,6 +17,8 @@
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
+static void command_set_loglevel(char* cpu, char* loglevel);
+
 
 void command_run(char *cmdArray[], uint32_t cmdNum)
 {
@@ -117,6 +119,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_showUVC();
     }
+    else if ((memcmp(cmdArray[0], "set_loglevel", strlen("set_loglevel")) == 0))
+    {
+        command_set_loglevel(cmdArray[1], cmdArray[2]);
+    }
     /* error command */
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
@@ -141,6 +147,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("startuvc <width> <height>");
         dlog_error("saveuvc");
         dlog_error("stopsaveuvc");
+        dlog_error("set_loglevel <cpuid> <loglevel>");
         dlog_output(1000);
     }
 }
@@ -208,4 +215,14 @@ void command_writeMemory(char *addr, char *value)
     *((unsigned int *)(writeAddress)) = writeValue;
 }
 
+static void command_set_loglevel(char* cpu, char* loglevel)
+{
+    uint8_t level = command_str2uint(loglevel);
+    if (memcmp(cpu, "cpu0", strlen("cpu0")) == 0)
+    {
+        g_log_level = level;
+    }
+
+    return;
+}
 

@@ -22,6 +22,7 @@ void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
 void command_upgrade(void);
 void command_malloc(char *size);
+static void command_set_loglevel(char* cpu, char* loglevel);
 
 
 void command_run(char *cmdArray[], uint32_t cmdNum)
@@ -131,6 +132,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         /* like linux busybox top system call */
         ar_top();
     }
+    else if ((memcmp(cmdArray[0], "set_loglevel", strlen("set_loglevel")) == 0))
+    {
+        command_set_loglevel(cmdArray[1], cmdArray[2]);
+    }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
         dlog_error("Please use the commands like:");
@@ -156,6 +161,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_sd <choise>");
         dlog_error("malloc <size>");
         dlog_error("top");
+        dlog_error("set_loglevel <cpuid> <loglevel>");
     }
 }
 
@@ -242,5 +248,16 @@ void command_malloc(char *size)
 	}
 
 	return;
+}
+
+static void command_set_loglevel(char* cpu, char* loglevel)
+{
+    uint8_t level = command_str2uint(loglevel);
+    if (memcmp(cpu, "cpu1", strlen("cpu1")) == 0)
+    {
+        g_log_level = level;
+    }
+
+    return;
 }
 

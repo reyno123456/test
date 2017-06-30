@@ -9,6 +9,8 @@
 #include "interrupt.h"
 #include "hal_uart.h"
 
+uint8_t g_log_level = LOG_LEVEL_WARNING;
+
 static uint8_t s_u8_dlogServerCpuId = 0xFF;
 
 #define DEBUG_LOG_OUTPUT_BUF_HEAD_0      ((char*)(((STRU_DebugLogOutputBuffer*)SRAM_DEBUG_LOG_OUTPUT_BUFFER_ST_ADDR_0)->buf))

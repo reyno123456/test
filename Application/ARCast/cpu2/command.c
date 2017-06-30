@@ -10,6 +10,13 @@
 #include "hal_nvic.h"
 #include "memory_config.h"
 
+static void command_set_loglevel(char* cpu, char* loglevel);
+
+unsigned int command_str2uint(char *str)
+{
+    return strtoul(str, NULL, 0); 
+}
+
 void command_run(char *cmdArray[], uint32_t cmdNum)
 {
     extern int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2);
@@ -26,10 +33,28 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
                     strtoul(cmdArray[4], NULL, 0)   //param2
                     );
     }
+    else if ((memcmp(cmdArray[0], "set_loglevel", strlen("set_loglevel")) == 0))
+    {
+        command_set_loglevel(cmdArray[1], cmdArray[2]);
+    }
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0) 
     {
         dlog_error("Please use commands like:");
         dlog_error("BB_uart10_spi_sel <value>");
         dlog_error("BB_add_cmds <type> <param0> <param1> <param2>");
+        dlog_error("set_loglevel <cpuid> <loglevel>");
     }
 }
+
+static void command_set_loglevel(char* cpu, char* loglevel)
+{
+    uint8_t level = command_str2uint(loglevel);
+    if (memcmp(cpu, "cpu1", strlen("cpu1")) == 0)
+    {
+        g_log_level = level;
+    }
+
+    return;
+}
+
+

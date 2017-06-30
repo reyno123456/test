@@ -8,6 +8,8 @@
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
+static void command_set_loglevel(char* cpu, char* loglevel);
+
 
 void command_run(char *cmdArray[], uint32_t cmdNum)
 {
@@ -21,12 +23,17 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_writeMemory(cmdArray[1], cmdArray[2]);
     }
+    else if ((memcmp(cmdArray[0], "set_loglevel", strlen("set_loglevel")) == 0))
+    {
+        command_set_loglevel(cmdArray[1], cmdArray[2]);
+    }
     /* error command */
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
         dlog_error("Please use the commands like:");
         dlog_error("read <address>");
         dlog_error("write <address> <data>");
+        dlog_error("set_loglevel <cpuid> <loglevel>");
     }
 }
 
@@ -92,3 +99,15 @@ void command_writeMemory(char *addr, char *value)
 
     *((unsigned int *)(writeAddress)) = writeValue;
 }
+
+static void command_set_loglevel(char* cpu, char* loglevel)
+{
+    uint8_t level = command_str2uint(loglevel);
+    if (memcmp(cpu, "cpu1", strlen("cpu1")) == 0)
+    {
+        g_log_level = level;
+    }
+
+    return;
+}
+
