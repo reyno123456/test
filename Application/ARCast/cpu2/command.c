@@ -49,7 +49,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
 static void command_set_loglevel(char* cpu, char* loglevel)
 {
     uint8_t level = command_str2uint(loglevel);
-    if (memcmp(cpu, "cpu1", strlen("cpu1")) == 0)
+    if (memcmp(cpu, "cpu2", strlen("cpu2")) == 0)
     {
         g_log_level = level;
     }

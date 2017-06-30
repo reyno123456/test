@@ -253,7 +253,7 @@ void command_malloc(char *size)
 static void command_set_loglevel(char* cpu, char* loglevel)
 {
     uint8_t level = command_str2uint(loglevel);
-    if (memcmp(cpu, "cpu1", strlen("cpu1")) == 0)
+    if (memcmp(cpu, "cpu1", strlen("cpu0")) == 0)
     {
         g_log_level = level;
     }
