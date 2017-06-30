@@ -51,7 +51,7 @@ int main(void)
 
     /* initialize the uart */
     console_init(0,115200);
-    dlog_info("cpu0 start!!! \n");
+    dlog_critical("cpu0 start!!! \n");
 
     HAL_USB_ConfigPHY();
 
