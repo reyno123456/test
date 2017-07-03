@@ -184,4 +184,16 @@ uint32_t SysTicks_GetDiff(uint32_t u32_start, uint32_t u32_end)
     }
 }
 
+uint64_t SysTicks_GetUsDiff(uint64_t u64_start, uint64_t u64_end)
+{
+    if (u64_end >= u64_start)
+    {
+        return (u64_end - u64_start);
+    }
+    else
+    {
+       return ((((uint64_t)0xFFFFFFFFFFFFFFFF) - u64_start) + u64_end);
+    }
+}
+
 

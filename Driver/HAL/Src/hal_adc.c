@@ -12,6 +12,8 @@ History:
 
 #include <stdint.h>
 #include "reg_rw.h"
+#include "debuglog.h"
+#include "systicks.h"
 #include "hal_adc.h"
 
 /** 
@@ -21,10 +23,39 @@ History:
  * Sample interval = 0.48us;
  * @return  the digital value of AD
  */
-uint32_t HAL_ADC_Read(uint8_t channel)
+
+uint8_t  s_u8_AdcChannelBack = 0;
+uint64_t s_u64_AdcTickBack = 0;
+
+uint32_t HAL_ADC_Read(uint8_t channel, uint8_t nextChannel)
 {
-	uint32_t u32_SarAddr = 0x40B000EC;
-	uint32_t u32_dateAddr = 0x40B000F4;
-	Reg_Write32(u32_SarAddr, channel << 2);
-	return Reg_Read32(u32_dateAddr);
+    uint32_t u32_dateAddr = 0x40B000F4;
+    uint32_t u32_SarAddr = 0x40B000EC;
+    
+    if (s_u8_AdcChannelBack != channel)
+    {
+        Reg_Write32(u32_SarAddr, channel << 2);
+        SysTicks_DelayUS(5);
+        s_u8_AdcChannelBack = channel;
+    }
+    else
+    {
+        uint64_t u64_usDiff = SysTicks_GetUsDiff(s_u64_AdcTickBack, SysTicks_GetUsTickCount());
+        if (u64_usDiff < 5)
+        {
+            SysTicks_DelayUS(5-u64_usDiff);
+        }
+    }
+    
+    uint32_t u32_recValue = Reg_Read32(u32_dateAddr);
+
+    if (s_u8_AdcChannelBack != nextChannel)
+    {
+        Reg_Write32(u32_SarAddr, nextChannel << 2);
+        s_u8_AdcChannelBack = nextChannel;
+        s_u64_AdcTickBack = SysTicks_GetUsTickCount();
+    }
+
+
+    return u32_recValue;
 }

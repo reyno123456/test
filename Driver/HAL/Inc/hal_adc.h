@@ -28,7 +28,7 @@ extern "C"
  * Sample interval = 0.48us;
  * @return  the digital value of AD
  */
-uint32_t HAL_ADC_Read(uint8_t channel);
+uint32_t HAL_ADC_Read(uint8_t channel, uint8_t nextChannel);
 
 #ifdef __cplusplus
 }
