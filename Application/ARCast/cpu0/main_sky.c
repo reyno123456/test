@@ -24,7 +24,6 @@
 #include "hal_sram.h"
 #include "arcast_appcommon.h"
 #include "hal_pmu.h"
-#include "hal_rtc.h"
 
 
 void CONSOLE_Init(void)
@@ -51,9 +50,10 @@ int main(void)
     HAL_SYS_CTL_GetConfig( &pst_cfg);
     pst_cfg->u8_workMode = 0;
     HAL_SYS_CTL_Init(pst_cfg);
+    g_log_level = LOG_LEVEL_INFO;
     /* initialize the uart */
     CONSOLE_Init();
-    dlog_info("cpu0 start!!! \n");
+    dlog_critical("cpu0 start!!! \n");
     
     //HAL_PMU_Init();
     
@@ -63,8 +63,6 @@ int main(void)
 
     HDMI_powerOn();
     
-    HAL_RTC_INIT();
-
     *((uint8_t *)(SRAM_MODULE_SHARE_AUDIO_PCM)) = HAL_SOFTI2S_ENCODE_IEC_48000;
     STRU_MP3_ENCODE_CONFIGURE_WAVE st_audioConfig;
     st_audioConfig.e_samplerate = HAL_MP3_ENCODE_48000;

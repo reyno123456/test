@@ -7,6 +7,8 @@
 #include "hal_softi2s.h"
 #include "hal_uart.h"
 
+
+
 void CONSOLE_Init(void)
 {
     dlog_init(command_run, DLOG_CLIENT_PROCESSOR);
@@ -21,7 +23,7 @@ int main(void)
     HAL_SYS_CTL_Init(NULL);
     g_log_level = LOG_LEVEL_INFO;
     CONSOLE_Init();        
-    dlog_info("cpu1 start!!!\n"); 
+    dlog_critical("cpu1 start!!!\n"); 
     STRU_HAL_SOFTI2S_INIT st_audioConfig = {AUDIO_DATA_START,HAL_GPIO_NUM35,HAL_GPIO_NUM70,HAL_GPIO_NUM20};
     HAL_SOFTI2S_Init(&st_audioConfig);
     HAL_SOFTI2S_Funct();

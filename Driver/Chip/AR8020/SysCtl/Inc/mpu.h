@@ -50,39 +50,56 @@
 
 // SRAM DCache disable
 #define SRAM_MEMORY_MPU_REGION_NUMBER                    0
-#define SRAM_MEMORY_MPU_REGION_ST_ADDR_0                 0x21004000
-#define SRAM_MEMORY_MPU_REGION_ATTR_0                    (MPU_DEFS_RASE_AP_FULL_ACCESS) | \
+#define SRAM_MEMORY_MPU_REGION_ST_ADDR                   0x21004000
+#define SRAM_MEMORY_MPU_REGION_ATTR                      (MPU_DEFS_RASE_AP_FULL_ACCESS) | \
                                                          (1  << 19) | \
                                                          (MPU_DEFS_RASR_SIZE_16KB) | \
                                                          (MPU_RASR_ENABLE_Msk)
 
 #define SRAM_CONFIGURE_MEMORY_MPU_REGION_NUMBER          1
-#define SRAM_CONFIGURE_MEMORY_MPU_REGION_ST_ADDR_1       SRAM_CONFIGURE_MEMORY_ST_ADDR
-#define SRAM_CONFIGURE_MEMORY_MPU_REGION_ATTR_1          (0  << 28) | \
+#define SRAM_CONFIGURE_MEMORY_MPU_REGION_ST_ADDR         SRAM_CONFIGURE_MEMORY_ST_ADDR
+#define SRAM_CONFIGURE_MEMORY_MPU_REGION_ATTR            (0  << 28) | \
                                                          (MPU_DEFS_RASE_AP_FULL_ACCESS) | \
                                                          (1  << 19) | \
                                                          (MPU_DEFS_RASR_SIZE_4KB) | \
                                                          (MPU_RASR_ENABLE_Msk)
 
 #define SRAM_DEBUG_MEMORY_MPU_REGION_NUMBER              2
-#define SRAM_DEBUG_MEMORY_MPU_REGION_ST_ADDR_2           SRAM_DEBUG_LOG_BUFFER_ST_ADDR
-#define SRAM_DEBUG_MEMORY_MPU_REGION_ATTR_2              (MPU_DEFS_RASE_AP_FULL_ACCESS) | \
+#define SRAM_DEBUG_MEMORY_MPU_REGION_ST_ADDR             SRAM_DEBUG_LOG_BUFFER_ST_ADDR
+#define SRAM_DEBUG_MEMORY_MPU_REGION_ATTR                (MPU_DEFS_RASE_AP_FULL_ACCESS) | \
                                                          (1  << 19) | \
                                                          (MPU_DEFS_RASR_SIZE_8KB) | \
                                                          (MPU_RASR_ENABLE_Msk)
 
-#define QUAD_SPI_MPU_REGION_NUMBER                       3
-#define QUAD_SPI_MPU_REGION_ST_ADDR_3                    0x40C00000
-#define QUAD_SPI_MPU_REGION_ATTR_3                       (MPU_DEFS_RASE_AP_RO) | \
-                                                         (1  << 19) | \
-                                                         (MPU_DEFS_RASR_SIZE_512B) | \
-                                                         (MPU_RASR_ENABLE_Msk)
-#define SRAM_AV_MPU_REGION_NUMBER                       4
-#define SRAM_AV_MPU_REGION_ST_ADDR_4                    0x21000000
-#define SRAM_AV_MPU_REGION_ATTR_4                       (MPU_DEFS_RASE_AP_FULL_ACCESS) | \
+#define SRAM_AV_MPU_REGION_NUMBER                        3
+#define SRAM_AV_MPU_REGION_ST_ADDR                       0x21000000
+#define SRAM_AV_MPU_REGION_ATTR                          (MPU_DEFS_RASE_AP_FULL_ACCESS) | \
                                                          (1  << 19) | \
                                                          (MPU_DEFS_RASR_SIZE_16KB) | \
                                                          (MPU_RASR_ENABLE_Msk)                                                         
+
+#define WDT0_1_MPU_REGION_NUMBER                         4
+#define WDT0_1_MPU_REGION_ST_ADDR                        0x40600000
+#define WDT0_1_MPU_REGION_ATTR                           (MPU_DEFS_RASE_AP_NO_ACCESS) | \
+                                                         (1  << 19) | \
+                                                         (MPU_DEFS_RASR_SIZE_1MB) | \
+                                                         (MPU_RASR_ENABLE_Msk)
+
+#define WDT2_MPU_REGION_NUMBER                           5
+#define WDT2_MPU_REGION_ST_ADDR                          0xA0200000
+#define WDT2_MPU_REGION_ATTR                             (MPU_DEFS_RASE_AP_NO_ACCESS) | \
+                                                         (1  << 19) | \
+                                                         (MPU_DEFS_RASR_SIZE_64KB) | \
+                                                         (MPU_RASR_ENABLE_Msk)                                                    
+
+#define QUAD_SPI_MPU_REGION_NUMBER                       6
+#define QUAD_SPI_MPU_REGION_ST_ADDR                      0x40C00000
+#define QUAD_SPI_MPU_REGION_ATTR                         (MPU_DEFS_RASE_AP_RO) | \
+                                                         (1  << 19) | \
+                                                         (MPU_DEFS_RASR_SIZE_512B) | \
+                                                         (MPU_RASR_ENABLE_Msk)
+
+
 int32_t MPU_QuadspiProtectDisable(void);
 int32_t MPU_QuadspiProtectEnable(void);
 int32_t MPU_SetUp(void);

@@ -36,10 +36,17 @@ static void MPU_RegionConfigEnable(uint8_t u8_regionNum, uint32_t u32_addr, uint
 
 static void MPU_SRAMRegionConfigEnable(void)
 {
-    MPU_RegionConfigEnable(SRAM_MEMORY_MPU_REGION_NUMBER, SRAM_MEMORY_MPU_REGION_ST_ADDR_0, SRAM_MEMORY_MPU_REGION_ATTR_0);
-    MPU_RegionConfigEnable(SRAM_CONFIGURE_MEMORY_MPU_REGION_NUMBER, SRAM_CONFIGURE_MEMORY_MPU_REGION_ST_ADDR_1, SRAM_CONFIGURE_MEMORY_MPU_REGION_ATTR_1);
-    MPU_RegionConfigEnable(SRAM_DEBUG_MEMORY_MPU_REGION_NUMBER, SRAM_DEBUG_MEMORY_MPU_REGION_ST_ADDR_2, SRAM_DEBUG_MEMORY_MPU_REGION_ATTR_2);
-    MPU_RegionConfigEnable(SRAM_AV_MPU_REGION_NUMBER, SRAM_AV_MPU_REGION_ST_ADDR_4, SRAM_AV_MPU_REGION_ATTR_4);
+    MPU_RegionConfigEnable(SRAM_MEMORY_MPU_REGION_NUMBER, SRAM_MEMORY_MPU_REGION_ST_ADDR, SRAM_MEMORY_MPU_REGION_ATTR);
+    MPU_RegionConfigEnable(SRAM_CONFIGURE_MEMORY_MPU_REGION_NUMBER, SRAM_CONFIGURE_MEMORY_MPU_REGION_ST_ADDR, SRAM_CONFIGURE_MEMORY_MPU_REGION_ATTR);
+    MPU_RegionConfigEnable(SRAM_DEBUG_MEMORY_MPU_REGION_NUMBER, SRAM_DEBUG_MEMORY_MPU_REGION_ST_ADDR, SRAM_DEBUG_MEMORY_MPU_REGION_ATTR);
+    MPU_RegionConfigEnable(SRAM_AV_MPU_REGION_NUMBER, SRAM_AV_MPU_REGION_ST_ADDR, SRAM_AV_MPU_REGION_ATTR);
+}
+
+static void MPU_PeripheraleRgionConfigEnable(void)
+{
+    MPU_RegionConfigEnable(WDT0_1_MPU_REGION_NUMBER, WDT0_1_MPU_REGION_ST_ADDR, WDT0_1_MPU_REGION_ATTR);
+    MPU_RegionConfigEnable(WDT2_MPU_REGION_NUMBER, WDT2_MPU_REGION_ST_ADDR, WDT2_MPU_REGION_ATTR);
+    MPU_RegionConfigEnable(QUAD_SPI_MPU_REGION_NUMBER, QUAD_SPI_MPU_REGION_ST_ADDR, QUAD_SPI_MPU_REGION_ATTR);  
 }
 
 
@@ -51,15 +58,11 @@ int32_t MPU_SetUp(void)
     }
 
     MPU_ControlDisable();
-    MPU_SRAMRegionConfigEnable();
-    MPU_RegionConfigEnable(QUAD_SPI_MPU_REGION_NUMBER, QUAD_SPI_MPU_REGION_ST_ADDR_3, QUAD_SPI_MPU_REGION_ATTR_3);
-    MPU_RegionConfigEnable(SRAM_AV_MPU_REGION_NUMBER, SRAM_AV_MPU_REGION_ST_ADDR_4, SRAM_AV_MPU_REGION_ATTR_4);
-    
-    
-    MPU_RegionConfigDisable(5);
-    MPU_RegionConfigDisable(6);
-    MPU_RegionConfigDisable(7);
 
+    MPU_SRAMRegionConfigEnable();
+    MPU_PeripheraleRgionConfigEnable();   
+    MPU_RegionConfigDisable(7);
+    
     MPU_ControlEnable();
 }
 
@@ -72,11 +75,9 @@ int32_t MPU_QuadspiProtectEnable(void)
     }
 
     MPU_ControlDisable();
+
     MPU_SRAMRegionConfigEnable();
-    MPU_RegionConfigEnable(QUAD_SPI_MPU_REGION_NUMBER, QUAD_SPI_MPU_REGION_ST_ADDR_3, QUAD_SPI_MPU_REGION_ATTR_3);
-    MPU_RegionConfigEnable(SRAM_AV_MPU_REGION_NUMBER, SRAM_AV_MPU_REGION_ST_ADDR_4, SRAM_AV_MPU_REGION_ATTR_4);
-    MPU_RegionConfigDisable(5);
-    MPU_RegionConfigDisable(6);
+    MPU_PeripheraleRgionConfigEnable();   
     MPU_RegionConfigDisable(7);
 
     MPU_ControlEnable();
@@ -94,11 +95,7 @@ int32_t MPU_QuadspiProtectDisable(void)
     MPU_ControlDisable();
 
     MPU_SRAMRegionConfigEnable();
-
     MPU_RegionConfigDisable(QUAD_SPI_MPU_REGION_NUMBER);
-    MPU_RegionConfigEnable(SRAM_AV_MPU_REGION_NUMBER, SRAM_AV_MPU_REGION_ST_ADDR_4, SRAM_AV_MPU_REGION_ATTR_4);
-    MPU_RegionConfigDisable(5);
-    MPU_RegionConfigDisable(6);
     MPU_RegionConfigDisable(7);
 
     MPU_ControlEnable();

@@ -24,7 +24,6 @@
 #include "hal_usb_device.h"
 #include "hal_sram.h"
 #include "hal_dma.h"
-#include "hal_rtc.h"
 
 
 void CONSOLE_Init(void)
@@ -37,8 +36,6 @@ static void GenericInitial(void const *argument)
 {
     //HAL_PMU_Init();
     //Common_AVFORMATSysEventGroundInit();
-    //HAL_RTC_INIT();
-    HAL_RTC_GlobalTimerINIT();
     vTaskDelete(NULL);
 }
 
