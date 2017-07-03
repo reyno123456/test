@@ -12,6 +12,7 @@
 void CONSOLE_Init(void)
 {
     dlog_init(command_run, DLOG_CLIENT_PROCESSOR);
+    
 }
 /**
   * @brief  Main program

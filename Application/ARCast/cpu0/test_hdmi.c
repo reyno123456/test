@@ -41,8 +41,6 @@ void command_hdmi(void)
     dlog_info("audio sampleRate=%d ", u32_sampleRate);
     get_vid_info();
     show_vid_info();
-    volatile uint16_t adc=HAL_ADC_Read(14);
-    dlog_info("ADC14=%d", adc);
 }
 
 static void chgbank( int bank )

@@ -12,6 +12,7 @@
 #include "sys_event.h"
 #include "reg_rw.h"
 #include "bb_types.h"
+#include "rtc.h"
 
 extern RC_DATA rca[];
 #define H264_ENCODER_BUFFER_HIGH_LEVEL    (1<<19)
@@ -468,13 +469,13 @@ static void VEBRC_IRQ_Wrap_Handler(uint32_t u32_vectorNum)
                 {
                     // insert timestamp data, not only consider view1.
                     // close encoder channel
-                    uint32_t tick;
+                    volatile uint32_t tick;
                     uint32_t tmp;
                     uint8_t  sum = 0;
 
                     Reg_Write32( (unsigned int) 0xa003004c, 0x04);
                     
-                    tick = SysTicks_GetTickCount();
+		    tick =  *((volatile uint32_t *)(SRAM_MODULE_SHARE_AVSYNC_TICK));
                     //head: 0x35 + 0x53 + 0x55 + sum
                     sum += (0x35+0x53+0x55+((tick>>24)&0xff) + ((tick>>16) & 0xff) + ((tick>>8)& 0xff) + (tick& 0xff));
                     tmp = (sum << 24) + (0x55 << 16) + (0x53 <<8) + 0x35;
@@ -485,7 +486,7 @@ static void VEBRC_IRQ_Wrap_Handler(uint32_t u32_vectorNum)
 
                     //
                     Reg_Write32( (unsigned int) 0xa003004c, 0x00); // back to encoder channel
-                    //dlog_info("TS tick = 0x%08x 0x%02x\n", tick, sum);
+                    //dlog_error("TS tick = 0x%08x 0x%02x\n", tick, sum);
                 }
            }
 #endif

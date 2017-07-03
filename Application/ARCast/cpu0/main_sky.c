@@ -24,7 +24,15 @@
 #include "hal_sram.h"
 #include "arcast_appcommon.h"
 #include "hal_pmu.h"
+#include "hal_timer.h"
 
+void TIMER_avsyncInterruptHandle(uint32_t u32_vectorNum)
+{
+    volatile uint32_t u32_tick = *((volatile uint32_t *)(SRAM_MODULE_SHARE_AVSYNC_TICK));
+    u32_tick++;
+    *((volatile uint32_t *)(SRAM_MODULE_SHARE_AVSYNC_TICK)) = u32_tick;
+
+}
 
 void CONSOLE_Init(void)
 {
@@ -52,6 +60,7 @@ int main(void)
     HAL_SYS_CTL_Init(pst_cfg);
     g_log_level = LOG_LEVEL_INFO;
     /* initialize the uart */
+    g_log_level = 4;
     CONSOLE_Init();
     dlog_critical("cpu0 start!!! \n");
     
@@ -62,7 +71,10 @@ int main(void)
     HAL_USB_ConfigPHY();
 
     HDMI_powerOn();
-    
+
+    *((uint32_t *)(SRAM_MODULE_SHARE_AVSYNC_TICK)) = 0;
+    HAL_TIMER_RegisterTimer(HAL_TIMER_NUM21, 1000, TIMER_avsyncInterruptHandle);
+
     *((uint8_t *)(SRAM_MODULE_SHARE_AUDIO_PCM)) = HAL_SOFTI2S_ENCODE_IEC_48000;
     STRU_MP3_ENCODE_CONFIGURE_WAVE st_audioConfig;
     st_audioConfig.e_samplerate = HAL_MP3_ENCODE_48000;
@@ -101,3 +113,4 @@ int main(void)
 } 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+

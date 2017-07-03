@@ -35,7 +35,7 @@ void CONSOLE_Init(void)
 static void GenericInitial(void const *argument)
 {
     //HAL_PMU_Init();
-    //Common_AVFORMATSysEventGroundInit();
+    Common_AVFORMATSysEventGroundInit();
     vTaskDelete(NULL);
 }
 
@@ -97,7 +97,6 @@ static void Mp3Decoder(void const *argument)
                     }
                     else
                     {
-                        #if 1
                         k++;
                         if (k>100)
                         {
@@ -127,7 +126,6 @@ static void Mp3Decoder(void const *argument)
                                 HAL_USB_CustomerSendData((p_mp3DataBuffTmp + frame_size), MP3_USERDATA_LEN, 0);
                             }                            
                         }
-                        #endif
 
                         p_PCMDataBuff = (uint8_t *)(u8_pcmDataArray[buff_index]);
 
