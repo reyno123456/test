@@ -459,7 +459,7 @@ static USBH_StatusTypeDef USBH_MSC_Process(USBH_HandleTypeDef *phost)
              (MSC_Handle->unit[MSC_Handle->current_lun].sense.key == SCSI_SENSE_KEY_NOT_READY) )   
           {
             
-            if((phost->Timer - MSC_Handle->timer) > 10000)
+            if((phost->Timer - MSC_Handle->timer) > 1000)
             {
               MSC_Handle->unit[MSC_Handle->current_lun].state = MSC_TEST_UNIT_READY;
               break;

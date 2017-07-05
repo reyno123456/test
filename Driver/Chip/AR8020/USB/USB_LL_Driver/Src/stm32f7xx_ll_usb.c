@@ -1924,6 +1924,10 @@ void USB_LL_EnterDeviceTestMode(USB_OTG_GlobalTypeDef *USBx, uint8_t test_mode)
 
 void USB_LL_ConfigPhy(void)
 {
+    uint32_t        *ahbSlaveCtrlReg = (uint32_t *)0xE000EFA0;
+
+    *ahbSlaveCtrlReg            = 0x1010;
+
     USB_PHY_TXPREEMPHASISTUNE   = 0x3;
     USB_PHY_TXVREFTUNE          = 0xdd;
 
