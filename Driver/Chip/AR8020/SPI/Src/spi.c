@@ -72,6 +72,16 @@ void SPI_master_init(ENUM_SPI_COMPONENT en_id, STRU_SPI_InitTypes *st_settings)
 
     SPI_DisEnableInt(en_id, SPI_IMR_MASK);
 
+    if (5 == en_id)
+    {
+       uint32_t u32_data;
+
+       u32_data = *(uint32_t *)(0x40B00088);
+       u32_data &= 0xFFFFF00F; 
+       u32_data |= 0x00000550; // bit11~4 = 01010101B
+       *(uint32_t *)(0x40B00088) = u32_data;
+    }
+
     if (7 == en_id)
     {
         vct = VIDEO_SPI_INTR_BB_VECTOR_NUM;
