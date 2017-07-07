@@ -754,7 +754,7 @@ void command_adc(char * channel)
         if (u32_index++ >= 100)
             break;
 
-        dlog_info("channel %d value: %d", u32_channel, HAL_ADC_Read(u32_channel));
+        dlog_info("channel %d value: %d", u32_channel, HAL_ADC_Read(u32_channel,u32_channel));
     }
 }
 
