@@ -3,6 +3,7 @@
 #include "task.h"
 #include "cmsis_os.h"
 #include "debuglog.h"
+#include "systicks.h"
 
 #define m7_malloc pvPortMalloc
 #define m7_free vPortFree
@@ -12,19 +13,16 @@ static SemaphoreHandle_t xMutex;
 
 void vTask1( void const * argument)
 {
-	static portTickType xLastWakeTime;  
+     static portTickType xLastWakeTime;  
      const portTickType xFrequency = 1000;  
    
-     // 使用当前时间初始化变量xLastWakeTime  
      xLastWakeTime = xTaskGetTickCount();  
    
      for( ;; )  
      {  
-         //等待下一个周期  
          vTaskDelayUntil( &xLastWakeTime,xFrequency );  
    
-         // 需要周期性执行代码放在这里  
-         dlog_info("line = %d running\n", __LINE__);
+         dlog_critical("line = %d running", __LINE__);
      }  
 }
 

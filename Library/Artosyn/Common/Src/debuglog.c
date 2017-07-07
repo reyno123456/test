@@ -9,6 +9,7 @@
 #include "interrupt.h"
 #include "hal_uart.h"
 
+volatile uint8_t sd_mountStatus = 0;
 volatile uint8_t g_log_level = LOG_LEVEL_WARNING;
 
 static uint8_t s_u8_dlogServerCpuId = 0xFF;
@@ -79,6 +80,7 @@ static unsigned char s_u8_commandPos;
 static unsigned char s_u8_commandLine[128];
 
 static FUNC_CommandRun s_func_commandRun = NULL;
+static FUNC_LogSave s_sd_log_func_commandRun = NULL;
 
 __attribute__((weak)) ENUM_CPU_ID CPUINFO_GetLocalCpuId(void) 
 {
@@ -377,9 +379,14 @@ void DLOG_Process(void* p)
     }
 }
 
-void DLOG_Init(FUNC_CommandRun func, ENUM_DLOG_PROCESSOR e_dlogProcessor)
+
+
+void DLOG_Init(FUNC_CommandRun func_command, 
+                  FUNC_LogSave func_log_sd,
+                  ENUM_DLOG_PROCESSOR e_dlogProcessor)
 {
-    s_func_commandRun = func;
+    s_func_commandRun = func_command;
+    s_sd_log_func_commandRun = func_log_sd;
 
     if (e_dlogProcessor == DLOG_SERVER_PROCESSOR)
     {
@@ -488,6 +495,7 @@ unsigned int DLOG_Output(unsigned int byte_num)
 
     char tmp_buf[256];
     unsigned int tmp_buf_index;
+    uint32_t tmp_len;
 
     CHECK_DEBUG_BUF_INIT_STATUS();
 
@@ -557,7 +565,14 @@ unsigned int DLOG_Output(unsigned int byte_num)
                 if ((*tmpsrc != DEBUG_LOG_END))
                 {
                     uart_puts(DEBUG_LOG_UART_PORT, tmp_buf);
-                    Uart_WaitTillIdle(DEBUG_LOG_UART_PORT, UART_DEFAULT_TIMEOUTMS);
+                    Uart_WaitTillIdle(DEBUG_LOG_UART_PORT, UART_DEFAULT_TIMEOUTMS);                    
+
+                    if (s_sd_log_func_commandRun != NULL)
+                    {
+                        tmp_len = strlen(tmp_buf);
+                        s_sd_log_func_commandRun(tmp_buf, tmp_len);
+                    }
+
                     uart_putc(DEBUG_LOG_UART_PORT, '\r');
                     Uart_WaitTillIdle(DEBUG_LOG_UART_PORT, UART_DEFAULT_TIMEOUTMS);
                     iByte += tmp_buf_index;

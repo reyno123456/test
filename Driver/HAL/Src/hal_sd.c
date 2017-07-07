@@ -482,7 +482,8 @@ HAL_RET_T HAL_SD_Fatfs_Init(void)
 	}
 	else
 	{
-        dlog_info("mount to fat32 success");	
+        sd_mountStatus = 1;
+        dlog_info("mount to fat32 success, sd_mountStatus = %d", sd_mountStatus);	
     }
     
     return HAL_OK;
@@ -576,3 +577,13 @@ HAL_RET_T HAL_SD_Read_test(uint32_t u32_dstStartAddr, uint32_t u32_srcBlkAddr, u
 	return HAL_OK;
 }
 
+HAL_RET_T HAL_SD_GetPresent(void)
+{    
+    if (getCardPresence != CARD_IN)
+    {
+        dlog_error("card not pressent");
+        return HAL_FALSE;
+    }
+
+    return HAL_OK;
+}

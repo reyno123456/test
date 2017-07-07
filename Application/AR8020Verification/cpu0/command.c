@@ -82,6 +82,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_writeMemory_array(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
+#if 0
     /* initialize sdcard: "initsd" */
     else if (memcmp(cmdArray[0], "initsd", 6) == 0)
     {
@@ -109,6 +110,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_sdMount();
     }
+#endif
     else if (memcmp(cmdArray[0], "startbypassvideo", strlen("startbypassvideo")) == 0)
     {
         command_startBypassVideo(cmdArray[1]);

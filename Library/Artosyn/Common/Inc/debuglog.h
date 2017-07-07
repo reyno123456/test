@@ -57,8 +57,12 @@ typedef enum
 } ENUM_DLOG_PROCESSOR;
 
 typedef void (*FUNC_CommandRun)(char *cmdArray[], uint32_t cmdNum);
+typedef void (*FUNC_LogSave)(char *buf, uint32_t bytes);
 
-void DLOG_Init(FUNC_CommandRun func, ENUM_DLOG_PROCESSOR e_dlogProcessor);
+void DLOG_Init(FUNC_CommandRun func_command, 
+                  FUNC_LogSave func_log_sd,
+                  ENUM_DLOG_PROCESSOR e_dlogProcessor);
+
 unsigned int DLOG_Output(unsigned int byte_num);
 void DLOG_Process(void* p);
 
@@ -68,6 +72,9 @@ void DLOG_Process(void* p);
 #define dlog_warning(...)  DLOG_Warning(__VA_ARGS__)
 #define dlog_error(...)    DLOG_Error(__VA_ARGS__)
 #define dlog_critical(...) DLOG_Critical(__VA_ARGS__)
+
+extern volatile uint8_t sd_mountStatus;
+
 
 #ifdef  __cplusplus
 }

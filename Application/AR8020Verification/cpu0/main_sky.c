@@ -19,7 +19,7 @@
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
-    dlog_init(command_run, DLOG_CLIENT_PROCESSOR);
+    dlog_init(command_run, NULL, DLOG_CLIENT_PROCESSOR);
 }
 
 void HDMI_powerOn(void)
@@ -51,7 +51,8 @@ int main(void)
 
     /* initialize the uart */
     console_init(0,115200);
-    dlog_critical("cpu0 start!!! \n");
+
+    dlog_critical("cpu0 start!!!, time = %s", __TIME__);
 
     HAL_USB_ConfigPHY();
 
@@ -78,10 +79,11 @@ int main(void)
     HAL_NV_Init();
 
 	HAL_DMA_init();
-
+/*
 	HAL_SD_Init();
 
-/* 	HAL_SD_Fatfs_Init(); */
+	HAL_SD_Fatfs_Init();
+*/
 
     portDISABLE_INTERRUPTS();
 

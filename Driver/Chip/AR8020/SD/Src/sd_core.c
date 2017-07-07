@@ -20,7 +20,7 @@
 #include "debuglog.h"
 #include "systicks.h"
 
-#define SD_TIME_OUT 60000
+#define SD_TIME_OUT 1000
 /**
   * @brief  Get SDMMC Power state.
   * @param  SDMMCx: Pointer to SDMMC register base

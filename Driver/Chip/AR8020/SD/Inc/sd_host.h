@@ -17,7 +17,7 @@
 /*
  * Transfer the cpu addr to bus addr
  */
-#define  DTCMBUSADDR(x)             ((x)+0x24080000)
+#define  DTCMBUSADDR(x)             ((x)+0x24180000)
 #define  ITCMBUSADDR(x)             ((x)+0x44000000)
 
 /*

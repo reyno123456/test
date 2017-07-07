@@ -10,7 +10,7 @@ extern int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t 
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
-    dlog_init(command_run, DLOG_CLIENT_PROCESSOR);
+    dlog_init(command_run, NULL, DLOG_CLIENT_PROCESSOR);
 }
 
 /**

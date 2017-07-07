@@ -45,7 +45,10 @@ SRC_C := SysCtl/Src/reg_rw.c \
          USB/USB_LL_Driver/Src/stm32f7xx_ll_usb.c \
          USB/USB_LL_Driver/Src/stm32f7xx_hal_pcd.c \
          USB/USB_LL_Driver/Src/stm32f7xx_hal_pcd_ex.c \
-         USB/USB_LL_Driver/Src/stm32f7xx_hal_hcd.c
+         USB/USB_LL_Driver/Src/stm32f7xx_hal_hcd.c \
+         SD/Src/sd_core.c \
+         SD/Src/sd_host.c
+
 
 INCDIRS := -ISysCtl/Inc \
            -II2C/Inc \
@@ -69,5 +72,6 @@ INCDIRS := -ISysCtl/Inc \
            -I$(TOP_DIR)/Driver/Board \
            -I$(TOP_DIR)/Kernel/FreeRTOS/CMSIS_RTOS \
            -I$(TOP_DIR)/Kernel/FreeRTOS/include \
-           -I$(TOP_DIR)/Kernel/FreeRTOS/portable/GCC/ARM_CM7/r0p1
+           -I$(TOP_DIR)/Kernel/FreeRTOS/portable/GCC/ARM_CM7/r0p1 \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/SD/Inc
 

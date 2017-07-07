@@ -15,6 +15,7 @@
 #include "hal_ret_type.h"
 #include "hal_nvic.h"
 #include "testhal_dma.h"
+#include "test_sd.h"
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);
@@ -26,6 +27,8 @@ void command_upgrade(void);
 void command_sendCtrl(void);
 void command_sendVideo(void);
 static void command_set_loglevel(char* cpu, char* loglevel);
+void command_sdMount(void);
+
 
 void command_run(char *cmdArray[], uint32_t cmdNum)
 {
@@ -39,20 +42,34 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_writeMemory(cmdArray[1], cmdArray[2]);
     }
+    /* initialize sdcard: "initsd" */
+    else if (memcmp(cmdArray[0], "initsd", 6) == 0)
+    {
+        command_initSdcard();
+    }
     /* read sdcard: "readsd $(startBlock) $(blockNum)" */
-    //else if (memcmp(cmdArray[0], "readsd", 6) == 0)
-    //{
-    //    command_readSdcard(cmdArray[1], cmdArray[2]);
-    //}
+    else if (memcmp(cmdArray[0], "readsd", 6) == 0)
+    {
+        command_readSdcard(cmdArray[1], cmdArray[2]);
+    }
     /* write sdcard: "writesd $startBlock) $(blockNum) $(data)" */
-    //else if (memcmp(cmdArray[0], "writesd", 7) == 0)
-    //{
-    //    command_writeSdcard(cmdArray[1], cmdArray[2], cmdArray[3]);
-    //}
-    //else if (memcmp(cmdArray[0], "erasesd", 7) == 0)
-    //{
-    //    command_eraseSdcard(cmdArray[1], cmdArray[2]);
-    //}
+    else if (memcmp(cmdArray[0], "writesd", 7) == 0)
+    {
+        command_writeSdcard(cmdArray[1], cmdArray[2], cmdArray[3]);
+    }
+    else if (memcmp(cmdArray[0], "erasesd", 7) == 0)
+    {
+        command_eraseSdcard(cmdArray[1], cmdArray[2]);
+    }
+    else if (memcmp(cmdArray[0], "test_sd", 7) == 0 && (cmdNum == 2))
+    {
+        command_SdcardFatFs(cmdArray[1]);
+    }
+    else if (memcmp(cmdArray[0], "mount_sd", 8) == 0 && (cmdNum == 1))
+    {
+        command_sdMount();
+    }
+
     else if (memcmp(cmdArray[0], "test_timerall", strlen("test_timerall")) == 0)
     {
        command_TestTimAll();
@@ -93,6 +110,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_set_loglevel(cmdArray[1], cmdArray[2]);
     }
+    else if (memcmp(cmdArray[0], "unmount_sd", strlen("unmount_sd")) == 0)
+    {
+        command_sd_release();
+    }
     /* error command */
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)
     {
@@ -119,6 +140,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_TestGpioInterrupt <gpionum> <inttype> <polarity>");
         dlog_error("test_dma_cpu1 <src> <dst> <byte_num>");
         dlog_error("set_loglevel <cpuid> <loglevel>");
+        dlog_error("unmount_sd");
     }
 }
 
@@ -185,66 +207,66 @@ void command_writeMemory(char *addr, char *value)
     *((unsigned int *)(writeAddress)) = writeValue;
 }
 
-void command_readSdcard(char *Dstaddr, char *BytesNum)
+void command_readSdcard(char *DstBlkaddr, char *BlockNum)
 {
     unsigned int iDstAddr;
-    unsigned int iBytesNum;
-    unsigned int iSrcAddr;
+    unsigned int iBlockNum;
+    unsigned int iSrcBlkAddr;
     unsigned int rowIndex;
     unsigned int columnIndex;
     unsigned int blockIndex;
     char *readSdcardBuff;
     char *bufferPos;
 
-    iDstAddr   = command_str2uint(Dstaddr);
-    iBytesNum  = command_str2uint(BytesNum);
+    iSrcBlkAddr   = command_str2uint(DstBlkaddr);
+    iBlockNum  = command_str2uint(BlockNum);
 
-
-
-    dlog_info("readSdcardBuff = 0x%08x\n", readSdcardBuff);
-
-    dlog_info("iDstAddr = 0x%08x\n", iDstAddr);
-
-    dlog_info("iBytesNum = 0x%08x\n", iBytesNum);
-
-    dlog_info("iSrcAddr = 0x%08x\n", iSrcAddr);
-
-#if 0
-    readSdcardBuff = m7_malloc(iBytesNum);
-    memset(readSdcardBuff, '\0', iBytesNum);
+/*     readSdcardBuff = m7_malloc(iBlockNum * 512); */
+    readSdcardBuff = malloc(iBlockNum * 512);
+    if (readSdcardBuff == 0)
+    {
+        dlog_info("malloc error");
+        return;
+    }
+    memset(readSdcardBuff, 0, iBlockNum * 512);
     bufferPos = readSdcardBuff;
 
+    // dlog_info("iSrcBlock = 0x%08x\n", iSrcAddr);
+    // dlog_info("iBlockNum = 0x%08x\n", iBlockNum);
+    // dlog_info("readSdcardBuff = 0x%08x\n", readSdcardBuff);
+
     /* read from sdcard */
-    HAL_SD_Read(&sdhandle, bufferPos, iBytesNum, iSrcAddr);
+    HAL_SD_Read((uint32_t)bufferPos, iSrcBlkAddr, iBlockNum);
 
     /* print to serial */
-    for (blockIndex = iDstAddr; blockIndex <= (iDstAddr + iBytesNum / dma.BlockSize); blockIndex++)
+    for (blockIndex = iSrcBlkAddr; blockIndex < (iSrcBlkAddr + iBlockNum); blockIndex++)
     {
-        dlog_info("block:");
-        dlog_info("%x", blockIndex);
-        dlog_info("==============\n");
-
+        dlog_info("==================block: %d=================",blockIndex);
         for (rowIndex = 0; rowIndex < 16; rowIndex++)
         {
             /* new line */
-            dlog_info("0x");
-            dlog_info("%x", (unsigned int)((rowIndex << 5) + (blockIndex << 9)));
-            dlog_info(':');
-            dlog_info(' ');
-
-            for (columnIndex = 0; columnIndex < 8; columnIndex++)
+            dlog_info("0x%x: ",(unsigned int)((rowIndex << 5) + (blockIndex << 9)));
+            for (columnIndex = 0; columnIndex < 1; columnIndex++)
             {
-                dlog_info("%x", *((unsigned int *)bufferPos));
-                dlog_info(' ');
-                bufferPos += 4;
+                dlog_info("0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x", 
+                           *((unsigned int *)bufferPos), 
+                           *((unsigned int *)(bufferPos + 4)), 
+                           *((unsigned int *)(bufferPos + 8)), 
+                           *((unsigned int *)(bufferPos + 12)),
+                           *((unsigned int *)(bufferPos + 16)),
+                           *((unsigned int *)(bufferPos + 20)),
+                           *((unsigned int *)(bufferPos + 24)),
+                           *((unsigned int *)(bufferPos + 28)));
+                bufferPos += 32;
             }
-            dlog_info('\n');
         }
+        dlog_info("\n");
     }
-    m7_free(readSdcardBuff);
-#endif
+/*     m7_free(readSdcardBuff); */
+    free(readSdcardBuff);
 
 }
+
 
 void command_writeSdcard(char *Dstaddr, char *BytesNum, char *SrcAddr)
 {
@@ -306,5 +328,9 @@ static void command_set_loglevel(char* cpu, char* loglevel)
     return;
 }
 
+void command_sdMount(void)
+{
+    HAL_SD_Fatfs_Init();
+}
 
 

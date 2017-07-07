@@ -64,7 +64,7 @@ static EMU_SD_RTN SD_DMAConfig_test(SD_HandleTypeDef * hsd, SDMMC_DMATransTypeDe
 #define SD_WRITE_SINGLE_BLOCK 2
 #define SD_WRITE_MULTIPLE_BLOCK 3
 
-static void delay_ms(uint32_t num)
+static void sd_delay_ms(uint32_t num)
 {
     volatile int i;
     for (i = 0; i < num * 100; i++);
@@ -1357,7 +1357,7 @@ static EMU_SD_RTN InitializeCard(SD_HandleTypeDef *hsd)
 
     /* CMD0: GO_IDLE_STATE -----------------------------------------------------*/
     dlog_info("Send CMD0");
-    delay_ms(500);  /*add the delay to fix the initialize fail when print to sram */
+    sd_delay_ms(500);  /*add the delay to fix the initialize fail when print to sram */
     sdmmc_cmdinitstructure.Argument         = 0;
     sdmmc_cmdinitstructure.CmdIndex         = SD_CMD_GO_IDLE_STATE;
     sdmmc_cmdinitstructure.Response         = SDMMC_RESPONSE_NO;
@@ -1464,7 +1464,7 @@ static EMU_SD_RTN InitializeCard(SD_HandleTypeDef *hsd)
 
         if (vs_busy != 0) 
         {
-            delay_ms(10);
+            sd_delay_ms(10);
             dlog_info("ACMD41 Loop Done, loop = %d", loop);
         }
     }
@@ -1481,11 +1481,11 @@ static EMU_SD_RTN InitializeCard(SD_HandleTypeDef *hsd)
 #if BUFFER_CHIP_SURPPORTED
     if (response & SD_ACMD41_S18R) 
     {
-        delay_ms(10);
+        sd_delay_ms(10);
         dlog_info("1.8V Support");
 
         dlog_info("Send CMD11");
-        delay_ms(500);
+        sd_delay_ms(500);
         /* send CMD11 to switch 1.8V bus signaling level */
         Core_SDMMC_SetCLKENA(hsd->Instance, 0x00001);
         sdmmc_cmdinitstructure.Argument  = 0x41ffffff;
@@ -1530,7 +1530,7 @@ static EMU_SD_RTN InitializeCard(SD_HandleTypeDef *hsd)
                                            SDMMC_CMD_PRV_DAT_WAIT | 
                                            SDMMC_CMD_UPDATE_CLK;
         Core_SDMMC_SendCommand(hsd->Instance, &sdmmc_cmdinitstructure);
-        delay_ms(500);
+        sd_delay_ms(500);
         dlog_info("Host Supply 1.8v Clock");
 
         Core_SDMMC_SetCLKENA(hsd->Instance, 0x00001);
@@ -1867,7 +1867,7 @@ static EMU_SD_RTN PowerOffCard(SD_HandleTypeDef *hsd)
     
     Core_SDMMC_SetCLKENA(hsd->Instance, 0x0);
     Core_SDMMC_SetPWREN(hsd->Instance, 0x0);
-    delay_ms(1);
+    sd_delay_ms(1);
     Core_SDMMC_SetINTMASK(hsd->Instance, SDMMC_INTMASK_CARD_DETECT);
     Core_SDMMC_SetCTRL(hsd->Instance, SDMMC_CTRL_INT_ENABLE );
     Core_SDMMC_SetRINTSTS(hsd->Instance, SDMMC_RINTSTS_CARD_DETECT);

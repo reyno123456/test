@@ -9,7 +9,7 @@
 
 void CONSOLE_Init(void)
 {
-    DLOG_Init(command_run, DLOG_CLIENT_PROCESSOR);
+    DLOG_Init(command_run, NULL, DLOG_CLIENT_PROCESSOR);
 }
 /**
   * @brief  Main program

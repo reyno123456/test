@@ -9,7 +9,7 @@
 void CONSOLE_Init(void)
 {
     HAL_UART_Init(DEBUG_LOG_UART_PORT, HAL_UART_BAUDR_115200, NULL);
-    DLOG_Init(command_run, DLOG_SERVER_PROCESSOR);
+    DLOG_Init(command_run, NULL, DLOG_SERVER_PROCESSOR);
 }
 
 

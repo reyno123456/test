@@ -12,5 +12,6 @@
 #include "ff_gen_drv.h"
 
 extern Diskio_drvTypeDef  SD_Driver;
+extern volatile uint8_t sd_mountStatus;
 
 #endif /* __SD_DISKIO_H */

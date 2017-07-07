@@ -11,7 +11,7 @@
 
 void CONSOLE_Init(void)
 {
-    dlog_init(command_run, DLOG_CLIENT_PROCESSOR);
+    dlog_init(command_run, NULL, DLOG_CLIENT_PROCESSOR);
     
 }
 /**

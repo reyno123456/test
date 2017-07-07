@@ -17,7 +17,7 @@
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
-    dlog_init(command_run, DLOG_CLIENT_PROCESSOR);
+    dlog_init(command_run, NULL, DLOG_CLIENT_PROCESSOR);
 }
 
 void HDMI_powerOn(void)

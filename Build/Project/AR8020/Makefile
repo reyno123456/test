@@ -52,12 +52,14 @@ LIB0 := $(TOP_DIR)/Driver/Chip \
 
 LIB1 := $(TOP_DIR)/Driver/Chip \
         $(TOP_DIR)/Driver/Board \
+        $(TOP_DIR)/Library/ThirdParty/FatFs \
         $(TOP_DIR)/Driver/HAL \
         $(TOP_DIR)/Library/Artosyn/Common \
         $(TOP_DIR)/Library/Artosyn/SimpleC
 
 LIB2 := $(TOP_DIR)/Driver/Chip \
         $(TOP_DIR)/Driver/Board \
+        $(TOP_DIR)/Library/ThirdParty/FatFs \
         $(TOP_DIR)/Driver/HAL \
         $(TOP_DIR)/Library/Artosyn/Common \
         $(TOP_DIR)/Library/Artosyn/SimpleC

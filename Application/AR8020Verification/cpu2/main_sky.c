@@ -9,7 +9,7 @@
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {
-    dlog_init(command_run, DLOG_CLIENT_PROCESSOR);
+    dlog_init(command_run, NULL, DLOG_CLIENT_PROCESSOR);
 }
 /**
   * @brief  Main program
@@ -24,7 +24,7 @@ int main(void)
 
     /* initialize the uart */
     console_init(2, 115200);   
-    dlog_info("cpu2 start!!! \n");
+    dlog_critical("cpu2 start, time = %s\n", __TIME__);
 
     STRU_HAL_H264_CONFIG st_h264Cfg;
     st_h264Cfg.u8_view0En = 1;

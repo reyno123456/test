@@ -45,7 +45,7 @@ CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../s
 
 # libs
 LD_LIBS := --start-group
-LD_LIBS += -lhal -lboard -lAR8020drv -lm -lcommon -lsimplec -lgcc
+LD_LIBS += -lfatfs -lhal -lboard -lAR8020drv -lm -lcommon -lsimplec -lgcc
 ifeq ($(SRC_CXX), )
 LD_LIBS += --end-group
 else

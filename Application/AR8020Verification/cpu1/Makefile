@@ -29,7 +29,7 @@ TARGET = ar8020_cpu1.bin
 # source file(s), including *.s *.c *.cpp file(s)
 SRC_S   := start.s
 
-SRC_C   := main.c command.c ../share/test_timer.c ../share/test_i2c_adv7611.c ../share/test_gpio.c ../share/testhal_dma.c
+SRC_C   := main.c command.c ../share/test_timer.c ../share/test_i2c_adv7611.c ../share/test_gpio.c ../share/testhal_dma.c test_sd.c ../share/common_func.c
 
 SRC_CXX :=
 
@@ -39,7 +39,7 @@ CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../s
 
 # libs
 LD_LIBS := --start-group
-LD_LIBS += -lhal -lboard -lAR8020drv -lm -lcommon -lc_nano -lnosys -lgcc
+LD_LIBS += -lfatfs -lhal -lboard -lAR8020drv -lm -lcommon -lc_nano -lnosys -lgcc
 ifeq ($(SRC_CXX), )
 LD_LIBS += --end-group
 else
