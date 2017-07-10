@@ -366,19 +366,6 @@ int32_t DMA_Init(ENUM_Chan u8_channel, uint8_t u8_chanPriority)
     }
 }
 
-static uint32_t dmaPerpAddrConvert(uint32_t addr)
-{
-    if (ENUM_CPU0_ID == CPUINFO_GetLocalCpuId())
-    {
-        return addr + DTCM_CPU0_DMA_ADDR_OFFSET;                    
-    }
-    else if (ENUM_CPU1_ID == CPUINFO_GetLocalCpuId())
-    {
-        return addr + DTCM_CPU1_DMA_ADDR_OFFSET;                    
-    }
-    return -1;        
-}
-
 uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_transByteNum, 
                             uint8_t u8_chanIndex, ENUM_TransferType e_transType)
 {
@@ -438,7 +425,7 @@ uint32_t DMA_transfer(uint32_t u32_srcAddr, uint32_t u32_dstAddr, uint32_t u32_t
                 #endif
             }
 
-            u32_llpBaseAddr = dmaPerpAddrConvert((uint32_t)s_st_transStatus[u8_chanIndex].pst_lliMalloc);
+            u32_llpBaseAddr = peripheralAddrConvert((uint32_t)s_st_transStatus[u8_chanIndex].pst_lliMalloc);
 
             dma_prepare_LL_Config(&s_dma_config, u8_chanIndex, u32_llpBaseAddr, 
                                   u32_srcAddr, u32_dstAddr);

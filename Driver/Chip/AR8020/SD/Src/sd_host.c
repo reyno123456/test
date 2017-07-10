@@ -31,6 +31,7 @@
 #include "systicks.h"
 #include "sys_event.h"
 #include <string.h>
+#include "cpu_info.h"
 
 #define BUFFER_CHIP_SURPPORTED 1
 
@@ -151,7 +152,7 @@ EMU_SD_RTN Card_SD_CMD6(SD_HandleTypeDef *hsd)
     {
         dlog_error("malloc error");
     }
-    uint32_t dma_Dst = DTCMBUSADDR((uint32_t)CMD6Data);    
+    uint32_t dma_Dst = peripheralAddrConvert((uint32_t)CMD6Data);    
     hsd->SdTransferCplt  = 0;
     hsd->SdTransferErr   = SD_OK;
     if (hsd->CardType == HIGH_CAPACITY_SD_CARD)
@@ -160,7 +161,7 @@ EMU_SD_RTN Card_SD_CMD6(SD_HandleTypeDef *hsd)
     }
     /* Configure the SD DPSM (Data Path State Machine) */
     SD_DMAConfig(hsd, dma);
-    Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc));
+    Core_SDMMC_SetDBADDR(hsd->Instance, peripheralAddrConvert((uint32_t)&desc));
     Core_SDMMC_SetBYCTNT(hsd->Instance, 0x40);
     desc.des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH | SDMMC_DES0_LD;
     desc.des1 = 64;
@@ -241,7 +242,7 @@ static EMU_SD_RTN Card_SD_CMD6_check_patten(SD_HandleTypeDef *hsd)
     {
         dlog_error("malloc error");
     }
-    uint32_t dma_Dst = DTCMBUSADDR((uint32_t)CMD6Data);    
+    uint32_t dma_Dst = peripheralAddrConvert((uint32_t)CMD6Data);    
     dlog_info("CMD6Dst = 0x%08x", dma_Dst);
     hsd->SdTransferCplt  = 0;
     hsd->SdTransferErr   = SD_OK;
@@ -251,7 +252,7 @@ static EMU_SD_RTN Card_SD_CMD6_check_patten(SD_HandleTypeDef *hsd)
     }
     /* Configure the SD DPSM (Data Path State Machine) */
     SD_DMAConfig(hsd, dma);
-    Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc));
+    Core_SDMMC_SetDBADDR(hsd->Instance, peripheralAddrConvert((uint32_t)&desc));
     Core_SDMMC_SetBYCTNT(hsd->Instance, 0x40);
     desc.des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH | SDMMC_DES0_LD;
     desc.des1 = 64;
@@ -321,7 +322,7 @@ EMU_SD_RTN Card_SD_CMD19(SD_HandleTypeDef *hsd)
     IDMAC_DescTypeDef desc = {0};
     uint8_t *tuning = malloc(64);
     memset(tuning, 0, 64);
-    uint32_t tuningdst = DTCMBUSADDR((uint32_t)tuning);
+    uint32_t tuningdst = peripheralAddrConvert((uint32_t)tuning);
     hsd->SdTransferCplt  = 0;
     hsd->SdTransferErr   = SD_OK;
 
@@ -334,7 +335,7 @@ EMU_SD_RTN Card_SD_CMD19(SD_HandleTypeDef *hsd)
     if (errorstate != SD_OK) {
         return errorstate;
     }
-    Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc));
+    Core_SDMMC_SetDBADDR(hsd->Instance, peripheralAddrConvert((uint32_t)&desc));
     Core_SDMMC_SetBYCTNT(hsd->Instance, 0x40);
 
     desc.des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH | SDMMC_DES0_LD;
@@ -430,7 +431,7 @@ EMU_SD_RTN Card_SD_ReadBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *d
 
   /* Configure the SD DPSM (Data Path State Machine) */
   errorstate = SD_DMAConfig(hsd, dma);
-  Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc));
+  Core_SDMMC_SetDBADDR(hsd->Instance, peripheralAddrConvert((uint32_t)&desc));
   Core_SDMMC_SetBYCTNT(hsd->Instance, dma->BlockSize);
   if (errorstate != SD_OK) {
     return errorstate;
@@ -519,7 +520,7 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransType
 
   /* Configure the SD DPSM (Data Path State Machine) */
   errorstate = SD_DMAConfig(hsd, dma);
-  Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc[0]));
+  Core_SDMMC_SetDBADDR(hsd->Instance, peripheralAddrConvert((uint32_t)&desc[0]));
   if (errorstate != SD_OK) {
     free(desc);
     return errorstate;
@@ -539,7 +540,7 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransType
         desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH;
         desc[BlockIndex].des1 = dma->BlockSize * BuffSize;
         desc[BlockIndex].des2 = DstAddr;
-        desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);
+        desc[BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[BlockIndex+1]);
 
       }
       else if ((BlockIndex == 0) && (SectorDivid == 1))
@@ -565,7 +566,7 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransType
         desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH;
         desc[BlockIndex].des1 = dma->BlockSize * BuffSize;
         desc[BlockIndex].des2 = DstAddr;
-        desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);
+        desc[BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[BlockIndex+1]);
       }
     }
 
@@ -617,7 +618,7 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransType
     
         /* Configure the SD DPSM (Data Path State Machine) */
         errorstate = SD_DMAConfig(hsd, dma);
-        Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc[0]));
+        Core_SDMMC_SetDBADDR(hsd->Instance, peripheralAddrConvert((uint32_t)&desc[0]));
         //memset(desc, 0, sizeof(IDMAC_DescTypeDef) * (SectorDivid + SectorRmd));    
         //Core_SDMMC_SetBYCTNT(hsd->Instance, SectorRmd * dma->BlockSize);
     }
@@ -635,7 +636,7 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransType
           desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH | SDMMC_DES0_LD;
           desc[BlockIndex].des1 = dma->BlockSize;
           desc[BlockIndex].des2 = DstAddr;
-          desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex]);
+          desc[BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[BlockIndex]);
       }
       else if (BlockIndex == 0)
       {
@@ -643,7 +644,7 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransType
         desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH;
         desc[BlockIndex].des1 = dma->BlockSize;
         desc[BlockIndex].des2 = DstAddr;
-        desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);
+        desc[BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[BlockIndex+1]);
 
       }
       else if (BlockIndex == SectorRmd - 1)
@@ -659,7 +660,7 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransType
         desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH;
         desc[BlockIndex].des1 = dma->BlockSize;
         desc[BlockIndex].des2 = DstAddr;
-        desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);
+        desc[BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[BlockIndex+1]);
       }
     }
     // dlog_info("Rmd Addr = %x", dma->SrcAddr + SectorDivid * BuffSize * dma->BlockSize);
@@ -724,7 +725,7 @@ EMU_SD_RTN Card_SD_WriteBlock_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTypeDef *
 
   /* Configure the SD DPSM (Data Path State Machine) */
   errorstate = SD_DMAConfig(hsd, dma);
-  Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc));
+  Core_SDMMC_SetDBADDR(hsd->Instance, peripheralAddrConvert((uint32_t)&desc));
   Core_SDMMC_SetBYCTNT(hsd->Instance, dma->BlockSize);
   if (errorstate != SD_OK) {
     dlog_info("SD_DMAConfig Fail\n");
@@ -806,7 +807,7 @@ EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTyp
   dma->BlockSize = 512;
   /* Configure the SD DPSM (Data Path State Machine) */
   errorstate = SD_DMAConfig(hsd, dma);
-  Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc[0]));
+  Core_SDMMC_SetDBADDR(hsd->Instance, peripheralAddrConvert((uint32_t)&desc[0]));
   if (errorstate != SD_OK) {
     dlog_info("SD_DMAConfig Fail\n");
     free(desc);
@@ -832,7 +833,7 @@ EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTyp
         desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS | SDMMC_DES0_CH;
         desc[BlockIndex].des1 = dma->BlockSize * BuffSize;
         desc[BlockIndex].des2 = SrcAddr;
-        desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);
+        desc[BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[BlockIndex+1]);
 
       }
       else if (BlockIndex == SectorDivid - 1)
@@ -848,7 +849,7 @@ EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTyp
         desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH;
         desc[BlockIndex].des1 = dma->BlockSize * BuffSize;
         desc[BlockIndex].des2 = SrcAddr;
-        desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);
+        desc[BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[BlockIndex+1]);
       }
     }
 
@@ -900,7 +901,7 @@ EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTyp
             dma->BlockSize = 512;
         }
 
-        Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc[0]));
+        Core_SDMMC_SetDBADDR(hsd->Instance, peripheralAddrConvert((uint32_t)&desc[0]));
         errorstate = SD_DMAConfig(hsd, dma);
         if (errorstate != SD_OK) {
             dlog_info("SD_DMAConfig Fail\n");
@@ -921,7 +922,7 @@ EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTyp
         desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH | SDMMC_DES0_LD;
         desc[BlockIndex].des1 = dma->BlockSize;
         desc[BlockIndex].des2 = SrcAddr;
-        desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex]);
+        desc[BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[BlockIndex]);
       }
       else if (BlockIndex == 0)
       {
@@ -929,7 +930,7 @@ EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTyp
         desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH;
         desc[BlockIndex].des1 = dma->BlockSize;
         desc[BlockIndex].des2 = SrcAddr;
-        desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);
+        desc[BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[BlockIndex+1]);
 
       }
       else if (BlockIndex ==  SectorRmd - 1)
@@ -946,7 +947,7 @@ EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA(SD_HandleTypeDef *hsd, SDMMC_DMATransTyp
         desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH;
         desc[BlockIndex].des1 = dma->BlockSize;
         desc[BlockIndex].des2 = SrcAddr;
-        desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);
+        desc[BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[BlockIndex+1]);
       }
     }
 
@@ -2269,7 +2270,6 @@ static EMU_SD_RTN SD_DMAConfig(SD_HandleTypeDef * hsd, SDMMC_DMATransTypeDef * d
   Core_SDMMC_SetCTRL(hsd->Instance, SDMMC_CTRL_USE_INTERNAL_IDMAC |
                                     SDMMC_CTRL_INT_ENABLE | 
                                     SDMMC_CTRL_FIFO_RESET);
-  // Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc[0]));
   return errorstate;
 }
 
@@ -2654,7 +2654,7 @@ static EMU_SD_RTN SD_Tuning(SD_HandleTypeDef *hsd)
     IDMAC_DescTypeDef desc = {0};
     uint8_t *tuning = malloc(64);
     memset(tuning, 0, 64);
-    uint32_t tuningdst = DTCMBUSADDR((uint32_t)tuning);
+    uint32_t tuningdst = peripheralAddrConvert((uint32_t)tuning);
     hsd->SdTransferCplt  = 0;
     hsd->SdTransferErr   = SD_OK;
 
@@ -2667,7 +2667,7 @@ static EMU_SD_RTN SD_Tuning(SD_HandleTypeDef *hsd)
     if (errorstate != SD_OK) {
         return errorstate;
     }
-    Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc));
+    Core_SDMMC_SetDBADDR(hsd->Instance, peripheralAddrConvert((uint32_t)&desc));
     Core_SDMMC_SetBYCTNT(hsd->Instance, 0x40);
 
     desc.des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH | SDMMC_DES0_LD;
@@ -2695,7 +2695,7 @@ static EMU_SD_RTN SD_Tuning(SD_HandleTypeDef *hsd)
         if (errorstate != SD_OK) {
             return errorstate;
         }
-        Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc));
+        Core_SDMMC_SetDBADDR(hsd->Instance, peripheralAddrConvert((uint32_t)&desc));
         Core_SDMMC_SetBYCTNT(hsd->Instance, 0x40);
 
         desc.des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH | SDMMC_DES0_LD;
@@ -2816,7 +2816,7 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA_test(SD_HandleTypeDef *hsd, SDMMC_DMATran
     }
 
     errorstate = SD_DMAConfig(hsd, dma);
-    Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc[0]));
+    Core_SDMMC_SetDBADDR(hsd->Instance, peripheralAddrConvert((uint32_t)&desc[0]));
     if (errorstate != SD_OK) {
         free(desc);
         return errorstate;
@@ -2842,7 +2842,7 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA_test(SD_HandleTypeDef *hsd, SDMMC_DMATran
                 desc[i*SectorDivid + BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH;
                 desc[i*SectorDivid + BlockIndex].des1 = dma->BlockSize * BuffSize;
                 desc[i*SectorDivid + BlockIndex].des2 = DstAddr;
-                desc[i*SectorDivid + BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[i*SectorDivid+BlockIndex+1]);
+                desc[i*SectorDivid + BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[i*SectorDivid+BlockIndex+1]);
 
             }
             else
@@ -2851,7 +2851,7 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA_test(SD_HandleTypeDef *hsd, SDMMC_DMATran
                 desc[i*SectorDivid + BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH;
                 desc[i*SectorDivid + BlockIndex].des1 = dma->BlockSize * BuffSize;
                 desc[i*SectorDivid + BlockIndex].des2 = DstAddr;
-                desc[i*SectorDivid + BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[i*SectorDivid+BlockIndex+1]);
+                desc[i*SectorDivid + BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[i*SectorDivid+BlockIndex+1]);
 
             }
           }
@@ -2876,7 +2876,7 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA_test(SD_HandleTypeDef *hsd, SDMMC_DMATran
             }
             else
             {
-                desc[i*SectorDivid + BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[i*SectorDivid + BlockIndex+1]);
+                desc[i*SectorDivid + BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[i*SectorDivid + BlockIndex+1]);
                 desc[i*SectorDivid + BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH;
             }
             
@@ -2887,7 +2887,7 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA_test(SD_HandleTypeDef *hsd, SDMMC_DMATran
             desc[i*SectorDivid + BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH;
             desc[i*SectorDivid + BlockIndex].des1 = dma->BlockSize * BuffSize;
             desc[i*SectorDivid + BlockIndex].des2 = DstAddr;
-            desc[i*SectorDivid + BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[i*SectorDivid+BlockIndex+1]);
+            desc[i*SectorDivid + BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[i*SectorDivid+BlockIndex+1]);
           }
         }
     }
@@ -3000,7 +3000,7 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA_test(SD_HandleTypeDef *hsd, SDMMC_DMATran
 
     /* Configure the SD DPSM (Data Path State Machine) */
     errorstate = SD_DMAConfig(hsd, dma);
-    Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc[0]));
+    Core_SDMMC_SetDBADDR(hsd->Instance, peripheralAddrConvert((uint32_t)&desc[0]));
     if (errorstate != SD_OK) {
         free(desc);
         return errorstate;
@@ -3024,7 +3024,7 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA_test(SD_HandleTypeDef *hsd, SDMMC_DMATran
             desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS |  SDMMC_DES0_CH;
             desc[BlockIndex].des1 = dma->BlockSize * BuffSize;
             desc[BlockIndex].des2 = DstAddr;
-            desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);
+            desc[BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[BlockIndex+1]);
         }
         else if (BlockIndex == total_SectorDivid - 1) // last
         {
@@ -3038,7 +3038,7 @@ EMU_SD_RTN Card_SD_ReadMultiBlocks_DMA_test(SD_HandleTypeDef *hsd, SDMMC_DMATran
             desc[BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH;
             desc[BlockIndex].des1 = dma->BlockSize * BuffSize;
             desc[BlockIndex].des2 = DstAddr;
-            desc[BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[BlockIndex+1]);
+            desc[BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[BlockIndex+1]);
         }
     }
 
@@ -3142,7 +3142,7 @@ EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA_test(SD_HandleTypeDef *hsd, SDMMC_DMATra
 #endif
   dma->BlockSize = 512;
   errorstate = SD_DMAConfig(hsd, dma);
-  Core_SDMMC_SetDBADDR(hsd->Instance, DTCMBUSADDR((uint32_t)&desc[0]));
+  Core_SDMMC_SetDBADDR(hsd->Instance, peripheralAddrConvert((uint32_t)&desc[0]));
   if (errorstate != SD_OK) {
     dlog_info("SD_DMAConfig Fail\n");
     free(desc);
@@ -3164,14 +3164,14 @@ EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA_test(SD_HandleTypeDef *hsd, SDMMC_DMATra
                         desc[i*SectorDivid+BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH;
                         desc[i*SectorDivid+BlockIndex].des1 = dma->BlockSize * BuffSize;
                         desc[i*SectorDivid+BlockIndex].des2 = SrcAddr;
-                        desc[i*SectorDivid+BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[i*SectorDivid+BlockIndex+1]);
+                        desc[i*SectorDivid+BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[i*SectorDivid+BlockIndex+1]);
                     }
                     else
                     {
                         desc[i*SectorDivid+BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_FS | SDMMC_DES0_CH;
                         desc[i*SectorDivid+BlockIndex].des1 = dma->BlockSize * BuffSize;
                         desc[i*SectorDivid+BlockIndex].des2 = SrcAddr;
-                        desc[i*SectorDivid+BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[i*SectorDivid+BlockIndex+1]);
+                        desc[i*SectorDivid+BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[i*SectorDivid+BlockIndex+1]);
                     }
                 }
                 else if ((BlockIndex == 0) && (SectorDivid == 1))        // first and last
@@ -3192,7 +3192,7 @@ EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA_test(SD_HandleTypeDef *hsd, SDMMC_DMATra
                     }
                     else
                     {
-                        desc[i*SectorDivid+BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[i*SectorDivid+BlockIndex+1]);
+                        desc[i*SectorDivid+BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[i*SectorDivid+BlockIndex+1]);
                         desc[i*SectorDivid+BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH;
                     }
                 }
@@ -3201,7 +3201,7 @@ EMU_SD_RTN Card_SD_WriteMultiBlocks_DMA_test(SD_HandleTypeDef *hsd, SDMMC_DMATra
                     desc[i*SectorDivid+BlockIndex].des0 = SDMMC_DES0_OWN | SDMMC_DES0_CH;
                     desc[i*SectorDivid+BlockIndex].des1 = dma->BlockSize * BuffSize;
                     desc[i*SectorDivid+BlockIndex].des2 = SrcAddr;
-                    desc[i*SectorDivid+BlockIndex].des3 = DTCMBUSADDR((uint32_t)&desc[i*SectorDivid+BlockIndex+1]);
+                    desc[i*SectorDivid+BlockIndex].des3 = peripheralAddrConvert((uint32_t)&desc[i*SectorDivid+BlockIndex+1]);
                 }
             }
         }

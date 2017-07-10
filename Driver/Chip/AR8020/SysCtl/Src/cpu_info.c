@@ -84,5 +84,84 @@ void CPUINFO_DCacheCleanInvalidateByAddr(uint32_t *addr, int32_t dsize)
     SCB_CleanInvalidateDCache_by_Addr(addr, dsize);
 }
 
+uint32_t peripheralAddrConvert(uint32_t addr)
+{
+    ENUM_CPU_ID cpu_id = CPUINFO_GetLocalCpuId();
+
+    switch (cpu_id)
+    {
+        case ENUM_CPU0_ID:
+            if((addr >= 0 && addr <= 0x7FFFF) ||                // ITCM
+               (addr >= 0x20000000 && addr <= 0x2007FFFF))      // DTCM
+            {
+                if ((addr >= 0 && addr <= 0x7FFFF))
+                {
+                    return addr + ITCM_CPU0_DMA_ADDR_OFFSET;
+                }
+                else if ((addr >= 0x20000000 && addr <= 0x2007FFFF))
+                {
+                    return addr + DTCM_CPU0_DMA_ADDR_OFFSET;                
+                }
+                else
+                {
+                    return -1;
+                }
+            }
+            else
+            {
+                return addr;
+            }
+        break;
+
+        case ENUM_CPU1_ID:
+            if((addr >= 0 && addr <= 0x3FFFF) ||                // ITCM
+               (addr >= 0x20000000 && addr <= 0x2003FFFF))      // DTCM
+            {
+                if((addr >= 0 && addr <= 0x3FFFF))
+                {
+                    return addr + ITCM_CPU1_DMA_ADDR_OFFSET;
+                }
+                else if ((addr >= 0x20000000 && addr <= 0x2003FFFF))
+                {
+                    return addr + DTCM_CPU1_DMA_ADDR_OFFSET;            
+                }
+                else
+                {
+                    return -1;
+                }
+            }
+            else
+            {
+                return addr;
+            }
+        break;
+
+        case ENUM_CPU2_ID:
+            if((addr >= 0 && addr <= 0xFFFF) ||                // ITCM
+               (addr >= 0x20000000 && addr <= 0x2000FFFF))      // DTCM
+            {
+                if ((addr >= 0 && addr <= 0xFFFF))
+                {
+                    return addr + ITCM_CPU2_DMA_ADDR_OFFSET;
+                }
+                else if ((addr >= 0x20000000 && addr <= 0x2000FFFF))
+                {
+                    return addr + DTCM_CPU2_DMA_ADDR_OFFSET;
+                }
+                else
+                {
+                    return -1;
+                }
+            }
+            else
+            {
+                return addr;
+            }
+        break;
+
+        default:
+        break;
+    }
+}
 
 

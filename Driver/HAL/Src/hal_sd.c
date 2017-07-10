@@ -123,9 +123,7 @@ HAL_RET_T HAL_SD_Write(uint32_t u32_dstBlkAddr, uint32_t u32_srcStartAddr, uint3
 	EMU_SD_RTN e_errorState = SD_OK;
 	SDMMC_DMATransTypeDef st_dma;
 	st_dma.BlockSize = 512;
-/* 	st_dma.SrcAddr = (uint32_t )(u32_srcStartAddr); */
-/* 	st_dma.SrcAddr = (uint32_t )DTCMBUSADDR(u32_srcStartAddr); */
-    st_dma.SrcAddr = addrConvert(u32_srcStartAddr);
+    st_dma.SrcAddr = peripheralAddrConvert(u32_srcStartAddr);
 	st_dma.DstAddr = (uint32_t )u32_dstBlkAddr;                        /* [block units] */
 	st_dma.SectorNum = u32_sectorNum;
 
@@ -169,7 +167,7 @@ HAL_RET_T HAL_SD_Read(uint32_t u32_dstStartAddr, uint32_t u32_srcBlkAddr, uint32
 	SDMMC_DMATransTypeDef st_dma;
 	st_dma.BlockSize = 512;
 	st_dma.SrcAddr = u32_srcBlkAddr;                     /* [block units] */
-    st_dma.DstAddr = addrConvert(u32_dstStartAddr);
+    st_dma.DstAddr = peripheralAddrConvert(u32_dstStartAddr);
 	st_dma.SectorNum = u32_sectorNum;
 	
     if (getCardPresence != CARD_IN)
@@ -463,6 +461,12 @@ HAL_RET_T HAL_SD_Fatfs_Init(void)
     char *path = "SD:/";
     static FATFS fatfs;
 
+    if (HAL_OK != HAL_SD_GetPresent())
+    {
+        return -1;
+    }
+
+
     if( sdhandle.inited == 0 )
     {
         dlog_error("SD card not initilized");
@@ -526,7 +530,7 @@ HAL_RET_T HAL_SD_Write_test(uint32_t u32_dstBlkAddr, uint32_t u32_srcStartAddr, 
 	EMU_SD_RTN e_errorState = SD_OK;
 	SDMMC_DMATransTypeDef st_dma;
 	st_dma.BlockSize = 512;
-    st_dma.SrcAddr = addrConvert(u32_srcStartAddr);
+    st_dma.SrcAddr = peripheralAddrConvert(u32_srcStartAddr);
 	st_dma.DstAddr = (uint32_t )u32_dstBlkAddr;                        /* [block units] */
 	st_dma.SectorNum = u32_sectorNum;
     
@@ -552,7 +556,7 @@ HAL_RET_T HAL_SD_Read_test(uint32_t u32_dstStartAddr, uint32_t u32_srcBlkAddr, u
 	SDMMC_DMATransTypeDef st_dma;
 	st_dma.BlockSize = 512;
 	st_dma.SrcAddr = u32_srcBlkAddr;                     /* [block units] */
-    st_dma.DstAddr = addrConvert(u32_dstStartAddr);
+    st_dma.DstAddr = peripheralAddrConvert(u32_dstStartAddr);
 	st_dma.SectorNum = u32_sectorNum;
 	
     if (getCardPresence != CARD_IN)
@@ -581,7 +585,7 @@ HAL_RET_T HAL_SD_GetPresent(void)
 {    
     if (getCardPresence != CARD_IN)
     {
-        dlog_error("card not pressent");
+        // dlog_error("card not pressent");
         return HAL_FALSE;
     }
 
