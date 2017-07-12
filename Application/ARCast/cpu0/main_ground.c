@@ -70,8 +70,26 @@ static void Mp3Decoder(void const *argument)
     while(1)
     {
         u16_mp3BuffLen = HAL_SRAM_GetMp3BufferLength();
-        if (u16_mp3BuffLen > 512)
+        if (u16_mp3BuffLen > 0)
         {
+/*            p_mp3DataBuffTmp = (uint8_t *)(&u8_pcmDataArray[buff_index]);
+            HAL_SRAM_GetMp3Data(u16_mp3BuffLen, p_mp3DataBuffTmp);
+            for (i = 0; i < u16_mp3BuffLen ; i+=4)
+            {
+                u8_swap                = p_mp3DataBuffTmp[i];
+                p_mp3DataBuffTmp[i]       = p_mp3DataBuffTmp[i+3];
+                p_mp3DataBuffTmp[i+3]     = u8_swap;
+
+                u8_swap                = p_mp3DataBuffTmp[i+1];
+                p_mp3DataBuffTmp[i+1]     = p_mp3DataBuffTmp[i+2];
+                p_mp3DataBuffTmp[i+2]     = u8_swap;
+            }
+            
+            HAL_USB_AudioDataSend(p_mp3DataBuffTmp, u16_mp3BuffLen, 0);
+
+            buff_index++;
+            buff_index &= 1;*/
+
             if ((s32_decoderBuffLen + u16_mp3BuffLen) > (MP3_BUFF_SIZE + 512))
             {
                 dlog_error("mp3 buff overflow :%d", s32_decoderBuffLen);
@@ -83,7 +101,6 @@ static void Mp3Decoder(void const *argument)
                 HAL_SRAM_GetMp3Data(u16_mp3BuffLen, (p_mp3DataBuffTmp + s32_decoderBuffLen));            
                 s32_decoderBuffLen += u16_mp3BuffLen;
             }
-
             do
             {
                 frame_size = mp3_decode(g_p_mp3Decoder, p_mp3DataBuffTmp, s32_decoderBuffLen, u8_pcmDataArray[buff_index], &mp3_info);                
@@ -92,8 +109,7 @@ static void Mp3Decoder(void const *argument)
                     
                     if (mp3_info.audio_bytes < 0)
                     {
-                        dlog_error("audio_bytes error :%d buff_index=%d", mp3_info.audio_bytes, buff_index);
-                        dlog_error("p_mp3DataBuffTmp :%p s32_decoderBuffLen=%d", p_mp3DataBuffTmp, s32_decoderBuffLen);
+                        dlog_error("audio_bytes error :%d frame_size=%d", mp3_info.audio_bytes, frame_size);
                     }
                     else
                     {
@@ -126,9 +142,9 @@ static void Mp3Decoder(void const *argument)
                                 HAL_USB_CustomerSendData((p_mp3DataBuffTmp + frame_size), MP3_USERDATA_LEN, 0);
                             }                            
                         }
-
+                        
                         p_PCMDataBuff = (uint8_t *)(u8_pcmDataArray[buff_index]);
-
+                    
                         for (i = 0; i < mp3_info.audio_bytes ; i+=4)
                         {
                             u8_swap                = p_PCMDataBuff[i];
@@ -158,16 +174,17 @@ static void Mp3Decoder(void const *argument)
                     p_mp3DataBuffTmp += (frame_size+MP3_USERDATA_LEN);
                     s32_decoderBuffLen -= (frame_size+MP3_USERDATA_LEN);
                 }
-                else if (s32_decoderBuffLen > 400)
+                else if (s32_decoderBuffLen > 500)
                 {
-                    p_mp3DataBuffTmp += (s32_decoderBuffLen-400);
-                    s32_decoderBuffLen = 400;
+                    p_mp3DataBuffTmp += (s32_decoderBuffLen-500);
+                    s32_decoderBuffLen = 500;
                     k = 100;
                 }
             }while((frame_size > 0) && (s32_decoderBuffLen > MP3_USERDATA_LEN));
             
             memcpy(p_mp3DataBuff, p_mp3DataBuffTmp, s32_decoderBuffLen);
             p_mp3DataBuffTmp = p_mp3DataBuff;
+
         }
         HAL_Delay(1);        
     }

@@ -69,6 +69,22 @@ HAL_BOOL_T HAL_MP3EncodePcmUnInit(void)
     dlog_info("encode mp3 uninit");
 }
 
+static int hal_mp3_check_header(uint32_t header){
+    /* header */
+    if ((header & 0xffe00000) != 0xffe00000)
+        return -1;
+    /* layer check */
+    if ((header & (3<<17)) != (1 << 17))
+        return -1;
+    /* bit rate */
+    if ((header & (0xf<<12)) == 0xf<<12)
+        return -1;
+    /* frequency */
+    if ((header & (3<<10)) == 3<<10)
+        return -1;
+    return 0;
+}
+
 void HAL_MP3EncodePcm(void)
 {   
     if (0 != (*pu32_newPcmDataFlagAddr))
@@ -81,7 +97,7 @@ void HAL_MP3EncodePcm(void)
         uint16_t *pu16_rawDataAddr = (uint16_t *)(u32_tmpRawDataAddr);
         uint8_t  *pu8_encodeDataAddr = (uint8_t *)(u32_tmpEncodeDataAddr);
         volatile uint32_t tick=0;
-        uint32_t i=0;
+        uint32_t i=0,header=0,extra_bytes=0,j=0;
         uint8_t ch[AUDIO_DATA_BUFF_COUNT*420]={0};
         memset(ch, 0, AUDIO_DATA_BUFF_COUNT*420);
         uint8_t g_u8_userDataArray[8]={0};
@@ -111,14 +127,31 @@ void HAL_MP3EncodePcm(void)
                                   (uint8_t)g_u8_userDataArray[2]+(uint8_t)g_u8_userDataArray[4]+
                                   (uint8_t)g_u8_userDataArray[5]+(uint8_t)g_u8_userDataArray[6]+
                                   (uint8_t)g_u8_userDataArray[7]);
-        
-        memcpy((uint8_t *)g_u32_audioBypassAddr, ch, 4);
+#if 1   
+        extra_bytes = 0;
+        for (j = 0; j < i; j++)
+        {
+            header = (ch[extra_bytes] << 24) | (ch[extra_bytes+1] << 16) | (ch[extra_bytes+2] << 8) | ch[extra_bytes+3];
+            if(hal_mp3_check_header(header) < 0)
+            {
+                extra_bytes++;        
+            }
+            else
+            {
+                //dlog_info("extra_bytes %d %x",extra_bytes, header);
+                break;
+            }
+        }
+
+        memcpy((uint8_t *)g_u32_audioBypassAddr, ch, extra_bytes+1);
         memcpy((uint8_t *)g_u32_audioBypassAddr, g_u8_userDataArray, 8);     
-        memcpy((uint8_t *)g_u32_audioBypassAddr, &ch[4], i-4);
-        //memcpy((uint8_t *)g_u32_audioBypassAddr, ch, i);                  
-        //dlog_info("encode mp3 ok %x\n", tick);
+        memcpy((uint8_t *)g_u32_audioBypassAddr, &ch[extra_bytes], i-extra_bytes-1);
+#else
+        memcpy((uint8_t *)g_u32_audioBypassAddr, ch, i);                  
+#endif
+	//dlog_info("encode mp3 ok %x\n", tick);
         
-        g_u32_dstAddress+=i;
+        g_u32_dstAddress+=(i+8);
         (*pu32_newPcmDataFlagAddr) = 0;
 
     }    

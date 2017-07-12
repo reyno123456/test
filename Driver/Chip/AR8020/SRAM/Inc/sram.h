@@ -34,7 +34,7 @@
 #define SRAM_TIMEOUT_THRESHOLD          100
 
 #ifdef ARCAST
-#define SRAM_MP3_DECODE_BUFF_SIZE       0x4000
+#define SRAM_MP3_DECODE_BUFF_SIZE       0x400
 #endif
 
 
