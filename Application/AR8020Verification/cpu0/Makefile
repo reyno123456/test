@@ -30,28 +30,71 @@ TARGET = ar8020_cpu0.bin
 SRC_S   := start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
-SRC_C   := main_sky.c command.c test_freertos.c test_hal_can.c test_hal_camera.c ../share/test_i2c_adv7611.c \
-           test_usbh.c test_sd.c ../share/test_bb.c\
-           ../share/test_timer.c ../share/test_hal_spi_flash.c test_quadspi.c ../share/test_float.c ../share/test_gpio.c \
-           upgrade.c ../share/testhal_gpio.c ../share/testhal_timer.c ../share/testhal_pwm.c \
-           ../share/testhal_softpwm.c ../share/test_hal_i2c_24c256.c test_hal_uart.c test_hal_spi.c \
-           test_hal_mipi.c ../share/test_mp3.c test_hal_nv.c test_hal_i2c.c test_localirq.c ../share/testhal_dma.c
+SRC_C   := main_sky.c \
+		   command.c \
+           upgrade.c \
+		   ../../TestSuite/test_i2c_adv7611.c \
+           ../../TestSuite/test_bb.c \
+           ../../TestSuite/test_timer.c \
+           ../../TestSuite/test_hal_spi_flash.c \
+           ../../TestSuite/test_float.c \
+           ../../TestSuite/test_gpio.c \
+           ../../TestSuite/testhal_gpio.c \
+           ../../TestSuite/testhal_timer.c \
+           ../../TestSuite/testhal_pwm.c \
+           ../../TestSuite/testhal_softpwm.c \
+           ../../TestSuite/test_hal_i2c_24c256.c \
+           ../../TestSuite/test_mp3.c \
+           ../../TestSuite/testhal_dma.c \
+           ../../TestSuite/test_sd.c \
+           ../../TestSuite/test_freertos.c \
+           ../../TestSuite/test_hal_camera.c \
+           ../../TestSuite/test_hal_can.c \
+           ../../TestSuite/test_hal_i2c.c \
+           ../../TestSuite/test_hal_mipi.c \
+           ../../TestSuite/test_hal_nv.c \
+           ../../TestSuite/test_hal_uart.c \
+           ../../TestSuite/test_hal_spi.c \
+           ../../TestSuite/test_localirq.c \
+           ../../TestSuite/test_quadspi.c \
+           ../../TestSuite/test_usbh.c
 SRC_CXX :=
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
-SRC_C   := main_ground.c command.c test_freertos.c test_hal_can.c test_hal_camera.c ../share/test_i2c_adv7611.c \
-           test_usbh.c test_sd.c ../share/test_bb.c\
-           ../share/test_timer.c ../share/test_hal_spi_flash.c test_quadspi.c ../share/test_float.c ../share/test_gpio.c \
-           upgrade.c ../share/testhal_gpio.c ../share/testhal_timer.c ../share/testhal_pwm.c\
-           ../share/testhal_softpwm.c ../share/test_hal_i2c_24c256.c test_hal_uart.c test_hal_spi.c \
-           test_hal_mipi.c ../share/test_mp3.c test_hal_nv.c test_hal_i2c.c test_localirq.c ../share/testhal_dma.c
+SRC_C   := main_ground.c \
+		   command.c \
+           upgrade.c \
+		   ../../TestSuite/test_freertos.c \
+		   ../../TestSuite/test_hal_can.c \
+		   ../../TestSuite/test_hal_camera.c \
+		   ../../TestSuite/test_i2c_adv7611.c \
+           ../../TestSuite/test_usbh.c \
+           ../../TestSuite/test_bb.c \
+           ../../TestSuite/test_timer.c \
+           ../../TestSuite/test_hal_spi_flash.c \
+           ../../TestSuite/test_quadspi.c \
+           ../../TestSuite/test_float.c \
+           ../../TestSuite/test_gpio.c \
+           ../../TestSuite/testhal_gpio.c \
+           ../../TestSuite/testhal_timer.c \
+           ../../TestSuite/testhal_pwm.c \
+           ../../TestSuite/testhal_softpwm.c \
+           ../../TestSuite/test_hal_i2c_24c256.c \
+           ../../TestSuite/test_hal_uart.c \
+           ../../TestSuite/test_hal_spi.c \
+           ../../TestSuite/test_hal_mipi.c \
+           ../../TestSuite/test_mp3.c \
+           ../../TestSuite/test_hal_nv.c \
+           ../../TestSuite/test_hal_i2c.c \
+           ../../TestSuite/test_localirq.c \
+           ../../TestSuite/testhal_dma.c
 SRC_CXX :=
 endif
 
 # compile flags
-CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
-CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
+CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../TestSuite
+CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../TestSuite
 
 # libs
 LD_LIBS := --start-group

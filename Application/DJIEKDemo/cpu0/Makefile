@@ -30,22 +30,36 @@ TARGET = ar8020_cpu0.bin
 SRC_S   := start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
-SRC_C   := main_sky.c command.c test_hal_camera.c ../share/test_i2c_adv7611.c \
-           upgrade.c test_hal_mipi.c test_usbh.c ../share/test_bb.c\
-		   test_hal_nv.c test_sd.c
+SRC_C   := main_sky.c \
+           command.c \
+           upgrade.c \
+           ../../TestSuite/test_hal_camera.c \
+           ../../TestSuite/test_i2c_adv7611.c \
+           ../../TestSuite/test_hal_mipi.c \
+           ../../TestSuite/test_usbh.c \
+           ../../TestSuite/test_bb.c \
+           ../../TestSuite/test_hal_nv.c \
+           ../../TestSuite/test_sd.c
 SRC_CXX :=
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
-SRC_C   := main_ground.c command.c test_hal_camera.c ../share/test_i2c_adv7611.c \
-           upgrade.c test_hal_mipi.c test_usbh.c ../share/test_bb.c\
-		   test_hal_nv.c test_sd.c
+SRC_C   := main_ground.c \
+           command.c \
+           upgrade.c \
+           ../../TestSuite/test_hal_camera.c \
+           ../../TestSuite/test_i2c_adv7611.c \
+           ../../TestSuite/test_hal_mipi.c \
+           ../../TestSuite/test_usbh.c \
+           ../../TestSuite/test_bb.c \
+		   ../../TestSuite/test_hal_nv.c \
+		   ../../TestSuite/test_sd.c
 SRC_CXX :=
 endif
 
 # compile flags
-CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
-CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
+CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../TestSuite
+CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../TestSuite
 
 # libs
 LD_LIBS := --start-group

@@ -29,13 +29,20 @@ TARGET = ar8020_cpu1.bin
 # source file(s), including *.s *.c *.cpp file(s)
 SRC_S   := start.s
 
-SRC_C   := main.c command.c ../share/test_timer.c ../share/test_i2c_adv7611.c ../share/test_gpio.c ../share/testhal_dma.c test_sd.c ../share/common_func.c
+SRC_C   := main.c \
+		   command.c \
+		   ../share/common_func.c \
+		   ../../TestSuite/test_timer.c \
+		   ../../TestSuite/test_i2c_adv7611.c \
+		   ../../TestSuite/test_gpio.c \
+		   ../../TestSuite/testhal_dma.c \
+		   ../../TestSuite/test_sd.c
 
 SRC_CXX :=
 
 # compile flags
-CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
-CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
+CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../TestSuite
+CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../TestSuite
 
 # libs
 LD_LIBS := --start-group

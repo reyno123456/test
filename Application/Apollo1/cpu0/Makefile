@@ -30,22 +30,34 @@ TARGET = ar8020_cpu0.bin
 SRC_S   := start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
-SRC_C   := main_sky.c command.c test_usbh.c upgrade.c com_task.c \
-           test_hal_uart.c ../share/testhal_pwm.c \
-           ../share/testhal_gpio.c test_hal_nv.c
+SRC_C   := main_sky.c \
+           command.c \
+           upgrade.c \
+		   com_task.c \
+           ../../TestSuite/test_usbh.c \
+           ../../TestSuite/test_hal_uart.c \
+           ../../TestSuite/testhal_pwm.c \
+           ../../TestSuite/testhal_gpio.c \
+           ../../TestSuite/test_hal_nv.c
 SRC_CXX :=
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
-SRC_C   := main_ground.c command.c test_usbh.c upgrade.c com_task.c \
-           test_hal_uart.c ../share/testhal_pwm.c \
-           ../share/testhal_gpio.c test_hal_nv.c
+SRC_C   := main_ground.c \
+           command.c \
+           upgrade.c \
+           com_task.c \
+		   ../../TestSuite/test_usbh.c \
+           ../../TestSuite/test_hal_uart.c \
+           ../../TestSuite/testhal_pwm.c \
+           ../../TestSuite/testhal_gpio.c \
+           ../../TestSuite/test_hal_nv.c
 SRC_CXX :=
 endif
 
 # compile flags
-CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
-CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
+CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../TestSuite
+CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../TestSuite
 
 # libs
 LD_LIBS := --start-group

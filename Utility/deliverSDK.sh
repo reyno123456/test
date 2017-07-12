@@ -35,7 +35,9 @@ if [[ ! -n $SDK_VERSION ]]; then
 	echo "Path is null.	Exit"
 	exit -1
 else
-	mkdir -p $AR8020SW/Output/$SDK_VERSION	
+	mkdir -p $AR8020SW/Output/$SDK_VERSION
+	cp $AR8020SW/Application/TestSuite $AR8020SW/Output/$SDK_VERSION -R
+	cp $AR8020SW/Application/TestSuite $AR8020SW/Output/AR8020SDK -R
 fi
 
 

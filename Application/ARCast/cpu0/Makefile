@@ -30,18 +30,31 @@ TARGET = ar8020_cpu0.bin
 SRC_S   := start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
-SRC_C   := main_sky.c command.c test_hal_nv.c test_hal_i2c.c test_hdmi.c  arcast_appcommon.c test_bb.c
+SRC_C   := main_sky.c \
+           command.c \
+           arcast_appcommon.c \
+           ../../TestSuite/test_hal_nv.c \
+           ../../TestSuite/test_hal_i2c.c \
+           ../../TestSuite/test_hdmi.c \
+           ../../TestSuite/test_bb.c
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
-SRC_C   := main_ground.c command.c test_hal_nv.c test_usbh.c test_hal_i2c.c test_hdmi.c arcast_appcommon.c test_bb.c
+SRC_C   := main_ground.c \
+           command.c \
+           arcast_appcommon.c \
+           ../../TestSuite/test_hal_nv.c \
+           ../../TestSuite/test_usbh.c \
+           ../../TestSuite/test_hal_i2c.c \
+           ../../TestSuite/test_hdmi.c \
+           ../../TestSuite/test_bb.c
 endif
 
 SRC_CXX :=
 
 # compile flags
-CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
-CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share
+CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../share -I../../TestSuite
+CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../share -I../../TestSuite
 
 # libs
 LD_LIBS := --start-group
