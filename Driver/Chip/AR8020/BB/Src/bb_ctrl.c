@@ -144,7 +144,7 @@ void BB_use_param_setting(PARAM *user_setting)
 
     context.CH_bandwidth      = BW_10M;
 
-    context.it_manual_rf_band = 0xff;
+    context.e_rfbandMode      = AUTO;
     context.trx_ctrl          = IT_RC_MODE;
 }
 

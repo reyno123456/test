@@ -114,7 +114,7 @@ typedef struct
     uint8_t             cur_IT_ch;
     uint8_t             next_IT_ch;
     uint8_t             it_manual_ch;
-    uint8_t             it_manual_rf_band;
+    ENUM_RUN_MODE       e_rfbandMode;
     uint8_t             fec_unlock_cnt;
     uint16_t            rc_unlock_cnt;
 

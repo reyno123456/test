@@ -480,7 +480,7 @@ static int BB_SweepAfterFull( uint8_t flag )
     BB_UpdateOptCh(e_sweepBand, e_bw, u8_prevSweepCh);
 
     //check if band switch need
-    if ( flag_checkBandSwitch )
+    if ( flag_checkBandSwitch && context.e_rfbandMode == AUTO)
     {
         uint8_t i = 0;
         uint8_t flag_bandChange = 0, mainch = 0, optch = 0;

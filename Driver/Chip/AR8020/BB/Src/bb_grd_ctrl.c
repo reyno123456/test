@@ -434,13 +434,13 @@ void Grd_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
     {
         context.flag_mrc = 2;
         BB_WriteRegMask(PAGE1, 0x83, 0x01, 0x01); 
-        dlog_info("Disable %d\n", context.cycle_count);        
+        //dlog_info("Disable %d\n", context.cycle_count);        
     }
     else if( context.flag_mrc == 2 )
     {
         context.flag_mrc = 0;
         BB_WriteRegMask(PAGE1, 0x83, 0x00, 0x01);   
-        dlog_info("Enable %d\n", context.cycle_count);        
+        //dlog_info("Enable %d\n", context.cycle_count);        
     }
 
     //Enable BB_TX intr
@@ -875,7 +875,8 @@ void grd_handle_one_cmd(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
         {
             case FREQ_BAND_MODE:
             {
-                //band mode: AUTO MANUAL, only suppor the Manual mode
+                context.e_rfbandMode = (ENUM_RF_BAND)value;
+                dlog_info("rfbandMode = %d", value);
                 break;
             }
 
