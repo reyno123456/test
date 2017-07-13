@@ -36,9 +36,9 @@ if [[ ! -n $SDK_VERSION ]]; then
 	exit -1
 else
 	mkdir -p $AR8020SW/Output/$SDK_VERSION
-	cp $AR8020SW/Application/TestSuite $AR8020SW/Output/$SDK_VERSION -R
-	mkdir -p $AR8020SW/Output/AR8020SDK/TestSuite
-	cp $AR8020SW/Application/TestSuite $AR8020SW/Output/AR8020SDK -R
+	cp $AR8020SW/Application/Example $AR8020SW/Output/$SDK_VERSION -R
+	mkdir -p $AR8020SW/Output/AR8020SDK/Example
+	cp $AR8020SW/Application/Example $AR8020SW/Output/AR8020SDK -R
 fi
 
 

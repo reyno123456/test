@@ -33,28 +33,28 @@ ifeq ($(APPLICATION_SCENARIO), sky)
 SRC_C   := main_sky.c \
            command.c \
            arcast_appcommon.c \
-           ../../TestSuite/test_hal_nv.c \
-           ../../TestSuite/test_hal_i2c.c \
-           ../../TestSuite/test_hdmi.c \
-           ../../TestSuite/test_bb.c
+           ../../Example/test_hal_nv.c \
+           ../../Example/test_hal_i2c.c \
+           ../../Example/test_hdmi.c \
+           ../../Example/test_bb.c
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
 SRC_C   := main_ground.c \
            command.c \
            arcast_appcommon.c \
-           ../../TestSuite/test_hal_nv.c \
-           ../../TestSuite/test_usbh.c \
-           ../../TestSuite/test_hal_i2c.c \
-           ../../TestSuite/test_hdmi.c \
-           ../../TestSuite/test_bb.c
+           ../../Example/test_hal_nv.c \
+           ../../Example/test_usbh.c \
+           ../../Example/test_hal_i2c.c \
+           ../../Example/test_hdmi.c \
+           ../../Example/test_bb.c
 endif
 
 SRC_CXX :=
 
 # compile flags
-CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../share -I../../TestSuite
-CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../share -I../../TestSuite
+CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../share -I../../Example
+CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../share -I../../Example
 
 # libs
 LD_LIBS := --start-group

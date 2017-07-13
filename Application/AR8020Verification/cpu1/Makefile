@@ -32,17 +32,17 @@ SRC_S   := start.s
 SRC_C   := main.c \
 		   command.c \
 		   ../share/common_func.c \
-		   ../../TestSuite/test_timer.c \
-		   ../../TestSuite/test_i2c_adv7611.c \
-		   ../../TestSuite/test_gpio.c \
-		   ../../TestSuite/testhal_dma.c \
-		   ../../TestSuite/test_sd.c
+		   ../../Example/test_timer.c \
+		   ../../Example/test_i2c_adv7611.c \
+		   ../../Example/test_gpio.c \
+		   ../../Example/testhal_dma.c \
+		   ../../Example/test_sd.c
 
 SRC_CXX :=
 
 # compile flags
-CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../TestSuite
-CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../TestSuite
+CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../Example
+CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../Example
 
 # libs
 LD_LIBS := --start-group

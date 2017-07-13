@@ -34,11 +34,11 @@ SRC_C   := main_sky.c \
            command.c \
            upgrade.c \
 		   com_task.c \
-           ../../TestSuite/test_usbh.c \
-           ../../TestSuite/test_hal_uart.c \
-           ../../TestSuite/testhal_pwm.c \
-           ../../TestSuite/testhal_gpio.c \
-           ../../TestSuite/test_hal_nv.c
+           ../../Example/test_usbh.c \
+           ../../Example/test_hal_uart.c \
+           ../../Example/testhal_pwm.c \
+           ../../Example/testhal_gpio.c \
+           ../../Example/test_hal_nv.c
 SRC_CXX :=
 endif
 
@@ -47,17 +47,17 @@ SRC_C   := main_ground.c \
            command.c \
            upgrade.c \
            com_task.c \
-		   ../../TestSuite/test_usbh.c \
-           ../../TestSuite/test_hal_uart.c \
-           ../../TestSuite/testhal_pwm.c \
-           ../../TestSuite/testhal_gpio.c \
-           ../../TestSuite/test_hal_nv.c
+		   ../../Example/test_usbh.c \
+           ../../Example/test_hal_uart.c \
+           ../../Example/testhal_pwm.c \
+           ../../Example/testhal_gpio.c \
+           ../../Example/test_hal_nv.c
 SRC_CXX :=
 endif
 
 # compile flags
-CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../TestSuite
-CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../TestSuite
+CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../Example
+CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../Example
 
 # libs
 LD_LIBS := --start-group

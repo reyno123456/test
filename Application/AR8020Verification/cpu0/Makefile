@@ -33,31 +33,31 @@ ifeq ($(APPLICATION_SCENARIO), sky)
 SRC_C   := main_sky.c \
 		   command.c \
            upgrade.c \
-		   ../../TestSuite/test_i2c_adv7611.c \
-           ../../TestSuite/test_bb.c \
-           ../../TestSuite/test_timer.c \
-           ../../TestSuite/test_hal_spi_flash.c \
-           ../../TestSuite/test_float.c \
-           ../../TestSuite/test_gpio.c \
-           ../../TestSuite/testhal_gpio.c \
-           ../../TestSuite/testhal_timer.c \
-           ../../TestSuite/testhal_pwm.c \
-           ../../TestSuite/testhal_softpwm.c \
-           ../../TestSuite/test_hal_i2c_24c256.c \
-           ../../TestSuite/test_mp3.c \
-           ../../TestSuite/testhal_dma.c \
-           ../../TestSuite/test_sd.c \
-           ../../TestSuite/test_freertos.c \
-           ../../TestSuite/test_hal_camera.c \
-           ../../TestSuite/test_hal_can.c \
-           ../../TestSuite/test_hal_i2c.c \
-           ../../TestSuite/test_hal_mipi.c \
-           ../../TestSuite/test_hal_nv.c \
-           ../../TestSuite/test_hal_uart.c \
-           ../../TestSuite/test_hal_spi.c \
-           ../../TestSuite/test_localirq.c \
-           ../../TestSuite/test_quadspi.c \
-           ../../TestSuite/test_usbh.c
+		   ../../Example/test_i2c_adv7611.c \
+           ../../Example/test_bb.c \
+           ../../Example/test_timer.c \
+           ../../Example/test_hal_spi_flash.c \
+           ../../Example/test_float.c \
+           ../../Example/test_gpio.c \
+           ../../Example/testhal_gpio.c \
+           ../../Example/testhal_timer.c \
+           ../../Example/testhal_pwm.c \
+           ../../Example/testhal_softpwm.c \
+           ../../Example/test_hal_i2c_24c256.c \
+           ../../Example/test_mp3.c \
+           ../../Example/testhal_dma.c \
+           ../../Example/test_sd.c \
+           ../../Example/test_freertos.c \
+           ../../Example/test_hal_camera.c \
+           ../../Example/test_hal_can.c \
+           ../../Example/test_hal_i2c.c \
+           ../../Example/test_hal_mipi.c \
+           ../../Example/test_hal_nv.c \
+           ../../Example/test_hal_uart.c \
+           ../../Example/test_hal_spi.c \
+           ../../Example/test_localirq.c \
+           ../../Example/test_quadspi.c \
+           ../../Example/test_usbh.c
 SRC_CXX :=
 endif
 
@@ -65,36 +65,36 @@ ifeq ($(APPLICATION_SCENARIO), ground)
 SRC_C   := main_ground.c \
 		   command.c \
            upgrade.c \
-		   ../../TestSuite/test_freertos.c \
-		   ../../TestSuite/test_hal_can.c \
-		   ../../TestSuite/test_hal_camera.c \
-		   ../../TestSuite/test_i2c_adv7611.c \
-           ../../TestSuite/test_usbh.c \
-           ../../TestSuite/test_bb.c \
-           ../../TestSuite/test_timer.c \
-           ../../TestSuite/test_hal_spi_flash.c \
-           ../../TestSuite/test_quadspi.c \
-           ../../TestSuite/test_float.c \
-           ../../TestSuite/test_gpio.c \
-           ../../TestSuite/testhal_gpio.c \
-           ../../TestSuite/testhal_timer.c \
-           ../../TestSuite/testhal_pwm.c \
-           ../../TestSuite/testhal_softpwm.c \
-           ../../TestSuite/test_hal_i2c_24c256.c \
-           ../../TestSuite/test_hal_uart.c \
-           ../../TestSuite/test_hal_spi.c \
-           ../../TestSuite/test_hal_mipi.c \
-           ../../TestSuite/test_mp3.c \
-           ../../TestSuite/test_hal_nv.c \
-           ../../TestSuite/test_hal_i2c.c \
-           ../../TestSuite/test_localirq.c \
-           ../../TestSuite/testhal_dma.c
+		   ../../Example/test_freertos.c \
+		   ../../Example/test_hal_can.c \
+		   ../../Example/test_hal_camera.c \
+		   ../../Example/test_i2c_adv7611.c \
+           ../../Example/test_usbh.c \
+           ../../Example/test_bb.c \
+           ../../Example/test_timer.c \
+           ../../Example/test_hal_spi_flash.c \
+           ../../Example/test_quadspi.c \
+           ../../Example/test_float.c \
+           ../../Example/test_gpio.c \
+           ../../Example/testhal_gpio.c \
+           ../../Example/testhal_timer.c \
+           ../../Example/testhal_pwm.c \
+           ../../Example/testhal_softpwm.c \
+           ../../Example/test_hal_i2c_24c256.c \
+           ../../Example/test_hal_uart.c \
+           ../../Example/test_hal_spi.c \
+           ../../Example/test_hal_mipi.c \
+           ../../Example/test_mp3.c \
+           ../../Example/test_hal_nv.c \
+           ../../Example/test_hal_i2c.c \
+           ../../Example/test_localirq.c \
+           ../../Example/testhal_dma.c
 SRC_CXX :=
 endif
 
 # compile flags
-CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../TestSuite
-CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../TestSuite
+CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../Example
+CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../Example
 
 # libs
 LD_LIBS := --start-group

@@ -33,13 +33,13 @@ ifeq ($(APPLICATION_SCENARIO), sky)
 SRC_C   := main_sky.c \
            command.c \
            upgrade.c \
-           ../../TestSuite/test_hal_camera.c \
-           ../../TestSuite/test_i2c_adv7611.c \
-           ../../TestSuite/test_hal_mipi.c \
-           ../../TestSuite/test_usbh.c \
-           ../../TestSuite/test_bb.c \
-           ../../TestSuite/test_hal_nv.c \
-           ../../TestSuite/test_sd.c
+           ../../Example/test_hal_camera.c \
+           ../../Example/test_i2c_adv7611.c \
+           ../../Example/test_hal_mipi.c \
+           ../../Example/test_usbh.c \
+           ../../Example/test_bb.c \
+           ../../Example/test_hal_nv.c \
+           ../../Example/test_sd.c
 SRC_CXX :=
 endif
 
@@ -47,19 +47,19 @@ ifeq ($(APPLICATION_SCENARIO), ground)
 SRC_C   := main_ground.c \
            command.c \
            upgrade.c \
-           ../../TestSuite/test_hal_camera.c \
-           ../../TestSuite/test_i2c_adv7611.c \
-           ../../TestSuite/test_hal_mipi.c \
-           ../../TestSuite/test_usbh.c \
-           ../../TestSuite/test_bb.c \
-		   ../../TestSuite/test_hal_nv.c \
-		   ../../TestSuite/test_sd.c
+           ../../Example/test_hal_camera.c \
+           ../../Example/test_i2c_adv7611.c \
+           ../../Example/test_hal_mipi.c \
+           ../../Example/test_usbh.c \
+           ../../Example/test_bb.c \
+		   ../../Example/test_hal_nv.c \
+		   ../../Example/test_sd.c
 SRC_CXX :=
 endif
 
 # compile flags
-CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../TestSuite
-CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../TestSuite
+CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../Example
+CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../Example
 
 # libs
 LD_LIBS := --start-group
