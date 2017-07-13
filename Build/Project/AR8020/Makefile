@@ -111,8 +111,8 @@ $(LIBALL):
 
 sdk: 
 	@echo "make sdk ..."
-	@mkdir -p $(SDK_DIR) $(SDK_DIR)/Build $(SDK_DIR)/Utility $(SDK_DIR)/Application 
-	@cp -r $(CONFIGURE_DIR) $(SDK_DIR)/Inc
+	@mkdir -p $(SDK_DIR) $(SDK_DIR)/Build $(SDK_DIR)/Utility $(SDK_DIR)/Application $(SDK_DIR)/Inc 
+	@cp -r $(CONFIGURE_DIR)* $(SDK_DIR)/Inc
 	@cp -r $(OUTPUT_HEADER_STAGING_DIR) $(OUTPUT_LIB_STAGING_DIR) $(SDK_DIR)
 	@cp -r $(APPLICATION_DIR)/* $(SDK_DIR)/Application
 	@cp -r $(UTILITY_DIR)/joint2flash.sh $(UTILITY_DIR)/txt2bin.exe $(UTILITY_DIR)/imageinfo $(SDK_DIR)/Utility
