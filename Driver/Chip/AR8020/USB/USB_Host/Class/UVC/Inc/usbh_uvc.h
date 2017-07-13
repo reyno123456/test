@@ -45,8 +45,8 @@ extern USBH_ClassTypeDef            UVC_Class;
 #define UVC_HEADER_FRAME_START              0x01
 #define UVC_HEADER_FRAME_END                0x02
 
-
 #define USB_DESC_TYPE_CS_INTERFACE          0x24
+#define USB_DESC_TYPE_EP                    0x05
 
 #define USB_UVC_FORMAT_UNCOMPRESSED         0x04
 #define USB_UVC_FRAME_UNCOMPRESSED          0x05
@@ -300,19 +300,22 @@ static void USBH_UVC_UrbDone(USBH_HandleTypeDef *phost);
 uint8_t USBH_UVC_GetBuff(void);
 void USBH_UVC_SetBuffState(uint8_t u8_buffIndex, UVC_BuffStateTypeDef e_buffState);
 static UVC_BuffStateTypeDef USBH_UVC_GetBuffState(uint8_t u8_buffIndex);
-static void USBH_ParseFormatUncompDesc(uint8_t *buf, uint8_t index);
+static void USBH_ParseFormatUncompDesc(uint8_t *buf);
 static void USBH_ParseFrameUncompDesc(uint8_t *buf, uint8_t index);
+static void  USBH_ParseVideoStreamingDesc(uint8_t *buf, uint8_t index);
 void USBH_UVC_GetVideoFormatList(USBH_HandleTypeDef *phost);
 static uint8_t USBH_UVC_FindStreamingInterface(USBH_HandleTypeDef *phost);
 uint16_t USBH_UVC_GetFrameWidth(uint8_t index);
 uint16_t USBH_UVC_GetFrameHeight(uint8_t index);
 uint8_t USBH_UVC_GetFrameIndex(uint8_t index);
 uint32_t USBH_UVC_GetFrameSize(uint8_t frameIndex);
+static uint32_t USBH_GetFrameDefaultInterval(uint8_t frameIndex);
 uint32_t USBH_UVC_GetProcUnitControls(void);
 uint32_t USBH_UVC_GetExtUnitControls(void);
 uint32_t USBH_UVC_ProcUnitParamHandler(USBH_HandleTypeDef *phost, uint8_t index, UVC_GetParamTypeDef enParamType);
 USBH_UVCFrameBufferTypeDef *USBH_GetFrameBuffer(void);
 uint8_t *USBH_GetRecvBuffer(void);
+uint8_t USBH_SelAltInterfaceForCommit(uint32_t max_packet_size, USBH_HandleTypeDef *phost);
 
 
 extern USBH_UVCUserInterface    g_stUVCUserInterface;

@@ -21,11 +21,12 @@ USBH_UVCFrameBufferTypeDef          *g_UVCVideoBuffer = NULL;
 volatile UVC_BuffStateTypeDef        g_enumUVCBuffState[UVC_VIDEO_BUFF_FRAME_NUM];
 uint32_t                             g_u32UVCVideoBuffSizePerFrame;
 
-USBH_UVCUserInterface                       g_stUVCUserInterface;
-USBH_UVCFormatUncompressedTypeDef           g_stUVCFormatUncomp[USB_UVC_MAX_FRAME_FORMATS_NUM];
+USBH_UVCUserInterface                       g_stUVCUserInterface = {0};
+USBH_UVCFormatUncompressedTypeDef           g_stUVCFormatUncomp = {0};
 USBH_UVCFrameUncompressedTypeDef            g_stUVCFrameUncomp[USB_UVC_MAX_FRAME_FORMATS_NUM];
 USBH_VCProcessingUnitInterfaceDescriptor    g_stProcessingUnitDesc;
 USBH_VCExtensionUnitInterfaceDescriptor     g_stExtensionUnitDesc;
+USBH_InterfaceDescTypeDef                   g_stVideoStreamingDesc[USBH_MAX_NUM_INTERFACES];
 
 uint8_t                 g_req_mem[8];
 uint8_t                 g_cur_mem[28];
@@ -672,6 +673,7 @@ static USBH_StatusTypeDef USBH_UVC_Probe(USBH_HandleTypeDef *phost)
 {
     UVC_HandleTypeDef        *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
     USBH_StatusTypeDef        status = USBH_BUSY;
+    uint32_t                  default_interval = 0;
 
     phost->Control.setup.b.wValue.w = 0x0100;
     phost->Control.setup.b.wIndex.w = 0x0001;
@@ -723,10 +725,17 @@ static USBH_StatusTypeDef USBH_UVC_Probe(USBH_HandleTypeDef *phost)
     case UVC_PROBE_STATE_SET_CUR:
         phost->Control.setup.b.bRequest = UVC_SET_CUR;
         phost->Control.setup.b.bmRequestType = USB_H2D | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
-//        g_cur_mem[23] = 0;
-        g_max_mem[3] = UVC_Handle->u8_selFrameIndex;
 
-        if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)(g_max_mem) , 26))
+        default_interval = USBH_GetFrameDefaultInterval(UVC_Handle->u8_selFrameIndex);
+
+        g_cur_mem[2] = g_stUVCFormatUncomp.bFormatIndex;
+        g_cur_mem[3] = UVC_Handle->u8_selFrameIndex;
+        g_cur_mem[4] = (uint8_t)default_interval;
+        g_cur_mem[5] = (uint8_t)(default_interval>>8);
+        g_cur_mem[6] = (uint8_t)(default_interval>>16);
+        g_cur_mem[7] = (uint8_t)(default_interval>>24);
+
+        if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)(g_cur_mem) , 26))
         {
             UVC_Handle->probeCount++;
 
@@ -750,6 +759,7 @@ static USBH_StatusTypeDef USBH_UVC_Commit(USBH_HandleTypeDef *phost)
     USBH_StatusTypeDef           status = USBH_BUSY;
     uint8_t                     *u8_recvBuff = NULL;
     USBH_UVCFrameBufferTypeDef  *stUVCFrameBuffer = NULL;
+    uint32_t                     u32_epSize = 0;
 
     switch (UVC_Handle->uvc_probeState)
     {
@@ -775,12 +785,14 @@ static USBH_StatusTypeDef USBH_UVC_Commit(USBH_HandleTypeDef *phost)
 
         //g_cur_mem[23] = 0;
         //g_max_mem[3]  = UVC_Handle->u8_selFrameIndex;
+        g_cur_mem[22] = 0;
+        g_cur_mem[23] = 0;
+        g_cur_mem[24] = 0;
+        g_cur_mem[25] = 0;
 
-        //dlog_info("g_cur_mem[3]: %d", g_max_mem[3]);
-
-        if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)(g_max_mem) , 26))
+        if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)(g_cur_mem) , 26))
         {
-            UVC_Handle->uvc_probeState = UVC_PROBE_STATE_SET_CUR_COMMIT;
+            UVC_Handle->uvc_probeState = UVC_PROBE_STATE_GET_CUR_COMMIT;
         }
 
         break;
@@ -795,6 +807,13 @@ static USBH_StatusTypeDef USBH_UVC_Commit(USBH_HandleTypeDef *phost)
         if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)(g_cur_mem) , 26))
         {
             UVC_Handle->uvc_probeState = UVC_PROBE_STATE_SET_CUR_COMMIT;
+
+            u32_epSize  = g_cur_mem[22]+
+                          (g_cur_mem[23]<<8)+
+                          (g_cur_mem[24]<<16)+
+                          (g_cur_mem[25]<<24);
+            
+            UVC_Handle->u8_selAltInterface = USBH_SelAltInterfaceForCommit(u32_epSize, phost);
         }
 
         break;
@@ -807,7 +826,7 @@ static USBH_StatusTypeDef USBH_UVC_Commit(USBH_HandleTypeDef *phost)
         phost->Control.setup.b.wIndex.w = 0x0001;
         phost->Control.setup.b.wLength.w = 0x001A;
 
-        if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)(g_max_mem) , 26))
+        if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)(g_cur_mem) , 26))
         {
             UVC_Handle->uvc_probeState = UVC_STATE_SET_INTERFACE;
         }
@@ -922,11 +941,14 @@ static void USBH_UVC_UrbDone(USBH_HandleTypeDef *phost)
     {
         u32_recvSize = USBH_LL_GetLastXferSize(phost, UVC_Handle->VideoPipe);
 
+        #if 0
         if (u32_recvSize <= UVC_HEADER_SIZE)
         {
             stUVCFrameBuffer->u32_rawDataLen = 0;
         }
-        else if (u32_recvSize > UVC_HEADER_SIZE)
+        else
+        #endif
+        if (u32_recvSize > UVC_HEADER_SIZE)
         {
             u32_recvSize -= UVC_HEADER_SIZE;
 
@@ -1035,27 +1057,28 @@ static UVC_BuffStateTypeDef USBH_UVC_GetBuffState(uint8_t u8_buffIndex)
 }
 
 
-static void  USBH_ParseFormatUncompDesc(uint8_t *buf, uint8_t index)
+static void  USBH_ParseFormatUncompDesc(uint8_t *buf)
 {
     uint8_t                i;
 
-    g_stUVCFormatUncomp[index].bLength               = *(uint8_t  *) (buf + 0);
-    g_stUVCFormatUncomp[index].bDescriptorType       = *(uint8_t  *) (buf + 1);
-    g_stUVCFormatUncomp[index].bDescriptorSubtype    = *(uint8_t  *) (buf + 2);
-    g_stUVCFormatUncomp[index].bFormatIndex          = *(uint8_t  *) (buf + 3);
-    g_stUVCFormatUncomp[index].bNumFrameDescriptors  = *(uint8_t  *) (buf + 4);
+    g_stUVCFormatUncomp.bLength               = *(uint8_t  *) (buf + 0);
+    g_stUVCFormatUncomp.bDescriptorType       = *(uint8_t  *) (buf + 1);
+    g_stUVCFormatUncomp.bDescriptorSubtype    = *(uint8_t  *) (buf + 2);
+    g_stUVCFormatUncomp.bFormatIndex          = *(uint8_t  *) (buf + 3);
+    g_stUVCFormatUncomp.bNumFrameDescriptors  = *(uint8_t  *) (buf + 4);
 
     for (i = 0; i < 16; i++)
     {
-        g_stUVCFormatUncomp[index].guidFormat[i]     = *(uint8_t  *) (buf + (5 + i));
+        g_stUVCFormatUncomp.guidFormat[i]     = *(uint8_t  *) (buf + (5 + i));
     }
 
-    g_stUVCFormatUncomp[index].bBitsPerPixel         = *(uint8_t  *) (buf + 21);
-    g_stUVCFormatUncomp[index].bDefaultFrameIndex    = *(uint8_t  *) (buf + 22);
-    g_stUVCFormatUncomp[index].bAspectRatioX         = *(uint8_t  *) (buf + 23);
-    g_stUVCFormatUncomp[index].bAspectRatioY         = *(uint8_t  *) (buf + 24);
-    g_stUVCFormatUncomp[index].bmInterlaceFlags      = *(uint8_t  *) (buf + 25);
-    g_stUVCFormatUncomp[index].bCopyProtect          = *(uint8_t  *) (buf + 26);
+    g_stUVCFormatUncomp.bBitsPerPixel         = *(uint8_t  *) (buf + 21);
+    g_stUVCFormatUncomp.bDefaultFrameIndex    = *(uint8_t  *) (buf + 22);
+    g_stUVCFormatUncomp.bAspectRatioX         = *(uint8_t  *) (buf + 23);
+    g_stUVCFormatUncomp.bAspectRatioY         = *(uint8_t  *) (buf + 24);
+    g_stUVCFormatUncomp.bmInterlaceFlags      = *(uint8_t  *) (buf + 25);
+    g_stUVCFormatUncomp.bCopyProtect          = *(uint8_t  *) (buf + 26);
+
 }
 
 static void  USBH_ParseFrameUncompDesc(uint8_t *buf, uint8_t index)
@@ -1073,6 +1096,25 @@ static void  USBH_ParseFrameUncompDesc(uint8_t *buf, uint8_t index)
     g_stUVCFrameUncomp[index].dwDefaultFrameInterval     = LE32(buf + 21);
     g_stUVCFrameUncomp[index].bFrameIntervalType         = *(uint8_t  *) (buf + 25);
     g_stUVCFrameUncomp[index].dwFrameInterval            = LE32(buf + 26);
+}
+
+static void  USBH_ParseVideoStreamingDesc(uint8_t *buf, uint8_t index)
+{
+    g_stVideoStreamingDesc[index].bLength                   = *(uint8_t  *) (buf + 0);
+    g_stVideoStreamingDesc[index].bDescriptorType           = *(uint8_t  *) (buf + 1);
+    g_stVideoStreamingDesc[index].bInterfaceNumber          = *(uint8_t  *) (buf + 2);
+    g_stVideoStreamingDesc[index].bAlternateSetting         = *(uint8_t  *) (buf + 3);
+    g_stVideoStreamingDesc[index].bNumEndpoints             = *(uint8_t  *) (buf + 4);
+    g_stVideoStreamingDesc[index].bInterfaceClass           = *(uint8_t  *) (buf + 5);
+    g_stVideoStreamingDesc[index].bInterfaceSubClass        = *(uint8_t  *) (buf + 6);
+    g_stVideoStreamingDesc[index].bInterfaceProtocol        = *(uint8_t  *) (buf + 7);
+    g_stVideoStreamingDesc[index].iInterface                = *(uint8_t  *) (buf + 8);
+    g_stVideoStreamingDesc[index].Ep_Desc[0].bLength           = *(uint8_t  *) (buf + 9);
+    g_stVideoStreamingDesc[index].Ep_Desc[0].bDescriptorType   = *(uint8_t  *) (buf + 10);
+    g_stVideoStreamingDesc[index].Ep_Desc[0].bEndpointAddress  = *(uint8_t  *) (buf + 11);
+    g_stVideoStreamingDesc[index].Ep_Desc[0].bmAttributes      = *(uint8_t  *) (buf + 12);
+    g_stVideoStreamingDesc[index].Ep_Desc[0].wMaxPacketSize    = LE16(buf + 13);
+    g_stVideoStreamingDesc[index].Ep_Desc[0].bInterval         = *(uint8_t  *) (buf + 15);
 }
 
 uint16_t USBH_UVC_GetFrameWidth(uint8_t index)
@@ -1111,7 +1153,7 @@ uint32_t USBH_UVC_GetFrameSize(uint8_t frameIndex)
 
     frameSize       = (g_stUVCFrameUncomp[i].wWidth * g_stUVCFrameUncomp[i].wHeight);
 
-    bytePerPixel    = (g_stUVCFormatUncomp[0].bBitsPerPixel >> 3);
+    bytePerPixel    = (g_stUVCFormatUncomp.bBitsPerPixel >> 3);
 
     if (bytePerPixel != 0)
     {
@@ -1122,6 +1164,33 @@ uint32_t USBH_UVC_GetFrameSize(uint8_t frameIndex)
 
     return frameSize;
 }
+
+
+static uint32_t USBH_GetFrameDefaultInterval(uint8_t frameIndex)
+{
+    uint8_t         i;
+    uint32_t        frameDefaultInterval = 0;
+
+    for (i = 0; i < USB_UVC_MAX_FRAME_FORMATS_NUM; i++)
+    {
+        if (frameIndex == g_stUVCFrameUncomp[i].bFrameIndex)
+        {
+            break;
+        }
+    }
+
+    if (i >= USB_UVC_MAX_FRAME_FORMATS_NUM)
+    {
+        i = 0;
+
+        dlog_error("no this frameIndex");
+    }
+
+    frameDefaultInterval = g_stUVCFrameUncomp[i].dwDefaultFrameInterval;
+
+    return frameDefaultInterval;
+}
+
 
 static void USBH_ParseProcessingUnitDesc(uint8_t * buf)
 {
@@ -1185,8 +1254,8 @@ void USBH_UVC_GetVideoFormatList(USBH_HandleTypeDef *phost)
     USBH_DescHeader_t                 *pdesc;
     uint16_t                           ptr = 0;
     uint8_t                           *buff;
-    uint8_t                            formatUncompIndex = 0;
     uint8_t                            frameUncompIndex = 0;
+    uint8_t                            videoStreamingIndex = 0;
     USBH_CfgDescTypeDef               *cfg_desc;
     USBH_UVCInterfaceDescriptor       *if_desc;
 
@@ -1210,9 +1279,7 @@ void USBH_UVC_GetVideoFormatList(USBH_HandleTypeDef *phost)
 
                 if (buff[2] == USB_UVC_FORMAT_UNCOMPRESSED)
                 {
-                    USBH_ParseFormatUncompDesc(buff, formatUncompIndex);
-
-                    formatUncompIndex++;
+                    USBH_ParseFormatUncompDesc(buff);
                 }
                 else if (buff[2] == USB_UVC_FRAME_UNCOMPRESSED)
                 {
@@ -1220,6 +1287,14 @@ void USBH_UVC_GetVideoFormatList(USBH_HandleTypeDef *phost)
 
                     frameUncompIndex++;
                 }
+            }
+            else if (pdesc->bDescriptorType == USB_DESC_TYPE_EP)
+            {
+                buff    = (uint8_t *)if_desc;
+
+                USBH_ParseVideoStreamingDesc(buff, videoStreamingIndex);
+
+                videoStreamingIndex++;
             }
         }
         else if (if_desc->bInterfaceSubClass == USB_UVC_SUBCLASS_VIDEO_CONTROL)
@@ -1338,5 +1413,40 @@ uint8_t *USBH_GetRecvBuffer(void)
     return (g_UVCVideoBuffer->u8_rawData + u32_offset);
 }
 
+
+/* modified from linux kernel, select the appropriate alter interface for video-in endpoint */
+uint8_t USBH_SelAltInterfaceForCommit(uint32_t max_packet_size, USBH_HandleTypeDef *phost)
+{
+    uint8_t                 altInterface = 0;
+    uint32_t                best_psize = 0xC00;
+    uint32_t                psize;
+    uint8_t                 i;
+    UVC_HandleTypeDef      *UVC_Handle;
+
+    UVC_Handle =  (UVC_HandleTypeDef *) phost->pActiveClass->pData;
+
+    /* compare with all the candidate endpoints, select the most suitable one */
+    for (i = 0; i < USBH_MAX_NUM_INTERFACES; i++)
+    {
+        psize           = g_stVideoStreamingDesc[i].Ep_Desc[0].wMaxPacketSize;
+
+        psize           = (psize & 0x7FF) * (1 + ((psize >> 11) & 3));
+
+        if ((psize >= max_packet_size)&&
+            (psize <= best_psize))
+        {
+            altInterface = g_stVideoStreamingDesc[i].bAlternateSetting;
+
+            break;
+        }
+    }
+
+    if (i >= USBH_MAX_NUM_INTERFACES)
+    {
+        altInterface = UVC_Handle->u8_selAltInterface;
+    }
+
+    return altInterface;
+}
 
 
