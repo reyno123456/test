@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "debuglog.h"
-#include "i2c.h"
 #include "hal_camera.h"
 
 void command_TestHalCameraInit(unsigned char *rate, unsigned char *mode);

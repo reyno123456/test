@@ -4,7 +4,6 @@
 #include <string.h>
 #include "debuglog.h"
 
-#include "interrupt.h"
 #include "hal_ret_type.h"
 #include "hal_timer.h"
 #include "testhal_timer.h"

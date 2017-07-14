@@ -4,7 +4,9 @@
 #include "test_sysevent.h"
 #include "debuglog.h"
 
-void test_IdleCallback(void * p)
+static void test_IdleCallback(void * p);
+
+static void test_IdleCallback(void * p)
 {
     dlog_info("idle function ...");
 }

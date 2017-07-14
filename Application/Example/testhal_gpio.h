@@ -1,6 +1,6 @@
 /*****************************************************************************
 Copyright: 2016-2020, Artosyn. Co., Ltd.
-File name: test_gpio.h
+File name: testhal_gpio.h
 Description: test gpio
 Author: SW
 Version: 1.0

@@ -7,13 +7,11 @@
 #include <stdlib.h>
 #include "test_i2c_adv7611.h"
 #include "test_freertos.h"
-#include "test_timer.h"
 #include "test_hal_can.h"
 #include "test_sd.h"
 #include "hal_sd.h"
 #include "hal_adc.h"
 #include "test_quadspi.h"
-#include "test_gpio.h"
 #include "test_usbh.h"
 #include "test_float.h"
 #include "test_hal_camera.h"
@@ -164,26 +162,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_TestTaskQuit();
     }
-    else if (memcmp(cmdArray[0], "test_timerall", strlen("test_timerall")) == 0)
-    {
-       command_TestTimAll();
-    }
-    else if (memcmp(cmdArray[0], "test_timerused", strlen("test_timerused")) == 0)
-    {
-       command_TestTimUsed();
-    }
-    else if (memcmp(cmdArray[0], "test_timer", strlen("test_timer")) == 0)
-    {
-       command_TestTim(cmdArray[1], cmdArray[2], cmdArray[3]);
-    }    
-    else if (memcmp(cmdArray[0], "test_pwmall", strlen("test_pwmall")) == 0)
-    {
-       command_TestPwmAll();
-    }
-    else if (memcmp(cmdArray[0], "test_pwm", strlen("test_pwm")) == 0)
-    {
-       command_TestPwm(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4]);
-    }    
     else if (memcmp(cmdArray[0], "test_hal_spi_flash_id", strlen("test_hal_spi_flash_id")) == 0)
     {
        command_WbFlashID(cmdArray[1]);
@@ -235,18 +213,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     else if (memcmp(cmdArray[0], "test_nor_flash_all", strlen("test_nor_flash_all")) == 0)
     {
         command_testAllNorFlashOperations(cmdArray[1], cmdArray[2], cmdArray[3]);
-    }
-    else if (memcmp(cmdArray[0], "test_TestGpioNormalRange", strlen("test_TestGpioNormalRange")) == 0)
-    {
-        command_TestGpioNormalRange(cmdArray[1], cmdArray[2], cmdArray[3]);
-    }
-    else if (memcmp(cmdArray[0], "test_TestGpioNormal", strlen("test_TestGpioNormal")) == 0)
-    {
-        command_TestGpioNormal(cmdArray[1], cmdArray[2]);
-    }
-    else if (memcmp(cmdArray[0], "test_TestGpioInterrupt", strlen("test_TestGpioInterrupt")) == 0)
-    {
-        command_TestGpioInterrupt(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
     else if (memcmp(cmdArray[0], "test_float_calculate_pi", strlen("test_float_calculate_pi")) == 0)
     {
@@ -474,12 +440,12 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("read <address>");
         dlog_error("write <address> <data>");
         dlog_error("write_array <address> <data><len>");
-        dlog_error("initsd");
-        dlog_error("readsd <SrcAddr:0x> <SectorNum:0x>");
-        dlog_error("writesd <DstAddr:0x> <SectorNum:0x> <Srcaddr:0x>");
-        dlog_error("erasesd <startSector> <SectorNum>");
-        dlog_error("test_sd <choise>");
-        dlog_error("mount_sd");
+        //dlog_error("initsd");
+        //dlog_error("readsd <SrcAddr:0x> <SectorNum:0x>");
+        //dlog_error("writesd <DstAddr:0x> <SectorNum:0x> <Srcaddr:0x>");
+        //dlog_error("erasesd <startSector> <SectorNum>");
+        //dlog_error("test_sd <choise>");
+        //dlog_error("mount_sd");
         dlog_error("hdmiinit <index>");
         dlog_error("hdmidump <index>");
         dlog_error("hdmigetvideoformat <index>");
@@ -487,11 +453,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("hdmiwrite <slv address> <reg address> <reg value>");
         dlog_error("freertos_task");
         dlog_error("freertos_taskquit");
-        dlog_error("test_timer <TIM Group> <TIM Num> <TIM Count>");
-        dlog_error("test_timerused");
-        dlog_error("test_timerall");
-        dlog_error("test_pwm <PWM Group> <PWM Num> <PWM low> <PWM high>");
-        dlog_error("test_pwmall");
         dlog_error("test_hal_spi_flash_id <spi_port>");
         dlog_error("test_hal_spi_flash_write_read <spi_port>");
         dlog_error("test_hal_spi_flash_erase <spi_port>");
@@ -505,9 +466,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_write_flash <flash start address> <size> <value>");
         dlog_error("test_read_flash <flash start address> <size>");
         dlog_error("test_nor_flash_all <flash start address> <size> <value>");
-        dlog_error("test_TestGpioNormal <gpionum> <highorlow>");
-        dlog_error("test_TestGpioNormalRange <gpionum1> <gpionum2> <highorlow>");
-        dlog_error("test_TestGpioInterrupt <gpionum> <inttype> <polarity>");
         dlog_output(1000);
         dlog_error("startbypassvideo");
         dlog_error("stopbypassvideo");

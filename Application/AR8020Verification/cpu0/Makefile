@@ -35,10 +35,8 @@ SRC_C   := main_sky.c \
            upgrade.c \
 		   ../../Example/test_i2c_adv7611.c \
            ../../Example/test_bb.c \
-           ../../Example/test_timer.c \
            ../../Example/test_hal_spi_flash.c \
            ../../Example/test_float.c \
-           ../../Example/test_gpio.c \
            ../../Example/testhal_gpio.c \
            ../../Example/testhal_timer.c \
            ../../Example/testhal_pwm.c \
@@ -71,11 +69,9 @@ SRC_C   := main_ground.c \
 		   ../../Example/test_i2c_adv7611.c \
            ../../Example/test_usbh.c \
            ../../Example/test_bb.c \
-           ../../Example/test_timer.c \
            ../../Example/test_hal_spi_flash.c \
            ../../Example/test_quadspi.c \
            ../../Example/test_float.c \
-           ../../Example/test_gpio.c \
            ../../Example/testhal_gpio.c \
            ../../Example/testhal_timer.c \
            ../../Example/testhal_pwm.c \

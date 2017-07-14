@@ -8,8 +8,6 @@
 #include <stdlib.h>
 #include "cmsis_os.h"
 #include "hal_sd.h"
-#include "test_timer.h"
-#include "test_gpio.h"
 #include "test_i2c_adv7611.h"
 #include "test_simulatepwm.h"
 #include "hal_ret_type.h"
@@ -69,39 +67,6 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_sdMount();
     }
-
-    else if (memcmp(cmdArray[0], "test_timerall", strlen("test_timerall")) == 0)
-    {
-       command_TestTimAll();
-    }
-    else if (memcmp(cmdArray[0], "test_timerused", strlen("test_timerused")) == 0)
-    {
-       command_TestTimUsed();
-    }
-    else if (memcmp(cmdArray[0], "test_timer", strlen("test_timer")) == 0)
-    {
-       command_TestTim(cmdArray[1], cmdArray[2], cmdArray[3]);
-    }    
-    else if (memcmp(cmdArray[0], "test_pwmall", strlen("test_pwmall")) == 0)
-    {
-       command_TestPwmAll();
-    }
-    else if (memcmp(cmdArray[0], "test_pwm", strlen("test_pwm")) == 0)
-    {
-       command_TestPwm(cmdArray[1], cmdArray[2], cmdArray[3], cmdArray[4]);
-    }    
-    else if (memcmp(cmdArray[0], "test_TestGpioNormalRange", strlen("test_TestGpioNormalRange")) == 0)
-    {
-        command_TestGpioNormalRange(cmdArray[1], cmdArray[2], cmdArray[3]);
-    }
-    else if (memcmp(cmdArray[0], "test_TestGpioNormal", strlen("test_TestGpioNormal")) == 0)
-    {
-        command_TestGpioNormal(cmdArray[1], cmdArray[2]);
-    }
-    else if (memcmp(cmdArray[0], "test_TestGpioInterrupt", strlen("test_TestGpioInterrupt")) == 0)
-    {
-        command_TestGpioInterrupt(cmdArray[1], cmdArray[2], cmdArray[3]);
-    }
     else if (memcmp(cmdArray[0], "test_dma_cpu1", strlen("test_dma_cpu1")) == 0)
     {
         command_dma(cmdArray[1], cmdArray[2], cmdArray[3]);
@@ -120,24 +85,16 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("Please use the commands like:");
         dlog_error("read <address>");
         dlog_error("write <address> <data>");
-        //dlog_error("readsd <startBlock> <blockNum>");
-        //dlog_error("writesd <startBlock> <blockNum> <data>");
-        //dlog_error("erasesd");
+        dlog_error("readsd <startBlock> <blockNum>");
+        dlog_error("writesd <startBlock> <blockNum> <data>");
+        dlog_error("erasesd");
         dlog_error("sendusb");
         dlog_error("hdmiinit");
         dlog_error("hdmigetvideoformat");
         dlog_error("hdmiread <slv address> <reg address>");
         dlog_error("freertos_task");
         dlog_error("freertos_taskquit");
-        dlog_error("test_timer <TIM Group> <TIM Num> <TIM Count>");
-        dlog_error("test_timerall");
-        dlog_error("test_timerused");
-        dlog_error("test_pwm <PWM Group> <PWM Num> <PWM low> <PWM high>");
-        dlog_error("test_pwmall");
         dlog_error("test_nor_flash_all <flash start address> <size> <value>");
-        dlog_error("test_TestGpioNormal <gpionum> <highorlow>");
-        dlog_error("test_TestGpioNormalRange <gpionum1> <gpionum2> <highorlow>");
-        dlog_error("test_TestGpioInterrupt <gpionum> <inttype> <polarity>");
         dlog_error("test_dma_cpu1 <src> <dst> <byte_num>");
         dlog_error("set_loglevel <cpuid> <loglevel>");
         dlog_error("unmount_sd");

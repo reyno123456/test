@@ -3,7 +3,7 @@
 #include "task.h"
 #include "cmsis_os.h"
 #include "debuglog.h"
-#include "systicks.h"
+#include "hal.h"
 
 #define m7_malloc pvPortMalloc
 #define m7_free vPortFree
@@ -21,7 +21,6 @@ void vTask1( void const * argument)
      for( ;; )  
      {  
          vTaskDelayUntil( &xLastWakeTime,xFrequency );  
-   
          dlog_critical("line = %d running", __LINE__);
      }  
 }
@@ -32,8 +31,8 @@ void vTask2( void const * argument)
 
 	for (;;)
 	{
-        dlog_info("Task2 is running\n");
-		osDelay(3000);
+        dlog_info("Task2 is running");
+		HAL_Delay(3000);
 	}
 }
 

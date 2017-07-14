@@ -3,9 +3,6 @@
 
 #include "stm32f746xx.h"
 
-#define m7_malloc pvPortMalloc
-#define m7_free vPortFree
-
 void command_TestTask(void);
 void command_TestTaskQuit(void);
 

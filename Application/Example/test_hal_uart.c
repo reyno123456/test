@@ -6,6 +6,8 @@
 uint8_t s_u8_uartRxBuf[64];
 uint8_t s_u8_uartRxLen = 0;
 
+static uint32_t uartRxCallBack(uint8_t *pu8_rxBuf, uint8_t u8_len);
+
 void command_TestHalUartIntSet(unsigned char *ch, unsigned char *flag)
 {
     unsigned int u32_ch = strtoul(ch, NULL, 0);
@@ -65,7 +67,7 @@ void command_TestHalUartRx(unsigned char *ch)
     s_u8_uartRxLen = 0;
 }
 
-uint32_t uartRxCallBack(uint8_t *pu8_rxBuf, uint8_t u8_len)
+static uint32_t uartRxCallBack(uint8_t *pu8_rxBuf, uint8_t u8_len)
 {
     if (u8_len > 64)
     {

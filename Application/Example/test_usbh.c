@@ -31,7 +31,7 @@ void USBH_USBHostStatus(void const *argument)
     {
         HAL_USB_HostProcess();
 
-        osDelay(5);
+        HAL_Delay(5);
     }
 }
 
@@ -128,7 +128,7 @@ void USBH_BypassVideo(void const *argument)
                                 dlog_error("Cannot Read from the file \n");
                             }
 
-                            osDelay(10);
+                            HAL_Delay(10);
 
                             if (bytesread < USB_VIDEO_BYPASS_SIZE_ONCE)
                             {

@@ -9,19 +9,24 @@
 #include "stm32f746xx.h"
 #include "memory_config.h"
 #define TEST_FLASH_START_ADDR 0x10000000
-void Reg_Write323(uint32_t regAddr, uint32_t regData)
+
+static void Reg_Write323(uint32_t regAddr, uint32_t regData);
+static uint32_t Reg_Read323(uint32_t regAddr);
+static uint64_t Reg_Read646(uint32_t regAddr);
+
+static void Reg_Write323(uint32_t regAddr, uint32_t regData)
 {
     volatile uint32_t* ptr_regAddr = (uint32_t*)regAddr;
     *ptr_regAddr = regData;
 }
 
-uint32_t Reg_Read323(uint32_t regAddr)
+static uint32_t Reg_Read323(uint32_t regAddr)
 {
     volatile uint32_t* ptr_regAddr = (uint32_t*)regAddr;
     return *ptr_regAddr;
 }
 
-uint64_t Reg_Read646(uint32_t regAddr)
+static uint64_t Reg_Read646(uint32_t regAddr)
 {
     volatile uint64_t* ptr_regAddr = (uint64_t*)regAddr;
     return *ptr_regAddr;

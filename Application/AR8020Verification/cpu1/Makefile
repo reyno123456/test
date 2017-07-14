@@ -32,9 +32,7 @@ SRC_S   := start.s
 SRC_C   := main.c \
 		   command.c \
 		   ../share/common_func.c \
-		   ../../Example/test_timer.c \
 		   ../../Example/test_i2c_adv7611.c \
-		   ../../Example/test_gpio.c \
 		   ../../Example/testhal_dma.c \
 		   ../../Example/test_sd.c
 

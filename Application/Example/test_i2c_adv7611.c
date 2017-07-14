@@ -3,8 +3,7 @@
 #include "debuglog.h"
 #include "i2c.h"
 #include "adv_7611.h"
-
-#define TAR_24C256_ADDR       0x51
+#include "test_hal_i2c_24c256.h"
 
 #if 1
 #define TAR_ADV7611_ADDR      (0x98 >> 1)

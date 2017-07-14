@@ -12,20 +12,11 @@ static pwm_handle_st timer_queue[20];
 
 static uint32_t g_u32TimCount = 0;
 static uint32_t g_u32Index = 0;
-static uint32_t g_ACount[5][2];
 
 void TIMPWM_IRQHandler(uint32_t u32_vectorNum)
 {
     TIM_ClearNvic(g_stSimulateTimer);
     g_u32TimCount++;
-    /*if(0 == g_u32TimCount%2)
-    {
-        GPIO_SetPin(64,1);
-    }
-    else
-    {
-        GPIO_SetPin(64,0);
-    }   */ 
 }
 
 void command_TestSimulategpio(uint8_t gpionum)
@@ -96,21 +87,7 @@ uint32_t add_timer(pwm_handle_st *tmp)
     dlog_info("add_timer parament %d %d %d\n",tmp_num,tmp->base_time,tmp->count[tmp->polarity]);
     return TIMER_SUCCESS;
 }
-/*
-uint32_t del_timer(uint32_t timer_us)
-{
-    uint32_t i = 0;
-    for(i=1; i<9; i++)
-    {
-        if(timer_queue[i].count == timer_us)
-        {
-            memset(&(timer_queue[i]), 0, sizeof(pwm_handle_st));
-            return TIMER_SUCCESS; 
-        }
-    }
-    return  TIMER_NOT_TIME;
-}
- */
+
 void run_timer(void)
 {
 
@@ -128,17 +105,6 @@ void run_timer(void)
         time +=timer_queue[i].overflow;
         if((timer_queue[i].count[timer_queue[i].polarity] + timer_queue[i].base_time < time) && (0 != timer_queue[i].count[timer_queue[i].polarity]))
         {            
-            /*if(timer_queue[i].polarity ==1)
-            {
-                g_u32Index++;
-                timer_queue[i].count[0]=g_ACount[g_u32Index%5][0];
-                timer_queue[i].count[1]=g_ACount[g_u32Index%5][1];
-            }*/
-            /*if(g_u32Index>0xfffffff)
-            {
-                g_u32Index =0;
-            }*/
-
             timer_queue[i].base_time = time;
             timer_queue[i].polarity = timer_queue[i].polarity%2;
             timer_queue[i].polarity = (timer_queue[i].polarity == 1)?0:1;
@@ -178,25 +144,6 @@ void command_TestSimulatePwm(void)
     g_u32Index =0;
     command_TestSimulategpio(64);
     add_timer(&tmp);
-/*
-    g_ACount[0][0] = 50;
-    g_ACount[0][1] = 200;
-    g_ACount[1][0] = 80;
-    g_ACount[1][1] = 170;
-    g_ACount[2][0] = 100;
-    g_ACount[2][1] = 150;
-    g_ACount[3][0] = 120;
-    g_ACount[3][1] = 130;
-    g_ACount[4][0] = 150;
-    g_ACount[4][1] = 100;
-    for(i=90;i<100;i++)
-    {
-        tmp.data = i;
-        command_TestSimulategpio(i);
-        add_timer(&tmp);
-    }
-    */
-
 
     while(1)
     {

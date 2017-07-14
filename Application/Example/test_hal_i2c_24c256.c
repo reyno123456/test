@@ -8,13 +8,9 @@
 #include "hal.h"
 
 #define I2C_24C256_TIMEOUT_VALUE    (10)
-
 #define TEST_24C256_BUFFSIZE 64
-void testhal_24c256(unsigned char i2c_num,unsigned char value);
-void commandhal_Test24C256(char* i2c_num_str,char* i2c_value)
-{
-    testhal_24c256(strtoul(i2c_num_str, NULL, 0),strtoul(i2c_value, NULL, 0));
-}
+
+static void testhal_24c256(unsigned char i2c_num,unsigned char value);
 
 void testhal_24c256(unsigned char i2c_num,unsigned char value)
 {
@@ -49,4 +45,9 @@ void testhal_24c256(unsigned char i2c_num,unsigned char value)
 
     dlog_info("I2C_Master_Read_Data finished!\n");
 
+}
+
+void commandhal_Test24C256(char* i2c_num_str,char* i2c_value)
+{
+    testhal_24c256(strtoul(i2c_num_str, NULL, 0),strtoul(i2c_value, NULL, 0));
 }

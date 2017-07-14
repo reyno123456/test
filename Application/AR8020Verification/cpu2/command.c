@@ -7,7 +7,6 @@
 #include "cmsis_os.h"
 #include "bb_ctrl.h"
 #include "test_bb.h"
-#include "test_timer.h"
 #include "test_h264_encoder.h"
 #include "test_i2c_adv7611.h"
 #include "test_sysevent.h"

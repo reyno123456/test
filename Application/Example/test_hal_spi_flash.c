@@ -5,6 +5,14 @@
 #include "debuglog.h" 
 
 uint16_t CLKRATE_MHZ = 6;
+
+static void Test_WbFlashCommand (ENUM_SPI_COMPONENT SPI_BASE_ADDR, uint8_t cmd);
+static uint8_t Test_WbFlashReadReg (ENUM_SPI_COMPONENT SPI_BASE_ADDR, uint8_t cmd);
+static void Test_WbFlashWriteData (ENUM_SPI_COMPONENT SPI_BASE_ADDR,uint8_t wr_instruc, uint32_t addr, uint8_t data);
+static uint8_t Test_WbFlashReadData (ENUM_SPI_COMPONENT SPI_BASE_ADDR,uint8_t rd_instruc, uint32_t addr);
+static uint8_t Test_WbBlockErase(ENUM_SPI_COMPONENT SPI_BASE_ADDR, uint8_t cmd, uint32_t addr);
+static uint16_t Test_WbFlashID(uint8_t SPI_BASE_ADDR);
+
 /*====================================================*/
 /*             WinBond SPI_FLASH Test FUNC            */
 /*====================================================*/ 
@@ -20,7 +28,7 @@ void TEST_SPI_init(uint8_t index)
     HAL_SPI_MasterInit(index, &st_spiInitInfo);
 }
 
-uint16_t Test_WbFlashID(uint8_t SPI_BASE_ADDR)
+static uint16_t Test_WbFlashID(uint8_t SPI_BASE_ADDR)
 {
     uint16_t device_id = 0;
     uint8_t u8Wdate[] = {0x90, 0x00, 0x00, 0x00, 0x00, 0x00};
@@ -34,6 +42,46 @@ uint16_t Test_WbFlashID(uint8_t SPI_BASE_ADDR)
 
     return device_id ;
 }
+
+//
+static void Test_WbFlashCommand (ENUM_SPI_COMPONENT SPI_BASE_ADDR, uint8_t cmd)
+{
+    uint8_t u8Wdate = cmd;
+    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR, &u8Wdate, 1, NULL, 0, MAX_TIEM_MS);
+}
+
+static uint8_t Test_WbFlashReadReg (ENUM_SPI_COMPONENT SPI_BASE_ADDR, uint8_t cmd)
+{
+    uint8_t u8Wdate[] = {cmd, 0};
+    uint8_t u8Rbuf[2];
+    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8Wdate, 1,u8Rbuf, 1, MAX_TIEM_MS);
+    
+    return u8Rbuf[0];
+}
+
+static void Test_WbFlashWriteData (ENUM_SPI_COMPONENT SPI_BASE_ADDR,uint8_t wr_instruc, uint32_t addr, uint8_t data)
+{
+    uint8_t u8Wdate[] = {wr_instruc, (addr >>16) & 0x000000FF, (addr >> 8) & 0x000000FF, (addr & 0x000000FF),data};    
+    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8Wdate, sizeof(u8Wdate),NULL, 0, MAX_TIEM_MS);
+}
+
+static uint8_t Test_WbFlashReadData (ENUM_SPI_COMPONENT SPI_BASE_ADDR,uint8_t rd_instruc, uint32_t addr)
+{
+    uint8_t u8Wdate[] = {rd_instruc,  (addr >>16) & 0x000000FF, (addr >> 8) & 0x000000FF,(addr & 0x000000FF), 0x00};
+    uint8_t u8Rbuf[5]; 
+    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8Wdate, 4,u8Rbuf, 1, MAX_TIEM_MS);
+
+    return u8Rbuf[0] ;
+}
+
+static uint8_t Test_WbBlockErase(ENUM_SPI_COMPONENT SPI_BASE_ADDR, uint8_t cmd, uint32_t addr)
+{ 
+    uint8_t u8Wdate[] = {cmd, (addr >>16) & 0x000000FF, (addr >> 8) & 0x000000FF, (addr & 0x000000FF)}; 
+
+    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8Wdate, sizeof(u8Wdate),NULL, 0, MAX_TIEM_MS);
+
+}
+
 void command_WbFlashID(char *SPI_BASE_ADDR)
 {
 
@@ -43,44 +91,6 @@ void command_WbFlashID(char *SPI_BASE_ADDR)
 
 }
 
-//
-void Test_WbFlashCommand (ENUM_SPI_COMPONENT SPI_BASE_ADDR, uint8_t cmd)
-{
-    uint8_t u8Wdate = cmd;
-    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR, &u8Wdate, 1, NULL, 0, MAX_TIEM_MS);
-}
-
-uint8_t Test_WbFlashReadReg (ENUM_SPI_COMPONENT SPI_BASE_ADDR, uint8_t cmd)
-{
-    uint8_t u8Wdate[] = {cmd, 0};
-    uint8_t u8Rbuf[2];
-    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8Wdate, 1,u8Rbuf, 1, MAX_TIEM_MS);
-    
-    return u8Rbuf[0];
-}
-
-void Test_WbFlashWriteData (ENUM_SPI_COMPONENT SPI_BASE_ADDR,uint8_t wr_instruc, uint32_t addr, uint8_t data)
-{
-    uint8_t u8Wdate[] = {wr_instruc, (addr >>16) & 0x000000FF, (addr >> 8) & 0x000000FF, (addr & 0x000000FF),data};    
-    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8Wdate, sizeof(u8Wdate),NULL, 0, MAX_TIEM_MS);
-}
-
-uint8_t Test_WbFlashReadData (ENUM_SPI_COMPONENT SPI_BASE_ADDR,uint8_t rd_instruc, uint32_t addr)
-{
-    uint8_t u8Wdate[] = {rd_instruc,  (addr >>16) & 0x000000FF, (addr >> 8) & 0x000000FF,(addr & 0x000000FF), 0x00};
-    uint8_t u8Rbuf[5]; 
-    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8Wdate, 4,u8Rbuf, 1, MAX_TIEM_MS);
-
-    return u8Rbuf[0] ;
-}
-
-uint8_t Test_WbBlockErase(ENUM_SPI_COMPONENT SPI_BASE_ADDR, uint8_t cmd, uint32_t addr)
-{ 
-    uint8_t u8Wdate[] = {cmd, (addr >>16) & 0x000000FF, (addr >> 8) & 0x000000FF, (addr & 0x000000FF)}; 
-
-    HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,u8Wdate, sizeof(u8Wdate),NULL, 0, MAX_TIEM_MS);
-
-}
 void command_TestWbBlockErase(char *SPI_BASE_ADDR, char *cmd, char *addr)
 {
     uint8_t u8Cmd = strtoul(cmd, NULL, 0);
@@ -90,6 +100,7 @@ void command_TestWbBlockErase(char *SPI_BASE_ADDR, char *cmd, char *addr)
     Test_WbBlockErase(u8SpiAddr, u8Cmd, u32Addr);
  
 }
+
 void command_TestWbFlash(char *spi_base)
 {
     uint8_t u8WEL = 0;
