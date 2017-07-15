@@ -22,100 +22,17 @@ extern volatile VTiming CurVTiming;
 typedef unsigned char (*HDMI_SET_TABLE)[3];
 static HDMI_SET_TABLE hdmi_edid_table = NULL;
 
-static unsigned char hdmi_default_settings[][4] =
+static unsigned int s_u8Array_ARCastSupportedOutputFormat[][4] =
 {
-
-    {0x90, 0x0F, 0x03, 0x00}, //change bank 0
-    {0x90, 0x10, 0xFF, 0x08}, //[3]1:Register reset
-    {0x90, 0x0F, 0x03, 0x00},
-    {0x90, 0x10, 0xFF, 0x17},
-    {0x90, 0x11, 0xFF, 0x1F},
-    {0x90, 0x18, 0xFF, 0x1F},
-    {0x90, 0x12, 0xFF, 0xF8},
-    {0x90, 0x10, 0xFF, 0x10},
-    {0x90, 0x11, 0xFF, 0xA0},
-    {0x90, 0x18, 0xFF, 0xA0},
-    {0x90, 0x12, 0xFF, 0x00},
-    {0x90, 0x0F, 0x03, 0x01}, //change bank 1
-    {0x90, 0xC0, 0x80, 0x00},
-    {0x90, 0x0F, 0x03, 0x00}, //change bank 0
-    {0x90, 0x17, 0xC0, 0x80}, 
-    {0x90, 0x1E, 0xC0, 0x00},
-  
-    {0x90, 0x16, 0x08, 0x08},
-    {0x90, 0x1D, 0x08, 0x08},
-    {0x90, 0x2B, 0x07, 0x07}, //{0x90, 0x2B, 0xFF, 0x07},
-    {0x90, 0x31, 0xFF, 0x09},
-    {0x90, 0x49, 0xFF, 0x09},
-    {0x90, 0x35, 0x1E, 0x10+(0x01<<2)},
-    {0x90, 0x4B, 0x1E, 0x10+(0x01<<2)},
-
-    {0x90, 0x54, 0xFF, (1<<4)+1},
-    {0x90, 0x6A, 0xFF, 0x81},
-    {0x90, 0x74, 0xFF, 0xA0},
-    {0x90, 0x50, 0x1F, 0x12},
-    {0x90, 0x65, 0x0C, 0x08},
-    {0x90, 0x7A, 0x80, 0x80},
-    {0x90, 0x85, 0x02, 0x02},
-    {0x90, 0xC0, 0x43, 0x40},
-    
-
-    {0x90, 0x71, 0x08, 0x00},
-    {0x90, 0x37, 0xFF, 0xA6},
-    {0x90, 0x4D, 0xFF, 0xA6},
-    {0x90, 0x67, 0x80, 0x00},
-    {0x90, 0x7A, 0x70, 0x70},
-
-    {0x90, 0x77, 0x80, 0x80},
-    {0x90, 0x0F, 0x03, 0x01},
-    {0x90, 0xC0, 0x80, 0x80},
-    {0x90, 0x0F, 0x03, 0x00},
-
-    {0x90, 0x52, 0x20, 0x20},
-    {0x90, 0x53, 0xCE, 0x4E},
-
-    {0x90, 0x58, 0xFF, 0x33},
-
-    {0x90, 0x25, 0xFF, 0x1F},
-    {0x90, 0x3D, 0xFF, 0x1F},
-    {0x90, 0x27, 0xFF, 0x1F},
-    {0x90, 0x28, 0xFF, 0x1F},
-    {0x90, 0x29, 0xFF, 0x1F},
-    {0x90, 0x3F, 0xFF, 0x1F},
-    {0x90, 0x40, 0xFF, 0x1F},
-    {0x90, 0x41, 0xFF, 0x1F},
-
-
-    {0x90, 0x0F, 0x03, 0x01},
-    {0x90, 0xBC, 0xFF, 0x06},
-    {0x90, 0xCC, 0xFF, 0x00},
-    {0x90, 0xC6, 0x07, 0x03},
-    {0x90, 0xB5, 0x03, 0x03},
-    {0x90, 0xB8, 0x80, 0x00},
-    {0x90, 0xB6, 0x07, 0x03},
-    {0x90, 0x28, 0xFF, 0x00},
-    {0x90, 0x29, 0xFF, 0x00},
-    {0x90, 0x2A, 0xFF, 0x00},
-    {0x90, 0x2B, 0xFF, 0x00},
-    {0x90, 0x2C, 0xFF, 0x00},
-    {0x90, 0x0F, 0x03, 0x00},
-
-
-    {0x90, 0x22, 0xFF, 0x00},
-    {0x90, 0x3A, 0xFF, 0x00},
-    {0x90, 0x26, 0xFF, 0x00},
-    {0x90, 0x3E, 0xFF, 0x00},
-
-    {0x90, 0x63, 0xFF, 0x3F},
-    {0x90, 0x73, 0x08, 0x00},
-    {0x90, 0x60, 0x40, 0x40},
-    {0x90, 0x2A, 0x01, 0x00},
-    {0x90, 0x42, 0x01, 0x00},
-    {0x90, 0x77, 0x09, 0x09},
-    {0x90, 0xFF, 0xFF, 0xFF},
-    {0xFF, 0xFF, 0xFF, 0xFF}
-
+    { 720, 480,  50,  2},//4:3
+    { 720, 480,  60,  3},//16:9
+    { 720, 576,  50, 17},//4:3
+    { 720, 576,  60, 18},//16:9
+    {1280, 720,  60,  4},//16:9
+    {1280, 720,  50, 19},//16:9
+    {1920, 1080, 30, 34},//16:9
 };
+
 void IT_Delay(uint32_t delay)
 {
     if (40*delay>0xffffffff)
@@ -133,14 +50,6 @@ void IT_Delay(uint32_t delay)
         }        
     }
 }
-static unsigned char adv_i2c_addr_table[][3] =
-{
-    //{0x98, 0xFF, 0x80},                       //I2C reset
-    {0x90, 0x86, RX_I2C_CEC_MAP_ADDR+0x01},          //CEC
-    {0x90, 0x34, RX_I2C_RING_MAP_ADDR+0x01},         //RING
-    {0x90, 0x87, RX_I2C_EDID_MAP_ADDR+0x01},         //EDID
-    {0xFF, 0xFF, 0xFF}                          //End flag
-};
 
 uint8_t IT_66021_WriteByte(uint8_t slv_addr, uint8_t sub_addr, uint8_t val)
 {
@@ -216,39 +125,6 @@ void IT_66021_Set(unsigned char slv_addr, unsigned char sub_addr, unsigned char 
     I2C_Master_WriteData(IT_66021_I2C_COMPONENT_NUM, slv_addr >> 1, data, 2);
 }
 
-
-void IT_66021_ChangeBank(uint8_t index, uint8_t bank)
-{
-    unsigned int i = 0;
-    unsigned char slv_addr_offset = (index == 0) ? 0 : 2;
-
-    switch (bank)
-    {
-        case 0:
-            {
-                IT_66021_Set(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, IT_66021_REG_BLOCK_SEL, 0x03, 0x00);
-                break;
-            }
-        case 1:
-            {
-                IT_66021_Set(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, IT_66021_REG_BLOCK_SEL, 0x03, 0x01);
-                break;
-            }
-        case 2:
-            {
-                IT_66021_Set(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, IT_66021_REG_BLOCK_SEL, 0x03, 0x02);
-                break;
-            }
-        case 3:
-            {
-                IT_66021_Set(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, IT_66021_REG_BLOCK_SEL, 0x03, 0x03);
-                break;
-            }
-        default:
-            break;
-    }
-}
-
 static void IT_66021_I2CInitial(void)
 {
     static uint8_t i2c_initialized = 0;
@@ -263,380 +139,79 @@ static void IT_66021_I2CInitial(void)
     }
 }
 
-
-static void IT_66021_WriteTable(uint8_t index, unsigned char(*reg_table)[3])
+uint8_t IT_66021_GetVideoFormat(uint8_t index, uint16_t* widthPtr, uint16_t* hightPtr, uint8_t* framteratePtr, uint8_t* vic)
 {
-    unsigned int i = 0;
-    unsigned char slv_addr_offset = (index == 0) ? 0 : 2;
-
-    if (reg_table == NULL)
+    if (TRUE == IsVideoOn())
     {
-        dlog_error("reg_table is NULL", reg_table);
-        return;
-    }
-    
-    while (i < MAX_TABLE_ITEM_COUNT)
-    {
-        if ((reg_table[i][0] == 0xFF) && (reg_table[i][1] == 0xFF) && (reg_table[i][2] == 0xFF))
+        uint8_t i = 0;
+        uint8_t array_size = sizeof(s_u8Array_ARCastSupportedOutputFormat)/sizeof(s_u8Array_ARCastSupportedOutputFormat[0]);
+        struct it6602_dev_data *it6602data = get_it6602_dev_data();
+        for (i = 0; i < array_size; i++)
         {
-            break;
-        }
-
-        if ((reg_table[i][0] == 0) && (reg_table[i][1] == 0) && (reg_table[i][2] == 0))
-        {
-            break;
-        }
-
-        if (adv_i2c_addr_table == reg_table)
-        {
-            IT_66021_WriteByte(reg_table[i][0] + slv_addr_offset, reg_table[i][1], reg_table[i][2] + slv_addr_offset);
-        }
-        else
-        {
-            IT_66021_WriteByte(reg_table[i][0] + slv_addr_offset, reg_table[i][1], reg_table[i][2]);
-        }
-        
-        i++;
-    }
-}
-
-static void IT_66021_SetTable(uint8_t index, unsigned char(*reg_table)[4])
-{
-    unsigned int i = 0;
-    unsigned char slv_addr_offset = (index == 0) ? 0 : 2;
-
-    if (reg_table == NULL)
-    {
-        dlog_error("reg_table is NULL", reg_table);
-        return;
-    }
-    
-    while (i < MAX_TABLE_ITEM_COUNT)
-    {
-        if ((reg_table[i][0] == 0xFF) && (reg_table[i][1] == 0xFF) && (reg_table[i][2] == 0xFF))
-        {
-            break;
-        }
-
-        if ((reg_table[i][0] == 0) && (reg_table[i][1] == 0) && (reg_table[i][2] == 0))
-        {
-            break;
-        }
-        IT_66021_Set(reg_table[i][0] + slv_addr_offset, reg_table[i][1], reg_table[i][2], reg_table[i][3]);
-        i++;
-    }
-}
-
-void IT_66021_HPDCtrl(uint8_t index, unsigned char ucEnable)
-{
-
-    uint8_t slv_addr_offset = (index == 0) ? 0 : 2;
-    uint8_t u8_status = 0;
-
-    if(ucEnable == 0)
-    {
-
-        IT_66021_ChangeBank(index, 1);
-        IT_66021_Set(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, 0xb0, 0x03, 0x01); //clear port 0 HPD=1 for EDID update
-        IT_66021_ChangeBank(index, 0);
-
-    }
-    else
-    {
-        u8_status = IT_66021_ReadByte(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, REG_RX_P0_SYS_STATUS) & B_P0_PWR5V_DET;
-        if(u8_status)
-        {
-            IT_66021_ChangeBank(index, 1);
-            IT_66021_Set(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, 0xb0, 0x03, 0x03); //set port 0 HPD=1
-            IT_66021_ChangeBank(index, 0);
-            dlog_info("HDMI IT66021 HPD %x %x", RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, u8_status);
-        }
-    }
-
-}
-
-
-
-static unsigned char IT_66021_FindPhyaddressLocation(unsigned char(*reg_table)[3], unsigned char Block_Number)
-{
-    unsigned char AddStart;
-    unsigned char tag, count;
-    unsigned char offset,End;
-    unsigned char u8_VSDB_Addr;
-    unsigned char  txphyadr[2]={0};
-
-    if ( Block_Number == 0x02 )
-        AddStart = 0x00+128*0x01;
-    else
-        AddStart = 0x00+128*Block_Number;
-
-    if(reg_table[AddStart][2]!=0x2 || reg_table[AddStart+1][2]!=0x3)
-        return 0;
-    End = reg_table[AddStart+2][2];
-    u8_VSDB_Addr=0;
-
-    for(offset=(AddStart+0x04);offset<(AddStart+End); )
-    {
-
-
-        tag=reg_table[offset][2]>>5;
-        count=reg_table[offset][2] & 0x1f;
-
-        offset++;
-        
-        if(tag==0x03)   // HDMI VSDB Block of EDID
-        {
-
-            if( reg_table[offset][2]==0x03 &&
-                reg_table[offset+1][2]==0x0C &&
-                reg_table[offset+2][2]==0x0    )
+            if (it6602data->VIC == s_u8Array_ARCastSupportedOutputFormat[i][3])
             {
-                u8_VSDB_Addr=offset+3;
-                txphyadr[0]=reg_table[offset+3][2];
-                txphyadr[1]=reg_table[offset+4][2];
-                return u8_VSDB_Addr;
+                *widthPtr = s_u8Array_ARCastSupportedOutputFormat[i][0];
+                *hightPtr = s_u8Array_ARCastSupportedOutputFormat[i][1];
+                *framteratePtr = s_u8Array_ARCastSupportedOutputFormat[i][2];
+                *vic = it6602data->VIC;
+                return TRUE;
             }
         }
+        
+        uint8_t hdmi_i2c_addr = (index == 0) ? RX_I2C_HDMI_MAP_ADDR : (RX_I2C_HDMI_MAP_ADDR + 2);
 
-        offset=offset+count;
+        uint32_t u32_HTotal   = (((IT_66021_ReadByte(hdmi_i2c_addr, 0x9D))&0x3F)<<8) + IT_66021_ReadByte(hdmi_i2c_addr, 0x9C);
+        uint32_t u32_HActive  = (((IT_66021_ReadByte(hdmi_i2c_addr, 0x9F))&0x3F)<<8) + IT_66021_ReadByte(hdmi_i2c_addr, 0x9E);
+
+        uint32_t u32_VTotal   = (((IT_66021_ReadByte(hdmi_i2c_addr, 0xA4))&0x0F)<<8) + IT_66021_ReadByte(hdmi_i2c_addr, 0xA3);
+        uint32_t u32_VActive  = (((IT_66021_ReadByte(hdmi_i2c_addr, 0xA4))&0xF0)<<4) + IT_66021_ReadByte(hdmi_i2c_addr, 0xA5);
+
+        uint8_t u8_rddata = IT_66021_ReadByte(hdmi_i2c_addr, 0x9A);
+        uint32_t PCLK = (124*255/u8_rddata)/10;
+        uint64_t u64_FrameRate = (uint64_t)(PCLK)*1000*1000;
+        u64_FrameRate /= u32_HTotal;
+        u64_FrameRate /= u32_VTotal;
+         
+        *widthPtr = (uint16_t)u32_HActive;
+        *hightPtr = (uint16_t)u32_VActive;
+       
+        if ((u64_FrameRate > 55) || (u64_FrameRate > 65))   
+        {
+            *framteratePtr = 60;
+        }
+        else if ((u64_FrameRate > 45) || (u64_FrameRate > 55))
+        {
+            *framteratePtr = 50;    
+        }
+        else if ((u64_FrameRate > 25) || (u64_FrameRate > 35))
+        {
+            *framteratePtr = 30;
+        }
+        *vic = 0xff;
+        return TRUE;
     }
-    return 0;
-}
-
-static unsigned char IT_66021_UpdateEDIDRAM(uint8_t index, unsigned char BlockNUM)
-{
-    unsigned char  i,offset;
-    uint8_t u8_sum = 0;
-    uint8_t slv_addr_offset = (index == 0) ? 0 : 2;
-
-    if ( BlockNUM == 0x02 )
-        offset = 0x00+128*0x01;
     else
-        offset = 0x00+128*BlockNUM;
-
-    for (i=0;i<0x7F;i++)
     {
-        IT_66021_WriteByte(hdmi_edid_table[i+offset][0] + slv_addr_offset, hdmi_edid_table[i+offset][1], hdmi_edid_table[i+offset][2]);
-        u8_sum+=hdmi_edid_table[i+offset][2];
-    }
-
-    u8_sum = 0x00 - u8_sum;
-    return  u8_sum;
-}
-
-static void IT_66021_UpdateEDIDReg(uint8_t index, unsigned char u8_VSDB_Addr, unsigned char CEC_AB, unsigned char CEC_CD, unsigned char Block1_CheckSum)
-{
-
-    unsigned char  A_Addr_AB, A_Addr_CD, A_Block1_CheckSum;
-    unsigned char  B_Addr_AB, B_Addr_CD, B_Block1_CheckSum;
-    uint8_t slv_addr_offset = (index == 0) ? 0 : 2;
-
-    A_Addr_AB=0x10;
-    A_Addr_CD=0x00;
-
-    B_Addr_AB=0x20;
-    B_Addr_CD=0x00;
-
-
-    A_Block1_CheckSum=(Block1_CheckSum+CEC_AB+CEC_CD -0x10-0x00)%0x100;
-    B_Block1_CheckSum=(Block1_CheckSum+CEC_AB+CEC_CD -0x20-0x00)%0x100;
-
-    IT_66021_WriteByte(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, 0xC1, u8_VSDB_Addr);
-    IT_66021_WriteByte(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, 0xC2, A_Addr_AB);
-    IT_66021_WriteByte(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, 0xC3, A_Addr_CD);
-    IT_66021_WriteByte(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, 0xC5, A_Block1_CheckSum);
-
-    IT_66021_WriteByte(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, 0xC6, B_Addr_AB);
-    IT_66021_WriteByte(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, 0xC7, B_Addr_CD);
-    IT_66021_WriteByte(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, 0xC9, B_Block1_CheckSum);
-
-
-
-}
-
-static void IT_66021_EDIDRAMInitial(uint8_t index)
-{
-
-    unsigned char Block0_CheckSum;
-    unsigned char Block1_CheckSum;
-    unsigned char u8_VSDB_Addr;
-    unsigned char BlockNo;
-
-    u8_VSDB_Addr=0;
-    uint8_t slv_addr_offset = (index == 0) ? 0 : 2;
-
-
-    //IT_66021_HPDCtrl(index, 0);
-
-    //IT_66021_WriteTable(index, hdmi_edid_table);
-
-
-    for(BlockNo=0;BlockNo<2;BlockNo++){
-
-
-        if(BlockNo==0)
-        {
-            Block0_CheckSum =  IT_66021_UpdateEDIDRAM(index, 0);
-            IT_66021_WriteByte(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, 0xC4, Block0_CheckSum);
-            IT_66021_WriteByte(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, 0xC8, Block0_CheckSum);
-        }
-        else
-        {
-            Block1_CheckSum =  IT_66021_UpdateEDIDRAM(index, 1);
-
-            u8_VSDB_Addr=IT_66021_FindPhyaddressLocation(hdmi_edid_table,1);
-
-            if(u8_VSDB_Addr!=0)
-            {
-
-                IT_66021_UpdateEDIDReg(index,u8_VSDB_Addr, hdmi_edid_table[u8_VSDB_Addr][2],hdmi_edid_table[u8_VSDB_Addr+1][2], Block1_CheckSum);
-            }
-        }
-    }
-
-    //resset edid
-    IT_66021_Set(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, 0x0C, 0x20, 0x20);
-    msleep(1);
-    IT_66021_Set(RX_I2C_HDMI_MAP_ADDR + slv_addr_offset, 0x0C, 0x20, 0x00);
-
-}
-
-void IT_66021_GetVideoFormat(uint8_t index, uint16_t* widthPtr, uint16_t* hightPtr, uint8_t* framteratePtr)
-{
-    uint8_t hdmi_i2c_addr = (index == 0) ? RX_I2C_HDMI_MAP_ADDR : (RX_I2C_HDMI_MAP_ADDR + 2);
-
-    uint32_t u32_HTotal   = (((IT_66021_ReadByte(hdmi_i2c_addr, 0x9D))&0x3F)<<8) + IT_66021_ReadByte(hdmi_i2c_addr, 0x9C);
-    uint32_t u32_HActive  = (((IT_66021_ReadByte(hdmi_i2c_addr, 0x9F))&0x3F)<<8) + IT_66021_ReadByte(hdmi_i2c_addr, 0x9E);
-
-    uint32_t u32_VTotal   = (((IT_66021_ReadByte(hdmi_i2c_addr, 0xA4))&0x0F)<<8) + IT_66021_ReadByte(hdmi_i2c_addr, 0xA3);
-    uint32_t u32_VActive  = (((IT_66021_ReadByte(hdmi_i2c_addr, 0xA4))&0xF0)<<4) + IT_66021_ReadByte(hdmi_i2c_addr, 0xA5);
-
-    uint8_t u8_rddata = IT_66021_ReadByte(hdmi_i2c_addr, 0x9A);
-    uint32_t PCLK = (124*255/u8_rddata)/10;
-    uint64_t u64_FrameRate = (uint64_t)(PCLK)*1000*1000;
-    u64_FrameRate /= u32_HTotal;
-    u64_FrameRate /= u32_VTotal;
-     
-    *widthPtr = (uint16_t)u32_HActive;
-    *hightPtr = (uint16_t)u32_VActive;
-   
-    if ((u64_FrameRate > 55) || (u64_FrameRate > 65))   
-    {
-        *framteratePtr = 60;
-    }
-    else if ((u64_FrameRate > 45) || (u64_FrameRate > 55))
-    {
-        *framteratePtr = 50;    
-    }
-    else if ((u64_FrameRate > 25) || (u64_FrameRate > 35))
-    {
-        *framteratePtr = 30;
+        *widthPtr = 0;
+        *hightPtr = 0;
+        *framteratePtr = 0;
+        *vic = 0xff;
+        return FALSE;
     }
 }
 
-void IT_66021_GetAudioSampleRate(uint8_t index, uint32_t* sampleRate)
+uint8_t IT_66021_GetAudioSampleRate(uint8_t index, uint32_t* sampleRate)
 {
     struct it6602_dev_data *it6602data = get_it6602_dev_data();
     if (ASTATE_AudioOn == it6602data->m_AState)
     {
         *sampleRate = (int)it6602data->m_RxAudioCaps.SampleFreq;
+        return TRUE;
     }
     else
     {
         *sampleRate = 1;
-    }
-}
-
-void IT_66021_DumpOutEdidData(uint8_t index)
-{
-    dlog_info("Edid Data:");
-
-    unsigned char slv_addr_offset = (index == 0) ? 0 : 2; 
-    dlog_info("slv_addr_offset=%d", slv_addr_offset);
-    unsigned int i;
-    unsigned char val = 0;
-    for (i = 0; ; i++)
-    {
-        if ((hdmi_edid_table[i][0] == 0xFF) && (hdmi_edid_table[i][1] == 0xFF) && (hdmi_edid_table[i][2] == 0xFF))
-        {
-            break;
-        }
-
-        if ((hdmi_edid_table[i][0] == 0) && (hdmi_edid_table[i][1] == 0) && (hdmi_edid_table[i][2] == 0))
-        {
-            break;
-        }
-
-        val = IT_66021_ReadByte(hdmi_edid_table[i][0] + slv_addr_offset, hdmi_edid_table[i][1]);
-        
-        if (val == hdmi_edid_table[i][2])
-        {
-            dlog_info("0x%x, 0x%x, 0x%x", hdmi_edid_table[i][0] + slv_addr_offset, hdmi_edid_table[i][1], val);
-        }
-        else
-        {
-            dlog_info("0x%x, 0x%x, 0x%x, Error: right value 0x%x!", hdmi_edid_table[i][0] + slv_addr_offset, hdmi_edid_table[i][1], val, hdmi_edid_table[i][2]);
-        }
-        DLOG_Output(100);
-    }
-}
-
-void IT_66021_DumpOutDefaultSettings(uint8_t index)
-{
-    unsigned int i;
-    unsigned char val = 0;
-    unsigned char slv_addr_offset = (index == 0) ? 0 : 2; 
-
-    dlog_info("I2C Address Table:");
-    for (i = 1; ; i++)
-    {
-        if ((adv_i2c_addr_table[i][0] == 0xFF) && (adv_i2c_addr_table[i][1] == 0xFF) && (adv_i2c_addr_table[i][2] == 0xFF))
-        {
-            break;
-        }
-
-        if ((adv_i2c_addr_table[i][0] == 0) && (adv_i2c_addr_table[i][1] == 0) && (adv_i2c_addr_table[i][2] == 0))
-        {
-            break;
-        }
-
-        val = IT_66021_ReadByte(adv_i2c_addr_table[i][0] + slv_addr_offset, adv_i2c_addr_table[i][1]);
-        
-        if (val == (adv_i2c_addr_table[i][2] + slv_addr_offset))
-        {
-            dlog_info("0x%x, 0x%x, 0x%x", adv_i2c_addr_table[i][0] + slv_addr_offset, adv_i2c_addr_table[i][1], val);
-        }
-        else
-        {
-            dlog_info("0x%x, 0x%x, 0x%x, Error: right value 0x%x!", adv_i2c_addr_table[i][0] + slv_addr_offset, adv_i2c_addr_table[i][1], val, adv_i2c_addr_table[i][2] + slv_addr_offset);            
-        }
-        DLOG_Output(100);
-    }
- 
-    dlog_info("Default Settings:"); 
-    for (i = 0; ; i++)
-    {
-        if ((hdmi_default_settings[i][0] == 0xFF) && (hdmi_default_settings[i][1] == 0xFF) && (hdmi_default_settings[i][2] == 0xFF))
-        {
-            break;
-        }
-
-        if ((hdmi_default_settings[i][0] == 0) && (hdmi_default_settings[i][1] == 0) && (hdmi_default_settings[i][2] == 0))
-        {
-            break;
-        }
-
-        val = IT_66021_ReadByte(hdmi_default_settings[i][0] + slv_addr_offset, hdmi_default_settings[i][1]);
-
-        if (val == hdmi_default_settings[i][2])
-        {
-            dlog_info("0x%x, 0x%x, 0x%x", hdmi_default_settings[i][0] + slv_addr_offset, hdmi_default_settings[i][1], val);
-        }
-        else
-        {
-            dlog_info("0x%x, 0x%x, 0x%x, Error: right value 0x%x!", hdmi_default_settings[i][0] + slv_addr_offset, hdmi_default_settings[i][1], val, hdmi_default_settings[i][2]);
-        }
-        DLOG_Output(100);
+        return FALSE;
     }
 }
 

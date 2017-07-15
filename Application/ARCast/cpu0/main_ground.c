@@ -25,6 +25,7 @@
 #include "hal_sram.h"
 #include "hal_dma.h"
 
+void Command_BBSendCommand(void const *argument);
 
 void CONSOLE_Init(void)
 {
@@ -72,23 +73,6 @@ static void Mp3Decoder(void const *argument)
         u16_mp3BuffLen = HAL_SRAM_GetMp3BufferLength();
         if (u16_mp3BuffLen > 0)
         {
-/*            p_mp3DataBuffTmp = (uint8_t *)(&u8_pcmDataArray[buff_index]);
-            HAL_SRAM_GetMp3Data(u16_mp3BuffLen, p_mp3DataBuffTmp);
-            for (i = 0; i < u16_mp3BuffLen ; i+=4)
-            {
-                u8_swap                = p_mp3DataBuffTmp[i];
-                p_mp3DataBuffTmp[i]       = p_mp3DataBuffTmp[i+3];
-                p_mp3DataBuffTmp[i+3]     = u8_swap;
-
-                u8_swap                = p_mp3DataBuffTmp[i+1];
-                p_mp3DataBuffTmp[i+1]     = p_mp3DataBuffTmp[i+2];
-                p_mp3DataBuffTmp[i+2]     = u8_swap;
-            }
-            
-            HAL_USB_AudioDataSend(p_mp3DataBuffTmp, u16_mp3BuffLen, 0);
-
-            buff_index++;
-            buff_index &= 1;*/
 
             if ((s32_decoderBuffLen + u16_mp3BuffLen) > (MP3_BUFF_SIZE + 512))
             {
@@ -219,7 +203,7 @@ int main(void)
 	
     dlog_info("cpu0 start!!!\n");	
 
-	g_p_mp3Decoder = mp3_create();
+    g_p_mp3Decoder = mp3_create();
 	
     HAL_GPIO_InPut(HAL_GPIO_NUM99);
 
@@ -243,15 +227,18 @@ int main(void)
 
     HAL_NV_Init();
 	
-    osThreadDef(GenericInitialTask, GenericInitial, osPriorityNormal, 0, 4 * 128);
+    osThreadDef(GenericInitialTask, GenericInitial, osPriorityHigh, 0, 4 * 128);
     osThreadCreate(osThread(GenericInitialTask), NULL);
 
     osThreadDef(USBHStatus_Task, USBH_USBHostStatus, osPriorityNormal, 0, 4 * 128);
     osThreadCreate(osThread(USBHStatus_Task), NULL);
-
-	osThreadDef(MP3_Task, Mp3Decoder, osPriorityBelowNormal, 0, 6 * 1024);
+    
+    osThreadDef(MP3_Task, Mp3Decoder, osPriorityBelowNormal, 0, 6 * 1024);
     osThreadCreate(osThread(MP3_Task), NULL);
-	
+     
+    osThreadDef(SendCommand_Task, Command_BBSendCommand, osPriorityBelowNormal, 0, 4 * 128);
+    osThreadCreate(osThread(SendCommand_Task), NULL);
+
     osThreadDef(IOTask, IO_Task, osPriorityIdle, 0, 16 * 128);
     osThreadCreate(osThread(IOTask), NULL);
 

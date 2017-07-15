@@ -33,6 +33,8 @@ ifeq ($(APPLICATION_SCENARIO), sky)
 SRC_C   := main_sky.c \
            command.c \
            arcast_appcommon.c \
+           arcast_appcommon_sky.c \
+           eedid_create.c \
            ../../Example/test_hal_nv.c \
            ../../Example/test_hal_i2c.c \
            ../../Example/test_hdmi.c \
@@ -42,7 +44,9 @@ endif
 ifeq ($(APPLICATION_SCENARIO), ground)
 SRC_C   := main_ground.c \
            command.c \
+           eedid_create.c \
            arcast_appcommon.c \
+           arcast_appcommon_gnd.c \
            ../../Example/test_hal_nv.c \
            ../../Example/test_usbh.c \
            ../../Example/test_hal_i2c.c \
@@ -53,8 +57,8 @@ endif
 SRC_CXX :=
 
 # compile flags
-CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../share -I../../Example
-CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../share -I../../Example
+CFLAGS   += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../Example
+CXXFLAGS += -I$(OUTPUT_HEADER_STAGING_DIR) -I$(TOP_DIR)/Configure/Include -I../share -I../../Example
 
 # libs
 LD_LIBS := --start-group

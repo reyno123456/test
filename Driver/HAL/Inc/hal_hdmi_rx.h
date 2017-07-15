@@ -27,6 +27,7 @@ typedef struct
     uint16_t u16_width;
     uint16_t u16_hight;
     uint8_t  u8_framerate;
+    uint8_t  u8_vic;
 } STRU_HDMI_RX_OUTPUT_FORMAT;
 
 

@@ -4278,12 +4278,12 @@ static void GetAVIInfoFrame(struct it6602_dev_data *it6602)
 	}
 //FIX_ID_027	 xxxxx
 
-	DLOG_INFO("AVI ColorMode = %X \r\n",(int) it6602->ColorMode);
-	DLOG_INFO("AVI Colorimetry = %X \r\n",(int) it6602->Colorimetry);
-	DLOG_INFO("AVI ExtendedColorimetry = %X \r\n",(int) it6602->ExtendedColorimetry);
-	DLOG_INFO("AVI RGBQuantizationRange = %X \r\n",(int) it6602->RGBQuantizationRange);
-	DLOG_INFO("AVI VIC = %X \r\n",(int) it6602->VIC);
-	DLOG_INFO("AVI YCCQuantizationRange = %X \r\n",(int) it6602->YCCQuantizationRange);
+	dlog_info("AVI ColorMode = %X \r\n",(int) it6602->ColorMode);
+	dlog_info("AVI Colorimetry = %X \r\n",(int) it6602->Colorimetry);
+	dlog_info("AVI ExtendedColorimetry = %X \r\n",(int) it6602->ExtendedColorimetry);
+	dlog_info("AVI RGBQuantizationRange = %X \r\n",(int) it6602->RGBQuantizationRange);
+	dlog_info("AVI VIC = %X \r\n",(int) it6602->VIC);
+	dlog_info("AVI YCCQuantizationRange = %X \r\n",(int) it6602->YCCQuantizationRange);
 }
 
 
@@ -11637,19 +11637,19 @@ void show_vid_info( void )
 
 	switch( GCP_CD ) {
 	case 5 :
-	DLOG_INFO("I/P ColorDepth = 30 bits per pixel \r\n");
+	dlog_info("I/P ColorDepth = 30 bits per pixel \r\n");
 	InBPC=10;
 	hdmirxset(0x65, 0x0C, 0x04);
 	OutCD = OUT10B;
 	break;
 	case 6 :
-	DLOG_INFO("I/P ColorDepth = 36 bits per pixel \r\n");
+	dlog_info("I/P ColorDepth = 36 bits per pixel \r\n");
 	InBPC=12;
 	hdmirxset(0x65, 0x0C, 0x08);
 	OutCD = OUT12B;
 	break;
 	default :
-	DLOG_INFO("I/P ColorDepth = 24 bits per pixel \r\n");
+	dlog_info("I/P ColorDepth = 24 bits per pixel \r\n");
 	InBPC=8;
 	hdmirxset(0x65, 0x0C, 0x00);
 	OutCD = OUT8B;
@@ -11658,13 +11658,13 @@ void show_vid_info( void )
 
 	switch( OutCD ) {
 	case 1 :
-	DLOG_INFO("O/P ColorDepth = 30 bits per pixel \r\n");
+	dlog_info("O/P ColorDepth = 30 bits per pixel \r\n");
 	break;
 	case 2 :
-	DLOG_INFO("O/P ColorDepth = 36 bits per pixel \r\n");
+	dlog_info("O/P ColorDepth = 36 bits per pixel \r\n");
 	break;
 	default :
-	DLOG_INFO("O/P ColorDepth = 24 bits per pixel \r\n");
+	dlog_info("O/P ColorDepth = 24 bits per pixel \r\n");
 	break;
 	}
 
@@ -11682,22 +11682,22 @@ void show_vid_info( void )
 
 	switch( InColorMode ) {
 	case 0 :
-	DLOG_INFO("Input Color Mode = RGB444 \n");
+	dlog_info("Input Color Mode = RGB444 \n");
 	//		 hdmirxset(0xAE, 0x01, 0x01);
 	//		 defaultrgb();
 	break;
 	case 1 :
-	DLOG_INFO("Input Color Mode = YCbCr422\n");
+	dlog_info("Input Color Mode = YCbCr422\n");
 	//		 hdmirxset(0xAE, 0x01, 0x00);
 	//		 yuv422torgb();
 	break;
 	case 2 :
-	DLOG_INFO("Input Color Mode = YCbCr444\n");
+	dlog_info("Input Color Mode = YCbCr444\n");
 	//		 hdmirxset(0xAE, 0x01, 0x00);
 	//		 yuv444torgb();
 	break;
 	default :
-	DLOG_INFO("Input Color Mode = Reserved !!!\n");
+	dlog_info("Input Color Mode = Reserved !!!\n");
 	break;
 	}
 
@@ -11705,57 +11705,57 @@ void show_vid_info( void )
 	OutColorMode = (hdmirxrd(0x65)&0x30)>>4;
 	switch( OutColorMode ) {
 	case 0 :
-	DLOG_INFO("Output Color Mode = RGB444\n");
+	dlog_info("Output Color Mode = RGB444\n");
 	//		 hdmirxset(0x65, 0x30, 0x00);
 	break;
 	case 1 :
-	DLOG_INFO("Output Color Mode = YCbCr422\n");
+	dlog_info("Output Color Mode = YCbCr422\n");
 	//		 hdmirxset(0x65, 0x30, 0x10);
 	break;
 	case 2 :
-	DLOG_INFO("Output Color Mode = YCbCr444\n");
+	dlog_info("Output Color Mode = YCbCr444\n");
 	//		 hdmirxset(0x65, 0x30, 0x20);
 	break;
 	default :
-	DLOG_INFO("Output Color Mode = Reserved !!!\n");
+	dlog_info("Output Color Mode = Reserved !!!\n");
 	break;
 	}
 
 
-	//    DLOG_INFO("Video Input Timing: %s\n", s_VMTable[VIC].format);
-	//    DLOG_INFO("TMDSCLK = %3.3fMHz\n", (unsigned long)(CurTMDSCLK)/1000);
-	//    DLOG_INFO("PCLK = %3.3fMHz\n", (unsigned long)(CurVTiming.PCLK)/1000);
+	//    dlog_info("Video Input Timing: %s\n", s_VMTable[VIC].format);
+	//    dlog_info("TMDSCLK = %3.3fMHz\n", (unsigned long)(CurTMDSCLK)/1000);
+	//    dlog_info("PCLK = %3.3fMHz\n", (unsigned long)(CurVTiming.PCLK)/1000);
 
-	DLOG_INFO("HFrontPorch = %d\n", CurVTiming.HFrontPorch);
-	DLOG_INFO("HSyncWidth = %d\n", CurVTiming.HSyncWidth);
-	DLOG_INFO("HBackPorch = %d\n", CurVTiming.HBackPorch);
-	DLOG_INFO("VFrontPorch = %d\n", CurVTiming.VFrontPorch);
-	DLOG_INFO("VSyncWidth = %d\n", CurVTiming.VSyncWidth);
-	DLOG_INFO("VBackPorch = %d\n", CurVTiming.VBackPorch);
+	dlog_info("HFrontPorch = %d\n", CurVTiming.HFrontPorch);
+	dlog_info("HSyncWidth = %d\n", CurVTiming.HSyncWidth);
+	dlog_info("HBackPorch = %d\n", CurVTiming.HBackPorch);
+	dlog_info("VFrontPorch = %d\n", CurVTiming.VFrontPorch);
+	dlog_info("VSyncWidth = %d\n", CurVTiming.VSyncWidth);
+	dlog_info("VBackPorch = %d\n", CurVTiming.VBackPorch);
 
 	FrameRate = (unsigned long)(CurVTiming.PCLK)*1000*1000;
 	FrameRate /= CurVTiming.HTotal;
 	FrameRate /= CurVTiming.VTotal;
-	DLOG_INFO("FrameRate = %ld Hz\n", FrameRate);
+	dlog_info("FrameRate = %ld Hz\n", FrameRate);
 	if( CurVTiming.ScanMode==0 ) {
-	DLOG_INFO("ScanMode = Progressive\n");
+	dlog_info("ScanMode = Progressive\n");
 	}
 	else {
-	DLOG_INFO("ScanMode = InterLaced\n");
+	dlog_info("ScanMode = InterLaced\n");
 	}
 
 	if( CurVTiming.VPolarity==1 ) {
-	DLOG_INFO("VSyncPol = Positive\n");
+	dlog_info("VSyncPol = Positive\n");
 	}
 	else {
-	DLOG_INFO("VSyncPol = Negative\n");
+	dlog_info("VSyncPol = Negative\n");
 	}
 
 	if( CurVTiming.HPolarity==1 ) {
-	DLOG_INFO("HSyncPol = Positive\n");
+	dlog_info("HSyncPol = Positive\n");
 	}
 	else {
-	DLOG_INFO("HSyncPol = Negative\n");
+	dlog_info("HSyncPol = Negative\n");
 	}
 
 	if(((hdmirxrd(0x51)&0x01)))
@@ -11787,24 +11787,24 @@ void show_vid_info( void )
 		DLOG_INFO("Reg29=%X \r\n",(int)hdmirxrd(REG_RX_029));
 		chgbank(1);
 		DLOG_INFO("Rec_B_CS=%X  ",(int)(hdmirxrd(REG_RX_1D5)&0x80)>>7);
-		 DLOG_INFO("Rec_G_CS=%X  ",(int)(hdmirxrd(REG_RX_1D6)&0x80)>>7);
-		 DLOG_INFO("Rec_R_CS=%X  \n",(int)(hdmirxrd(REG_RX_1D7)&0x80)>>7);
+		DLOG_INFO("Rec_G_CS=%X  ",(int)(hdmirxrd(REG_RX_1D6)&0x80)>>7);
+		DLOG_INFO("Rec_R_CS=%X  \n",(int)(hdmirxrd(REG_RX_1D7)&0x80)>>7);
 
-		 DLOG_INFO("Rec_B_RS=%X  ",(int)(hdmirxrd(REG_RX_1D5)&0x7F));
-		 DLOG_INFO("Rec_G_RS=%X  ",(int)(hdmirxrd(REG_RX_1D6)&0x7F));
-		 DLOG_INFO("Rec_R_RS=%X  \n",(int)(hdmirxrd(REG_RX_1D7)&0x7F));
+		DLOG_INFO("Rec_B_RS=%X  ",(int)(hdmirxrd(REG_RX_1D5)&0x7F));
+		DLOG_INFO("Rec_G_RS=%X  ",(int)(hdmirxrd(REG_RX_1D6)&0x7F));
+		DLOG_INFO("Rec_R_RS=%X  \n",(int)(hdmirxrd(REG_RX_1D7)&0x7F));
 		DLOG_INFO("REG_RX_1B1 = %X ,  REG_RX_1B2 = %X\r\n",(int)hdmirxrd(REG_RX_1B1),(int)hdmirxrd(REG_RX_1B2));
 
 
 		chgbank(0);
 	}
 
-	DLOG_INFO("TMDSCLK = %d MHz\n", (int)(CurTMDSCLK));
-	DLOG_INFO("PCLK = %d MHz\n", (int)(CurVTiming.PCLK));
-	DLOG_INFO("HActive = %d\n", CurVTiming.HActive);
-	DLOG_INFO("VActive = %d\n", CurVTiming.VActive);
-	DLOG_INFO("HTotal = %d\n", CurVTiming.HTotal);
-	DLOG_INFO("VTotal = %d\n", CurVTiming.VTotal);
+	dlog_info("TMDSCLK = %d MHz\n", (int)(CurTMDSCLK));
+	dlog_info("PCLK = %d MHz\n", (int)(CurVTiming.PCLK));
+	dlog_info("HActive = %d\n", CurVTiming.HActive);
+	dlog_info("VActive = %d\n", CurVTiming.VActive);
+	dlog_info("HTotal = %d\n", CurVTiming.HTotal);
+	dlog_info("VTotal = %d\n", CurVTiming.VTotal);
 
 //FIX_ID_036	xxxxx //Enable MHL Function for IT68XX
 #ifdef _ENABLE_IT68XX_MHL_FUNCTION_
@@ -11817,17 +11817,17 @@ void show_vid_info( void )
 	if( MHL_Mode )
 	{
 		if( MHL_CLK_Mode==0x02 )
-		DLOG_INFO("BUS MODE : MHL PackPixel Mode\n");
+		dlog_info("BUS MODE : MHL PackPixel Mode\n");
 		else
-		DLOG_INFO("BUS MODE : MHL 24 bits Mode\n");
+		dlog_info("BUS MODE : MHL 24 bits Mode\n");
 	}
 	if(IsHDMIMode())
 	{
-		DLOG_INFO("HDMI/DVI Mode : HDMI \n");
+		dlog_info("HDMI/DVI Mode : HDMI \n");
 	}
 	else
 	{
-		DLOG_INFO("HDMI/DVI Mode : DVI \n");
+		dlog_info("HDMI/DVI Mode : DVI \n");
 	}
 #endif
 
@@ -12630,4 +12630,10 @@ void it66021_init(void)
     dlog_info("MHL_RX_08=%2x", mhlrxrd(MHL_RX_08));
     dlog_info("MHL_RX_09=%2x", mhlrxrd(MHL_RX_09));
     //IT_Delay(1000); //for power sequence
+}
+
+void it6602_GetAVIInfoFrame(void)
+{
+	struct it6602_dev_data *it6602data = get_it6602_dev_data();
+	GetAVIInfoFrame(it6602data);
 }

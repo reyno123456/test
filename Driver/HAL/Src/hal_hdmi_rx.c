@@ -125,6 +125,7 @@ static void HDMI_RX_CheckFormatStatus(ENUM_HAL_HDMI_RX e_hdmiIndex, HAL_BOOL_T b
     uint16_t u16_width;
     uint16_t u16_hight;
     uint8_t u8_framerate;
+    uint8_t u8_vic;
 
     uint8_t u8_hdmiIndex = HDMI_RX_MapToDeviceIndex(e_hdmiIndex);
 
@@ -133,7 +134,15 @@ static void HDMI_RX_CheckFormatStatus(ENUM_HAL_HDMI_RX e_hdmiIndex, HAL_BOOL_T b
     #endif
 
     #ifdef USE_IT66021_EDID_CONFIG_BIN
-        IT_66021_GetVideoFormat(u8_hdmiIndex, &u16_width, &u16_hight, &u8_framerate);
+        if (FALSE == IT_66021_GetVideoFormat(u8_hdmiIndex, &u16_width, &u16_hight, &u8_framerate, &u8_vic))
+        {
+            dlog_error("HAL detect Video OFF");
+            return;
+        }
+        else
+        {
+            dlog_error("HAL detect Video ON");
+        }
     #endif
 
     if (HDMI_RX_CheckVideoFormatSupportOrNot(u16_width, u16_hight, u8_framerate) == HAL_TRUE)
@@ -147,6 +156,7 @@ static void HDMI_RX_CheckFormatStatus(ENUM_HAL_HDMI_RX e_hdmiIndex, HAL_BOOL_T b
             p.width = u16_width;
             p.hight = u16_hight;
             p.framerate = u8_framerate;
+            p.vic = u8_vic;
             if (HAL_HDMI_RX_0 == e_hdmiIndex)
             {
                 p.e_h264InputSrc = ENCODER_INPUT_SRC_HDMI_0;
@@ -155,11 +165,18 @@ static void HDMI_RX_CheckFormatStatus(ENUM_HAL_HDMI_RX e_hdmiIndex, HAL_BOOL_T b
             {
                 p.e_h264InputSrc = ENCODER_INPUT_SRC_HDMI_1;
             }
+
+#ifdef USE_IT66021_EDID_CONFIG_BIN
+            SYS_EVENT_Notify(SYS_EVENT_ID_H264_INPUT_FORMAT_CHANGE_ARCAST, (void*)&p);
+#endif
+#ifdef USE_ADV7611_EDID_CONFIG_BIN            
             SYS_EVENT_Notify(SYS_EVENT_ID_H264_INPUT_FORMAT_CHANGE, (void*)&p);
+#endif
 
             s_st_hdmiRxStatus[e_hdmiIndex].st_videoFormat.u16_width    = u16_width;
             s_st_hdmiRxStatus[e_hdmiIndex].st_videoFormat.u16_hight    = u16_hight;
             s_st_hdmiRxStatus[e_hdmiIndex].st_videoFormat.u8_framerate = u8_framerate;
+            s_st_hdmiRxStatus[e_hdmiIndex].st_videoFormat.u8_vic = u8_vic;
             
         }
     }
@@ -185,6 +202,7 @@ static void HDMI_RX_CheckFormatStatus(ENUM_HAL_HDMI_RX e_hdmiIndex, HAL_BOOL_T b
             p.width = 0;
             p.hight = 0;
             p.framerate = 0;
+            p.vic = u8_vic;
             if (HAL_HDMI_RX_0 == e_hdmiIndex)
             {
                 p.e_h264InputSrc = ENCODER_INPUT_SRC_HDMI_0;
@@ -193,11 +211,17 @@ static void HDMI_RX_CheckFormatStatus(ENUM_HAL_HDMI_RX e_hdmiIndex, HAL_BOOL_T b
             {
                 p.e_h264InputSrc = ENCODER_INPUT_SRC_HDMI_1;
             }
-            SYS_EVENT_Notify(SYS_EVENT_ID_H264_INPUT_FORMAT_CHANGE, (void*)&p);
 
+#ifdef USE_IT66021_EDID_CONFIG_BIN
+            SYS_EVENT_Notify(SYS_EVENT_ID_H264_INPUT_FORMAT_CHANGE_ARCAST, (void*)&p);
+#endif
+#ifdef USE_ADV7611_EDID_CONFIG_BIN            
+            SYS_EVENT_Notify(SYS_EVENT_ID_H264_INPUT_FORMAT_CHANGE, (void*)&p);
+#endif
             s_st_hdmiRxStatus[e_hdmiIndex].st_videoFormat.u16_width    = 0;
             s_st_hdmiRxStatus[e_hdmiIndex].st_videoFormat.u16_hight    = 0;
             s_st_hdmiRxStatus[e_hdmiIndex].st_videoFormat.u8_framerate = 0;
+            s_st_hdmiRxStatus[e_hdmiIndex].st_videoFormat.u8_vic = u8_vic;
         }
        
     }
@@ -259,9 +283,16 @@ uint8_t HDMI_RX_CheckAudioStatus(ENUM_HAL_HDMI_RX e_hdmiIndex)
     #endif
 
     #ifdef USE_IT66021_EDID_CONFIG_BIN
-        IT_66021_GetAudioSampleRate(u8_hdmiIndex, &u32_sampleRate);
+        if (FALSE == IT_66021_GetAudioSampleRate(u8_hdmiIndex, &u32_sampleRate))
+        {
+            dlog_error("HAL detect Audio OFF");
+            return 0;
+        }
+        else
+        {
+            dlog_error("HAL detect Audio ON");
+        }
     #endif
-
     if ( HDMI_RX_CheckAudioSampleRateSupportOrNot(u32_sampleRate) == HAL_TRUE)
     {
     
@@ -412,7 +443,8 @@ HAL_RET_T HAL_HDMI_RX_GetVideoFormat(ENUM_HAL_HDMI_RX e_hdmiIndex,
     #endif
 
     #ifdef USE_IT66021_EDID_CONFIG_BIN
-        IT_66021_GetVideoFormat(HDMI_RX_MapToDeviceIndex(e_hdmiIndex), pu16_width, pu16_hight, pu8_framterate);
+        uint8_t vic;
+        IT_66021_GetVideoFormat(HDMI_RX_MapToDeviceIndex(e_hdmiIndex), pu16_width, pu16_hight, pu8_framterate, &vic);
     #endif
 
     return HAL_OK;
@@ -442,7 +474,7 @@ static void HAL_HDMI_RX_IrqHandler0(uint32_t u32_vectorNum)
     #endif
 
     #ifdef USE_IT66021_EDID_CONFIG_BIN        
-        //IT_66021_IrqHandler0();
+        IT_66021_IrqHandler0();
         HDMI_RX_IdleCallback0(NULL);
     #endif
 }

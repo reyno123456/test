@@ -107,6 +107,7 @@ void SYS_EVENT_DumpAllListNodes(void);
 
 #define SYS_EVENT_ID_AUDIO_INPUT_CHANGE               (SYS_EVENT_LEVEL_MIDIUM_MASK | 0x000D )
 #define SYS_EVENT_ID_SD_CARD_CHANGE                   (SYS_EVENT_LEVEL_MIDIUM_MASK | 0x000E )
+#define SYS_EVENT_ID_H264_INPUT_FORMAT_CHANGE_ARCAST  (SYS_EVENT_LEVEL_MIDIUM_MASK | 0x000F )
 
 typedef enum
 {
@@ -123,8 +124,9 @@ typedef struct _SysEvent_H264InputFormatChangeParameter
     uint16_t width;
     uint16_t hight;
     uint8_t  framerate;
+    uint8_t  vic;
     ENUM_ENCODER_INPUT_SRC  e_h264InputSrc;
-    uint8_t  reserve[SYS_EVENT_HANDLER_PARAMETER_LENGTH - 8];
+    uint8_t  reserve[SYS_EVENT_HANDLER_PARAMETER_LENGTH - 9];
 } STRU_SysEvent_H264InputFormatChangeParameter;
 
 typedef struct _SysEvent_BB_ModulationChange

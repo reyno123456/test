@@ -12,6 +12,7 @@
 #include "test_bb.h"
 #include "hal_nvic.h"
 #include "hal_rtc.h"
+#include "arcast_appcommon.h"
 
 void command_readMemory(char *addr);
 void command_writeMemory(char *addr, char *value);

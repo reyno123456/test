@@ -34,6 +34,7 @@ void TIMER_avsyncInterruptHandle(uint32_t u32_vectorNum)
 
 }
 
+uint8_t Command_FormatStatus(void);
 void CONSOLE_Init(void)
 {
     HAL_UART_Init(DEBUG_LOG_UART_PORT, HAL_UART_BAUDR_115200, NULL);
@@ -106,7 +107,10 @@ int main(void)
     
     for( ;; )
     {
-        HAL_MP3EncodePcm();
+        if (ARCAST_SKY_FORMAT_STABLE == Command_FormatStatus())
+        {
+            HAL_MP3EncodePcm();
+        }
         Wireless_MessageProcess();
         SYS_EVENT_Process();
     }
