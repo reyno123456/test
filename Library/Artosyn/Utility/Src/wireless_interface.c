@@ -96,6 +96,12 @@ WIRELESS_CONFIG_HANDLER g_stWirelessMsgHandler[MAX_PID_NUM] =
     WIRELESS_INTERFACE_VIDEO_BAND_WIDTH_Handler,
     WIRELESS_INTERFACE_RESET_BB_Handler,
     WIRELESS_INTERFACE_OPERATE_REG_Handler,
+    WIRELESS_INTERFACE_READ_RF9363_Handler,
+    WIRELESS_INTERFACE_WRITE_RF9363_Handler,    
+    NULL,
+    NULL,
+    NULL,
+    NULL,
     PAD_FREQUENCY_BAND_WIDTH_SELECT_Handler,
     PAD_FREQUENCY_BAND_OPERATION_MODE_Handler,
     PAD_FREQUENCY_BAND_SELECT_Handler,
@@ -832,6 +838,25 @@ uint8_t WIRELESS_INTERFACE_SWITCH_DEBUG_MODE_Handler(void *param, uint8_t id)
     return 0;
 }
 
+uint8_t WIRELESS_INTERFACE_WRITE_RF9363_Handler(void *param, uint8_t id)
+{
+    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
+    recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
+
+    uint16_t u16_addr = ((recvMessage->paramData[0]) << 8) | recvMessage->paramData[1];
+
+    //dlog_info("ID = 0x%x 0x%x 0x%x 0x%x 0x%x\n",recvMessage->messageId, recvMessage->paramData[0], 
+    //                                            recvMessage->paramData[1], recvMessage->paramData[2], u16_addr);
+
+    if (WIRELESS_IsInDebugMode() == 1)
+    {
+        if (HAL_RF8003S_WriteReg(u16_addr, recvMessage->paramData[2]))
+        {
+            dlog_error("write fail!\n");
+            return 1;
+        }
+    }
+}
 uint8_t WIRELESS_INTERFACE_WRITE_RF_REG_Handler(void *param, uint8_t id)
 {
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
@@ -874,6 +899,32 @@ uint8_t WIRELESS_INTERFACE_CLOSE_VIDEO_Handler(void *param, uint8_t id)
     HAL_USB_CloseVideo(id);
 
     return 0;
+}
+
+
+uint8_t WIRELESS_INTERFACE_READ_RF9363_Handler(void *param, uint8_t id)
+{
+    STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
+    recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
+    uint16_t addr = (recvMessage->paramData[0] << 8) | recvMessage->paramData[1];
+
+    if (WIRELESS_IsInDebugMode() == 1)
+    {
+
+        recvMessage->messageId = 0x4A;
+        recvMessage->paramLen  = 3;
+        recvMessage->paramData[0] = recvMessage->paramData[0];
+        recvMessage->paramData[1] = recvMessage->paramData[1];
+        
+        if (HAL_RF8003S_ReadByte(addr, &recvMessage->paramData[2]))
+        {
+            dlog_error("read rf8003s error\n");
+
+            return 1;
+        }
+
+        Wireless_InsertMsgIntoReplyBuff(recvMessage, id);
+    }
 }
 
 

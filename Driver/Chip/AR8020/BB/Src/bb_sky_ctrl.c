@@ -830,7 +830,6 @@ static void sky_handle_IT_cmd(void)
     {
         uint32_t u32_rc = ( data0 << 24 ) | ( data1 << 16 ) | ( data2 << 8 ) | ( data3 );
         BB_write_ItRegs( u32_rc );
-        dlog_info("--write IT frq: 0x%x", u32_rc);
     }
 }
 
@@ -1170,7 +1169,7 @@ void sky_handle_all_spi_cmds(void)
 
     sky_handle_rc_rcv_grd_mask_code_cmd();
 
-    sky_handle_rc_channel_sync_cmd();
+    //sky_handle_rc_channel_sync_cmd();
     //sky_handle_frqOffset();
 }
 

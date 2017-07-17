@@ -10,7 +10,7 @@
 #include "hal_uart.h"
 
 volatile uint8_t sd_mountStatus = 0;
-volatile uint8_t g_log_level = LOG_LEVEL_WARNING;
+volatile uint8_t g_log_level = LOG_LEVEL_INFO;
 
 static uint8_t s_u8_dlogServerCpuId = 0xFF;
 

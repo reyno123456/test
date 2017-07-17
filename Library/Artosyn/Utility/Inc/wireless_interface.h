@@ -100,6 +100,8 @@ typedef enum
     WIRELESS_INTERFACE_VIDEO_BAND_WIDTH             = 0x47,
     WIRELESS_INTERFACE_RESET_BB                     = 0x48,
     WIRELESS_INTERFACE_OPERATE_REG                  = 0x49,
+    WIRELESS_INTERFACE_READ_RF9363                  = 0x4A,
+    WIRELESS_INTERFACE_WRITE_RF9363                 = 0x4B,    
     PAD_FREQUENCY_BAND_WIDTH_SELECT                 = 0x50,
     PAD_FREQUENCY_BAND_OPERATION_MODE               = 0x51,
     PAD_FREQUENCY_BAND_SELECT                       = 0x52,
@@ -251,6 +253,8 @@ uint8_t WIRELESS_INTERFACE_READ_RF_REG_Handler(void *param, uint8_t id);
 uint8_t WIRELESS_INTERFACE_OPEN_VIDEO_Handler(void *param, uint8_t id);
 uint8_t WIRELESS_INTERFACE_CLOSE_VIDEO_Handler(void *param, uint8_t id);
 uint8_t WIRELESS_INTERFACE_RESET_BB_Handler(void *param, uint8_t id);
+uint8_t WIRELESS_INTERFACE_READ_RF9363_Handler(void *param, uint8_t id);
+uint8_t WIRELESS_INTERFACE_WRITE_RF9363_Handler(void *param, uint8_t id);
 uint8_t PAD_FREQUENCY_BAND_WIDTH_SELECT_Handler(void *param, uint8_t id);
 uint8_t PAD_FREQUENCY_BAND_OPERATION_MODE_Handler(void *param, uint8_t id);
 uint8_t PAD_FREQUENCY_BAND_SELECT_Handler(void *param, uint8_t id);

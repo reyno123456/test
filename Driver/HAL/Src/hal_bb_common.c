@@ -18,7 +18,7 @@ History:
 #include "sys_event.h"
 #include "bb_spi.h"
 #include "bb_ctrl.h"
-#include "rf_8003s.h"
+#include "rf_if.h"
 #include "hal_bb.h"
 #include "debuglog.h"
 
@@ -553,9 +553,9 @@ HAL_RET_T HAL_BB_SetItOnlyFreqProxy(uint8_t mode)
  * @retval  HAL_BB_ERR_SPI_WRITE            spi write fail
  * @note    The function can only be called by cpu0,1, and only call for debug.
  */
-HAL_RET_T HAL_RF8003S_WriteReg(uint8_t u8_addr, uint8_t u8_data)
+HAL_RET_T HAL_RF8003S_WriteReg(uint16_t u16_addr, uint8_t u8_data)
 { 
-    if (0 == RF8003s_SPI_WriteReg(u8_addr, u8_data))
+    if (0 == RF_SPI_WriteReg(u16_addr, u8_data))
     {
         return HAL_OK;
     }
@@ -573,9 +573,9 @@ HAL_RET_T HAL_RF8003S_WriteReg(uint8_t u8_addr, uint8_t u8_data)
  * @retval  HAL_BB_ERR_SPI_READ             spi read fail
  * @note    The function can only be called by cpu0,1, and only call for debug.
  */
-HAL_RET_T HAL_RF8003S_ReadByte(uint8_t u8_addr, uint8_t *pu8_regValue)
+HAL_RET_T HAL_RF8003S_ReadByte(uint16_t u16_addr, uint8_t *pu8_regValue)
 {
-    if ( 0 == RF8003s_SPI_ReadReg(u8_addr, pu8_regValue))
+    if ( 0 == RF_SPI_ReadReg(u16_addr, pu8_regValue))
     {
         return HAL_OK;
     }

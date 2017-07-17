@@ -45,9 +45,9 @@ all: $(obj).depend $(LIB) install
 
 $(LIB): CFLAGS += -DCPU0_DRV 
 $(LIB): $(OBJ_C)
-	@echo "Generating static library: $(CPU_NUMBER) " $(notdir $@)
+	@echo "Generating static library: $(CPU_NUMBER) $(FUNCTION_DEFS)" $(notdir $@)
 	$(AR) $(ARFLAGS) $@ $(OBJ_C)
-	$(CC) -c BB/Src/bb_init_regs.c -o BB/Src/bb_init_regs_config.o
+	$(CC) $(FUNCTION_DEFS) -c BB/Src/bb_init_regs.c -o BB/Src/bb_init_regs_config.o
 	$(OBJCOPY) -O binary BB/Src/bb_init_regs_config.o BB/Src/$(CFG_BIN)
 
 
@@ -64,7 +64,6 @@ install:
 	@cp -f SPI/Inc/spi.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/bb_spi.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/bb_uart_com.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f BB/Inc/rf_8003s.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/inter_core.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/pll_ctrl.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/systicks.h $(OUTPUT_HEADER_STAGING_DIR)
@@ -82,7 +81,6 @@ install:
 	@cp -f BB/Inc/bb_types.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Inc/bb_spi_com.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/timer.h $(OUTPUT_HEADER_STAGING_DIR)
-	@cp -f BB/Inc/rf_8003s.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f BB/Src/$(CFG_BIN) $(OUTPUT_BIN_STAGING_DIR)/
 	@cp -f SysCtl/Inc/stm32f746xx.h $(OUTPUT_HEADER_STAGING_DIR)
 	@cp -f SysCtl/Inc/core_cm7.h $(OUTPUT_HEADER_STAGING_DIR)

@@ -41,7 +41,7 @@ STRU_BoardCfg stru_boardCfg =
     .u8_bbGrdRegsCnt    = 0,
     .pstru_bbGrdRegs    = NULL,
 
-    .u8_rf8003Cnt 	    = 1,
+    .u8_rfCnt 	    = 1,
 
     .u8_rf1SkyRegsCnt   = 0,
     .pstru_rf1SkyRegs   = NULL,

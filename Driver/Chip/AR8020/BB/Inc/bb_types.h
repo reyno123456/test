@@ -30,7 +30,8 @@ typedef enum _ENUM_RF_BAND
 {
     RF_2G           = 0x01,     //support only 2G 
     RF_5G           = 0x02,     //support only 5G 
-    RF_2G_5G        = (RF_2G | RF_5G)
+    RF_2G_5G        = (RF_2G | RF_5G),
+    RF_600M         = 0x04
 }ENUM_RF_BAND;
 
 

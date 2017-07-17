@@ -58,7 +58,6 @@ void BB_GRD_start(void)
     context.qam_ldpc = context.u8_bbStartMcs;
     context.flag_mrc = 0;
 
-    BB_set_RF_bandwitdh(BB_GRD_MODE, context.CH_bandwidth);
 
     grd_set_txmsg_mcs_change(context.CH_bandwidth, context.qam_ldpc);
 
@@ -84,14 +83,14 @@ void BB_GRD_start(void)
 
     BB_SweepStart(context.e_curBand, context.CH_bandwidth);    
 
-    reg_IrqHandle(BB_TX_ENABLE_VECTOR_NUM, wimax_vsoc_tx_isr, NULL);
-    INTR_NVIC_SetIRQPriority(BB_TX_ENABLE_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_BB_TX,0));
-    INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);
 
     BB_UARTComInit( BB_grd_uartDataHandler ); 
     BB_GetDevInfo();
 
     grd_init_rc_frq_mask_func();
+    reg_IrqHandle(BB_TX_ENABLE_VECTOR_NUM, wimax_vsoc_tx_isr, NULL);
+    INTR_NVIC_SetIRQPriority(BB_TX_ENABLE_VECTOR_NUM,INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_BB_TX,0));
+    INTR_NVIC_EnableIRQ(BB_TX_ENABLE_VECTOR_NUM);    
 }
 
 static void BB_grd_uartDataHandler(void *p)

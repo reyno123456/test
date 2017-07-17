@@ -63,7 +63,7 @@ STRU_BoardCfg stru_boardCfg =
     .u8_bbGrdRegsCnt    = sizeof(ek2T4R_bb_grd_regs) / sizeof(STRU_BB_REG),
     .pstru_bbGrdRegs    = ek2T4R_bb_grd_regs,
 
-    .u8_rf8003Cnt 	    = 2,
+    .u8_rfCnt 	    = 2,
 
     .u8_rf1SkyRegsCnt   = 0,
     .pstru_rf1SkyRegs   = NULL,
@@ -143,7 +143,7 @@ STRU_BoardCfg stru_boardCfg =
     .u8_bbGrdRegsCnt    = 0,
     .pstru_bbGrdRegs    = NULL,
 
-    .u8_rf8003Cnt 	    = 1,
+    .u8_rfCnt 	    = 1,
 
     .u8_rf1SkyRegsCnt   = 0,
     .pstru_rf1SkyRegs   = NULL,

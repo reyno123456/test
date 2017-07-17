@@ -15,7 +15,6 @@ SRC_C := SysCtl/Src/reg_rw.c \
          SPI/Src/spi.c \
          BB/Src/bb_spi.c \
          BB/Src/bb_uart_com.c \
-         BB/Src/rf_8003s.c \
          BB/Src/bb_sky_ctrl.c \
          BB/Src/bb_grd_ctrl.c \
          BB/Src/bb_grd_sweep.c \

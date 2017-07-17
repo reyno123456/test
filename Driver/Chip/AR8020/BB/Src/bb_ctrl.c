@@ -11,7 +11,7 @@
 #include "systicks.h"
 #include "bb_regs.h"
 #include "sys_event.h"
-#include "rf_8003s.h"
+#include "rf_if.h"
 #include "memory_config.h"
 #include "boardParameters.h"
 
@@ -25,25 +25,13 @@ volatile CONTEXT context;
 static volatile ENUM_REG_PAGES en_curPage;
 
 
-STRU_FRQ_CHANNEL *Rc_2G_frq    = NULL;
-STRU_FRQ_CHANNEL *Sweep_2G_10m_frq = NULL;
-STRU_FRQ_CHANNEL *Sweep_2G_20m_frq = NULL;
-STRU_FRQ_CHANNEL *It_2G_frq    = NULL;
-
-STRU_FRQ_CHANNEL *Rc_5G_frq = NULL;
-STRU_FRQ_CHANNEL *Sweep_5G_10m_frq = NULL;
-STRU_FRQ_CHANNEL *Sweep_5G_20m_frq = NULL;
-STRU_FRQ_CHANNEL *It_5G_frq = NULL;
-
 
 /*
   * cali_reg: Store the calibration registers value
  */
-static uint8_t cali_reg[2][10];
+
 static uint8_t *BB_sky_regs = NULL;
 static uint8_t *BB_grd_regs = NULL;
-static uint8_t *RF1_8003s_regs = NULL;
-static uint8_t *RF2_8003s_regs = NULL;
 
 static void BB_GetNv(void);
 
@@ -57,7 +45,22 @@ static void BB_regs_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *pstru_boardCfg)
 {
     uint32_t page_cnt=0;    
     uint8_t *regs = (en_mode == BB_SKY_MODE) ? BB_sky_regs : BB_grd_regs;
-    
+
+    //update the board registers
+    {
+        uint8_t num;
+        uint8_t cfgRegNum = ((en_mode == BB_SKY_MODE ) ? pstru_boardCfg->u8_bbSkyRegsCnt : pstru_boardCfg->u8_bbGrdRegsCnt);
+        STRU_BB_REG *bbBoardReg  = ((en_mode == BB_SKY_MODE ) ? (STRU_BB_REG *)pstru_boardCfg->pstru_bbSkyRegs : 
+                                                                (STRU_BB_REG *)pstru_boardCfg->pstru_bbGrdRegs);
+
+        for(num = 0; num < cfgRegNum; num++ )
+        {
+            uint16_t addr  = ((uint16_t)bbBoardReg[num].page << 8) + bbBoardReg[num].addr;
+            uint8_t  value = bbBoardReg[num].value;
+            regs[addr] = value;
+        }
+    }
+
     for(page_cnt = 0 ; page_cnt < 4; page_cnt ++)
     {
         uint32_t addr_cnt=0;
@@ -66,18 +69,7 @@ static void BB_regs_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *pstru_boardCfg)
          * PAGE setting included in the regs array.
          */
         en_curPage = page;
-        //update the board registers
-        {
-            uint8_t num;
-            uint8_t cfgRegNum = ((en_mode == BB_SKY_MODE ) ? pstru_boardCfg->u8_bbSkyRegsCnt : pstru_boardCfg->u8_bbGrdRegsCnt);
-            STRU_BB_REG *bbBoardReg  = ((en_mode == BB_SKY_MODE ) ? (STRU_BB_REG *)pstru_boardCfg->pstru_bbSkyRegs : 
-                                                                    (STRU_BB_REG *)pstru_boardCfg->pstru_bbGrdRegs);
 
-            for(num = 0; num < cfgRegNum; num++ )
-            {
-                regs[((uint16_t)bbBoardReg[num].page << 8) + bbBoardReg[num].addr] = bbBoardReg[num].value;
-            }
-        }
 
         for(addr_cnt = 0; addr_cnt < 256; addr_cnt++)
         {
@@ -160,18 +152,7 @@ void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
 
     BB_sky_regs   = &(cfg_addr->bb_sky_configure[0][0]);
     BB_grd_regs   = &(cfg_addr->bb_grd_configure[0][0]);
-    RF1_8003s_regs = &(cfg_addr->rf1_configure[0]);
-    RF2_8003s_regs = &(cfg_addr->rf2_configure[0]);
-    
-    Rc_2G_frq    = (STRU_FRQ_CHANNEL *)(cfg_addr->RC_2_4G_frq);
-    Sweep_2G_10m_frq = (STRU_FRQ_CHANNEL *)(cfg_addr->IT_2_4G_frq);
-    Sweep_2G_20m_frq = (STRU_FRQ_CHANNEL *)(cfg_addr->IT_2_4G_20M_sweep_frq);
-    It_2G_frq    = (STRU_FRQ_CHANNEL *)(cfg_addr->IT_2_4G_frq);
 
-    Rc_5G_frq = (STRU_FRQ_CHANNEL *)(cfg_addr->RC_5G_frq);
-    Sweep_5G_10m_frq = (STRU_FRQ_CHANNEL *)(cfg_addr->IT_5G_frq);
-    Sweep_5G_20m_frq = (STRU_FRQ_CHANNEL *)(cfg_addr->IT_5G_20M_sweep_frq);
-    It_5G_frq = (STRU_FRQ_CHANNEL *)(cfg_addr->IT_5G_frq);
     context.e_bandsupport = boardCfg->e_bandsupport;
 
     BB_GetNv();
@@ -182,26 +163,25 @@ void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
     context.u8_bbStartMcs = ((context.CH_bandwidth == BW_20M) ? (boardCfg->u8_bbStartMcs20M) : (boardCfg->u8_bbStartMcs10M));
 
     BB_regs_init(en_mode, boardCfg);
-    RF8003s_init(RF1_8003s_regs, RF2_8003s_regs, boardCfg, en_mode);
+    RF_init(boardCfg, context.en_bbmode);
 
     BB_softReset(en_mode);
 
-    BB_before_RF_cali();
-    BB_RF_start_cali();
-
-    BB_WriteReg(PAGE0, TX_CALI_ENABLE, 0x00);   //disable calibration
-
     BB_after_RF_cali(en_mode, boardCfg);
-    RF8003s_afterCali(en_mode, boardCfg);
 
     //choose the start band
     if ( context.e_bandsupport == RF_2G_5G || context.e_bandsupport == RF_2G )
     {
         context.e_curBand = RF_2G;
     }
-    else
+    else if( context.e_bandsupport == RF_5G )
     {
         context.e_curBand = RF_5G;
+    }
+    else
+    {
+        dlog_warning("RF band: 600MHz");
+        context.e_curBand = RF_600M;
     }
     BB_set_RF_Band(en_mode, context.e_curBand);
     BB_set_RF_bandwitdh(en_mode, context.CH_bandwidth);
@@ -259,47 +239,6 @@ int BB_ReadRegMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t mask)
 }
 
 
-uint8_t BB_set_sweepfrq(ENUM_RF_BAND band, ENUM_CH_BW e_bw, uint8_t ch)
-{
-    STRU_FRQ_CHANNEL *ch_ptr;
-
-    if (BW_10M == e_bw)
-    {
-        ch_ptr = ((band == RF_2G)?Sweep_2G_10m_frq:Sweep_5G_10m_frq);
-    }
-    else
-    {
-        ch_ptr = ((band == RF_2G)?Sweep_2G_20m_frq:Sweep_5G_20m_frq);
-    }
-
-    //set sweep frequency
-    if ( band == RF_2G )
-    {
-        BB_WriteRegMask(PAGE2, 0x20, 0x00, 0x04);
-    }
-    else
-    {
-        // P2 0x20 [2]=1,sweep frequency,5G
-        BB_WriteRegMask(PAGE2, 0x20, 0x04, 0x04);   
-    }
-    
-    BB_WriteReg(PAGE2, SWEEP_FREQ_0, ch_ptr[ch].frq1);
-    BB_WriteReg(PAGE2, SWEEP_FREQ_1, ch_ptr[ch].frq2);
-    BB_WriteReg(PAGE2, SWEEP_FREQ_2, ch_ptr[ch].frq3);
-    BB_WriteReg(PAGE2, SWEEP_FREQ_3, ch_ptr[ch].frq4);
-}
-
-
-void BB_grd_notify_it_skip_freq(ENUM_RF_BAND band, uint8_t u8_ch)
-{
-    STRU_FRQ_CHANNEL *pstru_frq = ((band == RF_2G)?It_2G_frq:It_5G_frq);
-
-    BB_WriteReg(PAGE2, IT_FRQ_0, pstru_frq[u8_ch].frq1);
-    BB_WriteReg(PAGE2, IT_FRQ_1, pstru_frq[u8_ch].frq2);
-    BB_WriteReg(PAGE2, IT_FRQ_2, pstru_frq[u8_ch].frq3);
-    BB_WriteReg(PAGE2, IT_FRQ_3, pstru_frq[u8_ch].frq4);
-}
-
 
 const uint8_t mcs_idx_bitrate_map_10m[] = 
 {
@@ -330,74 +269,6 @@ uint8_t BB_get_bitrateByMcs(ENUM_CH_BW bw, uint8_t u8_mcs)
     {
         return mcs_idx_bitrate_map_20m[u8_mcs];
     }
-}
-
-void BB_grd_notify_it_skip_freq_1(void)
-{
-    BB_WriteReg(PAGE2, IT_FRQ_0, context.stru_itRegs.frq1);
-    BB_WriteReg(PAGE2, IT_FRQ_1, context.stru_itRegs.frq2);
-    BB_WriteReg(PAGE2, IT_FRQ_2, context.stru_itRegs.frq3);
-    BB_WriteReg(PAGE2, IT_FRQ_3, context.stru_itRegs.frq4);
-}
-
-
-uint8_t BB_write_ItRegs(uint32_t u32_it)
-{
-    context.stru_itRegs.frq1 = (uint8_t)(u32_it >> 24) & 0xff;
-    context.stru_itRegs.frq2 = (uint8_t)(u32_it >> 16) & 0xff;
-    context.stru_itRegs.frq3 = (uint8_t)(u32_it >>  8) & 0xff;
-    context.stru_itRegs.frq4 = (uint8_t)(u32_it) & 0xff;
-
-    BB_WriteReg(PAGE2, AGC3_0, context.stru_itRegs.frq1);
-    BB_WriteReg(PAGE2, AGC3_1, context.stru_itRegs.frq2);
-    BB_WriteReg(PAGE2, AGC3_2, context.stru_itRegs.frq3);
-    BB_WriteReg(PAGE2, AGC3_3, context.stru_itRegs.frq4);
-}
-
-
-
-uint8_t BB_set_ITfrq(ENUM_RF_BAND band, uint8_t ch)
-{
-	STRU_FRQ_CHANNEL *it_ch_ptr = ((band == RF_2G)?It_2G_frq:It_5G_frq);
-
-    context.stru_itRegs.frq1 = it_ch_ptr[ch].frq1;
-    context.stru_itRegs.frq2 = it_ch_ptr[ch].frq2;
-    context.stru_itRegs.frq3 = it_ch_ptr[ch].frq3;
-    context.stru_itRegs.frq4 = it_ch_ptr[ch].frq4;
-
-	BB_WriteReg(PAGE2, AGC3_0, it_ch_ptr[ch].frq1);
-	BB_WriteReg(PAGE2, AGC3_1, it_ch_ptr[ch].frq2);
-	BB_WriteReg(PAGE2, AGC3_2, it_ch_ptr[ch].frq3);
-	BB_WriteReg(PAGE2, AGC3_3, it_ch_ptr[ch].frq4);    
-}
-
-uint8_t BB_write_RcRegs(uint32_t u32_rc)
-{
-    context.stru_rcRegs.frq1 = (uint8_t)(u32_rc >> 24) & 0xff;
-    context.stru_rcRegs.frq2 = (uint8_t)(u32_rc >> 16) & 0xff;
-    context.stru_rcRegs.frq3 = (uint8_t)(u32_rc >>  8) & 0xff;
-    context.stru_rcRegs.frq4 = (uint8_t)(u32_rc) & 0xff;
-
-    BB_WriteReg(PAGE2, AGC3_a, context.stru_rcRegs.frq1);
-    BB_WriteReg(PAGE2, AGC3_b, context.stru_rcRegs.frq2);
-    BB_WriteReg(PAGE2, AGC3_c, context.stru_rcRegs.frq3);
-    BB_WriteReg(PAGE2, AGC3_d, context.stru_rcRegs.frq4);
-}
-
-
-uint8_t BB_set_Rcfrq(ENUM_RF_BAND band, uint8_t ch)
-{
-	STRU_FRQ_CHANNEL *pu8_rcRegs = ((band == RF_2G)?Rc_2G_frq:Rc_5G_frq);
-
-    context.stru_rcRegs.frq1 = pu8_rcRegs[ch].frq1;
-    context.stru_rcRegs.frq2 = pu8_rcRegs[ch].frq2;
-    context.stru_rcRegs.frq3 = pu8_rcRegs[ch].frq3;
-    context.stru_rcRegs.frq4 = pu8_rcRegs[ch].frq4;
-
-    BB_WriteReg(PAGE2, AGC3_a, pu8_rcRegs[ch].frq1);
-    BB_WriteReg(PAGE2, AGC3_b, pu8_rcRegs[ch].frq2);
-    BB_WriteReg(PAGE2, AGC3_c, pu8_rcRegs[ch].frq3);
-    BB_WriteReg(PAGE2, AGC3_d, pu8_rcRegs[ch].frq4); 
 }
 
 
@@ -438,7 +309,7 @@ void BB_set_RF_Band(ENUM_BB_MODE sky_ground, ENUM_RF_BAND rf_band)
         BB_WriteRegMask(PAGE2, 0x21, 0x00, 0x90);
         BB_WriteRegMask(PAGE2, 0x20, 0x00, 0x04);
     }
-    else
+    else if(rf_band == RF_5G)
     {
         // P0 0x20 [3]=0, [2]=1,2G PA off,5G PA on
         BB_WriteRegMask(PAGE0, 0x20, 0x04, 0x0C); 
@@ -453,7 +324,7 @@ void BB_set_RF_Band(ENUM_BB_MODE sky_ground, ENUM_RF_BAND rf_band)
     }
 
     //calibration and reset
-    BB_RF_2G_5G_switch(rf_band);
+    BB_RF_band_switch(rf_band);
 }
 
 
@@ -479,25 +350,6 @@ void BB_set_RF_bandwitdh(ENUM_BB_MODE sky_ground, ENUM_CH_BW rf_bw)
     BB_softReset(sky_ground);
 }
 
-void read_cali_register(uint8_t *buf)
-{
-    buf[0] = BB_ReadReg(PAGE0, 0xd0);
-    buf[1] = BB_ReadReg(PAGE0, 0xd1);
-    buf[2] = BB_ReadReg(PAGE0, 0xd2);
-    buf[3] = BB_ReadReg(PAGE0, 0xd3);
-    buf[4] = BB_ReadReg(PAGE0, 0xd4);
-    buf[5] = BB_ReadReg(PAGE0, 0xd5);
-    buf[6] = BB_ReadReg(PAGE0, 0xd6);
-    buf[7] = BB_ReadReg(PAGE0, 0xd7);
-    buf[8] = BB_ReadReg(PAGE0, 0xd8);
-    buf[9] = BB_ReadReg(PAGE0, 0xd9);
-}
-
-
-static int BB_before_RF_cali(void)
-{
-    BB_WriteRegMask(PAGE0, 0x20, 0x00, 0x0c);
-}
 
 
 static void BB_after_RF_cali(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
@@ -534,191 +386,6 @@ static void BB_after_RF_cali(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
             BB_WriteReg(page, bb_regs[cnt].addr, bb_regs[cnt].value);
         }
     }
-}
-
-static void BB_RF_start_cali( void )
-{
-    uint8_t data;
-
-    //step 1
-    //1.1 Enable RF calibration 0x61= 0x0F
-    BB_WriteReg(PAGE0, TX_CALI_ENABLE, 0x0F);
-
-    //1.2: soft reset0
-    //page0 0x64[4] = 1'b1
-    data = BB_ReadReg(PAGE0, 0x64);
-    data = data | 0x10;
-    BB_WriteReg(PAGE0, 0x64, data);
-    //page0 0x64[4] = 1'b0
-    data = data & 0xEF;
-    BB_WriteReg(PAGE0, 0x64, data);
-
-    data = BB_ReadReg(PAGE0, 0x00);
-    data |= 0x01;
-    BB_WriteReg(PAGE0, 0x00, data);
-    //page0 0x64[4] = 1'b0
-    data &= 0xFE;
-    BB_WriteReg(PAGE0, 0x00, data);
-
-    //1.3: wait 1s
-    SysTicks_DelayMS(1000);
-
-    //select the 2G,  Read RF calibration register values
-    data = BB_ReadReg(PAGE0, 0x64);
-    BB_WriteReg(PAGE0, 0x64, (data&0x7F));
-    read_cali_register(cali_reg[0]);
-
-    //select the 5G,  Read RF calibration register values
-    BB_WriteReg(PAGE0, 0x64, (data | 0x80));
-    read_cali_register(cali_reg[1]);
-}
-
-
-void BB_RF_2G_5G_switch(ENUM_RF_BAND rf_band)
-{
-    uint8_t data, data1;
-    char *regbuf = ((rf_band==RF_2G) ? cali_reg[0]:cali_reg[1]); 
-
-    //write 0xd0[7] -> 0x67[7]
-    data = (BB_ReadReg(PAGE0, 0x67) & 0x7f) | (regbuf[0] & 0x80);
-    BB_WriteReg(PAGE0, 0x67, data);
-
-    //write 0xd0[5:2] -> 0x68[7:4]
-    data1 = ((regbuf[0] & 0x3c) << 2);
-    data = (BB_ReadReg(PAGE0, 0x68) & 0x0f) | data1;
-    BB_WriteReg(PAGE0, 0x68, data);
-
-    //write 0xd1[7] -> 0x67[6]
-    data = (BB_ReadReg(PAGE0, 0x67) & 0xbf) |  ((regbuf[1] & 0x80) >> 1);
-    BB_WriteReg(PAGE0, 0x67, data);
-
-    //write 0xd1[5:2] -> 0x68[3:0]
-    data1 = ((regbuf[1] & 0x3c) >> 2);
-    data = (BB_ReadReg(PAGE0, 0x68) & 0xf0) | data1;
-    BB_WriteReg(PAGE0, 0x68, data);
-    
-    //write 0xd4[7] -> 0x67[5]
-    data = (BB_ReadReg(PAGE0, 0x67) &  0xdf) | ((regbuf[4] & 0x80) >> 2);
-    BB_WriteReg(PAGE0, 0x67, data);
-
-    //write 0xd4[6:3] -> 0x6a[7:4]
-    data1 = ((regbuf[4] & 0x78) << 1);
-    data = (BB_ReadReg(PAGE0, 0x6A) & 0x0f) | data1;
-    BB_WriteReg(PAGE0, 0x6A, data);
-    
-    //0xd3[3:0]->0x6a[3:0]
-    data = (BB_ReadReg(PAGE0, 0x6A) & 0xf0) | (regbuf[3] & 0x0f);;
-    BB_WriteReg(PAGE0, 0x6A, data);
-    
-    //0xd2[7:0] -> 0x6b[7:0]
-    BB_WriteReg(PAGE0, 0x6b, regbuf[2]);
-    
-    uint16_t tmp = (((uint16_t)regbuf[3] & 0x0f) << 8 ) | regbuf[2]; //abs(tmp[11:0])
-    if(tmp & 0x800) //tmp[11]
-    {
-        tmp = (~tmp) + 1;
-        tmp &= 0x0fff;
-    }
-
-    typedef struct _STRU_thresh_regvalue
-    {
-        uint16_t thresh;
-        uint8_t value;
-    }STRU_thresh_regvalue;
-
-    STRU_thresh_regvalue thresh_regvalue[] = 
-    {
-        {0x41,  0xFF}, {0x60,  0xFE}, {0x70,  0xFD}, {0x80,  0xFC}, 
-        {0x8F,  0xFB}, {0x9F,  0xFA}, {0xAF,  0xF8}, {0xBE,  0xF7}, 
-        {0xCE,  0xF6}, {0xDD,  0xF4}, {0xED,  0xF2}, {0xFD,  0xF0}, 
-        {0x10C, 0xEE}, {0x11C, 0xEC}, {0x12B, 0xEA}, {0x13B, 0xE7}, 
-        {0x14A, 0xE5}, {0x15A, 0xE2}, {0x169, 0xE0}, {0x179, 0xDD}, 
-        {0x188, 0xDA}, {0x198, 0xD7}, {0x1A7, 0xD4}, {0x1B6, 0xD0},
-        {0x1C6, 0xCD}, {0x1D5, 0xC9},
-    };
-
-    uint8_t regvalue = 0xc6;
-    uint8_t idx = 0;
-    for(idx = 0; idx < sizeof(thresh_regvalue)/sizeof(thresh_regvalue[0]); idx++)
-    {
-        if(tmp <= thresh_regvalue[idx].thresh)
-        {
-            regvalue = thresh_regvalue[idx].value;
-            break;
-        }
-    }
-
-    BB_WriteReg(PAGE0, 0x69, regvalue);
-
-    //write 0xd5[7] -> 0x67[3]
-    data1 = (regbuf[5] & 0x80) >> 4;
-    data = BB_ReadReg(PAGE0, 0x67) & 0xf7 | data1;
-    BB_WriteReg(PAGE0, 0x67, data);
-    
-    //0xd5[5:2]->0x67[7:4]
-    data1 = (regbuf[5] & 0x3c) << 2;
-    data = (BB_ReadReg(PAGE0, 0x6c) & 0x0f) | data1;
-    BB_WriteReg(PAGE0, 0x6c, data);
-
-    //write 0xd6[7] -> 0x67[2]
-    data1 = (regbuf[6] & 0x80) >> 5;
-    data = (BB_ReadReg(PAGE0, 0x67) & 0xfb) | data1;
-    BB_WriteReg(PAGE0, 0x67, data);
-
-    //0xd6[5:2]->0x6c[3:0]
-    data1 = (regbuf[6] >> 2) & 0x0f ;
-    data = (BB_ReadReg(PAGE0, 0x6c) & 0xf0) | data1;
-    BB_WriteReg(PAGE0, 0x6c, data);
-
-    //write 0xd9[7] -> 0x67[1]
-    data1 = (regbuf[9] & 0x80) >> 6;
-    data = (BB_ReadReg(PAGE0, 0x67) & 0xfd) | data1;
-    BB_WriteReg(PAGE0, 0x67, data);
-    
-    //write 0xd9[6:3] -> 0x6E[7:4]
-    data1 = (regbuf[9]<<1) & 0xf0;
-    data = (BB_ReadReg(PAGE0, 0x6e) & 0x0f) | data1;
-    BB_WriteReg(PAGE0, 0x6e, data); 
-
-    //0xd8[3:0] -> 0x6E[3:0]
-    data1 = regbuf[8] & 0x0f;
-    data = (BB_ReadReg(PAGE0, 0x6e) & 0xf0) | data1;
-    BB_WriteReg(PAGE0, 0x6e, data);
-
-    //0xd7[7:0] -> 0x6F[7:0]
-    BB_WriteReg(PAGE0, 0x6f, regbuf[7]);
-
-    tmp = (((uint16_t)regbuf[8] & 0x0f)<<8) | regbuf[7];
-    if(tmp & 0x800) //tmp[11]
-    {
-        tmp = (~tmp) + 1;
-        tmp &= 0x0fff;
-    }
-
-    regvalue = 0xc6;
-    for(idx = 0; idx < sizeof(thresh_regvalue)/sizeof(thresh_regvalue[0]); idx++)
-    {
-        if(tmp <= thresh_regvalue[idx].thresh)
-        {
-            regvalue = thresh_regvalue[idx].value;
-            break;
-        }
-    }
-
-    BB_WriteReg(PAGE0, 0x6d, regvalue);
-    BB_WriteRegMask(PAGE0, 0x60, 0x02, 0x02);   //fix calibration result.
-#if 0
-    data = BB_ReadReg(PAGE0, 0x00);
-    data |= 0x01;
-    BB_WriteReg(PAGE0, 0x00, data);
-    
-    data &= 0xfe;
-    BB_WriteReg(PAGE0, 0x00, data);  
-#endif
-
-    BB_WriteReg(PAGE2, RF_BAND_CHANGE_0, rf_band);
-    BB_WriteReg(PAGE2, RF_BAND_CHANGE_1, rf_band);
-    
 }
 
 
@@ -780,7 +447,7 @@ int BB_InsertCmd(STRU_WIRELESS_CONFIG_CHANGE *p)
 }
 
 
-int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
+int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2, uint32_t param3)
 {
     STRU_WIRELESS_CONFIG_CHANGE cmd;
     int ret = 1;
@@ -878,7 +545,7 @@ int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
         {
             cmd.u8_configClass  = WIRELESS_MISC;
             cmd.u8_configItem   = MISC_READ_RF_REG;
-            cmd.u32_configValue = (param0) | (param1 << 8);
+            cmd.u32_configValue = (param0) | (param1 << 8) | (param2 << 16);
 
             dlog_info("1:%d 2:%d 3:%d 4:%d", type, param0, param1, param2);
             break;
@@ -889,7 +556,7 @@ int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2)
             cmd.u8_configClass  = WIRELESS_MISC;
             cmd.u8_configItem   = MISC_WRITE_RF_REG;
                                //8003s num: addr: value
-            cmd.u32_configValue  = (param0) | (param1 << 8) | (param2 << 16);
+            cmd.u32_configValue  = (param0) | (param1 << 8) | (param2 << 16) | (param3 << 24);
             break;
         }
 
@@ -1049,9 +716,9 @@ void BB_handle_misc_cmds(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
                 uint8_t v;
                 BB_SPI_curPageWriteByte(0x01, (value == 0)? 0x01 : 0x03);               //value2==0: write RF8003-0
                                                                                         //value2==1: write RF8003-1
-                RF8003s_SPI_ReadReg(value1, &v);
-                dlog_info("RF read 8003-%d addr=0x%0.2x value=0x%0.2x", value, value1, v);
+                RF_SPI_ReadReg( (value1<<8 )|value2, &v);
                 BB_SPI_curPageWriteByte(0x01,0x02);
+                dlog_info("RF read %d addrH=0x%0.2x addrL:%0.2x out:0x%0.2x", value, value1, value2, v);
                 break;
             }
 
@@ -1059,10 +726,10 @@ void BB_handle_misc_cmds(STRU_WIRELESS_CONFIG_CHANGE* pcmd)
             {
                 BB_SPI_curPageWriteByte(0x01, (value == 0)? 0x01 : 0x03);              //value2==0: write RF8003-0
                                                                                        //value2==1: write RF8003-1
-                RF8003s_SPI_WriteReg(value1, value2);
+                RF_SPI_WriteReg( (value1 << 8) | value2, value3);
                 BB_SPI_curPageWriteByte(0x01,0x02);
 
-                dlog_info("RF write 8003-%d addr=0x%0.2x value=0x%0.2x", value, value1, value2);
+                dlog_info("RF write %d addr=0x%0.2x value=0x%0.2x", value, (value1 << 8) | value2, value3);
                 break;
             }
 
@@ -1294,10 +961,9 @@ static void BB_GetNv(void)
     volatile uint32_t tmpCnt = 0;
     volatile STRU_NV *pst_nv = (STRU_NV *)SRAM_NV_MEMORY_ST_ADDR;
 
-    while(0x23178546 != (pst_nv->st_nvMng.u32_nvInitFlag))
+    while(0x23178546 != (pst_nv->st_nvMng.u32_nvInitFlag) && (tmpCnt++) < 200)
     {
-        tmpCnt = 0;
-        while((tmpCnt++) < 200);
+        SysTicks_DelayMS(10);
     }
     
     memcpy((uint8_t*)(context.u8_flashId), (void *)(pst_nv->st_nvDataUpd.u8_nvBbRcId), 5);

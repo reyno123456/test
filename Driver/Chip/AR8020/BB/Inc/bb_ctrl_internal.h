@@ -5,6 +5,9 @@
 
 #include "bb_ctrl.h"
 #include "bb_spi.h"
+#include "rf_if.h"
+#include "bb_regs.h"
+
 
 #define MAX_2G_RC_FRQ_SIZE          (34)
 #define MAX_2G_IT_FRQ_SIZE          (8)
@@ -227,22 +230,21 @@ extern volatile DEVICE_STATE dev_state;
 
 
 
-
 #define MAX(a,b) (((a) > (b)) ?  (a) :  (b) )
 
 void BB_uart10_spi_sel(uint32_t sel_dat);
 
 int BB_softReset(ENUM_BB_MODE en_mode);
 
-uint8_t BB_set_Rcfrq(ENUM_RF_BAND band, uint8_t ch);
 
-uint8_t BB_set_ITfrq(ENUM_RF_BAND band, uint8_t ch);
 
-uint8_t BB_set_sweepfrq(ENUM_RF_BAND band, ENUM_CH_BW e_bw, uint8_t ch);
 
 uint8_t BB_ReadReg(ENUM_REG_PAGES page, uint8_t addr);
 
 uint8_t BB_WriteReg(ENUM_REG_PAGES page, uint8_t addr, uint8_t data);
+
+int BB_WriteRegMask(ENUM_REG_PAGES page, uint8_t addr, uint8_t data, uint8_t mask);
+
 
 uint8_t BB_map_modulation_to_br(uint8_t mod);
 
@@ -254,7 +256,6 @@ void BB_set_RF_Band(ENUM_BB_MODE sky_ground, ENUM_RF_BAND rf_band);
 
 void BB_set_RF_bandwitdh(ENUM_BB_MODE sky_ground, ENUM_CH_BW rf_bw);
 
-void BB_RF_2G_5G_switch(ENUM_RF_BAND rf_band);
 
 int BB_GetCmd(STRU_WIRELESS_CONFIG_CHANGE *pconfig);
 
@@ -262,7 +263,7 @@ void BB_HandleEventsCallback(void *p);
 
 void BB_handle_misc_cmds(STRU_WIRELESS_CONFIG_CHANGE* pcmd);
 
-int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2);
+int BB_add_cmds(uint8_t type, uint32_t param0, uint32_t param1, uint32_t param2, uint32_t param3);
 
 void BB_set_QAM(ENUM_BB_QAM mod);
 

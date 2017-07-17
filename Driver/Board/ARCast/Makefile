@@ -39,6 +39,7 @@ SRC_C := ../Common/NORFlash/Src/nor_flash.c \
          ../Common/OV5640/Src/ov5640.c \
          ../Common/IT66021/Src/it_66021.c \
          ../Common/IT66021/Src/it6602.c \
+         ../Common/RF8003s/Src/rf_8003s.c \
          ./Src/board_bbrf.c \
          ./Src/pmu_rtp5903.c
 
@@ -46,6 +47,7 @@ SRC_C := ../Common/NORFlash/Src/nor_flash.c \
 INCDIRS := -I../ \
            -I../Common/NORFlash/Inc \
            -I../Common/OV5640/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/SPI/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/I2C/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/BB/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/QuadSPI/Inc \

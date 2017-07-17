@@ -38,6 +38,7 @@ SRC_C := ../Common/ADV7611/Src/adv_7611.c \
          ../Common/NORFlash/Src/nor_flash.c \
          ../Common/NORFlash/Src/w25q128.c \
          ../Common/OV5640/Src/ov5640.c \
+         ../Common/RF8003s/Src/rf_8003s.c \
          ./Src/board_bbrf.c
 
 
@@ -47,6 +48,7 @@ INCDIRS := -I../ \
            -I../Common/OV5640/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/BB/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/I2C/Inc \
+           -I$(TOP_DIR)/Driver/Chip/AR8020/SPI/Inc \
            -I$(TOP_DIR)/Driver/Chip/AR8020/QuadSPI/Inc \
            -I$(TOP_DIR)/Configure \
            -I$(TOP_DIR)/Configure/Include \

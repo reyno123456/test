@@ -72,7 +72,7 @@ STRU_BoardCfg stru_boardCfg =
     .u8_bbGrdRegsCnt    = sizeof(arcast_bb_regs_beforeCali) / sizeof(STRU_BB_REG),
     .pstru_bbGrdRegs    = arcast_bb_regs_beforeCali,
 
-    .u8_rf8003Cnt       = 1,
+    .u8_rfCnt       = 1,
 
     .u8_rf1SkyRegsCnt   = sizeof(arcast_rf1_regs_beforeCali) / sizeof(STRU_RF_REG),
     .pstru_rf1SkyRegs   = arcast_rf1_regs_beforeCali,

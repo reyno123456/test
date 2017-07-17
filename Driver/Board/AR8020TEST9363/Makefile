@@ -38,9 +38,8 @@ SRC_C := ../Common/ADV7611/Src/adv_7611.c \
          ../Common/NORFlash/Src/nor_flash.c \
          ../Common/NORFlash/Src/w25q128.c \
          ../Common/OV5640/Src/ov5640.c \
-         ../Common/RF8003s/Src/rf_8003s.c \
-         ./Src/board_bbrf.c
-
+         ../Common/RF9363/rf_9363.c \
+         ./Src/board_bbrf.c \
 
 INCDIRS := -I../ \
            -I../Common/ADV7611/Inc \

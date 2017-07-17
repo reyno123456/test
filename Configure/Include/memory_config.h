@@ -258,6 +258,11 @@ typedef struct
     unsigned char RC_5G_frq[40][4];
     unsigned char IT_5G_frq[13][4];
     unsigned char IT_5G_20M_sweep_frq[7][4];
+#ifdef RF9363
+    uint8_t RF9363_common_regs[2572][3];
+    uint8_t RF9363_sky_regs[59][3];
+    uint8_t RF9363_ground_regs[52][3];
+#endif
 #endif
 #ifdef USE_ADV7611_EDID_CONFIG_BIN
     unsigned char hdmi_configure[264][3];

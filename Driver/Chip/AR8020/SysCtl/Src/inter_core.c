@@ -100,7 +100,7 @@ static void InterCore_CopyConfigureFormFlashToSRAM(void)
     while(CONFIGURE_INIT_FLAG_VALUE != (*sram_configure_start_addr))
     {
         
-        memcpy((uint8_t *)(SRAM_CONFIGURE_MEMORY_ST_ADDR+4),(uint8_t *)(configure_start_addr),(1024*4));
+        memcpy((uint8_t *)(SRAM_CONFIGURE_MEMORY_ST_ADDR+4),(uint8_t *)(configure_start_addr),sizeof(STRU_SettingConfigure));
         (*sram_configure_start_addr) = CONFIGURE_INIT_FLAG_VALUE;
     }
     
