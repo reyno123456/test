@@ -1169,7 +1169,7 @@ void sky_handle_all_spi_cmds(void)
 
     sky_handle_rc_rcv_grd_mask_code_cmd();
 
-    //sky_handle_rc_channel_sync_cmd();
+    sky_handle_rc_channel_sync_cmd();
     //sky_handle_frqOffset();
 }
 
