@@ -38,7 +38,6 @@ static void GPIOhal_IRQHandler(uint32_t u32_vectorNum)
         dlog_output(1000);
     }
     g_u32GpioCount++;    
-    //HAL_GPIO_SetPin(90, g_u32GpioCount);
 }
 
 static void GPIOhal_IRQHandler1(uint32_t u32_vectorNum)
@@ -51,7 +50,6 @@ static void GPIOhal_IRQHandler1(uint32_t u32_vectorNum)
         dlog_output(1000);
     }
     g_u32GpioCount2++;    
-    //HAL_GPIO_SetPin(91, g_u32GpioCount2);  
 }
 
 void commandhal_TestGpioNormal(uint8_t *gpionum, uint8_t *highorlow)
@@ -78,6 +76,4 @@ void commandhal_TestGpioInterrupt(uint8_t *gpionum, uint8_t *inttype, uint8_t *p
         dlog_info("fail %d",u8_GpioNum);
     }
     dlog_output(100);
-	
-
 }

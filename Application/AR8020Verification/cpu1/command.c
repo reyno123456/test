@@ -9,7 +9,6 @@
 #include "cmsis_os.h"
 #include "hal_sd.h"
 #include "test_i2c_adv7611.h"
-#include "test_simulatepwm.h"
 #include "hal_ret_type.h"
 #include "hal_nvic.h"
 #include "testhal_dma.h"

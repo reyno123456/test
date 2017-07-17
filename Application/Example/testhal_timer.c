@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "debuglog.h"
 
+#include "debuglog.h"
 #include "hal_ret_type.h"
 #include "hal_timer.h"
 #include "testhal_timer.h"

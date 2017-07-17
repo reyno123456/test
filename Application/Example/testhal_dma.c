@@ -7,7 +7,7 @@ Version: 0.0.1
 Date: 2016/12/19
 History:
          0.0.1    2016/12/19    test pwm
-         0.0.2    2017/3/27      seperated to share
+         0.0.2    2017/3/27     seperated to share
 *****************************************************************************/
 
 #include <stdio.h>
@@ -22,29 +22,19 @@ History:
 #include "cmsis_os.h"
 #include "systicks.h"
 
-extern unsigned int command_str2uint(char *str);
-
 void command_dma(char * u32_src, char *u32_dst, char *u32_byteNum)
 {
     unsigned int iSrcAddr;
     unsigned int iDstAddr;
     unsigned int iNum;
 
-    iDstAddr    = command_str2uint(u32_dst);
-    iSrcAddr    = command_str2uint(u32_src);
-    iNum        = command_str2uint(u32_byteNum);
+    iDstAddr    = strtoul(u32_dst, NULL, 0);
+    iSrcAddr    = strtoul(u32_src, NULL, 0);
+    iNum        = strtoul(u32_byteNum, NULL, 0);
 
 
     HAL_DMA_Transfer(iSrcAddr, iDstAddr, iNum, 10);
-	
-	/* use to fake the dst data */
-#if 0
-    unsigned char *p_reg;
-    p_reg = (unsigned char *)0x81800000;
-    *p_reg = 0xAA;
-#endif
-    /***********************/
-    
+	    
     #define MD5_SIZE 16
     uint8_t    md5_value[MD5_SIZE];
     int i = 0;
@@ -138,20 +128,17 @@ void command_test_dma_driver(char * u32_src, char *u32_dst, char *u32_byteNum,
 	unsigned int iNum;
 	unsigned int iTimeout;
 
-	iDstAddr = command_str2uint(u32_dst);
-	iSrcAddr = command_str2uint(u32_src);
-	iNum = command_str2uint(u32_byteNum);
-	iTimeout = command_str2uint(u32_ms);
+	iDstAddr = strtoul(u32_dst, NULL, 0);
+	iSrcAddr = strtoul(u32_src, NULL, 0);
+	iNum = strtoul(u32_byteNum, NULL, 0);
+	iTimeout = strtoul(u32_ms, NULL, 0);
 
-	//extern unsigned int mem_malloc_brk;
 	while(1)
 	{
 		DMA_forDriverTransfer(iSrcAddr, iDstAddr, iNum, DMA_noneBlocked, iTimeout);
-		//dlog_info("%d, brk = 0x%x", __LINE__, mem_malloc_brk);
 		delay_us(125);
 		
 		HAL_DMA_Transfer(iSrcAddr, iDstAddr, iNum, 0);
-		//dlog_info("%d, brk = 0x%x", __LINE__, mem_malloc_brk);
 		delay_us(125);
 	}
 }
@@ -164,10 +151,10 @@ void command_test_dma_user(char * u32_src, char *u32_dst, char *u32_byteNum,
 	unsigned int iNum;
 	unsigned int iTimeout;
 
-	iDstAddr = command_str2uint(u32_dst);
-	iSrcAddr = command_str2uint(u32_src);
-	iNum = command_str2uint(u32_byteNum);
-	iTimeout = command_str2uint(u32_ms);
+	iDstAddr = strtoul(u32_dst, NULL, 0);
+	iSrcAddr = strtoul(u32_src, NULL, 0);
+	iNum = strtoul(u32_byteNum, NULL, 0);
+	iTimeout = strtoul(u32_ms, NULL, 0);
 	
 	HAL_DMA_Transfer(iSrcAddr, iDstAddr, iNum, iTimeout);
 }

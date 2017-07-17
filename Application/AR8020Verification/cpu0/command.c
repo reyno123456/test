@@ -38,6 +38,7 @@
 #include "test_localirq.h"
 #include "testhal_dma.h"
 #include "ar_freertos_specific.h"
+#include "hal.h"
 
 
 void command_readMemory(char *addr);
@@ -60,12 +61,10 @@ static void command_set_loglevel(char* cpu, char* loglevel);
 
 void command_run(char *cmdArray[], uint32_t cmdNum)
 {
-    /* read memory: "read $(address)" */
     if ((memcmp(cmdArray[0], "read", 4) == 0) && (cmdNum == 2))
     {
         command_readMemory(cmdArray[1]);
     }
-	/* read memory: "read $(address)" */
     else if ((memcmp(cmdArray[0], "malloc", strlen("malloc")) == 0) && (cmdNum == 2))
     {
         command_malloc(cmdArray[1]);
@@ -154,9 +153,9 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
         command_writeADV7611(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
-    else if (memcmp(cmdArray[0], "freertos_task", strlen("freertos_task")) == 0)
+    else if (memcmp(cmdArray[0], "test_os", strlen("test_os")) == 0)
     {
-        command_TestTask();
+        command_TestTask(cmdArray[1]);
     }
     else if (memcmp(cmdArray[0], "freertos_taskquit", strlen("freertos_taskquit")) == 0)
     {
@@ -451,7 +450,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("hdmigetvideoformat <index>");
         dlog_error("hdmiread <slv address> <reg address>");
         dlog_error("hdmiwrite <slv address> <reg address> <reg value>");
-        dlog_error("freertos_task");
+        dlog_error("test_os <choise>");
         dlog_error("freertos_taskquit");
         dlog_error("test_hal_spi_flash_id <spi_port>");
         dlog_error("test_hal_spi_flash_write_read <spi_port>");
@@ -467,6 +466,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("test_read_flash <flash start address> <size>");
         dlog_error("test_nor_flash_all <flash start address> <size> <value>");
         dlog_output(1000);
+        HAL_Delay(100);
         dlog_error("startbypassvideo");
         dlog_error("stopbypassvideo");
         dlog_error("test_float_calculate_pi");
@@ -514,6 +514,7 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
         dlog_error("set_loglevel <cpuid> <loglevel>");
         dlog_error("top");
         dlog_output(1000);
+        HAL_Delay(100);
     }
 }
 

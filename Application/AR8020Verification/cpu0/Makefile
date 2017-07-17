@@ -55,7 +55,9 @@ SRC_C   := main_sky.c \
            ../../Example/test_hal_spi.c \
            ../../Example/test_localirq.c \
            ../../Example/test_quadspi.c \
-           ../../Example/test_usbh.c
+           ../../Example/test_usbh.c \
+           ../../Example/test_os_mail.c
+
 SRC_CXX :=
 endif
 
@@ -84,7 +86,9 @@ SRC_C   := main_ground.c \
            ../../Example/test_hal_nv.c \
            ../../Example/test_hal_i2c.c \
            ../../Example/test_localirq.c \
-           ../../Example/testhal_dma.c
+           ../../Example/testhal_dma.c \
+           ../../Example/test_os_mail.c
+           
 SRC_CXX :=
 endif
 
