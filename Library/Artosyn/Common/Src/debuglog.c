@@ -10,7 +10,7 @@
 #include "hal_uart.h"
 
 volatile uint8_t sd_mountStatus = 0;
-volatile uint8_t g_log_level = LOG_LEVEL_INFO;
+static uint8_t g_log_level = LOG_LEVEL_INFO;
 
 static uint8_t s_u8_dlogServerCpuId = 0xFF;
 
@@ -684,3 +684,18 @@ unsigned int DLOG_Output(unsigned int byte_num)
 
 #endif
 
+int dlog_set_output_level(unsigned char level)
+{
+    if (level <= LOG_LEVEL_INFO)
+    {
+        g_log_level = level;
+        return 0;
+    }
+
+    return -1;
+}
+
+unsigned int dlog_get_output_level(void)
+{
+    return g_log_level;
+}

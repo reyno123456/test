@@ -124,16 +124,19 @@ static void TestQueue(void)
 
 static void Task1( void const * argument)
 {
-     static portTickType xLastWakeTime;  
-     const portTickType xFrequency = 1000;  
-   
-     xLastWakeTime = xTaskGetTickCount();  
-   
-     for( ;; )  
-     {  
-         vTaskDelayUntil( &xLastWakeTime,xFrequency );  
-         dlog_critical("line = %d running", __LINE__);
-     }  
+    static portTickType xLastWakeTime;  
+    const portTickType xFrequency = 1000;  
+
+    xLastWakeTime = xTaskGetTickCount();  
+
+    for( ;; )  
+    {  
+        vTaskDelayUntil( &xLastWakeTime,xFrequency );
+        dlog_info("line = %d running", __LINE__);
+        dlog_warning("line = %d running", __LINE__);
+        dlog_error("line = %d running", __LINE__);
+        dlog_critical("line = %d running", __LINE__);
+    }  
 }
 
 static void Task2( void const * argument)

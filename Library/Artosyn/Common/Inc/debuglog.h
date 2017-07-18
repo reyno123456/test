@@ -14,33 +14,34 @@ extern "C"
 #define LOG_LEVEL_WARNING 3
 #define LOG_LEVEL_INFO 4
 
-extern volatile uint8_t g_log_level;
+int dlog_set_output_level(unsigned char level);
+unsigned int dlog_get_output_level(void);
 
 #define DLOG_Critical(fmt, arg...) \
 do \
 { \
-    {if (g_log_level >= LOG_LEVEL_CRITICAL) \
+    {if (dlog_get_output_level() >= LOG_LEVEL_CRITICAL) \
     printf("CPU%d: %s\t" fmt "\n", *((int*)0x0000018C), __FUNCTION__, ##arg);} \
 }while(0)
 
 #define DLOG_Error(fmt, arg...) \
 do \
 { \
-    {if (g_log_level >= LOG_LEVEL_ERROR) \
+    {if (dlog_get_output_level() >= LOG_LEVEL_ERROR) \
     printf("CPU%d: %s\t" fmt "\n", *((int*)0x0000018C), __FUNCTION__, ##arg);} \
 }while(0)
 
 #define DLOG_Warning(fmt, arg...) \
 do \
 { \
-    {if (g_log_level >= LOG_LEVEL_WARNING)  \
+    {if (dlog_get_output_level() >= LOG_LEVEL_WARNING)  \
     printf("CPU%d: %s\t" fmt "\n", *((int*)0x0000018C), __FUNCTION__, ##arg);} \
 }while(0)
 
 #define DLOG_Info(fmt, arg...) \
 do \
 { \
-    {if (g_log_level >= LOG_LEVEL_INFO) \
+    {if (dlog_get_output_level() >= LOG_LEVEL_INFO) \
     printf("CPU%d: %s\t" fmt "\n", *((int*)0x0000018C), __FUNCTION__, ##arg);} \
 }while(0)
 

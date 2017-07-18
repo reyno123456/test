@@ -51,7 +51,7 @@ static void command_set_loglevel(char* cpu, char* loglevel)
     uint8_t level = command_str2uint(loglevel);
     if (memcmp(cpu, "cpu2", strlen("cpu2")) == 0)
     {
-        g_log_level = level;
+        dlog_set_output_level(level);
     }
 
     return;

@@ -197,7 +197,7 @@ int main(void)
     HAL_SYS_CTL_GetConfig( &pst_cfg);
     pst_cfg->u8_workMode = 1;
     HAL_SYS_CTL_Init(pst_cfg);
-    g_log_level = 4;
+    dlog_set_output_level(LOG_LEVEL_INFO);
     /* initialize the uart */
     CONSOLE_Init();
 	
