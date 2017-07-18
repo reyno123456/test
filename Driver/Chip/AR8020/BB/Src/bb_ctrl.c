@@ -963,9 +963,13 @@ static void BB_GetNv(void)
 
     while(0x23178546 != (pst_nv->st_nvMng.u32_nvInitFlag) && (tmpCnt++) < 200)
     {
-        SysTicks_DelayMS(10);
+        SysTicks_DelayMS(50);
+        
     }
-    
+    if (200 <= tmpCnt)
+    {
+        dlog_error("get nv id error");
+    }
     memcpy((uint8_t*)(context.u8_flashId), (void *)(pst_nv->st_nvDataUpd.u8_nvBbRcId), 5);
     context.u8_flashId[5] = pst_nv->st_nvDataUpd.u8_nvChk;
 
