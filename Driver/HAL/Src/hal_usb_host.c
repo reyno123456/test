@@ -20,6 +20,7 @@ History:
 #include "cpu_info.h"
 #include "systicks.h"
 #include "hal.h"
+#include "sram.h"
 
 static ENUM_HAL_USB_HOST_STATE   s_eUSBHostAppState[HAL_USB_PORT_NUM];
 USBH_HandleTypeDef               hUSBHost[USBH_PORT_NUM];
@@ -142,11 +143,22 @@ void HAL_USB_InitHost(ENUM_HAL_USB_PORT e_usbPort)
 HAL_RET_T HAL_USB_StartUVC(uint16_t u16_width,
                            uint16_t u16_height,
                            uint32_t *u32_frameSize,
+                           ENUM_HAL_USB_UVC_DATA_TYPE e_UVCDataType,
                            uint8_t u8_uvcPortId)
 {
     HAL_RET_T           u8_ret = HAL_OK;
     uint8_t             u8_frameIndex;
+    uint8_t             u8_formatIndex;
     uint8_t             i;
+    UVC_SupportedFormatsDef uvc_format;
+    uint8_t             u8_frameNum;
+
+    if (u8_uvcPortId > HAL_USB_PORT_NUM)
+    {
+        dlog_error("invalid usb port number");
+
+        return HAL_USB_ERR_USBH_UVC_INVALID_PARAM;
+    }
 
     if ((u16_width == 0)||(u16_height == 0))
     {
@@ -155,23 +167,41 @@ HAL_RET_T HAL_USB_StartUVC(uint16_t u16_width,
         return HAL_USB_ERR_USBH_UVC_INVALID_PARAM;
     }
 
-    for (i = 0; i < HAL_USB_UVC_MAX_FRAME_FORMATS_NUM; i++)
+    if (e_UVCDataType == ENUM_UVC_DATA_H264)
     {
-        if ((u16_width == USBH_UVC_GetFrameWidth(i))&&
-            (u16_height == USBH_UVC_GetFrameHeight(i)))
+        uvc_format = UVC_SUPPORTED_FORMAT_FRAME_BASED;
+
+        u8_frameNum = USBH_UVC_GetFrameFrameNum(&hUSBHost[u8_uvcPortId]);
+    }
+    else
+    {
+        uvc_format = UVC_SUPPORTED_FORMAT_UNCOMPRESSED;
+
+        u8_frameNum = USBH_UVC_GetFrameUncompNum(&hUSBHost[u8_uvcPortId]);
+    }
+
+    for (i = 0; i < u8_frameNum; i++)
+    {
+        if ((u16_width == USBH_UVC_GetFrameWidth(i, uvc_format))&&
+            (u16_height == USBH_UVC_GetFrameHeight(i, uvc_format)))
         {
             break;
         }
     }
 
-    if (i < HAL_USB_UVC_MAX_FRAME_FORMATS_NUM)
+    if (i < u8_frameNum)
     {
-        u8_frameIndex       = USBH_UVC_GetFrameIndex(i);
-        *u32_frameSize      = USBH_UVC_GetFrameSize(u8_frameIndex);
+        u8_frameIndex       = USBH_UVC_GetFrameIndex(i, uvc_format);
+        u8_formatIndex      = USBH_UVC_GetFormatIndex(uvc_format);
 
-        dlog_info("u8_frameIndex, u32_frameSize: %d, %d", u8_frameIndex, *u32_frameSize);
+        if (uvc_format == UVC_SUPPORTED_FORMAT_UNCOMPRESSED)
+        {
+            *u32_frameSize      = USBH_UVC_GetFrameSize(u8_frameIndex);
+        }
 
-        if (0 == USBH_UVC_StartView(&hUSBHost[u8_uvcPortId], u8_frameIndex))
+        dlog_info("u8_frameIndex, u8_formatIndex: %d, %d", u8_frameIndex, u8_formatIndex);
+
+        if (0 == USBH_UVC_StartView(&hUSBHost[u8_uvcPortId], u8_frameIndex, u8_formatIndex, uvc_format))
         {
             dlog_info("START UVC OK");
         }
@@ -248,10 +278,12 @@ HAL_RET_T HAL_USB_UVCCheckFrameReady(uint32_t *u32_frameNum,
 * @retval   void
 * @note  
 */
-void HAL_USB_UVCGetVideoFormats(STRU_UVC_VIDEO_FRAME_FORMAT *stVideoFrameFormat)
+void HAL_USB_UVCGetVideoFormats(STRU_UVC_SUPPORT_FORMAT_LIST *stVideoFrameFormat)
 {
     uint8_t         i;
+    uint8_t         j;
     uint8_t         u8_uvcPortId;
+    uint8_t         u8_frameNum = 0;
 
     u8_uvcPortId    = HAL_USB_GetUVCPortId();
 
@@ -262,19 +294,60 @@ void HAL_USB_UVCGetVideoFormats(STRU_UVC_VIDEO_FRAME_FORMAT *stVideoFrameFormat)
         return;
     }
 
-    USBH_UVC_GetVideoFormatList(&hUSBHost[u8_uvcPortId]);
+    u8_frameNum = USBH_UVC_GetFrameUncompNum(&hUSBHost[u8_uvcPortId]);
 
-    for (i = 0; i < HAL_USB_UVC_MAX_FRAME_FORMATS_NUM; i++)
+    if (u8_frameNum > 0)
     {
-        stVideoFrameFormat->u16_width[i]       = USBH_UVC_GetFrameWidth(i);
-        stVideoFrameFormat->u16_height[i]      = USBH_UVC_GetFrameHeight(i);
-        stVideoFrameFormat->u8_frameIndex[i]   = USBH_UVC_GetFrameIndex(i);
+        dlog_info("YUV Formats:");
 
-        dlog_info("i: %d, width: %d, height: %d, frameIndex: %d",
-                  i,
-                  stVideoFrameFormat->u16_width[i],
-                  stVideoFrameFormat->u16_height[i],
-                  stVideoFrameFormat->u8_frameIndex[i]);
+        for (i = 0; i < u8_frameNum; i++)
+        {
+            stVideoFrameFormat->st_uvcFrameFormat[i].u16_height = USBH_UVC_GetFrameHeight(i, UVC_SUPPORTED_FORMAT_UNCOMPRESSED);
+            stVideoFrameFormat->st_uvcFrameFormat[i].u16_width  = USBH_UVC_GetFrameWidth(i, UVC_SUPPORTED_FORMAT_UNCOMPRESSED);
+            stVideoFrameFormat->st_uvcFrameFormat[i].e_dataType = ENUM_UVC_DATA_YUV;
+
+            (stVideoFrameFormat->u16_frameNum)++;
+
+            if (stVideoFrameFormat->u16_frameNum >= HAL_USB_UVC_MAX_FRAME_FORMATS_NUM)
+            {
+                dlog_error("exceed the max number for frame formats");
+
+                return;
+            }
+
+            dlog_info("i: %d, width: %d, height: %d",
+                      i,
+                      stVideoFrameFormat->st_uvcFrameFormat[i].u16_width,
+                      stVideoFrameFormat->st_uvcFrameFormat[i].u16_height);
+        }
+    }
+
+    u8_frameNum = USBH_UVC_GetFrameFrameNum(&hUSBHost[u8_uvcPortId]);
+
+    if (u8_frameNum > 0)
+    {
+        dlog_info("H264 Formats:");
+
+        for (j = 0; j < u8_frameNum; j++)
+        {
+            stVideoFrameFormat->st_uvcFrameFormat[j+i].u16_height = USBH_UVC_GetFrameHeight(j, UVC_SUPPORTED_FORMAT_FRAME_BASED);
+            stVideoFrameFormat->st_uvcFrameFormat[j+i].u16_width  = USBH_UVC_GetFrameWidth(j, UVC_SUPPORTED_FORMAT_FRAME_BASED);
+            stVideoFrameFormat->st_uvcFrameFormat[j+i].e_dataType = ENUM_UVC_DATA_H264;
+
+            (stVideoFrameFormat->u16_frameNum)++;
+
+            if (stVideoFrameFormat->u16_frameNum >= HAL_USB_UVC_MAX_FRAME_FORMATS_NUM)
+            {
+                dlog_error("exceed the max number for frame formats");
+
+                return;
+            }
+
+            dlog_info("i: %d, width: %d, height: %d",
+                      i,
+                      stVideoFrameFormat->st_uvcFrameFormat[j+i].u16_width,
+                      stVideoFrameFormat->st_uvcFrameFormat[j+i].u16_height);
+        }
     }
 }
 
@@ -446,11 +519,11 @@ void HAL_USB_TransferUVCToGrd(uint8_t *buff,
     u8_header[11]           = 0x00;
 
     // copy header to baseband
-    memcpy((void *)0xB1800000,
+    memcpy((void *)VIDEO_BYPASS_CHANNEL_1_DEST_ADDR,
            (void *)u8_header,
-           12);
+           sizeof(u8_header));
     // copy frame data to baseband
-    memcpy((void *)0xB180000C,
+    memcpy((void *)(VIDEO_BYPASS_CHANNEL_1_DEST_ADDR + sizeof(u8_header)),
            (void *)buff,
            dataLen);
 }

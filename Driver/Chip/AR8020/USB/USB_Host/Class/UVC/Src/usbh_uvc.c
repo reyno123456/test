@@ -3,6 +3,7 @@
 #include "systicks.h"
 #include "dma.h"
 #include "cpu_info.h"
+#include "sram.h"
 
 USBH_ClassTypeDef  UVC_Class = 
 {
@@ -23,10 +24,13 @@ uint32_t                             g_u32UVCVideoBuffSizePerFrame;
 
 USBH_UVCUserInterface                       g_stUVCUserInterface = {0};
 USBH_UVCFormatUncompressedTypeDef           g_stUVCFormatUncomp = {0};
-USBH_UVCFrameUncompressedTypeDef            g_stUVCFrameUncomp[USB_UVC_MAX_FRAME_FORMATS_NUM];
+USBH_UVCFrameUncompressedTypeDef            g_stUVCFrameUncomp[USB_UVC_MAX_FRAME_FORMATS_NUM] = {0};
+USBH_UVCFormatFrameBasedTypeDef             g_stUVCFormatFrameBased = {0};
+USBH_UVCFrameFrameBasedTypeDef              g_stUVCFrameFrameBased[USB_UVC_MAX_FRAME_FRAME_BASED_NUM] = {0};
 USBH_VCProcessingUnitInterfaceDescriptor    g_stProcessingUnitDesc;
 USBH_VCExtensionUnitInterfaceDescriptor     g_stExtensionUnitDesc;
-USBH_InterfaceDescTypeDef                   g_stVideoStreamingDesc[USBH_MAX_NUM_INTERFACES];
+USBH_InterfaceDescTypeDef                   g_stVideoStreamingDesc[USBH_MAX_NUM_ENDPOINT_INTERFACES];
+USBH_UVCInterfaceDescriptor                 g_stUVCSupportedFormatInterface[UVC_SUPPORTED_FORMAT_NUM];
 
 uint8_t                 g_req_mem[8];
 uint8_t                 g_cur_mem[28];
@@ -61,6 +65,8 @@ static USBH_StatusTypeDef USBH_UVC_InterfaceInit (USBH_HandleTypeDef *phost)
     USBH_StatusTypeDef      status = USBH_FAIL ;
     UVC_HandleTypeDef      *UVC_Handle;
     uint8_t                 interface;
+    uint8_t                 i;
+    uint8_t                 j;
 
     // ctrl interface
     interface = USBH_FindInterface(phost, 14, 1, 0);
@@ -84,32 +90,7 @@ static USBH_StatusTypeDef USBH_UVC_InterfaceInit (USBH_HandleTypeDef *phost)
         UVC_Handle->CtrlEp      = (phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].bEndpointAddress);
         UVC_Handle->CtrlEpSize  = phost->device.CfgDesc.Itf_Desc[phost->device.current_interface].Ep_Desc[0].wMaxPacketSize;
 
-        dlog_info("CtrlEp: %d, CtrlEpSize: %d", 
-                    UVC_Handle->CtrlEp,
-                    UVC_Handle->CtrlEpSize);
-
-        // video interface
-        interface = USBH_UVC_FindStreamingInterface(phost);
-
-        if(interface == 0xFF) /* Not Valid Interface */
-        {
-            dlog_info("Cannot Find the interface for %s class.", phost->pActiveClass->Name);
-
-            status = USBH_FAIL;
-        }
-        else
-        {
-            UVC_Handle->VideoEp      = (phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].bEndpointAddress);
-            UVC_Handle->VideoEpSize  = UVC_VIDEO_EP_MAX_SIZE;
-
-            UVC_Handle->u8_selInterface = phost->device.CfgDesc.Itf_Desc[interface].bInterfaceNumber;
-            UVC_Handle->u8_selAltInterface = phost->device.CfgDesc.Itf_Desc[interface].bAlternateSetting;
-        }
-
         UVC_Handle->CtrlPipe    = USBH_AllocPipe(phost, UVC_Handle->CtrlEp);
-        UVC_Handle->VideoPipe   = USBH_AllocPipe(phost, UVC_Handle->VideoEp);
-
-        dlog_info("ctrlpipe: %d, videopipe: %d", UVC_Handle->CtrlPipe, UVC_Handle->VideoPipe);
 
         /* Open the new channels */
         USBH_OpenPipe(phost,
@@ -120,16 +101,48 @@ static USBH_StatusTypeDef USBH_UVC_InterfaceInit (USBH_HandleTypeDef *phost)
                       USB_EP_TYPE_INTR,
                       UVC_Handle->CtrlEpSize);
 
-        USBH_OpenPipe(phost,
-                      UVC_Handle->VideoPipe,
-                      UVC_Handle->VideoEp,
-                      phost->device.address,
-                      phost->device.speed,
-                      USB_EP_TYPE_ISOC,
-                      UVC_Handle->VideoEpSize);
-
         USBH_LL_SetToggle(phost, UVC_Handle->CtrlPipe, 0);
-        USBH_LL_SetToggle(phost, UVC_Handle->VideoPipe, 0);
+
+        // video interface
+        USBH_UVC_GetVideoFormatList(phost);
+
+        for (i = 0; i < UVC_SUPPORTED_FORMAT_NUM; i++)
+        {
+            if (UVC_Handle->u8_formatSupported[i])
+            {
+                UVC_Handle->VideoEp[i]      = USBH_UVC_GetVideoEpAddr((UVC_SupportedFormatsDef)i);
+
+                /* check whether this endpoint has been alloced */
+                for (j = 0; j < i; j++)
+                {
+                    if (UVC_Handle->VideoEp[i] == UVC_Handle->VideoEp[j])
+                    {
+                        UVC_Handle->VideoEpSize[i]  = UVC_Handle->VideoEpSize[j];
+                        UVC_Handle->VideoPipe[i]    = UVC_Handle->VideoPipe[j];
+
+                        break;
+                    }
+                }
+                /* this is a new endpoint */
+                if (j >= i)
+                {
+                    UVC_Handle->VideoEpSize[i]  = UVC_VIDEO_EP_MAX_SIZE;
+                    UVC_Handle->VideoPipe[i]    = USBH_AllocPipe(phost, UVC_Handle->VideoEp[i]);
+
+                    USBH_OpenPipe(phost,
+                                  UVC_Handle->VideoPipe[i],
+                                  UVC_Handle->VideoEp[i],
+                                  phost->device.address,
+                                  phost->device.speed,
+                                  USB_EP_TYPE_ISOC,
+                                  UVC_Handle->VideoEpSize[i]);
+
+                    dlog_info("open pipe: %d, 0x%02x, %d", i, UVC_Handle->VideoEp[i], UVC_Handle->VideoPipe[i]);
+
+                    USBH_LL_SetToggle(phost, UVC_Handle->VideoPipe[i], 0);
+                }
+            }
+        }
 
         phost->isocURBDone  = USBH_UVC_UrbDone;
 
@@ -151,9 +164,17 @@ USBH_StatusTypeDef USBH_UVC_InterfaceDeInit (USBH_HandleTypeDef *phost)
     USBH_FreePipe(phost, UVC_Handle->CtrlPipe);
     UVC_Handle->CtrlPipe = 0;
 
-    USBH_ClosePipe(phost, UVC_Handle->VideoPipe);
-    USBH_FreePipe  (phost, UVC_Handle->VideoPipe);
-    UVC_Handle->VideoPipe = 0;
+    for (i = UVC_SUPPORTED_FORMAT_UNCOMPRESSED;
+         i < UVC_SUPPORTED_FORMAT_NUM;
+         i++)
+    {
+        if (UVC_Handle->VideoPipe[i] != 0)
+        {
+            USBH_ClosePipe(phost, UVC_Handle->VideoPipe[i]);
+            USBH_FreePipe(phost, UVC_Handle->VideoPipe[i]);
+            UVC_Handle->VideoPipe[i] = 0;
+        }
+    }
 
     USBH_memset((void *)UVC_Handle, 0, sizeof(UVC_HandleTypeDef));
     phost->pActiveClass->pData = 0;
@@ -668,7 +689,6 @@ static uint32_t USBH_UVC_GetPowerLine(USBH_HandleTypeDef *phost,
 
 }
 
-
 static USBH_StatusTypeDef USBH_UVC_Probe(USBH_HandleTypeDef *phost)
 {
     UVC_HandleTypeDef        *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
@@ -676,19 +696,21 @@ static USBH_StatusTypeDef USBH_UVC_Probe(USBH_HandleTypeDef *phost)
     uint32_t                  default_interval = 0;
 
     phost->Control.setup.b.wValue.w = 0x0100;
-    phost->Control.setup.b.wIndex.w = 0x0001;
     phost->Control.setup.b.wLength.w = 0x001A;
+    phost->Control.setup.b.wIndex.w = 
+                    g_stUVCSupportedFormatInterface[UVC_Handle->uvc_format].bInterfaceNumber;
 
     switch (UVC_Handle->uvc_probeState)
     {
     case UVC_PROBE_STATE_GET_CUR:
         phost->Control.setup.b.bRequest = UVC_GET_CUR;
         phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
-
+        
         if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)g_cur_mem, 26))
         {
             UVC_Handle->uvc_probeState = UVC_PROBE_STATE_GET_MAX;
         }
+
         break;
 
     case UVC_PROBE_STATE_GET_MAX:
@@ -726,14 +748,18 @@ static USBH_StatusTypeDef USBH_UVC_Probe(USBH_HandleTypeDef *phost)
         phost->Control.setup.b.bRequest = UVC_SET_CUR;
         phost->Control.setup.b.bmRequestType = USB_H2D | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
 
-        default_interval = USBH_GetFrameDefaultInterval(UVC_Handle->u8_selFrameIndex);
-
-        g_cur_mem[2] = g_stUVCFormatUncomp.bFormatIndex;
-        g_cur_mem[3] = UVC_Handle->u8_selFrameIndex;
-        g_cur_mem[4] = (uint8_t)default_interval;
-        g_cur_mem[5] = (uint8_t)(default_interval>>8);
-        g_cur_mem[6] = (uint8_t)(default_interval>>16);
-        g_cur_mem[7] = (uint8_t)(default_interval>>24);
+        default_interval = USBH_GetFrameDefaultInterval(UVC_Handle->u8_selFrameIndex,
+                                                        UVC_Handle->uvc_format);
+        g_cur_mem[2]  = UVC_Handle->u8_selFormatIndex;
+        g_cur_mem[3]  = UVC_Handle->u8_selFrameIndex;
+        g_cur_mem[4]  = (uint8_t)default_interval;
+        g_cur_mem[5]  = (uint8_t)(default_interval>>8);
+        g_cur_mem[6]  = (uint8_t)(default_interval>>16);
+        g_cur_mem[7]  = (uint8_t)(default_interval>>24);
+        g_cur_mem[22] = 0;
+        g_cur_mem[23] = 0;
+        g_cur_mem[24] = 0;
+        g_cur_mem[25] = 0;
 
         if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)(g_cur_mem) , 26))
         {
@@ -767,7 +793,8 @@ static USBH_StatusTypeDef USBH_UVC_Commit(USBH_HandleTypeDef *phost)
         phost->Control.setup.b.bRequest = UVC_GET_CUR;
         phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
         phost->Control.setup.b.wValue.w = 0x0100;
-        phost->Control.setup.b.wIndex.w = 0x0001;
+        phost->Control.setup.b.wIndex.w = 
+                        g_stUVCSupportedFormatInterface[UVC_Handle->uvc_format].bInterfaceNumber;
         phost->Control.setup.b.wLength.w = 0x001A;
 
         if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)(g_cur_mem) , 26))
@@ -780,11 +807,10 @@ static USBH_StatusTypeDef USBH_UVC_Commit(USBH_HandleTypeDef *phost)
         phost->Control.setup.b.bRequest = UVC_SET_CUR;
         phost->Control.setup.b.bmRequestType = USB_H2D | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
         phost->Control.setup.b.wValue.w = 0x0100;
-        phost->Control.setup.b.wIndex.w = 0x0001;
+        phost->Control.setup.b.wIndex.w = 
+                        g_stUVCSupportedFormatInterface[UVC_Handle->uvc_format].bInterfaceNumber;
         phost->Control.setup.b.wLength.w = 0x001A;
 
-        //g_cur_mem[23] = 0;
-        //g_max_mem[3]  = UVC_Handle->u8_selFrameIndex;
         g_cur_mem[22] = 0;
         g_cur_mem[23] = 0;
         g_cur_mem[24] = 0;
@@ -801,7 +827,8 @@ static USBH_StatusTypeDef USBH_UVC_Commit(USBH_HandleTypeDef *phost)
         phost->Control.setup.b.bRequest = UVC_GET_CUR;
         phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
         phost->Control.setup.b.wValue.w = 0x0100;
-        phost->Control.setup.b.wIndex.w = 0x0001;
+        phost->Control.setup.b.wIndex.w = 
+                        g_stUVCSupportedFormatInterface[UVC_Handle->uvc_format].bInterfaceNumber;
         phost->Control.setup.b.wLength.w = 0x001A;
 
         if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)(g_cur_mem) , 26))
@@ -812,7 +839,7 @@ static USBH_StatusTypeDef USBH_UVC_Commit(USBH_HandleTypeDef *phost)
                           (g_cur_mem[23]<<8)+
                           (g_cur_mem[24]<<16)+
                           (g_cur_mem[25]<<24);
-            
+
             UVC_Handle->u8_selAltInterface = USBH_SelAltInterfaceForCommit(u32_epSize, phost);
         }
 
@@ -823,7 +850,8 @@ static USBH_StatusTypeDef USBH_UVC_Commit(USBH_HandleTypeDef *phost)
         phost->Control.setup.b.bRequest = UVC_SET_CUR;
         phost->Control.setup.b.bmRequestType = USB_H2D | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
         phost->Control.setup.b.wValue.w = 0x0200;
-        phost->Control.setup.b.wIndex.w = 0x0001;
+        phost->Control.setup.b.wIndex.w = 
+                        g_stUVCSupportedFormatInterface[UVC_Handle->uvc_format].bInterfaceNumber;
         phost->Control.setup.b.wLength.w = 0x001A;
 
         if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)(g_cur_mem) , 26))
@@ -834,18 +862,21 @@ static USBH_StatusTypeDef USBH_UVC_Commit(USBH_HandleTypeDef *phost)
         break;
 
     case UVC_STATE_SET_INTERFACE:
-        if (USBH_OK == USBH_SetInterface(phost,
-                                         UVC_Handle->u8_selInterface,
-                                         UVC_Handle->u8_selAltInterface))
         {
-            UVC_Handle->uvc_probeState = UVC_STATE_VIDEO_PLAY;
+            if (USBH_OK == USBH_SetInterface(phost,
+                                             UVC_Handle->u8_selInterface,
+                                             UVC_Handle->u8_selAltInterface))
+            {
+                UVC_Handle->uvc_probeState = UVC_STATE_VIDEO_PLAY;
+            }
         }
+
         break;
 
     case UVC_STATE_VIDEO_PLAY:
-        u8_recvBuff         = USBH_GetRecvBuffer();
+        u8_recvBuff         = USBH_GetRecvBuffer(phost);
 
-        USBH_IsocReceiveData(phost, u8_recvBuff, UVC_VIDEO_MAX_SIZE_PER_SOF, UVC_Handle->VideoPipe);
+        USBH_IsocReceiveData(phost, u8_recvBuff, UVC_VIDEO_MAX_SIZE_PER_SOF, UVC_Handle->VideoPipe[UVC_Handle->uvc_format]);
 
         status = USBH_OK;
 
@@ -860,17 +891,21 @@ static USBH_StatusTypeDef USBH_UVC_Commit(USBH_HandleTypeDef *phost)
 }
 
 
-uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost, uint8_t u8_frameIndex)
+uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost,
+                          uint8_t u8_frameIndex,
+                          uint8_t u8_formatIndex,
+                          UVC_SupportedFormatsDef uvc_format)
 {
     uint8_t                     i;
     uint8_t                     j;
     UVC_HandleTypeDef          *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
     uint8_t                    *u8_baseAddr;
 
-    UVC_Handle->uvc_state           = UVC_STATE_PROBE;
-    UVC_Handle->uvc_probeState      = UVC_PROBE_STATE_GET_CUR;
     UVC_Handle->probeCount          = 0;
     UVC_Handle->u8_selFrameIndex    = u8_frameIndex;
+    UVC_Handle->u8_selFormatIndex   = u8_formatIndex;
+    UVC_Handle->uvc_format          = uvc_format;
+    UVC_Handle->u8_selInterface     = g_stUVCSupportedFormatInterface[uvc_format].bInterfaceNumber;
 
     if (UVC_Handle->u8_startUVCFlag == USB_UVC_STARTED)
     {
@@ -880,10 +915,6 @@ uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost, uint8_t u8_frameIndex)
     {
         UVC_Handle->u8_startUVCFlag = USB_UVC_STARTED;
     }
-
-    g_u32UVCVideoBuffSizePerFrame   = USBH_UVC_GetFrameSize(u8_frameIndex);
-
-    dlog_info("g_u32UVCVideoBuffSizePerFrame: %d", g_u32UVCVideoBuffSizePerFrame);
 
     if (g_UVCVideoBuffer == NULL)
     {
@@ -897,6 +928,17 @@ uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost, uint8_t u8_frameIndex)
         }
     }
 
+    if (uvc_format == UVC_SUPPORTED_FORMAT_UNCOMPRESSED)
+    {
+        g_u32UVCVideoBuffSizePerFrame   = USBH_UVC_GetFrameSize(u8_frameIndex);
+
+        dlog_info("g_u32UVCVideoBuffSizePerFrame: %d", g_u32UVCVideoBuffSizePerFrame);
+    }
+    else
+    {
+        g_UVCVideoBuffer->u8_frameBasedRecvBuff = (uint8_t *)malloc(sizeof(UVC_VIDEO_MAX_SIZE_PER_SOF));
+    }
+
     g_UVCVideoBuffer->u32_rawDataLen    = 0;
     g_UVCVideoBuffer->u8_rawData        = (uint8_t *)0x4405A7F4;
 
@@ -904,6 +946,11 @@ uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost, uint8_t u8_frameIndex)
     g_stUVCUserInterface.u32_frameLen      = 0;
     g_stUVCUserInterface.u8_userBuffer     = NULL;
     g_stUVCUserInterface.u8_userWaiting    = UVC_USER_GET_FRAME_IDLE;
+
+    SRAM_SKY_EnableBypassVideoConfig(0);
+
+    UVC_Handle->uvc_probeState      = UVC_PROBE_STATE_GET_CUR;
+    UVC_Handle->uvc_state           = UVC_STATE_PROBE;
 
     return 0;
 }
@@ -919,6 +966,7 @@ static void USBH_UVC_UrbDone(USBH_HandleTypeDef *phost)
     uint8_t                      isLastPacket = 0;
     uint32_t                     srcAddr;
     uint32_t                     destAddr;
+    static uint8_t              *bypass_address = (uint8_t *)0xB1000000;
 
     UVC_Handle          = (UVC_HandleTypeDef *) phost->pActiveClass->pData;
 
@@ -931,85 +979,111 @@ static void USBH_UVC_UrbDone(USBH_HandleTypeDef *phost)
         return;
     }
 
-    u8_recvBuff         = USBH_GetRecvBuffer();
+    u8_recvBuff         = USBH_GetRecvBuffer(phost);
 
     if (u8_recvBuff[0] != UVC_HEADER_SPECIAL_CHAR)
     {
-        dlog_error("this is not UVC package: 0x%08x", u8_recvBuff);
+        dlog_error("this is not UVC package");
     }
     else
     {
-        u32_recvSize = USBH_LL_GetLastXferSize(phost, UVC_Handle->VideoPipe);
+        u32_recvSize = USBH_LL_GetLastXferSize(phost, UVC_Handle->VideoPipe[UVC_Handle->uvc_format]);
 
-        #if 0
-        if (u32_recvSize <= UVC_HEADER_SIZE)
-        {
-            stUVCFrameBuffer->u32_rawDataLen = 0;
-        }
-        else
-        #endif
         if (u32_recvSize > UVC_HEADER_SIZE)
         {
             u32_recvSize -= UVC_HEADER_SIZE;
 
             isLastPacket = u8_recvBuff[1];
 
-            /* recover the last 12 bytes occupied by UVC header */
-            if (stUVCFrameBuffer->u32_rawDataLen != 0)
+            if (UVC_Handle->uvc_format == UVC_SUPPORTED_FORMAT_UNCOMPRESSED)
             {
-                for (i = 0; i < UVC_HEADER_SIZE; i++)
+                /* recover the last 12 bytes occupied by UVC header */
+                if (stUVCFrameBuffer->u32_rawDataLen != 0)
                 {
-                    u8_recvBuff[i] = stUVCFrameBuffer->u8_backup[i];
+                    for (i = 0; i < UVC_HEADER_SIZE; i++)
+                    {
+                        u8_recvBuff[i] = stUVCFrameBuffer->u8_backup[i];
+                    }
                 }
-            }
 
-            stUVCFrameBuffer->u32_rawDataLen += u32_recvSize;
+                stUVCFrameBuffer->u32_rawDataLen += u32_recvSize;
 
-            if (UVC_HEADER_FRAME_END != (UVC_HEADER_FRAME_END & isLastPacket))
-            {
-                /* buffer size is overflow, refill this buffer */
-                if (stUVCFrameBuffer->u32_rawDataLen >= g_u32UVCVideoBuffSizePerFrame)
+                if (UVC_HEADER_FRAME_END != (UVC_HEADER_FRAME_END & isLastPacket))
                 {
-                    dlog_info("overflow: %d", stUVCFrameBuffer->u32_rawDataLen);
+                    /* buffer size is overflow, refill this buffer */
+                    if (stUVCFrameBuffer->u32_rawDataLen >= g_u32UVCVideoBuffSizePerFrame)
+                    {
+                        dlog_info("overflow: %d", stUVCFrameBuffer->u32_rawDataLen);
+
+                        stUVCFrameBuffer->u32_rawDataLen        = 0;
+                    }
+
+                    for (i = 0; i < UVC_HEADER_SIZE; i++)
+                    {
+                        stUVCFrameBuffer->u8_backup[i]  = *((stUVCFrameBuffer->u8_rawData + stUVCFrameBuffer->u32_rawDataLen) + i);
+                    }
+                }
+                else
+                {
+                    if (stUVCFrameBuffer->u32_rawDataLen == g_u32UVCVideoBuffSizePerFrame)
+                    {
+                        u32_frameNumber++;
+
+                        if ((g_stUVCUserInterface.u8_userWaiting == UVC_USER_GET_FRAME_WAITING)&&
+                            (g_stUVCUserInterface.u8_userBuffer != NULL))
+                        {
+                            srcAddr     = (uint32_t)(stUVCFrameBuffer->u8_rawData + UVC_HEADER_SIZE);
+
+                            destAddr    = (uint32_t)g_stUVCUserInterface.u8_userBuffer + DTCM_CPU0_DMA_ADDR_OFFSET;
+
+                            if (0 == DMA_forDriverTransfer(srcAddr,
+                                                           destAddr,
+                                                           stUVCFrameBuffer->u32_rawDataLen,
+                                                           DMA_blocked,
+                                                           0xFFFF))
+                            {
+                                CPUINFO_DCacheInvalidateByAddr((uint32_t *)g_stUVCUserInterface.u8_userBuffer,
+                                                                stUVCFrameBuffer->u32_rawDataLen);
+
+                                g_stUVCUserInterface.u8_userWaiting = UVC_USER_GET_FRAME_FINISHED;
+                                g_stUVCUserInterface.u32_frameIndex = u32_frameNumber;
+                                g_stUVCUserInterface.u32_frameLen   = stUVCFrameBuffer->u32_rawDataLen;
+                            }
+                        }
+                    }
 
                     stUVCFrameBuffer->u32_rawDataLen        = 0;
-                }
-
-                for (i = 0; i < UVC_HEADER_SIZE; i++)
-                {
-                    stUVCFrameBuffer->u8_backup[i]  = *((stUVCFrameBuffer->u8_rawData + stUVCFrameBuffer->u32_rawDataLen) + i);
                 }
             }
             else
             {
-                if (stUVCFrameBuffer->u32_rawDataLen == g_u32UVCVideoBuffSizePerFrame)
+                memcpy((void *)(stUVCFrameBuffer->u8_rawData + stUVCFrameBuffer->u32_rawDataLen),
+                       (void *)(u8_recvBuff + UVC_HEADER_SIZE),
+                       u32_recvSize);
+                
+                stUVCFrameBuffer->u32_rawDataLen += u32_recvSize;
+
+                if (UVC_HEADER_FRAME_END != (UVC_HEADER_FRAME_END & isLastPacket))
                 {
                     u32_frameNumber++;
 
-                    if ((g_stUVCUserInterface.u8_userWaiting == UVC_USER_GET_FRAME_WAITING)&&
-                        (g_stUVCUserInterface.u8_userBuffer != NULL))
+                    memcpy((void *)bypass_address,
+                           (void *)(stUVCFrameBuffer->u8_rawData),
+                           stUVCFrameBuffer->u32_rawDataLen);
+                    
+                    bypass_address += stUVCFrameBuffer->u32_rawDataLen;
+                    
+                    if (bypass_address >= (uint8_t *)0xB1600000)
                     {
-                        srcAddr     = (uint32_t)(stUVCFrameBuffer->u8_rawData + UVC_HEADER_SIZE);
-
-                        destAddr    = (uint32_t)g_stUVCUserInterface.u8_userBuffer + DTCM_CPU0_DMA_ADDR_OFFSET;
-
-                        if (0 == DMA_forDriverTransfer(srcAddr,
-                                                       destAddr,
-                                                       stUVCFrameBuffer->u32_rawDataLen,
-                                                       DMA_blocked,
-                                                       0xFFFF))
-                        {
-                            CPUINFO_DCacheInvalidateByAddr((uint32_t *)g_stUVCUserInterface.u8_userBuffer,
-                                                            stUVCFrameBuffer->u32_rawDataLen);
-
-                            g_stUVCUserInterface.u8_userWaiting = UVC_USER_GET_FRAME_FINISHED;
-                            g_stUVCUserInterface.u32_frameIndex = u32_frameNumber;
-                            g_stUVCUserInterface.u32_frameLen   = stUVCFrameBuffer->u32_rawDataLen;
-                        }
+                        bypass_address = (uint8_t *)0xB1000000;
                     }
-                }
 
-                stUVCFrameBuffer->u32_rawDataLen        = 0;
+                    g_stUVCUserInterface.u8_userWaiting = UVC_USER_GET_FRAME_FINISHED;
+                    g_stUVCUserInterface.u32_frameIndex = u32_frameNumber;
+                    g_stUVCUserInterface.u32_frameLen   = stUVCFrameBuffer->u32_rawDataLen;
+
+                    stUVCFrameBuffer->u32_rawDataLen    = 0;
+                }
             }
         }
     }
@@ -1020,9 +1094,9 @@ static void USBH_UVC_UrbDone(USBH_HandleTypeDef *phost)
     }
     else
     {
-        u8_recvBuff         = USBH_GetRecvBuffer();
+        u8_recvBuff         = USBH_GetRecvBuffer(phost);
 
-        USBH_IsocReceiveData(phost, u8_recvBuff, UVC_VIDEO_MAX_SIZE_PER_SOF, UVC_Handle->VideoPipe);
+        USBH_IsocReceiveData(phost, u8_recvBuff, UVC_VIDEO_MAX_SIZE_PER_SOF, UVC_Handle->VideoPipe[UVC_Handle->uvc_format]);
     }
 
     return;
@@ -1079,6 +1153,7 @@ static void  USBH_ParseFormatUncompDesc(uint8_t *buf)
     g_stUVCFormatUncomp.bmInterlaceFlags      = *(uint8_t  *) (buf + 25);
     g_stUVCFormatUncomp.bCopyProtect          = *(uint8_t  *) (buf + 26);
 
+    return;
 }
 
 static void  USBH_ParseFrameUncompDesc(uint8_t *buf, uint8_t index)
@@ -1096,6 +1171,59 @@ static void  USBH_ParseFrameUncompDesc(uint8_t *buf, uint8_t index)
     g_stUVCFrameUncomp[index].dwDefaultFrameInterval     = LE32(buf + 21);
     g_stUVCFrameUncomp[index].bFrameIntervalType         = *(uint8_t  *) (buf + 25);
     g_stUVCFrameUncomp[index].dwFrameInterval            = LE32(buf + 26);
+
+    return;
+}
+
+static void USBH_ParseFormatFrameBasedDesc(uint8_t *buf)
+{
+    uint8_t             i;
+
+    g_stUVCFormatFrameBased.bLength               = *(uint8_t  *) (buf + 0);
+    g_stUVCFormatFrameBased.bDescriptorType       = *(uint8_t  *) (buf + 1);
+    g_stUVCFormatFrameBased.bDescriptorSubtype    = *(uint8_t  *) (buf + 2);
+    g_stUVCFormatFrameBased.bFormatIndex          = *(uint8_t  *) (buf + 3);
+    g_stUVCFormatFrameBased.bNumFrameDescriptors  = *(uint8_t  *) (buf + 4);
+
+    for (i = 0; i < 16; i++)
+    {
+        g_stUVCFormatFrameBased.guidFormat[i]     = *(uint8_t  *) (buf + (5 + i));
+    }
+
+    g_stUVCFormatFrameBased.bBitsPerPixel         = *(uint8_t  *) (buf + 21);
+    g_stUVCFormatFrameBased.bDefaultFrameIndex    = *(uint8_t  *) (buf + 22);
+    g_stUVCFormatFrameBased.bAspectRatioX         = *(uint8_t  *) (buf + 23);
+    g_stUVCFormatFrameBased.bAspectRatioY         = *(uint8_t  *) (buf + 24);
+    g_stUVCFormatFrameBased.bmInterlaceFlags      = *(uint8_t  *) (buf + 25);
+    g_stUVCFormatFrameBased.bCopyProtect          = *(uint8_t  *) (buf + 26);
+    g_stUVCFormatFrameBased.bVariableSize         = *(uint8_t  *) (buf + 27);
+
+    return;
+}
+
+static void USBH_ParseFrameFrameBasedDesc(uint8_t *buf, uint8_t index)
+{
+    g_stUVCFrameFrameBased[index].bLength                   = *(uint8_t  *) (buf + 0);
+    g_stUVCFrameFrameBased[index].bDescriptorType           = *(uint8_t  *) (buf + 1);
+    g_stUVCFrameFrameBased[index].bDescriptorSubtype        = *(uint8_t  *) (buf + 2);
+    g_stUVCFrameFrameBased[index].bFrameIndex               = *(uint8_t  *) (buf + 3);
+    g_stUVCFrameFrameBased[index].bmCapabilities            = *(uint8_t  *) (buf + 4);
+    g_stUVCFrameFrameBased[index].wWidth                    = LE16(buf + 5);
+    g_stUVCFrameFrameBased[index].wHeight                   = LE16(buf + 7);
+    g_stUVCFrameFrameBased[index].dwMinBitRate              = LE32(buf + 9);
+    g_stUVCFrameFrameBased[index].dwMaxBitRate              = LE32(buf + 13);
+    g_stUVCFrameFrameBased[index].dwDefaultFrameInterval    = LE32(buf + 17);
+    g_stUVCFrameFrameBased[index].bFrameIntervalType        = *(uint8_t  *) (buf + 21);
+    g_stUVCFrameFrameBased[index].dwBytesPerLine            = LE32(buf + 22);
+    g_stUVCFrameFrameBased[index].dwFrameInterval[0]        = LE32(buf + 26);
+    g_stUVCFrameFrameBased[index].dwFrameInterval[1]        = LE32(buf + 30);
+    g_stUVCFrameFrameBased[index].dwFrameInterval[2]        = LE32(buf + 34);
+    g_stUVCFrameFrameBased[index].dwFrameInterval[3]        = LE32(buf + 38);
+    g_stUVCFrameFrameBased[index].dwFrameInterval[4]        = LE32(buf + 42);
+    g_stUVCFrameFrameBased[index].dwFrameInterval[5]        = LE32(buf + 46);
+    g_stUVCFrameFrameBased[index].dwFrameInterval[6]        = LE32(buf + 50);
+
+    return;
 }
 
 static void  USBH_ParseVideoStreamingDesc(uint8_t *buf, uint8_t index)
@@ -1115,21 +1243,77 @@ static void  USBH_ParseVideoStreamingDesc(uint8_t *buf, uint8_t index)
     g_stVideoStreamingDesc[index].Ep_Desc[0].bmAttributes      = *(uint8_t  *) (buf + 12);
     g_stVideoStreamingDesc[index].Ep_Desc[0].wMaxPacketSize    = LE16(buf + 13);
     g_stVideoStreamingDesc[index].Ep_Desc[0].bInterval         = *(uint8_t  *) (buf + 15);
+
+    return;
 }
 
-uint16_t USBH_UVC_GetFrameWidth(uint8_t index)
+uint8_t USBH_UVC_GetVideoEpAddr(UVC_SupportedFormatsDef uvc_format)
 {
-    return g_stUVCFrameUncomp[index].wWidth;
+    uint8_t                 i;
+    uint8_t                 u8_videoEp = 0x81;
+
+    for (i = 0; i < USBH_MAX_NUM_ENDPOINT_INTERFACES; i++)
+    {
+        if (g_stUVCSupportedFormatInterface[uvc_format].bInterfaceNumber == g_stVideoStreamingDesc[i].bInterfaceNumber)
+        {
+            break;
+        }
+    }
+
+    if (i < USBH_MAX_NUM_ENDPOINT_INTERFACES)
+    {
+        u8_videoEp = g_stVideoStreamingDesc[i].Ep_Desc[0].bEndpointAddress;
+    }
+
+    return u8_videoEp;
 }
 
-uint16_t USBH_UVC_GetFrameHeight(uint8_t index)
+uint16_t USBH_UVC_GetFrameWidth(uint8_t index, UVC_SupportedFormatsDef uvc_format)
 {
-    return g_stUVCFrameUncomp[index].wHeight;
+    if (uvc_format == UVC_SUPPORTED_FORMAT_FRAME_BASED)
+    {
+        return g_stUVCFrameFrameBased[index].wWidth;
+    }
+    else
+    {
+        return g_stUVCFrameUncomp[index].wWidth;
+    }
 }
 
-uint8_t USBH_UVC_GetFrameIndex(uint8_t index)
+uint16_t USBH_UVC_GetFrameHeight(uint8_t index, UVC_SupportedFormatsDef uvc_format)
 {
-    return g_stUVCFrameUncomp[index].bFrameIndex;
+    if (uvc_format == UVC_SUPPORTED_FORMAT_FRAME_BASED)
+    {
+        return g_stUVCFrameFrameBased[index].wHeight;
+    }
+    else
+    {
+        return g_stUVCFrameUncomp[index].wHeight;
+    }
+}
+
+uint8_t USBH_UVC_GetFrameIndex(uint8_t index, UVC_SupportedFormatsDef uvc_format)
+{
+    if (uvc_format == UVC_SUPPORTED_FORMAT_FRAME_BASED)
+    {
+        return g_stUVCFrameFrameBased[index].bFrameIndex;
+    }
+    else
+    {
+        return g_stUVCFrameUncomp[index].bFrameIndex;
+    }
+}
+
+uint8_t USBH_UVC_GetFormatIndex(UVC_SupportedFormatsDef uvc_format)
+{
+    if (uvc_format == UVC_SUPPORTED_FORMAT_FRAME_BASED)
+    {
+        return g_stUVCFormatFrameBased.bFormatIndex;
+    }
+    else
+    {
+        return g_stUVCFormatUncomp.bFormatIndex;
+    }
 }
 
 uint32_t USBH_UVC_GetFrameSize(uint8_t frameIndex)
@@ -1166,17 +1350,34 @@ uint32_t USBH_UVC_GetFrameSize(uint8_t frameIndex)
 }
 
 
-static uint32_t USBH_GetFrameDefaultInterval(uint8_t frameIndex)
+static uint32_t USBH_GetFrameDefaultInterval(uint8_t frameIndex, UVC_SupportedFormatsDef uvc_format)
 {
     uint8_t         i;
     uint32_t        frameDefaultInterval = 0;
 
-    for (i = 0; i < USB_UVC_MAX_FRAME_FORMATS_NUM; i++)
+    if (uvc_format == UVC_SUPPORTED_FORMAT_FRAME_BASED)
     {
-        if (frameIndex == g_stUVCFrameUncomp[i].bFrameIndex)
+        for (i = 0; i < USB_UVC_MAX_FRAME_FORMATS_NUM; i++)
         {
-            break;
+            if (frameIndex == g_stUVCFrameFrameBased[i].bFrameIndex)
+            {
+                break;
+            }
         }
+
+        frameDefaultInterval = g_stUVCFrameFrameBased[i].dwDefaultFrameInterval;
+    }
+    else
+    {
+        for (i = 0; i < USB_UVC_MAX_FRAME_FORMATS_NUM; i++)
+        {
+            if (frameIndex == g_stUVCFrameUncomp[i].bFrameIndex)
+            {
+                break;
+            }
+        }
+
+        frameDefaultInterval = g_stUVCFrameUncomp[i].dwDefaultFrameInterval;
     }
 
     if (i >= USB_UVC_MAX_FRAME_FORMATS_NUM)
@@ -1185,8 +1386,6 @@ static uint32_t USBH_GetFrameDefaultInterval(uint8_t frameIndex)
 
         dlog_error("no this frameIndex");
     }
-
-    frameDefaultInterval = g_stUVCFrameUncomp[i].dwDefaultFrameInterval;
 
     return frameDefaultInterval;
 }
@@ -1255,12 +1454,15 @@ void USBH_UVC_GetVideoFormatList(USBH_HandleTypeDef *phost)
     uint16_t                           ptr = 0;
     uint8_t                           *buff;
     uint8_t                            frameUncompIndex = 0;
+    uint8_t                            frameFrameBasedIndex = 0;
     uint8_t                            videoStreamingIndex = 0;
     USBH_CfgDescTypeDef               *cfg_desc;
     USBH_UVCInterfaceDescriptor       *if_desc;
+    UVC_HandleTypeDef                 *UVC_Handle;
 
-    cfg_desc                      = &(phost->device.CfgDesc);
-    pdesc                         = (USBH_DescHeader_t *)(&(phost->device.CfgDesc_Raw));
+    UVC_Handle                  = (UVC_HandleTypeDef *) phost->pActiveClass->pData;
+    cfg_desc                    = &(phost->device.CfgDesc);
+    pdesc                       = (USBH_DescHeader_t *)(&(phost->device.CfgDesc_Raw));
 
     while (ptr < cfg_desc->wTotalLength)
     {
@@ -1280,12 +1482,38 @@ void USBH_UVC_GetVideoFormatList(USBH_HandleTypeDef *phost)
                 if (buff[2] == USB_UVC_FORMAT_UNCOMPRESSED)
                 {
                     USBH_ParseFormatUncompDesc(buff);
+
+                    UVC_Handle->u8_formatSupported[UVC_SUPPORTED_FORMAT_UNCOMPRESSED] = 1;
+
+                    memcpy((void *)&g_stUVCSupportedFormatInterface[UVC_SUPPORTED_FORMAT_UNCOMPRESSED],
+                           (void *)if_desc,
+                           sizeof(USBH_UVCInterfaceDescriptor));
                 }
                 else if (buff[2] == USB_UVC_FRAME_UNCOMPRESSED)
                 {
                     USBH_ParseFrameUncompDesc(buff, frameUncompIndex);
 
                     frameUncompIndex++;
+
+                    UVC_Handle->u8_frameNum[UVC_SUPPORTED_FORMAT_UNCOMPRESSED] = frameUncompIndex;
+                }
+                else if (buff[2] == USB_UVC_FORMAT_FRAME_BASED)
+                {
+                    USBH_ParseFormatFrameBasedDesc(buff);
+
+                    UVC_Handle->u8_formatSupported[UVC_SUPPORTED_FORMAT_FRAME_BASED] = 1;
+
+                    memcpy((void *)&g_stUVCSupportedFormatInterface[UVC_SUPPORTED_FORMAT_FRAME_BASED],
+                           (void *)if_desc,
+                           sizeof(USBH_UVCInterfaceDescriptor));
+                }
+                else if (buff[2] == USB_UVC_FRAME_FRAME_BASED)
+                {
+                    USBH_ParseFrameFrameBasedDesc(buff, frameFrameBasedIndex);
+
+                    frameFrameBasedIndex++;
+
+                    UVC_Handle->u8_frameNum[UVC_SUPPORTED_FORMAT_FRAME_BASED] = frameFrameBasedIndex;
                 }
             }
             else if (pdesc->bDescriptorType == USB_DESC_TYPE_EP)
@@ -1328,16 +1556,7 @@ static uint8_t USBH_UVC_FindStreamingInterface(USBH_HandleTypeDef *phost)
     for (i = 2; i < USBH_MAX_NUM_INTERFACES; i++)
     {
         interface_desc              = &cfg_desc->Itf_Desc[i];
-#if 1
-        dlog_info("bInterfaceClass: %d", interface_desc->bInterfaceClass);
-        dlog_info("bInterfaceSubClass: %d", interface_desc->bInterfaceSubClass);
-        dlog_info("bNumEndpoints: %d", interface_desc->bNumEndpoints);
-        dlog_info("bInterfaceNumber: %d", interface_desc->bInterfaceNumber);
-        dlog_info("bAlternateSetting: %d", interface_desc->bAlternateSetting);
-        dlog_info("wMaxPacketSize: %d", interface_desc->Ep_Desc[0].wMaxPacketSize);
 
-        dlog_output(200);
-#endif
         if ((interface_desc->bInterfaceClass == UVC_CLASS)&&
             (interface_desc->bInterfaceSubClass == USB_UVC_SUBCLASS_VIDEO_STREAMING)&&
             (interface_desc->bNumEndpoints > 0))
@@ -1404,13 +1623,25 @@ USBH_UVCFrameBufferTypeDef *USBH_GetFrameBuffer(void)
 }
 
 
-uint8_t *USBH_GetRecvBuffer(void)
+uint8_t *USBH_GetRecvBuffer(USBH_HandleTypeDef *phost)
 {
-    uint32_t        u32_offset;
+    uint32_t                u32_offset;
+    UVC_HandleTypeDef      *UVC_Handle;
 
-    u32_offset      = g_UVCVideoBuffer->u32_rawDataLen;
+    UVC_Handle =  (UVC_HandleTypeDef *) phost->pActiveClass->pData;
 
-    return (g_UVCVideoBuffer->u8_rawData + u32_offset);
+    if (UVC_Handle->uvc_format == UVC_SUPPORTED_FORMAT_UNCOMPRESSED)
+    {
+        u32_offset      = g_UVCVideoBuffer->u32_rawDataLen;
+
+        return (g_UVCVideoBuffer->u8_rawData + u32_offset);
+    }
+    else
+    {
+        return g_UVCVideoBuffer->u8_frameBasedRecvBuff;
+    }
+
+    
 }
 
 
@@ -1426,7 +1657,7 @@ uint8_t USBH_SelAltInterfaceForCommit(uint32_t max_packet_size, USBH_HandleTypeD
     UVC_Handle =  (UVC_HandleTypeDef *) phost->pActiveClass->pData;
 
     /* compare with all the candidate endpoints, select the most suitable one */
-    for (i = 0; i < USBH_MAX_NUM_INTERFACES; i++)
+    for (i = 0; i < USBH_MAX_NUM_ENDPOINT_INTERFACES; i++)
     {
         psize           = g_stVideoStreamingDesc[i].Ep_Desc[0].wMaxPacketSize;
 
@@ -1449,4 +1680,32 @@ uint8_t USBH_SelAltInterfaceForCommit(uint32_t max_packet_size, USBH_HandleTypeD
     return altInterface;
 }
 
+uint8_t USBH_UVC_GetFrameUncompNum(USBH_HandleTypeDef *phost)
+{
+    UVC_HandleTypeDef        *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
+
+    if (UVC_Handle->u8_formatSupported[UVC_SUPPORTED_FORMAT_UNCOMPRESSED] == 0)
+    {
+        return 0;
+    }
+    else 
+    {
+        return UVC_Handle->u8_frameNum[UVC_SUPPORTED_FORMAT_UNCOMPRESSED];
+    }
+}
+
+uint8_t USBH_UVC_GetFrameFrameNum(USBH_HandleTypeDef *phost)
+{
+    UVC_HandleTypeDef        *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
+
+    if (UVC_Handle->u8_formatSupported[UVC_SUPPORTED_FORMAT_FRAME_BASED] == 0)
+    {
+        return 0;
+    }
+    else 
+    {
+        return UVC_Handle->u8_frameNum[UVC_SUPPORTED_FORMAT_FRAME_BASED];
+    }
+
+}
 

@@ -22,7 +22,7 @@ extern "C"
 #include "hal_usb_otg.h"
 
 
-#define HAL_USB_UVC_MAX_FRAME_FORMATS_NUM     10
+#define HAL_USB_UVC_MAX_FRAME_FORMATS_NUM     20
 
 typedef enum
 {
@@ -55,16 +55,24 @@ typedef enum
 {
     ENUM_UVC_DATA_YUV   = 1,
     ENUM_UVC_DATA_Y     = 2,
+    ENUM_UVC_DATA_H264  = 3,
 } ENUM_HAL_USB_UVC_DATA_TYPE;
 
 
 typedef struct
 {
-    uint16_t    u16_width[HAL_USB_UVC_MAX_FRAME_FORMATS_NUM];
-    uint16_t    u16_height[HAL_USB_UVC_MAX_FRAME_FORMATS_NUM];
-    uint32_t    u32_sizePerFrame[HAL_USB_UVC_MAX_FRAME_FORMATS_NUM];
-    uint8_t     u8_frameIndex[HAL_USB_UVC_MAX_FRAME_FORMATS_NUM];
+    uint16_t    u16_width;
+    uint16_t    u16_height;
+    ENUM_HAL_USB_UVC_DATA_TYPE e_dataType;
 } STRU_UVC_VIDEO_FRAME_FORMAT;
+
+
+typedef struct
+{
+    uint16_t    u16_frameNum;
+    STRU_UVC_VIDEO_FRAME_FORMAT st_uvcFrameFormat[HAL_USB_UVC_MAX_FRAME_FORMATS_NUM];
+} STRU_UVC_SUPPORT_FORMAT_LIST;
+
 
 
 /**
@@ -113,6 +121,7 @@ void HAL_USB_InitHost(ENUM_HAL_USB_PORT e_usbPort);
 HAL_RET_T HAL_USB_StartUVC(uint16_t u16_width,
                            uint16_t u16_height,
                            uint32_t *u32_frameSize,
+                           ENUM_HAL_USB_UVC_DATA_TYPE e_UVCDataType,
                            uint8_t u8_uvcPortId);
 
 /**
@@ -138,10 +147,10 @@ HAL_RET_T HAL_USB_UVCCheckFrameReady(uint32_t *u32_frameNum,
 /**
 * @brief  get the formats this camera support
 * @param  
-* @retval   STRU_UVC_VIDEO_FRAME_FORMAT *stVideoFrameFormat
+* @retval   STRU_UVC_SUPPORT_FORMAT_LIST *stVideoFrameFormat
 * @note  
 */
-void HAL_USB_UVCGetVideoFormats(STRU_UVC_VIDEO_FRAME_FORMAT *stVideoFrameFormat);
+void HAL_USB_UVCGetVideoFormats(STRU_UVC_SUPPORT_FORMAT_LIST *stVideoFrameFormat);
 
 
 /**

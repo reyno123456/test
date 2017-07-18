@@ -33,7 +33,8 @@ ifeq ($(APPLICATION_SCENARIO), sky)
 SRC_C   := main_sky.c \
            command.c \
            upgrade.c \
-		   com_task.c \
+           com_task.c \
+           uvc_task.c \
            ../../Example/test_usbh.c \
            ../../Example/test_hal_uart.c \
            ../../Example/testhal_pwm.c \
@@ -47,7 +48,8 @@ SRC_C   := main_ground.c \
            command.c \
            upgrade.c \
            com_task.c \
-		   ../../Example/test_usbh.c \
+           uvc_task.c \
+	   ../../Example/test_usbh.c \
            ../../Example/test_hal_uart.c \
            ../../Example/testhal_pwm.c \
            ../../Example/testhal_gpio.c \

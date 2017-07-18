@@ -12,7 +12,7 @@
 #include "test_usbh.h"
 #include "test_hal_nv.h"
 #include "ar_freertos_specific.h"
-
+#include "uvc_task.h"
 
 
 void command_readMemory(char *addr);

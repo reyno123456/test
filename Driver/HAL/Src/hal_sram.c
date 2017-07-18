@@ -132,6 +132,23 @@ void HAL_SRAM_ChannelConfig(ENUM_HAL_SRAM_CHANNEL_TYPE e_channelType,
 }
 
 
+uint8_t *HAL_SRAM_GetVideoBypassChannelBuff(ENUM_HAL_SRAM_VIDEO_CHANNEL e_channel)
+{
+    uint8_t          *channel_buff;
+
+    if (e_channel == HAL_SRAM_VIDEO_CHANNEL_0)
+    {
+        channel_buff = (uint8_t *)VIDEO_BYPASS_CHANNEL_0_DEST_ADDR;
+    }
+    else
+    {
+        channel_buff = (uint8_t *)VIDEO_BYPASS_CHANNEL_1_DEST_ADDR;
+    }
+
+    return channel_buff;
+}
+
+
 #ifdef ARCAST
 uint32_t HAL_SRAM_GetMp3BufferLength(void)
 {

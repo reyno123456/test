@@ -9,12 +9,6 @@
 
 
 #define USB_VIDEO_BYPASS_SIZE_ONCE              (8192)
-#define USB_VIDEO_BYPASS_CHANNEL_0_DEST_ADDR    (0xB1000000)
-#define USB_VIDEO_BYPASS_CHANNEL_1_DEST_ADDR    (0xB1800000)
-
-#define UVC_TRANSFER_SIZE_ONCE                  (8192)
-#define UVC_ENDPOINT_FOR_TRANSFER               (0x85)
-
 
 
 typedef enum
@@ -22,16 +16,6 @@ typedef enum
     USBH_APP_START_BYPASS_VIDEO = 0,
     USBH_APP_STOP_BYPASS_VIDEO,
 }USBH_APP_EVENT_DEF;
-
-
-typedef enum
-{
-    USBH_UVC_TASK_IDLE                  = 0,
-    USBH_UVC_TASK_START                 = 1,
-    USBH_UVC_TASK_GET_FRAME             = 2,
-    USBH_UVC_TASK_CHECK_FRAME_READY     = 3,
-    USBH_UVC_TASK_DISCONNECT            = 4,
-} USBH_UVC_TASK_STATE;
 
 
 typedef enum
@@ -69,13 +53,6 @@ void USBH_MountUSBDisk(void);
 void USB_MainTask(void const *argument);
 void command_startBypassVideo(uint8_t *bypassChannel);
 void command_stopBypassVideo(void);
-void USBH_ProcUVC(void);
-void command_ViewUVC(void);
-void USBH_UVCTask(void const *argument);
-void command_startUVC(char *width, char *height);
-void command_saveUVC(void);
-void command_stopSaveUVC(void);
-void command_showUVC(void);
 
 
 extern USBH_AppCtrl             g_usbhAppCtrl;

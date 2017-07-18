@@ -15,6 +15,8 @@
 #include "hal_nv.h"
 #include "hal_dma.h"
 #include "com_task.h"
+#include "uvc_task.h"
+
 
 void console_init(uint32_t uart_num, uint32_t baut_rate)
 {

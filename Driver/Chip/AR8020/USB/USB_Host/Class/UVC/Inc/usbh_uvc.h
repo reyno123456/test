@@ -50,6 +50,9 @@ extern USBH_ClassTypeDef            UVC_Class;
 
 #define USB_UVC_FORMAT_UNCOMPRESSED         0x04
 #define USB_UVC_FRAME_UNCOMPRESSED          0x05
+#define USB_UVC_FORMAT_FRAME_BASED          0x10
+#define USB_UVC_FRAME_FRAME_BASED           0x11
+
 
 #define USB_UVC_PROCESSING_UNIT             0x05
 #define USB_UVC_EXTENSION_UNIT              0x06
@@ -60,6 +63,7 @@ extern USBH_ClassTypeDef            UVC_Class;
 
 
 #define USB_UVC_MAX_FRAME_FORMATS_NUM       10
+#define USB_UVC_MAX_FRAME_FRAME_BASED_NUM   20
 
 #define USB_UVC_RECV_BUFFER_ADDR            0x21000000
 #define USB_UVC_VIDEO_BUFFER_ADDR           0x21000800
@@ -84,6 +88,13 @@ extern USBH_ClassTypeDef            UVC_Class;
 #define USB_UVC_STARTED                         0x01
 #define USB_UVC_SWITCH_PIXEL                    0x02
 
+
+typedef enum
+{
+    UVC_SUPPORTED_FORMAT_UNCOMPRESSED  = 0,
+    UVC_SUPPORTED_FORMAT_FRAME_BASED = 1,
+    UVC_SUPPORTED_FORMAT_NUM,
+} UVC_SupportedFormatsDef;
 
 typedef enum
 {
@@ -131,19 +142,23 @@ typedef struct _UVC_Process
     uint8_t                     CtrlPipe;
     uint8_t                     CtrlEp;
     uint16_t                    CtrlEpSize;
-    uint8_t                     VideoPipe;
-    uint8_t                     VideoEp;
-    uint16_t                    VideoEpSize;
+    uint8_t                     VideoPipe[UVC_SUPPORTED_FORMAT_NUM];
+    uint8_t                     VideoEp[UVC_SUPPORTED_FORMAT_NUM];
+    uint16_t                    VideoEpSize[UVC_SUPPORTED_FORMAT_NUM];
     UVC_StateTypeDef            uvc_state;
     UVC_StateTypeDef            uvc_probeState;
     UVC_GetParamTypeDef         uvc_getParamState;
     uint16_t                    uvc_CSCount;
     uint8_t                     probeCount;
     uint8_t                     interface;
+    uint8_t                     u8_selFormatIndex;
     uint8_t                     u8_selFrameIndex;
     uint8_t                     u8_selInterface;
     uint8_t                     u8_selAltInterface;
     volatile uint8_t            u8_startUVCFlag;
+    UVC_SupportedFormatsDef     uvc_format;
+    uint8_t                     u8_formatSupported[UVC_SUPPORTED_FORMAT_NUM];
+    uint8_t                     u8_frameNum[UVC_SUPPORTED_FORMAT_NUM];
 }
 UVC_HandleTypeDef;
 
@@ -241,11 +256,48 @@ typedef struct _UVCFrameUncompressedTypeDef
 } USBH_UVCFrameUncompressedTypeDef;
 
 
+typedef struct _UVCFormatFrameBasedTypeDef
+{
+    uint8_t     bLength;
+    uint8_t     bDescriptorType;
+    uint8_t     bDescriptorSubtype;
+    uint8_t     bFormatIndex;
+    uint8_t     bNumFrameDescriptors;
+    uint8_t     guidFormat[16];
+    uint8_t     bBitsPerPixel;
+    uint8_t     bDefaultFrameIndex;
+    uint8_t     bAspectRatioX;
+    uint8_t     bAspectRatioY;
+    uint8_t     bmInterlaceFlags;
+    uint8_t     bCopyProtect;
+    uint8_t     bVariableSize;
+} USBH_UVCFormatFrameBasedTypeDef;
+
+
+typedef struct _UVCFrameFrameBasedTypeDef
+{
+    uint8_t   bLength;
+    uint8_t   bDescriptorType;
+    uint8_t   bDescriptorSubtype;
+    uint8_t   bFrameIndex;
+    uint8_t   bmCapabilities;
+    uint16_t  wWidth;
+    uint16_t  wHeight;
+    uint32_t  dwMinBitRate;
+    uint32_t  dwMaxBitRate;
+    uint32_t  dwDefaultFrameInterval;
+    uint8_t   bFrameIntervalType;
+    uint32_t  dwBytesPerLine;
+    uint32_t  dwFrameInterval[7];
+} USBH_UVCFrameFrameBasedTypeDef;
+
+
 typedef struct _UVCFrameBuffer
 {
     volatile uint32_t       u32_rawDataLen;
     uint8_t                 u8_backup[UVC_HEADER_SIZE];
     uint8_t                *u8_rawData;
+    uint8_t                *u8_frameBasedRecvBuff;
 } USBH_UVCFrameBufferTypeDef;
 
 
@@ -295,7 +347,10 @@ static uint32_t USBH_UVC_GetPowerLine(USBH_HandleTypeDef *phost,
                                       UVC_GetParamTypeDef paramType);
 static USBH_StatusTypeDef USBH_UVC_Probe(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_UVC_Commit(USBH_HandleTypeDef *phost);
-uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost, uint8_t u8_frameIndex);
+uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost,
+                          uint8_t u8_frameIndex,
+                          uint8_t u8_formatIndex,
+                          UVC_SupportedFormatsDef uvc_format);
 static void USBH_UVC_UrbDone(USBH_HandleTypeDef *phost);
 uint8_t USBH_UVC_GetBuff(void);
 void USBH_UVC_SetBuffState(uint8_t u8_buffIndex, UVC_BuffStateTypeDef e_buffState);
@@ -305,17 +360,21 @@ static void USBH_ParseFrameUncompDesc(uint8_t *buf, uint8_t index);
 static void  USBH_ParseVideoStreamingDesc(uint8_t *buf, uint8_t index);
 void USBH_UVC_GetVideoFormatList(USBH_HandleTypeDef *phost);
 static uint8_t USBH_UVC_FindStreamingInterface(USBH_HandleTypeDef *phost);
-uint16_t USBH_UVC_GetFrameWidth(uint8_t index);
-uint16_t USBH_UVC_GetFrameHeight(uint8_t index);
-uint8_t USBH_UVC_GetFrameIndex(uint8_t index);
+uint16_t USBH_UVC_GetFrameWidth(uint8_t index, UVC_SupportedFormatsDef uvc_format);
+uint16_t USBH_UVC_GetFrameHeight(uint8_t index, UVC_SupportedFormatsDef uvc_format);
+uint8_t USBH_UVC_GetFrameIndex(uint8_t index, UVC_SupportedFormatsDef uvc_format);
+uint8_t USBH_UVC_GetFormatIndex(UVC_SupportedFormatsDef uvc_format);
 uint32_t USBH_UVC_GetFrameSize(uint8_t frameIndex);
-static uint32_t USBH_GetFrameDefaultInterval(uint8_t frameIndex);
+static uint32_t USBH_GetFrameDefaultInterval(uint8_t frameIndex, UVC_SupportedFormatsDef uvc_format);
 uint32_t USBH_UVC_GetProcUnitControls(void);
 uint32_t USBH_UVC_GetExtUnitControls(void);
 uint32_t USBH_UVC_ProcUnitParamHandler(USBH_HandleTypeDef *phost, uint8_t index, UVC_GetParamTypeDef enParamType);
 USBH_UVCFrameBufferTypeDef *USBH_GetFrameBuffer(void);
-uint8_t *USBH_GetRecvBuffer(void);
+uint8_t *USBH_GetRecvBuffer(USBH_HandleTypeDef *phost);
 uint8_t USBH_SelAltInterfaceForCommit(uint32_t max_packet_size, USBH_HandleTypeDef *phost);
+uint8_t USBH_UVC_GetFrameUncompNum(USBH_HandleTypeDef *phost);
+uint8_t USBH_UVC_GetFrameFrameNum(USBH_HandleTypeDef *phost);
+uint8_t USBH_UVC_GetVideoEpAddr(UVC_SupportedFormatsDef uvc_format);
 
 
 extern USBH_UVCUserInterface    g_stUVCUserInterface;
