@@ -7,6 +7,12 @@
 #include "debuglog.h"
 #include "hal.h"
 #include "test_os_mail.h"
+#include "test_os_mutex.h"
+#include "test_os_semaphore.h"
+#include "test_os_signal.h"
+#include "test_os_message.h"
+#include "test_os_timer.h"
+
 
 #define m7_malloc pvPortMalloc
 #define m7_free vPortFree
@@ -168,15 +174,11 @@ static void mutexService(void const *argument)
 		{
             if (100 == *((const int*)argument))
             {
-    			dlog_info("1111 Got Mutex argument %d", *((const int*)argument));
-    			dlog_info("1111 Got Mutex argument 0x%08x", *((uint32_t*)argument));
-    			dlog_info("1111 Got Mutex argument %p", argument);
+    			dlog_info("mutexService1 Got Mutex argument %d", *((const int*)argument));
 		    }
             else if (200 == *((const int*)argument))
             {
-    			dlog_info("2222 Got Mutex argument %d", *((const int*)argument));
-    			dlog_info("2222 Got Mutex argument 0x%08x", *((uint32_t*)argument));
-    			dlog_info("2222 Got Mutex argument %p", argument);
+    			dlog_info("mutexService2 Got Mutex argument %d", *((const int*)argument));
             }
         }
 
@@ -271,6 +273,26 @@ void command_TestTask(char* arg1)
 
         case 4:
             test_os_mail();
+        break;
+
+        case 5:
+            test_os_mutex();
+        break;
+
+        case 6:
+            test_os_semaphore();
+        break;
+
+        case 7:
+            test_os_signal();
+        break;
+
+        case 8:
+            test_os_message();
+        break;
+
+        case 9:
+            test_os_timer();
         break;
 
         default:

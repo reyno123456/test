@@ -31,7 +31,7 @@ SRC_S   := start.s
 
 ifeq ($(APPLICATION_SCENARIO), sky)
 SRC_C   := main_sky.c \
-		   command.c \
+           command.c \
            upgrade.c \
 		   ../../Example/test_i2c_adv7611.c \
            ../../Example/test_bb.c \
@@ -56,14 +56,20 @@ SRC_C   := main_sky.c \
            ../../Example/test_localirq.c \
            ../../Example/test_quadspi.c \
            ../../Example/test_usbh.c \
-           ../../Example/test_os_mail.c
+           ../../Example/test_os_mail.c \
+           ../../Example/test_os_mutex.c \
+           ../../Example/test_os_semaphore.c \
+           ../../Example/test_os_signal.c \
+           ../../Example/test_os_message.c \
+           ../../Example/test_os_timer.c 
+
 
 SRC_CXX :=
 endif
 
 ifeq ($(APPLICATION_SCENARIO), ground)
 SRC_C   := main_ground.c \
-		   command.c \
+           command.c \
            upgrade.c \
 		   ../../Example/test_freertos.c \
 		   ../../Example/test_hal_can.c \
@@ -87,8 +93,13 @@ SRC_C   := main_ground.c \
            ../../Example/test_hal_i2c.c \
            ../../Example/test_localirq.c \
            ../../Example/testhal_dma.c \
-           ../../Example/test_os_mail.c
-           
+           ../../Example/test_os_mail.c \
+           ../../Example/test_os_mutex.c \
+           ../../Example/test_os_semaphore.c \
+           ../../Example/test_os_signal.c \
+           ../../Example/test_os_message.c \
+           ../../Example/test_os_timer.c 
+
 SRC_CXX :=
 endif
 

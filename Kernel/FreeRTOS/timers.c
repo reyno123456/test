@@ -109,6 +109,7 @@ typedef struct tmrTimerControl
 	UBaseType_t				uxAutoReload;		/*<< Set to pdTRUE if the timer should be automatically restarted once expired.  Set to pdFALSE if the timer is, in effect, a one-shot timer. */
 	void 					*pvTimerID;			/*<< An ID to identify the timer.  This allows the timer to be identified when the same callback is used for multiple timers. */
 	TimerCallbackFunction_t	pxCallbackFunction;	/*<< The function that will be called when the timer expires. */
+    void                    *argument;
 	#if( configUSE_TRACE_FACILITY == 1 )
 		UBaseType_t			uxTimerNumber;		/*<< An ID assigned by trace tools such as FreeRTOS+Trace */
 	#endif
@@ -272,7 +273,11 @@ BaseType_t xReturn = pdFAIL;
 }
 /*-----------------------------------------------------------*/
 
-TimerHandle_t xTimerCreate( const char * const pcTimerName, const TickType_t xTimerPeriodInTicks, const UBaseType_t uxAutoReload, void * const pvTimerID, TimerCallbackFunction_t pxCallbackFunction ) /*lint !e971 Unqualified char types are allowed for strings and single characters only. */
+TimerHandle_t xTimerCreate( const char * const pcTimerName, 
+                                const TickType_t xTimerPeriodInTicks, 
+                                const UBaseType_t uxAutoReload, 
+                                void *argument, 
+                                TimerCallbackFunction_t pxCallbackFunction ) /*lint !e971 Unqualified char types are allowed for strings and single characters only. */
 {
 Timer_t *pxNewTimer;
 
@@ -294,7 +299,8 @@ Timer_t *pxNewTimer;
 			pxNewTimer->pcTimerName = pcTimerName;
 			pxNewTimer->xTimerPeriodInTicks = xTimerPeriodInTicks;
 			pxNewTimer->uxAutoReload = uxAutoReload;
-			pxNewTimer->pvTimerID = pvTimerID;
+/* 			pxNewTimer->pvTimerID = pvTimerID; */
+			pxNewTimer->argument = argument;
 			pxNewTimer->pxCallbackFunction = pxCallbackFunction;
 			vListInitialiseItem( &( pxNewTimer->xTimerListItem ) );
 
@@ -411,7 +417,7 @@ Timer_t * const pxTimer = ( Timer_t * ) listGET_OWNER_OF_HEAD_ENTRY( pxCurrentTi
 	}
 
 	/* Call the timer callback. */
-	pxTimer->pxCallbackFunction( ( TimerHandle_t ) pxTimer );
+	pxTimer->pxCallbackFunction( pxTimer->argument );
 }
 /*-----------------------------------------------------------*/
 

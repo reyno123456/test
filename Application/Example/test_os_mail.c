@@ -1,3 +1,13 @@
+/*****************************************************************************
+Copyright: 2016-2020, Artosyn. Co., Ltd.
+File name: test_os_message.c
+Description: 
+Author: Wumin @ Artosy Software Team
+Version: 0.0.1
+Date: 2017/17/19
+History:
+         0.0.1    2017/07/19    test_os_mail
+*****************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
 #include "cmsis_os.h"
