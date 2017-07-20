@@ -989,7 +989,8 @@ void BB_UARTComCycleSendMsg(void)
     g_BBUartTxFIFO.tx_fifo_rd_pos   = read_pos;
 
     /* 16 byte aligned */
-    if (send_size > 0)
+    if ((send_size > 0)&&
+        ((send_size % 16) != 0))
     {
         size_align = send_size;
         size_align = 16 - (size_align % 16);
