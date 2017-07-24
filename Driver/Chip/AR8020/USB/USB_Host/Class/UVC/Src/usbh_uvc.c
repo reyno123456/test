@@ -59,6 +59,7 @@ USBH_UVCAttrCtrl        g_stUVCAttrCtrl[USB_UVC_PARAM_MAX_NUM] =
     {1,  1,  1,  1,  1,  1,  2,  USB_UVC_PU_DIGITAL_MULTIPLIER_LIMIT_CONTROL}
 };
 
+uint8_t                *u8_frameBasedRecvBuff = NULL;
 
 static USBH_StatusTypeDef USBH_UVC_InterfaceInit (USBH_HandleTypeDef *phost)
 {
@@ -181,13 +182,6 @@ USBH_StatusTypeDef USBH_UVC_InterfaceDeInit (USBH_HandleTypeDef *phost)
 
     if (g_UVCVideoBuffer != NULL)
     {
-        if (g_UVCVideoBuffer->u8_frameBasedRecvBuff != NULL)
-        {
-            free(g_UVCVideoBuffer->u8_frameBasedRecvBuff);
-
-            g_UVCVideoBuffer->u8_frameBasedRecvBuff = NULL;
-        }
-
         free(g_UVCVideoBuffer);
 
         g_UVCVideoBuffer = NULL;
@@ -541,22 +535,6 @@ uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost,
         }
 
         memset((void *)g_UVCVideoBuffer, 0, sizeof(USBH_UVCFrameBufferTypeDef));
-
-        if (uvc_format == UVC_SUPPORTED_FORMAT_FRAME_BASED)
-        {
-            g_UVCVideoBuffer->u8_frameBasedRecvBuff = (uint8_t *)malloc(sizeof(UVC_VIDEO_MAX_SIZE_PER_SOF));
-
-            if (g_UVCVideoBuffer->u8_frameBasedRecvBuff == NULL)
-            {
-                free(g_UVCVideoBuffer);
-
-                g_UVCVideoBuffer = NULL;
-
-                dlog_error("malloc u8_frameBasedRecvBuff error");
-
-                return 1;
-            }
-        }
     }
 
     if (uvc_format == UVC_SUPPORTED_FORMAT_UNCOMPRESSED)
@@ -566,8 +544,9 @@ uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost,
         dlog_info("g_u32UVCVideoBuffSizePerFrame: %d", g_u32UVCVideoBuffSizePerFrame);
     }
 
-    g_UVCVideoBuffer->u32_rawDataLen    = 0;
-    g_UVCVideoBuffer->u8_rawData        = (uint8_t *)0x44059C00;
+    g_UVCVideoBuffer->u32_rawDataLen        = 0;
+    g_UVCVideoBuffer->u8_rawData            = (uint8_t *)0x44059C00;
+    g_UVCVideoBuffer->u8_frameBasedRecvBuff = (uint8_t *)0x4407F400;
 
     g_stUVCUserInterface.u32_frameIndex    = 0;
     g_stUVCUserInterface.u32_frameLen      = 0;
