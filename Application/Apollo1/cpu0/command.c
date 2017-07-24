@@ -13,6 +13,7 @@
 #include "test_hal_nv.h"
 #include "ar_freertos_specific.h"
 #include "uvc_task.h"
+#include "hal_usb_host.h"
 
 
 void command_readMemory(char *addr);
@@ -122,6 +123,18 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     else if ((memcmp(cmdArray[0], "set_loglevel", strlen("set_loglevel")) == 0))
     {
         command_set_loglevel(cmdArray[1], cmdArray[2]);
+    }
+    else if ((memcmp(cmdArray[0], "setuvcattr", strlen("setuvcattr")) == 0))
+    {
+        command_setUVCAttribute(cmdArray[1], cmdArray[2]);
+    }
+    else if ((memcmp(cmdArray[0], "getuvcattr", strlen("getuvcattr")) == 0))
+    {
+        command_getUVCAttribute(cmdArray[1], cmdArray[2]);
+    }
+    else if ((memcmp(cmdArray[0], "uvchelp", strlen("uvchelp")) == 0))
+    {
+        command_uvchelp();
     }
     /* error command */
     else if (memcmp(cmdArray[0], "help", strlen("help")) == 0)

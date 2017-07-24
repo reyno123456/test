@@ -42,13 +42,36 @@ typedef enum
 
 typedef enum
 {
-    HAL_UVC_GET_LEN = 0,
-    HAL_UVC_GET_INFO,
-    HAL_UVC_GET_MIN,
-    HAL_UVC_GET_MAX,
-    HAL_UVC_GET_RES,
-    HAL_UVC_GET_DEF,
-} ENUM_HAL_UVC_GET_PARAM_TYPE;
+    HAL_UVC_GET_CUR = 0x81,
+    HAL_UVC_GET_MIN = 0x82,
+    HAL_UVC_GET_MAX = 0x83,
+    HAL_UVC_GET_RES = 0x84,
+    HAL_UVC_GET_LEN = 0x85,
+    HAL_UVC_GET_INFO = 0x86,
+    HAL_UVC_GET_DEF = 0x87,
+} ENUM_HAL_UVC_GET_ATTRIBUTE_TYPE;
+
+
+typedef enum
+{
+    ENUM_HAL_UVC_BRIGHTNESS                = 0,
+    ENUM_HAL_UVC_CONTRAST                  = 1,
+    ENUM_HAL_UVC_HUE                       = 2,
+    ENUM_HAL_UVC_SATURATION                = 3,
+    ENUM_HAL_UVC_SHARPNESS                 = 4,
+    ENUM_HAL_UVC_GAMMA                     = 5,
+    ENUM_HAL_UVC_WHITE_BALANCE_TEMP        = 6,
+    ENUM_HAL_UVC_WHITE_BALANCE_COMP        = 7,
+    ENUM_HAL_UVC_BACKLIGHT_COMP            = 8,
+    ENUM_HAL_UVC_GAIN                      = 9,
+    ENUM_HAL_UVC_PWR_LINE_FREQ             = 10,
+    ENUM_HAL_UVC_HUE_AUTO                  = 11,
+    ENUM_HAL_UVC_WHITE_BALANCE_TEMP_AUTO   = 12,
+    ENUM_HAL_UVC_WHITE_BALANCE_COMP_AUTO   = 13,
+    ENUM_HAL_UVC_DIGITAL_MULTI             = 14,
+    ENUM_HAL_UVC_DIGITAL_MULTI_LIMIT       = 15,
+    ENUM_HAL_UVC_MAX_NUM                   = 16,
+} ENUM_HAL_UVC_ATTRIBUTE_INDEX;
 
 
 typedef enum
@@ -195,6 +218,14 @@ ENUM_HAL_USB_HOST_CLASS HAL_USB_CurUsbClassType(uint8_t port_id);
 uint8_t HAL_USB_GetUVCPortId(void);
 
 uint8_t HAL_USB_GetMSCPort(void);
+
+HAL_RET_T HAL_USB_HOST_SetUVCAttr(ENUM_HAL_UVC_ATTRIBUTE_INDEX uvc_attr_index,
+                                  int32_t uvc_attr_value);
+
+HAL_RET_T HAL_USB_HOST_GetUVCAttr(ENUM_HAL_UVC_ATTRIBUTE_INDEX uvc_attr_index,
+                                ENUM_HAL_UVC_GET_ATTRIBUTE_TYPE uvc_attr_type,
+                                int32_t *uvc_attr_value);
+
 
 #ifdef __cplusplus
 }

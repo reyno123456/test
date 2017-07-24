@@ -7,7 +7,7 @@ _estack = 0x20080000;     /* end of RAM */
 
 MEMORY
 {
-    ITCM0      : ORIGIN = 0x00000000, LENGTH = 0x5A7F4
+    ITCM0      : ORIGIN = 0x00000000, LENGTH = 0x59C00
     DTCM0      : ORIGIN = 0x20000000, LENGTH = 0x80000
 }
 

@@ -32,31 +32,31 @@ USBH_VCExtensionUnitInterfaceDescriptor     g_stExtensionUnitDesc;
 USBH_InterfaceDescTypeDef                   g_stVideoStreamingDesc[USBH_MAX_NUM_ENDPOINT_INTERFACES];
 USBH_UVCInterfaceDescriptor                 g_stUVCSupportedFormatInterface[UVC_SUPPORTED_FORMAT_NUM];
 
-uint8_t                 g_req_mem[8];
 uint8_t                 g_cur_mem[28];
 uint8_t                 g_max_mem[28];
 uint8_t                 g_min_mem[28];
-
 uint8_t                 g_u8UVCPortId;
 
-static USBH_UVC_PARAM_HANDLER hUsbhUVCParamHandler[16] = 
+
+USBH_UVCAttrCtrl        g_stUVCAttrCtrl[USB_UVC_PARAM_MAX_NUM] =
 {
-    USBH_UVC_GetBrightness,
-    USBH_UVC_GetContrast,
-    USBH_UVC_GetHUE,
-    USBH_UVC_GetSaturation,
-    USBH_UVC_GetSharpness,
-    USBH_UVC_GetGamma,
-    USBH_UVC_GetWhiteTemp,
-    NULL,
-    USBH_UVC_GetBack,
-    NULL,
-    USBH_UVC_GetPowerLine,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+ /* cur  min  max  res  info  def  length  selector*/
+    {1,  1,  1,  1,  1,  1,  2,  USB_UVC_PU_BRIGHTNESS_CONTROL},
+    {1,  1,  1,  1,  1,  1,  2,  USB_UVC_PU_CONTRAST_CONTROL},
+    {1,  1,  1,  1,  1,  1,  2,  USB_UVC_PU_HUE_CONTROL},
+    {1,  1,  1,  1,  1,  1,  2,  USB_UVC_PU_SATURATION_CONTROL},
+    {1,  1,  1,  1,  1,  1,  2,  USB_UVC_PU_SHARPNESS_CONTROL},
+    {1,  1,  1,  1,  1,  1,  2,  USB_UVC_PU_GAMMA_CONTROL},
+    {1,  1,  1,  1,  1,  1,  2,  USB_UVC_PU_WHITE_BALANCE_TEMP_CONTROL},
+    {1,  1,  1,  1,  1,  1,  4,  USB_UVC_PU_WHITE_BALANCE_COMP_CONTROL},
+    {1,  1,  1,  1,  1,  1,  2,  USB_UVC_PU_BACKLIGHT_COMPENSATION_CONTROL},
+    {1,  1,  1,  1,  1,  1,  2,  USB_UVC_PU_GAIN_CONTROL},
+    {1,  0,  0,  0,  1,  1,  1,  USB_UVC_PU_POWER_LINE_FREQUENCY_CONTROL},
+    {1,  0,  0,  0,  1,  1,  1,  USB_UVC_PU_HUE_AUTO_CONTROL},
+    {1,  0,  0,  0,  1,  1,  1,  USB_UVC_PU_WHITE_BALANCE_TEMP_AUTO_CONTROL},
+    {1,  0,  0,  0,  1,  1,  1,  USB_UVC_PU_WHITE_BALANCE_COMP_AUTO_CONTROL},
+    {1,  1,  1,  1,  1,  1,  2,  USB_UVC_PU_DIGITAL_MULTIPLIER_CONTROL},
+    {1,  1,  1,  1,  1,  1,  2,  USB_UVC_PU_DIGITAL_MULTIPLIER_LIMIT_CONTROL}
 };
 
 
@@ -181,6 +181,13 @@ USBH_StatusTypeDef USBH_UVC_InterfaceDeInit (USBH_HandleTypeDef *phost)
 
     if (g_UVCVideoBuffer != NULL)
     {
+        if (g_UVCVideoBuffer->u8_frameBasedRecvBuff != NULL)
+        {
+            free(g_UVCVideoBuffer->u8_frameBasedRecvBuff);
+
+            g_UVCVideoBuffer->u8_frameBasedRecvBuff = NULL;
+        }
+
         free(g_UVCVideoBuffer);
 
         g_UVCVideoBuffer = NULL;
@@ -208,8 +215,10 @@ static USBH_StatusTypeDef USBH_UVC_ClassRequest(USBH_HandleTypeDef *phost)
 
 static USBH_StatusTypeDef USBH_UVC_Process (USBH_HandleTypeDef *phost)
 {
-    UVC_HandleTypeDef        *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
-    USBH_StatusTypeDef        status = USBH_BUSY;
+    UVC_HandleTypeDef      *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
+    USBH_StatusTypeDef      status = USBH_BUSY;
+    static uint8_t          i = 0;
+    uint8_t                *u8_recvBuff = NULL;
 
     if (UVC_Handle->u8_startUVCFlag == USB_UVC_SWITCH_PIXEL)
     {
@@ -227,6 +236,27 @@ static USBH_StatusTypeDef USBH_UVC_Process (USBH_HandleTypeDef *phost)
 
     switch (UVC_Handle->uvc_state)
     {
+    case UVC_STATE_GET_ATTR:
+        while ((((1<<i)&(UVC_Handle->u32_uvcAttributeMask)) != (1<<i))&&
+                (i < USB_UVC_PARAM_MAX_NUM))
+        {
+            i++;
+        }
+
+        if (i < USB_UVC_PARAM_MAX_NUM)
+        {
+            if (USBH_OK == USBH_UVC_GetUVCAttribution(phost, i))
+            {
+                i++;
+            }
+        }
+        else
+        {
+            i = 0;
+            UVC_Handle->uvc_state = UVC_STATE_PROBE;
+        }
+
+        break;
     case UVC_STATE_PROBE:
         if (USBH_OK == USBH_UVC_Probe(phost))
         {
@@ -234,13 +264,27 @@ static USBH_StatusTypeDef USBH_UVC_Process (USBH_HandleTypeDef *phost)
             UVC_Handle->uvc_probeState      = UVC_PROBE_STATE_GET_CUR;
             UVC_Handle->probeCount          = 0;
         }
+
         break;
 
     case UVC_STATE_COMMIT:
         if (USBH_OK == USBH_UVC_Commit(phost))
         {
-            UVC_Handle->uvc_state           = UVC_STATE_ERROR;
+            UVC_Handle->uvc_state           = UVC_STATE_DEFAULT;
         }
+
+        break;
+
+    case UVC_STATE_SET_ATTR:
+        if (USBH_OK == USBH_UVC_SetUVCAttribution(phost))
+        {
+            u8_recvBuff = USBH_GetRecvBuffer(phost);
+
+            USBH_IsocReceiveData(phost, u8_recvBuff, UVC_VIDEO_MAX_SIZE_PER_SOF, UVC_Handle->VideoPipe[UVC_Handle->uvc_format]);
+
+            UVC_Handle->uvc_state           = UVC_STATE_DEFAULT;
+        }
+
         break;
 
     default:
@@ -256,438 +300,6 @@ static USBH_StatusTypeDef USBH_UVC_SOFProcess (USBH_HandleTypeDef *phost)
     return USBH_OK;
 }
 
-
-static USBH_StatusTypeDef USBH_UVC_GetCSParam(USBH_HandleTypeDef *phost)
-{
-    UVC_HandleTypeDef        *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
-    USBH_StatusTypeDef        status = USBH_BUSY;
-
-    switch (UVC_Handle->uvc_getParamState)
-    {
-    case UVC_PARAM_TYPE_GET_LEN:
-        phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
-        phost->Control.setup.b.bRequest = UVC_GET_LEN;
-        phost->Control.setup.b.wValue.w = (uint16_t)((UVC_Handle->uvc_CSCount)<<8);
-        phost->Control.setup.b.wIndex.w = 0x0300;
-        phost->Control.setup.b.wLength.w = 0x0002;
-
-        if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)g_req_mem , 8))
-        {
-            UVC_Handle->uvc_getParamState = UVC_PARAM_TYPE_GET_INFO;
-        }
-        break;
-
-    case UVC_PARAM_TYPE_GET_INFO:
-        phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
-        phost->Control.setup.b.bRequest = UVC_GET_INFO;
-        phost->Control.setup.b.wValue.w = (uint16_t)((UVC_Handle->uvc_CSCount)<<8);
-        phost->Control.setup.b.wIndex.w = 0x0300;
-        phost->Control.setup.b.wLength.w = 0x0001;
-
-        if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)g_req_mem, 8))
-        {
-            UVC_Handle->uvc_getParamState = UVC_PARAM_TYPE_GET_MIN;
-        }
-        break;
-
-    case UVC_PARAM_TYPE_GET_MIN:
-        phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
-        phost->Control.setup.b.bRequest = UVC_GET_MIN;
-        phost->Control.setup.b.wValue.w = (uint16_t)((UVC_Handle->uvc_CSCount)<<8);
-        phost->Control.setup.b.wIndex.w = 0x0300;
-
-        if (UVC_Handle->uvc_CSCount == 1)
-        {
-            phost->Control.setup.b.wLength.w = 0x0004;
-        }
-        else if (UVC_Handle->uvc_CSCount == 2)
-        {
-            phost->Control.setup.b.wLength.w = 0x0008;
-        }
-        else
-        {
-            phost->Control.setup.b.wLength.w = 0x000B;
-        }
-
-        if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)g_req_mem, 8))
-        {
-            UVC_Handle->uvc_getParamState = UVC_PARAM_TYPE_GET_MAX;
-        }
-
-        break;
-        
-    case UVC_PARAM_TYPE_GET_MAX:
-        phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
-        phost->Control.setup.b.bRequest = UVC_GET_MAX;
-        phost->Control.setup.b.wValue.w = (uint16_t)((UVC_Handle->uvc_CSCount)<<8);
-        phost->Control.setup.b.wIndex.w = 0x0300;
-
-        if (UVC_Handle->uvc_CSCount == 1)
-        {
-            phost->Control.setup.b.wLength.w = 0x0004;
-        }
-        else if (UVC_Handle->uvc_CSCount == 2)
-        {
-            phost->Control.setup.b.wLength.w = 0x0008;
-        }
-        else
-        {
-            phost->Control.setup.b.wLength.w = 0x000B;
-        }
-
-        if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)g_req_mem, 8))
-        {
-            UVC_Handle->uvc_getParamState = UVC_PARAM_TYPE_GET_RES;
-        }
-
-        break;
-
-    case UVC_PARAM_TYPE_GET_RES:
-        phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
-        phost->Control.setup.b.bRequest = UVC_GET_RES;
-        phost->Control.setup.b.wValue.w = (uint16_t)((UVC_Handle->uvc_CSCount)<<8);
-        phost->Control.setup.b.wIndex.w = 0x0300;
-
-        if (UVC_Handle->uvc_CSCount == 1)
-        {
-            phost->Control.setup.b.wLength.w = 0x0004;
-        }
-        else if (UVC_Handle->uvc_CSCount == 2)
-        {
-            phost->Control.setup.b.wLength.w = 0x0008;
-        }
-        else
-        {
-            phost->Control.setup.b.wLength.w = 0x000B;
-        }
-
-        if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)g_req_mem, 8))
-        {
-            UVC_Handle->uvc_getParamState = UVC_PARAM_TYPE_GET_DEF;
-        }
-
-        break;
-
-    case UVC_PARAM_TYPE_GET_DEF:
-        phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
-        phost->Control.setup.b.bRequest = UVC_GET_DEF;
-        phost->Control.setup.b.wValue.w = (uint16_t)((UVC_Handle->uvc_CSCount)<<8);
-        phost->Control.setup.b.wIndex.w = 0x0300;
-
-        if (UVC_Handle->uvc_CSCount == 1)
-        {
-            phost->Control.setup.b.wLength.w = 0x0004;
-        }
-        else if (UVC_Handle->uvc_CSCount == 2)
-        {
-            phost->Control.setup.b.wLength.w = 0x0008;
-        }
-        else
-        {
-            phost->Control.setup.b.wLength.w = 0x000B;
-        }
-
-        if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)g_req_mem, 8))
-        {
-            UVC_Handle->uvc_CSCount++;
-
-            if (UVC_Handle->uvc_CSCount >= 6)
-            {
-                status  = USBH_OK;
-            }
-            else
-            {
-                UVC_Handle->uvc_getParamState = UVC_PARAM_TYPE_GET_LEN;
-            }
-        }
-
-        break;
-
-    default:
-        break;
-
-    }
-
-    return status;
-}
-
-
-static uint32_t USBH_UVC_GetBrightness(USBH_HandleTypeDef *phost,
-                                      UVC_GetParamTypeDef paramType)
-{
-    UVC_HandleTypeDef        *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
-    uint32_t                  ret = 0xFFFFFFFF;
-
-    phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
-    phost->Control.setup.b.wValue.w = 0x0200;
-    phost->Control.setup.b.wIndex.w = 0x0200;
-    phost->Control.setup.b.bRequest = paramType;
-
-    if (UVC_PARAM_TYPE_GET_INFO == paramType)
-    {
-        phost->Control.setup.b.wLength.w = 0x0001;
-    }
-    else
-    {
-        phost->Control.setup.b.wLength.w = 0x0002;
-    }
-
-    memset((void *)g_req_mem, 0, 8);
-
-    if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)g_req_mem, 8))
-    {
-        ret = LE32(g_req_mem);
-    }
-
-    return ret;
-}
-
-
-static uint32_t USBH_UVC_GetContrast(USBH_HandleTypeDef *phost,
-                                    UVC_GetParamTypeDef paramType)
-{
-    UVC_HandleTypeDef        *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
-    uint32_t                  ret = 0xFFFFFFFF;
-
-    phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
-    phost->Control.setup.b.wValue.w = 0x0300;
-    phost->Control.setup.b.wIndex.w = 0x0200;
-    phost->Control.setup.b.bRequest = paramType;
-
-    if (UVC_PARAM_TYPE_GET_INFO == paramType)
-    {
-        phost->Control.setup.b.wLength.w = 0x0001;
-    }
-    else
-    {
-        phost->Control.setup.b.wLength.w = 0x0002;
-    }
-
-    memset((void *)g_req_mem, 0, 8);
-
-    if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)g_req_mem, 8))
-    {
-        ret = LE32(g_req_mem);
-    }
-
-    return ret;
-}
-
-
-static uint32_t USBH_UVC_GetHUE(USBH_HandleTypeDef *phost,
-                                 UVC_GetParamTypeDef paramType)
-{
-    UVC_HandleTypeDef        *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
-    uint32_t                  ret = 0xFFFFFFFF;
-
-    phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
-    phost->Control.setup.b.wValue.w = 0x0600;
-    phost->Control.setup.b.wIndex.w = 0x0200;
-    phost->Control.setup.b.bRequest = paramType;
-
-    if (UVC_PARAM_TYPE_GET_INFO == paramType)
-    {
-        phost->Control.setup.b.wLength.w = 0x0001;
-    }
-    else
-    {
-        phost->Control.setup.b.wLength.w = 0x0002;
-    }
-
-    memset((void *)g_req_mem, 0, 8);
-
-    if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)g_req_mem, 8))
-    {
-        ret = LE32(g_req_mem);
-    }
-
-    return ret;
-}
-
-
-static uint32_t USBH_UVC_GetSaturation(USBH_HandleTypeDef *phost,
-                                      UVC_GetParamTypeDef paramType)
-{
-    UVC_HandleTypeDef        *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
-    uint32_t                  ret = 0xFFFFFFFF;
-
-    phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
-    phost->Control.setup.b.wValue.w = 0x0700;
-    phost->Control.setup.b.wIndex.w = 0x0200;
-    phost->Control.setup.b.bRequest = paramType;
-
-    if (UVC_PARAM_TYPE_GET_INFO == paramType)
-    {
-        phost->Control.setup.b.wLength.w = 0x0001;
-    }
-    else
-    {
-        phost->Control.setup.b.wLength.w = 0x0002;
-    }
-
-    memset((void *)g_req_mem, 0, 8);
-
-    if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)g_req_mem, 8))
-    {
-        ret = LE32(g_req_mem);
-    }
-
-    return ret;
-}
-
-
-static uint32_t USBH_UVC_GetSharpness(USBH_HandleTypeDef *phost,
-                                      UVC_GetParamTypeDef paramType)
-{
-    UVC_HandleTypeDef        *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
-    uint32_t                  ret = 0xFFFFFFFF;
-
-    phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
-    phost->Control.setup.b.wValue.w = 0x0800;
-    phost->Control.setup.b.wIndex.w = 0x0200;
-    phost->Control.setup.b.bRequest = paramType;
-
-    if (UVC_PARAM_TYPE_GET_INFO == paramType)
-    {
-        phost->Control.setup.b.wLength.w = 0x0001;
-    }
-    else
-    {
-        phost->Control.setup.b.wLength.w = 0x0002;
-    }
-
-    memset((void *)g_req_mem, 0, 8);
-
-    if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)g_req_mem, 8))
-    {
-        ret = LE32(g_req_mem);
-    }
-
-    return ret;
-}
-
-
-static uint32_t USBH_UVC_GetGamma(USBH_HandleTypeDef *phost,
-                                   UVC_GetParamTypeDef paramType)
-{
-    UVC_HandleTypeDef        *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
-    uint32_t                  ret = 0xFFFFFFFF;
-
-    phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
-    phost->Control.setup.b.wValue.w = 0x0900;
-    phost->Control.setup.b.wIndex.w = 0x0200;
-    phost->Control.setup.b.bRequest = paramType;
-
-    if (UVC_PARAM_TYPE_GET_INFO == paramType)
-    {
-        phost->Control.setup.b.wLength.w = 0x0001;
-    }
-    else
-    {
-        phost->Control.setup.b.wLength.w = 0x0002;
-    }
-
-    memset((void *)g_req_mem, 0, 8);
-
-    if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)g_req_mem, 8))
-    {
-        ret = LE32(g_req_mem);
-    }
-
-    return ret;
-}
-
-
-static uint32_t USBH_UVC_GetWhiteTemp(USBH_HandleTypeDef *phost,
-                                      UVC_GetParamTypeDef paramType)
-{
-    UVC_HandleTypeDef        *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
-    uint32_t                  ret = 0xFFFFFFFF;
-
-    phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
-    phost->Control.setup.b.wValue.w = 0x0a00;
-    phost->Control.setup.b.wIndex.w = 0x0200;
-    phost->Control.setup.b.bRequest = paramType;
-
-    if (UVC_PARAM_TYPE_GET_INFO == paramType)
-    {
-        phost->Control.setup.b.wLength.w = 0x0001;
-    }
-    else
-    {
-        phost->Control.setup.b.wLength.w = 0x0002;
-    }
-
-    memset((void *)g_req_mem, 0, 8);
-
-    if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)g_req_mem, 8))
-    {
-        ret = LE32(g_req_mem);
-    }
-
-    return ret;
-}
-
-
-static uint32_t USBH_UVC_GetBack(USBH_HandleTypeDef *phost,
-                                  UVC_GetParamTypeDef paramType)
-{
-    UVC_HandleTypeDef        *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
-    uint32_t                  ret = 0xFFFFFFFF;
-
-    phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
-    phost->Control.setup.b.wValue.w = 0x0100;
-    phost->Control.setup.b.wIndex.w = 0x0200;
-    phost->Control.setup.b.bRequest = paramType;
-
-    if (UVC_PARAM_TYPE_GET_INFO == paramType)
-    {
-        phost->Control.setup.b.wLength.w = 0x0001;
-    }
-    else
-    {
-        phost->Control.setup.b.wLength.w = 0x0002;
-    }
-
-    if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)g_req_mem, 8))
-    {
-        ret = LE32(g_req_mem);
-    }
-
-    return ret;
-}
-
-
-static uint32_t USBH_UVC_GetPowerLine(USBH_HandleTypeDef *phost,
-                                      UVC_GetParamTypeDef paramType)
-{
-    UVC_HandleTypeDef        *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
-    uint32_t                  ret = 0xFFFFFFFF;
-
-    phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
-    phost->Control.setup.b.wValue.w = 0x0500;
-    phost->Control.setup.b.wIndex.w = 0x0200;
-    phost->Control.setup.b.bRequest = paramType;
-
-    if (UVC_PARAM_TYPE_GET_INFO == paramType)
-    {
-        phost->Control.setup.b.wLength.w = 0x0001;
-    }
-    else
-    {
-        phost->Control.setup.b.wLength.w = 0x0002;
-    }
-
-    memset((void *)g_req_mem, 0, 8);
-
-    if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)g_req_mem, 8))
-    {
-        ret = LE32(g_req_mem);
-    }
-
-    return ret;
-
-}
 
 static USBH_StatusTypeDef USBH_UVC_Probe(USBH_HandleTypeDef *phost)
 {
@@ -901,11 +513,12 @@ uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost,
     UVC_HandleTypeDef          *UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
     uint8_t                    *u8_baseAddr;
 
-    UVC_Handle->probeCount          = 0;
-    UVC_Handle->u8_selFrameIndex    = u8_frameIndex;
-    UVC_Handle->u8_selFormatIndex   = u8_formatIndex;
-    UVC_Handle->uvc_format          = uvc_format;
-    UVC_Handle->u8_selInterface     = g_stUVCSupportedFormatInterface[uvc_format].bInterfaceNumber;
+    UVC_Handle->probeCount              = 0;
+    UVC_Handle->u8_selFrameIndex        = u8_frameIndex;
+    UVC_Handle->u8_selFormatIndex       = u8_formatIndex;
+    UVC_Handle->uvc_format              = uvc_format;
+    UVC_Handle->u8_selInterface         = g_stUVCSupportedFormatInterface[uvc_format].bInterfaceNumber;
+    UVC_Handle->u32_uvcAttributeMask    = USBH_UVC_GetUVCAttributionMask();
 
     if (UVC_Handle->u8_startUVCFlag == USB_UVC_STARTED)
     {
@@ -926,6 +539,24 @@ uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost,
 
             return 1;
         }
+
+        memset((void *)g_UVCVideoBuffer, 0, sizeof(USBH_UVCFrameBufferTypeDef));
+
+        if (uvc_format == UVC_SUPPORTED_FORMAT_FRAME_BASED)
+        {
+            g_UVCVideoBuffer->u8_frameBasedRecvBuff = (uint8_t *)malloc(sizeof(UVC_VIDEO_MAX_SIZE_PER_SOF));
+
+            if (g_UVCVideoBuffer->u8_frameBasedRecvBuff == NULL)
+            {
+                free(g_UVCVideoBuffer);
+
+                g_UVCVideoBuffer = NULL;
+
+                dlog_error("malloc u8_frameBasedRecvBuff error");
+
+                return 1;
+            }
+        }
     }
 
     if (uvc_format == UVC_SUPPORTED_FORMAT_UNCOMPRESSED)
@@ -934,13 +565,9 @@ uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost,
 
         dlog_info("g_u32UVCVideoBuffSizePerFrame: %d", g_u32UVCVideoBuffSizePerFrame);
     }
-    else
-    {
-        g_UVCVideoBuffer->u8_frameBasedRecvBuff = (uint8_t *)malloc(sizeof(UVC_VIDEO_MAX_SIZE_PER_SOF));
-    }
 
     g_UVCVideoBuffer->u32_rawDataLen    = 0;
-    g_UVCVideoBuffer->u8_rawData        = (uint8_t *)0x4405A7F4;
+    g_UVCVideoBuffer->u8_rawData        = (uint8_t *)0x44059C00;
 
     g_stUVCUserInterface.u32_frameIndex    = 0;
     g_stUVCUserInterface.u32_frameLen      = 0;
@@ -950,7 +577,9 @@ uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost,
     SRAM_SKY_EnableBypassVideoConfig(0);
 
     UVC_Handle->uvc_probeState      = UVC_PROBE_STATE_GET_CUR;
-    UVC_Handle->uvc_state           = UVC_STATE_PROBE;
+    //UVC_Handle->uvc_state           = UVC_STATE_PROBE;
+    UVC_Handle->uvc_state           = UVC_STATE_GET_ATTR;
+    UVC_Handle->uvc_getParamState   = UVC_PARAM_TYPE_GET_INFO;
 
     return 0;
 }
@@ -1060,29 +689,21 @@ static void USBH_UVC_UrbDone(USBH_HandleTypeDef *phost)
                 memcpy((void *)(stUVCFrameBuffer->u8_rawData + stUVCFrameBuffer->u32_rawDataLen),
                        (void *)(u8_recvBuff + UVC_HEADER_SIZE),
                        u32_recvSize);
-                
+
                 stUVCFrameBuffer->u32_rawDataLen += u32_recvSize;
 
-                if (UVC_HEADER_FRAME_END != (UVC_HEADER_FRAME_END & isLastPacket))
+                if (UVC_HEADER_FRAME_END == (UVC_HEADER_FRAME_END & isLastPacket))
                 {
-                    u32_frameNumber++;
-
                     memcpy((void *)bypass_address,
                            (void *)(stUVCFrameBuffer->u8_rawData),
                            stUVCFrameBuffer->u32_rawDataLen);
-                    
-                    bypass_address += stUVCFrameBuffer->u32_rawDataLen;
-                    
+
                     if (bypass_address >= (uint8_t *)0xB1600000)
                     {
                         bypass_address = (uint8_t *)0xB1000000;
                     }
 
-                    g_stUVCUserInterface.u8_userWaiting = UVC_USER_GET_FRAME_FINISHED;
-                    g_stUVCUserInterface.u32_frameIndex = u32_frameNumber;
-                    g_stUVCUserInterface.u32_frameLen   = stUVCFrameBuffer->u32_rawDataLen;
-
-                    stUVCFrameBuffer->u32_rawDataLen    = 0;
+                    stUVCFrameBuffer->u32_rawDataLen = 0;
                 }
             }
         }
@@ -1410,7 +1031,6 @@ static void USBH_ParseProcessingUnitDesc(uint8_t * buf)
 
     g_stProcessingUnitDesc.iProcessing          = *(uint8_t  *) (buf + (8 + i));
     g_stProcessingUnitDesc.bmVideoStandards     = *(uint8_t  *) (buf + (9 + i));
-
 }
 
 
@@ -1597,26 +1217,6 @@ uint32_t USBH_UVC_GetExtUnitControls(void)
 }
 
 
-uint32_t USBH_UVC_ProcUnitParamHandler(USBH_HandleTypeDef *phost, uint8_t index, UVC_GetParamTypeDef enParamType)
-{
-    uint32_t      timeout = 0;
-    if ((index < 16)&&
-        (hUsbhUVCParamHandler[index] != NULL))
-    {
-        while (0xFFFFFFFF == hUsbhUVCParamHandler[index](phost, enParamType))
-        {
-            timeout++;
-
-            if (timeout >= 200000)
-            {
-                dlog_error("get uvc param timeout");
-                break;
-            }
-        }
-    }
-}
-
-
 USBH_UVCFrameBufferTypeDef *USBH_GetFrameBuffer(void)
 {
     return g_UVCVideoBuffer;
@@ -1640,8 +1240,6 @@ uint8_t *USBH_GetRecvBuffer(USBH_HandleTypeDef *phost)
     {
         return g_UVCVideoBuffer->u8_frameBasedRecvBuff;
     }
-
-    
 }
 
 
@@ -1708,4 +1306,293 @@ uint8_t USBH_UVC_GetFrameFrameNum(USBH_HandleTypeDef *phost)
     }
 
 }
+
+uint32_t USBH_UVC_GetUVCAttributionMask(void)
+{
+    uint8_t         i;
+    uint32_t        ret = 0;
+
+    for (i = 0; i < g_stProcessingUnitDesc.bControlSize; i++)
+    {
+        ret += (g_stProcessingUnitDesc.bmControls[i] << (i << 3));
+    }
+
+    return ret;
+}
+
+
+static int32_t USBH_UVC_ExtractValidData(int32_t *data, uint8_t dataLen)
+{
+    uint8_t         i;
+    uint32_t        negtive_check = 0x80;
+    int32_t         temp;
+
+    if (dataLen > sizeof(int32_t))
+    {
+        dataLen = sizeof(int32_t);
+    }
+
+    negtive_check       <<= ((dataLen - 1) << 3);
+
+    temp = *data;
+
+    /* negtive value */
+    if (temp &= negtive_check)
+    {
+        /* set high bits 1 */
+        *data |= (0xFFFFFFFF - (negtive_check - 1));
+    }
+    /* positive value */
+    else
+    {
+        /* set high bits 0 */
+        *data &= (0xFFFFFFFF >> ((sizeof(int32_t) - dataLen) << 3));
+    }
+}
+
+
+static USBH_StatusTypeDef USBH_UVC_GetUVCAttribution(USBH_HandleTypeDef *phost, uint8_t index)
+{
+    UVC_HandleTypeDef        *UVC_Handle;
+    USBH_StatusTypeDef        status     = USBH_BUSY;
+    uint8_t                   i;
+
+    UVC_Handle =  (UVC_HandleTypeDef *) phost->pActiveClass->pData;
+
+    phost->Control.setup.b.bmRequestType = USB_D2H | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
+    phost->Control.setup.b.wValue.w = (g_stUVCAttrCtrl[index].selector << 8);
+    phost->Control.setup.b.wIndex.w = (g_stProcessingUnitDesc.bUnitID << 8);
+    phost->Control.setup.b.wLength.w = g_stUVCAttrCtrl[index].len;
+
+    switch (UVC_Handle->uvc_getParamState)
+    {
+    case UVC_PARAM_TYPE_GET_INFO:
+        if (g_stUVCAttrCtrl[index].info != 0)
+        {
+            phost->Control.setup.b.bRequest = UVC_GET_INFO;
+
+            if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)(&(g_stUVCAttrCtrl[index].info)) , phost->Control.setup.b.wLength.w))
+            {
+                USBH_UVC_ExtractValidData(&(g_stUVCAttrCtrl[index].info), g_stUVCAttrCtrl[index].len);
+
+                UVC_Handle->uvc_getParamState = UVC_PARAM_TYPE_GET_MIN;
+            }
+        }
+        else
+        {
+            UVC_Handle->uvc_getParamState = UVC_PARAM_TYPE_GET_MIN;
+        }
+
+        break;
+
+    case UVC_PARAM_TYPE_GET_MIN:
+        if (g_stUVCAttrCtrl[index].min!= 0)
+        {
+            phost->Control.setup.b.bRequest = UVC_GET_MIN;
+
+            if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)(&(g_stUVCAttrCtrl[index].min)) , phost->Control.setup.b.wLength.w))
+            {
+                USBH_UVC_ExtractValidData(&(g_stUVCAttrCtrl[index].min), g_stUVCAttrCtrl[index].len);
+
+                UVC_Handle->uvc_getParamState = UVC_PARAM_TYPE_GET_MAX;
+            }
+        }
+        else
+        {
+            UVC_Handle->uvc_getParamState = UVC_PARAM_TYPE_GET_MAX;
+        }
+
+        break;
+
+    case UVC_PARAM_TYPE_GET_MAX:
+        if (g_stUVCAttrCtrl[index].max!= 0)
+        {
+            phost->Control.setup.b.bRequest = UVC_GET_MAX;
+
+            if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)(&(g_stUVCAttrCtrl[index].max)) , phost->Control.setup.b.wLength.w))
+            {
+                USBH_UVC_ExtractValidData(&(g_stUVCAttrCtrl[index].max), g_stUVCAttrCtrl[index].len);
+
+                UVC_Handle->uvc_getParamState = UVC_PARAM_TYPE_GET_RES;
+            }
+        }
+        else
+        {
+            UVC_Handle->uvc_getParamState = UVC_PARAM_TYPE_GET_RES;
+        }
+
+        break;
+
+    case UVC_PARAM_TYPE_GET_RES:
+        if (g_stUVCAttrCtrl[index].res != 0)
+        {
+            phost->Control.setup.b.bRequest = UVC_GET_RES;
+
+            if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)(&(g_stUVCAttrCtrl[index].res)) , phost->Control.setup.b.wLength.w))
+            {
+                USBH_UVC_ExtractValidData(&(g_stUVCAttrCtrl[index].res), g_stUVCAttrCtrl[index].len);
+
+                UVC_Handle->uvc_getParamState = UVC_PARAM_TYPE_GET_DEF;
+            }
+        }
+        else
+        {
+            UVC_Handle->uvc_getParamState = UVC_PARAM_TYPE_GET_DEF;
+        }
+
+        break;
+
+    case UVC_PARAM_TYPE_GET_DEF:
+        if (g_stUVCAttrCtrl[index].def!= 0)
+        {
+            phost->Control.setup.b.bRequest = UVC_GET_DEF;
+
+            if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)(&(g_stUVCAttrCtrl[index].def)) , phost->Control.setup.b.wLength.w))
+            {
+                USBH_UVC_ExtractValidData(&(g_stUVCAttrCtrl[index].def), g_stUVCAttrCtrl[index].len);
+
+                UVC_Handle->uvc_getParamState = UVC_PARAM_TYPE_GET_INFO;
+
+                status = USBH_OK;
+            }
+        }
+        else
+        {
+            UVC_Handle->uvc_getParamState = UVC_PARAM_TYPE_GET_INFO;
+
+            status = USBH_OK;
+        }
+
+        break;
+
+    default:
+        dlog_error("no this attribute");
+        break;
+
+    }
+
+    return status;
+}
+
+
+static USBH_StatusTypeDef USBH_UVC_SetUVCAttribution(USBH_HandleTypeDef *phost)
+{
+    UVC_HandleTypeDef        *UVC_Handle;
+    USBH_StatusTypeDef        status     = USBH_BUSY;
+
+    UVC_Handle =  (UVC_HandleTypeDef *) phost->pActiveClass->pData;
+
+    phost->Control.setup.b.bmRequestType = USB_H2D | USB_REQ_RECIPIENT_INTERFACE | USB_REQ_TYPE_CLASS;
+    phost->Control.setup.b.bRequest = UVC_SET_CUR;
+    phost->Control.setup.b.wValue.w = (g_stUVCAttrCtrl[UVC_Handle->u8_setAttrIndex].selector << 8);
+    phost->Control.setup.b.wIndex.w = (g_stProcessingUnitDesc.bUnitID << 8);
+    phost->Control.setup.b.wLength.w = g_stUVCAttrCtrl[UVC_Handle->u8_setAttrIndex].len;
+
+    if (USBH_OK == USBH_CtlReq(phost, (uint8_t *)(&(g_stUVCAttrCtrl[UVC_Handle->u8_setAttrIndex].cur)) , phost->Control.setup.b.wLength.w))
+    {
+        status = USBH_OK;
+    }
+
+    return status;
+}
+
+
+int8_t USBH_UVC_SetUVCAttrInterface(USBH_HandleTypeDef *phost, uint8_t attr_index, int32_t attr_value)
+{
+    UVC_HandleTypeDef      *UVC_Handle;
+    uint8_t                 i;
+
+    UVC_Handle =  (UVC_HandleTypeDef *) phost->pActiveClass->pData;
+
+    /* check whether support for this attribute */
+    if (((1<<attr_index) & UVC_Handle->u32_uvcAttributeMask) == 0)
+    {
+        dlog_error("no support for this attrinute");
+
+        return -1;
+    }
+
+    /* check value in the range from min to max */
+    if (attr_value > g_stUVCAttrCtrl[UVC_Handle->u8_setAttrIndex].max)
+    {
+        dlog_error("exceed the max value: %d", g_stUVCAttrCtrl[UVC_Handle->u8_setAttrIndex].max);
+
+        g_stUVCAttrCtrl[UVC_Handle->u8_setAttrIndex].cur = g_stUVCAttrCtrl[UVC_Handle->u8_setAttrIndex].max;
+    }
+    else if (attr_value < g_stUVCAttrCtrl[UVC_Handle->u8_setAttrIndex].min)
+    {
+        dlog_error("exceed the min value: %d", g_stUVCAttrCtrl[UVC_Handle->u8_setAttrIndex].min);
+
+        g_stUVCAttrCtrl[UVC_Handle->u8_setAttrIndex].cur = g_stUVCAttrCtrl[UVC_Handle->u8_setAttrIndex].min;
+    }
+    else
+    {
+        g_stUVCAttrCtrl[UVC_Handle->u8_setAttrIndex].cur = attr_value;
+    }
+
+    UVC_Handle =  (UVC_HandleTypeDef *) phost->pActiveClass->pData;
+
+    /* attribute set should be in the interval of two frames, so wait for a frame end */
+    UVC_Handle->u8_waitFrameEnd     = 1;
+    UVC_Handle->u8_setAttrIndex     = attr_index;
+    UVC_Handle->uvc_state           = UVC_STATE_SET_ATTR;
+
+    return 0;
+}
+
+
+int8_t USBH_UVC_GetUVCAttrInterface(USBH_HandleTypeDef *phost,
+                                   uint8_t attr_index,
+                                   uint8_t attr_type,
+                                   int32_t *uvc_attr_value)
+{
+    UVC_HandleTypeDef      *UVC_Handle;
+
+    UVC_Handle =  (UVC_HandleTypeDef *)phost->pActiveClass->pData;
+
+    /* check whether support for this attribute */
+    if (((1<<attr_index) & UVC_Handle->u32_uvcAttributeMask) == 0)
+    {
+        dlog_error("no support for this attrinute");
+
+        return -1;
+    }
+
+    switch (attr_type)
+    {
+    case UVC_PARAM_TYPE_GET_CUR:
+        *uvc_attr_value  = g_stUVCAttrCtrl[attr_index].cur;
+        break;
+
+    case UVC_PARAM_TYPE_GET_MIN:
+        *uvc_attr_value  = g_stUVCAttrCtrl[attr_index].min;
+        break;
+
+    case UVC_PARAM_TYPE_GET_MAX:
+        *uvc_attr_value  = g_stUVCAttrCtrl[attr_index].max;
+        break;
+
+    case UVC_PARAM_TYPE_GET_RES:
+        *uvc_attr_value  = g_stUVCAttrCtrl[attr_index].res;
+        break;
+
+    case UVC_PARAM_TYPE_GET_LEN:
+        *uvc_attr_value  = g_stUVCAttrCtrl[attr_index].len;
+        break;
+
+    case UVC_PARAM_TYPE_GET_INFO:
+        *uvc_attr_value  = g_stUVCAttrCtrl[attr_index].info;
+        break;
+
+    case UVC_PARAM_TYPE_GET_DEF:
+        *uvc_attr_value  = g_stUVCAttrCtrl[attr_index].def;
+        break;
+
+    default:
+        break;
+    }
+
+    return 0;
+}
+
 

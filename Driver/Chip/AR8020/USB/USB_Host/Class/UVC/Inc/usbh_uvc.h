@@ -68,25 +68,49 @@ extern USBH_ClassTypeDef            UVC_Class;
 #define USB_UVC_RECV_BUFFER_ADDR            0x21000000
 #define USB_UVC_VIDEO_BUFFER_ADDR           0x21000800
 
-#define USB_UVC_PARAM_BRIGHTNESS                0x0001
-#define USB_UVC_PARAN_CONTRAST                  0x0002
-#define USB_UVC_PARAN_HUE                       0x0004
-#define USB_UVC_PARAN_SATURATION                0x0008
-#define USB_UVC_PARAN_SHARPNESS                 0x0010
-#define USB_UVC_PARAN_GAMMA                     0x0020
-#define USB_UVC_PARAN_WHITE_BALANCE_TEMP        0x0040
-#define USB_UVC_PARAN_WHITE_BALANCE_COMP        0x0080
-#define USB_UVC_PARAN_BACKLIGHT_COMP            0x0100
-#define USB_UVC_PARAN_GAIN                      0x0200
-#define USB_UVC_PARAN_PWR_LINE_FREQ             0x0400
-#define USB_UVC_PARAN_HUE_AUTO                  0x0800
-#define USB_UVC_PARAN_WHITE_BALANCE_TEMP_AUTO   0x1000
-#define USB_UVC_PARAN_WHITE_BALANCE_COMP_AUTO   0x2000
-#define USB_UVC_PARAN_DIGITAL_MULTI             0x4000
-#define USB_UVC_PARAN_DIGITAL_MULTI_LIMIT       0x8000
+#define USB_UVC_STARTED                     0x01
+#define USB_UVC_SWITCH_PIXEL                0x02
 
-#define USB_UVC_STARTED                         0x01
-#define USB_UVC_SWITCH_PIXEL                    0x02
+
+#define USB_UVC_PU_CONTROL_UNDEFINED                0x00
+#define USB_UVC_PU_BACKLIGHT_COMPENSATION_CONTROL   0x01
+#define USB_UVC_PU_BRIGHTNESS_CONTROL               0x02
+#define USB_UVC_PU_CONTRAST_CONTROL                 0x03
+#define USB_UVC_PU_GAIN_CONTROL                     0x04
+#define USB_UVC_PU_POWER_LINE_FREQUENCY_CONTROL     0x05
+#define USB_UVC_PU_HUE_CONTROL                      0x06
+#define USB_UVC_PU_SATURATION_CONTROL               0x07
+#define USB_UVC_PU_SHARPNESS_CONTROL                0x08
+#define USB_UVC_PU_GAMMA_CONTROL                    0x09
+#define USB_UVC_PU_WHITE_BALANCE_TEMP_CONTROL       0x0A
+#define USB_UVC_PU_WHITE_BALANCE_TEMP_AUTO_CONTROL  0x0B
+#define USB_UVC_PU_WHITE_BALANCE_COMP_CONTROL       0x0C
+#define USB_UVC_PU_WHITE_BALANCE_COMP_AUTO_CONTROL  0x0D
+#define USB_UVC_PU_DIGITAL_MULTIPLIER_CONTROL       0x0E
+#define USB_UVC_PU_DIGITAL_MULTIPLIER_LIMIT_CONTROL 0x0F
+#define USB_UVC_PU_HUE_AUTO_CONTROL                 0x10
+
+
+typedef enum
+{
+    USB_UVC_PARAM_BRIGHTNESS                = 0,
+    USB_UVC_PARAM_CONTRAST                  = 1,
+    USB_UVC_PARAM_HUE                       = 2,
+    USB_UVC_PARAM_SATURATION                = 3,
+    USB_UVC_PARAM_SHARPNESS                 = 4,
+    USB_UVC_PARAM_GAMMA                     = 5,
+    USB_UVC_PARAM_WHITE_BALANCE_TEMP        = 6,
+    USB_UVC_PARAM_WHITE_BALANCE_COMP        = 7,
+    USB_UVC_PARAM_BACKLIGHT_COMP            = 8,
+    USB_UVC_PARAM_GAIN                      = 9,
+    USB_UVC_PARAM_PWR_LINE_FREQ             = 10,
+    USB_UVC_PARAM_HUE_AUTO                  = 11,
+    USB_UVC_PARAM_WHITE_BALANCE_TEMP_AUTO   = 12,
+    USB_UVC_PARAM_WHITE_BALANCE_COMP_AUTO   = 13,
+    USB_UVC_PARAM_DIGITAL_MULTI             = 14,
+    USB_UVC_PARAM_DIGITAL_MULTI_LIMIT       = 15,
+    USB_UVC_PARAM_MAX_NUM                   = 16,
+} USB_UVC_PARAM_MASK_INDEX;
 
 
 typedef enum
@@ -99,30 +123,31 @@ typedef enum
 typedef enum
 {
     UVC_STATE_SET_INTERFACE = 0,
+    UVC_STATE_GET_ATTR,
+    UVC_STATE_SET_ATTR,
     UVC_STATE_PROBE,
     UVC_STATE_COMMIT,
     UVC_STATE_VIDEO_PLAY,
-    UVC_STATE_ERROR,
+    UVC_STATE_DEFAULT,
     UVC_PROBE_STATE_GET_CUR,
     UVC_PROBE_STATE_GET_MAX,
     UVC_PROBE_STATE_GET_MIN,
     UVC_PROBE_STATE_SET_CUR,
     UVC_PROBE_STATE_GET_CUR_COMMIT,
     UVC_PROBE_STATE_SET_CUR_COMMIT,
-    UVC_RECV_CTRL_DATA,
-    UVC_RECV_CTRL_OK,
 }
 UVC_StateTypeDef;
 
 typedef enum
 {
+    UVC_PARAM_TYPE_NON       = 0,
     UVC_PARAM_TYPE_GET_CUR   = 0x81,
     UVC_PARAM_TYPE_GET_MIN   = 0x82,
     UVC_PARAM_TYPE_GET_MAX   = 0x83,
     UVC_PARAM_TYPE_GET_RES   = 0x84,
     UVC_PARAM_TYPE_GET_LEN   = 0x85,
     UVC_PARAM_TYPE_GET_INFO  = 0x86,
-    UVC_PARAM_TYPE_GET_DEF   = 0x87,    
+    UVC_PARAM_TYPE_GET_DEF   = 0x87,
 } UVC_GetParamTypeDef;
 
 
@@ -159,6 +184,9 @@ typedef struct _UVC_Process
     UVC_SupportedFormatsDef     uvc_format;
     uint8_t                     u8_formatSupported[UVC_SUPPORTED_FORMAT_NUM];
     uint8_t                     u8_frameNum[UVC_SUPPORTED_FORMAT_NUM];
+    uint8_t                     u8_waitFrameEnd;
+    uint32_t                    u32_uvcAttributeMask;
+    uint8_t                     u8_setAttrIndex;
 }
 UVC_HandleTypeDef;
 
@@ -317,7 +345,18 @@ typedef struct _UVCUserInterface
 } USBH_UVCUserInterface;
 
 
-typedef uint32_t (*USBH_UVC_PARAM_HANDLER)(USBH_HandleTypeDef *phost, UVC_GetParamTypeDef paramType);
+typedef struct
+{
+    int32_t     cur;
+    int32_t     min;
+    int32_t     max;
+    int32_t     res;
+    int32_t     info;
+    int32_t     def;
+    uint16_t    len;
+    uint16_t    selector;
+} USBH_UVCAttrCtrl;
+
 
 
 static USBH_StatusTypeDef USBH_UVC_InterfaceInit (USBH_HandleTypeDef *phost);
@@ -326,25 +365,6 @@ static USBH_StatusTypeDef USBH_UVC_ClassRequest(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_UVC_Process (USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_UVC_SOFProcess (USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_UVC_GetCSParam(USBH_HandleTypeDef *phost);
-
-static uint32_t USBH_UVC_GetBrightness(USBH_HandleTypeDef *phost,
-                                      UVC_GetParamTypeDef paramType);
-static uint32_t USBH_UVC_GetContrast(USBH_HandleTypeDef *phost,
-                                    UVC_GetParamTypeDef paramType);
-static uint32_t USBH_UVC_GetHUE(USBH_HandleTypeDef *phost,
-                                 UVC_GetParamTypeDef paramType);
-static uint32_t USBH_UVC_GetSaturation(USBH_HandleTypeDef *phost,
-                                      UVC_GetParamTypeDef paramType);
-static uint32_t USBH_UVC_GetSharpness(USBH_HandleTypeDef *phost,
-                                      UVC_GetParamTypeDef paramType);
-static uint32_t USBH_UVC_GetGamma(USBH_HandleTypeDef *phost,
-                                   UVC_GetParamTypeDef paramType);
-static uint32_t USBH_UVC_GetWhiteTemp(USBH_HandleTypeDef *phost,
-                                      UVC_GetParamTypeDef paramType);
-static uint32_t USBH_UVC_GetBack(USBH_HandleTypeDef *phost,
-                                  UVC_GetParamTypeDef paramType);
-static uint32_t USBH_UVC_GetPowerLine(USBH_HandleTypeDef *phost,
-                                      UVC_GetParamTypeDef paramType);
 static USBH_StatusTypeDef USBH_UVC_Probe(USBH_HandleTypeDef *phost);
 static USBH_StatusTypeDef USBH_UVC_Commit(USBH_HandleTypeDef *phost);
 uint8_t USBH_UVC_StartView(USBH_HandleTypeDef *phost,
@@ -368,14 +388,20 @@ uint32_t USBH_UVC_GetFrameSize(uint8_t frameIndex);
 static uint32_t USBH_GetFrameDefaultInterval(uint8_t frameIndex, UVC_SupportedFormatsDef uvc_format);
 uint32_t USBH_UVC_GetProcUnitControls(void);
 uint32_t USBH_UVC_GetExtUnitControls(void);
-uint32_t USBH_UVC_ProcUnitParamHandler(USBH_HandleTypeDef *phost, uint8_t index, UVC_GetParamTypeDef enParamType);
 USBH_UVCFrameBufferTypeDef *USBH_GetFrameBuffer(void);
 uint8_t *USBH_GetRecvBuffer(USBH_HandleTypeDef *phost);
 uint8_t USBH_SelAltInterfaceForCommit(uint32_t max_packet_size, USBH_HandleTypeDef *phost);
 uint8_t USBH_UVC_GetFrameUncompNum(USBH_HandleTypeDef *phost);
 uint8_t USBH_UVC_GetFrameFrameNum(USBH_HandleTypeDef *phost);
 uint8_t USBH_UVC_GetVideoEpAddr(UVC_SupportedFormatsDef uvc_format);
-
+uint32_t USBH_UVC_GetUVCAttributionMask(void);
+static USBH_StatusTypeDef USBH_UVC_GetUVCAttribution(USBH_HandleTypeDef *phost, uint8_t index);
+static USBH_StatusTypeDef USBH_UVC_SetUVCAttribution(USBH_HandleTypeDef *phost);
+int8_t USBH_UVC_SetUVCAttrInterface(USBH_HandleTypeDef *phost, uint8_t attr_index, int32_t attr_value);
+int8_t USBH_UVC_GetUVCAttrInterface(USBH_HandleTypeDef *phost,
+                                   uint8_t attr_index,
+                                   uint8_t attr_type,
+                                   int32_t *uvc_attr_value);
 
 extern USBH_UVCUserInterface    g_stUVCUserInterface;
 extern uint8_t                  g_u8UVCPortId;

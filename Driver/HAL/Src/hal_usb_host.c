@@ -385,29 +385,6 @@ uint32_t HAL_USB_GetUVCExtUnitControls(void)
 
 
 /**
-* @brief  get the control param from Processing Unit
-* @param  void
-* @retval   uint32_t, bit maps
-* @note
-*/
-uint32_t HAL_USB_GetProcUnitParam(uint8_t index, uint8_t type)
-{
-    uint8_t         u8_uvcPortId;
-
-    u8_uvcPortId    = HAL_USB_GetUVCPortId();
-
-    if (u8_uvcPortId > HAL_USB_PORT_NUM)
-    {
-        dlog_error("invalid usb port number");
-
-        return 0xFFFFFFFF;
-    }
-
-    USBH_UVC_ProcUnitParamHandler(&hUSBHost[u8_uvcPortId], index, type);
-}
-
-
-/**
 * @brief    configure the USB Controller to enter into TEST MODE
 * @param  void
 * @retval   void
@@ -591,4 +568,59 @@ uint8_t HAL_USB_GetMSCPort(void)
 }
 
 
+HAL_RET_T HAL_USB_HOST_SetUVCAttr(ENUM_HAL_UVC_ATTRIBUTE_INDEX uvc_attr_index,
+                                  int32_t uvc_attr_value)
+{
+    uint8_t     u8_uvcPortId = HAL_USB_PORT_0;
+
+    u8_uvcPortId = HAL_USB_GetUVCPortId();
+
+    if (u8_uvcPortId >= HAL_USB_PORT_NUM)
+    {
+        dlog_error("get uvc port error");
+
+        return HAL_USB_ERR_PORT_INVALID;
+    }
+
+    if (0 != USBH_UVC_SetUVCAttrInterface(&hUSBHost[u8_uvcPortId], (uint8_t)uvc_attr_index, uvc_attr_value))
+    {
+        dlog_error("UVC Attribution not suppoprted");
+
+        return HAL_USB_ERR_USBH_UVC_INVALID_PARAM;
+    }
+
+    return HAL_OK;
+}
+
+
+HAL_RET_T HAL_USB_HOST_GetUVCAttr(ENUM_HAL_UVC_ATTRIBUTE_INDEX uvc_attr_index,
+                                ENUM_HAL_UVC_GET_ATTRIBUTE_TYPE uvc_attr_type,
+                                int32_t *uvc_attr_value)
+{
+    uint8_t     u8_uvcPortId = HAL_USB_PORT_0;
+    int8_t      ret;
+
+    u8_uvcPortId = HAL_USB_GetUVCPortId();
+
+    if (u8_uvcPortId >= HAL_USB_PORT_NUM)
+    {
+        dlog_error("get uvc port error");
+
+        return HAL_USB_ERR_PORT_INVALID;
+    }
+
+    ret = USBH_UVC_GetUVCAttrInterface(&hUSBHost[u8_uvcPortId],
+                                      (uint8_t)uvc_attr_index,
+                                      (uint8_t)uvc_attr_type,
+                                      uvc_attr_value);
+
+    if (ret != 0)
+    {
+        dlog_error("UVC Attribution not suppoprted");
+
+        return HAL_USB_ERR_USBH_UVC_INVALID_PARAM;
+    }
+
+    return HAL_OK;
+}
 
