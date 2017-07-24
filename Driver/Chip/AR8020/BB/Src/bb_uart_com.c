@@ -290,7 +290,7 @@ uint32_t BB_UARTComPacketDataAnalyze(uint8_t *u8_uartRxBuf, uint8_t u8_uartRxLen
 
                 g_BBUartDataBuf[data_buf_index++] = chData;
 
-                if (session_data_type = BB_UART_SESSION_DATA_RT)
+                if (session_data_type == BB_UART_SESSION_DATA_RT)
                 {
                     /* process data */
                     BB_UARTComWriteSessionRxBuffer(session_id, g_BBUartDataBuf, (data_buf_index - BBCOM_UART_SESSION_DATA_HEADER_SIZE));
@@ -319,7 +319,7 @@ uint32_t BB_UARTComPacketDataAnalyze(uint8_t *u8_uartRxBuf, uint8_t u8_uartRxLen
                 /* user data all received */
                 if (data_buf_index == (data_length + 1))
                 {
-                    if (session_data_type = BB_UART_SESSION_DATA_RT)
+                    if (session_data_type == BB_UART_SESSION_DATA_RT)
                     {
                         /* process data */
                         BB_UARTComWriteSessionRxBuffer(session_id, g_BBUartDataBuf, data_length);
