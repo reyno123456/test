@@ -103,8 +103,7 @@ HAL_RET_T HAL_CAN_Send(STRU_HAL_CAN_MSG *st_halCanMsg, uint32_t u32_timeOut)
                  dlog_info("can %dtime out.", st_halCanMsg->e_halCanComponent);
                  return HAL_TIME_OUT;
             }
-
-            HAL_Delay(1);
+            SysTicks_DelayUS(100);
         }
     }
     

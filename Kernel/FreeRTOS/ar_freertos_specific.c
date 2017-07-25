@@ -23,7 +23,7 @@ History:
 #include "cmsis_os.h"
 #include "systicks.h"
 
-#define LOCAL_MAX_TASK_NUM 100
+#define LOCAL_MAX_TASK_NUM 20
 #define LOCAL_HAL_TIMER 21
 #define LOCAL_HAL_TIMER_INTERVEL 100
 

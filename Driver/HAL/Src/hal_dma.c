@@ -73,12 +73,12 @@ HAL_RET_T HAL_DMA_Transfer(uint32_t u32_srcAddr,
 		
 		while( DMA_getStatus(u8_chanIndex) == 0 )
 		{
-                    if ((SysTicks_GetDiff(u32_start, SysTicks_GetTickCount())) >= u32_timeOut)            
-                    {                 
-                        return HAL_TIME_OUT;            
-                    }            
+            if ((SysTicks_GetDiff(u32_start, SysTicks_GetTickCount())) >= u32_timeOut)            
+            {                 
+                return HAL_TIME_OUT;            
+            }            
 
-                    HAL_Delay(1);
+            SysTicks_DelayUS(5);
 		}
 	}
 	

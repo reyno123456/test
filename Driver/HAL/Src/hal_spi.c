@@ -148,7 +148,7 @@ HAL_RET_T HAL_SPI_MasterWriteRead(ENUM_HAL_SPI_COMPONENT e_spiComponent,
                 return HAL_TIME_OUT;
             }
 
-            HAL_Delay(1);
+            SysTicks_DelayUS(5);
         }
     }
     

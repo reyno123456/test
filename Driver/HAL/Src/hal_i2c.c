@@ -168,7 +168,7 @@ HAL_RET_T HAL_I2C_MasterWriteData(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
                  return HAL_TIME_OUT;
             }
 
-            HAL_Delay(1);
+            SysTicks_DelayUS(100);
         }
     }
     
@@ -244,7 +244,7 @@ HAL_RET_T HAL_I2C_MasterReadData(ENUM_HAL_I2C_COMPONENT e_i2cComponent,
                  return HAL_TIME_OUT;
             }
 
-            HAL_Delay(1);
+            SysTicks_DelayUS(100);
         }
     }
 

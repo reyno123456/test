@@ -57,8 +57,8 @@ static void os_message_task2 (void const *args)
 
 void test_os_message(void)
 {
-    osPoolDef(mpool, 16, message_t);
-    osMessageQDef(queue, 16, message_t);
+    osPoolDef(mpool, 16, uint32_t);
+    osMessageQDef(queue, 16, uint32_t);
 
     mpool = osPoolCreate(osPool(mpool));
     queue = osMessageCreate(osMessageQ(queue), NULL);

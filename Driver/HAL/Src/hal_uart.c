@@ -47,7 +47,7 @@ HAL_RET_T HAL_UART_WaitTillIdle(ENUM_HAL_UART_COMPONENT e_uartComponent, uint32_
                 return HAL_UART_ERR_TIMEOUT;
             }
             
-            HAL_Delay(1);
+            SysTicks_DelayUS(100);
         }        
     }
 
