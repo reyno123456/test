@@ -154,6 +154,7 @@ void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
     BB_grd_regs   = &(cfg_addr->bb_grd_configure[0][0]);
 
     context.e_bandsupport = boardCfg->e_bandsupport;
+    context.CH_bandwidth  = BW_10M;  //default to 10M
 
     BB_GetNv();
 
@@ -164,11 +165,11 @@ void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
 
     BB_regs_init(en_mode, boardCfg);
     RF_init(boardCfg, context.en_bbmode);
-
-    BB_softReset(en_mode);
+    RF_CaliProcess(en_mode, boardCfg);
 
     BB_after_RF_cali(en_mode, boardCfg);
 
+    BB_softReset(en_mode);
     //choose the start band
     if ( context.e_bandsupport == RF_2G_5G || context.e_bandsupport == RF_2G )
     {

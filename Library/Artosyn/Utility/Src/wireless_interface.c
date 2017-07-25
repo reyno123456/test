@@ -916,13 +916,7 @@ uint8_t WIRELESS_INTERFACE_READ_RF9363_Handler(void *param, uint8_t id)
         recvMessage->paramData[0] = recvMessage->paramData[0];
         recvMessage->paramData[1] = recvMessage->paramData[1];
         
-        if (HAL_RF8003S_ReadByte(addr, &recvMessage->paramData[2]))
-        {
-            dlog_error("read rf8003s error\n");
-
-            return 1;
-        }
-
+        HAL_RF8003S_ReadByte(addr, &recvMessage->paramData[2]);
         Wireless_InsertMsgIntoReplyBuff(recvMessage, id);
     }
 }
@@ -933,19 +927,12 @@ uint8_t WIRELESS_INTERFACE_READ_RF_REG_Handler(void *param, uint8_t id)
     STRU_WIRELESS_PARAM_CONFIG_MESSAGE     *recvMessage;
     recvMessage = (STRU_WIRELESS_PARAM_CONFIG_MESSAGE *)param;
 
-    dlog_info("ID = %x\n",recvMessage->messageId);
-
     if (WIRELESS_IsInDebugMode() == 1)
     {
         recvMessage->messageId = 0x3A;
         recvMessage->paramLen = 2;
         recvMessage->paramData[0] = recvMessage->paramData[0];
-        if (HAL_RF8003S_ReadByte(recvMessage->paramData[0],&recvMessage->paramData[1]))
-        {
-            dlog_error("read rf8003s error\n");
-
-            return 1;
-        }
+        HAL_RF8003S_ReadByte(recvMessage->paramData[0],&recvMessage->paramData[1]);
 
         Wireless_InsertMsgIntoReplyBuff(recvMessage, id);
     }
