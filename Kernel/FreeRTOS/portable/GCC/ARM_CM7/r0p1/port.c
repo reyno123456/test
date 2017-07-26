@@ -729,6 +729,13 @@ static void vPortEnableVFP( void )
 			The following links provide detailed information:
 			http://www.freertos.org/RTOS-Cortex-M3-M4.html
 			http://www.freertos.org/FAQHelp.html */
+			if (ucCurrentPriority < ucMaxSysCallPriority)
+			{
+				dlog_error("ulCurrentInterrupt: %d, ucCurrentPriority: %d, ucMaxSysCallPriority: %d",
+							ulCurrentInterrupt,
+							ucCurrentPriority,
+							ucMaxSysCallPriority);
+			}
 			configASSERT( ucCurrentPriority >= ucMaxSysCallPriority );
 		}
 

@@ -115,6 +115,7 @@ void InterCore_Init(void)
     InterCore_CopyConfigureFormFlashToSRAM();
     // Interrupt enable
     reg_IrqHandle(VIDEO_GLOBAL2_INTR_RES_VSOC0_VECTOR_NUM, InterCore_IRQ0Handler, NULL);
+    INTR_NVIC_SetIRQPriority(VIDEO_GLOBAL2_INTR_RES_VSOC0_VECTOR_NUM, INTR_NVIC_EncodePriority(NVIC_PRIORITYGROUP_5,INTR_NVIC_PRIORITY_GLOBAL2_INTR_VSOC0,0));
     INTR_NVIC_EnableIRQ(VIDEO_GLOBAL2_INTR_RES_VSOC0_VECTOR_NUM);
     /*
     reg_IrqHandle(VIDEO_GLOBAL2_INTR_RES_VSOC1_VECTOR_NUM, InterCore_IRQ1Handler, NULL);
@@ -180,12 +181,6 @@ uint8_t InterCore_GetMsg(INTER_CORE_MSG_ID* msg_p, uint8_t* buf, uint32_t max_le
 #endif
         if(((msgPtr[i].dataAccessed & dst_filter) == 0) && ((msgPtr[i].enDstCpuID & dst_filter) != 0))
         {
-            // Set the data accessed flag of the current CPU
-            // Add lock to avoid multi CPU conflict
-            Lock((uint32_t*)(&(msgPtr[i].lock)));
-            msgPtr[i].dataAccessed |= dst_filter;
-            __asm volatile ("dsb"); // Sync to SRAM and make sure other CPUs can access the latest data in SRAM
-            UnLock((uint32_t*)(&(msgPtr[i].lock)));
             break;
         }
     }
@@ -206,6 +201,13 @@ uint8_t InterCore_GetMsg(INTER_CORE_MSG_ID* msg_p, uint8_t* buf, uint32_t max_le
     // Retrieve the message data
     *msg_p = msgPtr[i].enMsgID;
     memcpy((void*)buf, (void*)(msgPtr[i].data), (max_length <= sizeof(msgPtr[i].data)) ?  max_length : sizeof(msgPtr[i].data));
+
+    // Set the data accessed flag of the current CPU
+    // Add lock to avoid multi CPU conflict
+    Lock((uint32_t*)(&(msgPtr[i].lock)));
+    msgPtr[i].dataAccessed |= dst_filter;
+    __asm volatile ("dsb"); // Sync to SRAM and make sure other CPUs can access the latest data in SRAM
+    UnLock((uint32_t*)(&(msgPtr[i].lock)));
 
     return 1;
 }
