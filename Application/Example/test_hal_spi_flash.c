@@ -605,13 +605,11 @@ void command_TestWbFlashWrite_loop(char *spi_base, char *addr, char *len)
 
     uint8_t tmp = 0x11;
     uint8_t tmp_read;
-    int j;
-    volatile uint64_t diff = 0;
    
     uint64_t u32_start = SysTicks_GetUsTickCount();
-    for (j=0;j<=256;j++)
+    for (i=0;i<=256;i++)
     {    
-        ret = HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,&tmp, 1,&tmp_read, 1, MAX_TIEM_MS*4);
+        HAL_SPI_MasterWriteRead(SPI_BASE_ADDR,&tmp, 1,&tmp_read, 1, MAX_TIEM_MS*4);
     }
     dlog_info("used %d us", (uint32_t)(SysTicks_GetUsDiff(u32_start, SysTicks_GetUsTickCount())));    
     dlog_output(1000);
