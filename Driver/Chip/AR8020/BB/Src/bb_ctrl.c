@@ -216,9 +216,7 @@ void BB_init(ENUM_BB_MODE en_mode, STRU_BoardCfg *pstru_boardCfg, STRU_CUSTOMER_
     BB_softReset(en_mode);
 
     SYS_EVENT_RegisterHandler(SYS_EVENT_ID_USER_CFG_CHANGE, BB_HandleEventsCallback);
-    dlog_warning("use board cfg: %s", pstru_boardCfg->name);
-    dlog_warning("RC id:0x%x 0x%x 0x%x 0x%x 0x%x",  context.rcid[0], context.rcid[1], context.rcid[2], 
-                                                    context.rcid[3], context.rcid[4]);
+    dlog_warning("use board cfg: %s %d %d", pstru_boardCfg->name, context.e_bandwidth, context.e_curBand);
 }
 
 

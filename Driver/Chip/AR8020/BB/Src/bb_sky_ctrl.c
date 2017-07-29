@@ -457,7 +457,7 @@ static void Sky_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
         }
         sky_calc_dist();
     }
-    else if (SKY_RC_ERR(stru_skystatus.u8_rcStatus))
+    else if (SKY_RC_ERR(stru_skystatus.u8_rcStatus) && context.dev_state != LOCK)
     {
         sky_soft_reset();
     }
@@ -537,6 +537,7 @@ static void Sky_TIM2_6_IRQHandler(uint32_t u32_vectorNum)
             {
                 u32_contiousUnlock = 0;
                 context.dev_state  = CHECK_LOCK;
+                dlog_warning("LOCK->CHECK_LOCK");
             }
             else if (sky_checkRcLock(stru_skystatus.u8_rcStatus))
             {
