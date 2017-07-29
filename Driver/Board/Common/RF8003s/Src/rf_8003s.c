@@ -260,7 +260,9 @@ static void RF8003s_afterCali(ENUM_BB_MODE en_mode, STRU_BoardCfg *boardCfg)
         } 
         
         BB_SPI_curPageWriteByte(0x01,0x02);             //SPI change into 8020    
-    }    
+    }
+
+    BB_SPI_init();
 }
 
 

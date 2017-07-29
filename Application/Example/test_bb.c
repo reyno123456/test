@@ -117,13 +117,11 @@ void BB_skyEventHandler(void *p)
     {
         if (pstru_status->lockstatus == 1)
         {
-            //BB_ledLock();
-            dlog_info("Lock");
+            BB_ledLock();
         }
         else
         {
-            //BB_ledUnlock();
-            dlog_info("unLock");
+            BB_ledUnlock();
         }
     }
     else if(pstru_status->pid == BB_GET_RCID)
