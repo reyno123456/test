@@ -31,12 +31,13 @@ typedef enum
 
 typedef struct
 {
-    uint32_t txLen;     //
-    uint32_t txAlrLen;  //
-    uint8_t *txBuf;     //
-    uint32_t rxLen;     //
-    uint32_t rxAlrLen;  //
-    uint8_t *rxBuf;     //
+    uint32_t txLen;         //
+    uint32_t txAlrLen;      //
+    uint8_t *txBuf;         //
+    uint32_t txLenLast;     //
+    uint32_t rxLen;         //
+    uint32_t rxAlrLen;      //
+    uint8_t *rxBuf;         //
     uint32_t rxAlrLanNum;
 } STRU_I2C_INT_DATA;
 

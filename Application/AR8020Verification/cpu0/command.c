@@ -173,6 +173,10 @@ void command_run(char *cmdArray[], uint32_t cmdNum)
     {
        command_TestWbBlockErase(cmdArray[1], cmdArray[2], cmdArray[3]);
     }
+    else if (memcmp(cmdArray[0], "test_hal_spi_flash_loop", strlen("test_hal_spi_flash_loop")) == 0)
+    { 
+        command_TestWbFlashWrite_loop(cmdArray[1], cmdArray[2], cmdArray[3]);                
+    }
     else if (memcmp(cmdArray[0], "test_hal_spi_flash_write", strlen("test_hal_spi_flash_write")) == 0)
     { 
         command_TestWbFlashWrite(cmdArray[1], cmdArray[2], cmdArray[3]);                

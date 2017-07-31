@@ -6,6 +6,7 @@
 #include "debuglog.h"
 #include "interrupt.h"
 #include "pll_ctrl.h"
+#include "driver_buffer.h"
 
 /* Private variables ---------------------------------------------------------*/
 static uint32_t SPI_BaseList[]= {
@@ -36,7 +37,7 @@ static STRU_SPI_InitTypes spi_inits[]= {
     },
 };
 
-static STRU_SPI_INT_DATA s_st_spiIntData[SPI_MAX_CHANNEL];
+static STRU_SPI_INT_DATA s_st_spiIntData[SPI_MAX_CHANNEL] = {0};
 
 
 static void SPI_SetReadDataLen(ENUM_SPI_COMPONENT en_id, uint16_t u16_len);
@@ -102,7 +103,7 @@ void SPI_master_init(ENUM_SPI_COMPONENT en_id, STRU_SPI_InitTypes *st_settings)
     Reg_Read32(SPI_BaseList[en_id]+SPI_ICR);
     Reg_Write32((SPI_BaseList[en_id]+SPI_SSIENR), 0x01);          //enable ssi
 
-    memset((uint8_t *)(&s_st_spiIntData[en_id]), 0x00, sizeof(STRU_SPI_INT_DATA));
+/*     memset((uint8_t *)(&s_st_spiIntData[en_id]), 0x00, sizeof(STRU_SPI_INT_DATA)); */
     memcpy( (void *)(spi_inits+en_id), (void *)st_settings, sizeof(STRU_SPI_InitTypes)); 
 }
 
@@ -330,7 +331,32 @@ static int32_t SPI_SetIntData(ENUM_SPI_COMPONENT en_id,
     {
         s_st_spiIntData[en_id].txLen = u32_wsize;     
         s_st_spiIntData[en_id].txAlrLen = 0;  
-        s_st_spiIntData[en_id].txBuf = ptr_wbuf;     
+        if ((ptr_wbuf != NULL) && (u32_wsize != 0))         // write
+        {
+/*
+            dlog_info("line = %d, en_id = %d, s_st_spiIntData[en_id].txBuf = %p",
+                        __LINE__, en_id, s_st_spiIntData[en_id].txBuf);
+*/
+            if(0 == get_new_buffer(&s_st_spiIntData[en_id].txBuf,
+                                   ptr_wbuf,
+                                   &s_st_spiIntData[en_id].txLenLast, 
+                                   u32_wsize))
+            {
+/*
+                dlog_info("success");
+                SysTicks_DelayMS(10);
+*/
+            }
+            else
+            {
+                dlog_info("fail");
+            }
+/*
+            dlog_info("line = %d, en_id = %d, s_st_spiIntData[en_id].txBuf = %p",
+                        __LINE__, en_id, s_st_spiIntData[en_id].txBuf);
+*/
+        }
+/*         s_st_spiIntData[en_id].txBuf = ptr_wbuf;      */
         s_st_spiIntData[en_id].rxLen = u32_rsize;     
         s_st_spiIntData[en_id].rxAlrLen = 0;  
         s_st_spiIntData[en_id].rxBuf = ptr_rbuf;  

@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include <string.h>
 #include "data_type.h"
 #include "i2c.h"
 #include "i2c_ll.h"
@@ -5,9 +7,10 @@
 #include "reg_rw.h"
 #include "interrupt.h"
 #include "systicks.h"
+#include "driver_buffer.h"
 
 
-static STRU_I2C_INT_DATA s_st_i2cIntrData[MAX_I2C_CONTOLLER_NUMBER];
+static STRU_I2C_INT_DATA s_st_i2cIntrData[MAX_I2C_CONTOLLER_NUMBER] = {0};
 
 static int32_t I2C_Master_SetIntrData(EN_I2C_COMPONENT en_component,
                                       uint8_t *ptr_wbuf, uint32_t u32_wsize,
@@ -434,7 +437,35 @@ static int32_t I2C_Master_SetIntrData(EN_I2C_COMPONENT en_component,
     {
         s_st_i2cIntrData[en_component].txLen = u32_wsize;     
         s_st_i2cIntrData[en_component].txAlrLen = 0;  
-        s_st_i2cIntrData[en_component].txBuf = ptr_wbuf;     
+        if ((ptr_wbuf != NULL) && (u32_wsize != 0))         // write
+        {
+/*
+            dlog_warning("line = %d, en_component = %d, buf = %p", __LINE__, en_component, s_st_i2cIntrData[en_component].txBuf);
+            dlog_warning("line = %d, en_component = %d, buf = %p", __LINE__, en_component, ptr_wbuf);
+*/
+            if(0 == get_new_buffer(&s_st_i2cIntrData[en_component].txBuf,
+                                   ptr_wbuf,
+                                   &s_st_i2cIntrData[en_component].txLenLast, 
+                                   u32_wsize))
+            {
+/*
+                dlog_info("success");
+*/
+
+            }
+            else
+            {
+                dlog_info("fail");                
+            }
+/*             dlog_warning("line = %d, en_component = %d, buf = %p", __LINE__, en_component, s_st_i2cIntrData[en_component].txBuf); */
+        }
+        else                                                // read
+        {
+/*
+            if (en_component == 0)
+                dlog_warning("line = %d, en_component = %d, buf = %p", __LINE__, en_component, s_st_i2cIntrData[en_component].txBuf);
+*/
+        }
         s_st_i2cIntrData[en_component].rxLen = u32_rsize;     
         s_st_i2cIntrData[en_component].rxAlrLen = 0;  
         s_st_i2cIntrData[en_component].rxBuf = ptr_rbuf;  

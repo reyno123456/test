@@ -52,6 +52,7 @@ typedef struct
   uint16_t u16_uartSendBuffLen;  
   uint16_t u16_uartSendBuffLentmp;
   const char *ps8_uartSendBuff;
+  uint32_t txLenLast;
 }uart_tx;
 
 typedef struct 

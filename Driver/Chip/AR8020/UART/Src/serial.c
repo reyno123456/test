@@ -1,20 +1,15 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-
 #include "pll_ctrl.h"
 #include "cpu_info.h"
 #include "interrupt.h"
 #include "serial.h"
 #include "systicks.h"
 #include "memory_config.h"
-
 #include "hal_uart.h"
-
 #include "debuglog.h"
-
-
-
+#include "driver_buffer.h"
 
 //the user CallBack for uart receive data.
 static UART_RxHandler s_pfun_uartUserHandlerTbl[UART_TOTAL_CHANNEL] =  
@@ -226,7 +221,7 @@ void uart_putFifo(unsigned char index)
                 }
                 s_st_uartTxArray[index].u16_uartSendBuffLentmp += s_st_uartTxArray[index].u16_uartSendBuffLen;
                 s_st_uartTxArray[index].u16_uartSendBuffLen = 0;
-                s_st_uartTxArray[index].ps8_uartSendBuff = NULL;                  
+/*                 s_st_uartTxArray[index].ps8_uartSendBuff = NULL;                   */
             }
             else
             {            
@@ -335,8 +330,22 @@ void uart_putdata(unsigned char index,  const char *s, unsigned short dataLen)
     {
         s_st_uartTxArray[index].u16_uartSendBuffLen = dataLen;
         s_st_uartTxArray[index].u16_uartSendBuffLentmp = 0;
-        s_st_uartTxArray[index].ps8_uartSendBuff = s;
-        
+/*         s_st_uartTxArray[index].ps8_uartSendBuff = s; */
+        //dlog_info("line = %d, s_st_uartTxArray[%d].ps8_uartSendBuff = %p", __LINE__, index, 
+        //            s_st_uartTxArray[index].ps8_uartSendBuff);              
+        if(0 == get_new_buffer((uint8_t**)(&s_st_uartTxArray[index].ps8_uartSendBuff),
+                               (uint8_t*)s,
+                               (uint32_t*)&s_st_uartTxArray[index].txLenLast, 
+                               dataLen))
+        {
+            //dlog_info("success");
+        }
+        else
+        {
+            dlog_info("fail");
+        }
+        //dlog_info("line = %d, s_st_uartTxArray[%d].ps8_uartSendBuff = %p", __LINE__, index, 
+        //            s_st_uartTxArray[index].ps8_uartSendBuff);              
     }
     else
     {

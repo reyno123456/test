@@ -2,6 +2,9 @@
 #include "test_hal_uart.h"
 #include "hal_nvic.h"
 #include "debuglog.h"
+#include "hal.h"
+#include "cmsis_os.h"
+
 
 uint8_t s_u8_uartRxBuf[64];
 uint8_t s_u8_uartRxLen = 0;
@@ -37,11 +40,16 @@ void command_TestHalUartInit(unsigned char *ch, unsigned char *br)
 
 void command_TestHalUartTx(unsigned char *ch, unsigned char *len)
 {
-    uint8_t u8_data[64]={0};
     uint16_t u16_i;
     unsigned int u32_ch = strtoul(ch, NULL, 0);
     unsigned int u32_len = strtoul(len, NULL, 0);
-    
+    uint8_t *u8_data = malloc(u32_len);
+
+    if (NULL == u8_data)
+    {
+        dlog_error("malloc error");
+    }
+
     for(u16_i = 0; u16_i < (uint16_t)u32_len; u16_i++)
     {
         u8_data[u16_i] = u16_i;
@@ -52,6 +60,8 @@ void command_TestHalUartTx(unsigned char *ch, unsigned char *len)
                     u8_data, 
                     u16_i,
                     HAL_UART_DEFAULT_TIMEOUTMS);
+
+    free(u8_data);
 }
 
 void command_TestHalUartRx(unsigned char *ch)
@@ -77,4 +87,56 @@ static uint32_t uartRxCallBack(uint8_t *pu8_rxBuf, uint8_t u8_len)
     memcpy(s_u8_uartRxBuf + s_u8_uartRxLen, pu8_rxBuf, u8_len);
 
     s_u8_uartRxLen += u8_len;
+}
+
+static void uart_send_hander( void const * argument)
+{
+    static uint8_t flag_inited = 0;
+    uint32_t len;
+    uint32_t i;
+
+    uint8_t* u8_data = NULL;
+
+    if (flag_inited == 0)
+    {
+        HAL_UART_Init(1, 4, uartRxCallBack);
+    }
+ 
+    while(1)
+    {
+        for (len = 1; len < 4096; len++)
+        {
+            u8_data = malloc(len);
+            if (NULL == u8_data)
+            {
+                dlog_error("malloc fail");
+            }
+            else
+            {
+                for (i = 0;i < len; i++)
+                {
+                    u8_data[i] = (uint8_t)i;
+                }
+            }
+
+            HAL_UART_TxData(1, 
+                            u8_data, 
+                            len,
+                            HAL_UART_DEFAULT_TIMEOUTMS);
+
+            free(u8_data);
+            HAL_Delay(10);
+			if (len % 100 ==  0)
+			{
+				dlog_info("send len = %d", len);
+			}
+        }
+        HAL_Delay(1);
+    }
+}
+
+void test_uart_with_os()
+{
+	osThreadDef(UART_SEND, uart_send_hander, osPriorityNormal, 0, 8 * configMINIMAL_STACK_SIZE);
+	osThreadCreate(osThread(UART_SEND), NULL);
 }

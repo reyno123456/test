@@ -34,7 +34,8 @@ endif
 SRC_C   := Src/sys_event.c \
            Src/debuglog.c \
            Src/md5.c \
-           Src/log10.c
+           Src/log10.c \
+           Src/driver_buffer.c
 
 INCDIRS :=  -IInc \
             -I$(TOP_DIR)/Library/Artosyn/SimpleC/Inc \
