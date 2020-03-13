@@ -13,3 +13,5 @@ stable 2
 amend 3
 stable 4
 amend 5
+stable 6
+amend 7
