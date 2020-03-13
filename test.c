@@ -11,3 +11,4 @@ int main(int argc, char** argv)
 stable 1
 stable 2
 amend 3
+stable 4
